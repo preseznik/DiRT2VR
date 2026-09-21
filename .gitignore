@@ -1,0 +1,7 @@
+.deps/
+build/
+artifacts/
+__pycache__/
+*.user
+tools/xml-convert/obj/
+tools/xml-convert/bin/
