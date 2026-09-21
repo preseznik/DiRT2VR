@@ -105,7 +105,9 @@ Assignments stay attached to the selected device. A disconnected device is not r
 
 Click **?** at the top right of the launcher (or press **F1**) for **Help / About**. It shows the installed version and build, credits developer **Bohloney**, and links to instructions, GitHub issues and releases.
 
-Choose **Check for updates** to check the public GitHub Releases page; no GitHub account is required. **Include experimental releases** is selected by default in alpha builds. Clear it to check only stable releases. Checks happen only when requested.
+The launcher checks GitHub Releases once in the background when its window opens. When a newer version exists, **New version available** appears beside **?**; click it to review the update. Alpha builds include experimental releases in the startup check; stable builds check stable releases only. Offline checks stay quiet and never block launching. Quick launch and background game sessions do not check for updates.
+
+Choose **Check for updates** in Help / About to retry manually; no GitHub account is required. **Include experimental releases** is selected by default in alpha builds. Clear it for a stable-only manual check; this choice applies to the current Help / About window. Downloads and installation always require your action.
 
 When a newer release has a verified installer, **Download and install** downloads it, checks its SHA-256 checksum and opens setup for your current game folder. Close the game first. The launcher restores pending changes before handing over to setup, then closes. Complete the normal setup prompts, including Windows administrator approval if requested. Preferences are retained. This is an assisted update, not a silent background installation. ZIP users can use it too; doing so adds the installer and uninstaller to that installation.
 

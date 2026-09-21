@@ -2,7 +2,7 @@
   #error Stage must point to the staged package
 #endif
 #ifndef PackageVersion
-  #define PackageVersion "0.1.0-alpha.2"
+  #define PackageVersion "0.1.0-alpha.3"
 #endif
 [Setup]
 AppId={{7BB25362-6E23-44BD-AE38-E64B2EC717D7}

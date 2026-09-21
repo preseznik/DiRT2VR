@@ -6,9 +6,68 @@ Imports System.Text
 Imports System.Text.Json
 Imports System.Threading
 Imports System.Threading.Tasks
+Imports System.Windows.Forms
 Imports DiRT2VR
 
 Module UpdateTests
+    Public Sub Startup(context As InstallContext, folder As String, check As Action(Of Boolean, String))
+        Dim completion As New TaskCompletionSource(Of ReleaseUpdate)(), calls As Integer
+        Dim releaseUpdate = UpdateService.SelectUpdate(JsonSerializer.Serialize({Release("v9.0.0")}), BuildInfo.Version, True)
+        Using form As New MainForm(context, Function(token)
+                                               calls += 1
+                                               Return completion.Task
+                                           End Function)
+            form.ShowInTaskbar = False : form.StartPosition = FormStartPosition.Manual : form.Location = New Drawing.Point(-32000, -32000)
+            form.Show() : Application.DoEvents()
+            Dim notice = DirectCast(form.Controls.Find("UpdateAvailable", True).Single(), Button)
+            check(calls = 1 AndAlso Not notice.Visible AndAlso form.Controls.Find("LaunchDesktop", True).Single().Enabled, "startup check runs once without blocking launch")
+            completion.SetResult(releaseUpdate)
+            PumpUntil(Function() notice.Visible)
+            check(notice.Visible AndAlso notice.AccessibleDescription.Contains("9.0.0"), "background result displays the new version indicator")
+            Using bitmap As New Drawing.Bitmap(form.Width, form.Height)
+                form.DrawToBitmap(bitmap, New Drawing.Rectangle(0, 0, form.Width, form.Height))
+                bitmap.Save(Path.Combine(folder, "launcher-update-available.png"))
+            End Using
+            Using closeDialog As New System.Windows.Forms.Timer With {.Interval = 20}
+                Dim verified = False
+                AddHandler closeDialog.Tick, Sub()
+                                                 Dim about = Application.OpenForms.OfType(Of AboutForm)().SingleOrDefault()
+                                                 If about Is Nothing Then Return
+                                                 verified = about.Controls.Find("UpdateStatus", True).Single().Text.Contains("9.0.0") AndAlso about.Controls.Find("InstallUpdate", True).Single().Enabled
+                                                 closeDialog.Stop() : about.Close()
+                                             End Sub
+                closeDialog.Start() : notice.PerformClick()
+                check(verified, "update indicator opens About with cached update ready to install")
+            End Using
+            form.Hide() : form.Show() : Application.DoEvents()
+            check(calls = 1, "reshowing window does not repeat startup request")
+            form.Close()
+        End Using
+        For Each result In {Task.FromResult(Of ReleaseUpdate)(Nothing), Task.FromException(Of ReleaseUpdate)(New HttpRequestException("offline"))}
+            Using form As New MainForm(context, Function(token) result)
+                form.ShowInTaskbar = False : form.StartPosition = FormStartPosition.Manual : form.Location = New Drawing.Point(-32000, -32000)
+                form.Show() : Application.DoEvents()
+                check(Not form.Controls.Find("UpdateAvailable", True).Single().Visible AndAlso form.Controls.Find("LaunchDesktop", True).Single().Enabled, "no release/offline startup remains quiet and usable")
+                form.Close()
+            End Using
+        Next
+        Dim late As New TaskCompletionSource(Of ReleaseUpdate)(), observed As CancellationToken
+        Using form As New MainForm(context, Function(token)
+                                               observed = token
+                                               Return late.Task
+                                           End Function)
+            form.ShowInTaskbar = False : form.StartPosition = FormStartPosition.Manual : form.Location = New Drawing.Point(-32000, -32000)
+            form.Show() : Application.DoEvents() : form.Close()
+            late.SetResult(releaseUpdate) : Application.DoEvents()
+            check(observed.IsCancellationRequested AndAlso form.IsDisposed, "closing cancels startup check and ignores late results")
+        End Using
+    End Sub
+    Private Sub PumpUntil(done As Func(Of Boolean))
+        Dim deadline = DateTime.UtcNow.AddSeconds(3)
+        While Not done() AndAlso DateTime.UtcNow < deadline
+            Application.DoEvents() : Thread.Sleep(5)
+        End While
+    End Sub
     Private Function Release(tag As String, Optional draft As Boolean = False, Optional preview As Boolean = False, Optional url As String = Nothing, Optional digest As String = Nothing) As Object
         Dim name = "DiRT2VR-" & tag.TrimStart("v"c) & "-Setup.exe"
         Return New With {.tag_name = tag, .draft = draft, .prerelease = preview, .assets = {New With {

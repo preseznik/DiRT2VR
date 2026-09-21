@@ -1,11 +1,16 @@
 # Changelog
 
-Notable changes to DiRT2VR are recorded here, newest first. The project is an unreleased development prototype; dated entries are development milestones, not packaged releases. Headset checks refer to Quest 3 through SteamVR unless stated otherwise.
+Notable changes to DiRT2VR are recorded here, newest first. Versioned releases remain experimental; older dated entries are development milestones. Headset checks refer to Quest 3 through SteamVR unless stated otherwise.
 
 ## Unreleased
 
+## 0.1.0-alpha.3 — 2026-09-21
+
+First public experimental package, including the development changes below.
+
 ### Added
 
+- Automatic, nonblocking update check when the launcher window opens, with a clickable **New version available** indicator beside Help / About. Alpha builds include experimental releases; stable builds check stable releases only. Offline checks stay quiet, and downloads/installation remain user-initiated. Package version is `0.1.0-alpha.3`.
 - Help / About (`?` or F1) with installed version, build revision/date, Bohloney developer credit and documentation/issues/release links. Launcher package version is now `0.1.0-alpha.2`.
 - User-initiated GitHub Release checks with stable/experimental selection, verified installer downloads and an assisted setup handoff for the current game folder. Existing recovery and installer safeguards apply; preferences survive. No silent background updates. ZIP installations can switch to installer-managed updates. Public release-to-release installation remains pending until packaged releases are published.
 - Fixed the initial lap override targeting an unused route setup path. A guarded hook now supplies the selected count to the actual demo route descriptor for both Race and Practice. Solo/eight-car desktop diagnostics confirmed three laps in the copied descriptor; the tester confirmed the three-lap HUD and continuation into lap 2 at Baja – Ensenada Sprint. Complete multi-lap finishes and VR acceptance remain pending.

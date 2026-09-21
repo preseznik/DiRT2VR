@@ -15,7 +15,7 @@ Public Class AboutForm
     Private ReadOnly progress As New ProgressBar With {.Dock = DockStyle.Top, .Visible = False}
     Private availableUpdate As ReleaseUpdate
     Private working As Boolean
-    Public Sub New(value As InstallContext)
+    Public Sub New(value As InstallContext, Optional knownUpdate As ReleaseUpdate = Nothing)
         context = value
         Text = "DiRT2VR — Help / About"
         Using stream = GetType(MainForm).Assembly.GetManifestResourceStream("DiRT2VR.ico"), appIcon As New Icon(stream)
@@ -58,6 +58,9 @@ Public Class AboutForm
                                           End Sub
         AddHandler FormClosing, Sub() cancellation.Cancel()
         AddHandler FormClosed, Sub() client.Dispose()
+        If knownUpdate IsNot Nothing Then
+            availableUpdate = knownUpdate : DescribeUpdate() : SetWorking(False)
+        End If
     End Sub
     Private Shared Function AddText(layout As TableLayoutPanel, text As String, Optional size As Single = 10, Optional bold As Boolean = False) As Label
         Dim label As New Label With {.Text = text, .AutoSize = True, .MaximumSize = New Size(570, 0), .Margin = New Padding(0, 0, 0, 12), .Font = New Font("Segoe UI", size, If(bold, FontStyle.Bold, FontStyle.Regular))}
@@ -96,7 +99,7 @@ Public Class AboutForm
         Try
             availableUpdate = Await New UpdateService(client).CheckAsync(BuildInfo.Version, preview.Checked, cancellation.Token)
             If IsDisposed Then Return
-            status.Text = If(availableUpdate Is Nothing, "No newer published release is available on this channel.", If(availableUpdate.Download Is Nothing, "Version " & availableUpdate.Version.Text & " is available, but has no verified installer. Open Releases for details.", "Version " & availableUpdate.Version.Text & " is available (" & Math.Ceiling(availableUpdate.Size / 1048576.0).ToString() & " MB)."))
+            DescribeUpdate()
         Catch ex As OperationCanceledException
             If Not IsDisposed Then status.Text = "Update check canceled or timed out. Try again when connected."
         Catch ex As Exception
@@ -105,6 +108,9 @@ Public Class AboutForm
             If Not IsDisposed Then SetWorking(False)
         End Try
     End Function
+    Private Sub DescribeUpdate()
+        status.Text = If(availableUpdate Is Nothing, "No newer published release is available on this channel.", If(availableUpdate.Download Is Nothing, "Version " & availableUpdate.Version.Text & " is available, but has no verified installer. Open Releases for details.", "Version " & availableUpdate.Version.Text & " is available (" & Math.Ceiling(availableUpdate.Size / 1048576.0).ToString() & " MB)."))
+    End Sub
     Private Async Function InstallUpdate() As Task
         If working OrElse availableUpdate?.Download Is Nothing Then Return
         SetWorking(True) : progress.Value = 0 : progress.Visible = True

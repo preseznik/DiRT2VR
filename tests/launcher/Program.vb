@@ -246,7 +246,8 @@ Module Program
                 Console.WriteLine($"INPUT {sampleState.Label} connected={sampleState.Connected}")
             Next
         End Using
-        Using form As New MainForm(context)
+        UpdateTests.Startup(context, folder, AddressOf Check)
+        Using form As New MainForm(context, Function(token) Threading.Tasks.Task.FromResult(Of ReleaseUpdate)(Nothing))
             form.ShowInTaskbar = False : form.StartPosition = FormStartPosition.Manual : form.Location = New Drawing.Point(-32000, -32000)
             form.Show() : Application.DoEvents()
             Check(form.Controls.Find("HelpAbout", True).Single().AccessibleName = "Help / About", "help button is discoverable")

@@ -1,5 +1,6 @@
 Imports System.Windows.Forms
 Imports System.Drawing
+Imports System.Threading.Tasks
 
 Public Class MainForm
     Inherits Form
@@ -36,8 +37,13 @@ Public Class MainForm
     Private capturedDevice As ControllerSample
     Private capturedButtons As New HashSet(Of Integer)
     Private busy As Boolean
-    Public Sub New(value As InstallContext)
+    Private ReadOnly updateNotice As New Button With {.Text = "New version available", .Name = "UpdateAvailable", .AutoSize = True, .Visible = False, .Anchor = AnchorStyles.Right}
+    Private ReadOnly updateCancellation As New CancellationTokenSource()
+    Private ReadOnly checkForUpdate As Func(Of CancellationToken, Task(Of ReleaseUpdate))
+    Private availableUpdate As ReleaseUpdate
+    Public Sub New(value As InstallContext, Optional releaseCheck As Func(Of CancellationToken, Task(Of ReleaseUpdate)) = Nothing)
         context = value
+        checkForUpdate = If(releaseCheck, AddressOf CheckReleaseAsync)
         settings = VrSettings.Load(context)
         Text = "DiRT2VR — Experimental launcher"
         Using stream = GetType(MainForm).Assembly.GetManifestResourceStream("DiRT2VR.ico"), appIcon As New Icon(stream)
@@ -55,12 +61,13 @@ Public Class MainForm
         layout.RowStyles.Add(New RowStyle(SizeType.AutoSize))
         layout.RowStyles.Add(New RowStyle(SizeType.Percent, 100))
         layout.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-        Dim header As New TableLayoutPanel With {.ColumnCount = 2, .Dock = DockStyle.Fill, .AutoSize = True}
-        header.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100)) : header.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
+        Dim header As New TableLayoutPanel With {.ColumnCount = 3, .Dock = DockStyle.Fill, .AutoSize = True}
+        header.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100)) : header.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize)) : header.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
         header.Controls.Add(New Label With {.Text = "DiRT 2 VR", .Font = New Font(Font.FontFamily, 20, FontStyle.Bold), .AutoSize = True}, 0, 0)
         Dim help As New Button With {.Text = "?", .Name = "HelpAbout", .AccessibleName = "Help / About", .Size = New Size(36, 36), .Anchor = AnchorStyles.Right}
         AddHandler help.Click, Sub() ShowAbout()
-        header.Controls.Add(help, 1, 0) : layout.Controls.Add(header)
+        AddHandler updateNotice.Click, Sub() ShowAbout()
+        header.Controls.Add(updateNotice, 1, 0) : header.Controls.Add(help, 2, 0) : layout.Controls.Add(header)
         AddHandler HelpRequested, Sub(sender, e)
                                      e.Handled = True : ShowAbout()
                                  End Sub
@@ -110,11 +117,30 @@ Public Class MainForm
                                   RefreshStatus()
                               End Sub
         AddHandler FormClosed, Sub()
+                                  updateCancellation.Cancel() : updateCancellation.Dispose()
                                   timer.Stop() : timer.Dispose() : input.Dispose()
                                   Icon.Dispose()
                               End Sub
         timer.Start() : RefreshStatus()
+        AddHandler Shown, Async Sub() Await CheckStartupUpdate()
     End Sub
+    Private Shared Async Function CheckReleaseAsync(token As CancellationToken) As Task(Of ReleaseUpdate)
+        Using client = UpdateService.CreateClient()
+            Return Await New UpdateService(client).CheckAsync(BuildInfo.Version, BuildInfo.Version.Contains("-"), token)
+        End Using
+    End Function
+    Private Async Function CheckStartupUpdate() As Task
+        Dim token = updateCancellation.Token
+        Try
+            Dim result = Await checkForUpdate(token)
+            If IsDisposed OrElse token.IsCancellationRequested Then Return
+            availableUpdate = result
+            updateNotice.Visible = result IsNot Nothing
+            If result IsNot Nothing Then updateNotice.AccessibleDescription = "Version " & result.Version.Text & " is available. Open Help / About to review and install."
+        Catch ex As Exception
+            ' Offline/rate-limited startup checks are quiet; About offers a manual retry.
+        End Try
+    End Function
     Private Shared Function Percentage(name As String, low As Integer, high As Integer, value As Integer) As NumericUpDown
         Return New NumericUpDown With {.Name = name, .AccessibleName = name, .Minimum = low, .Maximum = high, .Value = value, .Increment = 5, .Width = 90}
     End Function
@@ -186,7 +212,7 @@ Public Class MainForm
         content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Sessions loop after finishing; pause only offers Continue. Alt+F4 quits. Use Game menus for full event options and results."))
     End Sub
     Private Sub ShowAbout()
-        Using dialog As New AboutForm(context)
+        Using dialog As New AboutForm(context, availableUpdate)
             dialog.ShowDialog(Me)
         End Using
     End Sub
