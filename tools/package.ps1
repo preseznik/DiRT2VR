@@ -1,0 +1,61 @@
+param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild)
+$ErrorActionPreference='Stop'
+$root=Split-Path $PSScriptRoot -Parent
+Set-Location -LiteralPath $root
+[xml]$project=Get-Content -LiteralPath (Join-Path $root 'launcher\DiRT2VR.vbproj') -Raw
+$version=[string]$project.Project.PropertyGroup.Version
+if (!$SkipNativeBuild) {
+    & (Join-Path $PSScriptRoot 'build-distribution.cmd')
+    if ($LASTEXITCODE) { throw 'Native distribution build/tests failed' }
+}
+$output=Join-Path $root ('artifacts\packages\'+$version+'-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
+$stage=Join-Path $output 'stage'
+$publish=Join-Path $output 'publish'
+New-Item -ItemType Directory -Path "$stage\DiRT2VR\payload","$stage\DiRT2VR\licenses" -Force | Out-Null
+& dotnet publish launcher/DiRT2VR.vbproj -c Release -o $publish --nologo
+if ($LASTEXITCODE) { throw 'Launcher publish failed' }
+Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
+Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
+Copy-Item -LiteralPath 'README.md','CHANGELOG.md' -Destination "$stage\DiRT2VR"
+Copy-Item -LiteralPath 'docs' -Destination "$stage\DiRT2VR\docs" -Recurse
+@'
+@echo off
+start "" /wait "%~dp0DiRT2VR.exe" --launch --no-ui
+exit /b %errorlevel%
+'@ | Set-Content -LiteralPath "$stage\Start-DiRT2VR.cmd" -Encoding ascii
+Copy-Item -LiteralPath '.deps\Ego-Engine-Modding\LICENSE' -Destination "$stage\DiRT2VR\licenses\EGO-MIT.txt"
+Copy-Item -LiteralPath '.deps\minhook\LICENSE.txt' -Destination "$stage\DiRT2VR\licenses\MinHook.txt"
+Copy-Item -LiteralPath '.deps\OpenXR-SDK\LICENSE' -Destination "$stage\DiRT2VR\licenses\OpenXR-Apache-2.0.txt"
+Copy-Item -LiteralPath '.deps\OpenXR-SDK\src\external\jsoncpp\LICENSE' -Destination "$stage\DiRT2VR\licenses\JsonCpp.txt"
+Copy-Item -LiteralPath 'licenses\MiscUtil.txt' -Destination "$stage\DiRT2VR\licenses\MiscUtil.txt"
+# Single-file publishing does not copy runtime license files into publish/.
+# Use the exact runtime packs selected by restore, not the newest installed SDK.
+$assets=Get-Content -LiteralPath 'launcher\obj\project.assets.json' -Raw | ConvertFrom-Json
+$packs=$assets.project.frameworks.'net10.0-windows'.downloadDependencies
+foreach ($name in @('Microsoft.NETCore.App.Runtime.win-x64','Microsoft.WindowsDesktop.App.Runtime.win-x64')) {
+    $pack=$packs | Where-Object name -EQ $name
+    $packVersion=($pack.version.Trim('[',']').Split(',')[0]).Trim()
+    $packPath=$assets.packageFolders.PSObject.Properties.Name | ForEach-Object {
+        Join-Path $_ ($name.ToLowerInvariant()+'\'+$packVersion)
+    } | Where-Object { Test-Path -LiteralPath $_ } | Select-Object -First 1
+    if (!$packPath) { throw "Runtime license pack not found: $name $packVersion" }
+    $license=Get-ChildItem -LiteralPath $packPath -File | Where-Object Name -Match '^LICENSE(\.TXT)?$' | Select-Object -First 1
+    if (!$license) { throw "Runtime license missing in $packPath" }
+    Copy-Item -LiteralPath $license.FullName -Destination "$stage\DiRT2VR\licenses\$name-LICENSE.txt"
+    $notices=Join-Path $packPath 'THIRD-PARTY-NOTICES.TXT'
+    if ($name -eq 'Microsoft.NETCore.App.Runtime.win-x64' -and !(Test-Path -LiteralPath $notices)) { throw 'Missing .NET third-party notices' }
+    if (Test-Path -LiteralPath $notices) { Copy-Item -LiteralPath $notices -Destination "$stage\DiRT2VR\licenses\$name-NOTICES.txt" }
+}
+$hashes=[ordered]@{}
+Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {
+    $relative=[IO.Path]::GetRelativePath($stage,$_.FullName).Replace('\','/')
+    $hashes[$relative]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+}
+[ordered]@{Version=$version;Files=$hashes} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$stage\DiRT2VR\package.json" -Encoding utf8
+$zip=Join-Path $output "DiRT2VR-$version.zip"
+Compress-Archive -LiteralPath "$stage\DiRT2VR.exe","$stage\Start-DiRT2VR.cmd","$stage\DiRT2VR" -DestinationPath $zip
+if (!(Test-Path -LiteralPath $InnoCompiler)) { throw "Inno compiler not found: $InnoCompiler. ZIP is at $zip" }
+& $InnoCompiler "/DStage=$stage" "/DPackageVersion=$version" (Join-Path $root 'installer\DiRT2VR.iss')
+if ($LASTEXITCODE) { throw 'Installer compile failed' }
+Get-ChildItem -LiteralPath $output -File | Get-FileHash | Format-Table -AutoSize
+Write-Host "Package output: $output"

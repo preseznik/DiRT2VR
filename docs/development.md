@@ -10,6 +10,8 @@ On 2026-09-16, Quest 3 through SteamVR displayed the diagnostic cube; the user c
 
 See [implementation status and evidence](implementation-status.md) and [rendering investigation](rendering-notes.md).
 
+The in-place launcher and packaging workflow is documented in [launcher implementation notes](launcher.md). End users no longer need an isolated game copy. The scripts below remain developer diagnostic tools; do not mix a legacy trace session with a launcher-managed session. Their recovery receipts use different formats.
+
 ## Build
 
 Requires Windows x64, Visual Studio C++ x86 tools and Windows SDK, CMake 3.24+, Ninja, Git, Python 3, and .NET SDK 10 for the XML converter required by interactive play. The resulting native programs are x86.

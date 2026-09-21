@@ -5,3 +5,9 @@ __pycache__/
 *.user
 tools/xml-convert/obj/
 tools/xml-convert/bin/
+launcher/bin/
+launcher/obj/
+tools/ego-xml/bin/
+tools/ego-xml/obj/
+tests/launcher/bin/
+tests/launcher/obj/

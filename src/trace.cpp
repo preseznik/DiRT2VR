@@ -136,6 +136,20 @@ void __fastcall ProjectedSetup(void* self,void*,void* light,void* context,void* 
 }
 bool cameraHooksReady{};
 bool cameraSetupHookReady{};
+using PauseWorldFn = int (__thiscall*)(void*,const void*);
+PauseWorldFn realPauseWorld{};
+bool pauseHookReady{};
+std::atomic<bool> pauseWorld{};
+int __fastcall PauseWorld(void* self,void*,const void* message) {
+    // RenderPauseWorld's handler copies message+4 to frontend+0x96.
+    // Observe the engine event, including gamepad pause; never change it.
+    const auto bytes=static_cast<const unsigned char*>(message);
+    const bool paused=bytes[4]!=0;
+    const int result=realPauseWorld(self,message);
+    if(pauseWorld.exchange(paused)!=paused)
+        Log("OpenXR pause world=%d frame=%llu auxiliary=%u",paused,frame.load(),bytes[5]);
+    return result;
+}
 using FrustumCopyFn = void* (__thiscall*)(void*,const void*);
 FrustumCopyFn realFrustumCopy{},buildFrustum{};
 bool WideVisibility() {
@@ -334,7 +348,10 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             static_cast<const float*>(cameraA)[21],static_cast<const float*>(cameraB)[21]);
         previousCandidate=cockpit;
     }
-    if(!cockpit || !lightingHooksReady) return false;
+    // A paused cockpit retains its near plane. Render the original complete
+    // frame (including modal dialogs) on the screen instead of replaying it.
+    // Preserve the requested mode so resuming returns to cockpit VR.
+    if(!cockpit || !lightingHooksReady || !pauseHookReady || pauseWorld.load()) return false;
     if(!preparedLights.Snapshot(f,context,eyeLights)) {
         Log("lighting replay capacity exceeded; using virtual screen frame=%llu",f);
         return false;
@@ -873,6 +890,16 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         }
         if(ContinuousReplayEnabled()) {
             auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+            if(HeadsetEnabled() && !realPauseWorld) {
+                const unsigned char pause[]={0x8b,0x44,0x24,0x04,0x8a,0x50,0x04,0x56,0x8b,0xf1,
+                    0x8a,0x8e,0x96,0,0,0,0x88,0x96,0x96,0,0,0};
+                if(memcmp(base+0x16ec90,pause,sizeof(pause))==0) {
+                    auto status=MH_CreateHook(base+0x16ec90,reinterpret_cast<void*>(PauseWorld),reinterpret_cast<void**>(&realPauseWorld));
+                    if(status==MH_OK) status=MH_EnableHook(base+0x16ec90);
+                    pauseHookReady=status==MH_OK;
+                    Log("pause world hook RVA=0x16ec90 status=%s",MH_StatusToString(status));
+                } else Log("pause world hook rejected instruction guard; using virtual screen");
+            }
             if(HeadsetEnabled() && WideVisibility() && !realFrustumCopy) {
                 const unsigned char copy[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0xc1,0x8b,0x4d,0x08};
                 const unsigned char build[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x04,0x01,0,0};

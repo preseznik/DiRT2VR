@@ -2,6 +2,11 @@
 #include "trace.h"
 #include <intrin.h>
 
+static bool SessionActive() {
+    wchar_t value[8]{};
+    return GetEnvironmentVariableW(L"DIRT2VR_ACTIVE",value,8)==1 && value[0]==L'1';
+}
+
 static FARPROC RealProc(const char* name) {
     static HMODULE real = [] {
         wchar_t system[MAX_PATH]{};
@@ -19,7 +24,7 @@ extern "C" HRESULT WINAPI ProxyCreateDevice(IDXGIAdapter* adapter, D3D_DRIVER_TY
     ID3D11Device** device, D3D_FEATURE_LEVEL* level, ID3D11DeviceContext** context) {
     const auto fn = reinterpret_cast<decltype(&D3D11CreateDevice)>(RealProc("D3D11CreateDevice"));
     HRESULT hr = fn(adapter, type, software, flags, levels, count, sdk, device, level, context);
-    if (SUCCEEDED(hr) && device && *device && vr::SupportedHost())
+    if (SUCCEEDED(hr) && device && *device && SessionActive() && vr::SupportedHost())
         vr::AttachTrace(*device, context ? *context : nullptr, nullptr);
     return hr;
 }
@@ -30,7 +35,7 @@ extern "C" HRESULT WINAPI ProxyCreateDeviceAndSwapChain(IDXGIAdapter* adapter, D
     D3D_FEATURE_LEVEL* level, ID3D11DeviceContext** context) {
     const auto fn = reinterpret_cast<decltype(&D3D11CreateDeviceAndSwapChain)>(RealProc("D3D11CreateDeviceAndSwapChain"));
     HRESULT hr = fn(adapter, type, software, flags, levels, count, sdk, desc, swapchain, device, level, context);
-    if (SUCCEEDED(hr) && device && *device && vr::SupportedHost())
+    if (SUCCEEDED(hr) && device && *device && SessionActive() && vr::SupportedHost())
         vr::AttachTrace(*device, context ? *context : nullptr, swapchain ? *swapchain : nullptr);
     return hr;
 }

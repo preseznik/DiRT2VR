@@ -62,6 +62,7 @@ New-Item -ItemType Directory -Path $output | Out-Null
 Copy-Item -LiteralPath $proxy -Destination (Join-Path $game 'd3d11.dll')
 Copy-Item -LiteralPath (Join-Path $root 'config\vr_benchmark.xml') -Destination (Join-Path $game 'vr_benchmark.xml')
 $previousOutput = $env:DIRT2VR_OUTPUT
+$previousActive = $env:DIRT2VR_ACTIVE
 $previousReplay = $env:DIRT2VR_REPLAY_PROBE
 $previousWater = $env:DIRT2VR_SKIP_WATER
 $previousOffset = $env:DIRT2VR_CAMERA_OFFSET
@@ -158,6 +159,7 @@ try {
         Write-Host 'Temporary graphics settings applied; original bytes will be restored when the game exits.'
     }
     $env:DIRT2VR_OUTPUT = $output
+    $env:DIRT2VR_ACTIVE = '1'
     $env:DIRT2VR_REPLAY_PROBE = if ($ReplayExperiment) { '1' } else { '0' }
     $env:DIRT2VR_SKIP_WATER = if ($SkipWater) { '1' } else { '0' }
     $env:DIRT2VR_CAMERA_OFFSET = $CameraOffset.ToString([Globalization.CultureInfo]::InvariantCulture)
@@ -188,6 +190,7 @@ try {
         Write-Host 'Original graphics settings restored.'
     }
     $env:DIRT2VR_OUTPUT = $previousOutput
+    $env:DIRT2VR_ACTIVE = $previousActive
     $env:DIRT2VR_REPLAY_PROBE = $previousReplay
     $env:DIRT2VR_SKIP_WATER = $previousWater
     $env:DIRT2VR_CAMERA_OFFSET = $previousOffset

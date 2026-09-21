@@ -1,0 +1,10 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework><Nullable>enable</Nullable><ImplicitUsings>enable</ImplicitUsings><EnableDefaultCompileItems>false</EnableDefaultCompileItems></PropertyGroup>
+  <ItemGroup>
+    <Compile Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/Xml/*.cs" />
+    <Compile Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/Conversion/*.cs" />
+    <Compile Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/IO/EndianBinary*.cs" />
+    <Compile Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/IO/StreamExtensions.cs" />
+    <Compile Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/IO/ConcatenatedStream.cs" />
+  </ItemGroup>
+</Project>

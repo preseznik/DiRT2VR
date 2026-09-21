@@ -4,8 +4,27 @@ Notable changes to DiRT2VR are recorded here, newest first. The project is an un
 
 ## Unreleased
 
+### Added
+
+- Visual Basic .NET Windows Forms launcher with a bundled runtime, SteamVR preflight, configurable keyboard shortcuts and Xbox / standard HID button bindings.
+- In-place installer and ZIP packaging. Game copying is now a developer failure-testing workflow, not an end-user requirement. Packages contain mod files only.
+- A background session manager shared by the GUI and quick-launch script, with original-file backups, durable recovery journals, proxy ownership checks and narrowly scoped file-worker elevation.
+- Per-installation settings and logs under Local AppData; restoration preserves unrelated graphics-settings changes and refuses unexpected asset changes.
+- Inactive proxy forwarding for normal desktop launches, without VR hooks, XR initialization or diagnostics.
+
+### Validation
+
+- The tester confirmed that the launcher detected the Xbox-compatible controller, captured bindings, launched the game, and supported Toggle VR and Recenter during play.
+- Native tests, launcher transaction/input tests and installer install/upgrade/conflict/uninstall checks passed in isolated fixtures. Protected-folder, interruption and broader hardware acceptance remain incomplete.
+- Following the reported power outage, inspection found the previous session already restored both original game assets with no pending recovery journal; this does not establish recovery from a power loss during an active write.
+
+### Fixed
+
+- Paused cockpit menus and confirmation dialogs now use the virtual screen, preserving the selected VR mode for resume. The tester confirmed the Load Preset Controls dialog is readable and resuming returns to cockpit VR.
+
 ### Documentation
 
+- Replaced developer-copy setup instructions with packaged in-place installation, launcher controls, recovery, upgrade and removal instructions.
 - Replaced the root README with end-user setup, play instructions, controls, limitations and troubleshooting.
 - Moved the previous technical README to `docs/development.md` and added explicit interrupted-run recovery instructions.
 - Added this changelog and repository guidance to maintain it alongside future changes.

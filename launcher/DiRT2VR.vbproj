@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <RootNamespace>DiRT2VR</RootNamespace>
+    <StartupObject>DiRT2VR.Program</StartupObject>
+    <OptionStrict>On</OptionStrict>
+    <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
+    <AssemblyName>DiRT2VR</AssemblyName>
+    <Version>0.1.0-alpha.1</Version>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <SelfContained>true</SelfContained>
+    <PublishSingleFile>true</PublishSingleFile>
+    <IncludeNativeLibrariesForSelfExtract>true</IncludeNativeLibrariesForSelfExtract>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+  <ItemGroup>
+    <Import Include="System.IO" />
+    <Import Include="System.Diagnostics" />
+    <Import Include="System.Threading" />
+    <Import Include="System.Runtime.InteropServices" />
+    <ProjectReference Include="../tools/ego-xml/EgoXml.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,67 @@
+# Launcher and distribution implementation
+
+Status: experimental `0.1.0-alpha.1`. End-user instructions are in [README](../README.md). The launcher works in the existing game folder; retain `artifacts/game` only for development and failure testing.
+
+## Build and package
+
+Prerequisites: the pinned dependencies from `tools/bootstrap.ps1`, Visual Studio x86 C++ tools, Windows SDK, CMake/Ninja, Python, .NET SDK 10, and Inno Setup. No development dependencies are required by packaged users.
+
+```powershell
+.\tools\build-distribution.cmd
+# Requires an unmodified supported game fixture at artifacts/game:
+dotnet run --project tests/launcher/LauncherTests.vbproj -c Release -- .
+.\tools\package.ps1 -SkipNativeBuild
+```
+
+`DIRT2VR_VS_ROOT` overrides the Visual Studio path; `DIRT2VR_PYTHON` overrides Python. `package.ps1 -InnoCompiler <path>` overrides the Inno compiler. The default compiler is the locally installed Inno Setup 7. Packaging creates a timestamped directory under `artifacts/packages`; installer and ZIP come from the same SHA256 manifest. Never include proprietary game executables, assets or saves in a distribution.
+
+The native build uses a static MSVC runtime, including the OpenXR loader. The launcher publishes a self-contained x64 single-file WinForms executable. `tools/ego-xml` compiles only the required XML, endian and stream support from the pinned EGO dependency. The package retains EGO, MiscUtil, MinHook, OpenXR, JsonCpp and bundled .NET notices. MiscUtil notice source: https://jonskeet.uk/csharp/miscutil/licence.txt.
+
+## Ownership and activation
+
+The package carries its x86 D3D11 proxy under `DiRT2VR/payload`. Setup validates the supported executable SHA256, rejects linked paths and foreign proxies, then records the installed proxy hash in `DiRT2VR/installation.json`. Upgrades accept the current packaged hash or a matching installed ownership receipt.
+
+`DIRT2VR_ACTIVE=1` is required before the proxy runs compatibility checks or installs hooks. An ordinary Steam launch calls system D3D11 directly through the proxy, without XR or diagnostic side effects. The launcher strips inherited `DIRT2VR_*` variables and sets its tested rendering baseline explicitly. `XR_RUNTIME_JSON` is set only on the probe and game processes, never globally.
+
+The settings window starts a separate unelevated session manager. The `--launch --no-ui` path and `Start-DiRT2VR.cmd` use that same manager. The file worker can elevate for fixed setup/prepare/recover/remove operations; it does not start the game or read controllers. The session manager holds `Global\DiRT2VR.Session` through preparation, play and restoration. Graphics settings are shared by game installations, so detection conservatively refuses modification if any DiRT 2 process is running.
+
+Process lifetime currently follows the launched wrapper handle plus polling `dirt2`/`dirt2_game` processes. Full descendant/job tracking is not yet implemented; delayed-launch and unusual wrapper behavior need acceptance before release. GUI windows can coexist; only one session or recovery transaction can run.
+
+## Transactions
+
+Asset preparation backs up the user's own `cars/sti/cameras.xml` and `postprocess/effects.xml` in `DiRT2VR/backups`. It flushes originals and a pending JSON journal before replacing either file. The journal identifies the original and modified hashes of each allowlisted asset and the owning user's pending graphics journal. An existing pending transaction cannot be overwritten by preparation.
+
+Recovery restores only original/already-restored or recognized modified bytes. Unexpected asset edits, missing backups or mismatched hashes preserve the pending journal and surface a conflict. Each restored entry is journaled, then the completed journal is archived. Backups are retained. An installer running under a different account refuses to recover assets while the owner's graphics journal still needs recovery.
+
+Documents graphics overrides have a separate per-user journal in Local AppData. If the current XML exactly matches the applied version, recovery restores the original bytes. Otherwise it restores only overridden attributes that still match the applied values, retaining unrelated or deliberately changed values. Missing/malformed settings stop recovery; they are not silently replaced.
+
+There is an unavoidable distinction between durable files and a tested power-cut guarantee. Automated partial-write and conflict checks passed; abrupt machine loss during each actual filesystem operation has not been tested. The reported power outage occurred after the observed completed session had already restored assets.
+
+## Input
+
+Keyboard bindings are configured through `DIRT2VR_KEYS`; defaults are F9/F10. The game window consumes both edges of assigned keys, including F10, preventing the system-menu freeze. Ctrl/Alt/Shift are optional.
+
+The session manager reads XInput and Raw Input/HID without exclusive acquisition or synthetic keystrokes. Raw Input registration stays out of the injected DLL. Controller identity is the XInput slot or HID device path; HID devices become known on receiving a report. Bindings are one button or a two-button chord on one device; subsets/duplicates are rejected. Held buttons and reconnection require a neutral state before arming, and a completed combination fires once until fully released.
+
+Controller actions use a session-specific, 16-byte shared mapping: uint32 magic `0x32565244`, ABI version `1`, Toggle VR counter, Recenter counter. The manager increments counters only with the game focused. The proxy consumes changes through the existing action handling. VR buttons still reach DiRT 2 normally.
+
+## Accepted checks and remaining gates
+
+- Seven native CTests passed, including inactive-proxy WARP device creation without diagnostic output.
+- Launcher tests cover installation/owned upgrade/foreign conflicts, Unicode and spaced paths, partial preparation, exact restoration, external-edit conflicts, graphics merging and binding arming/release/reconnect rules. Fixtures use local game files and synthetic graphics XML.
+- Real Inno setup, repeat upgrade, foreign-proxy rejection and uninstall passed in a writable isolated fixture. Uninstall preserved original game files.
+- The user confirmed GUI launch, Xbox-compatible controller discovery, button capture, Toggle VR and Recenter in a driven race. Bindings were Xbox slot 0, left shoulder for toggle and right shoulder for recenter.
+- The follow-up `--launch --no-ui` session confirmed automatic pause/options/confirmation screen mode and return to VR on resume. Both asset originals were restored afterward.
+- Still pending: protected-folder/UAC acceptance (including denial), complete descendant tracking, forced session-manager termination/recovery, interruption at every recovery stage, installed Steam game desktop/regression testing, quick-launch CMD invocation, comprehensive duplicate/focus tests on hardware, generic HID wheel hardware and PSVR2.
+
+No public release or full acceptance claim follows from these checks. Continue using the isolated full game copy for failure injection. Validate the installed Steam game only after recovery acceptance is sufficient.
+
+## Pause-menu rendering fix
+
+The original camera filter admits near-plane 0.075 cockpit records, including the paused cockpit behind the Load Preset Controls dialog. That allows per-eye camera changes into a scene intended for a flat menu. The user confirmed the same dialog was correct in virtual-screen mode.
+
+On the fingerprinted 1.1 executable, `RenderPauseWorld` is named at RVA `0xf13d18`, its type getter is `0x259830`, and frontend dispatch at `0x17bbaa` calls the handler at `0x16ec90`. That handler copies message byte +4 to frontend byte +0x96, with a second flag at +5. Pause entry call sites set +4 to one; resume clears it. The detour checks the original instruction bytes, calls the original unchanged, and observes this boolean atomically. It never retains the message pointer.
+
+`HeadsetScene` declines stereo while the flag is set, letting the original completed frame reach `HeadsetScreen` at Present. The requested user mode remains intact, so resume restores cockpit VR. If the hook guard fails, headset output remains on the virtual screen. This does not claim to identify every replay or non-pause overlay.
+
+Local evidence (not distributed): `artifacts/menu-build.log`; session `20260921-163231-056` under the isolated installation's AppData logs. The hook loaded successfully; pause transitions matched screen output; the tester confirmed readable menus and return to VR. The original GUI/controller acceptance log is `20260921-161815-168`. These logs contain diagnostics, not assets or saves.

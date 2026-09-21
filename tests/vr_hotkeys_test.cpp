@@ -32,6 +32,22 @@ int main() {
     SendMessageW(window,WM_KEYDOWN,'A',1); SendMessageW(window,WM_KEYUP,'A',static_cast<LPARAM>(0xc0000001u));
     CHECK(forwardedKeys==2 && vr::ConsumeHotkeys()==0);
     CHECK(DestroyWindow(window));
+    CHECK(!vr::ConfigureHotkeys(VK_F8,0,VK_F8,0));
+    CHECK(!vr::ConfigureHotkeys(256,0,VK_F7,0));
+    CHECK(vr::ConfigureHotkeys(VK_F8,0,VK_F7,0));
+    window=CreateWindowW(type.lpszClassName,L"Remapped keys",0,0,0,100,100,nullptr,nullptr,type.hInstance,nullptr);
+    CHECK(vr::AttachHotkeys(window));
+    forwardedKeys=0;
+    SendMessageW(window,WM_KEYDOWN,VK_F8,1);
+    SendMessageW(window,WM_KEYUP,VK_F8,static_cast<LPARAM>(0xc0000001u));
+    CHECK(vr::ConsumeHotkeys()==vr::ToggleScreen && forwardedKeys==0);
+    SendMessageW(window,WM_KEYDOWN,VK_F7,1);
+    SendMessageW(window,WM_KEYUP,VK_F7,static_cast<LPARAM>(0xc0000001u));
+    CHECK(vr::ConsumeHotkeys()==vr::Recenter && forwardedKeys==0);
+    SendMessageW(window,WM_KEYDOWN,VK_F9,1);
+    SendMessageW(window,WM_KEYUP,VK_F9,static_cast<LPARAM>(0xc0000001u));
+    CHECK(vr::ConsumeHotkeys()==0 && forwardedKeys==2);
+    CHECK(DestroyWindow(window));
     CHECK(UnregisterClassW(type.lpszClassName,type.hInstance));
     puts("VR shortcuts consumed, repeats suppressed, ordinary keys forwarded; F10 cannot enter system menu.");
 }
