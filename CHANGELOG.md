@@ -20,6 +20,7 @@ Notable changes to DiRT2VR are recorded here, newest first. The project is an un
 
 ### Fixed
 
+- Novigrad road rubble now renders in both eyes by preserving the matching ground-cover instance counts through the second eye. Rubble remains enabled; the tester confirmed the fix in the headset. Other ground-cover shader variants still need coverage.
 - Paused cockpit menus and confirmation dialogs now use the virtual screen, preserving the selected VR mode for resume. The tester confirmed the Load Preset Controls dialog is readable and resuming returns to cockpit VR.
 
 ### Documentation

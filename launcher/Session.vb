@@ -50,6 +50,7 @@ Public Class Session
                         start.Environment("DIRT2VR_" & name) = "1"
                     Next
                     start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"
+                    start.Environment("DIRT2VR_CAPTURE_REQUESTS") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
                     start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
                     start.Environment("DIRT2VR_WORLD_SCALE") = "1"
                     start.Environment("DIRT2VR_OUTPUT") = logFolder

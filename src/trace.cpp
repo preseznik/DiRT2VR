@@ -6,6 +6,7 @@
 #include "gpu_timer.h"
 #include "vr_hotkeys.h"
 #include "light_replay.h"
+#include "ground_cover.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -69,6 +70,7 @@ thread_local float projectionShift{};
 thread_local const XrFovf* eyeFov{};
 thread_local unsigned eyeProjectionUploads{};
 thread_local unsigned lightingEye{}; // 0 = original scene, 1/2 = headset eyes.
+thread_local GroundCoverPair groundCoverPair;
 bool LightingTrace() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_TRACE_LIGHTS",value,8)>0 && wcscmp(value,L"1")==0; }();
     return enabled;
@@ -234,6 +236,20 @@ bool DetailedTrace() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_CAPTURE_DIAGNOSTICS",value,16)>0 ? wcscmp(value,L"1")==0 : !InteractiveEnabled(); }();
     return enabled;
 }
+bool RequestedCapturesEnabled() {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_CAPTURE_REQUESTS",value,8)>0 && wcscmp(value,L"1")==0; }();
+    return enabled;
+}
+uint64_t requestedCaptureFrame=~uint64_t{};
+unsigned requestedCaptureCount{};
+bool TakeCaptureRequest(uint64_t f) {
+    if(!RequestedCapturesEnabled() || requestedCaptureCount>=4 || f%60) return false;
+    std::error_code error;
+    if(!std::filesystem::remove(Output()/"capture.request",error)) return false;
+    requestedCaptureFrame=f; ++requestedCaptureCount;
+    Log("requested stereo capture=%u frame=%llu; capture stalls excluded from performance acceptance",requestedCaptureCount,f);
+    return true;
+}
 // Process-owned diagnostic session. Never invoke the runtime under DLL detach's
 // loader lock; explicit runtime stop/error is handled on the rendering thread.
 GameXr* gameXr{};
@@ -357,6 +373,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         return false;
     }
     if(!EnsureGameXr()) return false;
+    const bool requestedCapture=TakeCaptureRequest(f);
     xrTickFrame=f;
     static EyePair eyes;
     static const float scale=[] {
@@ -388,8 +405,9 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     // shared light materials can be restored after both eyes, including failure.
     alignas(16) std::array<unsigned char,0x1a0> originalLightContext;
     memcpy(originalLightContext.data(),context,originalLightContext.size());
+    groundCoverPair.Begin();
     const bool submitted=gameXr->Tick([&](unsigned eye,const XrView& view,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
-        const auto before=draws.load(); scenePass=DetailedTrace() && f==3000 ? eye+1 : 0;
+        const auto before=draws.load(); scenePass=(requestedCapture || (DetailedTrace() && f==3000)) ? eye+1 : 0;
         eyeProjectionUploads=0;
         if(eye==0) gpu.Begin(f);
         {
@@ -413,6 +431,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         }
         PrepareHeadsetViews(views);
     });
+    groundCoverPair.End();
     if(!eyeLights.empty()) {
         lightsRefreshed=false;
         RefreshLights(originalLightContext.data());
@@ -420,6 +439,12 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     }
     gpu.End(false); // Close a partial pair after an acquire/draw failure.
     scenePass=0;
+    if(requestedCapture && submitted && eyes.Ready(f)) {
+        const unsigned id=920000+requestedCaptureCount*2;
+        ScreenshotTexture(eyes.Texture(0),id); ScreenshotTexture(eyes.Texture(1),id+1);
+        Log("requested stereo capture complete frame=%llu images=%u/%u",f,id,id+1);
+    }
+    requestedCaptureFrame=~uint64_t{};
     QueryPerformanceCounter(&end);
     static std::ofstream csv(Output()/"headset-frames.csv");
     static bool header=false;
@@ -662,7 +687,7 @@ uint64_t Shader(const void* bytes, SIZE_T length, const char* stage) {
     uint64_t hash=14695981039346656037ull;
     auto data=static_cast<const unsigned char*>(bytes);
     for(SIZE_T i=0;i<length;++i) hash=(hash^data[i])*1099511628211ull;
-    if(!DetailedTrace()) return hash; // Hashes are still needed for the water filter.
+    if(!DetailedTrace() && !RequestedCapturesEnabled()) return hash; // Hashes are still needed for the water filter.
     std::lock_guard lock(shaderMutex);
     if(!shaders.insert(hash).second) return hash;
     char name[80]{};
@@ -695,7 +720,7 @@ uint64_t Shader(const void* bytes, SIZE_T length, const char* stage) {
     return hash;
 }
 
-bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT instances=1) {
+bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT instances=1,UINT start=0,INT base=0,UINT firstInstance=0) {
     static const bool skipWater=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_SKIP_WATER",value,16)>0 && wcscmp(value,L"1")==0; }();
     if(!scenePass && !skipWater) return true;
     ComPtr<ID3D11PixelShader> ps;
@@ -718,6 +743,16 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
         return false;
     }
     if(!scenePass) return true;
+    if(requestedCaptureFrame==frame.load()) {
+        ComPtr<ID3D11Buffer> vertex,index; UINT stride{},offset{},indexOffset{}; DXGI_FORMAT format{};
+        D3D11_PRIMITIVE_TOPOLOGY topology{};
+        context->IAGetVertexBuffers(0,1,vertex.GetAddressOf(),&stride,&offset);
+        context->IAGetIndexBuffer(&index,&format,&indexOffset); context->IAGetPrimitiveTopology(&topology);
+        std::ofstream capture(Output()/("capture-"+std::to_string(frame.load())+"-eye-"+std::to_string(scenePass)+".csv"),std::ios::app);
+        capture << kind << ',' << count << ',' << instances << ',' << std::hex << vh << ',' << ph << std::dec
+            << ',' << start << ',' << base << ',' << firstInstance << ',' << topology << ',' << vertex.Get()
+            << ',' << stride << ',' << offset << ',' << index.Get() << ',' << format << ',' << indexOffset << '\n';
+    }
     std::ofstream out(Output()/("draws-pass-"+std::to_string(scenePass)+".csv"),std::ios::app);
     out << kind << ',' << count << ',' << instances << ',' << std::hex << vh << ',' << ph << '\n';
     return true;
@@ -808,11 +843,41 @@ HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT f
     return realPresent(swapchain,interval,flags);
 }
 void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT base) {
-    if(Sample() && draws.load()<3) Stack("DrawIndexed"); if(!RecordDraw(c,"indexed",n)) return; ++draws; realDrawIndexed(c,n,start,base);
+    if(Sample() && draws.load()<3) Stack("DrawIndexed"); if(!RecordDraw(c,"indexed",n,1,start,base)) return; ++draws; realDrawIndexed(c,n,start,base);
 }
-void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) { if(!RecordDraw(c,"draw",n)) return; ++draws; realDraw(c,n,start); }
-void STDMETHODCALLTYPE DrawInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,UINT e) { if(!RecordDraw(c,"instanced",a,b)) return; ++draws; realDrawInstanced(c,a,b,d,e); }
-void STDMETHODCALLTYPE DrawIndexedInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,INT e,UINT f) { if(!RecordDraw(c,"indexed_instanced",a,b)) return; ++draws; realDrawIndexedInstanced(c,a,b,d,e,f); }
+void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) { if(!RecordDraw(c,"draw",n,1,start)) return; ++draws; realDraw(c,n,start); }
+void STDMETHODCALLTYPE DrawInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,UINT e) { if(!RecordDraw(c,"instanced",a,b,d,0,e)) return; ++draws; realDrawInstanced(c,a,b,d,e); }
+void STDMETHODCALLTYPE DrawIndexedInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,INT e,UINT f) {
+    if(lightingEye) {
+        ComPtr<ID3D11VertexShader> vs; ComPtr<ID3D11PixelShader> ps;
+        c->VSGetShader(&vs,nullptr,nullptr); c->PSGetShader(&ps,nullptr,nullptr);
+        uint64_t vh{},ph{};
+        { std::lock_guard lock(shaderMutex); vh=shaderNames[vs.Get()]; ph=shaderNames[ps.Get()]; }
+        // Novigrad capture: these three ground-cover batches have counts
+        // 18/13/16 in the first eye, then 0/0/0 with the same mesh bindings.
+        // Restrict correction to this verified shader pair and exact IA state.
+        if(vh==0x5277336be52ad8fdull && ph==0x1292783744ff6ba8ull) {
+            GroundCoverKey key; key.indices=a; key.start=d; key.base=e;
+            std::array<ID3D11Buffer*,32> buffers{}; std::array<UINT,32> strides{},offsets{};
+            c->IAGetVertexBuffers(0,32,buffers.data(),strides.data(),offsets.data());
+            for(unsigned i=0;i<32;++i) {
+                key.streams[i]={reinterpret_cast<uintptr_t>(buffers[i]),strides[i],offsets[i]};
+                if(buffers[i]) buffers[i]->Release();
+            }
+            ComPtr<ID3D11Buffer> index; ComPtr<ID3D11InputLayout> layout;
+            DXGI_FORMAT format{}; D3D11_PRIMITIVE_TOPOLOGY topology{};
+            c->IAGetIndexBuffer(&index,&format,&key.indexOffset); c->IAGetInputLayout(&layout); c->IAGetPrimitiveTopology(&topology);
+            key.index=reinterpret_cast<uintptr_t>(index.Get()); key.layout=reinterpret_cast<uintptr_t>(layout.Get());
+            key.format=format; key.topology=topology;
+            const bool repaired=groundCoverPair.Apply(lightingEye,key,b,f);
+            if(requestedCaptureFrame==frame.load()) {
+                Log("ground cover eye=%u repaired=%d instances=%u first=%u indices=%u",lightingEye,repaired,b,f,a);
+                Stack("GroundCoverDraw");
+            }
+        }
+    }
+    if(!RecordDraw(c,"indexed_instanced",a,b,d,e,f)) return; ++draws; realDrawIndexedInstanced(c,a,b,d,e,f);
+}
 void STDMETHODCALLTYPE Dispatch(ID3D11DeviceContext* c,UINT x,UINT y,UINT z) { ++dispatches; realDispatch(c,x,y,z); }
 void STDMETHODCALLTYPE Targets(ID3D11DeviceContext* c,UINT n,ID3D11RenderTargetView* const* views,ID3D11DepthStencilView* depth) {
     if(Sample()) {

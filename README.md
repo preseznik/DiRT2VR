@@ -74,6 +74,7 @@ If recovery reports a conflict, it preserves unexpected asset edits and backups 
 
 - The modified camera targets the Subaru STI. Broader car/stage coverage is unfinished.
 - Scenery visibility and car-aligned headlights passed the reported tests; other lighting, mirrors and interiors need testing.
+- Road rubble is retained in both eyes in the tested Novigrad scene. Other stages and ground-cover variants still need testing.
 - Crowds, particles, shadows and motion blur are reduced or disabled. Water, HUD placement, seat adjustment, replay transitions and calibrated world scale remain unfinished.
 - Occasional hitching remains; a steady headset frame rate is not guaranteed.
 - Headset reconnection during play is unsupported. Quit and relaunch after reconnecting.
