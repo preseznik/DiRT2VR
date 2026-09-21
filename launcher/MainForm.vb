@@ -55,7 +55,15 @@ Public Class MainForm
         layout.RowStyles.Add(New RowStyle(SizeType.AutoSize))
         layout.RowStyles.Add(New RowStyle(SizeType.Percent, 100))
         layout.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-        layout.Controls.Add(New Label With {.Text = "DiRT 2 VR", .Font = New Font(Font.FontFamily, 20, FontStyle.Bold), .AutoSize = True})
+        Dim header As New TableLayoutPanel With {.ColumnCount = 2, .Dock = DockStyle.Fill, .AutoSize = True}
+        header.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100)) : header.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
+        header.Controls.Add(New Label With {.Text = "DiRT 2 VR", .Font = New Font(Font.FontFamily, 20, FontStyle.Bold), .AutoSize = True}, 0, 0)
+        Dim help As New Button With {.Text = "?", .Name = "HelpAbout", .AccessibleName = "Help / About", .Size = New Size(36, 36), .Anchor = AnchorStyles.Right}
+        AddHandler help.Click, Sub() ShowAbout()
+        header.Controls.Add(help, 1, 0) : layout.Controls.Add(header)
+        AddHandler HelpRequested, Sub(sender, e)
+                                     e.Handled = True : ShowAbout()
+                                 End Sub
         stateLabel.Margin = New Padding(0, 8, 0, 16)
         layout.Controls.Add(stateLabel)
         layout.Controls.Add(tabs)
@@ -176,6 +184,11 @@ Public Class MainForm
         launchMode.SelectedIndex = Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode)
         content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents using the selected car. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
         content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Sessions loop after finishing; pause only offers Continue. Alt+F4 quits. Use Game menus for full event options and results."))
+    End Sub
+    Private Sub ShowAbout()
+        Using dialog As New AboutForm(context)
+            dialog.ShowDialog(Me)
+        End Using
     End Sub
     Private Sub RefreshLaps()
         Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)

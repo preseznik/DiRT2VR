@@ -6,6 +6,8 @@ Notable changes to DiRT2VR are recorded here, newest first. The project is an un
 
 ### Added
 
+- Help / About (`?` or F1) with installed version, build revision/date, Bohloney developer credit and documentation/issues/release links. Launcher package version is now `0.1.0-alpha.2`.
+- User-initiated GitHub Release checks with stable/experimental selection, verified installer downloads and an assisted setup handoff for the current game folder. Existing recovery and installer safeguards apply; preferences survive. No silent background updates. ZIP installations can switch to installer-managed updates. Public release-to-release installation remains pending until packaged releases are published.
 - Fixed the initial lap override targeting an unused route setup path. A guarded hook now supplies the selected count to the actual demo route descriptor for both Race and Practice. Solo/eight-car desktop diagnostics confirmed three laps in the copied descriptor; the tester confirmed the three-lap HUD and continuation into lap 2 at Baja – Ensenada Sprint. Complete multi-lap finishes and VR acceptance remain pending.
 - Configurable 1–20 circuit laps for Direct practice and Race. Point-to-point stages remain one run, identified from the installed game's route metadata. Original executable and database files stay untouched.
 - Experimental Race mode beside Direct practice, with 1–7 AI opponents using the selected car, for desktop and VR launch. Solo practice remains unchanged. Retains the repeating direct-start session and Continue-only pause menu; difficulty and normal results flow are not exposed. Desktop player control and seven AI opponents were tester-confirmed at Baja with the Subaru; crowded-grid VR acceptance remains pending.

@@ -26,6 +26,7 @@ Module Program
         Dim folder = IO.Path.Combine(repo, "artifacts", "launcher-tests-" & DateTime.Now.ToString("yyyyMMdd-HHmmss"))
         Dim root = IO.Path.Combine(folder, "DiRT 2 Ž test")
         Directory.CreateDirectory(root)
+        UpdateTests.Run(folder, AddressOf Check, args.Contains("--live-updates"))
         For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars\sti\cameras.xml", "cars\n12\cameras.xml", "postprocess\effects.xml"}
             Dim target = IO.Path.Combine(root, relative)
             Directory.CreateDirectory(IO.Path.GetDirectoryName(target))
@@ -248,6 +249,20 @@ Module Program
         Using form As New MainForm(context)
             form.ShowInTaskbar = False : form.StartPosition = FormStartPosition.Manual : form.Location = New Drawing.Point(-32000, -32000)
             form.Show() : Application.DoEvents()
+            Check(form.Controls.Find("HelpAbout", True).Single().AccessibleName = "Help / About", "help button is discoverable")
+            Using about As New AboutForm(context)
+                about.StartPosition = FormStartPosition.Manual : about.Location = New Drawing.Point(-32000, -32000)
+                about.Show(form) : Application.DoEvents()
+                Check(about.Controls.Find("BuildVersion", True).Single().Text.Contains(BuildInfo.Version), "About displays actual assembly version")
+                Check(Not about.Controls.Find("InstallUpdate", True).Single().Enabled, "install requires a verified update check")
+                Dim closeAbout = about.Controls.Find("CloseAbout", True).Single()
+                Check(about.RectangleToScreen(about.ClientRectangle).Contains(closeAbout.RectangleToScreen(closeAbout.ClientRectangle)), "About close button remains visible outside scrolling content")
+                Using bitmap As New Drawing.Bitmap(about.Width, about.Height)
+                    about.DrawToBitmap(bitmap, New Drawing.Rectangle(0, 0, about.Width, about.Height))
+                    bitmap.Save(IO.Path.Combine(folder, "launcher-About.png"))
+                End Using
+                about.Close()
+            End Using
             Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
             Check(tabs.TabPages.Cast(Of TabPage).Select(Function(page) page.Text).SequenceEqual({"Launcher", "Graphics", "Controls", "Settings"}), "launcher tabs present in order")
             Dim launch = form.Controls.Find("LaunchDesktop", True).Single()

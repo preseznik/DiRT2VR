@@ -12,7 +12,8 @@ $output=Join-Path $root ('artifacts\packages\'+$version+'-'+(Get-Date -Format 'y
 $stage=Join-Path $output 'stage'
 $publish=Join-Path $output 'publish'
 New-Item -ItemType Directory -Path "$stage\DiRT2VR\payload","$stage\DiRT2VR\licenses" -Force | Out-Null
-& dotnet publish launcher/DiRT2VR.vbproj -c Release -o $publish --nologo
+$buildUtc=[DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
+& dotnet publish launcher/DiRT2VR.vbproj -c Release -o $publish --nologo "-p:BuildUtc=$buildUtc"
 if ($LASTEXITCODE) { throw 'Launcher publish failed' }
 Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
 Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
@@ -58,4 +59,8 @@ if (!(Test-Path -LiteralPath $InnoCompiler)) { throw "Inno compiler not found: $
 & $InnoCompiler "/DStage=$stage" "/DPackageVersion=$version" (Join-Path $root 'installer\DiRT2VR.iss')
 if ($LASTEXITCODE) { throw 'Installer compile failed' }
 Get-ChildItem -LiteralPath $output -File | Get-FileHash | Format-Table -AutoSize
+# Upload these exact versioned assets to a GitHub Release tagged v<PackageVersion>.
+Get-ChildItem -LiteralPath $output -File | Where-Object Extension -In '.exe','.zip' | ForEach-Object {
+    (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()+'  '+$_.Name
+} | Set-Content -LiteralPath (Join-Path $output 'SHA256SUMS.txt') -Encoding ascii
 Write-Host "Package output: $output"

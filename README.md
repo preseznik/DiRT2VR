@@ -101,6 +101,18 @@ Assignments stay attached to the selected device. A disconnected device is not r
 
 ## Recovery, upgrades and removal
 
+### Help and updates
+
+Click **?** at the top right of the launcher (or press **F1**) for **Help / About**. It shows the installed version and build, credits developer **Bohloney**, and links to instructions, GitHub issues and releases.
+
+Choose **Check for updates** to check the public GitHub Releases page; no GitHub account is required. **Include experimental releases** is selected by default in alpha builds. Clear it to check only stable releases. Checks happen only when requested.
+
+When a newer release has a verified installer, **Download and install** downloads it, checks its SHA-256 checksum and opens setup for your current game folder. Close the game first. The launcher restores pending changes before handing over to setup, then closes. Complete the normal setup prompts, including Windows administrator approval if requested. Preferences are retained. This is an assisted update, not a silent background installation. ZIP users can use it too; doing so adds the installer and uninstaller to that installation.
+
+Updates require a published [GitHub Release](https://github.com/preseznik/DiRT2VR/releases) containing the packaged installer. Source commits and GitHub's source-code ZIPs are not installable updates. If checking or downloading fails, your current installation remains available; retry later or use the Releases link. Maintainers can find the publishing steps in [the update documentation](docs/updates.md).
+
+### Restore or remove
+
 VR sessions temporarily adjust the Subaru camera (or the selected car's camera for direct practice), motion-blur asset and selected graphics settings. Originals and a recovery journal are saved before changes. Normal exits and detected game crashes trigger restoration. Unrelated graphics-settings edits are retained. Direct practice temporarily creates `DiRT2VR/p.xml` and removes it during recovery. An existing file at that path is preserved and blocks preparation.
 
 After a power failure or forced session-manager termination, close any remaining DiRT 2 processes and choose **Restore original files**. A new launch also checks for pending recovery. Do not delete `DiRT2VR/backups` or the corresponding AppData folder while recovery is pending.
