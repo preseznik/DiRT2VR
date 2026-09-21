@@ -30,6 +30,16 @@ The final source enables the fix by default, bounds the borrowed light reference
 
 Computer-use input stopped after physical Escape was detected; subsequent test operation was left to the user and inspected through log files only. The launcher restored shared graphics settings after each completed run; the normal game save/progress is retained.
 
+## Scenery visibility, September 21
+
+The user reported scenery, vegetation and buildings disappearing on side/rear head turns, while cars and cockpit appeared unaffected. Scene preparation was still using the original forward-facing camera before the per-eye camera hook. The new guarded hook replaces the main renderer's CPU frustum with a bounded all-directions box before scenery preparation. It preserves the original camera/distance/LOD metadata and the actual eye projections; details and exact addresses are in `rendering-notes.md`.
+
+In `trace-20260921-151802-020`, the user tested the requested left/right/rear views and reported **"That worked great. Everything remained visible."** The run recorded **4,379 visible stereo pairs**, 784 visible screen frames, and zero recorded camera-restoration, pair-completeness, projection or draw-count failures. Generated plane/corner data confirms the expected 2016-unit-wide box at a 1000-unit original far setting.
+
+The inner stereo GPU interval measured **1.08646 ms median / 1.80122 ms p95**. Present intervals for submitted stereo frames measured **11.1214 ms median / 11.99 ms p95**, with eight intervals above 22.22 ms and a maximum of 47.4832 ms. These are not a matched before/after comparison or compositor-delivery proof. Peak committed address space was **1,124,757,504 bytes**, minimum free **818,728,960 bytes**, and minimum largest free block **237,174,784 bytes**, with all traversals complete. Broader stage coverage and hitching investigation remain outstanding.
+
+The final launcher enables the volume for VR by default; `-WideVisibility:$false` restores the original frustum for comparisons. The final DLL additionally zero-initializes corner padding left unwritten by the engine constructor. All six CTest suites pass; the zero-initialization/default-launch changes followed the user's visual run and do not have a separate headset acceptance run. Shared settings and copied assets were restored after the test.
+
 ## In-game OpenXR, September 21
 
 The game proxy now creates an OpenXR session on the actual game D3D11 device, verifies the runtime adapter requirements, and renders both eyes for one predicted display time. It transforms both verified inline cameras, applies asymmetric projections before the engine's camera upload, captures each eye independently and restores graphics bindings around presentation. F10 recenters. The launcher configures a reduced-effects cockpit benchmark, a wider original visibility camera and desktop VSync off. Four CTest suites pass, including pose/projection maths, frame preparation/failure paths and WARP GPU copy/state-restoration checks.
@@ -153,7 +163,7 @@ The installed executable still hashes to the supported SHA-256. No `d3d11.dll` w
 ## Next gate
 
 1. Extend the confirmed Battersea Bridge headlight fix to broader night-event/shadow checks, and follow the positive look/lean report with stationary pillar/recenter and broader-angle checks. Preserve the current GPU measurements separately from full-frame performance acceptance.
-2. Establish correct CPU visibility for both eyes and head movement. The 120-degree original preparation camera is an experiment, not a complete solution.
+2. Extend the positively tested all-directions scenery volume across more stages and compare its full-frame cost. Consider a headset-directed volume only if the broad volume's cost warrants the added preparation/timing integration.
 3. Establish simulation timing, animation and resource-history integrity during a complete interactive race. Do not restore whole opaque engine objects or replay simulation updates speculatively.
 4. Measure CPU/GPU timing and address-space headroom over stage changes at recorded game and headset dimensions. Keep the reduced-effects baseline while diagnosing defects; reintroduce optional effects individually.
 5. Replace the conservative camera filter/manual screen override with verified game-state transitions and add controller bindings before packaging for end users. Validate wheel/gamepad controls and actual PSVR2 hardware separately.

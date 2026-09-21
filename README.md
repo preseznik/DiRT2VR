@@ -25,7 +25,7 @@ $env:DIRT2VR_PYTHON = 'C:\Path\To\python.exe' # Replace with your Python executa
 .\tools\build.cmd
 ```
 
-Outputs: `build/ninja/bin/xr_probe.exe`, `d3d11.dll`, and test executables. Five CTest suites run after building, covering exports, frame lifecycle, GPU copies/state restoration/timestamps, camera maths and window hotkeys. The system D3D11 export table generates all 51 named/ordinal forwarders on this machine. Build directories must be reconfigured when changing compilers.
+Outputs: `build/ninja/bin/xr_probe.exe`, `d3d11.dll`, and test executables. Six CTest suites run after building, covering exports, frame lifecycle, GPU copies/state restoration/timestamps, camera maths, window hotkeys and light replay. The system D3D11 export table generates all 51 named/ordinal forwarders on this machine. Build directories must be reconfigured when changing compilers.
 
 ## Headset diagnostic
 
@@ -71,6 +71,8 @@ Use `-Headset -QuietTrace` for an automatic benchmark with the same reduced inst
 
 Add `-TraceLights` to record sampled light transforms and per-eye refresh counts for lighting investigations. The lighting fix is enabled without this diagnostic switch.
 
+VR launches now use an all-directions scenery visibility volume in eligible cockpit cameras. This replaces the original forward-facing CPU frustum with a bounded box before scene preparation; it does not change the eye projections. The user confirmed buildings and vegetation remained visible throughout the headset check. It retains the original distance/LOD logic but can increase rendering cost; broader stage coverage remains outstanding. Run `./tools/run-trace.ps1 -Interactive -WideVisibility:$false` in PowerShell to disable it for comparison.
+
 ## Experimental in-game headset benchmark
 
 Prepare the isolated game copy described below, build the proxy and XML converter, then connect and wear the headset through SteamVR:
@@ -84,7 +86,7 @@ This runs the automatic benchmark, not an interactive race. The script selects c
 
 Both eyes use the same prepared scene and predicted display time. **F9 switches screen/cockpit and F10 recenters**; `-WorldScale` adjusts game units per metre, default 1 and not physically calibrated. `-Runtime` selects another SteamVR x86 manifest without changing the global runtime. The game must use the runtime's graphics adapter. This implementation requires D3D11.1 context-state support to preserve the game's graphics state around presentation.
 
-Frames without an eligible cockpit use the virtual screen, including the observed benchmark introductory cameras. HUD, mirrors, seat adjustment, complete automatic pause/transition handling and visibility outside the original prepared lists are unfinished. A wider preparation camera reduces some clipping risks but does not establish correct per-eye culling. Session restart and device replacement are unsupported.
+Frames without an eligible cockpit use the virtual screen, including the observed benchmark introductory cameras. HUD, mirrors, seat adjustment and complete automatic pause/transition handling are unfinished. The bounded all-directions visibility volume fixes the reported scenery disappearance in the tested scene; it does not establish complete visibility coverage across stages. Session restart and device replacement are unsupported.
 
 `headset-frames.csv` records successful submissions, visibility, eye draws, projection uploads and camera restoration. Its tick duration includes `xrWaitFrame`, so it is not GPU time. Captures at submitted scene pairs 120, 600, 1800 and 3600 use image numbers 900001 through 900008; the trace maps them to actual game frames. Earlier pairs can show the intro. `address-space.csv` includes the game's OpenXR allocations. Diagnostic capture and tracing stalls prevent these runs from proving a 90 Hz performance budget.
 

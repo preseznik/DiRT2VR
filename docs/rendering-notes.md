@@ -98,6 +98,16 @@ Follow-up `trace-20260921-145248-255` recorded the same light refresh count for 
 
 `run-trace.ps1 -Interactive -TraceLights` enables sampled world/view matrices in `lights.csv`, first-call stacks and per-eye refresh counts. Normal operation keeps the correction enabled with those captures off.
 
+## All-directions scenery visibility
+
+The user reports scenery, vegetation and buildings disappearing when looking sideways or behind; cars and cockpit appear unaffected. The existing eye-camera changes happen in the inner scene, after the game has prepared directional scenery lists from the original camera. Widening that camera to 120 degrees cannot cover a full head turn.
+
+For the supported executable, renderer preparation at RVA `0x292b60` builds a frustum from context `+0x1a0` through `0xd26c40`, then copies it into renderer `+0x340` through `0x2b7db0` (return address `0x292b99`). Worker preparation at `0x288c40` subsequently passes this volume to scenery routines, including `0x96a650`. The volume contains six planes followed by eight XYZ corners in 16-byte slots, occupying `0xe0` bytes. The constructor leaves the fourth corner lanes untouched, so the replacement storage is zero-initialized. Position/FOV metadata following it is populated separately and remains unchanged.
+
+VR launches hook that copy, restricted to the exact main-renderer caller and the existing cockpit-camera signature. The hook uses the game's guarded constructor to generate coherent planes/corners from an orthographic world-to-clip box enclosing both original camera positions. Each axis extends by the larger original far distance plus an 8-unit translation margin; negative Z scale preserves the original clip handedness. Non-finite camera input, far distances outside 25–5000 units, or non-finite generated volumes retain the original frustum. Eye projections, reflection/shadow frustums and original distance/LOD metadata are unchanged. `-WideVisibility:$false` disables the hook for comparison; desktop-only diagnostics do not enable it.
+
+This deliberately retains scenery in all directions rather than using a possibly stale headset pose during preparation. The first original/replacement volumes are saved in the trace as `visibility-original.bin` and `visibility-expanded.bin`. Automated maths checks cover all six directions, the finite boundary and invalid far distance. Receipt `trace-20260921-151802-020` confirms six inward-facing planes, with the camera centre approximately 1008 units inside each plane. The user reported: "That worked great. Everything remained visible." Other stages, occlusion paths and long-session performance still require coverage.
+
 ## Instrumentation limitations
 
 - Default tracing does not replay. `DIRT2VR_REPLAY_PROBE=1` repeats one main-view call at frame 3000; `DIRT2VR_INNER_REPLAY=1` selects the prepared-inner boundary. The separate `DIRT2VR_CONTINUOUS_REPLAY=1` mode repeats eligible main scenes from frame 300 onwards, with symmetric offsets and persistent GPU copies. Use the launcher so serial rendering and restoration are configured together.

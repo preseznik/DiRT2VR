@@ -136,6 +136,44 @@ void __fastcall ProjectedSetup(void* self,void*,void* light,void* context,void* 
 }
 bool cameraHooksReady{};
 bool cameraSetupHookReady{};
+using FrustumCopyFn = void* (__thiscall*)(void*,const void*);
+FrustumCopyFn realFrustumCopy{},buildFrustum{};
+bool WideVisibility() {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_WIDE_VISIBILITY",value,8)>0 && wcscmp(value,L"1")==0; }();
+    return enabled;
+}
+void* __fastcall FrustumCopy(void* self,void*,const void* source) {
+    const auto base=reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+    const auto caller=reinterpret_cast<uintptr_t>(_ReturnAddress())-base;
+    // This call copies the main renderer's visibility volume before scenery
+    // jobs start. Do not alter reflection/shadow frustums or eye projections.
+    if(caller==0x292b99 && buildFrustum) {
+        const auto renderer=static_cast<unsigned char*>(self)-0x340;
+        const auto a=reinterpret_cast<const float*>(renderer+0x5e0);
+        const auto b=reinterpret_cast<const float*>(renderer+0x650);
+        alignas(16) std::array<float,16> matrix;
+        // The engine writes XYZ corners but leaves their fourth lane untouched.
+        alignas(16) std::array<float,56> volume{};
+        if(CockpitCameraCandidate(a,b) && VisibilityBox(a,b,matrix.data())) {
+            buildFrustum(volume.data(),matrix.data());
+            bool finite=true; for(float v:volume) finite &= std::isfinite(v);
+            if(finite) {
+                static std::atomic<bool> captured{};
+                if(!captured.exchange(true)) {
+                    std::ofstream before(Output()/"visibility-original.bin",std::ios::binary);
+                    before.write(static_cast<const char*>(source),224);
+                    std::ofstream after(Output()/"visibility-expanded.bin",std::ios::binary);
+                    after.write(reinterpret_cast<const char*>(volume.data()),224);
+                    Log("visibility expanded to all directions frame=%llu far=%.1f/%.1f",frame.load(),a[22],b[22]);
+                }
+                if(frame.load()%120==0) Log("visibility all-directions frame=%llu far=%.1f/%.1f",frame.load(),a[22],b[22]);
+                return realFrustumCopy(self,volume.data());
+            }
+            Log("visibility expansion rejected invalid frustum frame=%llu",frame.load());
+        }
+    }
+    return realFrustumCopy(self,source);
+}
 
 void __fastcall CameraSetup(void* self,void*,void* context,void* camera,float nearPlane,bool upload) {
     const bool previous=eyeCameraSetup;
@@ -835,6 +873,16 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         }
         if(ContinuousReplayEnabled()) {
             auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+            if(HeadsetEnabled() && WideVisibility() && !realFrustumCopy) {
+                const unsigned char copy[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0xc1,0x8b,0x4d,0x08};
+                const unsigned char build[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x04,0x01,0,0};
+                if(memcmp(base+0x2b7db0,copy,sizeof(copy))==0 && memcmp(base+0xd26c40,build,sizeof(build))==0) {
+                    buildFrustum=reinterpret_cast<FrustumCopyFn>(base+0xd26c40);
+                    auto status=MH_CreateHook(base+0x2b7db0,reinterpret_cast<void*>(FrustumCopy),reinterpret_cast<void**>(&realFrustumCopy));
+                    if(status==MH_OK) status=MH_EnableHook(base+0x2b7db0);
+                    Log("visibility frustum hook status=%s",MH_StatusToString(status));
+                } else Log("visibility frustum hook rejected instruction guard");
+            }
             if(HeadsetEnabled()) {
                 const unsigned char point[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x10};
                 const unsigned char spot[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0x45,0x10,0x83,0xec,0x14};

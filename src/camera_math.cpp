@@ -1,5 +1,6 @@
 #include "camera_math.h"
 #include <cmath>
+#include <algorithm>
 #include <stdexcept>
 
 namespace vr {
@@ -68,5 +69,24 @@ void MultiplyMatrices(const float* a,const float* b,float* result) {
     for(unsigned r=0;r<4;++r) for(unsigned c=0;c<4;++c)
         for(unsigned k=0;k<4;++k) product[4*r+c]+=a[4*r+k]*b[4*k+c];
     for(unsigned i=0;i<16;++i) result[i]=product[i];
+}
+bool VisibilityBox(const float* a,const float* b,float* matrix) {
+    for(const float* camera:{a,b}) {
+        for(unsigned i:{16u,17u,18u,22u}) if(!std::isfinite(camera[i])) return false;
+        if(camera[22]<25 || camera[22]>5000) return false;
+    }
+    // Include either original camera and head/eye translation margin. Keep the
+    // engine's distance/LOD logic; this replaces only the directional frustum.
+    const float range=std::max(a[22],b[22])+8.f;
+    std::array<float,16> result{};
+    for(unsigned axis=0;axis<3;++axis) {
+        const float center=(a[16+axis]+b[16+axis])*.5f;
+        const float extent=range+std::abs(a[16+axis]-b[16+axis])*.5f;
+        const float scale=(axis==2 ? -1.f : 1.f)/extent;
+        result[axis*5]=scale; result[12+axis]=-center*scale;
+    }
+    result[15]=1;
+    for(unsigned i=0;i<16;++i) matrix[i]=result[i];
+    return true;
 }
 }

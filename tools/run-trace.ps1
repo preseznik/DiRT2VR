@@ -4,7 +4,7 @@ param([switch]$ReplayExperiment, [switch]$ReducedEffects, [switch]$LowPost,
     [switch]$ContinuousReplay,
     [ValidateRange(0,4096)][int]$RenderWidth=0, [ValidateRange(0,4096)][int]$RenderHeight=0,
     [ValidateRange(-0.25,0.25)][double]$ProjectionShift=0,
-    [switch]$Headset, [switch]$Interactive, [switch]$CaptureDiagnostics, [switch]$QuietTrace, [switch]$TraceLights,
+    [switch]$Headset, [switch]$Interactive, [switch]$CaptureDiagnostics, [switch]$QuietTrace, [switch]$TraceLights, [switch]$WideVisibility=$true,
     [ValidateRange(0.25,4)][double]$WorldScale=1,
     [string]$Runtime='C:\Program Files (x86)\Steam\steamapps\common\SteamVR\steamxr_win32.json')
 $ErrorActionPreference = 'Stop'
@@ -56,6 +56,7 @@ New-Item -ItemType Directory -Path $output | Out-Null
     headset = [bool]$Headset; interactive = [bool]$Interactive; worldScale = $WorldScale
     captureDiagnostics = !$QuietTrace -and (!$Interactive -or [bool]$CaptureDiagnostics)
     traceLights = [bool]$TraceLights
+    wideVisibility = [bool]($Headset -and $WideVisibility)
     executableSha256 = $expected; proxySha256 = (Get-FileHash -LiteralPath $proxy -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'diagnostic-options.json')
 Copy-Item -LiteralPath $proxy -Destination (Join-Path $game 'd3d11.dll')
@@ -71,6 +72,7 @@ $previousHeadset = $env:DIRT2VR_HEADSET
 $previousInteractive = $env:DIRT2VR_INTERACTIVE
 $previousCapture = $env:DIRT2VR_CAPTURE_DIAGNOSTICS
 $previousLights = $env:DIRT2VR_TRACE_LIGHTS
+$previousVisibility = $env:DIRT2VR_WIDE_VISIBILITY
 $previousScale = $env:DIRT2VR_WORLD_SCALE
 $previousRuntime = $env:XR_RUNTIME_JSON
 $settings = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\DiRT2\hardwaresettings\hardware_settings_config.xml'
@@ -166,6 +168,7 @@ try {
     $env:DIRT2VR_INTERACTIVE = if ($Interactive) { '1' } else { '0' }
     $env:DIRT2VR_CAPTURE_DIAGNOSTICS = if (!$QuietTrace -and (!$Interactive -or $CaptureDiagnostics)) { '1' } else { '0' }
     $env:DIRT2VR_TRACE_LIGHTS = if ($TraceLights) { '1' } else { '0' }
+    $env:DIRT2VR_WIDE_VISIBILITY = if ($Headset -and $WideVisibility) { '1' } else { '0' }
     $env:DIRT2VR_WORLD_SCALE = $WorldScale.ToString([Globalization.CultureInfo]::InvariantCulture)
     if ($Headset) { $env:XR_RUNTIME_JSON = (Resolve-Path -LiteralPath $Runtime).Path }
     Write-Host "Diagnostic started. Trace: $output"
@@ -195,6 +198,7 @@ try {
     $env:DIRT2VR_INTERACTIVE = $previousInteractive
     $env:DIRT2VR_CAPTURE_DIAGNOSTICS = $previousCapture
     $env:DIRT2VR_TRACE_LIGHTS = $previousLights
+    $env:DIRT2VR_WIDE_VISIBILITY = $previousVisibility
     $env:DIRT2VR_WORLD_SCALE = $previousScale
     $env:XR_RUNTIME_JSON = $previousRuntime
 }

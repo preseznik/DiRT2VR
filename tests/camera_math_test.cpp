@@ -39,6 +39,19 @@ int main() {
             a[21]=.075f; b[21]=nearPlane; Check(!vr::CockpitCameraCandidate(a.data(),b.data()));
             b[21]=.075f;
         }
-        puts("Eye pose, recenter and asymmetric projection tests passed."); return 0;
+        a[16]=b[16]=234; a[17]=b[17]=18; a[18]=b[18]=-456;
+        a[22]=b[22]=1000;
+        std::array<float,16> box;
+        Check(vr::VisibilityBox(a.data(),b.data(),box.data()));
+        for(unsigned axis=0;axis<3;++axis) for(float direction:{-1.f,1.f}) {
+            float clip=(a[16+axis]+direction*1000)*box[axis*5]+box[12+axis];
+            Check(std::abs(clip)<1); // Left/right, above/below, ahead/behind.
+            clip=(a[16+axis]+direction*1100)*box[axis*5]+box[12+axis];
+            Check(std::abs(clip)>1); // Bounded, rather than an infinite frustum.
+        }
+        Check(box[0]*box[5]*box[10]<0 && box[15]==1); // Engine clip handedness.
+        a[22]=0;
+        Check(!vr::VisibilityBox(a.data(),b.data(),box.data()));
+        puts("Eye pose, recenter, projection and visibility box tests passed."); return 0;
     } catch(const std::exception& e) { std::fprintf(stderr,"%s\n",e.what()); return 1; }
 }
