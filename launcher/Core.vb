@@ -91,7 +91,7 @@ Public Class ControllerBinding
 End Class
 
 Public Class VrSettings
-    Public Property Version As Integer = 2
+    Public Property Version As Integer = 3
     Public Property Runtime As String = Discovery.RuntimePath()
     Public Property ToggleKey As Integer = 120
     Public Property ToggleModifiers As Integer
@@ -102,6 +102,9 @@ Public Class VrSettings
     Public Property HeadsetScale As Integer = 50
     Public Property FieldOfView As Integer = 100
     Public Property Mirrors As String = "game"
+    Public Property LaunchMode As String = "menus"
+    Public Property TrackId As String = "127"
+    Public Property CarCode As String = "sti"
     <Serialization.JsonIgnore>
     Public ReadOnly Property RenderWidth As Integer
         Get
@@ -115,7 +118,9 @@ Public Class VrSettings
         End Get
     End Property
     Public Sub Validate()
-        If Version <> 2 Then Throw New IOException("Unsupported settings version.")
+        If Version <> 3 Then Throw New IOException("Unsupported settings version.")
+        If Not {"menus", "practice"}.Contains(LaunchMode) Then Throw New IOException("Unknown launch mode.")
+        RaceCatalog.Current.Track(TrackId) : RaceCatalog.Current.Car(CarCode)
         If RenderScale < 50 OrElse RenderScale > 150 OrElse HeadsetScale < 25 OrElse HeadsetScale > 100 OrElse FieldOfView < 70 OrElse FieldOfView > 100 OrElse Not {"game", "on", "off"}.Contains(Mirrors) Then Throw New IOException("Invalid VR graphics settings.")
         If Not ValidKey(ToggleKey) OrElse Not ValidKey(RecenterKey) OrElse ToggleModifiers < 0 OrElse ToggleModifiers > 7 OrElse RecenterModifiers < 0 OrElse RecenterModifiers > 7 Then Throw New IOException("Choose valid keyboard shortcuts.")
         If ToggleKey = RecenterKey AndAlso ToggleModifiers = RecenterModifiers Then Throw New IOException("Toggle VR and recenter must have different shortcuts.")
@@ -137,7 +142,7 @@ Public Class VrSettings
     Public Shared Function Load(context As InstallContext) As VrSettings
         Dim settings = If(File.Exists(context.PreferencesPath), Files.ReadJson(Of VrSettings)(context.PreferencesPath), New VrSettings())
         If settings Is Nothing Then Throw New IOException("Settings are empty.")
-        If settings.Version = 1 Then settings.Version = 2 ' Added graphics fields retain their defaults.
+        If settings.Version = 1 OrElse settings.Version = 2 Then settings.Version = 3 ' New fields retain defaults; existing controls/graphics are preserved.
         settings.Validate()
         Return settings
     End Function

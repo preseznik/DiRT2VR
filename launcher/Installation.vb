@@ -57,23 +57,29 @@ Public Class Installation
 End Class
 
 Public Module Worker
-    Public Sub Run(context As InstallContext, operation As String)
+    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing)
         context.ValidateGame() : context.RequireClosed()
         Select Case operation
             Case "setup" : Call (New Installation(context)).Setup()
             Case "prepare"
                 Dim transaction As New AssetTransaction(context)
-                transaction.Recover() : transaction.Prepare()
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId)
             Case "recover" : Call (New AssetTransaction(context)).Recover()
             Case "remove" : Call (New Installation(context)).RemoveProxy()
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String)
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing)
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
         Next
+        If operation = "prepare" Then
+            start.ArgumentList.Add("--car") : start.ArgumentList.Add(carCode)
+            If trackId IsNot Nothing Then
+                start.ArgumentList.Add("--track") : start.ArgumentList.Add(trackId)
+            End If
+        End If
         If Environment.GetCommandLineArgs().Contains("--quiet") Then start.ArgumentList.Add("--quiet")
         Using child = Process.Start(start)
             child.WaitForExit()

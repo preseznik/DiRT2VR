@@ -6,6 +6,9 @@ Notable changes to DiRT2VR are recorded here, newest first. The project is an un
 
 ### Added
 
+- Fixed direct practice falling back to Croatia: the installed launch path shortened the long generated config argument. The session now uses the verified short `DiRT2VR/p.xml` path, refuses existing-file conflicts and retains recovery of old version 2 journals. Desktop engine reads matched selected Baja and London routes/cars; headset acceptance remains pending.
+- Experimental Direct practice on the Launcher tab with event-category, installed-track and car selectors. Uses the game's direct-start path with a guarded, memory-only change restoring human control. Desktop driving, pause/resume and finishing were tester-confirmed at Baja; the session loops afterward and the pause menu only has Continue. Packaged VR and other cars remain unverified.
+- Direct-practice preparation journals the selected car camera and a short generated race configuration. Recovery supports existing Subaru journals, preserves external edits and removes only the recorded configuration.
 - Graphics tab with scene render resolution, headset texture scale, optional field-of-view cropping, mirror overrides and restoration of defaults. Existing graphics defaults remain unchanged; nondefault values and cropping await headset acceptance.
 - Optional headset refresh-rate reporting during preflight; Graphics displays the last reported rate without changing SteamVR/headset settings.
 - New DiRT 2 VR rally/headset icon for the launcher executable, window, shortcuts and installer.
@@ -36,6 +39,10 @@ Notable changes to DiRT2VR are recorded here, newest first. The project is an un
 
 ### Changed
 
+- Fixed a background-session startup crash that could make Launch VR appear to do nothing: Windows Forms text rendering is now configured before theme initialization can create a hidden window.
+- Moved game location, runtime selection and setup instructions into Settings. Launcher now holds launch mode and practice selection; saved selections also apply to quick launch.
+- Fixed light areas left by native themed TabPages in dark mode and explicitly themed practice dropdown text. Offscreen light/dark rendering checks cover all four tabs.
+- Settings version 3 preserves existing graphics and bindings while adding launch mode, track and car preferences. Normal game-menu launch remains the default.
 - Split the launcher into Launch, Graphics and Controls tabs. Controls groups each action with its keyboard shortcut and controller/wheel assignments, retaining multiple-device bindings and disconnected assignments.
 - Settings migrate from version 1 to version 2 with existing bindings intact. Graphics changes share the existing temporary-file journal and quick-launch lifecycle.
 

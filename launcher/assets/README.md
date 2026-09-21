@@ -1,5 +1,7 @@
 # Launcher artwork
 
+`race-catalog.json` is the embedded supported-build route/car identifier allowlist, with English display names and discipline mappings. It contains no game assets or full extracted database/localization tables. Its provenance, validation and limitations are documented in [direct practice](../../docs/direct-practice.md).
+
 `DiRT2VR.png` is the original transparent artwork generated with the built-in image-generation tool on 2026-09-21. `DiRT2VR.ico` contains 16, 24, 32, 48, 64, 128 and 256 pixel entries, encoded from that artwork by `tools/make-launcher-icon.ps1`. Both files belong in source control; generation is not required when building the launcher. The icon is embedded in the executable, the form and the installer.
 
 Generation prompt:

@@ -22,7 +22,7 @@ Public Module XmlPatches
             If camera Then
                 Dim head = document.SelectSingleNode("//View[@ident='head-cam']")
                 Dim chase = document.SelectSingleNode("//View[@ident='chase_close']")
-                If head Is Nothing OrElse chase Is Nothing Then Throw New IOException("Unsupported Subaru camera definitions.")
+                If head Is Nothing OrElse chase Is Nothing Then Throw New IOException("This car has unsupported cockpit camera definitions.")
                 Dim replacement = DirectCast(head.CloneNode(True), XmlElement)
                 Parameter(replacement, "fov", "120.0")
                 For Each item As XmlElement In replacement.SelectNodes("AccelerationBasedShake/Parameter[@type='scalar']")
@@ -67,6 +67,8 @@ Public Class AssetJournal
     Public Property Id As String = Guid.NewGuid().ToString("N")
     Public Property SettingsJournal As String = ""
     Public Property Entries As New List(Of AssetEntry)
+    Public Property CarCode As String = "sti"
+    Public Property PracticeConfigHash As String = ""
 End Class
 Public Class AssetTransaction
     Public Shared ReadOnly Names As String() = {"cars\sti\cameras.xml", "postprocess\effects.xml"}
@@ -83,14 +85,17 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing)
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing)
         context.RequireClosed()
         If Pending Then Throw New IOException("Asset recovery is pending.")
         Files.NoLinks(folder)
-        Dim journal As New AssetJournal With {.SettingsJournal = IO.Path.Combine(context.UserRoot, "graphics-pending.json")}
+        RaceCatalog.Current.Car(carCode)
+        If trackId IsNot Nothing Then RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
+        Dim journal As New AssetJournal With {.Version = 3, .CarCode = carCode, .SettingsJournal = IO.Path.Combine(context.UserRoot, "graphics-pending.json")}
+        Dim targets = AssetNames(journal)
         Dim replacements As New List(Of Byte())
         For i = 0 To Names.Length - 1
-            Dim target = IO.Path.Combine(context.GameRoot, Names(i))
+            Dim target = IO.Path.Combine(context.GameRoot, targets(i))
             Files.NoLinks(target)
             Dim original = File.ReadAllBytes(target)
             Dim replacement = XmlPatches.Asset(original, i = 0)
@@ -100,9 +105,20 @@ Public Class AssetTransaction
             Files.AtomicWrite(backup, original)
             journal.Entries.Add(New AssetEntry With {.Index = i, .OriginalHash = Files.Hash(backup), .AppliedHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(replacement))})
         Next
-        Files.SaveJson(journalPath, journal)
+        If trackId IsNot Nothing Then
+            Dim config = IO.Path.Combine(context.GameRoot, ConfigRelative(journal))
+            Files.NoLinks(config)
+            If File.Exists(config) Then Throw New IOException("Practice configuration already exists.")
+            Dim bytes = RaceCatalog.Current.Config(trackId, carCode)
+            journal.PracticeConfigHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(bytes))
+            ' Record ownership before creating the disposable config or modifying any game asset.
+            Files.SaveJson(journalPath, journal)
+            Files.AtomicWrite(config, bytes)
+        Else
+            Files.SaveJson(journalPath, journal)
+        End If
         For Each entry In journal.Entries
-            Dim target = IO.Path.Combine(context.GameRoot, Names(entry.Index))
+            Dim target = IO.Path.Combine(context.GameRoot, targets(entry.Index))
             If Files.Hash(target) <> entry.OriginalHash Then Throw New IOException("Game asset changed during preparation.")
             Files.AtomicWrite(target, replacements(entry.Index))
             afterWrite?.Invoke(entry.Index)
@@ -114,11 +130,12 @@ Public Class AssetTransaction
         If Not Pending Then Return
         Dim journal = Files.ReadJson(Of AssetJournal)(journalPath)
         Dim parsed As Guid
-        If journal Is Nothing OrElse journal.Version <> 1 OrElse Not Guid.TryParseExact(journal.Id, "N", parsed) OrElse journal.Entries Is Nothing OrElse journal.Entries.Count <> Names.Length OrElse journal.Entries.Select(Function(e) e.Index).Distinct().Count() <> Names.Length Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
+        If journal Is Nothing OrElse Not {1, 2, 3}.Contains(journal.Version) OrElse Not Guid.TryParseExact(journal.Id, "N", parsed) OrElse journal.Entries Is Nothing OrElse journal.Entries.Count <> Names.Length OrElse journal.Entries.Select(Function(e) e.Index).Distinct().Count() <> Names.Length Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
+        Dim targets = AssetNames(journal)
         If Not String.IsNullOrEmpty(journal.SettingsJournal) AndAlso File.Exists(journal.SettingsJournal) Then Throw New IOException("Graphics recovery must finish under the Windows account that started VR before restoring assets or uninstalling. Open DiRT2VR under that account and choose Restore original files.")
         For Each entry In journal.Entries
             If entry.Index < 0 OrElse entry.Index >= Names.Length Then Throw New IOException("Invalid asset index.")
-            Dim target = IO.Path.Combine(context.GameRoot, Names(entry.Index))
+            Dim target = IO.Path.Combine(context.GameRoot, targets(entry.Index))
             Dim backup = BackupPath(journal, entry.Index)
             Files.NoLinks(target) : Files.NoLinks(backup)
             If Not File.Exists(backup) OrElse Files.Hash(backup) <> entry.OriginalHash Then Throw New IOException("Original backup is missing or changed: " & backup)
@@ -133,8 +150,38 @@ Public Class AssetTransaction
             End If
             Files.SaveJson(journalPath, journal)
         Next
+        If journal.Version >= 2 AndAlso journal.PracticeConfigHash <> "" Then
+            Dim config = IO.Path.Combine(context.GameRoot, ConfigRelative(journal))
+            Files.NoLinks(config)
+            If File.Exists(config) Then
+                If Files.Hash(config) <> journal.PracticeConfigHash Then Throw New IOException("Practice configuration changed outside DiRT2VR. It and the recovery journal were preserved.")
+                File.Delete(config)
+            End If
+        End If
         File.Move(journalPath, IO.Path.Combine(folder, journal.Id & "-restored.json"))
     End Sub
+    Private Shared Function AssetNames(journal As AssetJournal) As String()
+        ' Legacy journals always refer to STI, regardless of current preferences.
+        Dim code = If(journal.Version = 1, "sti", RaceCatalog.Current.Car(journal.CarCode).Code)
+        Return {"cars\" & code & "\cameras.xml", Names(1)}
+    End Function
+    Private Shared Function ConfigRelative(journal As AssetJournal) As String
+        Dim id As Guid
+        If Not Guid.TryParseExact(journal.Id, "N", id) Then Throw New IOException("Invalid practice journal ID.")
+        ' The installed game wrapper truncates the longer journal-derived argument.
+        ' One session owns this fixed short path; preparation refuses any existing file.
+        ' Preserve the old location solely for recovery of version 2 journals.
+        Return If(journal.Version = 3, "DiRT2VR/p.xml", "DiRT2VR/backups/" & journal.Id & ".xml")
+    End Function
+    Public Function PracticeConfig() As String
+        Dim journal = Files.ReadJson(Of AssetJournal)(journalPath)
+        If Not {2, 3}.Contains(journal.Version) OrElse String.IsNullOrEmpty(journal.PracticeConfigHash) Then Throw New IOException("Practice preparation is incomplete.")
+        Dim relative = ConfigRelative(journal)
+        Dim filename = IO.Path.Combine(context.GameRoot, relative)
+        Files.NoLinks(filename)
+        If Files.Hash(filename) <> journal.PracticeConfigHash Then Throw New IOException("Practice configuration is damaged.")
+        Return relative
+    End Function
     Private Function BackupPath(journal As AssetJournal, index As Integer) As String
         Return IO.Path.Combine(folder, journal.Id & "-" & index.ToString() & ".bin")
     End Function

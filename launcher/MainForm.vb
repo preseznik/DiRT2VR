@@ -10,6 +10,10 @@ Public Class MainForm
     Private ReadOnly inputLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly bindingLists As ListBox() = {New ListBox(), New ListBox()}
     Private ReadOnly tabs As New TabControl With {.Dock = DockStyle.Fill, .Name = "LauncherTabs"}
+    Private ReadOnly launchMode As ComboBox = Choice("LaunchMode")
+    Private ReadOnly eventChoice As ComboBox = Choice("PracticeEvent")
+    Private ReadOnly trackChoice As ComboBox = Choice("PracticeTrack")
+    Private ReadOnly carChoice As ComboBox = Choice("PracticeCar")
     Private ReadOnly renderScale As NumericUpDown = Percentage("RenderScale", 50, 150, 100)
     Private ReadOnly headsetScale As NumericUpDown = Percentage("HeadsetScale", 25, 100, 50)
     Private ReadOnly fieldOfView As NumericUpDown = Percentage("FieldOfView", 70, 100, 100)
@@ -55,6 +59,7 @@ Public Class MainForm
         BuildLaunchTab()
         BuildGraphicsTab()
         BuildControlsTab()
+        BuildSettingsTab()
         AddHandler tabs.SelectedIndexChanged, Sub()
                                                   keyboardCapture = -1 : controllerCapture = -1 : capturedDevice = Nothing
                                                   inputLabel.Text = "Select a binding to change it."
@@ -91,8 +96,13 @@ Public Class MainForm
     Private Shared Function Percentage(name As String, low As Integer, high As Integer, value As Integer) As NumericUpDown
         Return New NumericUpDown With {.Name = name, .AccessibleName = name, .Minimum = low, .Maximum = high, .Value = value, .Increment = 5, .Width = 90}
     End Function
+    Private Shared Function Choice(name As String) As ComboBox
+        Return New ComboBox With {.Name = name, .AccessibleName = name, .DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Fill, .DropDownWidth = 600}
+    End Function
     Private Function TabLayout(title As String) As TableLayoutPanel
-        Dim page As New TabPage(title) With {.Padding = New Padding(16), .UseVisualStyleBackColor = True, .AutoScroll = True}
+        ' Native themed TabPages still paint a light background in Windows dark mode.
+        ' Inherit the form's resolved system palette instead of the visual-style brush.
+        Dim page As New TabPage(title) With {.Padding = New Padding(16), .UseVisualStyleBackColor = False, .BackColor = BackColor, .AutoScroll = True}
         Dim content As New TableLayoutPanel With {.Dock = DockStyle.Top, .AutoSize = True, .ColumnCount = 1}
         content.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
         page.Controls.Add(content) : tabs.TabPages.Add(page)
@@ -102,7 +112,63 @@ Public Class MainForm
         Return New Label With {.Text = text, .AutoSize = True, .MaximumSize = New Size(710, 0), .Margin = New Padding(0, 8, 0, 12)}
     End Function
     Private Sub BuildLaunchTab()
-        Dim content = TabLayout("Launch")
+        Dim content = TabLayout("Launcher")
+        Dim grid As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True, .Dock = DockStyle.Top}
+        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 140))
+        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
+        Dim labels = {"Launch mode", "Event", "Track", "Car"}
+        Dim choices = {launchMode, eventChoice, trackChoice, carChoice}
+        For i = 0 To choices.Length - 1
+            grid.Controls.Add(New Label With {.Text = labels(i), .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, i)
+            choices(i).Margin = New Padding(3, 8, 3, 10)
+            choices(i).FlatStyle = FlatStyle.Flat
+            choices(i).BackColor = BackColor : choices(i).ForeColor = ForeColor
+            ' Some native combo text areas retain a light brush even in app dark mode.
+            choices(i).DrawMode = DrawMode.OwnerDrawFixed
+            AddHandler choices(i).DrawItem, AddressOf DrawChoice
+            grid.Controls.Add(choices(i), 1, i)
+        Next
+        content.Controls.Add(grid)
+        launchMode.Items.AddRange({"Game menus", "Direct practice (experimental)"})
+        eventChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) Directory.Exists(t.Folder(context))).Select(Function(t) t.Event).Distinct().Order().Cast(Of Object).ToArray())
+        carChoice.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
+        AddHandler eventChoice.SelectedIndexChanged, Sub()
+                                                        Dim previous = TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id
+                                                        trackChoice.Items.Clear()
+                                                        trackChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) t.Event = CStr(eventChoice.SelectedItem) AndAlso Directory.Exists(t.Folder(context))).OrderBy(Function(t) t.Label).Cast(Of Object).ToArray())
+                                                        trackChoice.SelectedItem = trackChoice.Items.Cast(Of PracticeTrack).FirstOrDefault(Function(t) t.Id = previous)
+                                                        If trackChoice.SelectedIndex < 0 AndAlso trackChoice.Items.Count > 0 Then trackChoice.SelectedIndex = 0
+                                                    End Sub
+        eventChoice.SelectedItem = RaceCatalog.Current.Track(settings.TrackId).Event
+        If eventChoice.SelectedIndex < 0 AndAlso eventChoice.Items.Count > 0 Then eventChoice.SelectedIndex = 0
+        trackChoice.SelectedItem = trackChoice.Items.Cast(Of PracticeTrack).FirstOrDefault(Function(t) t.Id = settings.TrackId)
+        If trackChoice.SelectedIndex < 0 AndAlso trackChoice.Items.Count > 0 Then trackChoice.SelectedIndex = 0
+        carChoice.SelectedItem = carChoice.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = settings.CarCode)
+        If carChoice.SelectedIndex < 0 AndAlso carChoice.Items.Count > 0 Then carChoice.SelectedIndex = 0
+        AddHandler launchMode.SelectedIndexChanged, Sub()
+                                                        For Each control In {eventChoice, trackChoice, carChoice}
+                                                            control.Enabled = launchMode.SelectedIndex = 1
+                                                        Next
+                                                    End Sub
+        launchMode.SelectedIndex = If(settings.LaunchMode = "practice", 1, 0)
+        content.Controls.Add(Note("Direct practice loads one player-driven car. Event filters the track list; any listed car can be tried. Select cockpit view and use Toggle VR. Other cars and direct practice in the headset need testing."))
+        content.Controls.Add(Note("Practice loops after finishing; pause only offers Continue. Alt+F4 quits and restores original files. Choose Game menus for full race options."))
+    End Sub
+    Private Sub DrawChoice(sender As Object, e As DrawItemEventArgs)
+        Dim box = DirectCast(sender, ComboBox)
+        Dim highlighted = (e.State And DrawItemState.Selected) <> 0 AndAlso (e.State And DrawItemState.ComboBoxEdit) = 0
+        Dim background = If(highlighted, SystemColors.Highlight, BackColor)
+        Dim foreground = If(Not box.Enabled, SystemColors.GrayText, If(highlighted, SystemColors.HighlightText, ForeColor))
+        Using brush As New SolidBrush(background)
+            e.Graphics.FillRectangle(brush, e.Bounds)
+        End Using
+        If e.Index >= 0 Then
+            TextRenderer.DrawText(e.Graphics, box.GetItemText(box.Items(e.Index)), box.Font, e.Bounds, foreground, TextFormatFlags.Left Or TextFormatFlags.VerticalCenter Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        End If
+        e.DrawFocusRectangle()
+    End Sub
+    Private Sub BuildSettingsTab()
+        Dim content = TabLayout("Settings")
         content.Controls.Add(Note("Game folder" & Environment.NewLine & context.GameRoot))
         Dim runtimeRow As New TableLayoutPanel With {.ColumnCount = 3, .Dock = DockStyle.Top, .AutoSize = True, .Margin = New Padding(0, 12, 0, 12)}
         runtimeRow.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
@@ -234,6 +300,14 @@ Public Class MainForm
         settings.Runtime = runtimeBox.Text.Trim()
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
+        settings.LaunchMode = If(launchMode.SelectedIndex = 1, "practice", "menus")
+        If settings.LaunchMode = "practice" Then
+            Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
+            Dim car = TryCast(carChoice.SelectedItem, PracticeCar)
+            If track Is Nothing OrElse car Is Nothing Then Throw New IOException("Select an installed track and car, or use Game menus.")
+            RaceCatalog.Current.ValidateInstalled(context, track.Id, car.Code)
+            settings.TrackId = track.Id : settings.CarCode = car.Code
+        End If
         settings.Validate()
         Files.SaveJson(context.PreferencesPath, settings)
         stateLabel.Text = "Settings saved. Changes apply to the next VR session."

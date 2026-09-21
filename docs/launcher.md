@@ -4,7 +4,11 @@ Status: experimental `0.1.0-alpha.1`. End-user instructions are in [README](../R
 
 ## Appearance
 
+Tabs are Launcher, Graphics, Controls and Settings. Each TabPage disables the native visual-style background and uses the form's resolved palette, including unused page space. Practice combo text is owner-drawn with that palette because native combo text areas can keep a light brush. These controls retain normal keyboard navigation; contrast selection uses system colors. Tests render all tabs offscreen in both light and dark modes.
+
 Startup calls `Application.SetColorMode(SystemColorMode.System)` before creating controls. This uses the Windows app color preference with native Windows Forms controls and title-bar theming. The framework reads the setting at startup, requires Windows 11 for dark mode and respects contrast themes; it does not switch a running application when Windows changes theme. See [Microsoft's API documentation](https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.application.setcolormode?view=windowsdesktop-10.0). No Windows preference is written by the launcher.
+
+`SetCompatibleTextRenderingDefault(False)` runs first, before DPI/theme initialization, inside the entry point's error handler. During the initial direct-practice launcher test, Windows reported an unhandled `InvalidOperationException` because the prior ordering called it after a hidden window existed. That background process exited before writing session status, making Launch VR appear inactive. The regression test launches the actual application entry point in separate child processes as well as rendering MainForm in the test harness.
 
 The generated artwork and its prompt are in [launcher/assets](../launcher/assets/README.md). `tools/make-launcher-icon.ps1` re-encodes the PNG into a multi-resolution ICO. The project embeds the icon in both PE and managed resources, so the main form and Explorer/shortcuts use the same artwork even with single-file publishing. Inno Setup uses the same ICO for setup and the launcher executable for the uninstall display icon.
 
@@ -35,7 +39,7 @@ Process lifetime currently follows the launched wrapper handle plus polling `dir
 
 ## Transactions
 
-Asset preparation backs up the user's own `cars/sti/cameras.xml` and `postprocess/effects.xml` in `DiRT2VR/backups`. It flushes originals and a pending JSON journal before replacing either file. The journal identifies the original and modified hashes of each allowlisted asset and the owning user's pending graphics journal. An existing pending transaction cannot be overwritten by preparation.
+Asset preparation backs up the user's own `cars/sti/cameras.xml` (the selected car for direct practice) and `postprocess/effects.xml` in `DiRT2VR/backups`. It flushes originals and a pending JSON journal before replacing either file. The journal identifies the original and modified hashes of each allowlisted asset and the owning user's pending graphics journal. An existing pending transaction cannot be overwritten by preparation. Version 3 asset journals use the verified short practice config path; versions 1 and 2 retain their original recovery paths. See [direct practice](direct-practice.md) for selection, activation and config ownership details.
 
 Recovery restores only original/already-restored or recognized modified bytes. Unexpected asset edits, missing backups or mismatched hashes preserve the pending journal and surface a conflict. Each restored entry is journaled, then the completed journal is archived. Backups are retained. An installer running under a different account refuses to recover assets while the owner's graphics journal still needs recovery.
 
@@ -45,7 +49,7 @@ There is an unavoidable distinction between durable files and a tested power-cut
 
 ## Graphics configuration
 
-Settings version 2 adds integer `RenderScale` (50–150, default 100), `HeadsetScale` (25–100, default 50), `FieldOfView` (70–100, default 100), and `Mirrors` (`game`/`on`/`off`, default `game`). Version 1 loads with these defaults and retains its bindings; saving writes version 2. Unknown versions and invalid ranges fail validation before preparation.
+Graphics fields are integer `RenderScale` (50–150, default 100), `HeadsetScale` (25–100, default 50), `FieldOfView` (70–100, default 100), and `Mirrors` (`game`/`on`/`off`, default `game`). Version 1 loads with these defaults and retains its bindings. Current settings version 3 also stores launch mode and practice selection; version 2 graphics/bindings migrate unchanged. Unknown versions and invalid ranges fail validation before preparation.
 
 `GraphicsTransaction.Prepare(settings)` journals width/height as `round(1600 or 1200 × RenderScale/100 × FieldOfView/100)`. A mirror override adds `mirrors/@enabled`; `game` leaves that attribute untouched. Recovery uses the same recorded applied values and original-byte/merge rules as the previous fixed baseline. Desktop VSync remains off; the original desktop refresh-rate attribute remains untouched. Both GUI and quick launch pass these settings to the same transaction.
 
@@ -59,7 +63,7 @@ Validation: all eight native CTests pass, including asymmetric crop math, matchi
 
 ## Input
 
-The UI groups bindings by action on the Controls tab, with separate keyboard and controller/wheel columns. The underlying binding list and shared-memory action protocol are unchanged. List contents are rebuilt only when their text/connection state changes, preserving the selection. Changing tabs cancels an unfinished capture. Launch/Graphics/Controls editing is disabled while the session manager is active.
+The UI groups bindings by action on the Controls tab, with separate keyboard and controller/wheel columns. The underlying binding list and shared-memory action protocol are unchanged. List contents are rebuilt only when their text/connection state changes, preserving the selection. Changing tabs cancels an unfinished capture. All tab editing is disabled while the session manager is active.
 
 Keyboard bindings are configured through `DIRT2VR_KEYS`; defaults are F9/F10. The game window consumes both edges of assigned keys, including F10, preventing the system-menu freeze. Ctrl/Alt/Shift are optional.
 

@@ -4,17 +4,18 @@ Imports System.Security.Principal
 Public Module Program
     <STAThread>
     Public Function Main(args As String()) As Integer
-        Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)
-        ' Native controls follow the Windows app theme selected at startup.
-        Application.SetColorMode(SystemColorMode.System)
-        Application.EnableVisualStyles()
-        Application.SetCompatibleTextRenderingDefault(False)
         Try
+            ' Theme initialization can create a hidden HWND. Set text rendering first,
+            ' including in background session/worker processes launched by the UI.
+            Application.SetCompatibleTextRenderingDefault(False)
+            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)
+            Application.SetColorMode(SystemColorMode.System)
+            Application.EnableVisualStyles()
             Dim root = Argument(args, "--game", AppContext.BaseDirectory)
             Dim context As New InstallContext(root, If(args.Contains("--worker"), Argument(args, "--owner-base", Nothing), Nothing))
             If args.Contains("--worker") Then
                 Try
-                    Worker.Run(context, Argument(args, "--worker", ""))
+                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing))
                     Return 0
                 Catch ex As UnauthorizedAccessException
                     Return 5

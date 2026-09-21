@@ -32,6 +32,33 @@ std::mutex attachMutex, shaderMutex;
 std::unordered_set<void*> targets;
 std::unordered_set<uint64_t> shaders;
 std::unordered_map<void*,uint64_t> shaderNames;
+// The demo start path otherwise forces the local vehicle back to AI every update.
+// Only change the controller's override, preserving the frontend's loading flow.
+void EnableDirectPractice() {
+    static bool applied{};
+    wchar_t enabled[8]{};
+    if(applied || GetEnvironmentVariableW(L"DIRT2VR_DIRECT_PRACTICE",enabled,8)!=1 || enabled[0]!=L'1') return;
+    auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+    const unsigned char forceAi[]={0x74,0x06,0xc6,0x43,0x3a,0x01,0xeb,0x04,0xc6,0x43,0x3a,0x00};
+    const unsigned char update[]={0x83,0xec,0x6c,0x53,0x55,0x8b,0xd9,0x80,0x7b,0x20,0x01};
+    DWORD previous{};
+    if(SupportedHost() && memcmp(base+0x72a5a1,forceAi,sizeof(forceAi))==0 &&
+       memcmp(base+0x72a580,update,sizeof(update))==0 &&
+       VirtualProtect(base+0x72a5a1,1,PAGE_EXECUTE_READWRITE,&previous)) {
+        base[0x72a5a1]=0xeb;
+        DWORD ignored{};
+        const bool protectedAgain=VirtualProtect(base+0x72a5a1,1,previous,&ignored)!=0;
+        const bool flushed=FlushInstructionCache(GetCurrentProcess(),base+0x72a5a1,1)!=0;
+        if(protectedAgain && flushed) {
+            applied=true;
+            Log("direct practice: local human controller enabled (memory only)");
+            return;
+        }
+    }
+    Log("direct practice: instruction/protection guard failed; stopping launch");
+    MessageBoxW(nullptr,L"Direct practice is incompatible with this game process. Use Game menus in the launcher.",L"DiRT2VR",MB_OK|MB_ICONERROR);
+    ExitProcess(ERROR_BAD_EXE_FORMAT); // The session manager restores the prepared assets.
+}
 thread_local unsigned scenePass{};
 using PresentFn = HRESULT (STDMETHODCALLTYPE*)(IDXGISwapChain*,UINT,UINT);
 using DrawIndexedFn = void (STDMETHODCALLTYPE*)(ID3D11DeviceContext*,UINT,UINT,INT);
@@ -925,6 +952,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     std::lock_guard lock(attachMutex);
     static bool initialized=MH_Initialize()==MH_OK;
     if(!initialized) { Log("MinHook initialization failed"); return; }
+    EnableDirectPractice();
     Log("DX11 device=%p feature_level=0x%x context=%p swapchain=%p",device,device->GetFeatureLevel(),context,swapchain);
     Hook(device,12,reinterpret_cast<void*>(CreateVS),realVS);
     Hook(device,15,reinterpret_cast<void*>(CreatePS),realPS);

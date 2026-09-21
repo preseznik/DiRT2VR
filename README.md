@@ -29,7 +29,7 @@ Start the launcher normally, **not with Run as administrator**. In protected gam
 ## Play
 
 1. Start SteamVR and connect your headset.
-2. Open **DiRT2VR.exe**, check the SteamVR runtime path, and select **Launch VR**.
+2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Game menus** on **Launcher**, and select **Launch VR**.
 3. Navigate the original game on the virtual screen using your usual controls.
 4. Enter a **Subaru Impreza STI** event and select cockpit view for the tested setup.
 5. With the game window focused, press **F9** (or your Toggle VR binding). Sit facing forward and press **F10** (or Recenter).
@@ -44,7 +44,15 @@ To play on the desktop, close the VR session and launch the game through Steam n
 
 The launcher matches the Windows app light/dark setting when opened. Reopen it after changing that setting. Native dark mode requires Windows 11; Windows 10 and Windows contrast themes retain the standard accessible system appearance.
 
-**Launch** contains the game location and SteamVR runtime. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts are preserved when upgrading.
+**Launcher** selects how to start. **Settings** contains the game location, SteamVR runtime and setup instructions. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts and graphics preferences are preserved when upgrading.
+
+### Direct practice (experimental)
+
+On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**, and a **Car**, then **Launch VR**. Event filters the track list by discipline; this is solo practice, not a career event. The launcher lists installed routes and cars from the supported game's catalog. The Subaru STI is the tested cockpit; other car interiors are experimental.
+
+Direct practice bypasses the trailer menus and loads a player-driven car. Select cockpit view and use Toggle VR as usual. **Practice loops after the finish, and its pause menu only offers Continue. Press Alt+F4 to quit.** The session manager restores temporary files after exit. Use **Game menus** for full race options. Saved practice selections also work with `Start-DiRT2VR.cmd`.
+
+Desktop steering/throttle, pause/resume and finishing have been confirmed in the Subaru at Baja. The packaged direct-practice route in VR, other cars and broader stage coverage still need testing.
 
 ### Graphics
 
@@ -79,7 +87,7 @@ Assignments stay attached to the selected device. A disconnected device is not r
 
 ## Recovery, upgrades and removal
 
-VR sessions temporarily adjust the Subaru camera, motion-blur asset and selected graphics settings. Originals and a recovery journal are saved before changes. Normal exits and detected game crashes trigger restoration. Unrelated graphics-settings edits are retained.
+VR sessions temporarily adjust the Subaru camera (or the selected car's camera for direct practice), motion-blur asset and selected graphics settings. Originals and a recovery journal are saved before changes. Normal exits and detected game crashes trigger restoration. Unrelated graphics-settings edits are retained. Direct practice temporarily creates `DiRT2VR/p.xml` and removes it during recovery. An existing file at that path is preserved and blocks preparation.
 
 After a power failure or forced session-manager termination, close any remaining DiRT 2 processes and choose **Restore original files**. A new launch also checks for pending recovery. Do not delete `DiRT2VR/backups` or the corresponding AppData folder while recovery is pending.
 
@@ -93,7 +101,7 @@ If recovery reports a conflict, it preserves unexpected asset edits and backups 
 
 ## Limitations and troubleshooting
 
-- The modified camera targets the Subaru STI. Broader car/stage coverage is unfinished.
+- Game-menu launches prepare the Subaru STI camera. Direct practice prepares the selected car, but other interiors and broader stage coverage are not yet visually verified.
 - Scenery visibility and car-aligned headlights passed the reported tests; other lighting, mirrors and interiors need testing.
 - Road rubble is retained in both eyes in the tested Novigrad scene. Other stages and ground-cover variants still need testing.
 - Crowds, particles, shadows and motion blur are reduced or disabled. Water, HUD placement, seat adjustment, replay transitions and calibrated world scale remain unfinished.

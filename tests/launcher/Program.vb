@@ -20,12 +20,13 @@ Module Program
     <STAThread>
     Sub Main(args As String())
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)
+        Application.SetColorMode(If(args.Contains("--dark"), SystemColorMode.Dark, SystemColorMode.Classic))
         Application.EnableVisualStyles()
         Dim repo = IO.Path.GetFullPath(If(args.Length > 0, args(0), "."))
         Dim folder = IO.Path.Combine(repo, "artifacts", "launcher-tests-" & DateTime.Now.ToString("yyyyMMdd-HHmmss"))
         Dim root = IO.Path.Combine(folder, "DiRT 2 Ž test")
         Directory.CreateDirectory(root)
-        For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars\sti\cameras.xml", "postprocess\effects.xml"}
+        For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars\sti\cameras.xml", "cars\n12\cameras.xml", "postprocess\effects.xml"}
             Dim target = IO.Path.Combine(root, relative)
             Directory.CreateDirectory(IO.Path.GetDirectoryName(target))
             File.Copy(IO.Path.Combine(repo, "artifacts\game", relative), target)
@@ -93,10 +94,68 @@ Module Program
         Check(setting.RenderWidth = 1600 AndAlso setting.RenderHeight = 1200 AndAlso setting.HeadsetScale = 50 AndAlso setting.FieldOfView = 100 AndAlso setting.Mirrors = "game", "default graphics preserve baseline")
         Files.AtomicWrite(context.PreferencesPath, Text.Encoding.UTF8.GetBytes("{""Version"":1,""ToggleKey"":118,""RecenterKey"":119,""Bindings"":[]}"))
         Dim migrated = VrSettings.Load(context)
-        Check(migrated.Version = 2 AndAlso migrated.ToggleKey = 118 AndAlso migrated.RecenterKey = 119 AndAlso migrated.RenderWidth = 1600, "legacy settings migrate without changing keys")
-        For Each invalid In {New VrSettings With {.RenderScale = 49}, New VrSettings With {.RenderScale = 151}, New VrSettings With {.HeadsetScale = 24}, New VrSettings With {.HeadsetScale = 101}, New VrSettings With {.FieldOfView = 69}, New VrSettings With {.FieldOfView = 101}, New VrSettings With {.Mirrors = "invalid"}, New VrSettings With {.Version = 3}}
+        Check(migrated.Version = 3 AndAlso migrated.ToggleKey = 118 AndAlso migrated.RecenterKey = 119 AndAlso migrated.RenderWidth = 1600 AndAlso migrated.LaunchMode = "menus", "legacy settings migrate without changing keys")
+        For Each invalid In {New VrSettings With {.RenderScale = 49}, New VrSettings With {.RenderScale = 151}, New VrSettings With {.HeadsetScale = 24}, New VrSettings With {.HeadsetScale = 101}, New VrSettings With {.FieldOfView = 69}, New VrSettings With {.FieldOfView = 101}, New VrSettings With {.Mirrors = "invalid"}, New VrSettings With {.Version = 4}, New VrSettings With {.LaunchMode = "benchmark"}, New VrSettings With {.CarCode = "..\other"}, New VrSettings With {.TrackId = "999999"}}
             Reject(Sub() invalid.Validate(), "out-of-range graphics/settings rejected")
         Next
+        Files.AtomicWrite(context.PreferencesPath, Text.Encoding.UTF8.GetBytes("{""Version"":2,""RenderScale"":75,""FieldOfView"":80}"))
+        migrated = VrSettings.Load(context)
+        Check(migrated.Version = 3 AndAlso migrated.RenderWidth = 960 AndAlso migrated.LaunchMode = "menus", "graphics preferences survive version 2 migration")
+        Dim catalog = RaceCatalog.Current
+        Check(catalog.Tracks.Count = 41 AndAlso catalog.Cars.Count = 43 AndAlso catalog.Tracks.Select(Function(t) t.Id).Distinct().Count() = 41 AndAlso catalog.Cars.Select(Function(c) c.Code).Distinct().Count() = 43, "practice catalog has unique route and car IDs")
+        Dim game As New InstallContext(IO.Path.Combine(repo, "artifacts/game"))
+        For Each car In catalog.Cars
+            Dim bytes = File.ReadAllBytes(IO.Path.Combine(game.GameRoot, "cars", car.Code, "cameras.xml"))
+            Check(XmlPatches.Asset(bytes, True).Length > 0, "camera preparation accepts " & car.Code & " (not visual acceptance)")
+        Next
+        For Each route In catalog.Tracks
+            catalog.ValidateInstalled(game, route.Id, "sti")
+        Next
+        Check(True, "catalog routes exist in supported installation")
+        Reject(Sub() catalog.ValidateInstalled(context, "127", "sti"), "missing practice track rejected")
+        Directory.CreateDirectory(catalog.Track("127").Folder(context))
+        Directory.CreateDirectory(catalog.Track("129").Folder(context))
+        Dim alternate = IO.Path.Combine(root, "cars/n12/cameras.xml")
+        Dim alternateHash = Files.Hash(alternate)
+        transaction.Prepare(carCode:="n12", trackId:="127")
+        Dim config = IO.Path.Combine(root, transaction.PracticeConfig())
+        document = XmlPatches.Read(File.ReadAllBytes(config))
+        Check(document.SelectSingleNode("/config/track[@country='baja'][@name='baja_iron'][@route='route_0']/car[@name='n12'][@number='1']") IsNot Nothing AndAlso transaction.PracticeConfig() = "DiRT2VR/p.xml", "selected race config uses the verified short wrapper argument")
+        Check(Files.Hash(camera) = cameraHash AndAlso Files.Hash(alternate) <> alternateHash, "selected car patched without modifying Subaru")
+        transaction.Recover()
+        Check(Files.Hash(alternate) = alternateHash AndAlso Files.Hash(effects) = effectHash AndAlso Not File.Exists(config), "selected car and generated config recovered")
+        Reject(Sub() transaction.Prepare(Sub(index)
+                                             If index = 0 Then Throw New IOException("interrupted practice")
+                                         End Sub, "n12", "127"), "practice partial preparation interrupted")
+        config = IO.Path.Combine(root, transaction.PracticeConfig())
+        transaction.Recover()
+        Check(Files.Hash(alternate) = alternateHash AndAlso Not File.Exists(config), "interrupted practice recovers selected car")
+        transaction.Prepare(carCode:="n12", trackId:="127")
+        config = IO.Path.Combine(root, transaction.PracticeConfig())
+        Dim originalConfig = File.ReadAllBytes(config)
+        File.WriteAllText(config, "external change")
+        Reject(Sub() transaction.Recover(), "changed practice config preserved")
+        Check(File.ReadAllText(config) = "external change" AndAlso transaction.Pending, "practice config conflict remains recoverable")
+        Files.AtomicWrite(config, originalConfig) : transaction.Recover()
+        File.WriteAllText(config, "foreign config")
+        Reject(Sub() transaction.Prepare(carCode:="n12", trackId:="127"), "existing short config cannot be overwritten")
+        Check(File.ReadAllText(config) = "foreign config" AndAlso Not transaction.Pending AndAlso Files.Hash(alternate) = alternateHash, "short config conflict preserves originals without pending changes")
+        File.Delete(config)
+        transaction.Prepare(carCode:="n12", trackId:="127")
+        Dim version2Path = IO.Path.Combine(context.ModRoot, "backups/pending.json")
+        Dim version2 = Files.ReadJson(Of AssetJournal)(version2Path)
+        Dim oldConfig = IO.Path.Combine(context.ModRoot, "backups", version2.Id & ".xml")
+        File.Move(config, oldConfig)
+        version2.Version = 2 : Files.SaveJson(version2Path, version2)
+        Check(transaction.PracticeConfig().EndsWith(version2.Id & ".xml"), "version 2 journal keeps original generated path")
+        transaction.Recover()
+        Check(Not File.Exists(oldConfig) AndAlso Files.Hash(alternate) = alternateHash, "version 2 practice journal recovers after upgrade")
+        transaction.Prepare()
+        Dim pending = IO.Path.Combine(context.ModRoot, "backups/pending.json")
+        Dim legacy = Files.ReadJson(Of AssetJournal)(pending)
+        legacy.Version = 1 : legacy.CarCode = "ignored-legacy-field"
+        Files.SaveJson(pending, legacy) : transaction.Recover()
+        Check(Files.Hash(camera) = cameraHash, "legacy asset journal always restores Subaru")
         document = XmlPatches.Read(File.ReadAllBytes(graphics))
         Dim mirror = document.CreateElement("mirrors") : mirror.SetAttribute("enabled", "true")
         document.DocumentElement.AppendChild(mirror)
@@ -148,12 +207,26 @@ Module Program
             form.ShowInTaskbar = False : form.StartPosition = FormStartPosition.Manual : form.Location = New Drawing.Point(-32000, -32000)
             form.Show() : Application.DoEvents()
             Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
-            Check(tabs.TabPages.Cast(Of TabPage).Select(Function(page) page.Text).SequenceEqual({"Launch", "Graphics", "Controls"}), "launcher tabs present in order")
+            Check(tabs.TabPages.Cast(Of TabPage).Select(Function(page) page.Text).SequenceEqual({"Launcher", "Graphics", "Controls", "Settings"}), "launcher tabs present in order")
+            Dim mode = DirectCast(form.Controls.Find("LaunchMode", True).Single(), ComboBox)
+            Dim events = DirectCast(form.Controls.Find("PracticeEvent", True).Single(), ComboBox)
+            Dim routes = DirectCast(form.Controls.Find("PracticeTrack", True).Single(), ComboBox)
+            Dim vehicles = DirectCast(form.Controls.Find("PracticeCar", True).Single(), ComboBox)
+            Check(mode.SelectedIndex = 0 AndAlso Not routes.Enabled AndAlso Not vehicles.Enabled, "menu mode keeps practice selectors inactive")
+            mode.SelectedIndex = 1 : events.SelectedItem = "Rally"
+            vehicles.SelectedItem = vehicles.Items.Cast(Of PracticeCar).Single(Function(c) c.Code = "n12")
+            Check(routes.Enabled AndAlso vehicles.Enabled AndAlso routes.Items.Cast(Of PracticeTrack).All(Function(t) t.Event = "Rally") AndAlso DirectCast(routes.SelectedItem, PracticeTrack).Id = "129", "event selection filters installed routes")
             For Each page As TabPage In tabs.TabPages
                 tabs.SelectedTab = page : Application.DoEvents()
                 Using bitmap As New Drawing.Bitmap(form.Width, form.Height)
                     form.DrawToBitmap(bitmap, New Drawing.Rectangle(0, 0, form.Width, form.Height))
                     bitmap.Save(IO.Path.Combine(folder, "launcher-" & page.Text & ".png"))
+                End Using
+                Using bitmap As New Drawing.Bitmap(page.Width, page.Height)
+                    page.DrawToBitmap(bitmap, New Drawing.Rectangle(0, 0, page.Width, page.Height))
+                    ' Compare an unused page pixel with the resolved form palette. A themed
+                    ' TabPage used to leave this entire region white in Windows dark mode.
+                    Check(bitmap.GetPixel(4, page.Height - 8).ToArgb() = form.BackColor.ToArgb(), page.Text & " page background matches app theme")
                 End Using
             Next
             tabs.SelectedIndex = 1
@@ -165,8 +238,21 @@ Module Program
             Dim saved = VrSettings.Load(context)
             Check(saved.RenderWidth = 960 AndAlso saved.RenderHeight = 720 AndAlso saved.HeadsetScale = 60 AndAlso saved.Mirrors = "off", "Graphics tab saves selected values")
             Check(saved.Bindings.Count = 1 AndAlso saved.Bindings(0).Buttons.SequenceEqual({16, 32}), "tab save preserves existing controller pair")
+        Check(saved.LaunchMode = "practice" AndAlso saved.TrackId = "129" AndAlso saved.CarCode = "n12", "launcher selection persists for GUI and quick launch")
             form.Close()
         End Using
+        ' Exercise the real entry point in a child process, not only MainForm in this harness.
+        ' Theme startup used to crash here before any session status could be written.
+        Dim app = IO.Path.Combine(repo, "launcher/bin/Release/net10.0-windows/win-x64/DiRT2VR.exe")
+        For attempt = 1 To 3
+            Dim start As New ProcessStartInfo(app) With {.UseShellExecute = False, .CreateNoWindow = True}
+            For Each arg In {"--check-install", "--quiet", "--game", root}
+                start.ArgumentList.Add(arg)
+            Next
+            Using child = Process.Start(start)
+                Check(child.WaitForExit(15000) AndAlso child.ExitCode = 0, "real launcher child initializes Windows Forms " & attempt)
+            End Using
+        Next
         Console.WriteLine($"{passed} checks passed. Artifacts: {folder}")
     End Sub
 End Module

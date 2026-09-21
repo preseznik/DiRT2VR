@@ -19,6 +19,7 @@
   </PropertyGroup>
   <ItemGroup>
     <EmbeddedResource Include="assets\DiRT2VR.ico" LogicalName="DiRT2VR.ico" />
+    <EmbeddedResource Include="assets\race-catalog.json" LogicalName="DiRT2VR.race-catalog.json" />
     <Import Include="System.IO" />
     <Import Include="System.Diagnostics" />
     <Import Include="System.Threading" />

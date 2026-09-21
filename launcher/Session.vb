@@ -59,7 +59,14 @@ Public Class Session
                     start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
                     start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
                     start.Environment("XR_RUNTIME_JSON") = settings.Runtime
-                    Worker.Invoke(context, "prepare")
+                    If settings.LaunchMode = "practice" Then
+                        Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId)
+                        start.ArgumentList.Add("-demo")
+                        start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
+                        start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
+                    Else
+                        Worker.Invoke(context, "prepare")
+                    End If
                     graphics.Prepare(settings)
                     Using input As New ControllerInput(), machine As New BindingMachine(settings.Bindings)
                         Dim counts As UInteger() = {0UI, 0UI}
