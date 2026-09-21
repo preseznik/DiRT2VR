@@ -78,7 +78,7 @@ Mixed/class grids are randomized each launch, repeating models if the available 
 
 Use **Laps (circuits)** to choose 1–20 laps in either **Race** or **Direct practice**. On point-to-point stages this control is disabled and the session is one stage run; your saved circuit lap preference is retained. The three-lap HUD and continuation into lap 2 have been confirmed on desktop at Baja – Ensenada Sprint. Other counts, complete multi-lap finishes and VR still need testing.
 
-Race uses the same direct-start route as practice: it bypasses menus, repeats after finishing, and only offers Continue when paused. **Alt+F4 quits.** Difficulty, career progression and normal results screens are not configurable here; use Normal Launch for the full event flow. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Crowded-grid VR performance still needs testing.
+Race uses the same direct-start route as practice: it bypasses menus, repeats after finishing, and only offers Continue when paused. **Alt+F4 quits.** Difficulty, career progression and normal results screens are not configurable here; use Normal Launch for the full event flow. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Mixed opponent models also passed a desktop race check. Same-class gameplay and crowded-grid VR performance still need testing.
 
 ### Graphics
 

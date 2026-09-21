@@ -10,7 +10,7 @@ The UI explicitly retains the direct-start looping finish and Continue-only paus
 
 `OpponentCars` defaults to `same` for existing version 3 preferences; allowed values are `same`, `mixed`, and `class`. Both session paths pass it via `--opponent-cars` to the file worker. Mixed draws from all installed catalog models, irrespective of event. Class uses the driver's exact `vehicle_class.file_string`, not its event discipline. The catalog records all seven original classes from the installed database's purchasable, non-dummy vehicle records: Rally, Rallycross, Trailblazer, Stock Baja, Raid T1, Trophy Trucks, and Class 1 Buggies.
 
-Only models with installed camera assets enter the pool. Other models are sampled without replacement until the pool is exhausted; small pools repeat, and a class with no other installed model falls back to the driver. The grid is generated and validated before preparing asset backups. No opponent camera assets are modified. Mixed/class desktop gameplay and crowded-grid VR acceptance are pending.
+Only models with installed camera assets enter the pool. Other models are sampled without replacement until the pool is exhausted; small pools repeat, and a class with no other installed model falls back to the driver. The grid is generated and validated before preparing asset backups. No opponent camera assets are modified. The tester confirmed the packaged alpha.5 mixed-grid desktop race works correctly. Same-class gameplay and crowded-grid VR acceptance remain pending.
 
 ## Circuit lap override
 
