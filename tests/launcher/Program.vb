@@ -111,6 +111,11 @@ Module Program
         Reject(Sub() Call (New VrSettings With {.Opponents = 0}).Validate(), "race needs an opponent")
         Reject(Sub() Call (New VrSettings With {.Opponents = 8}).Validate(), "settings reject oversized grid")
         Check((New VrSettings With {.LaunchMode = "practice", .Opponents = 7}).GridOpponents = 0 AndAlso (New VrSettings With {.LaunchMode = "race", .Opponents = 3}).GridOpponents = 3, "solo mode ignores saved race grid")
+        Reject(Sub() Call (New VrSettings With {.Laps = 0}).Validate(), "zero laps rejected")
+        Reject(Sub() Call (New VrSettings With {.Laps = 21}).Validate(), "excessive laps rejected")
+        Check(catalog.Tracks.Where(Function(t) t.Circuit).Count() = 14 AndAlso catalog.Track("127").Circuit AndAlso Not catalog.Track("129").Circuit, "catalog identifies circuit and point-to-point routes")
+        Check((New VrSettings With {.LaunchMode = "practice", .TrackId = "127", .Laps = 3}).SessionLaps = 3 AndAlso (New VrSettings With {.LaunchMode = "race", .TrackId = "127", .Laps = 5}).SessionLaps = 5, "both direct modes use circuit lap choice")
+        Check((New VrSettings With {.LaunchMode = "race", .TrackId = "129", .Laps = 5}).SessionLaps = 1, "point-to-point stages ignore saved circuit laps")
         Check(catalog.Tracks.Count = 41 AndAlso catalog.Cars.Count = 43 AndAlso catalog.Tracks.Select(Function(t) t.Id).Distinct().Count() = 41 AndAlso catalog.Cars.Select(Function(c) c.Code).Distinct().Count() = 43, "practice catalog has unique route and car IDs")
         Dim game As New InstallContext(IO.Path.Combine(repo, "artifacts/game"))
         For Each car In catalog.Cars
@@ -261,12 +266,16 @@ Module Program
             Dim routes = DirectCast(form.Controls.Find("PracticeTrack", True).Single(), ComboBox)
             Dim vehicles = DirectCast(form.Controls.Find("PracticeCar", True).Single(), ComboBox)
             Dim opponents = DirectCast(form.Controls.Find("Opponents", True).Single(), NumericUpDown)
+            Dim laps = DirectCast(form.Controls.Find("Laps", True).Single(), NumericUpDown)
             Check(mode.SelectedIndex = 0 AndAlso Not routes.Enabled AndAlso Not vehicles.Enabled, "menu mode keeps practice selectors inactive")
             Check(Not opponents.Enabled, "menus disable opponent choice")
             mode.SelectedIndex = 2 : opponents.Value = 3
+            laps.Value = 3
+            Check(laps.Enabled, "race circuit enables lap choice")
             Check(opponents.Enabled AndAlso routes.Enabled AndAlso vehicles.Enabled, "race enables grid and content choices")
             mode.SelectedIndex = 1 : events.SelectedItem = "Rally"
             Check(Not opponents.Enabled, "solo practice disables opponent choice")
+            Check(Not laps.Enabled, "point-to-point route disables lap choice")
             vehicles.SelectedItem = vehicles.Items.Cast(Of PracticeCar).Single(Function(c) c.Code = "n12")
             Check(routes.Enabled AndAlso vehicles.Enabled AndAlso routes.Items.Cast(Of PracticeTrack).All(Function(t) t.Event = "Rally") AndAlso DirectCast(routes.SelectedItem, PracticeTrack).Id = "129", "event selection filters installed routes")
             For Each page As TabPage In tabs.TabPages
@@ -296,6 +305,7 @@ Module Program
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             saved = VrSettings.Load(context)
             Check(saved.LaunchMode = "race" AndAlso saved.GridOpponents = 3, "race mode and grid persist for both launch buttons")
+            Check(saved.Laps = 3 AndAlso saved.SessionLaps = 1, "saved circuit laps survive point-to-point selection")
             form.Close()
         End Using
         ' Exercise the real entry point in a child process, not only MainForm in this harness.

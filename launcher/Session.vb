@@ -72,6 +72,7 @@ Public Class Session
                         start.ArgumentList.Add("-demo")
                         start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                         start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
+                        start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
                     Else
                         Worker.Invoke(context, "prepare")
                     End If
@@ -130,7 +131,9 @@ Public Class Session
             config = New AssetTransaction(context).PracticeConfig()
             logFolder = IO.Path.Combine(context.UserRoot, "logs", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") & "-desktop")
         End If
-        WaitForGame(DesktopStartInfo(context, config, logFolder))
+        Dim start = DesktopStartInfo(context, config, logFolder)
+        If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
+        WaitForGame(start)
     End Sub
     Public Shared Function DesktopStartInfo(context As InstallContext, config As String, logFolder As String) As ProcessStartInfo
         Dim start As New ProcessStartInfo(IO.Path.Combine(context.GameRoot, "dirt2.exe")) With {.UseShellExecute = False, .WorkingDirectory = context.GameRoot}

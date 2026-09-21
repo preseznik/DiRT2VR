@@ -2,6 +2,7 @@
   "Tracks": [
     {
       "Id": "127",
+      "Circuit": true,
       "Event": "Landrush",
       "Label": "Baja - Ensenada Sprint",
       "Country": "baja",
@@ -10,6 +11,7 @@
     },
     {
       "Id": "128",
+      "Circuit": true,
       "Event": "Landrush",
       "Label": "Baja - Ensenada",
       "Country": "baja",
@@ -18,6 +20,7 @@
     },
     {
       "Id": "129",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Baja - Spillway Long",
       "Country": "baja",
@@ -26,6 +29,7 @@
     },
     {
       "Id": "130",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Baja - Spillway Short",
       "Country": "baja",
@@ -34,6 +38,7 @@
     },
     {
       "Id": "131",
+      "Circuit": false,
       "Event": "Raid",
       "Label": "Baja - Spillway",
       "Country": "baja",
@@ -42,6 +47,7 @@
     },
     {
       "Id": "132",
+      "Circuit": false,
       "Event": "Raid",
       "Label": "Baja - Peninsula Run",
       "Country": "baja",
@@ -50,6 +56,7 @@
     },
     {
       "Id": "133",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "China - Li River",
       "Country": "china",
@@ -58,6 +65,7 @@
     },
     {
       "Id": "134",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "China - Li River Hillclimb",
       "Country": "china",
@@ -66,6 +74,7 @@
     },
     {
       "Id": "135",
+      "Circuit": false,
       "Event": "Trailblazer",
       "Label": "China - Yu Yong",
       "Country": "china",
@@ -74,6 +83,7 @@
     },
     {
       "Id": "136",
+      "Circuit": false,
       "Event": "Trailblazer",
       "Label": "China - Yu Yong B",
       "Country": "china",
@@ -82,6 +92,7 @@
     },
     {
       "Id": "137",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Croatia - Mali Alan Pass",
       "Country": "croatia",
@@ -90,6 +101,7 @@
     },
     {
       "Id": "138",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Croatia - Hairpin Run",
       "Country": "croatia",
@@ -98,6 +110,7 @@
     },
     {
       "Id": "139",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Croatia - Chapel Run",
       "Country": "croatia",
@@ -106,6 +119,7 @@
     },
     {
       "Id": "140",
+      "Circuit": false,
       "Event": "Raid",
       "Label": "Croatia - Novigrad",
       "Country": "croatia",
@@ -114,6 +128,7 @@
     },
     {
       "Id": "141",
+      "Circuit": true,
       "Event": "Rallycross",
       "Label": "Japan - Shibuya",
       "Country": "japan",
@@ -122,6 +137,7 @@
     },
     {
       "Id": "142",
+      "Circuit": true,
       "Event": "Rallycross",
       "Label": "Japan - Shibuya B",
       "Country": "japan",
@@ -130,6 +146,7 @@
     },
     {
       "Id": "143",
+      "Circuit": true,
       "Event": "Rallycross",
       "Label": "London - Battersea Bridge",
       "Country": "london",
@@ -138,6 +155,7 @@
     },
     {
       "Id": "144",
+      "Circuit": true,
       "Event": "Rallycross",
       "Label": "London - Battersea Air",
       "Country": "london",
@@ -146,6 +164,7 @@
     },
     {
       "Id": "145",
+      "Circuit": true,
       "Event": "Rallycross",
       "Label": "Usa - Marina Air",
       "Country": "usa",
@@ -154,6 +173,7 @@
     },
     {
       "Id": "146",
+      "Circuit": true,
       "Event": "Rallycross",
       "Label": "Usa - Marina Sprint",
       "Country": "usa",
@@ -162,6 +182,7 @@
     },
     {
       "Id": "147",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Malaysia - Ladang Long",
       "Country": "malaysia",
@@ -170,6 +191,7 @@
     },
     {
       "Id": "148",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Malaysia - Ladang Sprint",
       "Country": "malaysia",
@@ -178,6 +200,7 @@
     },
     {
       "Id": "149",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Malaysia - Ladang Mine Run",
       "Country": "malaysia",
@@ -186,6 +209,7 @@
     },
     {
       "Id": "150",
+      "Circuit": false,
       "Event": "Raid",
       "Label": "Malaysia - Rawang Trail",
       "Country": "malaysia",
@@ -194,6 +218,7 @@
     },
     {
       "Id": "151",
+      "Circuit": true,
       "Event": "Landrush",
       "Label": "Malaysia - Tanamera",
       "Country": "malaysia",
@@ -202,6 +227,7 @@
     },
     {
       "Id": "152",
+      "Circuit": true,
       "Event": "Landrush",
       "Label": "Malaysia - Tanamera Falls ",
       "Country": "malaysia",
@@ -210,6 +236,7 @@
     },
     {
       "Id": "153",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Morocco - Kasbah Run",
       "Country": "morocco",
@@ -218,6 +245,7 @@
     },
     {
       "Id": "154",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Morocco - Ait Benhaddou",
       "Country": "morocco",
@@ -226,6 +254,7 @@
     },
     {
       "Id": "155",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "Morocco - Tamdaght",
       "Country": "morocco",
@@ -234,6 +263,7 @@
     },
     {
       "Id": "156",
+      "Circuit": false,
       "Event": "Raid",
       "Label": "Morocco - Kasbah Trail",
       "Country": "morocco",
@@ -242,6 +272,7 @@
     },
     {
       "Id": "157",
+      "Circuit": false,
       "Event": "Trailblazer",
       "Label": "Morocco - Ounila Descent",
       "Country": "morocco",
@@ -250,6 +281,7 @@
     },
     {
       "Id": "158",
+      "Circuit": false,
       "Event": "Trailblazer",
       "Label": "Morocco - Ounila Valley",
       "Country": "morocco",
@@ -258,6 +290,7 @@
     },
     {
       "Id": "159",
+      "Circuit": true,
       "Event": "Landrush",
       "Label": "Morocco - Hammada Circuit",
       "Country": "morocco",
@@ -266,6 +299,7 @@
     },
     {
       "Id": "160",
+      "Circuit": true,
       "Event": "Landrush",
       "Label": "Morocco - Hammada Sprint",
       "Country": "morocco",
@@ -274,6 +308,7 @@
     },
     {
       "Id": "161",
+      "Circuit": false,
       "Event": "Trailblazer",
       "Label": "Utah - Kane Creek",
       "Country": "utah",
@@ -282,6 +317,7 @@
     },
     {
       "Id": "162",
+      "Circuit": false,
       "Event": "Trailblazer",
       "Label": "Utah - Hurrah Pass",
       "Country": "utah",
@@ -290,6 +326,7 @@
     },
     {
       "Id": "168",
+      "Circuit": false,
       "Event": "Rally",
       "Label": "China - Li River Descent",
       "Country": "china",
@@ -298,6 +335,7 @@
     },
     {
       "Id": "169",
+      "Circuit": false,
       "Event": "Trailblazer",
       "Label": "China - Yu Yong Sprint",
       "Country": "china",
@@ -306,6 +344,7 @@
     },
     {
       "Id": "170",
+      "Circuit": false,
       "Event": "Trailblazer",
       "Label": "China - Yu Yong Sprint B",
       "Country": "china",
@@ -314,6 +353,7 @@
     },
     {
       "Id": "171",
+      "Circuit": true,
       "Event": "Rallycross",
       "Label": "London - Battersea Bridge B",
       "Country": "london",
@@ -322,6 +362,7 @@
     },
     {
       "Id": "182",
+      "Circuit": true,
       "Event": "Rallycross",
       "Label": "Usa - Stadium Sprint",
       "Country": "usa",

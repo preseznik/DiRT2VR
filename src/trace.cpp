@@ -23,6 +23,7 @@
 #include <cmath>
 #include <algorithm>
 #include <stdexcept>
+#include <cwchar>
 
 using Microsoft::WRL::ComPtr;
 namespace vr {
@@ -50,6 +51,28 @@ void EnableDirectPractice() {
         const bool protectedAgain=VirtualProtect(base+0x72a5a1,1,previous,&ignored)!=0;
         const bool flushed=FlushInstructionCache(GetCurrentProcess(),base+0x72a5a1,1)!=0;
         if(protectedAgain && flushed) {
+            wchar_t text[16]{};
+            const auto length=GetEnvironmentVariableW(L"DIRT2VR_LAPS",text,16);
+            if(length) {
+                if(length>=16) ExitProcess(ERROR_INVALID_PARAMETER);
+                wchar_t* end{};
+                const auto laps=wcstoul(text,&end,10);
+                // Direct-start route descriptor +0x14 is initialized to one lap.
+                // Only replace that immediate, inside the direct-start branch.
+                const unsigned char lapInit[]={0xc7,0x44,0x24,0x30,0x01,0x00,0x00,0x00,0xc6,0x44,0x24,0x50,0x01};
+                if(end==text || *end || laps<1 || laps>20 ||
+                   memcmp(base+0x334a4c,lapInit,sizeof(lapInit))!=0 ||
+                   !VirtualProtect(base+0x334a50,4,PAGE_EXECUTE_READWRITE,&previous)) {
+                    Log("direct start: lap override validation failed");
+                    ExitProcess(ERROR_BAD_EXE_FORMAT);
+                }
+                const DWORD value=static_cast<DWORD>(laps);
+                memcpy(base+0x334a50,&value,sizeof(value));
+                const bool lapProtected=VirtualProtect(base+0x334a50,4,previous,&ignored)!=0;
+                const bool lapFlushed=FlushInstructionCache(GetCurrentProcess(),base+0x334a50,4)!=0;
+                if(!lapProtected || !lapFlushed) ExitProcess(ERROR_BAD_EXE_FORMAT);
+                Log("direct start: laps=%lu (memory only)",laps);
+            }
             applied=true;
             Log("direct practice: local human controller enabled (memory only)");
             return;

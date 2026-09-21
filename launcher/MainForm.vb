@@ -15,6 +15,7 @@ Public Class MainForm
     Private ReadOnly trackChoice As ComboBox = Choice("PracticeTrack")
     Private ReadOnly carChoice As ComboBox = Choice("PracticeCar")
     Private ReadOnly opponents As New NumericUpDown With {.Name = "Opponents", .AccessibleName = "AI opponents", .Minimum = 1, .Maximum = 7, .Value = 7, .Width = 90}
+    Private ReadOnly laps As New NumericUpDown With {.Name = "Laps", .AccessibleName = "Laps", .Minimum = 1, .Maximum = 20, .Value = 1, .Width = 90}
     Private ReadOnly renderScale As NumericUpDown = Percentage("RenderScale", 50, 150, 100)
     Private ReadOnly headsetScale As NumericUpDown = Percentage("HeadsetScale", 25, 100, 50)
     Private ReadOnly fieldOfView As NumericUpDown = Percentage("FieldOfView", 70, 100, 100)
@@ -145,6 +146,10 @@ Public Class MainForm
         grid.Controls.Add(New Label With {.Text = "AI opponents", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 4)
         opponents.Value = settings.Opponents
         grid.Controls.Add(opponents, 1, 4)
+        grid.Controls.Add(New Label With {.Text = "Laps (circuits)", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 5)
+        laps.Value = settings.Laps
+        grid.Controls.Add(laps, 1, 5)
+        AddHandler trackChoice.SelectedIndexChanged, Sub() RefreshLaps()
         launchMode.Items.AddRange({"Game menus", "Direct practice (experimental)", "Race (experimental)"})
         eventChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) Directory.Exists(t.Folder(context))).Select(Function(t) t.Event).Distinct().Order().Cast(Of Object).ToArray())
         carChoice.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
@@ -166,10 +171,15 @@ Public Class MainForm
                                                             control.Enabled = launchMode.SelectedIndex > 0
                                                         Next
                                                         opponents.Enabled = launchMode.SelectedIndex = 2
+                                                        RefreshLaps()
                                                     End Sub
         launchMode.SelectedIndex = Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode)
         content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents using the selected car. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
-        content.Controls.Add(Note("Practice and Race loop after finishing; pause only offers Continue. Alt+F4 quits and restores original files. Choose Game menus for full race options, difficulty and results."))
+        content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Sessions loop after finishing; pause only offers Continue. Alt+F4 quits. Use Game menus for full event options and results."))
+    End Sub
+    Private Sub RefreshLaps()
+        Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
+        laps.Enabled = launchMode.SelectedIndex > 0 AndAlso track IsNot Nothing AndAlso track.Circuit
     End Sub
     Private Sub DrawChoice(sender As Object, e As DrawItemEventArgs)
         Dim box = DirectCast(sender, ComboBox)
@@ -319,6 +329,7 @@ Public Class MainForm
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
         settings.Opponents = CInt(opponents.Value)
+        settings.Laps = CInt(laps.Value)
         If settings.LaunchMode <> "menus" Then
             Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)

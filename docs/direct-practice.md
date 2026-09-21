@@ -2,11 +2,19 @@
 
 ## Race grid extension — 2026-09-21
 
-The installed `example_benchmark.xml` documents a maximum of eight cars per track, including `<car name="sti" number="8" />`. Its supplied example also lists eight separate car entries. Race mode uses the existing `-demo` parser with one selected car entry and `number = Opponents + 1`; it adds no native patches. The existing controller change skips only the direct-start forced-AI assignment, preserving the vehicle's human/AI role. Actual opponent driving remains a gameplay acceptance check.
+The installed `example_benchmark.xml` documents a maximum of eight cars per track, including `<car name="sti" number="8" />`. Its supplied example also lists eight separate car entries. Race mode uses the existing `-demo` parser with one selected car entry and `number = Opponents + 1`; the grid itself adds no native patches. The existing controller change skips only the direct-start forced-AI assignment, preserving the vehicle's human/AI role. The tester confirmed human driving and seven active AI opponents in the packaged desktop launcher at Baja with the Subaru STI.
 
 Settings version 3 accepts `LaunchMode="race"` and an optional `Opponents` field (default 7, allowed 1–7). Older preferences retain their launch mode. `GridOpponents` resolves to zero outside Race, so changing race settings cannot add cars to solo practice. Both VR and desktop session paths forward the count to the fixed-purpose worker. The worker validates 0–7 before preparation and journals the exact generated XML using the existing config ownership/recovery flow. Desktop Race uses the same config-only journal and does not change graphics or camera assets.
 
-The UI explicitly retains the direct-start looping finish and Continue-only pause menu. This is an opponent-grid extension, not integration with normal career/results, difficulty or lap setup. All participants use the selected car; begin acceptance on Landrush/Rallycross. Unit/transaction/UI tests cover count limits, one/eight-car XML, solo isolation, persistence and recovery in both themes. Desktop driving and VR grid performance must be checked separately.
+The UI explicitly retains the direct-start looping finish and Continue-only pause menu. This is an opponent-grid extension, not integration with normal career/results or difficulty. All participants use the selected car; begin acceptance on Landrush/Rallycross. Unit/transaction/UI tests cover count limits, one/eight-car XML, solo isolation, persistence and recovery in both themes. VR grid performance must be checked separately.
+
+## Circuit lap override
+
+The direct-start XML readers at VA `0x80c730` and `0x80bf40` parse config/track/car attributes but no lap count. The direct-start route setup at VA `0x734960` initializes a route descriptor using `0x768b80`, then explicitly assigns one to its `+0x14` field at `0x734a4c` before copying the descriptor through `0x777fa0`.
+
+For active direct sessions only, `DIRT2VR_LAPS` supplies a validated integer 1–20. After supported-host and instruction checks, the proxy changes the four-byte immediate at RVA `0x334a50` in process memory. Page protection is restored and the instruction cache flushed; a failed guard stops the game so the session manager can recover. No disk executable/database changes or additional render hooks are required. The assignment runs again for each loop, retaining the requested count. Gameplay confirmation is required before treating the inferred lap field as verified.
+
+The catalog's `Circuit` flag comes from `track_model.track_type_id` joined to `track_type` (`1=circuit`, `2=point_to_point`): 14 circuits and 27 point-to-point routes. Settings keep `Laps` (default 1), with `SessionLaps` forced to 1 for point-to-point routes or menu mode. The setting is shared by solo practice and Race, and disabled in the UI where it cannot apply. Desktop and VR sessions forward the same resolved count.
 
 ## Track-selection fix — 2026-09-21
 

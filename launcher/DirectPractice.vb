@@ -8,6 +8,7 @@ Public Class PracticeTrack
     Public Property Country As String = ""
     Public Property Track As String = ""
     Public Property Route As String = ""
+    Public Property Circuit As Boolean
     Public Overrides Function ToString() As String
         Return Label
     End Function

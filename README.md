@@ -64,7 +64,9 @@ Desktop steering/throttle, pause/resume and finishing have been confirmed in the
 
 Choose **Race**, an event, track and car, then set **AI opponents** from 1 to 7. Use **Launch** for desktop or **Launch VR** for headset play. The whole grid uses your selected car; Direct practice remains solo regardless of the saved opponent count. Start with Landrush or Rallycross. Other disciplines and track/car combinations need testing.
 
-Race uses the same direct-start route as practice: it bypasses menus, repeats after finishing, and only offers Continue when paused. **Alt+F4 quits.** Difficulty, lap count, career progression and normal results screens are not configurable here; use Game menus for the full event flow. Opponent driving and crowded-grid VR performance require gameplay validation.
+Use **Laps (circuits)** to choose 1–20 laps in either **Race** or **Direct practice**. On point-to-point stages this control is disabled and the session is one stage run; your saved circuit lap preference is retained. Custom lap counts still need gameplay validation.
+
+Race uses the same direct-start route as practice: it bypasses menus, repeats after finishing, and only offers Continue when paused. **Alt+F4 quits.** Difficulty, career progression and normal results screens are not configurable here; use Game menus for the full event flow. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Crowded-grid VR performance still needs testing.
 
 ### Graphics
 
