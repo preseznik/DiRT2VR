@@ -7,6 +7,19 @@
 #include <mutex>
 
 namespace vr {
+bool LoggingEnabled() {
+    static const bool enabled=[] {
+        wchar_t value[8]{};
+        return GetEnvironmentVariableW(L"DIRT2VR_LOGGING",value,8)==1 && value[0]==L'1';
+    }();
+    return enabled;
+}
+std::ofstream TraceFile(const std::filesystem::path& path, std::ios::openmode mode) {
+    if(!LoggingEnabled()) return {};
+    std::error_code ec;
+    std::filesystem::create_directories(path.parent_path(),ec);
+    return std::ofstream(path,mode);
+}
 std::filesystem::path Output() {
     static const auto path = [] {
         wchar_t value[32768]{};
@@ -19,6 +32,7 @@ std::filesystem::path Output() {
     return path;
 }
 void Log(const char* format, ...) {
+    if(!LoggingEnabled()) return;
     static std::mutex mutex;
     std::lock_guard lock(mutex);
     std::error_code ec;

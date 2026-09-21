@@ -4,6 +4,9 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Diagnostic logging toggle in Settings, off by default for new and existing preferences. Disables preflight log files, native trace/CSV/binary output and captures while preserving recovery journals and a single latest headset refresh summary. Existing logs are not deleted. Native logging-on/off and launcher preference tests pass; VR gameplay with logging disabled still needs a headset check.
+- Launcher minimizes after starting desktop or VR play and does not restore itself during session-status updates. Background session children start without a console window. In-game focus acceptance is pending.
+
 ## 0.1.0-alpha.3 — 2026-09-21
 
 First public experimental package, including the development changes below.

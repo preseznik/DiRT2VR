@@ -7,6 +7,10 @@ Public Class SessionStatus
     Public Property ProcessId As Integer
     Public Property UpdatedUtc As DateTime = DateTime.UtcNow
 End Class
+Public Class HeadsetStatus
+    Public Property RefreshHz As String = ""
+    Public Property UpdatedUtc As DateTime = DateTime.UtcNow
+End Class
 Public Class Session
     Private ReadOnly context As InstallContext
     Private ReadOnly settings As VrSettings
@@ -43,8 +47,7 @@ Public Class Session
                 graphics.Recover() : Worker.Invoke(context, "recover")
                 Worker.Invoke(context, "setup")
                 Status("Preparing")
-                Dim logFolder = IO.Path.Combine(context.UserRoot, "logs", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"))
-                Directory.CreateDirectory(logFolder)
+                Dim logFolder = CreateLogFolder(context, settings.LoggingEnabled OrElse Environment.GetCommandLineArgs().Contains("--diagnostic-capture"))
                 ProbeRuntime(logFolder)
                 Dim channel = "Local\DiRT2VR.Input." & Guid.NewGuid().ToString("N")
                 Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor()
@@ -63,7 +66,7 @@ Public Class Session
                     start.Environment("DIRT2VR_WORLD_SCALE") = "1"
                     start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
                     start.Environment("DIRT2VR_FOV_SCALE") = (settings.FieldOfView / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
-                    start.Environment("DIRT2VR_OUTPUT") = logFolder
+                    ConfigureLogging(start, logFolder)
                     start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
                     start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
                     start.Environment("XR_RUNTIME_JSON") = settings.Runtime
@@ -129,7 +132,7 @@ Public Class Session
             Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
             Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents)
             config = New AssetTransaction(context).PracticeConfig()
-            logFolder = IO.Path.Combine(context.UserRoot, "logs", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") & "-desktop")
+            logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
@@ -147,7 +150,7 @@ Public Class Session
             start.Environment("DIRT2VR_DESKTOP_PRACTICE") = "1"
             start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
             start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"
-            start.Environment("DIRT2VR_OUTPUT") = logFolder
+            ConfigureLogging(start, logFolder)
         End If
         Return start
     End Function
@@ -171,6 +174,22 @@ Public Class Session
             If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")
         End Using
     End Sub
+    Public Shared Function CreateLogFolder(context As InstallContext, enabled As Boolean) As String
+        If Not enabled Then Return Nothing
+        Dim folder = IO.Path.Combine(context.UserRoot, "logs", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"))
+        Directory.CreateDirectory(folder)
+        Return folder
+    End Function
+    Public Shared Sub ConfigureLogging(start As ProcessStartInfo, logFolder As String)
+        start.Environment("DIRT2VR_LOGGING") = If(logFolder Is Nothing, "0", "1")
+        start.Environment.Remove("DIRT2VR_OUTPUT")
+        If logFolder IsNot Nothing Then start.Environment("DIRT2VR_OUTPUT") = logFolder
+    End Sub
+    Public Shared Sub SavePreflightReport(context As InstallContext, report As String, logFolder As String)
+        If logFolder IsNot Nothing Then File.WriteAllText(IO.Path.Combine(logFolder, "preflight.txt"), report)
+        Dim match = System.Text.RegularExpressions.Regex.Match(report, "(?m)^display_refresh_hz=([0-9.]+)")
+        Files.SaveJson(IO.Path.Combine(context.UserRoot, "headset.json"), New HeadsetStatus With {.RefreshHz = If(match.Success, match.Groups(1).Value, "")})
+    End Sub
     Private Sub ProbeRuntime(logFolder As String)
         Dim executable = IO.Path.Combine(context.ModRoot, "payload\xr_probe.exe")
         Dim manifest = Files.ReadJson(Of PackageManifest)(IO.Path.Combine(context.ModRoot, "package.json"))
@@ -187,8 +206,8 @@ Public Class Session
                 Throw New IOException("SteamVR preflight timed out. Start SteamVR, connect your headset, then retry.")
             End If
             Dim report = stdout.GetAwaiter().GetResult() & stderr.GetAwaiter().GetResult()
-            File.WriteAllText(IO.Path.Combine(logFolder, "preflight.txt"), report)
-            If probe.ExitCode <> 0 Then Throw New IOException("SteamVR could not open a headset session. Connect your headset and check SteamVR. Details are in " & IO.Path.Combine(logFolder, "preflight.txt"))
+            SavePreflightReport(context, report, logFolder)
+            If probe.ExitCode <> 0 Then Throw New IOException("SteamVR could not open a headset session. Connect your headset and check SteamVR. " & If(logFolder Is Nothing, "Enable diagnostic logging in Settings and retry for details.", "Details are in " & IO.Path.Combine(logFolder, "preflight.txt")))
         End Using
     End Sub
 End Class

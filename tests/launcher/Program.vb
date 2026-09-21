@@ -92,9 +92,22 @@ Module Program
         Check(document.DocumentElement.GetAttribute("unrelatedTest") = "keep", "unrelated graphics changes retained")
         Check(DirectCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/resolution"), Xml.XmlElement).GetAttribute("width") <> "1600", "VR resolution restored during merge")
         Dim setting As New VrSettings()
+        Check(Not setting.LoggingEnabled, "diagnostic logging defaults off")
+        Check(Session.CreateLogFolder(context, False) Is Nothing AndAlso Not Directory.Exists(IO.Path.Combine(context.UserRoot, "logs")), "disabled logging creates no session log folder")
+        Session.SavePreflightReport(context, "display_refresh_hz=90" & Environment.NewLine & "verbose diagnostic data", Nothing)
+        Check(Not Directory.Exists(IO.Path.Combine(context.UserRoot, "logs")) AndAlso Files.ReadJson(Of HeadsetStatus)(IO.Path.Combine(context.UserRoot, "headset.json")).RefreshHz = "90", "quiet preflight retains only bounded refresh summary")
+        Dim enabledLog = Session.CreateLogFolder(context, True)
+        Session.SavePreflightReport(context, "test preflight", enabledLog)
+        Check(File.ReadAllText(IO.Path.Combine(enabledLog, "preflight.txt")) = "test preflight", "enabled logging preserves preflight details")
+        Dim loggingStart As New ProcessStartInfo()
+        Session.ConfigureLogging(loggingStart, enabledLog)
+        Check(loggingStart.Environment("DIRT2VR_LOGGING") = "1" AndAlso loggingStart.Environment("DIRT2VR_OUTPUT") = enabledLog, "VR logging setting enables native output")
+        Session.ConfigureLogging(loggingStart, Nothing)
+        Check(loggingStart.Environment("DIRT2VR_LOGGING") = "0" AndAlso Not loggingStart.Environment.ContainsKey("DIRT2VR_OUTPUT"), "disabled VR logging clears inherited output")
         Check(setting.RenderWidth = 1600 AndAlso setting.RenderHeight = 1200 AndAlso setting.HeadsetScale = 50 AndAlso setting.FieldOfView = 100 AndAlso setting.Mirrors = "game", "default graphics preserve baseline")
         Files.AtomicWrite(context.PreferencesPath, Text.Encoding.UTF8.GetBytes("{""Version"":1,""ToggleKey"":118,""RecenterKey"":119,""Bindings"":[]}"))
         Dim migrated = VrSettings.Load(context)
+        Check(Not migrated.LoggingEnabled, "existing preferences migrate with logging off")
         Check(migrated.Version = 3 AndAlso migrated.ToggleKey = 118 AndAlso migrated.RecenterKey = 119 AndAlso migrated.RenderWidth = 1600 AndAlso migrated.LaunchMode = "menus", "legacy settings migrate without changing keys")
         For Each invalid In {New VrSettings With {.RenderScale = 49}, New VrSettings With {.RenderScale = 151}, New VrSettings With {.HeadsetScale = 24}, New VrSettings With {.HeadsetScale = 101}, New VrSettings With {.FieldOfView = 69}, New VrSettings With {.FieldOfView = 101}, New VrSettings With {.Mirrors = "invalid"}, New VrSettings With {.Version = 4}, New VrSettings With {.LaunchMode = "benchmark"}, New VrSettings With {.CarCode = "..\other"}, New VrSettings With {.TrackId = "999999"}}
             Reject(Sub() invalid.Validate(), "out-of-range graphics/settings rejected")
@@ -195,6 +208,9 @@ Module Program
             Dim desktopMenu = Session.DesktopStartInfo(context, Nothing, Nothing)
             Check(desktopMenu.ArgumentList.Count = 0 AndAlso desktopMenu.Environment("DIRT2VR_ACTIVE") = "0" AndAlso Not desktopMenu.Environment.ContainsKey("DIRT2VR_HEADSET"), "regular menu launch disables inherited VR activation")
             Dim desktopRace = Session.DesktopStartInfo(context, "DiRT2VR/p.xml", folder)
+            Check(desktopRace.Environment("DIRT2VR_LOGGING") = "1", "desktop direct start supports opt-in logs")
+            Dim quietRace = Session.DesktopStartInfo(context, "DiRT2VR/p.xml", Nothing)
+            Check(quietRace.Environment("DIRT2VR_LOGGING") = "0" AndAlso Not quietRace.Environment.ContainsKey("DIRT2VR_OUTPUT"), "desktop direct start honors disabled logs")
             Check(desktopRace.ArgumentList.SequenceEqual({"-demo", "DiRT2VR/p.xml"}) AndAlso desktopRace.Environment("DIRT2VR_DESKTOP_PRACTICE") = "1" AndAlso Not desktopRace.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso Not desktopRace.Environment.ContainsKey("DIRT2VR_INPUT_CHANNEL"), "desktop practice enables human control without headset or VR input")
         Finally
             Environment.SetEnvironmentVariable("DIRT2VR_HEADSET", inherited)
@@ -308,12 +324,16 @@ Module Program
                 End Using
             Next
             tabs.SelectedIndex = 1
+            Dim logToggle = DirectCast(form.Controls.Find("LoggingEnabled", True).Single(), CheckBox)
+            Check(Not logToggle.Checked, "Settings logging checkbox starts off")
+            logToggle.Checked = True
             DirectCast(form.Controls.Find("RenderScale", True).Single(), NumericUpDown).Value = 75
             DirectCast(form.Controls.Find("HeadsetScale", True).Single(), NumericUpDown).Value = 60
             DirectCast(form.Controls.Find("FieldOfView", True).Single(), NumericUpDown).Value = 80
             DirectCast(form.Controls.Find("Mirrors", True).Single(), ComboBox).SelectedIndex = 2
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             Dim saved = VrSettings.Load(context)
+            Check(saved.LoggingEnabled, "Settings logging opt-in persists")
             Check(saved.RenderWidth = 960 AndAlso saved.RenderHeight = 720 AndAlso saved.HeadsetScale = 60 AndAlso saved.Mirrors = "off", "Graphics tab saves selected values")
             Check(saved.Bindings.Count = 1 AndAlso saved.Bindings(0).Buttons.SequenceEqual({16, 32}), "tab save preserves existing controller pair")
             Check(saved.LaunchMode = "practice" AndAlso saved.TrackId = "129" AndAlso saved.CarCode = "n12" AndAlso saved.Opponents = 3, "launcher selection persists for GUI and quick launch")

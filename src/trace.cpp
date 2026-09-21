@@ -146,7 +146,7 @@ thread_local unsigned lightingEye{}; // 0 = original scene, 1/2 = headset eyes.
 thread_local GroundCoverPair groundCoverPair;
 bool LightingTrace() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_TRACE_LIGHTS",value,8)>0 && wcscmp(value,L"1")==0; }();
-    return enabled;
+    return LoggingEnabled() && enabled;
 }
 void Stack(const char* event);
 using LightSetupFn = void (__thiscall*)(void*,void*,void*,void*);
@@ -178,7 +178,7 @@ void TraceLight(unsigned kind,void* light,void* context) {
     if(frame.load()%120) return;
     static std::mutex outputMutex;
     std::lock_guard lock(outputMutex);
-    static std::ofstream out(Output()/"lights.csv");
+    static auto out=TraceFile(Output()/"lights.csv");
     static bool header=false;
     if(!header) {
         out << "frame,kind,eye,light,context";
@@ -249,9 +249,9 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
             if(finite) {
                 static std::atomic<bool> captured{};
                 if(!captured.exchange(true)) {
-                    std::ofstream before(Output()/"visibility-original.bin",std::ios::binary);
+                    auto before=TraceFile(Output()/"visibility-original.bin",std::ios::binary);
                     before.write(static_cast<const char*>(source),224);
-                    std::ofstream after(Output()/"visibility-expanded.bin",std::ios::binary);
+                    auto after=TraceFile(Output()/"visibility-expanded.bin",std::ios::binary);
                     after.write(reinterpret_cast<const char*>(volume.data()),224);
                     Log("visibility expanded to all directions frame=%llu far=%.1f/%.1f",frame.load(),a[22],b[22]);
                 }
@@ -307,11 +307,11 @@ bool InteractiveEnabled() {
 }
 bool DetailedTrace() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_CAPTURE_DIAGNOSTICS",value,16)>0 ? wcscmp(value,L"1")==0 : !InteractiveEnabled(); }();
-    return enabled;
+    return LoggingEnabled() && enabled;
 }
 bool RequestedCapturesEnabled() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_CAPTURE_REQUESTS",value,8)>0 && wcscmp(value,L"1")==0; }();
-    return enabled;
+    return LoggingEnabled() && enabled;
 }
 uint64_t requestedCaptureFrame=~uint64_t{};
 unsigned requestedCaptureCount{};
@@ -379,7 +379,7 @@ void HeadsetScreen() {
     },[&](const std::array<XrView,2>& views) {
         PrepareHeadsetViews(views); screen.pose=ScreenPose(headsetReference,2.f);
     },&screen);
-    static std::ofstream csv(Output()/"screen-frames.csv");
+    static auto csv=TraceFile(Output()/"screen-frames.csv");
     static bool header=false;
     if(!header) { csv << "frame,submitted,visible\n"; header=true; }
     csv << f << ',' << submitted << ',' << gameXr->Visible() << '\n';
@@ -466,11 +466,11 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return false;
     static GpuTimer gpu;
     static bool gpuAttempted=false;
-    if(!gpuAttempted) {
+    if(LoggingEnabled() && !gpuAttempted) {
         gpuAttempted=true; ComPtr<ID3D11Device> device; back->GetDevice(&device);
         Log("OpenXR GPU timer initialized=%d",gpu.Initialize(device.Get()));
     }
-    static std::ofstream gpuCsv(Output()/"gpu-frames.csv");
+    static auto gpuCsv=TraceFile(Output()/"gpu-frames.csv");
     static bool gpuHeader=false;
     if(!gpuHeader) { gpuCsv << "frame,eye_pair_gpu_ms,valid\n"; gpuHeader=true; }
     for(const auto& timing:gpu.Poll()) gpuCsv << timing.frame << ',' << timing.milliseconds << ',' << timing.valid << '\n';
@@ -528,7 +528,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     }
     requestedCaptureFrame=~uint64_t{};
     QueryPerformanceCounter(&end);
-    static std::ofstream csv(Output()/"headset-frames.csv");
+    static auto csv=TraceFile(Output()/"headset-frames.csv");
     static bool header=false;
     if(!header) {
         csv << "frame,submitted,visible,pair_ready,cameras_restored,left_draws,right_draws,left_projection_uploads,right_projection_uploads,tick_ms\n";
@@ -602,7 +602,7 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
     const bool ready=SUCCEEDED(capture) && eyes.Ready(f) && restored;
     const bool matched=eyeDraws[0]==eyeDraws[1];
     if(ready) ++pairs;
-    static std::ofstream csv(Output()/"stereo-frames.csv");
+    static auto csv=TraceFile(Output()/"stereo-frames.csv");
     static bool header=false;
     if(!header) { csv << "frame,left_draws,right_draws,cameras_restored,pair_ready,cpu_ms\n"; header=true; }
     csv << f << ',' << eyeDraws[0] << ',' << eyeDraws[1] << ',' << restored << ',' << ready << ','
@@ -672,7 +672,7 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
             if(VirtualQuery(address,&region,sizeof(region)) && region.State==MEM_COMMIT &&
                !(region.Protect&(PAGE_NOACCESS|PAGE_GUARD)) &&
                reinterpret_cast<uintptr_t>(address)+112 <= reinterpret_cast<uintptr_t>(region.BaseAddress)+region.RegionSize) {
-                std::ofstream out(Output()/("scene-camera-"+std::to_string(f)+"-"+std::to_string(index)+".bin"),std::ios::binary);
+                auto out=TraceFile(Output()/("scene-camera-"+std::to_string(f)+"-"+std::to_string(index)+".bin"),std::ios::binary);
                 out.write(static_cast<const char*>(address),112);
             }
             ++index;
@@ -716,9 +716,10 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
 
 bool Sample() { auto f=frame.load(); return DetailedTrace() && (f==300 || f==1200 || f==3000); }
 void Stack(const char* event) {
+    if(!LoggingEnabled()) return;
     void* addresses[20]{};
     const auto n=CaptureStackBackTrace(1,20,addresses,nullptr);
-    std::ofstream out(Output()/"stacks.txt",std::ios::app);
+    auto out=TraceFile(Output()/"stacks.txt",std::ios::app);
     auto base=reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
     out << event << " frame=" << frame << " tid=" << GetCurrentThreadId();
     for (USHORT i=0;i<n;++i) {
@@ -757,7 +758,7 @@ void STDMETHODCALLTYPE Unmap(ID3D11DeviceContext* c,ID3D11Resource* resource,UIN
     if(it!=cameraMaps.end()) {
         static std::atomic<unsigned> index{};
         unsigned id=index++;
-        std::ofstream out(Output()/("camera-"+std::to_string(frame.load())+"-"+std::to_string(id)+".bin"),std::ios::binary);
+        auto out=TraceFile(Output()/("camera-"+std::to_string(frame.load())+"-"+std::to_string(id)+".bin"),std::ios::binary);
         out.write(static_cast<const char*>(it->second),400);
         Stack("CameraUnmap");
         cameraMaps.erase(it);
@@ -777,13 +778,13 @@ uint64_t Shader(const void* bytes, SIZE_T length, const char* stage) {
     auto directory=Output()/"shaders";
     std::error_code ec;
     std::filesystem::create_directories(directory,ec);
-    std::ofstream binary(directory/(std::string(name)+".dxbc"),std::ios::binary);
+    auto binary=TraceFile(directory/(std::string(name)+".dxbc"),std::ios::binary);
     binary.write(static_cast<const char*>(bytes),length);
     ComPtr<ID3D11ShaderReflection> reflection;
     if(FAILED(D3DReflect(bytes,length,IID_ID3D11ShaderReflection,&reflection))) return hash;
     D3D11_SHADER_DESC desc{};
     reflection->GetDesc(&desc);
-    std::ofstream text(directory/(std::string(name)+".txt"));
+    auto text=TraceFile(directory/(std::string(name)+".txt"));
     text << "instruction_count=" << desc.InstructionCount << '\n';
     for(UINT b=0;b<desc.BoundResources;++b) {
         D3D11_SHADER_INPUT_BIND_DESC binding{};
@@ -819,7 +820,7 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
     // build. Never suppress general depth rendering or unrecognized shaders.
     if(skipWater && (ph==0x08192877abdf068aull || ph==0x122478b22e69d9faull)) {
         if(scenePass) {
-            std::ofstream skipped(Output()/"skipped-water.csv",std::ios::app);
+            auto skipped=TraceFile(Output()/"skipped-water.csv",std::ios::app);
             skipped << scenePass << ',' << kind << ',' << count << ',' << instances << ',' << std::hex << vh << ',' << ph << '\n';
         }
         return false;
@@ -830,12 +831,12 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
         D3D11_PRIMITIVE_TOPOLOGY topology{};
         context->IAGetVertexBuffers(0,1,vertex.GetAddressOf(),&stride,&offset);
         context->IAGetIndexBuffer(&index,&format,&indexOffset); context->IAGetPrimitiveTopology(&topology);
-        std::ofstream capture(Output()/("capture-"+std::to_string(frame.load())+"-eye-"+std::to_string(scenePass)+".csv"),std::ios::app);
+        auto capture=TraceFile(Output()/("capture-"+std::to_string(frame.load())+"-eye-"+std::to_string(scenePass)+".csv"),std::ios::app);
         capture << kind << ',' << count << ',' << instances << ',' << std::hex << vh << ',' << ph << std::dec
             << ',' << start << ',' << base << ',' << firstInstance << ',' << topology << ',' << vertex.Get()
             << ',' << stride << ',' << offset << ',' << index.Get() << ',' << format << ',' << indexOffset << '\n';
     }
-    std::ofstream out(Output()/("draws-pass-"+std::to_string(scenePass)+".csv"),std::ios::app);
+    auto out=TraceFile(Output()/("draws-pass-"+std::to_string(scenePass)+".csv"),std::ios::app);
     out << kind << ',' << count << ',' << instances << ',' << std::hex << vh << ',' << ph << '\n';
     return true;
 }
@@ -846,6 +847,7 @@ void Screenshot(IDXGISwapChain* swapchain, unsigned long long number) {
     ScreenshotTexture(back.Get(),number);
 }
 void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number) {
+    if(!LoggingEnabled()) return;
     ComPtr<ID3D11Texture2D> source,staging;
     ComPtr<ID3D11Device> device; back->GetDevice(&device);
     ComPtr<ID3D11DeviceContext> context; device->GetImmediateContext(&context);
@@ -865,7 +867,7 @@ void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number) {
     D3D11_MAPPED_SUBRESOURCE mapped{};
     if(FAILED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped))) return;
     // PPM is intentionally simple and keeps screenshot support out of the render hook's dependencies.
-    std::ofstream out(Output()/("frame-"+std::to_string(number)+".ppm"),std::ios::binary);
+    auto out=TraceFile(Output()/("frame-"+std::to_string(number)+".ppm"),std::ios::binary);
     out << "P6\n" << desc.Width << " " << desc.Height << "\n255\n";
     std::vector<char> row(desc.Width*3);
     for(UINT y=0;y<desc.Height;++y) {
@@ -894,32 +896,34 @@ HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT f
     const double ms=previous ? 1000.0*(now.QuadPart-previous)/frequency.QuadPart : 0;
     previous=now.QuadPart;
     auto d=draws.exchange(0), c=dispatches.exchange(0);
-    PROCESS_MEMORY_COUNTERS_EX memory{}; memory.cb=sizeof(memory);
-    GetProcessMemoryInfo(GetCurrentProcess(),reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&memory),sizeof(memory));
-    static std::ofstream csv(Output()/"frames.csv");
-    if(f==0) csv << "frame,interval_ms,draws,dispatches,private_bytes,working_set_bytes,vsync\n";
-    csv << f << ',' << ms << ',' << d << ',' << c << ',' << memory.PrivateUsage << ',' << memory.WorkingSetSize << ',' << interval << '\n';
-    if(f%120==0) {
-        csv.flush(); Log("frame=%llu interval_ms=%.3f draws=%llu dispatches=%llu private_MB=%zu",f,ms,d,c,memory.PrivateUsage/1048576);
-        SYSTEM_INFO info{}; GetSystemInfo(&info);
-        const uint64_t limit=reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress)+1ull;
-        uint64_t committed=0,reserved=0,free=0,largestFree=0;
-        bool complete=true;
-        for(uint64_t address=0;address<limit;) {
-            MEMORY_BASIC_INFORMATION region{};
-            if(!VirtualQuery(reinterpret_cast<const void*>(static_cast<uintptr_t>(address)),&region,sizeof(region))) { complete=false; break; }
-            const uint64_t end=std::min(limit,reinterpret_cast<uintptr_t>(region.BaseAddress)+static_cast<uint64_t>(region.RegionSize));
-            if(end<=address) { complete=false; break; }
-            const auto bytes=end-address;
-            if(region.State==MEM_COMMIT) committed+=bytes;
-            else if(region.State==MEM_RESERVE) reserved+=bytes;
-            else if(region.State==MEM_FREE) { free+=bytes; largestFree=std::max(largestFree,bytes); }
-            address=end;
+    if(LoggingEnabled()) {
+        PROCESS_MEMORY_COUNTERS_EX memory{}; memory.cb=sizeof(memory);
+        GetProcessMemoryInfo(GetCurrentProcess(),reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&memory),sizeof(memory));
+        static auto csv=TraceFile(Output()/"frames.csv");
+        if(f==0) csv << "frame,interval_ms,draws,dispatches,private_bytes,working_set_bytes,vsync\n";
+        csv << f << ',' << ms << ',' << d << ',' << c << ',' << memory.PrivateUsage << ',' << memory.WorkingSetSize << ',' << interval << '\n';
+        if(f%120==0) {
+            csv.flush(); Log("frame=%llu interval_ms=%.3f draws=%llu dispatches=%llu private_MB=%zu",f,ms,d,c,memory.PrivateUsage/1048576);
+            SYSTEM_INFO info{}; GetSystemInfo(&info);
+            const uint64_t limit=reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress)+1ull;
+            uint64_t committed=0,reserved=0,free=0,largestFree=0;
+            bool complete=true;
+            for(uint64_t address=0;address<limit;) {
+                MEMORY_BASIC_INFORMATION region{};
+                if(!VirtualQuery(reinterpret_cast<const void*>(static_cast<uintptr_t>(address)),&region,sizeof(region))) { complete=false; break; }
+                const uint64_t end=std::min(limit,reinterpret_cast<uintptr_t>(region.BaseAddress)+static_cast<uint64_t>(region.RegionSize));
+                if(end<=address) { complete=false; break; }
+                const auto bytes=end-address;
+                if(region.State==MEM_COMMIT) committed+=bytes;
+                else if(region.State==MEM_RESERVE) reserved+=bytes;
+                else if(region.State==MEM_FREE) { free+=bytes; largestFree=std::max(largestFree,bytes); }
+                address=end;
+            }
+            static auto addresses=TraceFile(Output()/"address-space.csv");
+            if(f==0) addresses << "frame,limit_bytes,committed_bytes,reserved_bytes,free_bytes,largest_free_bytes,complete\n";
+            addresses << f << ',' << limit << ',' << committed << ',' << reserved << ',' << free << ',' << largestFree << ',' << complete << '\n';
+            addresses.flush();
         }
-        static std::ofstream addresses(Output()/"address-space.csv");
-        if(f==0) addresses << "frame,limit_bytes,committed_bytes,reserved_bytes,free_bytes,largest_free_bytes,complete\n";
-        addresses << f << ',' << limit << ',' << committed << ',' << reserved << ',' << free << ',' << largestFree << ',' << complete << '\n';
-        addresses.flush();
     }
     if(DetailedTrace() && (f==300 || f==1200 || f==3000)) { Stack("Present"); Screenshot(swapchain,f); }
     return realPresent(swapchain,interval,flags);

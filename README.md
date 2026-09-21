@@ -30,6 +30,8 @@ Start the launcher normally, **not with Run as administrator**. In protected gam
 
 **Launch** starts regular desktop play; **Launch VR** starts headset play. Both use the selected Game menus, Direct practice or Race mode. The launch buttons stay on the left; Save settings, Restore original files and Open logs stay on the right.
 
+The launcher minimizes after starting either mode and stays minimized during play. Reopen it from the taskbar when needed; the background session manager continues running.
+
 Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and use only the human-control fix and a temporary race file. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.
@@ -51,6 +53,8 @@ To play on the desktop, close the VR session and launch the game through Steam n
 The launcher matches the Windows app light/dark setting when opened. Reopen it after changing that setting. Native dark mode requires Windows 11; Windows 10 and Windows contrast themes retain the standard accessible system appearance.
 
 **Launcher** selects how to start. **Settings** contains the game location, SteamVR runtime and setup instructions. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts and graphics preferences are preserved when upgrading.
+
+**Settings → Enable diagnostic logging** is off by default, including when upgrading older settings. Enable it and save before a troubleshooting run to collect preflight details and game-side logs in **Open logs**. Turn it off afterward to stop generating session logs, frame CSVs and diagnostic captures. Existing logs are kept; you can remove them yourself when no longer needed. Settings, the latest session/refresh-rate summary and recovery journals remain available with logging off so the launcher can restore your game files safely.
 
 ### Direct practice (experimental)
 
@@ -143,7 +147,7 @@ If recovery reports a conflict, it preserves unexpected asset edits and backups 
 
 **Unsupported executable or foreign proxy:** use the supported game build and resolve the reported conflict. Do not bypass compatibility checks or download replacement game executables from an untrusted source.
 
-**Report a problem:** use **Open logs** and include the relevant `trace.log`, car/event, headset, steps to reproduce, and whether the problem affects cockpit VR or the virtual screen in a [GitHub issue](https://github.com/preseznik/DiRT2VR/issues). Logs live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\logs`. Do not upload game files or save profiles.
+**Report a problem:** enable diagnostic logging in **Settings**, save, and reproduce the issue. Then use **Open logs** and include the relevant `trace.log`, car/event, headset, steps to reproduce, and whether the problem affects cockpit VR or the virtual screen in a [GitHub issue](https://github.com/preseznik/DiRT2VR/issues). Turn logging off afterward. Logs live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\logs`. Do not upload game files or save profiles.
 
 See the [changelog](CHANGELOG.md). Build instructions and diagnostic details are in the [development guide](docs/development.md) and [launcher implementation notes](docs/launcher.md).
 

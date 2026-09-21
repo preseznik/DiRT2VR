@@ -7,6 +7,7 @@ Public Class MainForm
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
+    Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly stateLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly inputLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly bindingLists As ListBox() = {New ListBox(), New ListBox()}
@@ -250,6 +251,8 @@ Public Class MainForm
                                      End Using
                                  End Sub
         runtimeRow.Controls.Add(browse) : content.Controls.Add(runtimeRow)
+        logging.Checked = settings.LoggingEnabled : content.Controls.Add(logging)
+        content.Controls.Add(Note("Logging is off by default. Enable it only when troubleshooting, then save before launching. Recovery records are always kept; existing logs are not deleted."))
         content.Controls.Add(Note("For Launch VR, start SteamVR and connect your headset first. Use the Subaru STI cockpit for the tested setup. Regular Launch does not require a headset."))
         content.Controls.Add(Note("In VR, the game starts on the virtual menu screen. Use Toggle VR to enter cockpit VR, and Recenter when seated facing forward. Pause menus return to the screen automatically."))
         content.Controls.Add(Note("Quit the game normally to restore temporary files. You can close this settings window while playing; the background session manager stays running."))
@@ -301,6 +304,12 @@ Public Class MainForm
     Private Sub RefreshDisplayRate()
         refreshLabel.Text = "Runtime-controlled. Launch once to record the headset's reported refresh rate."
         Try
+            Dim summaryPath = IO.Path.Combine(context.UserRoot, "headset.json")
+            If File.Exists(summaryPath) Then
+                Dim summary = Files.ReadJson(Of HeadsetStatus)(summaryPath)
+                refreshLabel.Text = If(summary.RefreshHz <> "", $"Last launch reported {summary.RefreshHz} Hz ({summary.UpdatedUtc.ToLocalTime():g}). This is not a live reading.", "The last preflight did not report headset Hz. Check SteamVR or your headset connection software.")
+                Return
+            End If
             Dim logs = IO.Path.Combine(context.UserRoot, "logs")
             If Not Directory.Exists(logs) Then Return
             Dim latest = Directory.GetDirectories(logs).OrderByDescending(Function(path) IO.Path.GetFileName(path)).FirstOrDefault()
@@ -364,6 +373,7 @@ Public Class MainForm
     End Sub
     Private Sub SaveSettings()
         settings.Runtime = runtimeBox.Text.Trim()
+        settings.LoggingEnabled = logging.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
@@ -381,11 +391,13 @@ Public Class MainForm
         stateLabel.Text = "Settings saved. Changes apply to the next session."
     End Sub
     Private Sub Spawn(ParamArray arguments As String())
-        Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False}
+        Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In arguments.Concat({"--game", context.GameRoot})
             start.ArgumentList.Add(arg)
         Next
-        Process.Start(start)
+        Using child = Process.Start(start)
+            If arguments.Contains("--launch") Then WindowState = FormWindowState.Minimized
+        End Using
     End Sub
     Private Sub RefreshBindings()
         toggleButton.Text = If(keyboardCapture = 0, "Press a key…", KeyLabel(settings.ToggleKey, settings.ToggleModifiers))

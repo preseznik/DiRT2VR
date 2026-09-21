@@ -92,6 +92,7 @@ End Class
 
 Public Class VrSettings
     Public Property Version As Integer = 3
+    Public Property LoggingEnabled As Boolean = False
     Public Property Runtime As String = Discovery.RuntimePath()
     Public Property ToggleKey As Integer = 120
     Public Property ToggleModifiers As Integer
