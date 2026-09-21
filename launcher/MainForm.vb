@@ -23,7 +23,8 @@ Public Class MainForm
     Private lastStatus As String = ""
     Private ReadOnly toggleButton As New Button With {.AutoSize = True}
     Private ReadOnly recenterButton As New Button With {.AutoSize = True}
-    Private ReadOnly launchButton As New Button With {.Text = "Launch VR", .AutoSize = True}
+    Private ReadOnly desktopButton As New Button With {.Text = "Launch", .AutoSize = True, .Name = "LaunchDesktop"}
+    Private ReadOnly launchButton As New Button With {.Text = "Launch VR", .AutoSize = True, .Name = "LaunchVR"}
     Private ReadOnly saveButton As New Button With {.Text = "Save settings", .AutoSize = True, .Name = "SaveSettings"}
     Private ReadOnly recoverButton As New Button With {.Text = "Restore original files", .AutoSize = True}
     Private ReadOnly input As New ControllerInput()
@@ -65,9 +66,20 @@ Public Class MainForm
                                                   inputLabel.Text = "Select a binding to change it."
                                                   RefreshBindings()
                                               End Sub
-        Dim commands As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill, .Margin = New Padding(0, 16, 0, 0)}
-        Dim logs As New Button With {.Text = "Open logs", .AutoSize = True}
-        commands.Controls.AddRange({launchButton, saveButton, recoverButton, logs})
+        Dim commands As New TableLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill, .ColumnCount = 3, .RowCount = 1, .Margin = New Padding(0, 16, 0, 0)}
+        commands.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
+        commands.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
+        commands.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
+        Dim launches As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0)}
+        Dim utilities As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0), .Anchor = AnchorStyles.Right}
+        Dim logs As New Button With {.Text = "Open logs", .AutoSize = True, .Name = "OpenLogs"}
+        launches.Controls.AddRange({desktopButton, launchButton})
+        utilities.Controls.AddRange({saveButton, recoverButton, logs})
+        commands.Controls.Add(launches, 0, 0) : commands.Controls.Add(utilities, 2, 0)
+        AddHandler desktopButton.Click, Sub() SafeAction(Sub()
+                                                            SaveSettings()
+                                                            Spawn("--launch", "--desktop", "--no-ui")
+                                                        End Sub)
         AddHandler saveButton.Click, Sub() SafeAction(Sub() SaveSettings())
         AddHandler launchButton.Click, Sub() SafeAction(Sub()
                                                            SaveSettings()
@@ -151,7 +163,7 @@ Public Class MainForm
                                                         Next
                                                     End Sub
         launchMode.SelectedIndex = If(settings.LaunchMode = "practice", 1, 0)
-        content.Controls.Add(Note("Direct practice loads one player-driven car. Event filters the track list; any listed car can be tried. Select cockpit view and use Toggle VR. Other cars and direct practice in the headset need testing."))
+        content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Direct practice loads one player-driven car. Event filters the track list; any listed car can be tried. Other VR cockpits remain experimental."))
         content.Controls.Add(Note("Practice loops after finishing; pause only offers Continue. Alt+F4 quits and restores original files. Choose Game menus for full race options."))
     End Sub
     Private Sub DrawChoice(sender As Object, e As DrawItemEventArgs)
@@ -184,8 +196,8 @@ Public Class MainForm
                                      End Using
                                  End Sub
         runtimeRow.Controls.Add(browse) : content.Controls.Add(runtimeRow)
-        content.Controls.Add(Note("Start SteamVR and connect your headset before launching. Use the Subaru STI cockpit for the tested setup."))
-        content.Controls.Add(Note("The game starts on the virtual menu screen. Use Toggle VR to enter cockpit VR, and Recenter when seated facing forward. Pause menus return to the screen automatically."))
+        content.Controls.Add(Note("For Launch VR, start SteamVR and connect your headset first. Use the Subaru STI cockpit for the tested setup. Regular Launch does not require a headset."))
+        content.Controls.Add(Note("In VR, the game starts on the virtual menu screen. Use Toggle VR to enter cockpit VR, and Recenter when seated facing forward. Pause menus return to the screen automatically."))
         content.Controls.Add(Note("Quit the game normally to restore temporary files. You can close this settings window while playing; the background session manager stays running."))
     End Sub
     Private Sub BuildGraphicsTab()
@@ -310,7 +322,7 @@ Public Class MainForm
         End If
         settings.Validate()
         Files.SaveJson(context.PreferencesPath, settings)
-        stateLabel.Text = "Settings saved. Changes apply to the next VR session."
+        stateLabel.Text = "Settings saved. Changes apply to the next session."
     End Sub
     Private Sub Spawn(ParamArray arguments As String())
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False}
@@ -410,7 +422,7 @@ Public Class MainForm
                 Catch
                 End Try
             End If
-            launchButton.Enabled = Not busy : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
+            desktopButton.Enabled = Not busy : launchButton.Enabled = Not busy : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
             tabs.Enabled = Not busy
             Dim currentStatus = If(status Is Nothing, "", status.State & status.UpdatedUtc.ToString("O"))
             If currentStatus <> lastStatus Then

@@ -29,6 +29,12 @@ The native build uses a static MSVC runtime, including the OpenXR loader. The la
 
 ## Ownership and activation
 
+The footer groups Launch / Launch VR on the left and Save settings / Restore original files / Open logs on the right. Both buttons save the same menu/practice selection, then dispatch to the session manager; `--desktop` selects ordinary monitor play. Both are disabled during a managed game session.
+
+Desktop mode recovers pending VR changes first, then skips runtime validation/preflight, VR input polling and graphics/camera preparation. Normal menu launch passes `DIRT2VR_ACTIVE=0` after removing inherited mod flags and does not deploy a proxy. Desktop practice requires `graphics_card/directx@forcedx9=false`, deploys the recognized proxy and passes `DIRT2VR_DESKTOP_PRACTICE=1` with the direct-practice flag. The proxy takes an early path that applies the guarded human-control byte only, before MinHook, render hooks, hotkeys or OpenXR initialization. Desktop session logs therefore contain only compatibility/control diagnostics.
+
+Version 4 recovery journals own only the desktop practice config, with no game-asset entries or graphics journal. They retain the short-path hash/ownership and existing-file conflict checks. Versions 1–3 continue to recover as before. Desktop and VR sessions share the mutex and process-wait routine, including cleanup on launch failure and game exit.
+
 The package carries its x86 D3D11 proxy under `DiRT2VR/payload`. Setup validates the supported executable SHA256, rejects linked paths and foreign proxies, then records the installed proxy hash in `DiRT2VR/installation.json`. Upgrades accept the current packaged hash or a matching installed ownership receipt.
 
 `DIRT2VR_ACTIVE=1` is required before the proxy runs compatibility checks or installs hooks. An ordinary Steam launch calls system D3D11 directly through the proxy, without XR or diagnostic side effects. The launcher strips inherited `DIRT2VR_*` variables and sets its tested rendering baseline explicitly. `XR_RUNTIME_JSON` is set only on the probe and game processes, never globally.

@@ -28,6 +28,10 @@ Start the launcher normally, **not with Run as administrator**. In protected gam
 
 ## Play
 
+**Launch** starts regular desktop play; **Launch VR** starts headset play. Both use the selected Game menus or Direct practice mode. The launch buttons stay on the left; Save settings, Restore original files and Open logs stay on the right.
+
+Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice requires DX11 and uses only the human-control fix and a temporary race file. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
+
 1. Start SteamVR and connect your headset.
 2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Game menus** on **Launcher**, and select **Launch VR**.
 3. Navigate the original game on the virtual screen using your usual controls.
@@ -37,6 +41,8 @@ Start the launcher normally, **not with Run as administrator**. In protected gam
 7. Quit normally. The background session manager restores temporary files when the game exits. You may close the settings window while playing.
 
 For quick launch with saved settings, use **Start-DiRT2VR.cmd**. It runs the same session manager without opening the settings window. Its equivalent command is `DiRT2VR.exe --launch --no-ui`.
+
+For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The existing `Start-DiRT2VR.cmd` continues to launch VR.
 
 To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
 

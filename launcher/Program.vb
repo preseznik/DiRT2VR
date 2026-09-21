@@ -59,7 +59,7 @@ Public Module Program
             End If
             If args.Contains("--launch") Then
                 If New WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator) Then Throw New IOException("Start DiRT2VR normally, without Run as administrator. Only the file worker needs elevation.")
-                Call (New Session(context)).Run()
+                Call (New Session(context)).Run(Not args.Contains("--desktop"))
             Else
                 Application.Run(New MainForm(context))
             End If

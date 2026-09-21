@@ -950,6 +950,12 @@ template<class F> void Hook(void* object,unsigned index,void* replacement,F& ori
 }
 void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChain* swapchain) {
     std::lock_guard lock(attachMutex);
+    wchar_t desktop[8]{};
+    if(GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1') {
+        EnableDirectPractice();
+        Log("desktop practice: no rendering hooks, VR hotkeys or OpenXR initialization");
+        return;
+    }
     static bool initialized=MH_Initialize()==MH_OK;
     if(!initialized) { Log("MinHook initialization failed"); return; }
     EnableDirectPractice();

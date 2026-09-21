@@ -16,7 +16,7 @@ Public Class Session
     Private Sub Status(state As String, Optional message As String = "")
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message, .ProcessId = Environment.ProcessId})
     End Sub
-    Public Sub Run()
+    Public Sub Run(Optional vr As Boolean = True)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
             Dim held As Boolean
             Try
@@ -29,6 +29,14 @@ Public Class Session
             Try
                 Status("Checking")
                 context.ValidateGame() : context.RequireClosed()
+                If Not vr Then
+                    Status("Restoring", "Checking for an interrupted session")
+                    graphics.Recover() : Worker.Invoke(context, "recover")
+                    RunDesktop()
+                    Status("Restoring") : Worker.Invoke(context, "recover")
+                    Status("Ready", "Desktop session ended")
+                    Return
+                End If
                 If Not File.Exists(settings.Runtime) OrElse IO.Path.GetFileName(settings.Runtime) <> "steamxr_win32.json" Then Throw New IOException("Select SteamVR's steamxr_win32.json runtime, then start SteamVR and connect your headset.")
                 If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once to create graphics settings.")
                 Status("Restoring", "Checking for an interrupted session")
@@ -77,24 +85,7 @@ Public Class Session
                                 view.Write(8 + action * 4, counts(action))
                             Next
                         End Sub
-                        Using child = Process.Start(start)
-                            Status("Running")
-                            Dim seenGame As Boolean
-                            Dim gameAlive As Boolean = True
-                            Dim nextProcessCheck = DateTime.MinValue
-                            Dim deadline = DateTime.UtcNow.AddSeconds(30)
-                            Do
-                                Application.DoEvents() : input.Poll()
-                                If DateTime.UtcNow >= nextProcessCheck Then
-                                    gameAlive = context.GameRunning()
-                                    seenGame = seenGame Or gameAlive
-                                    nextProcessCheck = DateTime.UtcNow.AddMilliseconds(250)
-                                End If
-                                If child.HasExited AndAlso Not gameAlive AndAlso (seenGame OrElse DateTime.UtcNow > deadline) Then Exit Do
-                                Thread.Sleep(8)
-                            Loop
-                            If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")
-                        End Using
+                        WaitForGame(start, AddressOf input.Poll)
                     End Using
                 End Using
                 Status("Restoring")
@@ -121,6 +112,60 @@ Public Class Session
             Finally
                 guard.ReleaseMutex()
             End Try
+        End Using
+    End Sub
+    Private Sub RunDesktop()
+        Dim config As String = Nothing
+        Dim logFolder As String = Nothing
+        If settings.LaunchMode = "practice" Then
+            ' Human control is enabled by the DX11 proxy; desktop rendering settings
+            ' stay untouched rather than silently running an AI-driven DX9 session.
+            If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before using Direct practice.")
+            Dim document = XmlPatches.Read(File.ReadAllBytes(context.GraphicsPath))
+            Dim dx = TryCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/directx"), Xml.XmlElement)
+            If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice requires the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
+            Worker.Invoke(context, "setup")
+            Status("Preparing", "Desktop practice")
+            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId)
+            config = New AssetTransaction(context).PracticeConfig()
+            logFolder = IO.Path.Combine(context.UserRoot, "logs", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") & "-desktop")
+        End If
+        WaitForGame(DesktopStartInfo(context, config, logFolder))
+    End Sub
+    Public Shared Function DesktopStartInfo(context As InstallContext, config As String, logFolder As String) As ProcessStartInfo
+        Dim start As New ProcessStartInfo(IO.Path.Combine(context.GameRoot, "dirt2.exe")) With {.UseShellExecute = False, .WorkingDirectory = context.GameRoot}
+        For Each name In start.Environment.Keys.Where(Function(k) k.StartsWith("DIRT2VR_", StringComparison.OrdinalIgnoreCase)).ToArray()
+            start.Environment.Remove(name)
+        Next
+        start.Environment("DIRT2VR_ACTIVE") = "0"
+        If config IsNot Nothing Then
+            start.ArgumentList.Add("-demo") : start.ArgumentList.Add(config)
+            start.Environment("DIRT2VR_ACTIVE") = "1"
+            start.Environment("DIRT2VR_DESKTOP_PRACTICE") = "1"
+            start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
+            start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"
+            start.Environment("DIRT2VR_OUTPUT") = logFolder
+        End If
+        Return start
+    End Function
+    Private Sub WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing)
+        Using child = Process.Start(start)
+            Status("Running")
+            Dim seenGame As Boolean
+            Dim gameAlive As Boolean = True
+            Dim nextProcessCheck = DateTime.MinValue
+            Dim deadline = DateTime.UtcNow.AddSeconds(30)
+            Do
+                Application.DoEvents() : poll?.Invoke()
+                If DateTime.UtcNow >= nextProcessCheck Then
+                    gameAlive = context.GameRunning()
+                    seenGame = seenGame Or gameAlive
+                    nextProcessCheck = DateTime.UtcNow.AddMilliseconds(250)
+                End If
+                If child.HasExited AndAlso Not gameAlive AndAlso (seenGame OrElse DateTime.UtcNow > deadline) Then Exit Do
+                Thread.Sleep(8)
+            Loop
+            If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")
         End Using
     End Sub
     Private Sub ProbeRuntime(logFolder As String)

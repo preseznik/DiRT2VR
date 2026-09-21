@@ -61,9 +61,9 @@ Public Module Worker
         context.ValidateGame() : context.RequireClosed()
         Select Case operation
             Case "setup" : Call (New Installation(context)).Setup()
-            Case "prepare"
+            Case "prepare", "prepare-desktop"
                 Dim transaction As New AssetTransaction(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId)
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop")
             Case "recover" : Call (New AssetTransaction(context)).Recover()
             Case "remove" : Call (New Installation(context)).RemoveProxy()
             Case Else : Throw New ArgumentException("Unknown file operation.")
@@ -74,7 +74,7 @@ Public Module Worker
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
         Next
-        If operation = "prepare" Then
+        If operation = "prepare" OrElse operation = "prepare-desktop" Then
             start.ArgumentList.Add("--car") : start.ArgumentList.Add(carCode)
             If trackId IsNot Nothing Then
                 start.ArgumentList.Add("--track") : start.ArgumentList.Add(trackId)
