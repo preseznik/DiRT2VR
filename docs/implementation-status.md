@@ -2,9 +2,29 @@
 
 ## Decision
 
-The native x86 OpenXR route now receives game-rendered stereo frames on this machine. The user reports the headset run looked very good and both turning and leaning looked correct. **The planned first milestone is not complete.** Runtime submission and camera/projection checks pass, with positive subjective head-tracking confirmation; calibrated scale, broader visibility checks and a complete interactive race still need acceptance. Do not advance to playable-alpha/release claims.
+The native x86 OpenXR route now supports an interactive launch, a stationary virtual screen and requested cockpit VR. The user confirmed the screen/controls worked and drove a race test; they reported hitching and incorrect trailer scenes when switched to full 3D. The follow-up build filters the observed trailer cameras to the screen and disables expensive diagnostic captures. **Release acceptance remains incomplete.** Calibrated scale, broader visibility, race-state integrity and a complete frame-time budget still need validation.
 
-The reduced-effects route renders the prepared inner scene for each predicted headset eye pose/projection and presents independent images through OpenXR. Repeating the outer scene still consumes interior work. Remaining gates include calibrated scale, systematic per-eye visibility coverage, simulation integrity, proper menus/HUD and measured GPU performance.
+The reduced-effects route renders the prepared inner scene for each predicted headset eye pose/projection and presents independent images through OpenXR. Repeating the outer scene still consumes interior work. Remaining gates include calibrated scale, systematic per-eye visibility coverage, simulation integrity, HUD composition, complete game-state detection and performance validation.
+
+## Interactive playtest, September 21
+
+`Start-DiRT2VR.cmd` launches the normal game through the restoring wrapper (`-Interactive`). Menus/videos begin on a fixed OpenXR quad. F9 requests screen/cockpit mode and F10 recenters; the game window must have focus. The game retains its normal driving/navigation inputs and shared save profile. This is a development launcher, not a packaged installer or standalone replacement game.
+
+Initial receipt `trace-20260921-142019-630` contains **10,157 visible stereo scene pairs** and **7,018 visible screen frames**, with 15 recorded mode changes and no camera-restoration failures, missing submitted projections or incomplete pairs. A read-only live game screenshot showed an interactive circuit race on lap 2/2; finish-line completion and exact car/event identity were not independently recorded. The user confirmed the screen and controls worked, then reported that the run seemed fine apart from some hitching and incorrect trailer scenes in full 3D. They clarified that the flat screen was correct.
+
+That first build still performed synchronous captures and shader/camera dumps. The updated interactive default disables them, retaining lightweight CSVs and shader hashes for the water filter. Captured trailer cameras use a 0.2 near plane in both records, whereas verified cockpit records use 0.075. A tested conservative filter now admits only that cockpit near-plane signature and sends other cameras to the screen. It is not a complete game-state classifier: cockpit replays and pause overlays still require the screen toggle.
+
+The follow-up adds bounded asynchronous GPU timestamp queries for the inner stereo render/copy interval, excluding outer preparation, compositor and headset transport. All four CTest suites pass, including screen/stereo transitions, hidden/failed screen frames, recentered screen pose, the camera filter and GPU timestamp retirement. The initial interactive run measured peak committed address space 1,160,970,240 bytes, minimum free 756,867,072 bytes and minimum largest free block 175,439,872 bytes, with complete traversals under the unchanged 2 GB ceiling.
+
+Follow-up receipt `trace-20260921-143017-567` confirms `captureDiagnostics=false`, with **2,365 visible stereo pairs** and **10,505 visible screen frames**. At frame 3234, a cockpit request in the trailer was rejected by the camera filter (`near=0.2/0.2`) and the quad continued submitting. All recorded submitted pairs passed camera/projection/completeness checks. There are 2,365 valid GPU samples, zero invalid samples, a **0.915456 ms median / 1.1991 ms p95** inner stereo interval, and no sample above 11.11 ms. This is not a full-frame 90 Hz claim. Peak committed address space was 1,140,482,048 bytes, minimum free 769,482,752 bytes, and minimum largest free block 191,692,800 bytes; all traversals completed.
+
+The user reported that the follow-up worked fine, but F10 froze the view until pressed again. The original polling code allowed Windows' default F10 handler to enter its system-menu loop. The final fix consumes both edges of F9/F10 in the game window procedure, queues one action per press, and forwards unrelated messages. The new native-window regression test reproduces the default system-menu path and verifies the hook blocks it while preserving ordinary keys. **All five CTest suites pass.** In `trace-20260921-143714-046`, the window hook installed successfully and the user confirmed F10 recenters without freezing.
+
+The final run recorded **3,669 visible stereo pairs**, **5,098 visible screen frames**, zero recorded pair/camera/projection failures, and 3,669 valid GPU samples. The inner stereo GPU interval was **0.891904 ms median / 1.00352 ms p95**. CPU intervals at Present for those submitted stereo frames were **11.1113 ms median / 11.1702 ms p95**, maximum **21.991 ms**, with none above 22.22 ms. These bounded observations support continued prototype work, not compositor-delivery or broad 90 Hz acceptance. All final `restoration-check.json` checks pass, including original settings/assets, installed executable/xlive, deployed build identity and clean process exit.
+
+**New reported defect:** Subaru Impreza at Battersea at night: headlights follow headset orientation instead of staying aligned with the car. Treat night lighting as unaccepted until the light setup is separated from eye-camera transforms and retested.
+
+Computer-use input stopped after physical Escape was detected; subsequent test operation was left to the user and inspected through log files only. The launcher restored shared graphics settings after each completed run; the normal game save/progress is retained.
 
 ## In-game OpenXR, September 21
 
@@ -25,7 +45,7 @@ With OpenXR active, `trace-20260921-140522-838` measured peak committed address 
 
 This is an automatic benchmark with a script launcher, not an end-user executable or interactive VR race. Menus/no eligible scene are black; forced benchmark introductory cameras still render in 3D. HUD, reflection correctness, world scale (default one game unit per metre), visibility outside original prepared lists, device/session recovery and graceful session shutdown remain unfinished. The current process-owned diagnostic session avoids runtime calls from DLL detach's loader lock. The script restores shared settings and isolated camera/effects assets on exit.
 
-The practical next step is interactive race launch and a virtual menu screen, retaining this reduced-effects baseline. Validate recentering, stationary pillar disocclusion, clipping and full-race timing during that work. The intended end-user shape remains a small launcher/configuration application plus an in-process renderer DLL; the current PowerShell benchmark is a development entry point.
+This initial integration led to the interactive launch and virtual screen described above. The intended end-user shape remains a small launcher/configuration application plus an in-process renderer DLL; the current command/PowerShell launcher is a development entry point.
 
 Final restoration checks at `trace-20260921-140830-532/restoration-check.json` pass: shared settings and isolated camera/effects bytes restored, installed executable and `xlive.dll` unchanged, no installed-game proxy, deployed isolated proxy matching the final build, and all DiRT 2 processes exited. The last source change adds later capture triggers; those triggers still need a visible headset run. The summary tool deliberately returns failure for insufficient visible submissions instead of treating a hidden session as visual success.
 
@@ -83,7 +103,7 @@ The final lateral-offset benchmark exited normally. `trace-20260921-130251-711/r
 
 | Component | Evidence | Limit |
 |---|---|---|
-| x86 MSVC build with pinned dependencies | `tools/build.cmd`; four CTest suites pass | No release packaging |
+| x86 MSVC build with pinned dependencies | `tools/build.cmd`; five CTest suites pass | No release packaging |
 | D3D11 proxy and full export forwarding | Game creates feature-level 0xb000 device; standalone probe passes through same proxy | Single game device/swapchain diagnostic design |
 | Executable/prologue guards | SHA-256 plus scene-entry byte match | Only this exact 1.1.0.0 build |
 | Shader reflection and camera hooks | Camera setup/upload prologue guards, pose/FOV maths, live per-eye upload/restoration receipts | One executable; physical scale, culling and visual tracking still unvalidated |
@@ -128,11 +148,11 @@ The installed executable still hashes to the supported SHA-256. No `d3d11.dll` w
 
 ## Next gate
 
-1. Follow the positive look/lean report with stationary pillar/recenter and broader-angle checks during interactive race integration. Inspect the later eye captures; fix any scale or geometry defects before claiming full VR acceptance.
+1. Fix the reported car/headlight alignment at Battersea at night, then follow the positive look/lean report with stationary pillar/recenter and broader-angle checks. Preserve the current GPU measurements separately from full-frame performance acceptance.
 2. Establish correct CPU visibility for both eyes and head movement. The 120-degree original preparation camera is an experiment, not a complete solution.
 3. Establish simulation timing, animation and resource-history integrity during a complete interactive race. Do not restore whole opaque engine objects or replay simulation updates speculatively.
 4. Measure CPU/GPU timing and address-space headroom over stage changes at recorded game and headset dimensions. Keep the reduced-effects baseline while diagnosing defects; reintroduce optional effects individually.
-5. Add a virtual menu screen, clear game-state transitions and interactive cockpit launch before packaging for end users. Validate wheel/gamepad controls and actual PSVR2 hardware separately.
+5. Replace the conservative camera filter/manual screen override with verified game-state transitions and add controller bindings before packaging for end users. Validate wheel/gamepad controls and actual PSVR2 hardware separately.
 
 If a safe DX11 render boundary cannot be found, pause this route and scope a separate DX9 prototype. Existing geometry-stereo precedent makes DX9 worth investigating, but this code cannot simply be retargeted: DX9 has different hooks/resources and OpenXR has no native DX9 graphics binding. A DX9 route would need a proven D3D11-compatible presentation/interoperability design and new game-specific stereo work. No DX9 implementation or fallback was enabled.
 

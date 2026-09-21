@@ -29,6 +29,16 @@ int main() {
         Check(projection[10]==-1.01f && projection[14]==-.1f);
         bool rejected=false; try { vr::ApplyFov(projection.data(),{.8f,-.8f,.7f,-.7f}); } catch(...) { rejected=true; }
         Check(rejected);
+        auto screen=vr::ScreenPose({{0,s,0,s},{5,2,1}},2);
+        Check(Near(screen.position.x,3) && Near(screen.position.y,2) && Near(screen.position.z,1));
+        Check(Near(screen.orientation.y,s) && Near(screen.orientation.w,s));
+        std::array<float,28> a{},b{}; a[21]=b[21]=.075f;
+        Check(vr::CockpitCameraCandidate(a.data(),b.data()));
+        for(float nearPlane:{.2f,.1f,.05f}) {
+            a[21]=nearPlane; Check(!vr::CockpitCameraCandidate(a.data(),b.data()));
+            a[21]=.075f; b[21]=nearPlane; Check(!vr::CockpitCameraCandidate(a.data(),b.data()));
+            b[21]=.075f;
+        }
         puts("Eye pose, recenter and asymmetric projection tests passed."); return 0;
     } catch(const std::exception& e) { std::fprintf(stderr,"%s\n",e.what()); return 1; }
 }

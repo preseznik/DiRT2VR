@@ -64,7 +64,7 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
     }
     return true;
 }
-bool XrFrames::Tick(const Draw& draw,const Prepare& prepare) {
+bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen) {
     XrEventDataBuffer event{XR_TYPE_EVENT_DATA_BUFFER};
     XrResult eventResult{};
     while((eventResult=xrPollEvent(instance_,&event))==XR_SUCCESS) {
@@ -107,7 +107,7 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare) {
         catch(...) { valid=false; exiting_=true; Report("frame preparation failed: unknown exception"); }
     }
     std::array<XrCompositionLayerProjectionView,2> projectionViews{{{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW},{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}}};
-    for(unsigned i=0;valid && i<2;++i) {
+    for(unsigned i=0;valid && i<(screen ? 1u : 2u);++i) {
         auto& eye=eyes_[i]; uint32_t index{};
         XrSwapchainImageAcquireInfo acquire{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
         if(!Check(xrAcquireSwapchainImage(eye.chain,&acquire,&index),"acquire image")) { valid=false; break; }
@@ -129,7 +129,14 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare) {
     }
     XrCompositionLayerProjection projection{XR_TYPE_COMPOSITION_LAYER_PROJECTION};
     projection.space=space_; projection.viewCount=2; projection.views=projectionViews.data();
+    XrCompositionLayerQuad quad{XR_TYPE_COMPOSITION_LAYER_QUAD};
+    if(screen) {
+        quad.space=space_; quad.eyeVisibility=XR_EYE_VISIBILITY_BOTH;
+        quad.subImage=projectionViews[0].subImage;
+        quad.pose=screen->pose; quad.size=screen->size;
+    }
     const XrCompositionLayerBaseHeader* layers[]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&projection)};
+    if(screen) layers[0]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quad);
     if(valid) { end.layerCount=1; end.layers=layers; }
     if(!Check(xrEndFrame(session_,&end),"xrEndFrame")) { exiting_=true; return false; }
     if(valid) ++submitted_;

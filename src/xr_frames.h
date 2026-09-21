@@ -23,9 +23,13 @@ public:
     };
     using Draw = std::function<void(unsigned,const XrView&,ID3D11RenderTargetView*,uint32_t,uint32_t)>;
     using Prepare = std::function<void(const std::array<XrView,2>&)>;
+    struct Screen {
+        XrPosef pose{{0,0,0,1},{0,0,-2}};
+        XrExtent2Df size{2.4f,1.8f};
+    };
     ~XrFrames();
     bool Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale);
-    bool Tick(const Draw& draw,const Prepare& prepare={});
+    bool Tick(const Draw& draw,const Prepare& prepare={},const Screen* screen=nullptr);
     bool Exiting() const { return exiting_; }
     uint64_t Submitted() const { return submitted_; }
     bool Visible() const { return visible_; }

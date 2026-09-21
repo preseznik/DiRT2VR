@@ -1,5 +1,6 @@
 #include "eye_pair.h"
 #include "eye_blit.h"
+#include "gpu_timer.h"
 #include <cstdio>
 #include <cstdlib>
 using Microsoft::WRL::ComPtr;
@@ -42,6 +43,14 @@ int main() {
     D3D11_MAPPED_SUBRESOURCE copied{}; CHECK(SUCCEEDED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&copied)));
     CHECK(static_cast<unsigned char*>(copied.pData)[0]==255 && static_cast<unsigned char*>(copied.pData)[2]==0);
     context->Unmap(staging.Get(),0);
+    GpuTimer timer; CHECK(timer.Initialize(device.Get())); CHECK(timer.Begin(42));
+    CHECK(!timer.Begin(43));
+    context->ClearRenderTargetView(target.Get(),blue); timer.End();
+    context->Flush(); // Test-only retirement; production Poll never flushes.
+    std::vector<GpuTimer::Sample> timings;
+    for(unsigned attempts=0;attempts<2000 && timings.empty();++attempts) { timings=timer.Poll(); if(timings.empty()) Sleep(1); }
+    CHECK(timings.size()==1 && timings[0].frame==42 && timings[0].valid && timings[0].milliseconds>=0);
+    CHECK(timer.Poll().empty());
     CHECK(SUCCEEDED(pair.Capture(source.Get(),0,11)));
     CHECK(FAILED(pair.Capture(source.Get(),1,12))); CHECK(!pair.Ready(11));
     desc.Width=32; desc.Usage=D3D11_USAGE_DEFAULT; desc.CPUAccessFlags=0;

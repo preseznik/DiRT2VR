@@ -1,6 +1,6 @@
 # DiRT 2 VR investigation
 
-**Development prototype. This is not a playable VR mod.**
+**Experimental VR prototype. Interactive launch is available; release acceptance is incomplete.**
 
 The fingerprint-guarded **32-bit DiRT 2 DX11 proxy now connects the game renderer to OpenXR**. An experimental Subaru/Baja benchmark renders each eye from the runtime's predicted pose and asymmetric projection, with reduced effects and F10 recentering. SteamVR has accepted thousands of game-rendered pairs in a visible/focused session. The Quest 3 tester reports that the image looked very good and both turning and leaning looked correct. Calibrated world scale, broader visibility checks and full-race simulation integrity still need acceptance before this becomes a usable VR mode.
 
@@ -25,7 +25,7 @@ $env:DIRT2VR_PYTHON = 'C:\Path\To\python.exe' # Replace with your Python executa
 .\tools\build.cmd
 ```
 
-Outputs: `build/ninja/bin/xr_probe.exe`, `d3d11.dll`, and test executables. Four CTest suites run after building, covering exports, frame lifecycle, GPU copies/state restoration and camera maths. The system D3D11 export table generates all 51 named/ordinal forwarders on this machine. Build directories must be reconfigured when changing compilers.
+Outputs: `build/ninja/bin/xr_probe.exe`, `d3d11.dll`, and test executables. Five CTest suites run after building, covering exports, frame lifecycle, GPU copies/state restoration/timestamps, camera maths and window hotkeys. The system D3D11 export table generates all 51 named/ordinal forwarders on this machine. Build directories must be reconfigured when changing compilers.
 
 ## Headset diagnostic
 
@@ -40,6 +40,35 @@ The script uses SteamVR's `steamxr_win32.json` through a process-local `XR_RUNTI
 
 The cube is rendered separately for each headset eye using its predicted pose and projection. It is not captured from DiRT 2. No gamepad/wheel input is needed for this short test.
 
+## Interactive playtest
+
+With the build and isolated game copy prepared as below, connect the headset through SteamVR and double-click **`Start-DiRT2VR.cmd`**, or run:
+
+```powershell
+.\tools\run-trace.ps1 -Interactive
+```
+
+The original game opens normally, with menus and videos on a stationary virtual screen. Use the game's existing keyboard, gamepad or wheel controls to navigate and drive. The game window must have focus for the VR keyboard shortcuts:
+
+| Key | Action |
+|---|---|
+| F9 | Switch virtual screen / cockpit VR; recenter on the next tracked frame |
+| F10 | Recenter the current cockpit or virtual screen |
+
+The proxy consumes both press/release messages for these shortcuts. In particular, F10 no longer reaches Windows' default system-menu handler, which froze the earlier playtest until a second press.
+
+Known lighting defect: headlights were reported to follow headset orientation in the Subaru Impreza at Battersea at night. Night racing is not accepted yet.
+
+Select a Subaru STI event and its cockpit view for the prepared baseline. The launcher adjusts only that car's head/chase cameras; other interiors and visibility remain unverified. Once seated, press F9. A conservative camera filter keeps the observed trailer/exterior cameras on the screen even when cockpit VR is requested; the request remains active for the next eligible cockpit. It currently checks the verified cockpit near-plane setting in both camera records, not a complete game-state API. Before pause menus, replays or flashbacks, press F9 to force the screen: a replay using a cockpit camera or an overlay on a paused cockpit may still pass the filter.
+
+The screen is 2.4 metres wide, 2 metres ahead of the recenter position, with the desktop image's aspect ratio. Head movement does not move its anchor. No motion controllers are required. Wheel/gamepad driving remains the game's responsibility; F9/F10 do not yet have controller bindings.
+
+Quit the game normally and leave the launcher window open until settings restoration finishes. This uses the normal shared game profile, so gameplay progress can be saved normally. It restores temporary graphics settings and the copied camera/effects files, not your race progress. The original Steam game installation is untouched.
+
+Interactive mode disables synchronous shader/camera dumps and screenshots by default. Add `-CaptureDiagnostics` only for a capture run; it can introduce large stalls. Lightweight frame, screen, camera-check and address-space CSVs remain active. `gpu-frames.csv` measures the inner two-eye rendering/copy interval using asynchronous GPU timestamps without waiting or flushing. It excludes outer scene preparation, the compositor and headset transport; it is not a complete frame-budget measurement.
+
+Use `-Headset -QuietTrace` for an automatic benchmark with the same reduced instrumentation. `-QuietTrace` and `-CaptureDiagnostics` cannot be combined.
+
 ## Experimental in-game headset benchmark
 
 Prepare the isolated game copy described below, build the proxy and XML converter, then connect and wear the headset through SteamVR:
@@ -51,11 +80,13 @@ python .\tools\summarize_headset.py .\artifacts\trace-TIMESTAMP # After the laun
 
 This runs the automatic benchmark, not an interactive race. The script selects cockpit/reduced effects/serial rendering, disables desktop VSync, temporarily widens the original visibility camera to 120 degrees, and renders at 1600 × 1200 by default. Each geometry-rendered eye is copied into a separate OpenXR image at half the runtime's recommended dimensions (1536 × 1632 on the tested Quest 3 setup). There is no depth reconstruction or alternating-eye rendering. The image resize is not additional rendered detail.
 
-Both eyes use the same prepared scene and predicted display time. **F10 recenters**; `-WorldScale` adjusts game units per metre, default 1 and not physically calibrated. `-Runtime` selects another SteamVR x86 manifest without changing the global runtime. The game must use the runtime's graphics adapter. This implementation requires D3D11.1 context-state support to preserve the game's graphics state around presentation.
+Both eyes use the same prepared scene and predicted display time. **F9 switches screen/cockpit and F10 recenters**; `-WorldScale` adjusts game units per metre, default 1 and not physically calibrated. `-Runtime` selects another SteamVR x86 manifest without changing the global runtime. The game must use the runtime's graphics adapter. This implementation requires D3D11.1 context-state support to preserve the game's graphics state around presentation.
 
-Menus have no virtual screen yet. Frames without an eligible main scene are black; the benchmark's forced introductory cameras still render in 3D. HUD, mirrors, seat adjustment, pause/transition handling and visibility outside the original prepared lists are unfinished. A wider preparation camera reduces some clipping risks but does not establish correct per-eye culling. Session restart and device replacement are unsupported.
+Frames without an eligible cockpit use the virtual screen, including the observed benchmark introductory cameras. HUD, mirrors, seat adjustment, complete automatic pause/transition handling and visibility outside the original prepared lists are unfinished. A wider preparation camera reduces some clipping risks but does not establish correct per-eye culling. Session restart and device replacement are unsupported.
 
 `headset-frames.csv` records successful submissions, visibility, eye draws, projection uploads and camera restoration. Its tick duration includes `xrWaitFrame`, so it is not GPU time. Captures at submitted scene pairs 120, 600, 1800 and 3600 use image numbers 900001 through 900008; the trace maps them to actual game frames. Earlier pairs can show the intro. `address-space.csv` includes the game's OpenXR allocations. Diagnostic capture and tracing stalls prevent these runs from proving a 90 Hz performance budget.
+
+`screen-frames.csv` records virtual-screen submissions separately. The summary tool supports screen-only sessions and mode transitions; a successful summary means sufficient runtime submissions and no recorded integrity failures, not proof of a completed race or correct visuals.
 
 All temporary settings and copied camera/effects assets are restored when the launcher exits. **Let it finish**, as described in the restoration instructions below.
 
@@ -119,6 +150,8 @@ To remove instrumentation from the isolated copy, close it and remove only `arti
 | `src/eye_pair.*` | Independent GPU eye images with pair/size validation |
 | `src/eye_blit.*`, `src/game_xr.*` | Game-device OpenXR session and graphics-state-preserving eye presentation |
 | `src/camera_math.*` | Recenter, six-axis eye poses and asymmetric frustum maths |
+| `src/gpu_timer.h` | Bounded asynchronous GPU timestamp sampling |
+| `src/vr_hotkeys.*` | Window-local shortcut consumption without F10 system-menu activation |
 | `src/xr_frames.*` | Session events, predicted eye poses, swapchains and paired frame submission |
 | `src/xr_probe.cpp`, `src/xr_render_probe.cpp` | Standalone native headset test |
 | `tools/inspect_game.py` | Read-only PE/string/x86 inspection; optional `pefile` and `capstone` dependencies |
@@ -128,4 +161,4 @@ To remove instrumentation from the isolated copy, close it and remove only `arti
 | `tools/build-xml-converter.ps1`, `tools/xml-convert/` | Pinned EGO library and minimal binary-XML converter |
 | `tests/` | Export coverage, OpenXR lifecycle checks and WARP GPU eye-copy validation |
 
-Six-axis eye camera integration and keyboard recentering are experimental. Stereo visibility, HUD/menu composition, wheel/gamepad VR bindings, seat controls, full comfort settings, an end-user launcher/installer and PSVR2 acceptance remain outstanding. Runtime submission is not completed stereo or full-race acceptance.
+Six-axis eye camera integration, the virtual screen and keyboard mode/recenter controls are experimental. Stereo visibility, HUD composition, automatic game-state transitions, wheel/gamepad VR bindings, seat controls, full comfort settings, a packaged launcher/installer and PSVR2 acceptance remain outstanding. Runtime submission is not completed stereo or full-race acceptance.

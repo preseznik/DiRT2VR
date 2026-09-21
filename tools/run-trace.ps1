@@ -4,9 +4,12 @@ param([switch]$ReplayExperiment, [switch]$ReducedEffects, [switch]$LowPost,
     [switch]$ContinuousReplay,
     [ValidateRange(0,4096)][int]$RenderWidth=0, [ValidateRange(0,4096)][int]$RenderHeight=0,
     [ValidateRange(-0.25,0.25)][double]$ProjectionShift=0,
-    [switch]$Headset, [ValidateRange(0.25,4)][double]$WorldScale=1,
+    [switch]$Headset, [switch]$Interactive, [switch]$CaptureDiagnostics, [switch]$QuietTrace,
+    [ValidateRange(0.25,4)][double]$WorldScale=1,
     [string]$Runtime='C:\Program Files (x86)\Steam\steamapps\common\SteamVR\steamxr_win32.json')
 $ErrorActionPreference = 'Stop'
+if ($QuietTrace -and $CaptureDiagnostics) { throw 'Choose -QuietTrace or -CaptureDiagnostics, not both' }
+if ($Interactive) { $Headset=$true }
 if ($Headset) {
     if (!(Test-Path -LiteralPath $Runtime)) { throw "SteamVR x86 manifest not found: $Runtime" }
     $ContinuousReplay=$true; $SerialRender=$true; $Cockpit=$true; $ReducedEffects=$true
@@ -50,7 +53,8 @@ New-Item -ItemType Directory -Path $output | Out-Null
     continuousReplay = [bool]$ContinuousReplay
     renderWidth = $RenderWidth; renderHeight = $RenderHeight
     projectionShift = $ProjectionShift
-    headset = [bool]$Headset; worldScale = $WorldScale
+    headset = [bool]$Headset; interactive = [bool]$Interactive; worldScale = $WorldScale
+    captureDiagnostics = !$QuietTrace -and (!$Interactive -or [bool]$CaptureDiagnostics)
     executableSha256 = $expected; proxySha256 = (Get-FileHash -LiteralPath $proxy -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'diagnostic-options.json')
 Copy-Item -LiteralPath $proxy -Destination (Join-Path $game 'd3d11.dll')
@@ -63,6 +67,8 @@ $previousInner = $env:DIRT2VR_INNER_REPLAY
 $previousContinuous = $env:DIRT2VR_CONTINUOUS_REPLAY
 $previousProjection = $env:DIRT2VR_PROJECTION_SHIFT
 $previousHeadset = $env:DIRT2VR_HEADSET
+$previousInteractive = $env:DIRT2VR_INTERACTIVE
+$previousCapture = $env:DIRT2VR_CAPTURE_DIAGNOSTICS
 $previousScale = $env:DIRT2VR_WORLD_SCALE
 $previousRuntime = $env:XR_RUNTIME_JSON
 $settings = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\DiRT2\hardwaresettings\hardware_settings_config.xml'
@@ -92,13 +98,18 @@ try {
             $replacement.SelectSingleNode("Parameter[@name='$name']").SetAttribute('value','0.0')
         }
         $replacement.SelectSingleNode("Parameter[@name='headBuffeting']").SetAttribute('value','false')
+        if ($Interactive) {
+            $interactiveHead=$replacement.CloneNode($true)
+            $interactiveHead.SetAttribute('ident','head-cam')
+            $head.ParentNode.ReplaceChild($interactiveHead,$head) | Out-Null
+        }
         $chase.ParentNode.ReplaceChild($replacement,$chase) | Out-Null
         $cameraXml.Save($decodedCamera)
         $encodedCamera = Join-Path $output 'cameras-cockpit.bin'
         & $converter encode $decodedCamera $encodedCamera
         if ($LASTEXITCODE -ne 0) { throw 'Camera encode failed' }
         Copy-Item -LiteralPath $encodedCamera -Destination $cameras
-        Write-Host 'Isolated Subaru benchmark chase view replaced with its cockpit camera.'
+        Write-Host 'Isolated Subaru chase view uses its cockpit camera; interactive mode also adjusts the head camera.'
     }
     if ($NoMotionBlur) {
         $converter = Join-Path $root 'artifacts\xml-convert\xml-convert.exe'
@@ -150,13 +161,17 @@ try {
     $env:DIRT2VR_CONTINUOUS_REPLAY = if ($ContinuousReplay) { '1' } else { '0' }
     $env:DIRT2VR_PROJECTION_SHIFT = $ProjectionShift.ToString([Globalization.CultureInfo]::InvariantCulture)
     $env:DIRT2VR_HEADSET = if ($Headset) { '1' } else { '0' }
+    $env:DIRT2VR_INTERACTIVE = if ($Interactive) { '1' } else { '0' }
+    $env:DIRT2VR_CAPTURE_DIAGNOSTICS = if (!$QuietTrace -and (!$Interactive -or $CaptureDiagnostics)) { '1' } else { '0' }
     $env:DIRT2VR_WORLD_SCALE = $WorldScale.ToString([Globalization.CultureInfo]::InvariantCulture)
     if ($Headset) { $env:XR_RUNTIME_JSON = (Resolve-Path -LiteralPath $Runtime).Path }
     Write-Host "Diagnostic started. Trace: $output"
-    if ($Headset) { Write-Host 'Experimental headset benchmark. F10 recenters. Visibility and world scale are unvalidated; unsupported scenes are black.' }
+    if ($Interactive) { Write-Host 'Interactive VR: menus start on a virtual screen. Select the Subaru STI cockpit. F9 switches screen/cockpit, F10 recenters. Use screen mode for pause, replays and menus. Quit the game normally and let this window finish restoring settings.' }
+    elseif ($Headset) { Write-Host 'Experimental headset benchmark. F9 switches screen/cockpit, F10 recenters. Visibility and world scale are unvalidated.' }
     else { Write-Host 'This is desktop instrumentation, not VR. The replay experiment is unvalidated.' }
     $launch = @{FilePath=(Join-Path $game 'dirt2.exe'); WorkingDirectory=$game;
         ArgumentList='-benchmark vr_benchmark.xml'; WindowStyle='Hidden'}
+    if ($Interactive) { $launch.Remove('ArgumentList'); $launch.WindowStyle='Normal' }
     if ($originalSettings -or $originalEffects -or $originalCameras) { $launch.Wait = $true }
     Start-Process @launch | Out-Null
 } finally {
@@ -174,6 +189,8 @@ try {
     $env:DIRT2VR_CONTINUOUS_REPLAY = $previousContinuous
     $env:DIRT2VR_PROJECTION_SHIFT = $previousProjection
     $env:DIRT2VR_HEADSET = $previousHeadset
+    $env:DIRT2VR_INTERACTIVE = $previousInteractive
+    $env:DIRT2VR_CAPTURE_DIAGNOSTICS = $previousCapture
     $env:DIRT2VR_WORLD_SCALE = $previousScale
     $env:XR_RUNTIME_JSON = $previousRuntime
 }

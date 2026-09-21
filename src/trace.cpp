@@ -3,6 +3,8 @@
 #include "eye_pair.h"
 #include "camera_math.h"
 #include "game_xr.h"
+#include "gpu_timer.h"
+#include "vr_hotkeys.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -104,10 +106,69 @@ bool HeadsetEnabled() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_HEADSET",value,16)>0 && wcscmp(value,L"1")==0; }();
     return enabled;
 }
+bool InteractiveEnabled() {
+    static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_INTERACTIVE",value,16)>0 && wcscmp(value,L"1")==0; }();
+    return enabled;
+}
+bool DetailedTrace() {
+    static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_CAPTURE_DIAGNOSTICS",value,16)>0 ? wcscmp(value,L"1")==0 : !InteractiveEnabled(); }();
+    return enabled;
+}
 // Process-owned diagnostic session. Never invoke the runtime under DLL detach's
 // loader lock; explicit runtime stop/error is handled on the rendering thread.
 GameXr* gameXr{};
 uint64_t xrTickFrame=~uint64_t{};
+XrPosef headsetReference{};
+bool recenterRequested=true;
+bool& ScreenMode() { static bool screen=InteractiveEnabled(); return screen; }
+bool EnsureGameXr() {
+    static bool attempted=false;
+    if(!attempted && gameSwapchain) {
+        attempted=true; gameXr=new GameXr;
+        ComPtr<ID3D11Device> device; gameSwapchain->GetDevice(IID_PPV_ARGS(&device));
+        if(!gameXr->Initialize(device.Get(),.5f)) Log("OpenXR game initialization failed; desktop fallback");
+    }
+    return gameXr && gameXr->Active();
+}
+void PollHeadsetKeys() {
+    static uint64_t polled=~uint64_t{};
+    if(polled==frame.load()) return;
+    polled=frame.load();
+    const auto keys=ConsumeHotkeys();
+    if(keys&ToggleScreen) {
+        ScreenMode()=!ScreenMode(); recenterRequested=true;
+        Log("OpenXR requested mode=%s frame=%llu",ScreenMode()?"screen":"cockpit",frame.load());
+    }
+    if(keys&Recenter) recenterRequested=true;
+}
+void PrepareHeadsetViews(const std::array<XrView,2>& views) {
+    if(recenterRequested) {
+        headsetReference=CenterPose(views); recenterRequested=false;
+        Log("OpenXR recentered frame=%llu",frame.load());
+    }
+}
+void HeadsetScreen() {
+    const auto f=frame.load();
+    ComPtr<ID3D11Texture2D> back;
+    if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return;
+    D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
+    XrFrames::Screen screen; screen.size.height=screen.size.width*desc.Height/desc.Width;
+    static EyePair image;
+    xrTickFrame=f;
+    const bool submitted=gameXr->Tick([&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
+        if(FAILED(image.Capture(back.Get(),0,f)) || !gameXr->CopyEye(0,image.Texture(0),target,w,h))
+            throw std::runtime_error("virtual screen copy");
+    },[&](const std::array<XrView,2>& views) {
+        PrepareHeadsetViews(views); screen.pose=ScreenPose(headsetReference,2.f);
+    },&screen);
+    static std::ofstream csv(Output()/"screen-frames.csv");
+    static bool header=false;
+    if(!header) { csv << "frame,submitted,visible\n"; header=true; }
+    csv << f << ',' << submitted << ',' << gameXr->Visible() << '\n';
+    if(f%120==0) { csv.flush(); Log("OpenXR screen frame=%llu submitted=%d visible=%d",f,submitted,gameXr->Visible()); }
+    static uint64_t visible=0;
+    if(DetailedTrace() && submitted && gameXr->Visible() && ++visible==120) ScreenshotTexture(image.Texture(0),910001);
+}
 bool InnerReplayEnabled() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_INNER_REPLAY",value,16)>0 && wcscmp(value,L"1")==0; }();
     return enabled || ContinuousReplayEnabled();
@@ -156,26 +217,38 @@ public:
 
 bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
     const auto f=frame.load();
-    if(!continuousMain || f<300 || !gameSwapchain || !cameraHooksReady) return false;
+    PollHeadsetKeys();
+    if(ScreenMode() || !continuousMain || f<300 || !gameSwapchain || !cameraHooksReady || xrTickFrame==f) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) return false;
-    static bool initialized=false;
-    if(!initialized) {
-        initialized=true; gameXr=new GameXr;
-        ComPtr<ID3D11Device> device; gameSwapchain->GetDevice(IID_PPV_ARGS(&device));
-        if(!gameXr->Initialize(device.Get(),.5f)) { Log("OpenXR game initialization failed; desktop fallback"); return false; }
+    const bool cockpit=CockpitCameraCandidate(static_cast<const float*>(cameraA),static_cast<const float*>(cameraB));
+    static int previousCandidate=-1;
+    if(previousCandidate!=static_cast<int>(cockpit)) {
+        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f",cockpit?"cockpit":"screen",f,
+            static_cast<const float*>(cameraA)[21],static_cast<const float*>(cameraB)[21]);
+        previousCandidate=cockpit;
     }
-    if(!gameXr->Active()) return false;
+    if(!cockpit) return false;
+    if(!EnsureGameXr()) return false;
     xrTickFrame=f;
     static EyePair eyes;
-    static XrPosef reference{};
-    static bool recentered=false, keyWasDown=false;
     static const float scale=[] {
         wchar_t text[32]{}; GetEnvironmentVariableW(L"DIRT2VR_WORLD_SCALE",text,32);
         const float value=wcstof(text,nullptr); return std::isfinite(value) && value>=.25f && value<=4 ? value : 1.f;
     }();
     ComPtr<ID3D11Texture2D> back;
     if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return false;
+    static GpuTimer gpu;
+    static bool gpuAttempted=false;
+    if(!gpuAttempted) {
+        gpuAttempted=true; ComPtr<ID3D11Device> device; back->GetDevice(&device);
+        Log("OpenXR GPU timer initialized=%d",gpu.Initialize(device.Get()));
+    }
+    static std::ofstream gpuCsv(Output()/"gpu-frames.csv");
+    static bool gpuHeader=false;
+    if(!gpuHeader) { gpuCsv << "frame,eye_pair_gpu_ms,valid\n"; gpuHeader=true; }
+    for(const auto& timing:gpu.Poll()) gpuCsv << timing.frame << ',' << timing.milliseconds << ',' << timing.valid << '\n';
+    if(f%120==0) gpuCsv.flush();
     bool rendered=false;
     bool restored=true;
     std::array<uint64_t,2> counts{};
@@ -184,10 +257,11 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     std::array<float,28> originalA,originalB;
     memcpy(originalA.data(),cameraA,112); memcpy(originalB.data(),cameraB,112);
     const bool submitted=gameXr->Tick([&](unsigned eye,const XrView& view,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
-        const auto before=draws.load(); scenePass=f==3000 ? eye+1 : 0;
+        const auto before=draws.load(); scenePass=DetailedTrace() && f==3000 ? eye+1 : 0;
         eyeProjectionUploads=0;
+        if(eye==0) gpu.Begin(f);
         {
-            ScopedEyePose pose(cameraA,cameraB,RelativePose(reference,view.pose),scale);
+            ScopedEyePose pose(cameraA,cameraB,RelativePose(headsetReference,view.pose),scale);
             eyeRenderer=self; eyeFov=&view.fov;
             realInner(self,lists,cameraA,cameraB,context,scene,flags);
             rendered=true;
@@ -199,18 +273,15 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         if(!projectionUploads[eye]) throw std::runtime_error("eye projection was not uploaded");
         if(FAILED(eyes.Capture(back.Get(),eye,f))) throw std::runtime_error("eye capture");
         if(!gameXr->CopyEye(eye,eyes.Texture(eye),target,w,h)) throw std::runtime_error("eye presentation");
+        if(eye==1) gpu.End();
     },[&](const std::array<XrView,2>& views) {
         for(const auto& view:views) {
             std::array<float,16> projection{}; projection[11]=-1;
             ApplyFov(projection.data(),view.fov);
         }
-        const bool keyDown=(GetAsyncKeyState(VK_F10)&0x8000)!=0;
-        if(!recentered || (keyDown && !keyWasDown)) {
-            reference=CenterPose(views); recentered=true;
-            Log("OpenXR recentered; units_per_metre=%f (scale needs physical validation)",scale);
-        }
-        keyWasDown=keyDown;
+        PrepareHeadsetViews(views);
     });
+    gpu.End(false); // Close a partial pair after an acquire/draw failure.
     scenePass=0;
     QueryPerformanceCounter(&end);
     static std::ofstream csv(Output()/"headset-frames.csv");
@@ -227,7 +298,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     // Loading can consume thousands of desktop frames. Sample relative to the
     // first successful scene pair. Later samples cover driving after the intro.
     static uint64_t pairs=0;
-    if(submitted && (++pairs==120 || pairs==600 || pairs==1800 || pairs==3600)) {
+    if(DetailedTrace() && submitted && (++pairs==120 || pairs==600 || pairs==1800 || pairs==3600)) {
         const auto id=pairs==120 ? 900001u : pairs==600 ? 900003u : pairs==1800 ? 900005u : 900007u;
         ScreenshotTexture(eyes.Texture(0),id);
         ScreenshotTexture(eyes.Texture(1),id+1);
@@ -347,7 +418,7 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     const auto f=frame.load();
     const auto caller=reinterpret_cast<uintptr_t>(_ReturnAddress())-reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
     const bool mainView=caller==0x2889c0;
-    const bool sample=f==300 || f==1200 || f==3000;
+    const bool sample=DetailedTrace() && (f==300 || f==1200 || f==3000);
     if(sample) {
         Log("scene_enter frame=%llu caller=0x%zx main=%d self=%p args=%p,%p,%p,%p,%p",f,caller,mainView,self,a,b,c,d,e);
         // The call sites pass two inline 0x70-byte camera records. Read only.
@@ -364,7 +435,7 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
         }
     }
     const auto start=draws.load();
-    if(mainView && f==3000) scenePass=1;
+    if(DetailedTrace() && mainView && f==3000) scenePass=1;
     sampleInner=mainView && f==3000 && InnerReplayEnabled() && !ContinuousReplayEnabled();
     continuousMain=mainView && ContinuousReplayEnabled();
     realScene(self,a,b,c,d,e);
@@ -399,7 +470,7 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     }
 }
 
-bool Sample() { auto f=frame.load(); return f==300 || f==1200 || f==3000; }
+bool Sample() { auto f=frame.load(); return DetailedTrace() && (f==300 || f==1200 || f==3000); }
 void Stack(const char* event) {
     void* addresses[20]{};
     const auto n=CaptureStackBackTrace(1,20,addresses,nullptr);
@@ -454,6 +525,7 @@ uint64_t Shader(const void* bytes, SIZE_T length, const char* stage) {
     uint64_t hash=14695981039346656037ull;
     auto data=static_cast<const unsigned char*>(bytes);
     for(SIZE_T i=0;i<length;++i) hash=(hash^data[i])*1099511628211ull;
+    if(!DetailedTrace()) return hash; // Hashes are still needed for the water filter.
     std::lock_guard lock(shaderMutex);
     if(!shaders.insert(hash).second) return hash;
     char name[80]{};
@@ -556,15 +628,10 @@ void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number) {
 
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
-    if(HeadsetEnabled() && gameXr && gameXr->Active()) {
-        if(xrTickFrame!=frame.load()) {
-            gameXr->Tick([&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t,uint32_t) {
-                ComPtr<ID3D11Device> device; swapchain->GetDevice(IID_PPV_ARGS(&device));
-                ComPtr<ID3D11DeviceContext> context; device->GetImmediateContext(&context);
-                const float black[]={0,0,0,1}; context->ClearRenderTargetView(target,black);
-            });
-        }
-        if(gameXr->Exiting()) gameXr->Shutdown();
+    if(HeadsetEnabled() && EnsureGameXr()) {
+        PollHeadsetKeys();
+        if(xrTickFrame!=frame.load()) HeadsetScreen();
+        if(gameXr->Exiting()) { Log("OpenXR stopping on render thread"); gameXr->Shutdown(); }
         interval=0;
     }
     LARGE_INTEGER now{},frequency{}; QueryPerformanceCounter(&now); QueryPerformanceFrequency(&frequency);
@@ -600,7 +667,7 @@ HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT f
         addresses << f << ',' << limit << ',' << committed << ',' << reserved << ',' << free << ',' << largestFree << ',' << complete << '\n';
         addresses.flush();
     }
-    if(f==300 || f==1200 || f==3000) { Stack("Present"); Screenshot(swapchain,f); }
+    if(DetailedTrace() && (f==300 || f==1200 || f==3000)) { Stack("Present"); Screenshot(swapchain,f); }
     return realPresent(swapchain,interval,flags);
 }
 void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT base) {
@@ -662,6 +729,11 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     Hook(context,33,reinterpret_cast<void*>(Targets),realTargets);
     if(swapchain) {
         gameSwapchain=swapchain;
+        if(HeadsetEnabled()) {
+            DXGI_SWAP_CHAIN_DESC desc{};
+            const bool attached=SUCCEEDED(swapchain->GetDesc(&desc)) && AttachHotkeys(desc.OutputWindow);
+            Log("OpenXR window hotkeys attached=%d",attached);
+        }
         Hook(swapchain,8,reinterpret_cast<void*>(Present),realPresent);
         // Runtime traces from this exact SHA identify the common scene entry.
         // A prologue guard prevents detouring unexpected/incompatible code.

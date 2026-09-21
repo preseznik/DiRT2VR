@@ -22,12 +22,13 @@ namespace {
 std::vector<std::string> calls;
 XrSessionState event=XR_SESSION_STATE_READY;
 bool render=true, tracking=true, timeoutOnce=false;
+bool expectScreen=false;
 int acquireFailure=-1;
 uint32_t imageIndex=0, submittedLayers=0;
 void Require(bool value,const char* message) { if(!value) throw std::runtime_error(message); }
 void Reset() {
     calls.clear(); event=XR_SESSION_STATE_READY; render=tracking=true;
-    acquireFailure=-1; imageIndex=submittedLayers=0; timeoutOnce=false;
+    acquireFailure=-1; imageIndex=submittedLayers=0; timeoutOnce=false; expectScreen=false;
 }
 unsigned Eye(XrSwapchain chain) { return static_cast<unsigned>(static_cast<uint64_t>(chain)-10); }
 }
@@ -67,6 +68,14 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEndFrame(XrSession,const XrFrameEndInfo* info) 
     calls.emplace_back("endFrame"); submittedLayers=info->layerCount;
     Require(info->displayTime==123,"must submit at predicted time");
     if(info->layerCount) {
+        if(expectScreen) {
+            Require(info->layers[0]->type==XR_TYPE_COMPOSITION_LAYER_QUAD,"screen must be a quad");
+            auto layer=reinterpret_cast<const XrCompositionLayerQuad*>(info->layers[0]);
+            Require(layer->space==static_cast<XrSpace>(3) && layer->eyeVisibility==XR_EYE_VISIBILITY_BOTH,"screen must be stationary in LOCAL space and visible to both eyes");
+            Require(layer->pose.position.z==-2 && layer->size.width==2.4f,"screen placement changed");
+            Require(layer->subImage.swapchain==static_cast<XrSwapchain>(10),"screen must use the acquired image");
+            return XR_SUCCESS;
+        }
         auto layer=reinterpret_cast<const XrCompositionLayerProjection*>(info->layers[0]);
         Require(layer->viewCount==2,"must submit both eyes together");
         Require(layer->views[0].pose.position.x<0 && layer->views[1].pose.position.x>0,"must preserve individual eye poses");
@@ -140,6 +149,24 @@ int main() {
             XrFrames frames; XrFramesTestAccess::Seed(frames);
             Require(!frames.Tick(draw,[](const std::array<XrView,2>&) { throw std::runtime_error("invalid pose"); }),"failed preparation must not render");
             Require(frames.Exiting() && submittedLayers==0 && calls.back()=="endFrame","preparation failure must end without a layer");
+        }
+        Reset(); expectScreen=true;
+        {
+            XrFrames frames; XrFramesTestAccess::Seed(frames); XrFrames::Screen screen;
+            Require(frames.Tick(draw,{},&screen),"screen frame failed");
+            Require(calls==std::vector<std::string>{"beginSession","waitFrame","beginFrame","locate","acquire0","wait0","draw0","release0","endFrame"},"screen must acquire, draw and release only one image");
+            calls.clear(); expectScreen=false;
+            Require(frames.Tick(draw),"screen to stereo transition failed");
+            calls.clear(); expectScreen=true;
+            Require(frames.Tick(draw,{},&screen),"stereo to screen transition failed");
+            render=false; calls.clear();
+            Require(!frames.Tick(draw,{},&screen) && submittedLayers==0,"hidden screen must not submit");
+        }
+        Reset(); expectScreen=true;
+        {
+            XrFrames frames; XrFramesTestAccess::Seed(frames); XrFrames::Screen screen;
+            Require(!frames.Tick([](unsigned,const XrView&,ID3D11RenderTargetView*,uint32_t,uint32_t) { throw std::runtime_error("screen copy failed"); },{},&screen),"failed screen must not submit");
+            Require(frames.Exiting() && submittedLayers==0 && calls[calls.size()-2]=="release0","failed screen must release its image");
         }
         puts("OpenXR frame lifecycle tests passed"); return 0;
     } catch(const std::exception& e) { fprintf(stderr,"FAIL: %s\n",e.what()); return 1; }
