@@ -33,6 +33,39 @@ std::mutex attachMutex, shaderMutex;
 std::unordered_set<void*> targets;
 std::unordered_set<uint64_t> shaders;
 std::unordered_map<void*,uint64_t> shaderNames;
+using LapDescriptorCopyFn = void* (__thiscall*)(void*,const unsigned*);
+LapDescriptorCopyFn realLapDescriptorCopy{};
+unsigned directLaps=1;
+void* directLapCaller{};
+void* __fastcall LapDescriptorCopy(void* target,void*,const unsigned* source) {
+    // Only the demo route constructor; all other descriptor copies are untouched.
+    if(_ReturnAddress()!=directLapCaller) return realLapDescriptorCopy(target,source);
+    unsigned descriptor[14];
+    memcpy(descriptor,source,sizeof(descriptor));
+    if(descriptor[0]!=1 || descriptor[5]!=1) {
+        Log("direct start: unexpected demo route descriptor; stopping launch");
+        ExitProcess(ERROR_BAD_EXE_FORMAT);
+    }
+    descriptor[5]=directLaps;
+    auto result=realLapDescriptorCopy(target,descriptor);
+    Log("direct start: demo route laps=%u copied=%u",directLaps,static_cast<unsigned*>(target)[5]);
+    return result;
+}
+bool EnableDirectLaps(unsigned char* base,unsigned laps) {
+    if(laps==1) return true;
+    const unsigned char copyPrologue[]={0x8b,0xc1,0x8b,0x4c,0x24,0x04,0x8b,0x11};
+    const unsigned char callSite[]={0x89,0x94,0x24,0xa4,0x00,0x00,0x00,0xe8,0xfb,0x56,0x02,0x00};
+    if(memcmp(base+0x36a3d0,copyPrologue,sizeof(copyPrologue))!=0 ||
+       memcmp(base+0x344cc9,callSite,sizeof(callSite))!=0) return false;
+    auto status=MH_Initialize();
+    if(status!=MH_OK && status!=MH_ERROR_ALREADY_INITIALIZED) return false;
+    directLaps=laps;
+    directLapCaller=base+0x344cd5;
+    status=MH_CreateHook(base+0x36a3d0,reinterpret_cast<void*>(LapDescriptorCopy),reinterpret_cast<void**>(&realLapDescriptorCopy));
+    if(status==MH_OK) status=MH_EnableHook(base+0x36a3d0);
+    Log("direct start: demo lap override=%u hook=%s",laps,MH_StatusToString(status));
+    return status==MH_OK;
+}
 // The demo start path otherwise forces the local vehicle back to AI every update.
 // Only change the controller's override, preserving the frontend's loading flow.
 void EnableDirectPractice() {
@@ -57,21 +90,11 @@ void EnableDirectPractice() {
                 if(length>=16) ExitProcess(ERROR_INVALID_PARAMETER);
                 wchar_t* end{};
                 const auto laps=wcstoul(text,&end,10);
-                // Direct-start route descriptor +0x14 is initialized to one lap.
-                // Only replace that immediate, inside the direct-start branch.
-                const unsigned char lapInit[]={0xc7,0x44,0x24,0x30,0x01,0x00,0x00,0x00,0xc6,0x44,0x24,0x50,0x01};
-                if(end==text || *end || laps<1 || laps>20 ||
-                   memcmp(base+0x334a4c,lapInit,sizeof(lapInit))!=0 ||
-                   !VirtualProtect(base+0x334a50,4,PAGE_EXECUTE_READWRITE,&previous)) {
+                if(end==text || *end || laps<1 || laps>20 || !EnableDirectLaps(base,static_cast<unsigned>(laps))) {
                     Log("direct start: lap override validation failed");
                     ExitProcess(ERROR_BAD_EXE_FORMAT);
                 }
-                const DWORD value=static_cast<DWORD>(laps);
-                memcpy(base+0x334a50,&value,sizeof(value));
-                const bool lapProtected=VirtualProtect(base+0x334a50,4,previous,&ignored)!=0;
-                const bool lapFlushed=FlushInstructionCache(GetCurrentProcess(),base+0x334a50,4)!=0;
-                if(!lapProtected || !lapFlushed) ExitProcess(ERROR_BAD_EXE_FORMAT);
-                Log("direct start: laps=%lu (memory only)",laps);
+                Log("direct start: requested laps=%lu (memory only)",laps);
             }
             applied=true;
             Log("direct practice: local human controller enabled (memory only)");
