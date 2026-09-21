@@ -26,6 +26,8 @@ WizardStyle=modern
 CloseApplications=no
 AppMutex=Global\DiRT2VR.Session
 SetupLogging=yes
+SetupIconFile=..\launcher\assets\DiRT2VR.ico
+UninstallDisplayIcon={app}\DiRT2VR.exe
 
 [Files]
 Source: "{#Stage}\DiRT2VR.exe"; DestDir: "{app}"; Flags: ignoreversion

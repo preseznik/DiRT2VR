@@ -42,6 +42,8 @@ To play on the desktop, close the VR session and launch the game through Steam n
 
 ## Bindings
 
+The launcher matches the Windows app light/dark setting when opened. Reopen it after changing that setting. Native dark mode requires Windows 11; Windows 10 and Windows contrast themes retain the standard accessible system appearance.
+
 | Default | Action |
 |---|---|
 | **F9** | Toggle virtual screen / cockpit VR; also recenter |

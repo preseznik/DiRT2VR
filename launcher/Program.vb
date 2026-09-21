@@ -5,6 +5,8 @@ Public Module Program
     <STAThread>
     Public Function Main(args As String()) As Integer
         Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)
+        ' Native controls follow the Windows app theme selected at startup.
+        Application.SetColorMode(SystemColorMode.System)
         Application.EnableVisualStyles()
         Application.SetCompatibleTextRenderingDefault(False)
         Try

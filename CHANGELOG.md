@@ -6,6 +6,8 @@ Notable changes to DiRT2VR are recorded here, newest first. The project is an un
 
 ### Added
 
+- New DiRT 2 VR rally/headset icon for the launcher executable, window, shortcuts and installer.
+- Launcher light/dark appearance follows the Windows app theme at startup on Windows 11. Reopen after a theme change; contrast themes retain the system appearance.
 - Visual Basic .NET Windows Forms launcher with a bundled runtime, SteamVR preflight, configurable keyboard shortcuts and Xbox / standard HID button bindings.
 - In-place installer and ZIP packaging. Game copying is now a developer failure-testing workflow, not an end-user requirement. Packages contain mod files only.
 - A background session manager shared by the GUI and quick-launch script, with original-file backups, durable recovery journals, proxy ownership checks and narrowly scoped file-worker elevation.

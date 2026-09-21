@@ -10,6 +10,7 @@
     <AssemblyName>DiRT2VR</AssemblyName>
     <Version>0.1.0-alpha.1</Version>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>assets\DiRT2VR.ico</ApplicationIcon>
     <RuntimeIdentifier>win-x64</RuntimeIdentifier>
     <SelfContained>true</SelfContained>
     <PublishSingleFile>true</PublishSingleFile>
@@ -17,6 +18,7 @@
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
   <ItemGroup>
+    <EmbeddedResource Include="assets\DiRT2VR.ico" LogicalName="DiRT2VR.ico" />
     <Import Include="System.IO" />
     <Import Include="System.Diagnostics" />
     <Import Include="System.Threading" />

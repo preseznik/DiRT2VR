@@ -25,6 +25,9 @@ Public Class MainForm
         context = value
         settings = VrSettings.Load(context)
         Text = "DiRT2VR — Experimental launcher"
+        Using stream = GetType(MainForm).Assembly.GetManifestResourceStream("DiRT2VR.ico"), appIcon As New Icon(stream)
+            Icon = DirectCast(appIcon.Clone(), Icon)
+        End Using
         Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi
         MinimumSize = New Size(820, 690)
@@ -103,6 +106,7 @@ Public Class MainForm
                               End Sub
         AddHandler FormClosed, Sub()
                                   timer.Stop() : timer.Dispose() : input.Dispose()
+                                  Icon.Dispose()
                               End Sub
         timer.Start() : RefreshStatus()
     End Sub

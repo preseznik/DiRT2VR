@@ -2,6 +2,12 @@
 
 Status: experimental `0.1.0-alpha.1`. End-user instructions are in [README](../README.md). The launcher works in the existing game folder; retain `artifacts/game` only for development and failure testing.
 
+## Appearance
+
+Startup calls `Application.SetColorMode(SystemColorMode.System)` before creating controls. This uses the Windows app color preference with native Windows Forms controls and title-bar theming. The framework reads the setting at startup, requires Windows 11 for dark mode and respects contrast themes; it does not switch a running application when Windows changes theme. See [Microsoft's API documentation](https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.application.setcolormode?view=windowsdesktop-10.0). No Windows preference is written by the launcher.
+
+The generated artwork and its prompt are in [launcher/assets](../launcher/assets/README.md). `tools/make-launcher-icon.ps1` re-encodes the PNG into a multi-resolution ICO. The project embeds the icon in both PE and managed resources, so the main form and Explorer/shortcuts use the same artwork even with single-file publishing. Inno Setup uses the same ICO for setup and the launcher executable for the uninstall display icon.
+
 ## Build and package
 
 Prerequisites: the pinned dependencies from `tools/bootstrap.ps1`, Visual Studio x86 C++ tools, Windows SDK, CMake/Ninja, Python, .NET SDK 10, and Inno Setup. No development dependencies are required by packaged users.
