@@ -60,7 +60,7 @@ bool SupportedHost() {
         char hex[65]{};
         for (unsigned i=0; i<32; ++i) sprintf_s(hex+i*2, 3, "%02X", digest[i]);
         const bool match = ok && std::string(hex) == "49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48";
-        Log("host_sha256=%s supported=%d; diagnostic only, stereo is NOT implemented", hex, match);
+        Log("host_sha256=%s supported=%d; development prototype, headset acceptance pending", hex, match);
         return match;
     }();
     return supported;

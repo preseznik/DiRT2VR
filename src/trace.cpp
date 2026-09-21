@@ -1,6 +1,8 @@
 #include "trace.h"
 #include "common.h"
 #include "eye_pair.h"
+#include "camera_math.h"
+#include "game_xr.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -16,6 +18,7 @@
 #include <intrin.h>
 #include <cmath>
 #include <algorithm>
+#include <stdexcept>
 
 using Microsoft::WRL::ComPtr;
 namespace vr {
@@ -53,6 +56,41 @@ using SceneFn = void (__thiscall*)(void*,void*,void*,void*,void*,void*);
 SceneFn realScene{};
 using InnerFn = void (__thiscall*)(void*,void*,void*,void*,void*,void*,void*);
 InnerFn realInner{};
+using CameraSetupFn = void (__thiscall*)(void*,void*,void*,float,bool);
+CameraSetupFn realCameraSetup{};
+using CameraUploadFn = void (__thiscall*)(void*,void*);
+CameraUploadFn realCameraUpload{};
+thread_local void* eyeRenderer{};
+thread_local bool eyeCameraSetup{};
+thread_local float projectionShift{};
+thread_local const XrFovf* eyeFov{};
+thread_local unsigned eyeProjectionUploads{};
+bool cameraHooksReady{};
+bool cameraSetupHookReady{};
+
+void __fastcall CameraSetup(void* self,void*,void* context,void* camera,float nearPlane,bool upload) {
+    const bool previous=eyeCameraSetup;
+    auto bytes=static_cast<unsigned char*>(self);
+    eyeCameraSetup=self==eyeRenderer && (camera==bytes+0x5e0 || camera==bytes+0x650);
+    realCameraSetup(self,context,camera,nearPlane,upload);
+    eyeCameraSetup=previous;
+}
+void __fastcall CameraUpload(void* self,void*,void* context) {
+    if(eyeCameraSetup && (projectionShift!=0 || eyeFov)) {
+        auto bytes=static_cast<unsigned char*>(context);
+        auto projection=reinterpret_cast<float*>(bytes+0x120);
+        const auto view=reinterpret_cast<const float*>(bytes+0x160);
+        auto combined=reinterpret_cast<float*>(bytes+0x1a0);
+        // This engine uses a row-vector projection with its own depth mapping.
+        // Preserve depth; update the off-centre X term and its derived matrix.
+        if(projection[11]==-1.f && projection[15]==0.f) {
+            if(eyeFov) { ApplyFov(projection,*eyeFov); ++eyeProjectionUploads; }
+            else projection[8]=projectionShift;
+            MultiplyMatrices(view,projection,combined);
+        }
+    }
+    realCameraUpload(self,context);
+}
 thread_local bool sampleInner{};
 thread_local bool continuousMain{};
 IDXGISwapChain* gameSwapchain{}; // Diagnostic run owns one swapchain until process exit.
@@ -62,6 +100,14 @@ bool ContinuousReplayEnabled() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_CONTINUOUS_REPLAY",value,16)>0 && wcscmp(value,L"1")==0; }();
     return enabled;
 }
+bool HeadsetEnabled() {
+    static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_HEADSET",value,16)>0 && wcscmp(value,L"1")==0; }();
+    return enabled;
+}
+// Process-owned diagnostic session. Never invoke the runtime under DLL detach's
+// loader lock; explicit runtime stop/error is handled on the rendering thread.
+GameXr* gameXr{};
+uint64_t xrTickFrame=~uint64_t{};
 bool InnerReplayEnabled() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_INNER_REPLAY",value,16)>0 && wcscmp(value,L"1")==0; }();
     return enabled || ContinuousReplayEnabled();
@@ -91,6 +137,106 @@ public:
     ScopedCameraTranslation& operator=(const ScopedCameraTranslation&)=delete;
 };
 
+class ScopedEyePose {
+    std::array<float*,2> cameras_;
+    std::array<std::array<float,28>,2> original_;
+public:
+    ScopedEyePose(void* a,void* b,const XrPosef& pose,float scale):cameras_{static_cast<float*>(a),static_cast<float*>(b)} {
+        for(unsigned i=0;i<2;++i) memcpy(original_[i].data(),cameras_[i],112);
+        // Validate/compute both records before modifying either engine record.
+        auto changed=original_;
+        for(auto& camera:changed) ApplyEyePose(camera.data(),pose,scale);
+        for(unsigned i=0;i<2;++i) for(unsigned offset:{4u,8u,12u,16u}) memcpy(cameras_[i]+offset,changed[i].data()+offset,12);
+    }
+    ~ScopedEyePose() {
+        for(unsigned i=0;i<2;++i) for(unsigned offset:{4u,8u,12u,16u}) memcpy(cameras_[i]+offset,original_[i].data()+offset,12);
+        eyeRenderer=nullptr; eyeFov=nullptr;
+    }
+};
+
+bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
+    const auto f=frame.load();
+    if(!continuousMain || f<300 || !gameSwapchain || !cameraHooksReady) return false;
+    auto renderer=static_cast<unsigned char*>(self);
+    if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) return false;
+    static bool initialized=false;
+    if(!initialized) {
+        initialized=true; gameXr=new GameXr;
+        ComPtr<ID3D11Device> device; gameSwapchain->GetDevice(IID_PPV_ARGS(&device));
+        if(!gameXr->Initialize(device.Get(),.5f)) { Log("OpenXR game initialization failed; desktop fallback"); return false; }
+    }
+    if(!gameXr->Active()) return false;
+    xrTickFrame=f;
+    static EyePair eyes;
+    static XrPosef reference{};
+    static bool recentered=false, keyWasDown=false;
+    static const float scale=[] {
+        wchar_t text[32]{}; GetEnvironmentVariableW(L"DIRT2VR_WORLD_SCALE",text,32);
+        const float value=wcstof(text,nullptr); return std::isfinite(value) && value>=.25f && value<=4 ? value : 1.f;
+    }();
+    ComPtr<ID3D11Texture2D> back;
+    if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return false;
+    bool rendered=false;
+    bool restored=true;
+    std::array<uint64_t,2> counts{};
+    std::array<unsigned,2> projectionUploads{};
+    LARGE_INTEGER start{},end{},frequency{}; QueryPerformanceFrequency(&frequency); QueryPerformanceCounter(&start);
+    std::array<float,28> originalA,originalB;
+    memcpy(originalA.data(),cameraA,112); memcpy(originalB.data(),cameraB,112);
+    const bool submitted=gameXr->Tick([&](unsigned eye,const XrView& view,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
+        const auto before=draws.load(); scenePass=f==3000 ? eye+1 : 0;
+        eyeProjectionUploads=0;
+        {
+            ScopedEyePose pose(cameraA,cameraB,RelativePose(reference,view.pose),scale);
+            eyeRenderer=self; eyeFov=&view.fov;
+            realInner(self,lists,cameraA,cameraB,context,scene,flags);
+            rendered=true;
+        }
+        counts[eye]=draws.load()-before; scenePass=0;
+        projectionUploads[eye]=eyeProjectionUploads;
+        restored &= memcmp(originalA.data(),cameraA,112)==0 && memcmp(originalB.data(),cameraB,112)==0;
+        if(!restored) throw std::runtime_error("eye camera restoration");
+        if(!projectionUploads[eye]) throw std::runtime_error("eye projection was not uploaded");
+        if(FAILED(eyes.Capture(back.Get(),eye,f))) throw std::runtime_error("eye capture");
+        if(!gameXr->CopyEye(eye,eyes.Texture(eye),target,w,h)) throw std::runtime_error("eye presentation");
+    },[&](const std::array<XrView,2>& views) {
+        for(const auto& view:views) {
+            std::array<float,16> projection{}; projection[11]=-1;
+            ApplyFov(projection.data(),view.fov);
+        }
+        const bool keyDown=(GetAsyncKeyState(VK_F10)&0x8000)!=0;
+        if(!recentered || (keyDown && !keyWasDown)) {
+            reference=CenterPose(views); recentered=true;
+            Log("OpenXR recentered; units_per_metre=%f (scale needs physical validation)",scale);
+        }
+        keyWasDown=keyDown;
+    });
+    scenePass=0;
+    QueryPerformanceCounter(&end);
+    static std::ofstream csv(Output()/"headset-frames.csv");
+    static bool header=false;
+    if(!header) {
+        csv << "frame,submitted,visible,pair_ready,cameras_restored,left_draws,right_draws,left_projection_uploads,right_projection_uploads,tick_ms\n";
+        header=true;
+    }
+    csv << f << ',' << submitted << ',' << gameXr->Visible() << ',' << eyes.Ready(f) << ',' << restored << ','
+        << counts[0] << ',' << counts[1] << ',' << projectionUploads[0] << ',' << projectionUploads[1] << ','
+        << 1000.0*(end.QuadPart-start.QuadPart)/frequency.QuadPart << '\n';
+    if(f%120==0 || gameXr->Exiting()) csv.flush();
+    if(f%120==0) Log("OpenXR frame=%llu submitted=%llu visible=%d draws=%llu/%llu pair=%d",f,gameXr->Submitted(),gameXr->Visible(),counts[0],counts[1],eyes.Ready(f));
+    // Loading can consume thousands of desktop frames. Sample relative to the
+    // first successful scene pair. Later samples cover driving after the intro.
+    static uint64_t pairs=0;
+    if(submitted && (++pairs==120 || pairs==600 || pairs==1800 || pairs==3600)) {
+        const auto id=pairs==120 ? 900001u : pairs==600 ? 900003u : pairs==1800 ? 900005u : 900007u;
+        ScreenshotTexture(eyes.Texture(0),id);
+        ScreenshotTexture(eyes.Texture(1),id+1);
+        Log("OpenXR captured pair=%llu frame=%llu images=%u/%u",pairs,f,id,id+1);
+    }
+    if(gameXr->Exiting()) { Log("OpenXR stopping on render thread"); gameXr->Shutdown(); }
+    return rendered;
+}
+
 bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
     static bool disabled=false;
     static EyePair eyes;
@@ -105,6 +251,11 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         wchar_t text[32]{}; GetEnvironmentVariableW(L"DIRT2VR_CAMERA_OFFSET",text,32);
         const auto value=wcstof(text,nullptr);
         return std::isfinite(value) && std::abs(value)<=0.25f ? value : 0.0f;
+    }();
+    static const float shift=[] {
+        wchar_t text[32]{}; GetEnvironmentVariableW(L"DIRT2VR_PROJECTION_SHIFT",text,32);
+        const auto value=wcstof(text,nullptr);
+        return std::isfinite(value) && std::abs(value)<=0.25f ? value : 0.f;
     }();
     std::array<float,28> originalA,originalB;
     memcpy(originalA.data(),cameraA,112); memcpy(originalB.data(),cameraB,112);
@@ -122,7 +273,9 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         const auto before=draws.load();
         {
             ScopedCameraTranslation translation(cameraA,cameraB,(eye==0?-0.5f:0.5f)*separation);
+            eyeRenderer=self; projectionShift=(eye==0?-1.f:1.f)*shift;
             realInner(self,lists,cameraA,cameraB,context,scene,flags);
+            eyeRenderer=nullptr; projectionShift=0;
         }
         eyeDraws[eye]=draws.load()-before;
         restored &= memcmp(originalA.data(),cameraA,112)==0 && memcmp(originalB.data(),cameraB,112)==0;
@@ -152,6 +305,10 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
 }
 
 void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
+    if(HeadsetEnabled()) {
+        if(!HeadsetScene(self,lists,cameraA,cameraB,context,scene,flags)) realInner(self,lists,cameraA,cameraB,context,scene,flags);
+        return;
+    }
     if(ContinuousScene(self,lists,cameraA,cameraB,context,scene,flags)) return;
     static bool tested=false;
     const bool test=sampleInner && !tested && gameSwapchain;
@@ -399,6 +556,17 @@ void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number) {
 
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
+    if(HeadsetEnabled() && gameXr && gameXr->Active()) {
+        if(xrTickFrame!=frame.load()) {
+            gameXr->Tick([&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t,uint32_t) {
+                ComPtr<ID3D11Device> device; swapchain->GetDevice(IID_PPV_ARGS(&device));
+                ComPtr<ID3D11DeviceContext> context; device->GetImmediateContext(&context);
+                const float black[]={0,0,0,1}; context->ClearRenderTargetView(target,black);
+            });
+        }
+        if(gameXr->Exiting()) gameXr->Shutdown();
+        interval=0;
+    }
     LARGE_INTEGER now{},frequency{}; QueryPerformanceCounter(&now); QueryPerformanceFrequency(&frequency);
     static long long previous{};
     const auto f=frame.fetch_add(1);
@@ -510,6 +678,23 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
             auto status=MH_CreateHook(inner,reinterpret_cast<void*>(Inner),reinterpret_cast<void**>(&realInner));
             if(status==MH_OK) status=MH_EnableHook(inner);
             Log("inner scene trace RVA=0x336be0 status=%s",MH_StatusToString(status));
+        }
+        if(ContinuousReplayEnabled()) {
+            auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+            const unsigned char setupPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0xe4,0,0,0};
+            const unsigned char uploadPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x54};
+            if(!realCameraSetup && memcmp(base+0x330b70,setupPrologue,sizeof(setupPrologue))==0) {
+                auto status=MH_CreateHook(base+0x330b70,reinterpret_cast<void*>(CameraSetup),reinterpret_cast<void**>(&realCameraSetup));
+                if(status==MH_OK) status=MH_EnableHook(base+0x330b70);
+                Log("camera setup hook status=%s",MH_StatusToString(status));
+                cameraSetupHookReady=status==MH_OK;
+            }
+            if(!realCameraUpload && memcmp(base+0xba12d0,uploadPrologue,sizeof(uploadPrologue))==0) {
+                auto status=MH_CreateHook(base+0xba12d0,reinterpret_cast<void*>(CameraUpload),reinterpret_cast<void**>(&realCameraUpload));
+                if(status==MH_OK) status=MH_EnableHook(base+0xba12d0);
+                Log("camera upload hook status=%s",MH_StatusToString(status));
+                cameraHooksReady=status==MH_OK && cameraSetupHookReady;
+            }
         }
     }
 }

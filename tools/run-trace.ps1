@@ -2,8 +2,17 @@ param([switch]$ReplayExperiment, [switch]$ReducedEffects, [switch]$LowPost,
     [switch]$SerialRender, [switch]$NoAmbientOcclusion, [switch]$NoMotionBlur, [switch]$SkipWater,
     [switch]$Cockpit, [ValidateRange(-0.25,0.25)][double]$CameraOffset=0, [switch]$InnerReplay,
     [switch]$ContinuousReplay,
-    [ValidateRange(0,4096)][int]$RenderWidth=0, [ValidateRange(0,4096)][int]$RenderHeight=0)
+    [ValidateRange(0,4096)][int]$RenderWidth=0, [ValidateRange(0,4096)][int]$RenderHeight=0,
+    [ValidateRange(-0.25,0.25)][double]$ProjectionShift=0,
+    [switch]$Headset, [ValidateRange(0.25,4)][double]$WorldScale=1,
+    [string]$Runtime='C:\Program Files (x86)\Steam\steamapps\common\SteamVR\steamxr_win32.json')
 $ErrorActionPreference = 'Stop'
+if ($Headset) {
+    if (!(Test-Path -LiteralPath $Runtime)) { throw "SteamVR x86 manifest not found: $Runtime" }
+    $ContinuousReplay=$true; $SerialRender=$true; $Cockpit=$true; $ReducedEffects=$true
+    $LowPost=$true; $NoAmbientOcclusion=$true; $NoMotionBlur=$true; $SkipWater=$true
+    if (!$RenderWidth -and !$RenderHeight) { $RenderWidth=1600; $RenderHeight=1200 }
+}
 if (($RenderWidth -eq 0) -ne ($RenderHeight -eq 0) -or
     ($RenderWidth -ne 0 -and ($RenderWidth -lt 320 -or $RenderHeight -lt 240))) {
     throw 'Set both render dimensions, at least 320 by 240, or leave both zero'
@@ -40,6 +49,8 @@ New-Item -ItemType Directory -Path $output | Out-Null
     cameraOffsetGameUnits = $CameraOffset; innerReplay = [bool]$InnerReplay
     continuousReplay = [bool]$ContinuousReplay
     renderWidth = $RenderWidth; renderHeight = $RenderHeight
+    projectionShift = $ProjectionShift
+    headset = [bool]$Headset; worldScale = $WorldScale
     executableSha256 = $expected; proxySha256 = (Get-FileHash -LiteralPath $proxy -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'diagnostic-options.json')
 Copy-Item -LiteralPath $proxy -Destination (Join-Path $game 'd3d11.dll')
@@ -50,6 +61,10 @@ $previousWater = $env:DIRT2VR_SKIP_WATER
 $previousOffset = $env:DIRT2VR_CAMERA_OFFSET
 $previousInner = $env:DIRT2VR_INNER_REPLAY
 $previousContinuous = $env:DIRT2VR_CONTINUOUS_REPLAY
+$previousProjection = $env:DIRT2VR_PROJECTION_SHIFT
+$previousHeadset = $env:DIRT2VR_HEADSET
+$previousScale = $env:DIRT2VR_WORLD_SCALE
+$previousRuntime = $env:XR_RUNTIME_JSON
 $settings = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\DiRT2\hardwaresettings\hardware_settings_config.xml'
 $originalSettings = $null
 $effects = Join-Path $game 'postprocess\effects.xml'
@@ -71,6 +86,7 @@ try {
         if (!$head -or !$chase) { throw 'Expected Subaru camera definitions not found' }
         $replacement = $head.CloneNode($true)
         $replacement.SetAttribute('ident','chase_close')
+        if ($Headset) { $replacement.SelectSingleNode("Parameter[@name='fov']").SetAttribute('value','120.0') }
         foreach ($p in $replacement.SelectNodes("AccelerationBasedShake/Parameter[@type='scalar']")) { $p.SetAttribute('value','0.0') }
         foreach ($name in @('maxBodyOffset','maxHeadOffset','maxHeadLook')) {
             $replacement.SelectSingleNode("Parameter[@name='$name']").SetAttribute('value','0.0')
@@ -121,6 +137,7 @@ try {
             $resolution.SetAttribute('height',$RenderHeight.ToString())
             $resolution.SetAttribute('fullscreen','false')
         }
+        if ($Headset) { $configuration.hardware_settings_config.graphics_card.resolution.SetAttribute('vsync','0') }
         $configuration.Save($settings)
         Copy-Item -LiteralPath $settings -Destination (Join-Path $output 'settings-applied.xml')
         Write-Host 'Temporary graphics settings applied; original bytes will be restored when the game exits.'
@@ -131,8 +148,13 @@ try {
     $env:DIRT2VR_CAMERA_OFFSET = $CameraOffset.ToString([Globalization.CultureInfo]::InvariantCulture)
     $env:DIRT2VR_INNER_REPLAY = if ($InnerReplay -and $ReplayExperiment) { '1' } else { '0' }
     $env:DIRT2VR_CONTINUOUS_REPLAY = if ($ContinuousReplay) { '1' } else { '0' }
+    $env:DIRT2VR_PROJECTION_SHIFT = $ProjectionShift.ToString([Globalization.CultureInfo]::InvariantCulture)
+    $env:DIRT2VR_HEADSET = if ($Headset) { '1' } else { '0' }
+    $env:DIRT2VR_WORLD_SCALE = $WorldScale.ToString([Globalization.CultureInfo]::InvariantCulture)
+    if ($Headset) { $env:XR_RUNTIME_JSON = (Resolve-Path -LiteralPath $Runtime).Path }
     Write-Host "Diagnostic started. Trace: $output"
-    Write-Host 'This is desktop instrumentation, not VR. The replay experiment is unvalidated.'
+    if ($Headset) { Write-Host 'Experimental headset benchmark. F10 recenters. Visibility and world scale are unvalidated; unsupported scenes are black.' }
+    else { Write-Host 'This is desktop instrumentation, not VR. The replay experiment is unvalidated.' }
     $launch = @{FilePath=(Join-Path $game 'dirt2.exe'); WorkingDirectory=$game;
         ArgumentList='-benchmark vr_benchmark.xml'; WindowStyle='Hidden'}
     if ($originalSettings -or $originalEffects -or $originalCameras) { $launch.Wait = $true }
@@ -150,4 +172,8 @@ try {
     $env:DIRT2VR_CAMERA_OFFSET = $previousOffset
     $env:DIRT2VR_INNER_REPLAY = $previousInner
     $env:DIRT2VR_CONTINUOUS_REPLAY = $previousContinuous
+    $env:DIRT2VR_PROJECTION_SHIFT = $previousProjection
+    $env:DIRT2VR_HEADSET = $previousHeadset
+    $env:DIRT2VR_WORLD_SCALE = $previousScale
+    $env:XR_RUNTIME_JSON = $previousRuntime
 }

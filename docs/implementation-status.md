@@ -2,9 +2,32 @@
 
 ## Decision
 
-The native x86 OpenXR route is proven on this machine. The DX11 stereo route remains unproven. **The planned first milestone is not complete.** Do not advance to the playable-alpha/release stages or describe the current binaries as a VR mod.
+The native x86 OpenXR route now receives game-rendered stereo frames on this machine. The user reports the headset run looked very good and both turning and leaning looked correct. **The planned first milestone is not complete.** Runtime submission and camera/projection checks pass, with positive subjective head-tracking confirmation; calibrated scale, broader visibility checks and a complete interactive race still need acceptance. Do not advance to playable-alpha/release claims.
 
-The reduced-effects route now renders continuous pairs of high-resolution cockpit views into independent GPU textures. Repeating the outer scene still consumes interior work; repeating the prepared inner scene preserves it. The remaining gates include headset eye poses/projections, per-eye visibility, simulation integrity and actual headset presentation.
+The reduced-effects route renders the prepared inner scene for each predicted headset eye pose/projection and presents independent images through OpenXR. Repeating the outer scene still consumes interior work. Remaining gates include calibrated scale, systematic per-eye visibility coverage, simulation integrity, proper menus/HUD and measured GPU performance.
+
+## In-game OpenXR, September 21
+
+The game proxy now creates an OpenXR session on the actual game D3D11 device, verifies the runtime adapter requirements, and renders both eyes for one predicted display time. It transforms both verified inline cameras, applies asymmetric projections before the engine's camera upload, captures each eye independently and restores graphics bindings around presentation. F10 recenters. The launcher configures a reduced-effects cockpit benchmark, a wider original visibility camera and desktop VSync off. Four CTest suites pass, including pose/projection maths, frame preparation/failure paths and WARP GPU copy/state-restoration checks.
+
+The SteamVR x86 preflight at `xr-20260921-135943-703` created the instance, HMD system and session successfully. Runtime: SteamVR/OpenXR in Meta compatibility mode 2.17.10; orientation and position tracking advertised. The game session negotiates 1536 × 1632 eye images from a 3072 × 3264 recommendation, while each game-rendered source is 1600 × 1200.
+
+| Receipt under `artifacts/` | Observed result |
+|---|---|
+| `trace-20260921-134907-445` | Desktop asymmetric projection control: 8,280 pairs, matching counts/restored cameras, confirmed uploaded projection shifts and expected image movement |
+| `trace-20260921-140254-729` | First game-to-OpenXR benchmark: VISIBLE/FOCUSED, at least 8,416 accepted pairs in periodic logs, normal benchmark exit; old absolute-frame capture triggers missed the scene |
+| `trace-20260921-140522-838` | Instrumented run: **8,462 submitted scene pairs**, 8,461 marked visible; zero camera-restoration failures, missing submitted projections or incomplete submitted pairs; no render-thread shutdown/error |
+| `trace-20260921-140830-532` | Final build with later capture triggers: runtime remained non-visible; one startup pair, zero visible pairs, no late captures. This run does **not** pass the headset diagnostic's 60-visible-pair threshold |
+
+The instrumented run's per-eye draw counts also match, but this does not prove simulation integrity or correct visibility. Early captured pairs show actual introductory game scenes with different eye frustums; these samples do not establish cockpit geometry or comfort. The final source additionally samples pairs 1800 and 3600 to reach driving after the intro. The user watched the in-game headset run, reported that it looked very good, and explicitly confirmed that turning and leaning both looked correct when asked about cockpit response and scenery around the pillar. This is the first positive in-headset game and head-tracking acceptance report. It does not establish all viewing angles, physical scale, a stationary geometric measurement or a full interactive race. The earlier confirmed cube remains separate evidence.
+
+With OpenXR active, `trace-20260921-140522-838` measured peak committed address space **1,122,258,944 bytes**, minimum free space **822,829,056 bytes**, and minimum largest free block **253,165,568 bytes**. All sampled traversals completed under the unchanged 2 GB ceiling. These measurements include allocated XR resources but do not establish long-session/stage-transition headroom. Tick duration includes runtime waiting; there is no measured GPU frame-time budget or 90 Hz acceptance.
+
+This is an automatic benchmark with a script launcher, not an end-user executable or interactive VR race. Menus/no eligible scene are black; forced benchmark introductory cameras still render in 3D. HUD, reflection correctness, world scale (default one game unit per metre), visibility outside original prepared lists, device/session recovery and graceful session shutdown remain unfinished. The current process-owned diagnostic session avoids runtime calls from DLL detach's loader lock. The script restores shared settings and isolated camera/effects assets on exit.
+
+The practical next step is interactive race launch and a virtual menu screen, retaining this reduced-effects baseline. Validate recentering, stationary pillar disocclusion, clipping and full-race timing during that work. The intended end-user shape remains a small launcher/configuration application plus an in-process renderer DLL; the current PowerShell benchmark is a development entry point.
+
+Final restoration checks at `trace-20260921-140830-532/restoration-check.json` pass: shared settings and isolated camera/effects bytes restored, installed executable and `xlive.dll` unchanged, no installed-game proxy, deployed isolated proxy matching the final build, and all DiRT 2 processes exited. The last source change adds later capture triggers; those triggers still need a visible headset run. The summary tool deliberately returns failure for insufficient visible submissions instead of treating a hidden session as visual success.
 
 ## Continuous rendering, September 21
 
@@ -60,12 +83,12 @@ The final lateral-offset benchmark exited normally. `trace-20260921-130251-711/r
 
 | Component | Evidence | Limit |
 |---|---|---|
-| x86 MSVC build with pinned dependencies | `tools/build.cmd`; three CTest suites pass | No release packaging |
+| x86 MSVC build with pinned dependencies | `tools/build.cmd`; four CTest suites pass | No release packaging |
 | D3D11 proxy and full export forwarding | Game creates feature-level 0xb000 device; standalone probe passes through same proxy | Single game device/swapchain diagnostic design |
 | Executable/prologue guards | SHA-256 plus scene-entry byte match | Only this exact 1.1.0.0 build |
-| Shader reflection and camera discovery | `artifacts/trace-006/shaders`, camera binaries | A camera layout is not yet a supported game camera hook |
+| Shader reflection and camera hooks | Camera setup/upload prologue guards, pose/FOV maths, live per-eye upload/restoration receipts | One executable; physical scale, culling and visual tracking still unvalidated |
 | Standalone stereo OpenXR rendering | `artifacts/xr-render-visible.txt`: 1,733 submitted frames, states VISIBLE/FOCUSED, user saw cube | No game rendering or PSVR2 test |
-| Runtime selection | Final preflight `artifacts/xr-20260916-195621-288/probe.txt` | SteamVR manifest override applies only to child process |
+| Runtime selection | Latest preflight `artifacts/xr-20260921-135943-703/probe.txt` | SteamVR manifest override applies only to child process |
 | Frame lifecycle handling | Deterministic tests cover paired eye submission, predicted display time, hidden/tracking-invalid frames, stopping, one-eye acquire failure, draw exception and invalid image index | Not exhaustive runtime/device-loss acceptance |
 | Reproducible trace and XR launch scripts | Unique artifact folders, supported hash required, replay opt-in | Built-in game benchmark still uses shared Documents settings |
 
@@ -105,14 +128,14 @@ The installed executable still hashes to the supported SHA-256. No `d3d11.dll` w
 
 ## Next gate
 
-1. Extend the continuous prepared-inner result across other cars/stages and establish simulation timing, animation and resource-history integrity. Do not restore whole opaque engine objects or replay simulation updates speculatively.
-2. Keep the reduced-effects baseline while classifying the residual image differences. Reintroduce optional effects individually only after their eye-dependent work is understood.
-3. Establish camera handedness, units, projection asymmetry and CPU visibility. Render both eyes from one captured simulation state. Per-object transforms and culling must agree with the eye camera.
-4. Only then connect that renderer to `XrFrames`, test a stationary cockpit pillar lean, and measure frame time and virtual address-space headroom at recorded eye dimensions.
-5. Complete a race with timing, particles, animation and transitions checked before starting alpha features.
+1. Follow the positive look/lean report with stationary pillar/recenter and broader-angle checks during interactive race integration. Inspect the later eye captures; fix any scale or geometry defects before claiming full VR acceptance.
+2. Establish correct CPU visibility for both eyes and head movement. The 120-degree original preparation camera is an experiment, not a complete solution.
+3. Establish simulation timing, animation and resource-history integrity during a complete interactive race. Do not restore whole opaque engine objects or replay simulation updates speculatively.
+4. Measure CPU/GPU timing and address-space headroom over stage changes at recorded game and headset dimensions. Keep the reduced-effects baseline while diagnosing defects; reintroduce optional effects individually.
+5. Add a virtual menu screen, clear game-state transitions and interactive cockpit launch before packaging for end users. Validate wheel/gamepad controls and actual PSVR2 hardware separately.
 
 If a safe DX11 render boundary cannot be found, pause this route and scope a separate DX9 prototype. Existing geometry-stereo precedent makes DX9 worth investigating, but this code cannot simply be retargeted: DX9 has different hooks/resources and OpenXR has no native DX9 graphics binding. A DX9 route would need a proven D3D11-compatible presentation/interoperability design and new game-specific stereo work. No DX9 implementation or fallback was enabled.
 
 ## Acceptance still outstanding
 
-True cockpit stereo and 6DOF, correct newly revealed geometry, proper world scale, game frame pacing, full-race state integrity, menus/HUD/replays/flashbacks, pause tracking, recenter and seat controls, wheel/gamepad coverage, optional comfort effects, actual address-space measurements, disconnect/reconnect, broad content checks and PSVR2 hardware testing all remain outstanding.
+Systematic cockpit stereo/6DOF coverage beyond the positive first report, correct newly revealed geometry across viewing angles, calibrated world scale, GPU/game frame pacing, full-race state integrity, menus/HUD/replays/flashbacks, pause tracking, seat controls, wheel/gamepad VR bindings, optional comfort effects, long-session address-space stability, disconnect/reconnect, broad content checks and PSVR2 hardware testing remain outstanding. Keyboard recenter and short-run address-space measurements are implemented; their existence does not satisfy those wider acceptance gates.

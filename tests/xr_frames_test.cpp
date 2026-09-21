@@ -126,6 +126,21 @@ int main() {
             XrFrames frames; XrFramesTestAccess::Seed(frames);
             Require(!frames.Tick(draw) && frames.Exiting() && submittedLayers==0,"invalid image index must fail safely");
         }
+        Reset();
+        {
+            XrFrames frames; XrFramesTestAccess::Seed(frames);
+            Require(frames.Tick(draw,[](const std::array<XrView,2>& views) {
+                Require(views[0].pose.position.x<0 && views[1].pose.position.x>0,"prepare must receive both eye poses");
+                calls.emplace_back("prepare");
+            }),"prepared stereo frame failed");
+            Require(calls[4]=="prepare" && calls[5]=="acquire0","prepare must precede either eye acquisition");
+        }
+        Reset();
+        {
+            XrFrames frames; XrFramesTestAccess::Seed(frames);
+            Require(!frames.Tick(draw,[](const std::array<XrView,2>&) { throw std::runtime_error("invalid pose"); }),"failed preparation must not render");
+            Require(frames.Exiting() && submittedLayers==0 && calls.back()=="endFrame","preparation failure must end without a layer");
+        }
         puts("OpenXR frame lifecycle tests passed"); return 0;
     } catch(const std::exception& e) { fprintf(stderr,"FAIL: %s\n",e.what()); return 1; }
 }

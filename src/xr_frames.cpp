@@ -3,12 +3,16 @@
 #include <cmath>
 #include <cstdio>
 #include <stdexcept>
+#include <cstdarg>
 
-namespace {
-bool Check(XrResult result,const char* operation) {
-    if(XR_FAILED(result)) { printf("%s=%d\n",operation,result); return false; }
-    return true;
+void XrFrames::Report(const char* format,...) {
+    char message[512]{}; va_list args; va_start(args,format);
+    vsnprintf(message,sizeof(message),format,args); va_end(args);
+    if(logger_) logger_(message); else puts(message);
 }
+bool XrFrames::Check(XrResult result,const char* operation) {
+    if(XR_FAILED(result)) { Report("%s=%d",operation,result); return false; }
+    return true;
 }
 XrFrames::~XrFrames() {
     for(auto& eye:eyes_) {
@@ -22,18 +26,18 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
     instance_=instance; session_=session;
     uint32_t count{};
     if(!Check(xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,0,&count,nullptr),"enumerate views")) return false;
-    if(count!=2) { printf("unsupported stereo view count=%u\n",count); return false; }
+    if(count!=2) { Report("unsupported stereo view count=%u",count); return false; }
     std::array<XrViewConfigurationView,2> views{{{XR_TYPE_VIEW_CONFIGURATION_VIEW},{XR_TYPE_VIEW_CONFIGURATION_VIEW}}};
     if(!Check(xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,2,&count,views.data()),"enumerate views")) return false;
     if(!Check(xrEnumerateSwapchainFormats(session,0,&count,nullptr),"enumerate formats")) return false;
     std::vector<int64_t> formats(count);
     if(!Check(xrEnumerateSwapchainFormats(session,count,&count,formats.data()),"enumerate formats")) return false;
     int64_t format=0;
-    for(auto value:formats) printf("runtime_swapchain_format=%lld\n",static_cast<long long>(value));
+    for(auto value:formats) Report("runtime_swapchain_format=%lld",static_cast<long long>(value));
     for(auto candidate:{DXGI_FORMAT_R8G8B8A8_UNORM_SRGB,DXGI_FORMAT_B8G8R8A8_UNORM_SRGB,
                         DXGI_FORMAT_R8G8B8A8_UNORM,DXGI_FORMAT_B8G8R8A8_UNORM})
         if(std::find(formats.begin(),formats.end(),candidate)!=formats.end()) { format=candidate; break; }
-    if(!format) { puts("No supported RGBA/BGRA swapchain format"); return false; }
+    if(!format) { Report("No supported RGBA/BGRA swapchain format"); return false; }
     XrReferenceSpaceCreateInfo reference{XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
     reference.referenceSpaceType=XR_REFERENCE_SPACE_TYPE_LOCAL; reference.poseInReferenceSpace.orientation.w=1;
     if(!Check(xrCreateReferenceSpace(session,&reference,&space_),"create LOCAL space")) return false;
@@ -54,20 +58,20 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
             D3D11_RENDER_TARGET_VIEW_DESC target{};
             target.Format=static_cast<DXGI_FORMAT>(format); target.ViewDimension=D3D11_RTV_DIMENSION_TEXTURE2D;
             auto hr=device->CreateRenderTargetView(eye.images[j].texture,&target,&eye.targets[j]);
-            if(FAILED(hr)) { printf("CreateRenderTargetView=0x%08lx\n",hr); return false; }
+            if(FAILED(hr)) { Report("CreateRenderTargetView=0x%08lx",hr); return false; }
         }
-        printf("swapchain eye=%u %ux%u images=%u\n",i,eye.width,eye.height,count);
+        Report("swapchain eye=%u %ux%u images=%u",i,eye.width,eye.height,count);
     }
     return true;
 }
-bool XrFrames::Tick(const Draw& draw) {
+bool XrFrames::Tick(const Draw& draw,const Prepare& prepare) {
     XrEventDataBuffer event{XR_TYPE_EVENT_DATA_BUFFER};
     XrResult eventResult{};
     while((eventResult=xrPollEvent(instance_,&event))==XR_SUCCESS) {
         if(event.type==XR_TYPE_EVENT_DATA_SESSION_STATE_CHANGED) {
             const auto& state=*reinterpret_cast<XrEventDataSessionStateChanged*>(&event);
             if(state.session!=session_) { event={XR_TYPE_EVENT_DATA_BUFFER}; continue; }
-            printf("session_state=%d\n",state.state);
+            Report("session_state=%d",state.state);
             visible_=state.state==XR_SESSION_STATE_VISIBLE || state.state==XR_SESSION_STATE_FOCUSED;
             if(state.state==XR_SESSION_STATE_READY) {
                 XrSessionBeginInfo begin{XR_TYPE_SESSION_BEGIN_INFO}; begin.primaryViewConfigurationType=XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
@@ -97,6 +101,11 @@ bool XrFrames::Tick(const Draw& draw) {
     bool valid=frame.shouldRender && Check(xrLocateViews(session_,&locate,&state,2,&count,views.data()),"xrLocateViews") && count==2;
     constexpr auto required=XR_VIEW_STATE_ORIENTATION_VALID_BIT|XR_VIEW_STATE_POSITION_VALID_BIT;
     valid=valid && (state.viewStateFlags&required)==required;
+    if(valid && prepare) {
+        try { prepare(views); }
+        catch(const std::exception& error) { valid=false; exiting_=true; Report("frame preparation failed: %s",error.what()); }
+        catch(...) { valid=false; exiting_=true; Report("frame preparation failed: unknown exception"); }
+    }
     std::array<XrCompositionLayerProjectionView,2> projectionViews{{{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW},{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}}};
     for(unsigned i=0;valid && i<2;++i) {
         auto& eye=eyes_[i]; uint32_t index{};
@@ -110,7 +119,8 @@ bool XrFrames::Tick(const Draw& draw) {
             if(index>=eye.targets.size()) throw std::out_of_range("OpenXR image index");
             draw(i,views[i],eye.targets[index].Get(),eye.width,eye.height);
         }
-        catch(...) { valid=false; exiting_=true; }
+        catch(const std::exception& error) { valid=false; exiting_=true; Report("eye %u failed: %s",i,error.what()); }
+        catch(...) { valid=false; exiting_=true; Report("eye %u failed: unknown exception",i); }
         XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
         if(!Check(xrReleaseSwapchainImage(eye.chain,&release),"release image")) { valid=false; exiting_=true; }
         projectionViews[i].pose=views[i].pose; projectionViews[i].fov=views[i].fov;

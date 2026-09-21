@@ -1,4 +1,5 @@
 #include "eye_pair.h"
+#include "eye_blit.h"
 #include <cstdio>
 #include <cstdlib>
 using Microsoft::WRL::ComPtr;
@@ -29,6 +30,18 @@ int main() {
         CHECK(pixel[0]==(eye==0?255:0) && pixel[2]==(eye==1?255:0));
         context->Unmap(staging.Get(),0);
     }
+    EyeBlit blit; CHECK(blit.Initialize(device.Get()));
+    D3D11_VIEWPORT originalViewport{2,3,7,5,0,1}; context->RSSetViewports(1,&originalViewport);
+    auto originalTarget=target.Get(); context->OMSetRenderTargets(1,&originalTarget,nullptr);
+    CHECK(blit.Draw(0,pair.Texture(0),target.Get(),16,8));
+    ComPtr<ID3D11RenderTargetView> restoredTarget; context->OMGetRenderTargets(1,&restoredTarget,nullptr);
+    CHECK(restoredTarget.Get()==originalTarget);
+    D3D11_VIEWPORT restoredViewport{}; UINT count=1; context->RSGetViewports(&count,&restoredViewport);
+    CHECK(restoredViewport.TopLeftX==2 && restoredViewport.Width==7);
+    context->CopyResource(staging.Get(),source.Get());
+    D3D11_MAPPED_SUBRESOURCE copied{}; CHECK(SUCCEEDED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&copied)));
+    CHECK(static_cast<unsigned char*>(copied.pData)[0]==255 && static_cast<unsigned char*>(copied.pData)[2]==0);
+    context->Unmap(staging.Get(),0);
     CHECK(SUCCEEDED(pair.Capture(source.Get(),0,11)));
     CHECK(FAILED(pair.Capture(source.Get(),1,12))); CHECK(!pair.Ready(11));
     desc.Width=32; desc.Usage=D3D11_USAGE_DEFAULT; desc.CPUAccessFlags=0;
