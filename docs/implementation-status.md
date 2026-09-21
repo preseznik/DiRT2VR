@@ -22,7 +22,11 @@ The user reported that the follow-up worked fine, but F10 froze the view until p
 
 The final run recorded **3,669 visible stereo pairs**, **5,098 visible screen frames**, zero recorded pair/camera/projection failures, and 3,669 valid GPU samples. The inner stereo GPU interval was **0.891904 ms median / 1.00352 ms p95**. CPU intervals at Present for those submitted stereo frames were **11.1113 ms median / 11.1702 ms p95**, maximum **21.991 ms**, with none above 22.22 ms. These bounded observations support continued prototype work, not compositor-delivery or broad 90 Hz acceptance. All final `restoration-check.json` checks pass, including original settings/assets, installed executable/xlive, deployed build identity and clean process exit.
 
-**New reported defect:** Subaru Impreza at Battersea at night: headlights follow headset orientation instead of staying aligned with the car. Treat night lighting as unaccepted until the light setup is separated from eye-camera transforms and retested.
+The user then identified headlights following their head in the **Subaru Impreza STI Group N, Battersea Bridge at night**. Diagnostic `trace-20260921-144834-482` recorded the game's point/spot/projected light setup only before the eye renders. Those routines calculated camera-space values using the original view, which both eyes subsequently reused.
+
+The fix records that frame's light parameter calls for the exact render context and re-evaluates them after each eye's camera setup. It restores original light parameters afterward. In follow-up `trace-20260921-145248-255`, the user confirmed **"Headlights stay with the car"**. The trace records 952 visible stereo pairs, no camera/projection/pair failures or draw-count differences, and matching lighting refresh counts for both eyes and restoration. The inner GPU interval was 0.910336 ms median / 1.3824 ms p95. This was a short targeted check, not full night-race or shadow acceptance.
+
+The final source enables the fix by default, bounds the borrowed light references to 512 per frame, excludes other contexts and rejects stale/future frames. Overflow or missing hooks sends the scene to the virtual screen. Six CTest suites pass, including producer-thread handoff, context isolation, paired snapshots, stale-reference rejection and overflow recovery. These final cache/default-enabling changes were build/test validated after the user's visual check; that check used the preceding diagnostic build. Both lighting runs exited normally with shared settings and copied camera/effects restored.
 
 Computer-use input stopped after physical Escape was detected; subsequent test operation was left to the user and inspected through log files only. The launcher restored shared graphics settings after each completed run; the normal game save/progress is retained.
 
@@ -103,7 +107,7 @@ The final lateral-offset benchmark exited normally. `trace-20260921-130251-711/r
 
 | Component | Evidence | Limit |
 |---|---|---|
-| x86 MSVC build with pinned dependencies | `tools/build.cmd`; five CTest suites pass | No release packaging |
+| x86 MSVC build with pinned dependencies | `tools/build.cmd`; six CTest suites pass | No release packaging |
 | D3D11 proxy and full export forwarding | Game creates feature-level 0xb000 device; standalone probe passes through same proxy | Single game device/swapchain diagnostic design |
 | Executable/prologue guards | SHA-256 plus scene-entry byte match | Only this exact 1.1.0.0 build |
 | Shader reflection and camera hooks | Camera setup/upload prologue guards, pose/FOV maths, live per-eye upload/restoration receipts | One executable; physical scale, culling and visual tracking still unvalidated |
@@ -148,7 +152,7 @@ The installed executable still hashes to the supported SHA-256. No `d3d11.dll` w
 
 ## Next gate
 
-1. Fix the reported car/headlight alignment at Battersea at night, then follow the positive look/lean report with stationary pillar/recenter and broader-angle checks. Preserve the current GPU measurements separately from full-frame performance acceptance.
+1. Extend the confirmed Battersea Bridge headlight fix to broader night-event/shadow checks, and follow the positive look/lean report with stationary pillar/recenter and broader-angle checks. Preserve the current GPU measurements separately from full-frame performance acceptance.
 2. Establish correct CPU visibility for both eyes and head movement. The 120-degree original preparation camera is an experiment, not a complete solution.
 3. Establish simulation timing, animation and resource-history integrity during a complete interactive race. Do not restore whole opaque engine objects or replay simulation updates speculatively.
 4. Measure CPU/GPU timing and address-space headroom over stage changes at recorded game and headset dimensions. Keep the reduced-effects baseline while diagnosing defects; reintroduce optional effects individually.

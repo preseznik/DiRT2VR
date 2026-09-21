@@ -5,6 +5,7 @@
 #include "game_xr.h"
 #include "gpu_timer.h"
 #include "vr_hotkeys.h"
+#include "light_replay.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -67,6 +68,72 @@ thread_local bool eyeCameraSetup{};
 thread_local float projectionShift{};
 thread_local const XrFovf* eyeFov{};
 thread_local unsigned eyeProjectionUploads{};
+thread_local unsigned lightingEye{}; // 0 = original scene, 1/2 = headset eyes.
+bool LightingTrace() {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_TRACE_LIGHTS",value,8)>0 && wcscmp(value,L"1")==0; }();
+    return enabled;
+}
+void Stack(const char* event);
+using LightSetupFn = void (__thiscall*)(void*,void*,void*,void*);
+using PointSetupFn = void (__thiscall*)(void*,void*,void*);
+LightSetupFn realSpotSetup{},realProjectedSetup{};
+PointSetupFn realPointSetup{};
+PreparedLights preparedLights;
+bool lightingHooksReady{};
+thread_local std::vector<LightCall> eyeLights;
+thread_local bool lightsRefreshed{};
+void RememberLight(unsigned kind,void* self,void* light,void* context,void* material) {
+    preparedLights.Remember(frame.load(),{kind,self,light,context,material});
+}
+void RefreshLights(void* context) {
+    if(lightsRefreshed) return;
+    lightsRefreshed=true;
+    for(const auto& call:eyeLights) {
+        if(call.kind==0) realPointSetup(call.self,call.light,context);
+        else if(call.kind==1) realSpotSetup(call.self,call.light,context,call.material);
+        else realProjectedSetup(call.self,call.light,context,call.material);
+    }
+    if(LightingTrace() && frame.load()%120==0)
+        Log("lighting refreshed frame=%llu eye=%u context=%p calls=%zu",frame.load(),lightingEye,context,eyeLights.size());
+}
+void TraceLight(unsigned kind,void* light,void* context) {
+    static std::atomic<unsigned> seen{};
+    const unsigned bit=1u<<(kind*3+lightingEye);
+    if(!(seen.fetch_or(bit)&bit)) { Stack("LightSetup"); Log("light setup kind=%u eye=%u",kind,lightingEye); }
+    if(frame.load()%120) return;
+    static std::mutex outputMutex;
+    std::lock_guard lock(outputMutex);
+    static std::ofstream out(Output()/"lights.csv");
+    static bool header=false;
+    if(!header) {
+        out << "frame,kind,eye,light,context";
+        for(unsigned i=0;i<16;++i) out << ",view" << i;
+        for(unsigned i=0;i<16;++i) out << ",lightWorld" << i;
+        out << '\n'; header=true;
+    }
+    const auto view=reinterpret_cast<const float*>(static_cast<const unsigned char*>(context)+0x160);
+    const auto object=*reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(light)+0x1c);
+    const auto world=reinterpret_cast<const float*>(object+0x90);
+    out << frame.load() << ',' << kind << ',' << lightingEye << ',' << light << ',' << context;
+    for(unsigned i=0;i<16;++i) out << ',' << view[i];
+    for(unsigned i=0;i<16;++i) out << ',' << world[i];
+    out << '\n'; out.flush();
+}
+void __fastcall PointSetup(void* self,void*,void* light,void* context) {
+    RememberLight(0,self,light,context,nullptr);
+    if(LightingTrace()) TraceLight(0,light,context);
+    realPointSetup(self,light,context);
+}
+void __fastcall SpotSetup(void* self,void*,void* light,void* context,void* material) {
+    RememberLight(1,self,light,context,material);
+    if(LightingTrace()) TraceLight(1,light,context);
+    realSpotSetup(self,light,context,material);
+}
+void __fastcall ProjectedSetup(void* self,void*,void* light,void* context,void* material) {
+    RememberLight(2,self,light,context,material);
+    if(LightingTrace()) TraceLight(2,light,context);
+    realProjectedSetup(self,light,context,material);
+}
 bool cameraHooksReady{};
 bool cameraSetupHookReady{};
 
@@ -75,6 +142,7 @@ void __fastcall CameraSetup(void* self,void*,void* context,void* camera,float ne
     auto bytes=static_cast<unsigned char*>(self);
     eyeCameraSetup=self==eyeRenderer && (camera==bytes+0x5e0 || camera==bytes+0x650);
     realCameraSetup(self,context,camera,nearPlane,upload);
+    if(eyeCameraSetup && lightingEye && upload) RefreshLights(context);
     eyeCameraSetup=previous;
 }
 void __fastcall CameraUpload(void* self,void*,void* context) {
@@ -211,7 +279,7 @@ public:
     }
     ~ScopedEyePose() {
         for(unsigned i=0;i<2;++i) for(unsigned offset:{4u,8u,12u,16u}) memcpy(cameras_[i]+offset,original_[i].data()+offset,12);
-        eyeRenderer=nullptr; eyeFov=nullptr;
+        eyeRenderer=nullptr; eyeFov=nullptr; lightingEye=0;
     }
 };
 
@@ -228,7 +296,11 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             static_cast<const float*>(cameraA)[21],static_cast<const float*>(cameraB)[21]);
         previousCandidate=cockpit;
     }
-    if(!cockpit) return false;
+    if(!cockpit || !lightingHooksReady) return false;
+    if(!preparedLights.Snapshot(f,context,eyeLights)) {
+        Log("lighting replay capacity exceeded; using virtual screen frame=%llu",f);
+        return false;
+    }
     if(!EnsureGameXr()) return false;
     xrTickFrame=f;
     static EyePair eyes;
@@ -256,13 +328,18 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     LARGE_INTEGER start{},end{},frequency{}; QueryPerformanceFrequency(&frequency); QueryPerformanceCounter(&start);
     std::array<float,28> originalA,originalB;
     memcpy(originalA.data(),cameraA,112); memcpy(originalB.data(),cameraB,112);
+    // These three guarded parameter builders only read view (+0x160) and
+    // inverse view (+0x90) from the context. Preserve their original inputs so
+    // shared light materials can be restored after both eyes, including failure.
+    alignas(16) std::array<unsigned char,0x1a0> originalLightContext;
+    memcpy(originalLightContext.data(),context,originalLightContext.size());
     const bool submitted=gameXr->Tick([&](unsigned eye,const XrView& view,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
         const auto before=draws.load(); scenePass=DetailedTrace() && f==3000 ? eye+1 : 0;
         eyeProjectionUploads=0;
         if(eye==0) gpu.Begin(f);
         {
             ScopedEyePose pose(cameraA,cameraB,RelativePose(headsetReference,view.pose),scale);
-            eyeRenderer=self; eyeFov=&view.fov;
+            eyeRenderer=self; eyeFov=&view.fov; lightingEye=eye+1; lightsRefreshed=false;
             realInner(self,lists,cameraA,cameraB,context,scene,flags);
             rendered=true;
         }
@@ -281,6 +358,11 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         }
         PrepareHeadsetViews(views);
     });
+    if(!eyeLights.empty()) {
+        lightsRefreshed=false;
+        RefreshLights(originalLightContext.data());
+        eyeLights.clear();
+    }
     gpu.End(false); // Close a partial pair after an acquire/draw failure.
     scenePass=0;
     QueryPerformanceCounter(&end);
@@ -753,6 +835,25 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         }
         if(ContinuousReplayEnabled()) {
             auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+            if(HeadsetEnabled()) {
+                const unsigned char point[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x10};
+                const unsigned char spot[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0x45,0x10,0x83,0xec,0x14};
+                const unsigned char projected[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0x45,0x10,0x81,0xec,0x14,0x01,0,0};
+                auto hook=[&](unsigned rva,const void* signature,size_t size,void* replacement,void** original) {
+                    if(*original) return true;
+                    if(memcmp(base+rva,signature,size)!=0) return false;
+                    auto status=MH_CreateHook(base+rva,replacement,original);
+                    if(status==MH_OK) status=MH_EnableHook(base+rva);
+                    Log("lighting parameter hook RVA=0x%x status=%s",rva,MH_StatusToString(status));
+                    if(status!=MH_OK) *original=nullptr;
+                    return status==MH_OK;
+                };
+                const bool p=hook(0x7c0d30,point,sizeof(point),reinterpret_cast<void*>(PointSetup),reinterpret_cast<void**>(&realPointSetup));
+                const bool s=hook(0x7c7d70,spot,sizeof(spot),reinterpret_cast<void*>(SpotSetup),reinterpret_cast<void**>(&realSpotSetup));
+                const bool m=hook(0x7c7fa0,projected,sizeof(projected),reinterpret_cast<void*>(ProjectedSetup),reinterpret_cast<void**>(&realProjectedSetup));
+                lightingHooksReady=p && s && m;
+                Log("lighting parameter hooks ready=%d",lightingHooksReady);
+            }
             const unsigned char setupPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0xe4,0,0,0};
             const unsigned char uploadPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x54};
             if(!realCameraSetup && memcmp(base+0x330b70,setupPrologue,sizeof(setupPrologue))==0) {

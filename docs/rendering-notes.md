@@ -78,6 +78,26 @@ The user confirmed screen readability/stability and the initial controls, then r
 
 `GpuTimer` uses eight slots, each holding timestamp-start, timestamp-end and timestamp-disjoint queries. It starts immediately before the first eye's inner render and ends after the second eye's GPU copy/blit, before `xrEndFrame`. Previous slots are checked once per scene with `D3D11_ASYNC_GETDATA_DONOTFLUSH`; unavailable slots remain pending and a full ring skips sampling. Partial pairs close as invalid. Valid samples require both timestamp results, a non-disjoint clock, nonzero frequency and monotonic timestamps. This measures elapsed GPU timeline for that interval, including possible CPU submission gaps; it excludes outer scene preparation, compositor work and transport. The WARP test verifies query retirement, sample identity and no duplicated result. It does not establish headset performance.
 
+## Per-eye local lighting
+
+The user reproduced head-following headlights with the Subaru Impreza STI Group N at Battersea Bridge at night. `trace-20260921-144834-482` shows local-light preparation on a worker before main rendering, with no calls during either eye. Shader reflection identifies `lightPosVs`, `lightDirVs` and `mViewToLightClipSpace`; leaving these in the original camera's space explains the moving beam.
+
+For the fingerprinted executable, three guarded parameter builders are replayed:
+
+| RVA | thiscall arguments after self | Purpose |
+|---|---|---|
+| `0x7c0d30` | light, context | Point-light view-space position |
+| `0x7c7d70` | light, context, material | Spotlight view-space position/direction |
+| `0x7c7fa0` | light, context, material | Projected spotlight, including beam-mask transform |
+
+The original calls are recorded with the current Present counter. A mutex transfers records from the preparation worker; the supported serial-render configuration joins that work before rendering. Each main scene snapshots only records from the exact frame and context. Neither old nor future records are reused. The 512-call bound rejects the entire set on overflow, causing screen fallback. All three hooks must install before cockpit stereo is admitted. The unit test covers these pointer-lifetime/context boundaries independently of the game.
+
+After the first eligible camera setup/upload in each eye, call the original parameter builders with the updated context. They read its view at `+0x160` and inverse view at `+0x90`, and write material parameters through the engine setters. They do not rebuild visibility lists, place lights, simulate the car, or rerun shadow rendering. The builders' context reads lie within an aligned `0x1a0`-byte prefix; an original copy supplies restoration after the XR tick, including handled acquire/draw failure. Camera record restoration remains separate. This implementation still assumes the existing single main context and serial renderer.
+
+Follow-up `trace-20260921-145248-255` recorded the same light refresh count for eye 1, eye 2 and restoration (for example 19/19/19 at frame 5040). The user confirmed the headlights stay with the car. Projected shadow maps use additional parameters; detailed shadow alignment and other events have not been accepted by this beam-position check.
+
+`run-trace.ps1 -Interactive -TraceLights` enables sampled world/view matrices in `lights.csv`, first-call stacks and per-eye refresh counts. Normal operation keeps the correction enabled with those captures off.
+
 ## Instrumentation limitations
 
 - Default tracing does not replay. `DIRT2VR_REPLAY_PROBE=1` repeats one main-view call at frame 3000; `DIRT2VR_INNER_REPLAY=1` selects the prepared-inner boundary. The separate `DIRT2VR_CONTINUOUS_REPLAY=1` mode repeats eligible main scenes from frame 300 onwards, with symmetric offsets and persistent GPU copies. Use the launcher so serial rendering and restoration are configured together.

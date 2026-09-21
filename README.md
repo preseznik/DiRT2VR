@@ -57,7 +57,7 @@ The original game opens normally, with menus and videos on a stationary virtual 
 
 The proxy consumes both press/release messages for these shortcuts. In particular, F10 no longer reaches Windows' default system-menu handler, which froze the earlier playtest until a second press.
 
-Known lighting defect: headlights were reported to follow headset orientation in the Subaru Impreza at Battersea at night. Night racing is not accepted yet.
+Headlight alignment is corrected by refreshing light parameters for each eye. The user confirmed the beam stays with the car in a Subaru Impreza STI Group N night event at Battersea Bridge. Other night events and detailed shadow accuracy still need coverage.
 
 Select a Subaru STI event and its cockpit view for the prepared baseline. The launcher adjusts only that car's head/chase cameras; other interiors and visibility remain unverified. Once seated, press F9. A conservative camera filter keeps the observed trailer/exterior cameras on the screen even when cockpit VR is requested; the request remains active for the next eligible cockpit. It currently checks the verified cockpit near-plane setting in both camera records, not a complete game-state API. Before pause menus, replays or flashbacks, press F9 to force the screen: a replay using a cockpit camera or an overlay on a paused cockpit may still pass the filter.
 
@@ -68,6 +68,8 @@ Quit the game normally and leave the launcher window open until settings restora
 Interactive mode disables synchronous shader/camera dumps and screenshots by default. Add `-CaptureDiagnostics` only for a capture run; it can introduce large stalls. Lightweight frame, screen, camera-check and address-space CSVs remain active. `gpu-frames.csv` measures the inner two-eye rendering/copy interval using asynchronous GPU timestamps without waiting or flushing. It excludes outer scene preparation, the compositor and headset transport; it is not a complete frame-budget measurement.
 
 Use `-Headset -QuietTrace` for an automatic benchmark with the same reduced instrumentation. `-QuietTrace` and `-CaptureDiagnostics` cannot be combined.
+
+Add `-TraceLights` to record sampled light transforms and per-eye refresh counts for lighting investigations. The lighting fix is enabled without this diagnostic switch.
 
 ## Experimental in-game headset benchmark
 
