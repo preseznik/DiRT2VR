@@ -155,6 +155,7 @@ Public Class Session
         Return start
     End Function
     Private Sub WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing)
+        Dim focus As New StartupFocus(context)
         Using child = Process.Start(start)
             Status("Running")
             Dim seenGame As Boolean
@@ -164,6 +165,7 @@ Public Class Session
             Do
                 Application.DoEvents() : poll?.Invoke()
                 If DateTime.UtcNow >= nextProcessCheck Then
+                    focus.Poll()
                     gameAlive = context.GameRunning()
                     seenGame = seenGame Or gameAlive
                     nextProcessCheck = DateTime.UtcNow.AddMilliseconds(250)

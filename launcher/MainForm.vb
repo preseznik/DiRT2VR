@@ -396,7 +396,10 @@ Public Class MainForm
             start.ArgumentList.Add(arg)
         Next
         Using child = Process.Start(start)
-            If arguments.Contains("--launch") Then WindowState = FormWindowState.Minimized
+            If arguments.Contains("--launch") Then
+                StartupFocus.AllowSetForegroundWindow(CUInt(child.Id))
+                WindowState = FormWindowState.Minimized
+            End If
         End Using
     End Sub
     Private Sub RefreshBindings()
