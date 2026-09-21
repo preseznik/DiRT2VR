@@ -32,6 +32,8 @@ Start the launcher normally, **not with Run as administrator**. In protected gam
 
 The launcher minimizes after starting either mode and stays minimized during play. Reopen it from the taskbar when needed; the background session manager continues running.
 
+DiRT 2 may briefly fall behind other windows as it replaces its startup window. The launcher hands focus to the replacement once; the brief drop followed by immediate return has been confirmed on desktop.
+
 Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and use only the human-control fix and a temporary race file. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.

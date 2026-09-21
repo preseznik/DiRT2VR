@@ -2,25 +2,35 @@
 ' Only repair that transition, never continually enforce foreground focus.
 Public Class StartupFocusPolicy
     Private ReadOnly started As Long
-    Private ReadOnly inputAtStart As UInteger
+    Private previousInput As UInteger
     Private firstWindow As IntPtr
     Private hadForeground As Boolean
     Public Property Finished As Boolean
+    Public Property Outcome As String = "Waiting for game window"
     Public Sub New(now As Long, lastInput As UInteger)
-        started = now : inputAtStart = lastInput
+        started = now : previousInput = lastInput
     End Sub
     Public Function ShouldActivate(window As IntPtr, foreground As IntPtr, lastInput As UInteger, now As Long) As Boolean
         If Finished Then Return False
-        If now - started >= 30000 OrElse lastInput <> inputAtStart Then
+        If now - started >= 30000 Then
+            Outcome = "Expired"
             Finished = True : Return False
         End If
         If window = IntPtr.Zero Then Return False
-        If firstWindow = IntPtr.Zero Then firstWindow = window
+        If firstWindow = IntPtr.Zero Then
+            firstWindow = window : Outcome = "Initial game window detected"
+        End If
         If window = firstWindow Then
+            If hadForeground AndAlso foreground <> window AndAlso lastInput <> previousInput Then
+                Finished = True : Outcome = "Canceled: input switched away from game" : Return False
+            End If
+            previousInput = lastInput
             hadForeground = hadForeground OrElse foreground = window
+            If hadForeground Then Outcome = "Initial game window had focus"
             Return False
         End If
         Finished = True
+        Outcome = If(Not hadForeground, "Skipped: initial window never held focus", If(foreground = window, "Replacement already focused", "Requesting replacement focus"))
         Return hadForeground AndAlso foreground <> window
     End Function
 End Class
@@ -40,6 +50,11 @@ Public Class StartupFocus
     End Function
     Private ReadOnly policy As StartupFocusPolicy
     Private ReadOnly executable As String
+    Public ReadOnly Property Outcome As String
+        Get
+            Return policy.Outcome
+        End Get
+    End Property
     Public Sub New(context As InstallContext)
         executable = IO.Path.Combine(context.GameRoot, "dirt2_game.exe")
         Dim value As New LastInput With {.Size = CUInt(Marshal.SizeOf(Of LastInput)())}
@@ -50,7 +65,7 @@ Public Class StartupFocus
         If policy.Finished Then Return
         Dim input As New LastInput With {.Size = CUInt(Marshal.SizeOf(Of LastInput)())}
         If Not GetLastInputInfo(input) Then
-            policy.Finished = True : Return
+            policy.Finished = True : policy.Outcome = "Input state unavailable" : Return
         End If
         Dim window As IntPtr
         For Each game In Process.GetProcessesByName("dirt2_game")
@@ -62,6 +77,8 @@ Public Class StartupFocus
                 End Try
             End Using
         Next
-        If policy.ShouldActivate(window, GetForegroundWindow(), input.Tick, Environment.TickCount64) Then SetForegroundWindow(window)
+        If policy.ShouldActivate(window, GetForegroundWindow(), input.Tick, Environment.TickCount64) Then
+            policy.Outcome = If(SetForegroundWindow(window), "Replacement activated", "Windows declined activation")
+        End If
     End Sub
 End Class

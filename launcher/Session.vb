@@ -5,6 +5,7 @@ Public Class SessionStatus
     Public Property State As String = ""
     Public Property Message As String = ""
     Public Property ProcessId As Integer
+    Public Property StartupFocus As String = ""
     Public Property UpdatedUtc As DateTime = DateTime.UtcNow
 End Class
 Public Class HeadsetStatus
@@ -14,11 +15,12 @@ End Class
 Public Class Session
     Private ReadOnly context As InstallContext
     Private ReadOnly settings As VrSettings
+    Private focusStatus As String = ""
     Public Sub New(value As InstallContext)
         context = value : settings = VrSettings.Load(context)
     End Sub
     Private Sub Status(state As String, Optional message As String = "")
-        Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message, .ProcessId = Environment.ProcessId})
+        Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message, .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus})
     End Sub
     Public Sub Run(Optional vr As Boolean = True)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
@@ -166,6 +168,9 @@ Public Class Session
                 Application.DoEvents() : poll?.Invoke()
                 If DateTime.UtcNow >= nextProcessCheck Then
                     focus.Poll()
+                    If focusStatus <> focus.Outcome Then
+                        focusStatus = focus.Outcome : Status("Running")
+                    End If
                     gameAlive = context.GameRunning()
                     seenGame = seenGame Or gameAlive
                     nextProcessCheck = DateTime.UtcNow.AddMilliseconds(250)
