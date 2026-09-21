@@ -1,7 +1,17 @@
 param([switch]$ReplayExperiment, [switch]$ReducedEffects, [switch]$LowPost,
     [switch]$SerialRender, [switch]$NoAmbientOcclusion, [switch]$NoMotionBlur, [switch]$SkipWater,
-    [switch]$Cockpit, [ValidateRange(-0.25,0.25)][double]$CameraOffset=0, [switch]$InnerReplay)
+    [switch]$Cockpit, [ValidateRange(-0.25,0.25)][double]$CameraOffset=0, [switch]$InnerReplay,
+    [switch]$ContinuousReplay,
+    [ValidateRange(0,4096)][int]$RenderWidth=0, [ValidateRange(0,4096)][int]$RenderHeight=0)
 $ErrorActionPreference = 'Stop'
+if (($RenderWidth -eq 0) -ne ($RenderHeight -eq 0) -or
+    ($RenderWidth -ne 0 -and ($RenderWidth -lt 320 -or $RenderHeight -lt 240))) {
+    throw 'Set both render dimensions, at least 320 by 240, or leave both zero'
+}
+if ($ContinuousReplay) {
+    if (!$SerialRender) { throw '-ContinuousReplay requires -SerialRender' }
+    $ReplayExperiment = $true; $InnerReplay = $true
+}
 if ($InnerReplay -and !$ReplayExperiment) { throw '-InnerReplay requires -ReplayExperiment' }
 if ($InnerReplay -and $CameraOffset -ne 0 -and !$SerialRender) {
     throw 'Inline cockpit camera translation requires -SerialRender'
@@ -28,6 +38,8 @@ New-Item -ItemType Directory -Path $output | Out-Null
     noAmbientOcclusion = [bool]$NoAmbientOcclusion; noMotionBlur = [bool]$NoMotionBlur
     skipWater = [bool]$SkipWater; cockpit = [bool]$Cockpit
     cameraOffsetGameUnits = $CameraOffset; innerReplay = [bool]$InnerReplay
+    continuousReplay = [bool]$ContinuousReplay
+    renderWidth = $RenderWidth; renderHeight = $RenderHeight
     executableSha256 = $expected; proxySha256 = (Get-FileHash -LiteralPath $proxy -Algorithm SHA256).Hash
 } | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'diagnostic-options.json')
 Copy-Item -LiteralPath $proxy -Destination (Join-Path $game 'd3d11.dll')
@@ -37,6 +49,7 @@ $previousReplay = $env:DIRT2VR_REPLAY_PROBE
 $previousWater = $env:DIRT2VR_SKIP_WATER
 $previousOffset = $env:DIRT2VR_CAMERA_OFFSET
 $previousInner = $env:DIRT2VR_INNER_REPLAY
+$previousContinuous = $env:DIRT2VR_CONTINUOUS_REPLAY
 $settings = Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'My Games\DiRT2\hardwaresettings\hardware_settings_config.xml'
 $originalSettings = $null
 $effects = Join-Path $game 'postprocess\effects.xml'
@@ -90,7 +103,7 @@ try {
         Copy-Item -LiteralPath $encoded -Destination $effects
         Write-Host "Zeroed $($blurParameters.Count) motion-blur parameters in isolated assets."
     }
-    if ($ReducedEffects -or $LowPost -or $SerialRender -or $NoAmbientOcclusion) {
+    if ($ReducedEffects -or $LowPost -or $SerialRender -or $NoAmbientOcclusion -or $RenderWidth) {
         $originalSettings = [IO.File]::ReadAllBytes($settings)
         [IO.File]::WriteAllBytes((Join-Path $output 'settings-original.xml'), $originalSettings)
         [xml]$configuration = [IO.File]::ReadAllText($settings)
@@ -102,6 +115,12 @@ try {
         if ($LowPost) { $configuration.hardware_settings_config.postprocess.SetAttribute('quality','0') }
         if ($SerialRender) { $configuration.hardware_settings_config.cpu.threadStrategy.SetAttribute('parallelUpdateRender','false') }
         if ($NoAmbientOcclusion) { $configuration.hardware_settings_config.dynamic_ambient_occ.SetAttribute('enabled','false') }
+        if ($RenderWidth) {
+            $resolution = $configuration.hardware_settings_config.graphics_card.resolution
+            $resolution.SetAttribute('width',$RenderWidth.ToString())
+            $resolution.SetAttribute('height',$RenderHeight.ToString())
+            $resolution.SetAttribute('fullscreen','false')
+        }
         $configuration.Save($settings)
         Copy-Item -LiteralPath $settings -Destination (Join-Path $output 'settings-applied.xml')
         Write-Host 'Temporary graphics settings applied; original bytes will be restored when the game exits.'
@@ -111,6 +130,7 @@ try {
     $env:DIRT2VR_SKIP_WATER = if ($SkipWater) { '1' } else { '0' }
     $env:DIRT2VR_CAMERA_OFFSET = $CameraOffset.ToString([Globalization.CultureInfo]::InvariantCulture)
     $env:DIRT2VR_INNER_REPLAY = if ($InnerReplay -and $ReplayExperiment) { '1' } else { '0' }
+    $env:DIRT2VR_CONTINUOUS_REPLAY = if ($ContinuousReplay) { '1' } else { '0' }
     Write-Host "Diagnostic started. Trace: $output"
     Write-Host 'This is desktop instrumentation, not VR. The replay experiment is unvalidated.'
     $launch = @{FilePath=(Join-Path $game 'dirt2.exe'); WorkingDirectory=$game;
@@ -129,4 +149,5 @@ try {
     $env:DIRT2VR_SKIP_WATER = $previousWater
     $env:DIRT2VR_CAMERA_OFFSET = $previousOffset
     $env:DIRT2VR_INNER_REPLAY = $previousInner
+    $env:DIRT2VR_CONTINUOUS_REPLAY = $previousContinuous
 }

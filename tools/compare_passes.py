@@ -7,10 +7,10 @@ import json
 import pathlib
 
 
-def image_difference(directory):
+def image_difference(directory, numbers=(900001, 900002)):
     images = []
     size = None
-    for number in (900001, 900002):
+    for number in numbers:
         path = directory / f'frame-{number}.ppm'
         if not path.exists():
             return None

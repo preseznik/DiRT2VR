@@ -4,7 +4,32 @@
 
 The native x86 OpenXR route is proven on this machine. The DX11 stereo route remains unproven. **The planned first milestone is not complete.** Do not advance to the playable-alpha/release stages or describe the current binaries as a VR mod.
 
-The reduced-effects route now has a repeatable high-resolution cockpit scene and a successful lateral-camera geometry experiment at one sampled frame. Repeating the outer scene still consumes interior work; repeating the prepared inner scene preserves it. The remaining gates include headset eye poses/projections, per-eye visibility, full-race state integrity and actual headset presentation.
+The reduced-effects route now renders continuous pairs of high-resolution cockpit views into independent GPU textures. Repeating the outer scene still consumes interior work; repeating the prepared inner scene preserves it. The remaining gates include headset eye poses/projections, per-eye visibility, simulation integrity and actual headset presentation.
+
+## Continuous rendering, September 21
+
+`-ContinuousReplay` opts into two renders for every eligible main scene, with symmetric fixed eye positions. Both images are copied before subsequent rendering can overwrite them. Incomplete or resized pairs cannot be used, and a failed capture, camera restoration or draw-count comparison disables further replay. Each camera position is restored immediately after its eye renders. Geometry visibility still comes from the original prepared list.
+
+The initial continuous tests started at frame 3000. The current build starts at frame 300 to cover more of the benchmark, rather than just its later section. This remains the built-in benchmark with one supported car/stage, not interactive full-race acceptance.
+
+| Receipt under `artifacts/` | Dimensions per retained view | Result |
+|---|---|---|
+| `trace-20260921-131334-749` | 800 × 600 | Identical cameras: **3,815** consecutive pairs, frames 3000–6814; no draw-count, restoration or pair failures |
+| `trace-20260921-131648-390` | 800 × 600 | Separation 0.064 game units: **664** consecutive pairs, frames 3000–3663; no failures |
+| `trace-20260921-132006-406` | 1600 × 1200 | Initial larger-size check: **128** consecutive pairs, frames 3000–3127; no failures |
+| `trace-20260921-132334-304` | 1600 × 1200 | Final build, separation 0.064 game units: **3,290** consecutive pairs, frames **300–3589**; no draw-count, camera-restoration or pair failures; frame-3000 signatures match |
+
+The identical-camera run's captured pairs at frames 3000, 4500 and 6000 remain nearly pixel-identical; mean absolute channel differences are all below 0.001/255. The separated-view images retain the interior and show lateral parallax. Different pair totals reflect different presented-frame rates before the benchmark exits; they are not proof of equal simulation progression.
+
+At 800 × 600 with separated views, sampled address-space queries all completed. Peak committed virtual memory was 1,094,656,000 bytes; minimum free address space was 834,269,184 bytes (795.6 MiB), with a minimum largest free block of 442,892,288 bytes (422.4 MiB). The process address ceiling reported by Windows was 2,147,418,112 bytes. These are actual address-space measurements, unlike the earlier private-memory-only observations, but exclude future OpenXR allocations. CPU submission time was 1.401 ms median / 2.037 ms p95; this is neither GPU time nor a headset frame-rate claim.
+
+Three CTest suites now pass. The added WARP GPU test verifies distinct left/right contents after the source is overwritten, rejects stale/incomplete/resized pairs, and checks recovery after resizing. Live benchmark images separately validate game-rendered contents. Commands and the summary tool are documented in the README.
+
+The final 1600 × 1200 run completed the benchmark and retained the high-resolution cockpit in both captured views. It measured 1,112,580,096 bytes peak committed address space, 820,187,136 bytes minimum free space (782.2 MiB), and a minimum largest free block of 430,632,960 bytes (410.7 MiB). All address-space samples were complete. Neither this desktop resolution nor the CPU submission measurements establish a 90 Hz headset budget; GPU timing, OpenXR resources and game frame pacing are still outstanding.
+
+The final receipt's `restoration-check.json` confirms byte-identical restoration of shared graphics settings and the isolated camera/effects assets. The installed executable and `xlive.dll` are unchanged, no proxy was installed in the Steam directory, and the isolated proxy matches the tested build. Both isolated game processes exited. No Large Address Aware patch was applied.
+
+The source repository is `https://github.com/preseznik/DiRT2VR`, with work on `preseznik/native-vr-prototype`. Game files, extracted shaders, local captures, dependencies and binaries remain untracked.
 
 ## Reduced-effects experiment, September 21
 
@@ -35,7 +60,7 @@ The final lateral-offset benchmark exited normally. `trace-20260921-130251-711/r
 
 | Component | Evidence | Limit |
 |---|---|---|
-| x86 MSVC build with pinned dependencies | `tools/build.cmd`; two CTest suites pass | No release packaging |
+| x86 MSVC build with pinned dependencies | `tools/build.cmd`; three CTest suites pass | No release packaging |
 | D3D11 proxy and full export forwarding | Game creates feature-level 0xb000 device; standalone probe passes through same proxy | Single game device/swapchain diagnostic design |
 | Executable/prologue guards | SHA-256 plus scene-entry byte match | Only this exact 1.1.0.0 build |
 | Shader reflection and camera discovery | `artifacts/trace-006/shaders`, camera binaries | A camera layout is not yet a supported game camera hook |
@@ -80,7 +105,7 @@ The installed executable still hashes to the supported SHA-256. No `d3d11.dll` w
 
 ## Next gate
 
-1. Validate the prepared inner boundary beyond the single captured frame and across other cars/stages. Check simulation timing, animation and resource history over sustained two-eye rendering. Do not restore whole opaque engine objects or replay simulation updates speculatively.
+1. Extend the continuous prepared-inner result across other cars/stages and establish simulation timing, animation and resource-history integrity. Do not restore whole opaque engine objects or replay simulation updates speculatively.
 2. Keep the reduced-effects baseline while classifying the residual image differences. Reintroduce optional effects individually only after their eye-dependent work is understood.
 3. Establish camera handedness, units, projection asymmetry and CPU visibility. Render both eyes from one captured simulation state. Per-object transforms and culling must agree with the eye camera.
 4. Only then connect that renderer to `XrFrames`, test a stationary cockpit pillar lean, and measure frame time and virtual address-space headroom at recorded eye dimensions.

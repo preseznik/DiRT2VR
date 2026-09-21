@@ -2,7 +2,7 @@
 
 **Development prototype. This is not a playable VR mod.**
 
-The repository currently provides a working native **32-bit OpenXR/D3D11 headset diagnostic** and a fingerprint-guarded **DiRT 2 DX11 instrumentation DLL**. The game renderer is not connected to OpenXR. With optional effects disabled, a prepared inner scene can now reproduce the high-resolution cockpit and render a second laterally displaced view at one sampled frame. Headset eye poses/projections, visibility and sustained state integrity still need validation before this becomes a VR mode.
+The repository currently provides a working native **32-bit OpenXR/D3D11 headset diagnostic** and a fingerprint-guarded **DiRT 2 DX11 instrumentation DLL**. The game renderer is not connected to OpenXR. With optional effects disabled, the prepared inner scene can render continuous pairs of high-resolution cockpit views into independent GPU textures. Headset eye poses/projections, visibility and simulation integrity still need validation before this becomes a VR mode.
 
 On 2026-09-16, Quest 3 through SteamVR displayed the diagnostic cube; the user confirmed seeing it. The visible/focused run submitted 1,733 stereo frames at 1536 × 1632 per eye. This proves the local presentation route, not DiRT 2 VR, 90 Hz game performance, or PSVR2 compatibility.
 
@@ -76,6 +76,19 @@ This temporarily disables crowds, particles, shadows, ambient occlusion and moti
 
 Add `-CameraOffset 0.064` for a one-frame lateral camera experiment. This is **game units, not calibrated metres or headset IPD**. In inner replay it temporarily translates both verified inline camera positions and restores them after the second pass, so cockpit depth and colour use the same camera. It does not recompute prepared visibility lists or implement headset projection. Receipts include the chosen options and proxy hash. Run `compare_passes.py` only after the benchmark has completed.
 
+For sustained desktop two-view rendering:
+
+```powershell
+.\tools\run-trace.ps1 -ContinuousReplay -Cockpit -ReducedEffects -LowPost -SerialRender -NoAmbientOcclusion -NoMotionBlur -SkipWater -CameraOffset 0.064
+python .\tools\summarize_continuous.py .\artifacts\trace-TIMESTAMP
+```
+
+This opt-in mode renders each eligible main scene twice starting at diagnostic frame 300. The offset is the **total separation**, applied symmetrically as -0.032/+0.032 game units. Use zero for an identical-camera control. Both eye images are copied to persistent independent GPU textures before the next frame overwrites the game's output. A failed capture, changed camera record or draw-count mismatch disables further continuous replay. The desktop shows the second eye; there is no headset output yet.
+
+`stereo-frames.csv` records pair completeness, draw counts, camera restoration and CPU submission time. `address-space.csv` measures committed, reserved and free virtual memory plus the largest free region every 120 frames. CPU submission time is not GPU time. Image pairs are saved at frames 3000, 4500 and 6000 when reached. The summary script must run **after the launcher exits**, not while a receipt is still being written.
+
+Add `-RenderWidth 1600 -RenderHeight 1200` to temporarily test a larger windowed render size. Actual captured dimensions, rather than requested XML values, establish whether the override took effect. The supported configuration still uses shared Documents settings; the same restoration requirements apply.
+
 To remove instrumentation from the isolated copy, close it and remove only `artifacts/game/d3d11.dll`. The installed Steam game has no deployed proxy and remains independently launchable.
 
 ## Source map
@@ -84,11 +97,13 @@ To remove instrumentation from the isolated copy, close it and remove only `arti
 |---|---|
 | `src/proxy.cpp`, `tools/generate_exports.py` | System D3D11 forwarding, game identity gate |
 | `src/trace.cpp` | DX11/shader/camera traces and opt-in scene replay |
+| `src/eye_pair.*` | Independent GPU eye images with pair/size validation |
 | `src/xr_frames.*` | Session events, predicted eye poses, swapchains and paired frame submission |
 | `src/xr_probe.cpp`, `src/xr_render_probe.cpp` | Standalone native headset test |
 | `tools/inspect_game.py` | Read-only PE/string/x86 inspection; optional `pefile` and `capstone` dependencies |
 | `tools/compare_passes.py` | Draw-sequence and captured-image comparison |
+| `tools/summarize_continuous.py` | Continuous pair, image and address-space evidence summary |
 | `tools/build-xml-converter.ps1`, `tools/xml-convert/` | Pinned EGO library and minimal binary-XML converter |
-| `tests/` | Export coverage and deterministic OpenXR frame lifecycle checks |
+| `tests/` | Export coverage, OpenXR lifecycle checks and WARP GPU eye-copy validation |
 
 Game 6DOF camera integration, stereo visibility, HUD/menu composition, recenter/seat bindings, comfort settings, installer and PSVR2 acceptance are not implemented. The prepared scene result is a prototype rendering foothold, not completed stereo acceptance.

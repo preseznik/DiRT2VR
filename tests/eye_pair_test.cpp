@@ -1,0 +1,42 @@
+#include "eye_pair.h"
+#include <cstdio>
+#include <cstdlib>
+using Microsoft::WRL::ComPtr;
+#define CHECK(expression) do { if(!(expression)) { std::fprintf(stderr,"Failed line %d: %s\n",__LINE__,#expression); std::exit(1); } } while(0)
+
+int main() {
+    ComPtr<ID3D11Device> device; ComPtr<ID3D11DeviceContext> context;
+    CHECK(SUCCEEDED(D3D11CreateDevice(nullptr,D3D_DRIVER_TYPE_WARP,nullptr,0,nullptr,0,D3D11_SDK_VERSION,&device,nullptr,&context)));
+    D3D11_TEXTURE2D_DESC desc{}; desc.Width=16; desc.Height=8; desc.MipLevels=desc.ArraySize=1;
+    desc.Format=DXGI_FORMAT_R8G8B8A8_UNORM; desc.SampleDesc.Count=1; desc.BindFlags=D3D11_BIND_RENDER_TARGET;
+    auto make=[&] { ComPtr<ID3D11Texture2D> result; CHECK(SUCCEEDED(device->CreateTexture2D(&desc,nullptr,&result))); return result; };
+    auto source=make(); ComPtr<ID3D11RenderTargetView> target;
+    CHECK(SUCCEEDED(device->CreateRenderTargetView(source.Get(),nullptr,&target)));
+    EyePair pair;
+    CHECK(FAILED(pair.Capture(source.Get(),1,10)));
+    float red[]={1,0,0,1},blue[]={0,0,1,1};
+    context->ClearRenderTargetView(target.Get(),red);
+    CHECK(SUCCEEDED(pair.Capture(source.Get(),0,10))); CHECK(!pair.Ready(10));
+    context->ClearRenderTargetView(target.Get(),blue);
+    CHECK(SUCCEEDED(pair.Capture(source.Get(),1,10))); CHECK(pair.Ready(10)); CHECK(!pair.Ready(11));
+    desc.BindFlags=0; desc.Usage=D3D11_USAGE_STAGING; desc.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
+    auto staging=make();
+    for(unsigned eye=0;eye<2;++eye) {
+        context->CopyResource(staging.Get(),pair.Texture(eye));
+        D3D11_MAPPED_SUBRESOURCE mapped{};
+        CHECK(SUCCEEDED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped)));
+        auto pixel=static_cast<unsigned char*>(mapped.pData);
+        CHECK(pixel[0]==(eye==0?255:0) && pixel[2]==(eye==1?255:0));
+        context->Unmap(staging.Get(),0);
+    }
+    CHECK(SUCCEEDED(pair.Capture(source.Get(),0,11)));
+    CHECK(FAILED(pair.Capture(source.Get(),1,12))); CHECK(!pair.Ready(11));
+    desc.Width=32; desc.Usage=D3D11_USAGE_DEFAULT; desc.CPUAccessFlags=0;
+    auto resized=make();
+    CHECK(SUCCEEDED(pair.Capture(source.Get(),0,13)));
+    CHECK(FAILED(pair.Capture(resized.Get(),1,13))); CHECK(!pair.Ready(13));
+    CHECK(SUCCEEDED(pair.Capture(resized.Get(),0,14)));
+    CHECK(SUCCEEDED(pair.Capture(resized.Get(),1,14))); CHECK(pair.Ready(14));
+    CHECK(FAILED(pair.Capture(nullptr,0,15))); CHECK(!pair.Ready(14));
+    std::puts("Eye copies independent; incomplete, stale and resized pairs rejected.");
+}

@@ -51,7 +51,10 @@ The two scene camera records occupy 0x70 bytes. Position is at `0x40`. Comparing
 
 ## Instrumentation limitations
 
-- The replay repeats only one selected main-view call at outer frame 3000. It is controlled by `DIRT2VR_REPLAY_PROBE=1`, off by default.
+- Default tracing does not replay. `DIRT2VR_REPLAY_PROBE=1` repeats one main-view call at frame 3000; `DIRT2VR_INNER_REPLAY=1` selects the prepared-inner boundary. The separate `DIRT2VR_CONTINUOUS_REPLAY=1` mode repeats eligible main scenes from frame 300 onwards, with symmetric offsets and persistent GPU copies. Use the launcher so serial rendering and restoration are configured together.
+- Continuous copies are currently made from the completed desktop backbuffer. The desktop retains the second view. This preserves two independently rendered images but is not an OpenXR render-target binding or headset-sized viewport implementation.
+- The three sampled image pairs use file numbers 900001/900002 (frame 3000), 903001/903002 (4500), and 906001/906002 (6000). Only frame 3000 collects full draw signatures. Other frames compare counts and camera restoration, not every shader/buffer value.
+- `address-space.csv` uses `VirtualQuery` to cover the process application address range every 120 frames, distinguishing committed, reserved and free regions. An incomplete traversal is marked explicitly. These values include more than process-private usage and still exclude resources not yet allocated by a future VR mode.
 - Trace output calls are synchronous. Camera/shader files and screenshots significantly perturb timing.
 - Draw signatures contain call type, element count, instance count, VS and PS hash; they are not a full GPU capture. Buffer contents, hull/domain shaders, blend/depth state and command-list effects need separate investigation.
 - A hash of zero means no known shader mapping, including a null shader. The shader registry does not track lifetime beyond the bounded diagnostic process.

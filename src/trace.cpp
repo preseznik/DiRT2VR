@@ -1,5 +1,6 @@
 #include "trace.h"
 #include "common.h"
+#include "eye_pair.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -14,6 +15,7 @@
 #include <vector>
 #include <intrin.h>
 #include <cmath>
+#include <algorithm>
 
 using Microsoft::WRL::ComPtr;
 namespace vr {
@@ -52,11 +54,17 @@ SceneFn realScene{};
 using InnerFn = void (__thiscall*)(void*,void*,void*,void*,void*,void*,void*);
 InnerFn realInner{};
 thread_local bool sampleInner{};
+thread_local bool continuousMain{};
 IDXGISwapChain* gameSwapchain{}; // Diagnostic run owns one swapchain until process exit.
 void Screenshot(IDXGISwapChain*,unsigned long long);
+void ScreenshotTexture(ID3D11Texture2D*,unsigned long long);
+bool ContinuousReplayEnabled() {
+    static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_CONTINUOUS_REPLAY",value,16)>0 && wcscmp(value,L"1")==0; }();
+    return enabled;
+}
 bool InnerReplayEnabled() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_INNER_REPLAY",value,16)>0 && wcscmp(value,L"1")==0; }();
-    return enabled;
+    return enabled || ContinuousReplayEnabled();
 }
 
 // The cockpit colour pass reads self+0x650 directly. Copies supplied only as
@@ -83,7 +91,68 @@ public:
     ScopedCameraTranslation& operator=(const ScopedCameraTranslation&)=delete;
 };
 
+bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
+    static bool disabled=false;
+    static EyePair eyes;
+    static uint64_t pairs=0;
+    const auto f=frame.load();
+    if(!continuousMain || disabled || f<300 || !gameSwapchain) return false;
+    auto renderer=static_cast<unsigned char*>(self);
+    if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) {
+        Log("CONTINUOUS disabled: unexpected inline camera addresses"); disabled=true; return false;
+    }
+    static const float separation=[] {
+        wchar_t text[32]{}; GetEnvironmentVariableW(L"DIRT2VR_CAMERA_OFFSET",text,32);
+        const auto value=wcstof(text,nullptr);
+        return std::isfinite(value) && std::abs(value)<=0.25f ? value : 0.0f;
+    }();
+    std::array<float,28> originalA,originalB;
+    memcpy(originalA.data(),cameraA,112); memcpy(originalB.data(),cameraB,112);
+    ComPtr<ID3D11Texture2D> back;
+    if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) {
+        Log("CONTINUOUS disabled: no backbuffer"); disabled=true; return false;
+    }
+    const bool sampled=f==3000;
+    std::array<uint64_t,2> eyeDraws{};
+    LARGE_INTEGER start{},end{},frequency{}; QueryPerformanceFrequency(&frequency); QueryPerformanceCounter(&start);
+    bool restored=true;
+    HRESULT capture=S_OK;
+    for(unsigned eye=0;eye<2;++eye) {
+        scenePass=sampled ? eye+1 : 0;
+        const auto before=draws.load();
+        {
+            ScopedCameraTranslation translation(cameraA,cameraB,(eye==0?-0.5f:0.5f)*separation);
+            realInner(self,lists,cameraA,cameraB,context,scene,flags);
+        }
+        eyeDraws[eye]=draws.load()-before;
+        restored &= memcmp(originalA.data(),cameraA,112)==0 && memcmp(originalB.data(),cameraB,112)==0;
+        capture=eyes.Capture(back.Get(),eye,f);
+        if(FAILED(capture) || !restored) break;
+    }
+    scenePass=sampled ? 1 : 0;
+    QueryPerformanceCounter(&end);
+    const bool ready=SUCCEEDED(capture) && eyes.Ready(f) && restored;
+    const bool matched=eyeDraws[0]==eyeDraws[1];
+    if(ready) ++pairs;
+    static std::ofstream csv(Output()/"stereo-frames.csv");
+    static bool header=false;
+    if(!header) { csv << "frame,left_draws,right_draws,cameras_restored,pair_ready,cpu_ms\n"; header=true; }
+    csv << f << ',' << eyeDraws[0] << ',' << eyeDraws[1] << ',' << restored << ',' << ready << ','
+        << 1000.0*(end.QuadPart-start.QuadPart)/frequency.QuadPart << '\n';
+    if(f%120==0 || !ready || !matched) {
+        csv.flush(); Log("CONTINUOUS pairs=%llu frame=%llu draws=%llu/%llu restored=%d ready=%d capture=0x%08x",
+            pairs,f,eyeDraws[0],eyeDraws[1],restored,ready,static_cast<unsigned>(capture));
+    }
+    if(ready && (f==3000 || f==4500 || f==6000)) {
+        ScreenshotTexture(eyes.Texture(0),900001+2*(f-3000));
+        ScreenshotTexture(eyes.Texture(1),900002+2*(f-3000));
+    }
+    if(!ready || !matched) { Log("CONTINUOUS disabled after failed pair; inspect stereo-frames.csv"); disabled=true; }
+    return true;
+}
+
 void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
+    if(ContinuousScene(self,lists,cameraA,cameraB,context,scene,flags)) return;
     static bool tested=false;
     const bool test=sampleInner && !tested && gameSwapchain;
     if(test) tested=true;
@@ -139,9 +208,11 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     }
     const auto start=draws.load();
     if(mainView && f==3000) scenePass=1;
-    sampleInner=mainView && f==3000 && InnerReplayEnabled();
+    sampleInner=mainView && f==3000 && InnerReplayEnabled() && !ContinuousReplayEnabled();
+    continuousMain=mainView && ContinuousReplayEnabled();
     realScene(self,a,b,c,d,e);
     sampleInner=false;
+    continuousMain=false;
     scenePass=0;
     if(sample) Log("scene_exit frame=%llu draws=%llu",f,draws.load()-start);
     static const bool replay=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_REPLAY_PROBE",value,16)>0 && wcscmp(value,L"1")==0; }();
@@ -287,8 +358,12 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
 }
 
 void Screenshot(IDXGISwapChain* swapchain, unsigned long long number) {
-    ComPtr<ID3D11Texture2D> back,source,staging;
+    ComPtr<ID3D11Texture2D> back;
     if(FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return;
+    ScreenshotTexture(back.Get(),number);
+}
+void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number) {
+    ComPtr<ID3D11Texture2D> source,staging;
     ComPtr<ID3D11Device> device; back->GetDevice(&device);
     ComPtr<ID3D11DeviceContext> context; device->GetImmediateContext(&context);
     D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
@@ -298,7 +373,7 @@ void Screenshot(IDXGISwapChain* swapchain, unsigned long long number) {
     if(desc.SampleDesc.Count>1) {
         desc.SampleDesc={1,0}; desc.BindFlags=0; desc.MiscFlags=0;
         if(FAILED(device->CreateTexture2D(&desc,nullptr,&source))) return;
-        context->ResolveSubresource(source.Get(),0,back.Get(),0,desc.Format);
+        context->ResolveSubresource(source.Get(),0,back,0,desc.Format);
     }
     desc.Usage=D3D11_USAGE_STAGING; desc.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
     desc.BindFlags=0; desc.MiscFlags=0;
@@ -335,7 +410,28 @@ HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT f
     static std::ofstream csv(Output()/"frames.csv");
     if(f==0) csv << "frame,interval_ms,draws,dispatches,private_bytes,working_set_bytes,vsync\n";
     csv << f << ',' << ms << ',' << d << ',' << c << ',' << memory.PrivateUsage << ',' << memory.WorkingSetSize << ',' << interval << '\n';
-    if(f%120==0) { csv.flush(); Log("frame=%llu interval_ms=%.3f draws=%llu dispatches=%llu private_MB=%zu",f,ms,d,c,memory.PrivateUsage/1048576); }
+    if(f%120==0) {
+        csv.flush(); Log("frame=%llu interval_ms=%.3f draws=%llu dispatches=%llu private_MB=%zu",f,ms,d,c,memory.PrivateUsage/1048576);
+        SYSTEM_INFO info{}; GetSystemInfo(&info);
+        const uint64_t limit=reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress)+1ull;
+        uint64_t committed=0,reserved=0,free=0,largestFree=0;
+        bool complete=true;
+        for(uint64_t address=0;address<limit;) {
+            MEMORY_BASIC_INFORMATION region{};
+            if(!VirtualQuery(reinterpret_cast<const void*>(static_cast<uintptr_t>(address)),&region,sizeof(region))) { complete=false; break; }
+            const uint64_t end=std::min(limit,reinterpret_cast<uintptr_t>(region.BaseAddress)+static_cast<uint64_t>(region.RegionSize));
+            if(end<=address) { complete=false; break; }
+            const auto bytes=end-address;
+            if(region.State==MEM_COMMIT) committed+=bytes;
+            else if(region.State==MEM_RESERVE) reserved+=bytes;
+            else if(region.State==MEM_FREE) { free+=bytes; largestFree=std::max(largestFree,bytes); }
+            address=end;
+        }
+        static std::ofstream addresses(Output()/"address-space.csv");
+        if(f==0) addresses << "frame,limit_bytes,committed_bytes,reserved_bytes,free_bytes,largest_free_bytes,complete\n";
+        addresses << f << ',' << limit << ',' << committed << ',' << reserved << ',' << free << ',' << largestFree << ',' << complete << '\n';
+        addresses.flush();
+    }
     if(f==300 || f==1200 || f==3000) { Stack("Present"); Screenshot(swapchain,f); }
     return realPresent(swapchain,interval,flags);
 }
