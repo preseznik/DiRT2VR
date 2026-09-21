@@ -6,6 +6,8 @@ Notable changes to DiRT2VR are recorded here, newest first. The project is an un
 
 ### Added
 
+- Graphics tab with scene render resolution, headset texture scale, optional field-of-view cropping, mirror overrides and restoration of defaults. Existing graphics defaults remain unchanged; nondefault values and cropping await headset acceptance.
+- Optional headset refresh-rate reporting during preflight; Graphics displays the last reported rate without changing SteamVR/headset settings.
 - New DiRT 2 VR rally/headset icon for the launcher executable, window, shortcuts and installer.
 - Launcher light/dark appearance follows the Windows app theme at startup on Windows 11. Reopen after a theme change; contrast themes retain the system appearance.
 - Visual Basic .NET Windows Forms launcher with a bundled runtime, SteamVR preflight, configurable keyboard shortcuts and Xbox / standard HID button bindings.
@@ -31,6 +33,11 @@ Notable changes to DiRT2VR are recorded here, newest first. The project is an un
 - Replaced the root README with end-user setup, play instructions, controls, limitations and troubleshooting.
 - Moved the previous technical README to `docs/development.md` and added explicit interrupted-run recovery instructions.
 - Added this changelog and repository guidance to maintain it alongside future changes.
+
+### Changed
+
+- Split the launcher into Launch, Graphics and Controls tabs. Controls groups each action with its keyboard shortcut and controller/wheel assignments, retaining multiple-device bindings and disconnected assignments.
+- Settings migrate from version 1 to version 2 with existing bindings intact. Graphics changes share the existing temporary-file journal and quick-launch lifecycle.
 
 ## 2026-09-21 — Development prototype
 

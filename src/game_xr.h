@@ -6,7 +6,7 @@
 class GameXr {
 public:
     ~GameXr() { Shutdown(); }
-    bool Initialize(ID3D11Device* device,float scale);
+    bool Initialize(ID3D11Device* device,float scale,float fovScale=1.f);
     bool Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare={},const XrFrames::Screen* screen=nullptr);
     bool CopyEye(unsigned eye,ID3D11Texture2D* image,ID3D11RenderTargetView* target,unsigned w,unsigned h);
     void Shutdown();

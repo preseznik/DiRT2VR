@@ -166,13 +166,17 @@ Public Class GraphicsTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare()
+    Public Sub Prepare(Optional settings As VrSettings = Nothing)
         context.RequireClosed()
         If Pending Then Throw New IOException("Graphics settings recovery is pending.")
+        settings = If(settings, New VrSettings())
+        settings.Validate()
         Dim original = File.ReadAllBytes(context.GraphicsPath)
         Dim document = XmlPatches.Read(original)
         Dim journal As New GraphicsJournal()
-        For Each spec In {"crowd|enabled|false", "particles|enabled|false", "shadows|enabled|false", "postprocess|quality|0", "cpu/threadStrategy|parallelUpdateRender|false", "dynamic_ambient_occ|enabled|false", "graphics_card/resolution|width|1600", "graphics_card/resolution|height|1200", "graphics_card/resolution|fullscreen|false", "graphics_card/resolution|vsync|0"}
+        Dim specs As New List(Of String) From {"crowd|enabled|false", "particles|enabled|false", "shadows|enabled|false", "postprocess|quality|0", "cpu/threadStrategy|parallelUpdateRender|false", "dynamic_ambient_occ|enabled|false", $"graphics_card/resolution|width|{settings.RenderWidth}", $"graphics_card/resolution|height|{settings.RenderHeight}", "graphics_card/resolution|fullscreen|false", "graphics_card/resolution|vsync|0"}
+        If settings.Mirrors <> "game" Then specs.Add("mirrors|enabled|" & If(settings.Mirrors = "on", "true", "false"))
+        For Each spec In specs
             Dim parts = spec.Split("|"c)
             Dim node = TryCast(document.SelectSingleNode("/hardware_settings_config/" & parts(0)), XmlElement)
             If node Is Nothing Then Throw New IOException("Run DiRT 2 normally once to create compatible graphics settings. Missing: " & parts(0))

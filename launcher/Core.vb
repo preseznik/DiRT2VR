@@ -91,15 +91,32 @@ Public Class ControllerBinding
 End Class
 
 Public Class VrSettings
-    Public Property Version As Integer = 1
+    Public Property Version As Integer = 2
     Public Property Runtime As String = Discovery.RuntimePath()
     Public Property ToggleKey As Integer = 120
     Public Property ToggleModifiers As Integer
     Public Property RecenterKey As Integer = 121
     Public Property RecenterModifiers As Integer
     Public Property Bindings As New List(Of ControllerBinding)
+    Public Property RenderScale As Integer = 100
+    Public Property HeadsetScale As Integer = 50
+    Public Property FieldOfView As Integer = 100
+    Public Property Mirrors As String = "game"
+    <Serialization.JsonIgnore>
+    Public ReadOnly Property RenderWidth As Integer
+        Get
+            Return CInt(Math.Round(1600.0 * RenderScale * FieldOfView / 10000))
+        End Get
+    End Property
+    <Serialization.JsonIgnore>
+    Public ReadOnly Property RenderHeight As Integer
+        Get
+            Return CInt(Math.Round(1200.0 * RenderScale * FieldOfView / 10000))
+        End Get
+    End Property
     Public Sub Validate()
-        If Version <> 1 Then Throw New IOException("Unsupported settings version.")
+        If Version <> 2 Then Throw New IOException("Unsupported settings version.")
+        If RenderScale < 50 OrElse RenderScale > 150 OrElse HeadsetScale < 25 OrElse HeadsetScale > 100 OrElse FieldOfView < 70 OrElse FieldOfView > 100 OrElse Not {"game", "on", "off"}.Contains(Mirrors) Then Throw New IOException("Invalid VR graphics settings.")
         If Not ValidKey(ToggleKey) OrElse Not ValidKey(RecenterKey) OrElse ToggleModifiers < 0 OrElse ToggleModifiers > 7 OrElse RecenterModifiers < 0 OrElse RecenterModifiers > 7 Then Throw New IOException("Choose valid keyboard shortcuts.")
         If ToggleKey = RecenterKey AndAlso ToggleModifiers = RecenterModifiers Then Throw New IOException("Toggle VR and recenter must have different shortcuts.")
         If Bindings Is Nothing OrElse Bindings.Count > 32 Then Throw New IOException("Invalid controller bindings.")
@@ -120,6 +137,7 @@ Public Class VrSettings
     Public Shared Function Load(context As InstallContext) As VrSettings
         Dim settings = If(File.Exists(context.PreferencesPath), Files.ReadJson(Of VrSettings)(context.PreferencesPath), New VrSettings())
         If settings Is Nothing Then Throw New IOException("Settings are empty.")
+        If settings.Version = 1 Then settings.Version = 2 ' Added graphics fields retain their defaults.
         settings.Validate()
         Return settings
     End Function

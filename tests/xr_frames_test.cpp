@@ -3,11 +3,13 @@
 #include <stdexcept>
 #include <string>
 #include <vector>
+#include <cmath>
 
 // Exercise the real frame loop against a deterministic runtime, without a HMD.
 // Initialize's graphics allocation is covered by the live cube test separately.
 struct XrFramesTestAccess {
-    static void Seed(XrFrames& frames) {
+    static void Seed(XrFrames& frames,float fovScale=1.f) {
+        frames.fovScale_=fovScale;
         frames.instance_=static_cast<XrInstance>(1);
         frames.session_=static_cast<XrSession>(2);
         frames.space_=static_cast<XrSpace>(3);
@@ -25,10 +27,12 @@ bool render=true, tracking=true, timeoutOnce=false;
 bool expectScreen=false;
 int acquireFailure=-1;
 uint32_t imageIndex=0, submittedLayers=0;
+float expectedFovScale=1.f;
+XrFovf renderedFov[2]{};
 void Require(bool value,const char* message) { if(!value) throw std::runtime_error(message); }
 void Reset() {
     calls.clear(); event=XR_SESSION_STATE_READY; render=tracking=true;
-    acquireFailure=-1; imageIndex=submittedLayers=0; timeoutOnce=false; expectScreen=false;
+    acquireFailure=-1; imageIndex=submittedLayers=0; timeoutOnce=false; expectScreen=false; expectedFovScale=1.f;
 }
 unsigned Eye(XrSwapchain chain) { return static_cast<unsigned>(static_cast<uint64_t>(chain)-10); }
 }
@@ -49,7 +53,7 @@ XRAPI_ATTR XrResult XRAPI_CALL xrBeginFrame(XrSession,const XrFrameBeginInfo*) {
 XRAPI_ATTR XrResult XRAPI_CALL xrLocateViews(XrSession,const XrViewLocateInfo* info,XrViewState* state,uint32_t,uint32_t* count,XrView* views) {
     Require(info->displayTime==123,"must locate predicted poses"); calls.emplace_back("locate");
     *count=2; state->viewStateFlags=tracking ? XR_VIEW_STATE_ORIENTATION_VALID_BIT|XR_VIEW_STATE_POSITION_VALID_BIT : 0;
-    for(unsigned i=0;i<2;++i) { views[i].pose.orientation.w=1; views[i].pose.position.x=i ? 0.032f : -0.032f; }
+    for(unsigned i=0;i<2;++i) { views[i].pose.orientation.w=1; views[i].pose.position.x=i ? 0.032f : -0.032f; views[i].fov={-.9f,.7f,.8f,-.6f}; }
     return XR_SUCCESS;
 }
 XRAPI_ATTR XrResult XRAPI_CALL xrAcquireSwapchainImage(XrSwapchain chain,const XrSwapchainImageAcquireInfo*,uint32_t* index) {
@@ -79,6 +83,10 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEndFrame(XrSession,const XrFrameEndInfo* info) 
         auto layer=reinterpret_cast<const XrCompositionLayerProjection*>(info->layers[0]);
         Require(layer->viewCount==2,"must submit both eyes together");
         Require(layer->views[0].pose.position.x<0 && layer->views[1].pose.position.x>0,"must preserve individual eye poses");
+        for(unsigned eye=0;eye<2;++eye) {
+            const auto& f=layer->views[eye].fov; const auto& drawn=renderedFov[eye];
+            Require(f.angleLeft==drawn.angleLeft && f.angleRight==drawn.angleRight && f.angleUp==drawn.angleUp && f.angleDown==drawn.angleDown,"submission must use exactly the rendered cropped FOV");
+        }
     }
     return XR_SUCCESS;
 }
@@ -94,7 +102,14 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateSwapchainImages(XrSwapchain,uint32_t,u
 
 int main() {
     try {
-        const auto draw=[](unsigned eye,const XrView&,ID3D11RenderTargetView*,uint32_t,uint32_t) { calls.emplace_back("draw"+std::to_string(eye)); };
+        const auto draw=[](unsigned eye,const XrView& view,ID3D11RenderTargetView*,uint32_t,uint32_t) {
+            calls.emplace_back("draw"+std::to_string(eye)); renderedFov[eye]=view.fov;
+            const float scale=expectScreen ? 1.f : expectedFovScale;
+            Require(std::abs(std::tan(view.fov.angleLeft)-std::tan(-.9f)*scale)<.00001f &&
+                    std::abs(std::tan(view.fov.angleRight)-std::tan(.7f)*scale)<.00001f &&
+                    std::abs(std::tan(view.fov.angleUp)-std::tan(.8f)*scale)<.00001f &&
+                    std::abs(std::tan(view.fov.angleDown)-std::tan(-.6f)*scale)<.00001f,"asymmetric FOV crop incorrect");
+        };
         Reset();
         {
             XrFrames frames; XrFramesTestAccess::Seed(frames);
@@ -167,6 +182,15 @@ int main() {
             XrFrames frames; XrFramesTestAccess::Seed(frames); XrFrames::Screen screen;
             Require(!frames.Tick([](unsigned,const XrView&,ID3D11RenderTargetView*,uint32_t,uint32_t) { throw std::runtime_error("screen copy failed"); },{},&screen),"failed screen must not submit");
             Require(frames.Exiting() && submittedLayers==0 && calls[calls.size()-2]=="release0","failed screen must release its image");
+        }
+        Reset(); expectedFovScale=.8f;
+        {
+            XrFrames frames; XrFramesTestAccess::Seed(frames,.8f);
+            Require(frames.Tick(draw),"cropped stereo frame failed");
+            expectScreen=true; XrFrames::Screen screen;
+            Require(frames.Tick(draw,{},&screen),"cropping must not narrow menu FOV");
+            expectScreen=false;
+            Require(frames.Tick(draw),"crop must return on resume");
         }
         puts("OpenXR frame lifecycle tests passed"); return 0;
     } catch(const std::exception& e) { fprintf(stderr,"FAIL: %s\n",e.what()); return 1; }

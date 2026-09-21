@@ -40,9 +40,28 @@ For quick launch with saved settings, use **Start-DiRT2VR.cmd**. It runs the sam
 
 To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
 
-## Bindings
+## Launcher settings
 
 The launcher matches the Windows app light/dark setting when opened. Reopen it after changing that setting. Native dark mode requires Windows 11; Windows 10 and Windows contrast themes retain the standard accessible system appearance.
+
+**Launch** contains the game location and SteamVR runtime. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts are preserved when upgrading.
+
+### Graphics
+
+| Setting | Default | Effect |
+|---|---|---|
+| Render resolution | 100% | 1600 × 1200 per eye at full field of view. Adjust from 50–150%; lower values reduce scene detail and pixel work. |
+| Headset texture | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
+| Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
+| Car mirrors | Use game setting | Optionally force mirrors on or off during VR sessions. |
+
+The Graphics tab shows the effective scene resolution and pixel count. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore graphics defaults** returns to the tested baseline; save afterward.
+
+Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
+
+Field-of-view cropping keeps a narrower cockpit view rather than stretching the full image. Menus remain on their normal virtual screen, although reducing render resolution also lowers their image detail. Cropping and nondefault graphics values have automated coverage but still await an in-headset check. Keep the defaults for the established setup.
+
+### Controls
 
 | Default | Action |
 |---|---|
@@ -50,9 +69,9 @@ The launcher matches the Windows app light/dark setting when opened. Reopen it a
 | **F10** | Recenter |
 | Normal game controls | Driving and menu navigation |
 
-Click a keyboard binding in the launcher to change it, optionally with Ctrl, Alt or Shift. Escape cancels capture.
+The Controls tab has **Action**, **Keyboard** and **Controller / wheel** columns. Click an action's keyboard binding to change it, optionally with Ctrl, Alt or Shift. Escape cancels capture.
 
-Controller shortcuts start unassigned. Choose **Bind Toggle VR…** or **Bind Recenter…**, press one button or two buttons together on the same device, then release them. The launcher rejects overlapping assignments. Choose **Save settings**; changes apply on the next launch.
+Controller shortcuts start unassigned. Choose **Bind…** in the desired action's row, press one button or two buttons together on the same device, then release them. Multiple devices may be assigned to each action. Select an assignment and choose **Remove selected** to clear it. The launcher rejects overlapping assignments. Choose **Save settings**; changes apply on the next launch.
 
 **Assigned controller buttons still perform their normal game actions.** Choose buttons or combinations that avoid unwanted driving/menu actions. Shortcuts fire once per press and require release before firing again. Keep the game window focused.
 

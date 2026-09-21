@@ -43,7 +43,23 @@ Documents graphics overrides have a separate per-user journal in Local AppData. 
 
 There is an unavoidable distinction between durable files and a tested power-cut guarantee. Automated partial-write and conflict checks passed; abrupt machine loss during each actual filesystem operation has not been tested. The reported power outage occurred after the observed completed session had already restored assets.
 
+## Graphics configuration
+
+Settings version 2 adds integer `RenderScale` (50–150, default 100), `HeadsetScale` (25–100, default 50), `FieldOfView` (70–100, default 100), and `Mirrors` (`game`/`on`/`off`, default `game`). Version 1 loads with these defaults and retains its bindings; saving writes version 2. Unknown versions and invalid ranges fail validation before preparation.
+
+`GraphicsTransaction.Prepare(settings)` journals width/height as `round(1600 or 1200 × RenderScale/100 × FieldOfView/100)`. A mirror override adds `mirrors/@enabled`; `game` leaves that attribute untouched. Recovery uses the same recorded applied values and original-byte/merge rules as the previous fixed baseline. Desktop VSync remains off; the original desktop refresh-rate attribute remains untouched. Both GUI and quick launch pass these settings to the same transaction.
+
+The session passes invariant-culture `DIRT2VR_HEADSET_SCALE` and `DIRT2VR_FOV_SCALE` to the proxy. Missing, malformed, nonfinite or out-of-range native environment values fall back to 0.5 and 1.0. The first scales OpenXR swapchain width/height relative to runtime recommendations (this is not SteamVR's total-pixel percentage). It does not change the game's scene-render resolution; the XML override does that separately. Raising only the destination resolution cannot generate more scene detail.
+
+For cockpit frames, `XrFrames` narrows each asymmetric FOV edge with `atan(tan(angle) × FieldOfView/100)` before both the draw callback and projection-layer submission. Eye poses are unchanged. The reduced game target supplies actual pixel-work reduction; the implementation does not render a full-size image then cover its edges. Visibility preparation still retains scenery in every direction, so CPU/draw-call costs are not reduced. Screen-mode FOV and quad placement remain unchanged, though the shared game target affects menu image detail. Cropping does not currently reduce OpenXR swapchain allocation size.
+
+Preflight optionally enables `XR_FB_display_refresh_rate` and queries `xrGetDisplayRefreshRateFB`. It never calls a refresh-rate request API. If unavailable, preflight succeeds with an explicit unavailable value. Graphics reads the latest session's `preflight.txt` and labels any numeric rate as historical. It does not infer hardware Hz from application frame timing; OpenXR allows `predictedDisplayPeriod` to differ from the physical refresh cycle. See the [refresh-rate extension](https://registry.khronos.org/OpenXR/specs/1.0/man/html/XR_FB_display_refresh_rate.html) and [frame submission guide](https://github.com/KhronosGroup/OpenXR-Guide/blob/main/chapters/frame_submission.md).
+
+Validation: all eight native CTests pass, including asymmetric crop math, matching draw/submission FOV and screen/cockpit transitions. Launcher checks cover legacy migration, graphics ranges, UI save persistence, retained controller pairs, scaled XML/mirrors, exact restoration and merging unrelated edits. The UI test renders tab images off-screen without desktop input. Nondefault resolution, mirror overrides, refresh reporting on hardware and cropped-view headset acceptance remain pending; the user deferred headset testing for this change. Defaults retain the established rendering baseline.
+
 ## Input
+
+The UI groups bindings by action on the Controls tab, with separate keyboard and controller/wheel columns. The underlying binding list and shared-memory action protocol are unchanged. List contents are rebuilt only when their text/connection state changes, preserving the selection. Changing tabs cancels an unfinished capture. Launch/Graphics/Controls editing is disabled while the session manager is active.
 
 Keyboard bindings are configured through `DIRT2VR_KEYS`; defaults are F9/F10. The game window consumes both edges of assigned keys, including F10, preventing the system-menu freeze. Ctrl/Alt/Shift are optional.
 

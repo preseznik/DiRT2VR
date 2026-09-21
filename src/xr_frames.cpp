@@ -21,8 +21,9 @@ XrFrames::~XrFrames() {
     }
     if(space_) xrDestroySpace(space_);
 }
-bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale) {
-    if(instance_ || !device || !std::isfinite(scale) || scale<0.25f || scale>1.f) return false;
+bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale,float fovScale) {
+    if(instance_ || !device || !std::isfinite(scale) || scale<0.25f || scale>1.f || !std::isfinite(fovScale) || fovScale<.7f || fovScale>1.f) return false;
+    fovScale_=fovScale;
     instance_=instance; session_=session;
     uint32_t count{};
     if(!Check(xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,0,&count,nullptr),"enumerate views")) return false;
@@ -101,6 +102,14 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
     bool valid=frame.shouldRender && Check(xrLocateViews(session_,&locate,&state,2,&count,views.data()),"xrLocateViews") && count==2;
     constexpr auto required=XR_VIEW_STATE_ORIENTATION_VALID_BIT|XR_VIEW_STATE_POSITION_VALID_BIT;
     valid=valid && (state.viewStateFlags&required)==required;
+    if(valid && !screen && fovScale_<1.f) {
+        // Crop about the optical axis in tangent space. Render and submission
+        // use the same narrowed FOV, preserving scale rather than stretching.
+        for(auto& view:views) {
+            auto crop=[&](float angle) { return std::atan(std::tan(angle)*fovScale_); };
+            view.fov={crop(view.fov.angleLeft),crop(view.fov.angleRight),crop(view.fov.angleUp),crop(view.fov.angleDown)};
+        }
+    }
     if(valid && prepare) {
         try { prepare(views); }
         catch(const std::exception& error) { valid=false; exiting_=true; Report("frame preparation failed: %s",error.what()); }

@@ -28,7 +28,7 @@ public:
         XrExtent2Df size{2.4f,1.8f};
     };
     ~XrFrames();
-    bool Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale);
+    bool Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale,float fovScale=1.f);
     bool Tick(const Draw& draw,const Prepare& prepare={},const Screen* screen=nullptr);
     bool Exiting() const { return exiting_; }
     uint64_t Submitted() const { return submitted_; }
@@ -44,4 +44,5 @@ private:
     std::array<Eye,2> eyes_;
     bool running_{},exiting_{},visible_{};
     uint64_t submitted_{};
+    float fovScale_=1.f;
 };

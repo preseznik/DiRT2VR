@@ -53,12 +53,14 @@ Public Class Session
                     start.Environment("DIRT2VR_CAPTURE_REQUESTS") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
                     start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
                     start.Environment("DIRT2VR_WORLD_SCALE") = "1"
+                    start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
+                    start.Environment("DIRT2VR_FOV_SCALE") = (settings.FieldOfView / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
                     start.Environment("DIRT2VR_OUTPUT") = logFolder
                     start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
                     start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
                     start.Environment("XR_RUNTIME_JSON") = settings.Runtime
                     Worker.Invoke(context, "prepare")
-                    graphics.Prepare()
+                    graphics.Prepare(settings)
                     Using input As New ControllerInput(), machine As New BindingMachine(settings.Bindings)
                         Dim counts As UInteger() = {0UI, 0UI}
                         AddHandler input.StateChanged, Sub(sample)

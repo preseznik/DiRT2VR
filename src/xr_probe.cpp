@@ -18,14 +18,17 @@ int main(int argc,char** argv) {
     std::vector<XrExtensionProperties> extensions(count,{XR_TYPE_EXTENSION_PROPERTIES});
     result=xrEnumerateInstanceExtensionProperties(nullptr,count,&count,extensions.data());
     if(XR_FAILED(result)) return 1;
-    bool d3d11=false;
-    for(auto& e:extensions) if(!strcmp(e.extensionName,XR_KHR_D3D11_ENABLE_EXTENSION_NAME)) d3d11=true;
+    bool d3d11=false,refreshRate=false;
+    for(auto& e:extensions) {
+        if(!strcmp(e.extensionName,XR_KHR_D3D11_ENABLE_EXTENSION_NAME)) d3d11=true;
+        if(!strcmp(e.extensionName,XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME)) refreshRate=true;
+    }
     if(!d3d11) { puts("Runtime does not expose D3D11"); return 2; }
-    const char* enabled[]={XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
+    const char* enabled[]={XR_KHR_D3D11_ENABLE_EXTENSION_NAME,XR_FB_DISPLAY_REFRESH_RATE_EXTENSION_NAME};
     XrInstanceCreateInfo info{XR_TYPE_INSTANCE_CREATE_INFO};
     strcpy_s(info.applicationInfo.applicationName,"DiRT2VR runtime probe");
     info.applicationInfo.apiVersion=XR_MAKE_VERSION(1,0,0);
-    info.enabledExtensionCount=1; info.enabledExtensionNames=enabled;
+    info.enabledExtensionCount=refreshRate ? 2 : 1; info.enabledExtensionNames=enabled;
     XrInstance instance{};
     result=xrCreateInstance(&info,&instance);
     printf("xrCreateInstance=%d\n",result);
@@ -70,6 +73,10 @@ int main(int argc,char** argv) {
     result=xrCreateSession(instance,&sessionInfo,&session);
     printf("xrCreateSession=%d\n",result);
     if(XR_SUCCEEDED(result)) {
+        PFN_xrGetDisplayRefreshRateFB getRate{}; float hz{};
+        if(refreshRate && XR_SUCCEEDED(xrGetInstanceProcAddr(instance,"xrGetDisplayRefreshRateFB",reinterpret_cast<PFN_xrVoidFunction*>(&getRate))) &&
+           getRate && XR_SUCCEEDED(getRate(session,&hz)) && hz>0) printf("display_refresh_hz=%.2f\n",hz);
+        else puts("display_refresh_hz=unavailable (controlled by headset/SteamVR)");
         count=0; xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,0,&count,nullptr);
         std::vector<XrViewConfigurationView> views(count,{XR_TYPE_VIEW_CONFIGURATION_VIEW});
         xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,count,&count,views.data());

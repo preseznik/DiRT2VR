@@ -90,6 +90,32 @@ Module Program
         Check(document.DocumentElement.GetAttribute("unrelatedTest") = "keep", "unrelated graphics changes retained")
         Check(DirectCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/resolution"), Xml.XmlElement).GetAttribute("width") <> "1600", "VR resolution restored during merge")
         Dim setting As New VrSettings()
+        Check(setting.RenderWidth = 1600 AndAlso setting.RenderHeight = 1200 AndAlso setting.HeadsetScale = 50 AndAlso setting.FieldOfView = 100 AndAlso setting.Mirrors = "game", "default graphics preserve baseline")
+        Files.AtomicWrite(context.PreferencesPath, Text.Encoding.UTF8.GetBytes("{""Version"":1,""ToggleKey"":118,""RecenterKey"":119,""Bindings"":[]}"))
+        Dim migrated = VrSettings.Load(context)
+        Check(migrated.Version = 2 AndAlso migrated.ToggleKey = 118 AndAlso migrated.RecenterKey = 119 AndAlso migrated.RenderWidth = 1600, "legacy settings migrate without changing keys")
+        For Each invalid In {New VrSettings With {.RenderScale = 49}, New VrSettings With {.RenderScale = 151}, New VrSettings With {.HeadsetScale = 24}, New VrSettings With {.HeadsetScale = 101}, New VrSettings With {.FieldOfView = 69}, New VrSettings With {.FieldOfView = 101}, New VrSettings With {.Mirrors = "invalid"}, New VrSettings With {.Version = 3}}
+            Reject(Sub() invalid.Validate(), "out-of-range graphics/settings rejected")
+        Next
+        document = XmlPatches.Read(File.ReadAllBytes(graphics))
+        Dim mirror = document.CreateElement("mirrors") : mirror.SetAttribute("enabled", "true")
+        document.DocumentElement.AppendChild(mirror)
+        Files.AtomicWrite(graphics, XmlPatches.Bytes(document))
+        Dim beforeCustom = Files.Hash(graphics)
+        Dim custom As New VrSettings With {.RenderScale = 75, .HeadsetScale = 60, .FieldOfView = 80, .Mirrors = "off"}
+        gt.Prepare(custom)
+        document = XmlPatches.Read(File.ReadAllBytes(graphics))
+        Dim resolution = DirectCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/resolution"), Xml.XmlElement)
+        Check(resolution.GetAttribute("width") = "960" AndAlso resolution.GetAttribute("height") = "720", "render scale and crop reduce actual game target")
+        Check(DirectCast(document.SelectSingleNode("/hardware_settings_config/mirrors"), Xml.XmlElement).GetAttribute("enabled") = "false", "mirror override applied")
+        gt.Recover()
+        Check(Files.Hash(graphics) = beforeCustom, "custom graphics restore exact original bytes")
+        gt.Prepare(custom)
+        document = XmlPatches.Read(File.ReadAllBytes(graphics))
+        document.DocumentElement.SetAttribute("anotherUnrelatedChange", "preserve")
+        Files.AtomicWrite(graphics, XmlPatches.Bytes(document)) : gt.Recover()
+        document = XmlPatches.Read(File.ReadAllBytes(graphics))
+        Check(document.DocumentElement.GetAttribute("anotherUnrelatedChange") = "preserve" AndAlso DirectCast(document.SelectSingleNode("/hardware_settings_config/mirrors"), Xml.XmlElement).GetAttribute("enabled") = "true", "custom graphics recovery merges unrelated edits")
         setting.Bindings.Add(New ControllerBinding With {.Action = 0, .Source = "xinput", .Device = "0", .Buttons = New List(Of Integer) From {16, 32}})
         setting.Validate()
         setting.Bindings.Add(New ControllerBinding With {.Action = 1, .Source = "xinput", .Device = "0", .Buttons = New List(Of Integer) From {16}})
@@ -119,11 +145,26 @@ Module Program
             Next
         End Using
         Using form As New MainForm(context)
+            form.ShowInTaskbar = False : form.StartPosition = FormStartPosition.Manual : form.Location = New Drawing.Point(-32000, -32000)
             form.Show() : Application.DoEvents()
-            Using bitmap As New Drawing.Bitmap(form.Width, form.Height)
-                form.DrawToBitmap(bitmap, New Drawing.Rectangle(0, 0, form.Width, form.Height))
-                bitmap.Save(IO.Path.Combine(folder, "launcher.png"))
-            End Using
+            Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
+            Check(tabs.TabPages.Cast(Of TabPage).Select(Function(page) page.Text).SequenceEqual({"Launch", "Graphics", "Controls"}), "launcher tabs present in order")
+            For Each page As TabPage In tabs.TabPages
+                tabs.SelectedTab = page : Application.DoEvents()
+                Using bitmap As New Drawing.Bitmap(form.Width, form.Height)
+                    form.DrawToBitmap(bitmap, New Drawing.Rectangle(0, 0, form.Width, form.Height))
+                    bitmap.Save(IO.Path.Combine(folder, "launcher-" & page.Text & ".png"))
+                End Using
+            Next
+            tabs.SelectedIndex = 1
+            DirectCast(form.Controls.Find("RenderScale", True).Single(), NumericUpDown).Value = 75
+            DirectCast(form.Controls.Find("HeadsetScale", True).Single(), NumericUpDown).Value = 60
+            DirectCast(form.Controls.Find("FieldOfView", True).Single(), NumericUpDown).Value = 80
+            DirectCast(form.Controls.Find("Mirrors", True).Single(), ComboBox).SelectedIndex = 2
+            DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
+            Dim saved = VrSettings.Load(context)
+            Check(saved.RenderWidth = 960 AndAlso saved.RenderHeight = 720 AndAlso saved.HeadsetScale = 60 AndAlso saved.Mirrors = "off", "Graphics tab saves selected values")
+            Check(saved.Bindings.Count = 1 AndAlso saved.Bindings(0).Buttons.SequenceEqual({16, 32}), "tab save preserves existing controller pair")
             form.Close()
         End Using
         Console.WriteLine($"{passed} checks passed. Artifacts: {folder}")
