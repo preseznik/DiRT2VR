@@ -14,6 +14,7 @@ Public Class MainForm
     Private ReadOnly eventChoice As ComboBox = Choice("PracticeEvent")
     Private ReadOnly trackChoice As ComboBox = Choice("PracticeTrack")
     Private ReadOnly carChoice As ComboBox = Choice("PracticeCar")
+    Private ReadOnly opponents As New NumericUpDown With {.Name = "Opponents", .AccessibleName = "AI opponents", .Minimum = 1, .Maximum = 7, .Value = 7, .Width = 90}
     Private ReadOnly renderScale As NumericUpDown = Percentage("RenderScale", 50, 150, 100)
     Private ReadOnly headsetScale As NumericUpDown = Percentage("HeadsetScale", 25, 100, 50)
     Private ReadOnly fieldOfView As NumericUpDown = Percentage("FieldOfView", 70, 100, 100)
@@ -141,7 +142,10 @@ Public Class MainForm
             grid.Controls.Add(choices(i), 1, i)
         Next
         content.Controls.Add(grid)
-        launchMode.Items.AddRange({"Game menus", "Direct practice (experimental)"})
+        grid.Controls.Add(New Label With {.Text = "AI opponents", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 4)
+        opponents.Value = settings.Opponents
+        grid.Controls.Add(opponents, 1, 4)
+        launchMode.Items.AddRange({"Game menus", "Direct practice (experimental)", "Race (experimental)"})
         eventChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) Directory.Exists(t.Folder(context))).Select(Function(t) t.Event).Distinct().Order().Cast(Of Object).ToArray())
         carChoice.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
         AddHandler eventChoice.SelectedIndexChanged, Sub()
@@ -159,12 +163,13 @@ Public Class MainForm
         If carChoice.SelectedIndex < 0 AndAlso carChoice.Items.Count > 0 Then carChoice.SelectedIndex = 0
         AddHandler launchMode.SelectedIndexChanged, Sub()
                                                         For Each control In {eventChoice, trackChoice, carChoice}
-                                                            control.Enabled = launchMode.SelectedIndex = 1
+                                                            control.Enabled = launchMode.SelectedIndex > 0
                                                         Next
+                                                        opponents.Enabled = launchMode.SelectedIndex = 2
                                                     End Sub
-        launchMode.SelectedIndex = If(settings.LaunchMode = "practice", 1, 0)
-        content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Direct practice loads one player-driven car. Event filters the track list; any listed car can be tried. Other VR cockpits remain experimental."))
-        content.Controls.Add(Note("Practice loops after finishing; pause only offers Continue. Alt+F4 quits and restores original files. Choose Game menus for full race options."))
+        launchMode.SelectedIndex = Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode)
+        content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents using the selected car. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
+        content.Controls.Add(Note("Practice and Race loop after finishing; pause only offers Continue. Alt+F4 quits and restores original files. Choose Game menus for full race options, difficulty and results."))
     End Sub
     Private Sub DrawChoice(sender As Object, e As DrawItemEventArgs)
         Dim box = DirectCast(sender, ComboBox)
@@ -312,8 +317,9 @@ Public Class MainForm
         settings.Runtime = runtimeBox.Text.Trim()
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
-        settings.LaunchMode = If(launchMode.SelectedIndex = 1, "practice", "menus")
-        If settings.LaunchMode = "practice" Then
+        settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
+        settings.Opponents = CInt(opponents.Value)
+        If settings.LaunchMode <> "menus" Then
             Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)
             If track Is Nothing OrElse car Is Nothing Then Throw New IOException("Select an installed track and car, or use Game menus.")

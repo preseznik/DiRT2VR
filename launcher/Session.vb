@@ -67,8 +67,8 @@ Public Class Session
                     start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
                     start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
                     start.Environment("XR_RUNTIME_JSON") = settings.Runtime
-                    If settings.LaunchMode = "practice" Then
-                        Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId)
+                    If settings.LaunchMode <> "menus" Then
+                        Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents)
                         start.ArgumentList.Add("-demo")
                         start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                         start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
@@ -117,16 +117,16 @@ Public Class Session
     Private Sub RunDesktop()
         Dim config As String = Nothing
         Dim logFolder As String = Nothing
-        If settings.LaunchMode = "practice" Then
+        If settings.LaunchMode <> "menus" Then
             ' Human control is enabled by the DX11 proxy; desktop rendering settings
             ' stay untouched rather than silently running an AI-driven DX9 session.
-            If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before using Direct practice.")
+            If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before using Direct practice or Race.")
             Dim document = XmlPatches.Read(File.ReadAllBytes(context.GraphicsPath))
             Dim dx = TryCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/directx"), Xml.XmlElement)
-            If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice requires the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
+            If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice and Race require the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
             Worker.Invoke(context, "setup")
-            Status("Preparing", "Desktop practice")
-            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId)
+            Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
+            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents)
             config = New AssetTransaction(context).PracticeConfig()
             logFolder = IO.Path.Combine(context.UserRoot, "logs", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff") & "-desktop")
         End If

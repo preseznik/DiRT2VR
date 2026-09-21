@@ -29,7 +29,7 @@ The native build uses a static MSVC runtime, including the OpenXR loader. The la
 
 ## Ownership and activation
 
-The footer groups Launch / Launch VR on the left and Save settings / Restore original files / Open logs on the right. Both buttons save the same menu/practice selection, then dispatch to the session manager; `--desktop` selects ordinary monitor play. Both are disabled during a managed game session.
+The footer groups Launch / Launch VR on the left and Save settings / Restore original files / Open logs on the right. Both buttons save the same menu/practice/race selection, then dispatch to the session manager; `--desktop` selects ordinary monitor play. Both are disabled during a managed game session. Race forwards 1–7 opponents through the same preparation and recovery path; see [direct-start grid details](direct-practice.md).
 
 Desktop mode recovers pending VR changes first, then skips runtime validation/preflight, VR input polling and graphics/camera preparation. Normal menu launch passes `DIRT2VR_ACTIVE=0` after removing inherited mod flags and does not deploy a proxy. Desktop practice requires `graphics_card/directx@forcedx9=false`, deploys the recognized proxy and passes `DIRT2VR_DESKTOP_PRACTICE=1` with the direct-practice flag. The proxy takes an early path that applies the guarded human-control byte only, before MinHook, render hooks, hotkeys or OpenXR initialization. Desktop session logs therefore contain only compatibility/control diagnostics.
 

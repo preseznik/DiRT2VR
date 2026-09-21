@@ -102,6 +102,15 @@ Module Program
         migrated = VrSettings.Load(context)
         Check(migrated.Version = 3 AndAlso migrated.RenderWidth = 960 AndAlso migrated.LaunchMode = "menus", "graphics preferences survive version 2 migration")
         Dim catalog = RaceCatalog.Current
+        For Each count In {1, 7}
+            Dim raceXml As New Xml.XmlDocument()
+            raceXml.LoadXml(Text.Encoding.UTF8.GetString(catalog.Config("127", "sti", count)))
+            Check(raceXml.SelectSingleNode("/config/track/car").Attributes("number").Value = (count + 1).ToString(), "race grid includes player and requested opponents")
+        Next
+        Reject(Sub() catalog.Config("127", "sti", 8), "race grid exceeds engine limit")
+        Reject(Sub() Call (New VrSettings With {.Opponents = 0}).Validate(), "race needs an opponent")
+        Reject(Sub() Call (New VrSettings With {.Opponents = 8}).Validate(), "settings reject oversized grid")
+        Check((New VrSettings With {.LaunchMode = "practice", .Opponents = 7}).GridOpponents = 0 AndAlso (New VrSettings With {.LaunchMode = "race", .Opponents = 3}).GridOpponents = 3, "solo mode ignores saved race grid")
         Check(catalog.Tracks.Count = 41 AndAlso catalog.Cars.Count = 43 AndAlso catalog.Tracks.Select(Function(t) t.Id).Distinct().Count() = 41 AndAlso catalog.Cars.Select(Function(c) c.Code).Distinct().Count() = 43, "practice catalog has unique route and car IDs")
         Dim game As New InstallContext(IO.Path.Combine(repo, "artifacts/game"))
         For Each car In catalog.Cars
@@ -157,7 +166,10 @@ Module Program
         Files.SaveJson(pending, legacy) : transaction.Recover()
         Check(Files.Hash(camera) = cameraHash, "legacy asset journal always restores Subaru")
         Dim desktopGraphicsHash = Files.Hash(graphics)
-        transaction.Prepare(carCode:="n12", trackId:="127", configOnly:=True)
+        transaction.Prepare(carCode:="n12", trackId:="127", configOnly:=True, opponents:=7)
+        Dim grid As New Xml.XmlDocument()
+        grid.Load(IO.Path.Combine(root, transaction.PracticeConfig()))
+        Check(grid.SelectSingleNode("/config/track/car").Attributes("number").Value = "8", "desktop transaction preserves selected race grid")
         Dim desktopJournal = Files.ReadJson(Of AssetJournal)(pending)
         Check(desktopJournal.Version = 4 AndAlso desktopJournal.Entries.Count = 0 AndAlso desktopJournal.SettingsJournal = "", "desktop journal owns only the race config")
         Check(Files.Hash(camera) = cameraHash AndAlso Files.Hash(alternate) = alternateHash AndAlso Files.Hash(effects) = effectHash AndAlso Files.Hash(graphics) = desktopGraphicsHash, "desktop preparation leaves cameras effects and graphics unchanged")
@@ -248,8 +260,13 @@ Module Program
             Dim events = DirectCast(form.Controls.Find("PracticeEvent", True).Single(), ComboBox)
             Dim routes = DirectCast(form.Controls.Find("PracticeTrack", True).Single(), ComboBox)
             Dim vehicles = DirectCast(form.Controls.Find("PracticeCar", True).Single(), ComboBox)
+            Dim opponents = DirectCast(form.Controls.Find("Opponents", True).Single(), NumericUpDown)
             Check(mode.SelectedIndex = 0 AndAlso Not routes.Enabled AndAlso Not vehicles.Enabled, "menu mode keeps practice selectors inactive")
+            Check(Not opponents.Enabled, "menus disable opponent choice")
+            mode.SelectedIndex = 2 : opponents.Value = 3
+            Check(opponents.Enabled AndAlso routes.Enabled AndAlso vehicles.Enabled, "race enables grid and content choices")
             mode.SelectedIndex = 1 : events.SelectedItem = "Rally"
+            Check(Not opponents.Enabled, "solo practice disables opponent choice")
             vehicles.SelectedItem = vehicles.Items.Cast(Of PracticeCar).Single(Function(c) c.Code = "n12")
             Check(routes.Enabled AndAlso vehicles.Enabled AndAlso routes.Items.Cast(Of PracticeTrack).All(Function(t) t.Event = "Rally") AndAlso DirectCast(routes.SelectedItem, PracticeTrack).Id = "129", "event selection filters installed routes")
             For Each page As TabPage In tabs.TabPages
@@ -274,7 +291,11 @@ Module Program
             Dim saved = VrSettings.Load(context)
             Check(saved.RenderWidth = 960 AndAlso saved.RenderHeight = 720 AndAlso saved.HeadsetScale = 60 AndAlso saved.Mirrors = "off", "Graphics tab saves selected values")
             Check(saved.Bindings.Count = 1 AndAlso saved.Bindings(0).Buttons.SequenceEqual({16, 32}), "tab save preserves existing controller pair")
-        Check(saved.LaunchMode = "practice" AndAlso saved.TrackId = "129" AndAlso saved.CarCode = "n12", "launcher selection persists for GUI and quick launch")
+            Check(saved.LaunchMode = "practice" AndAlso saved.TrackId = "129" AndAlso saved.CarCode = "n12" AndAlso saved.Opponents = 3, "launcher selection persists for GUI and quick launch")
+            mode.SelectedIndex = 2
+            DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
+            saved = VrSettings.Load(context)
+            Check(saved.LaunchMode = "race" AndAlso saved.GridOpponents = 3, "race mode and grid persist for both launch buttons")
             form.Close()
         End Using
         ' Exercise the real entry point in a child process, not only MainForm in this harness.

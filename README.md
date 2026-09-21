@@ -28,9 +28,9 @@ Start the launcher normally, **not with Run as administrator**. In protected gam
 
 ## Play
 
-**Launch** starts regular desktop play; **Launch VR** starts headset play. Both use the selected Game menus or Direct practice mode. The launch buttons stay on the left; Save settings, Restore original files and Open logs stay on the right.
+**Launch** starts regular desktop play; **Launch VR** starts headset play. Both use the selected Game menus, Direct practice or Race mode. The launch buttons stay on the left; Save settings, Restore original files and Open logs stay on the right.
 
-Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice requires DX11 and uses only the human-control fix and a temporary race file. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
+Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and use only the human-control fix and a temporary race file. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.
 2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Game menus** on **Launcher**, and select **Launch VR**.
@@ -59,6 +59,12 @@ On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**,
 Direct practice bypasses the trailer menus and loads a player-driven car. Select cockpit view and use Toggle VR as usual. **Practice loops after the finish, and its pause menu only offers Continue. Press Alt+F4 to quit.** The session manager restores temporary files after exit. Use **Game menus** for full race options. Saved practice selections also work with `Start-DiRT2VR.cmd`.
 
 Desktop steering/throttle, pause/resume and finishing have been confirmed in the Subaru at Baja. The packaged direct-practice route in VR, other cars and broader stage coverage still need testing.
+
+### Race (experimental)
+
+Choose **Race**, an event, track and car, then set **AI opponents** from 1 to 7. Use **Launch** for desktop or **Launch VR** for headset play. The whole grid uses your selected car; Direct practice remains solo regardless of the saved opponent count. Start with Landrush or Rallycross. Other disciplines and track/car combinations need testing.
+
+Race uses the same direct-start route as practice: it bypasses menus, repeats after finishing, and only offers Continue when paused. **Alt+F4 quits.** Difficulty, lap count, career progression and normal results screens are not configurable here; use Game menus for the full event flow. Opponent driving and crowded-grid VR performance require gameplay validation.
 
 ### Graphics
 

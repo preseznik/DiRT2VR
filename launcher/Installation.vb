@@ -57,24 +57,25 @@ Public Class Installation
 End Class
 
 Public Module Worker
-    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing)
+    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0)
         context.ValidateGame() : context.RequireClosed()
         Select Case operation
             Case "setup" : Call (New Installation(context)).Setup()
             Case "prepare", "prepare-desktop"
                 Dim transaction As New AssetTransaction(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop")
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents)
             Case "recover" : Call (New AssetTransaction(context)).Recover()
             Case "remove" : Call (New Installation(context)).RemoveProxy()
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing)
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0)
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
         Next
         If operation = "prepare" OrElse operation = "prepare-desktop" Then
+            start.ArgumentList.Add("--opponents") : start.ArgumentList.Add(opponents.ToString(Globalization.CultureInfo.InvariantCulture))
             start.ArgumentList.Add("--car") : start.ArgumentList.Add(carCode)
             If trackId IsNot Nothing Then
                 start.ArgumentList.Add("--track") : start.ArgumentList.Add(trackId)

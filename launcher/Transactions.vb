@@ -85,8 +85,9 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False)
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0)
         context.RequireClosed()
+        If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
         Files.NoLinks(folder)
         RaceCatalog.Current.Car(carCode)
@@ -111,7 +112,7 @@ Public Class AssetTransaction
             Dim config = IO.Path.Combine(context.GameRoot, ConfigRelative(journal))
             Files.NoLinks(config)
             If File.Exists(config) Then Throw New IOException("Practice configuration already exists.")
-            Dim bytes = RaceCatalog.Current.Config(trackId, carCode)
+            Dim bytes = RaceCatalog.Current.Config(trackId, carCode, opponents)
             journal.PracticeConfigHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(bytes))
             ' Record ownership before creating the disposable config or modifying any game asset.
             Files.SaveJson(journalPath, journal)

@@ -1,5 +1,13 @@
 # Direct practice investigation and implementation
 
+## Race grid extension — 2026-09-21
+
+The installed `example_benchmark.xml` documents a maximum of eight cars per track, including `<car name="sti" number="8" />`. Its supplied example also lists eight separate car entries. Race mode uses the existing `-demo` parser with one selected car entry and `number = Opponents + 1`; it adds no native patches. The existing controller change skips only the direct-start forced-AI assignment, preserving the vehicle's human/AI role. Actual opponent driving remains a gameplay acceptance check.
+
+Settings version 3 accepts `LaunchMode="race"` and an optional `Opponents` field (default 7, allowed 1–7). Older preferences retain their launch mode. `GridOpponents` resolves to zero outside Race, so changing race settings cannot add cars to solo practice. Both VR and desktop session paths forward the count to the fixed-purpose worker. The worker validates 0–7 before preparation and journals the exact generated XML using the existing config ownership/recovery flow. Desktop Race uses the same config-only journal and does not change graphics or camera assets.
+
+The UI explicitly retains the direct-start looping finish and Continue-only pause menu. This is an opponent-grid extension, not integration with normal career/results, difficulty or lap setup. All participants use the selected car; begin acceptance on Landrush/Rallycross. Unit/transaction/UI tests cover count limits, one/eight-car XML, solo isolation, persistence and recovery in both themes. Desktop driving and VR grid performance must be checked separately.
+
 ## Track-selection fix — 2026-09-21
 
 The first packaged run selected Baja / Ensenada Sprint / Subaru STI but loaded Croatia. Investigation resumed with desktop-only tests. Reading the supported game's parsed configuration at module RVA `0x1051130` showed the fallback `croatia/croatia_rally/route_0`, and the actual child command line ended at `-demo DiRT2VR/backup`, instead of the complete generated subfolder path. Replacing the generated XML contents with the earlier working XML did not change that result.

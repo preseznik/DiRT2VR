@@ -48,12 +48,13 @@ Public Class RaceCatalog
         Files.NoLinks(route) : Files.NoLinks(camera)
         If Not Directory.Exists(route) OrElse Not File.Exists(camera) Then Throw New IOException("The selected track or car is missing from this game installation.")
     End Sub
-    Public Function Config(trackId As String, carCode As String) As Byte()
+    Public Function Config(trackId As String, carCode As String, Optional opponents As Integer = 0) As Byte()
+        If opponents < 0 OrElse opponents > 7 Then Throw New IOException("Choose between zero and seven opponents.")
         Dim route = Track(trackId)
         Dim vehicle = Car(carCode)
         Dim document As New XDocument(New XElement("config", New XAttribute("skipreplays", "true"),
             New XElement("track", New XAttribute("country", route.Country), New XAttribute("name", route.Track), New XAttribute("route", route.Route),
-                New XElement("car", New XAttribute("name", vehicle.Code), New XAttribute("number", "1")))))
+                New XElement("car", New XAttribute("name", vehicle.Code), New XAttribute("number", opponents + 1)))))
         Return Text.Encoding.UTF8.GetBytes(document.ToString())
     End Function
 End Class
