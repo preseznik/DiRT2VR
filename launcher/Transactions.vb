@@ -85,7 +85,7 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0)
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same")
         context.RequireClosed()
         If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
@@ -93,6 +93,7 @@ Public Class AssetTransaction
         RaceCatalog.Current.Car(carCode)
         If configOnly AndAlso trackId Is Nothing Then Throw New IOException("Desktop practice requires a track selection.")
         If trackId IsNot Nothing Then RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
+        Dim configBytes = If(trackId Is Nothing, Nothing, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context))
         ' Version 4 journals own only a desktop practice config, with no asset entries.
         Dim journal As New AssetJournal With {.Version = If(configOnly, 4, 3), .CarCode = carCode, .SettingsJournal = If(configOnly, "", IO.Path.Combine(context.UserRoot, "graphics-pending.json"))}
         Dim targets = AssetNames(journal)
@@ -112,7 +113,7 @@ Public Class AssetTransaction
             Dim config = IO.Path.Combine(context.GameRoot, ConfigRelative(journal))
             Files.NoLinks(config)
             If File.Exists(config) Then Throw New IOException("Practice configuration already exists.")
-            Dim bytes = RaceCatalog.Current.Config(trackId, carCode, opponents)
+            Dim bytes = configBytes
             journal.PracticeConfigHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(bytes))
             ' Record ownership before creating the disposable config or modifying any game asset.
             Files.SaveJson(journalPath, journal)

@@ -15,7 +15,7 @@ Public Module Program
             Dim context As New InstallContext(root, If(args.Contains("--worker"), Argument(args, "--owner-base", Nothing), Nothing))
             If args.Contains("--worker") Then
                 Try
-                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture))
+                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"))
                     Return 0
                 Catch ex As UnauthorizedAccessException
                     Return 5

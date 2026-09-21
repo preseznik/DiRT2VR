@@ -374,217 +374,303 @@
     {
       "Code": "stx",
       "Event": "Rallycross",
-      "Label": "Subaru Impreza WRX STI - Rallycross"
+      "Label": "Subaru Impreza WRX STI - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "stt",
       "Event": "Trailblazer",
-      "Label": "Subaru Impreza WRX STI - Trailblazer"
+      "Label": "Subaru Impreza WRX STI - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "n12",
       "Event": "Rally",
-      "Label": "Subaru Impreza STI Group N - Rally"
+      "Label": "Subaru Impreza STI Group N - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "n1x",
       "Event": "Rallycross",
-      "Label": "Subaru Impreza STI Group N - Rallycross"
+      "Label": "Subaru Impreza STI Group N - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "n1t",
       "Event": "Trailblazer",
-      "Label": "Subaru Impreza STI Group N - Trailblazer"
+      "Label": "Subaru Impreza STI Group N - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "hhx",
       "Event": "Raid",
-      "Label": "Hummer HX - Stock Baja"
+      "Label": "Hummer HX - Stock Baja",
+      "ClassId": "stock_baja",
+      "ClassName": "Stock Baja"
     },
     {
       "Code": "tfj",
       "Event": "Raid",
-      "Label": "Toyota FJ Cruiser - Stock Baja"
+      "Label": "Toyota FJ Cruiser - Stock Baja",
+      "ClassId": "stock_baja",
+      "ClassName": "Stock Baja"
     },
     {
       "Code": "hon",
       "Event": "Raid",
-      "Label": "Honda Ridgeline - Stock Baja"
+      "Label": "Honda Ridgeline - Stock Baja",
+      "ClassId": "stock_baja",
+      "ClassName": "Stock Baja"
     },
     {
       "Code": "hsb",
       "Event": "Landrush",
-      "Label": "Herbst Smithbuilt Buggy - Class 1 Buggies"
+      "Label": "Herbst Smithbuilt Buggy - Class 1 Buggies",
+      "ClassId": "class_1_buggies",
+      "ClassName": "Class 1 Buggies"
     },
     {
       "Code": "prc",
       "Event": "Landrush",
-      "Label": "PRC-1 Buggy - Class 1 Buggies"
+      "Label": "PRC-1 Buggy - Class 1 Buggies",
+      "ClassId": "class_1_buggies",
+      "ClassName": "Class 1 Buggies"
     },
     {
       "Code": "dej",
       "Event": "Landrush",
-      "Label": "DeJong MXR - Class 1 Buggies"
+      "Label": "DeJong MXR - Class 1 Buggies",
+      "ClassId": "class_1_buggies",
+      "ClassName": "Class 1 Buggies"
     },
     {
       "Code": "ick",
       "Event": "Landrush",
-      "Label": "Brian Ickler Buggy - Class 1 Buggies"
+      "Label": "Brian Ickler Buggy - Class 1 Buggies",
+      "ClassId": "class_1_buggies",
+      "ClassName": "Class 1 Buggies"
     },
     {
       "Code": "lan",
       "Event": "Raid",
-      "Label": "Mitsubishi Racing Lancer - Raid T1"
+      "Label": "Mitsubishi Racing Lancer - Raid T1",
+      "ClassId": "raid_t1",
+      "ClassName": "Raid T1"
     },
     {
       "Code": "vwt",
       "Event": "Raid",
-      "Label": "VW Race Touareg 2 - Raid T1"
+      "Label": "VW Race Touareg 2 - Raid T1",
+      "ClassId": "raid_t1",
+      "ClassName": "Raid T1"
     },
     {
       "Code": "bow",
       "Event": "Raid",
-      "Label": "Bowler Nemesis - Raid T1"
+      "Label": "Bowler Nemesis - Raid T1",
+      "ClassId": "raid_t1",
+      "ClassName": "Raid T1"
     },
     {
       "Code": "hh3",
       "Event": "Raid",
-      "Label": "Hummer H3 - Raid T1"
+      "Label": "Hummer H3 - Raid T1",
+      "ClassId": "raid_t1",
+      "ClassName": "Raid T1"
     },
     {
       "Code": "350",
       "Event": "Rally",
-      "Label": "Nissan 350Z - Rally"
+      "Label": "Nissan 350Z - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "35x",
       "Event": "Rallycross",
-      "Label": "Nissan 350Z - Rallycross"
+      "Label": "Nissan 350Z - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "35t",
       "Event": "Trailblazer",
-      "Label": "Nissan 350Z - Trailblazer"
+      "Label": "Nissan 350Z - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "sor",
       "Event": "Rally",
-      "Label": "Pontiac Solstice GXP - Rally"
+      "Label": "Pontiac Solstice GXP - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "sox",
       "Event": "Rallycross",
-      "Label": "Pontiac Solstice GXP - Rallycross"
+      "Label": "Pontiac Solstice GXP - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "sot",
       "Event": "Trailblazer",
-      "Label": "Pontiac Solstice GXP - Trailblazer"
+      "Label": "Pontiac Solstice GXP - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "bmw",
       "Event": "Rally",
-      "Label": "BMW Z4 M Coupe Motorsport  - Rally"
+      "Label": "BMW Z4 M Coupe Motorsport  - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "bmx",
       "Event": "Rallycross",
-      "Label": "BMW Z4 M Coupe Motorsport  - Rallycross"
+      "Label": "BMW Z4 M Coupe Motorsport  - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "bmt",
       "Event": "Trailblazer",
-      "Label": "BMW Z4 M Coupe Motorsport  - Trailblazer"
+      "Label": "BMW Z4 M Coupe Motorsport  - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "ecl",
       "Event": "Rally",
-      "Label": "Mitsubishi Eclipse GT - Rally"
+      "Label": "Mitsubishi Eclipse GT - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "ecx",
       "Event": "Rallycross",
-      "Label": "Mitsubishi Eclipse GT - Rallycross"
+      "Label": "Mitsubishi Eclipse GT - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "ect",
       "Event": "Trailblazer",
-      "Label": "Mitsubishi Eclipse GT - Trailblazer"
+      "Label": "Mitsubishi Eclipse GT - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "cme",
       "Event": "Rally",
-      "Label": "Ford Escort MK II - Rally"
+      "Label": "Ford Escort MK II - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "e9r",
       "Event": "Rally",
-      "Label": "Mitsubishi Lancer Evolution IX - Rally"
+      "Label": "Mitsubishi Lancer Evolution IX - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "e9x",
       "Event": "Rallycross",
-      "Label": "Mitsubishi Lancer Evolution IX - Rallycross"
+      "Label": "Mitsubishi Lancer Evolution IX - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "e9t",
       "Event": "Trailblazer",
-      "Label": "Mitsubishi Lancer Evolution IX - Trailblazer"
+      "Label": "Mitsubishi Lancer Evolution IX - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "kin",
       "Event": "Landrush",
-      "Label": "Kincaid Ford F-150 Trophy Truck - Trophy Trucks"
+      "Label": "Kincaid Ford F-150 Trophy Truck - Trophy Trucks",
+      "ClassId": "trophy_trucks",
+      "ClassName": "Trophy Trucks"
     },
     {
       "Code": "pfl",
       "Event": "Landrush",
-      "Label": "Chevrolet Silverado CK-1500 - Trophy Trucks"
+      "Label": "Chevrolet Silverado CK-1500 - Trophy Trucks",
+      "ClassId": "trophy_trucks",
+      "ClassName": "Trophy Trucks"
     },
     {
       "Code": "por",
       "Event": "Landrush",
-      "Label": "West Coast Choppers Stuka TT - Trophy Trucks"
+      "Label": "West Coast Choppers Stuka TT - Trophy Trucks",
+      "ClassId": "trophy_trucks",
+      "ClassName": "Trophy Trucks"
     },
     {
       "Code": "drt",
       "Event": "Landrush",
-      "Label": "Dodge Ram Trophy Truck - Trophy Trucks"
+      "Label": "Dodge Ram Trophy Truck - Trophy Trucks",
+      "ClassId": "trophy_trucks",
+      "ClassName": "Trophy Trucks"
     },
     {
       "Code": "cr4",
       "Event": "Rally",
-      "Label": "Colin McRae R4 - Rally"
+      "Label": "Colin McRae R4 - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "crx",
       "Event": "Rallycross",
-      "Label": "Colin McRae R4 - Rallycross"
+      "Label": "Colin McRae R4 - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "crt",
       "Event": "Trailblazer",
-      "Label": "Colin McRae R4 - Trailblazer"
+      "Label": "Colin McRae R4 - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "mer",
       "Event": "Rally",
-      "Label": "Mitsubishi Lancer Evolution X - Rally"
+      "Label": "Mitsubishi Lancer Evolution X - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     },
     {
       "Code": "mex",
       "Event": "Rallycross",
-      "Label": "Mitsubishi Lancer Evolution X - Rallycross"
+      "Label": "Mitsubishi Lancer Evolution X - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
     },
     {
       "Code": "met",
       "Event": "Trailblazer",
-      "Label": "Mitsubishi Lancer Evolution X - Trailblazer"
+      "Label": "Mitsubishi Lancer Evolution X - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
     },
     {
       "Code": "sti",
       "Event": "Rally",
-      "Label": "Subaru Impreza WRX STI - Rally"
+      "Label": "Subaru Impreza WRX STI - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
     }
   ]
 }

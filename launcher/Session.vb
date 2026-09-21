@@ -73,7 +73,7 @@ Public Class Session
                     start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
                     start.Environment("XR_RUNTIME_JSON") = settings.Runtime
                     If settings.LaunchMode <> "menus" Then
-                        Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents)
+                        Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
                         start.ArgumentList.Add("-demo")
                         start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                         start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
@@ -132,7 +132,7 @@ Public Class Session
             If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice and Race require the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
             Worker.Invoke(context, "setup")
             Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
-            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents)
+            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
             config = New AssetTransaction(context).PracticeConfig()
             logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         End If

@@ -29,7 +29,9 @@ The native build uses a static MSVC runtime, including the OpenXR loader. The la
 
 ## Ownership and activation
 
-The footer groups Launch / Launch VR on the left and Save settings / Restore original files / Open logs on the right. Both buttons save the same menu/practice/race selection, then dispatch to the session manager; `--desktop` selects ordinary monitor play. Both are disabled during a managed game session. Race forwards 1–7 opponents through the same preparation and recovery path; see [direct-start grid details](direct-practice.md).
+The footer groups Launch / Launch VR on the left and Save settings / Restore original files / Open logs on the right. Both buttons save the same menu/practice/race selection, then dispatch to the session manager; `--desktop` selects ordinary monitor play. Both are disabled during a managed game session. The visible menu mode is **Normal Launch**, retaining `menus` in saved settings for compatibility. Race forwards 1–7 opponents and the model selection through the same preparation and recovery path; see [direct-start grid details](direct-practice.md).
+
+Numeric settings use a shared native TrackBar with a visible value label, retaining existing bounds/defaults and single-step keyboard adjustment. Graphics, opponents and circuit laps use this control. The alpha.5 launcher suite passed 263 checks in each theme, covering settings migration/persistence, all 43 driver models with class-restricted grids, small and missing-model pools, driver ordering, recovery, and offscreen tab rendering. This verifies configuration and UI behavior, not gameplay acceptance of mixed/class grids.
 
 After successfully spawning a launch session, MainForm grants that session foreground permission and minimizes immediately. Status polling never restores or activates it. Worker/session processes do not create console windows; errors still use the existing message/status path.
 

@@ -28,7 +28,7 @@ Start the launcher normally, **not with Run as administrator**. In protected gam
 
 ## Play
 
-**Launch** starts regular desktop play; **Launch VR** starts headset play. Both use the selected Game menus, Direct practice or Race mode. The launch buttons stay on the left; Save settings, Restore original files and Open logs stay on the right.
+**Launch** starts regular desktop play; **Launch VR** starts headset play. Both use the selected Normal Launch, Direct practice or Race mode. The launch buttons stay on the left; Save settings, Restore original files and Open logs stay on the right.
 
 The launcher minimizes after starting either mode and stays minimized during play. Reopen it from the taskbar when needed; the background session manager continues running.
 
@@ -37,7 +37,7 @@ DiRT 2 may briefly fall behind other windows as it replaces its startup window. 
 Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and use only the human-control fix and a temporary race file. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.
-2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Game menus** on **Launcher**, and select **Launch VR**.
+2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Normal Launch** on **Launcher**, and select **Launch VR**.
 3. Navigate the original game on the virtual screen using your usual controls.
 4. Enter a **Subaru Impreza STI** event and select cockpit view for the tested setup.
 5. With the game window focused, press **F9** (or your Toggle VR binding). Sit facing forward and press **F10** (or Recenter).
@@ -62,17 +62,23 @@ The launcher matches the Windows app light/dark setting when opened. Reopen it a
 
 On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**, and a **Car**, then **Launch VR**. Event filters the track list by discipline; this is solo practice, not a career event. The launcher lists installed routes and cars from the supported game's catalog. The Subaru STI is the tested cockpit; other car interiors are experimental.
 
-Direct practice bypasses the trailer menus and loads a player-driven car. Select cockpit view and use Toggle VR as usual. **Practice loops after the finish, and its pause menu only offers Continue. Press Alt+F4 to quit.** The session manager restores temporary files after exit. Use **Game menus** for full race options. Saved practice selections also work with `Start-DiRT2VR.cmd`.
+Direct practice bypasses the trailer menus and loads a player-driven car. Select cockpit view and use Toggle VR as usual. **Practice loops after the finish, and its pause menu only offers Continue. Press Alt+F4 to quit.** The session manager restores temporary files after exit. Use **Normal Launch** for full race options. Saved practice selections also work with `Start-DiRT2VR.cmd`.
 
 Desktop steering/throttle, pause/resume and finishing have been confirmed in the Subaru at Baja. The packaged direct-practice route in VR, other cars and broader stage coverage still need testing.
 
 ### Race (experimental)
 
-Choose **Race**, an event, track and car, then set **AI opponents** from 1 to 7. Use **Launch** for desktop or **Launch VR** for headset play. The whole grid uses your selected car; Direct practice remains solo regardless of the saved opponent count. Start with Landrush or Rallycross. Other disciplines and track/car combinations need testing.
+Choose **Race**, an event, track and car, then set **AI opponents** from 1 to 7. Use **Launch** for desktop or **Launch VR** for headset play. Choose **Opponent cars**:
+
+- **Same as driver:** all opponents use your model.
+- **Mixed:** other models from all installed classes, regardless of event.
+- **Same class:** other models in your car's game-defined class.
+
+Mixed/class grids are randomized each launch, repeating models if the available pool is small. If no other eligible model is installed, they use your model. Direct practice remains solo regardless of saved opponent settings. Start with Landrush or Rallycross. Other disciplines and track/car combinations need testing.
 
 Use **Laps (circuits)** to choose 1–20 laps in either **Race** or **Direct practice**. On point-to-point stages this control is disabled and the session is one stage run; your saved circuit lap preference is retained. The three-lap HUD and continuation into lap 2 have been confirmed on desktop at Baja – Ensenada Sprint. Other counts, complete multi-lap finishes and VR still need testing.
 
-Race uses the same direct-start route as practice: it bypasses menus, repeats after finishing, and only offers Continue when paused. **Alt+F4 quits.** Difficulty, career progression and normal results screens are not configurable here; use Game menus for the full event flow. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Crowded-grid VR performance still needs testing.
+Race uses the same direct-start route as practice: it bypasses menus, repeats after finishing, and only offers Continue when paused. **Alt+F4 quits.** Difficulty, career progression and normal results screens are not configurable here; use Normal Launch for the full event flow. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Crowded-grid VR performance still needs testing.
 
 ### Graphics
 
@@ -83,7 +89,7 @@ Race uses the same direct-start route as practice: it bypasses menus, repeats af
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
 | Car mirrors | Use game setting | Optionally force mirrors on or off during VR sessions. |
 
-The Graphics tab shows the effective scene resolution and pixel count. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore graphics defaults** returns to the tested baseline; save afterward.
+Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. The Graphics tab shows the effective scene resolution and pixel count. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore graphics defaults** returns to the tested baseline; save afterward.
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
 

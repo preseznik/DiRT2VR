@@ -132,6 +132,14 @@ Module Program
         migrated = VrSettings.Load(context)
         Check(migrated.Version = 3 AndAlso migrated.RenderWidth = 960 AndAlso migrated.LaunchMode = "menus", "graphics preferences survive version 2 migration")
         Dim catalog = RaceCatalog.Current
+        Check(migrated.OpponentCars = "same", "existing preferences keep matching opponents")
+        Reject(Sub() Call (New VrSettings With {.OpponentCars = "unknown"}).Validate(), "unknown opponent selection rejected")
+        Reject(Sub() catalog.Config("127", "sti", 7, "mixed"), "mixed grid requires installed cars")
+        Check(catalog.Cars.All(Function(c) c.ClassId <> "" AndAlso c.ClassName <> "") AndAlso catalog.Cars.Select(Function(c) c.ClassId).Distinct().Count() = 7, "all cars have one of seven game vehicle classes")
+        Dim mixedGrid = XmlPatches.Read(catalog.Config("127", "sti", 7, "mixed", context))
+        Check(mixedGrid.SelectNodes("/config/track/car").Count = 8 AndAlso mixedGrid.SelectSingleNode("/config/track/car[1]/@name").Value = "sti" AndAlso mixedGrid.SelectNodes("/config/track/car[@name='n12'][@number='1']").Count = 7, "mixed grid uses only installed models and repeats small pools")
+        Dim soloGrid = XmlPatches.Read(catalog.Config("127", "sti", 0, "mixed", context))
+        Check(soloGrid.SelectNodes("/config/track/car").Count = 1 AndAlso soloGrid.SelectSingleNode("/config/track/car/@number").Value = "1", "mixed preference leaves practice solo")
         For Each count In {1, 7}
             Dim raceXml As New Xml.XmlDocument()
             raceXml.LoadXml(Text.Encoding.UTF8.GetString(catalog.Config("127", "sti", count)))
@@ -148,6 +156,15 @@ Module Program
         Check((New VrSettings With {.LaunchMode = "race", .TrackId = "129", .Laps = 5}).SessionLaps = 1, "point-to-point stages ignore saved circuit laps")
         Check(catalog.Tracks.Count = 41 AndAlso catalog.Cars.Count = 43 AndAlso catalog.Tracks.Select(Function(t) t.Id).Distinct().Count() = 41 AndAlso catalog.Cars.Select(Function(c) c.Code).Distinct().Count() = 43, "practice catalog has unique route and car IDs")
         Dim game As New InstallContext(IO.Path.Combine(repo, "artifacts/game"))
+        For Each driver In catalog.Cars
+            Dim classGrid = XmlPatches.Read(catalog.Config("127", driver.Code, 7, "class", game))
+            Dim entries = classGrid.SelectNodes("/config/track/car").Cast(Of Xml.XmlElement).ToArray()
+            Check(entries.Length = 8 AndAlso entries(0).GetAttribute("name") = driver.Code AndAlso entries.All(Function(c) c.GetAttribute("number") = "1" AndAlso catalog.Car(c.GetAttribute("name")).ClassId = driver.ClassId), "same-class eight-car grid preserves driver and class for " & driver.Code)
+        Next
+        mixedGrid = XmlPatches.Read(catalog.Config("127", "sti", 7, "mixed", game))
+        Check(mixedGrid.SelectNodes("/config/track/car").Cast(Of Xml.XmlElement).Select(Function(c) c.GetAttribute("name")).Distinct().Count() = 8, "full mixed pool chooses different models without replacement")
+        Dim onlyDriver As New RaceCatalog With {.Cars = New List(Of PracticeCar) From {catalog.Car("sti")}, .Tracks = catalog.Tracks}
+        Check(XmlPatches.Read(onlyDriver.Config("127", "sti", 7, "class", context)).SelectNodes("/config/track/car[@name='sti']").Count = 8, "single-model class falls back to the driver model")
         For Each car In catalog.Cars
             Dim bytes = File.ReadAllBytes(IO.Path.Combine(game.GameRoot, "cars", car.Code, "cameras.xml"))
             Check(XmlPatches.Asset(bytes, True).Length > 0, "camera preparation accepts " & car.Code & " (not visual acceptance)")
@@ -214,6 +231,11 @@ Module Program
         Reject(Sub() transaction.Recover(), "desktop config conflict preserved")
         Files.AtomicWrite(desktopConfig, desktopBytes) : transaction.Recover()
         Check(Not File.Exists(desktopConfig) AndAlso Not transaction.Pending, "desktop config recovery completes")
+        Worker.Run(context, "prepare-desktop", "sti", "127", 7, "class")
+        grid.Load(IO.Path.Combine(root, transaction.PracticeConfig()))
+        Check(grid.SelectNodes("/config/track/car[@name='n12']").Count = 7 AndAlso Files.Hash(alternate) = alternateHash, "worker carries class selection without patching opponent cameras")
+        transaction.Recover()
+        Check(Not File.Exists(desktopConfig) AndAlso Not transaction.Pending, "class grid configuration is removed by recovery")
         transaction.Prepare(carCode:="sti", trackId:="127", configOnly:=True)
         File.Delete(IO.Path.Combine(root, transaction.PracticeConfig()))
         transaction.Recover()
@@ -313,16 +335,21 @@ Module Program
             Dim events = DirectCast(form.Controls.Find("PracticeEvent", True).Single(), ComboBox)
             Dim routes = DirectCast(form.Controls.Find("PracticeTrack", True).Single(), ComboBox)
             Dim vehicles = DirectCast(form.Controls.Find("PracticeCar", True).Single(), ComboBox)
-            Dim opponents = DirectCast(form.Controls.Find("Opponents", True).Single(), NumericUpDown)
-            Dim laps = DirectCast(form.Controls.Find("Laps", True).Single(), NumericUpDown)
+            Dim opponents = DirectCast(form.Controls.Find("Opponents", True).Single(), ValueSlider)
+            Dim laps = DirectCast(form.Controls.Find("Laps", True).Single(), ValueSlider)
+            Dim opponentCars = DirectCast(form.Controls.Find("OpponentCars", True).Single(), ComboBox)
+            Check(mode.Items(0).ToString() = "Normal Launch" AndAlso Not opponentCars.Enabled, "Normal Launch label and inactive opponent model choice")
             Check(mode.SelectedIndex = 0 AndAlso Not routes.Enabled AndAlso Not vehicles.Enabled, "menu mode keeps practice selectors inactive")
             Check(Not opponents.Enabled, "menus disable opponent choice")
             mode.SelectedIndex = 2 : opponents.Value = 3
+            Check(opponentCars.Enabled AndAlso opponentCars.Items.Cast(Of String).SequenceEqual({"Same as driver", "Mixed", "Same class"}), "Race offers three opponent model modes")
+            opponentCars.SelectedIndex = 2
             laps.Value = 3
             Check(laps.Enabled, "race circuit enables lap choice")
             Check(opponents.Enabled AndAlso routes.Enabled AndAlso vehicles.Enabled, "race enables grid and content choices")
             mode.SelectedIndex = 1 : events.SelectedItem = "Rally"
             Check(Not opponents.Enabled, "solo practice disables opponent choice")
+            Check(Not opponentCars.Enabled AndAlso opponentCars.SelectedIndex = 2, "practice preserves but disables opponent models")
             Check(Not laps.Enabled, "point-to-point route disables lap choice")
             vehicles.SelectedItem = vehicles.Items.Cast(Of PracticeCar).Single(Function(c) c.Code = "n12")
             Check(routes.Enabled AndAlso vehicles.Enabled AndAlso routes.Items.Cast(Of PracticeTrack).All(Function(t) t.Event = "Rally") AndAlso DirectCast(routes.SelectedItem, PracticeTrack).Id = "129", "event selection filters installed routes")
@@ -343,9 +370,11 @@ Module Program
             Dim logToggle = DirectCast(form.Controls.Find("LoggingEnabled", True).Single(), CheckBox)
             Check(Not logToggle.Checked, "Settings logging checkbox starts off")
             logToggle.Checked = True
-            DirectCast(form.Controls.Find("RenderScale", True).Single(), NumericUpDown).Value = 75
-            DirectCast(form.Controls.Find("HeadsetScale", True).Single(), NumericUpDown).Value = 60
-            DirectCast(form.Controls.Find("FieldOfView", True).Single(), NumericUpDown).Value = 80
+            DirectCast(form.Controls.Find("RenderScale", True).Single(), ValueSlider).Value = 75
+            DirectCast(form.Controls.Find("HeadsetScale", True).Single(), ValueSlider).Value = 60
+            DirectCast(form.Controls.Find("FieldOfView", True).Single(), ValueSlider).Value = 80
+            Dim scaleSlider = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
+            Check(scaleSlider.Minimum = 50 AndAlso scaleSlider.Maximum = 150 AndAlso scaleSlider.SmallChange = 1 AndAlso form.Controls.Find("RenderScaleValue", True).Single().Text = "75%", "native graphics slider retains range precision and visible value")
             DirectCast(form.Controls.Find("Mirrors", True).Single(), ComboBox).SelectedIndex = 2
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             Dim saved = VrSettings.Load(context)
@@ -357,6 +386,7 @@ Module Program
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             saved = VrSettings.Load(context)
             Check(saved.LaunchMode = "race" AndAlso saved.GridOpponents = 3, "race mode and grid persist for both launch buttons")
+            Check(saved.OpponentCars = "class", "opponent model choice persists across tabs and launch modes")
             Check(saved.Laps = 3 AndAlso saved.SessionLaps = 1, "saved circuit laps survive point-to-point selection")
             form.Close()
         End Using

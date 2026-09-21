@@ -16,11 +16,13 @@ Public Class MainForm
     Private ReadOnly eventChoice As ComboBox = Choice("PracticeEvent")
     Private ReadOnly trackChoice As ComboBox = Choice("PracticeTrack")
     Private ReadOnly carChoice As ComboBox = Choice("PracticeCar")
-    Private ReadOnly opponents As New NumericUpDown With {.Name = "Opponents", .AccessibleName = "AI opponents", .Minimum = 1, .Maximum = 7, .Value = 7, .Width = 90}
-    Private ReadOnly laps As New NumericUpDown With {.Name = "Laps", .AccessibleName = "Laps", .Minimum = 1, .Maximum = 20, .Value = 1, .Width = 90}
-    Private ReadOnly renderScale As NumericUpDown = Percentage("RenderScale", 50, 150, 100)
-    Private ReadOnly headsetScale As NumericUpDown = Percentage("HeadsetScale", 25, 100, 50)
-    Private ReadOnly fieldOfView As NumericUpDown = Percentage("FieldOfView", 70, 100, 100)
+    Private ReadOnly opponents As New ValueSlider("Opponents", 1, 7, 7) With {.AccessibleName = "AI opponents"}
+    Private ReadOnly laps As New ValueSlider("Laps", 1, 20, 1) With {.AccessibleName = "Laps"}
+    Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 150, 100, "%")
+    Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 50, "%")
+    Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
+    Private ReadOnly opponentCars As ComboBox = Choice("OpponentCars")
+    Private ReadOnly opponentHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly graphicsSummary As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly refreshLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
@@ -142,9 +144,6 @@ Public Class MainForm
             ' Offline/rate-limited startup checks are quiet; About offers a manual retry.
         End Try
     End Function
-    Private Shared Function Percentage(name As String, low As Integer, high As Integer, value As Integer) As NumericUpDown
-        Return New NumericUpDown With {.Name = name, .AccessibleName = name, .Minimum = low, .Maximum = high, .Value = value, .Increment = 5, .Width = 90}
-    End Function
     Private Shared Function Choice(name As String) As ComboBox
         Return New ComboBox With {.Name = name, .AccessibleName = name, .DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Fill, .DropDownWidth = 600}
     End Function
@@ -165,8 +164,8 @@ Public Class MainForm
         Dim grid As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True, .Dock = DockStyle.Top}
         grid.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 140))
         grid.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
-        Dim labels = {"Launch mode", "Event", "Track", "Car"}
-        Dim choices = {launchMode, eventChoice, trackChoice, carChoice}
+        Dim labels = {"Launch mode", "Event", "Track", "Car", "Opponent cars"}
+        Dim choices = {launchMode, eventChoice, trackChoice, carChoice, opponentCars}
         For i = 0 To choices.Length - 1
             grid.Controls.Add(New Label With {.Text = labels(i), .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, i)
             choices(i).Margin = New Padding(3, 8, 3, 10)
@@ -178,14 +177,18 @@ Public Class MainForm
             grid.Controls.Add(choices(i), 1, i)
         Next
         content.Controls.Add(grid)
-        grid.Controls.Add(New Label With {.Text = "AI opponents", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 4)
+        grid.Controls.Add(New Label With {.Text = "AI opponents", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 5)
         opponents.Value = settings.Opponents
-        grid.Controls.Add(opponents, 1, 4)
-        grid.Controls.Add(New Label With {.Text = "Laps (circuits)", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 5)
+        grid.Controls.Add(opponents, 1, 5)
+        grid.Controls.Add(New Label With {.Text = "Laps (circuits)", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 6)
         laps.Value = settings.Laps
-        grid.Controls.Add(laps, 1, 5)
+        grid.Controls.Add(laps, 1, 6)
         AddHandler trackChoice.SelectedIndexChanged, Sub() RefreshLaps()
-        launchMode.Items.AddRange({"Game menus", "Direct practice (experimental)", "Race (experimental)"})
+        launchMode.Items.AddRange({"Normal Launch", "Direct practice (experimental)", "Race (experimental)"})
+        opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
+        opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, settings.OpponentCars)
+        AddHandler opponentCars.SelectedIndexChanged, Sub() RefreshOpponentHint()
+        AddHandler carChoice.SelectedIndexChanged, Sub() RefreshOpponentHint()
         eventChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) Directory.Exists(t.Folder(context))).Select(Function(t) t.Event).Distinct().Order().Cast(Of Object).ToArray())
         carChoice.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
         AddHandler eventChoice.SelectedIndexChanged, Sub()
@@ -206,11 +209,18 @@ Public Class MainForm
                                                             control.Enabled = launchMode.SelectedIndex > 0
                                                         Next
                                                         opponents.Enabled = launchMode.SelectedIndex = 2
+                                                        opponentCars.Enabled = launchMode.SelectedIndex = 2
+                                                        RefreshOpponentHint()
                                                         RefreshLaps()
                                                     End Sub
         launchMode.SelectedIndex = Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode)
-        content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents using the selected car. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
-        content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Sessions loop after finishing; pause only offers Continue. Alt+F4 quits. Use Game menus for full event options and results."))
+        content.Controls.Add(opponentHint)
+        content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
+        content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Sessions loop after finishing; pause only offers Continue. Alt+F4 quits. Use Normal Launch for full event options and results."))
+    End Sub
+    Private Sub RefreshOpponentHint()
+        Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
+        opponentHint.Text = If(launchMode.SelectedIndex <> 2, "Opponent car selection applies only to Race.", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed draws from all installed classes; vehicle performance can differ substantially.", "All opponents use the same car as the driver.")))
     End Sub
     Private Sub ShowAbout()
         Using dialog As New AboutForm(context, availableUpdate)
@@ -378,11 +388,12 @@ Public Class MainForm
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
         settings.Opponents = CInt(opponents.Value)
+        settings.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         settings.Laps = CInt(laps.Value)
         If settings.LaunchMode <> "menus" Then
             Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)
-            If track Is Nothing OrElse car Is Nothing Then Throw New IOException("Select an installed track and car, or use Game menus.")
+            If track Is Nothing OrElse car Is Nothing Then Throw New IOException("Select an installed track and car, or use Normal Launch.")
             RaceCatalog.Current.ValidateInstalled(context, track.Id, car.Code)
             settings.TrackId = track.Id : settings.CarCode = car.Code
         End If

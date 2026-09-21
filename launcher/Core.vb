@@ -107,6 +107,7 @@ Public Class VrSettings
     Public Property TrackId As String = "127"
     Public Property CarCode As String = "sti"
     Public Property Opponents As Integer = 7
+    Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
     <Serialization.JsonIgnore>
     Public ReadOnly Property SessionLaps As Integer
@@ -136,6 +137,7 @@ Public Class VrSettings
         If Version <> 3 Then Throw New IOException("Unsupported settings version.")
         If Not {"menus", "practice", "race"}.Contains(LaunchMode) Then Throw New IOException("Unknown launch mode.")
         If Opponents < 1 OrElse Opponents > 7 Then Throw New IOException("Choose between one and seven race opponents.")
+        If Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Unknown opponent car selection.")
         If Laps < 1 OrElse Laps > 20 Then Throw New IOException("Choose between one and twenty laps.")
         RaceCatalog.Current.Track(TrackId) : RaceCatalog.Current.Car(CarCode)
         If RenderScale < 50 OrElse RenderScale > 150 OrElse HeadsetScale < 25 OrElse HeadsetScale > 100 OrElse FieldOfView < 70 OrElse FieldOfView > 100 OrElse Not {"game", "on", "off"}.Contains(Mirrors) Then Throw New IOException("Invalid VR graphics settings.")

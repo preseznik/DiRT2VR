@@ -4,6 +4,9 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Numeric launcher settings now use sliders with visible values and one-step arrow-key adjustment, including Graphics, AI opponents and circuit laps. Renamed the Game menus launch mode to **Normal Launch**; existing preferences remain compatible.
+- Race adds **Same as driver**, **Mixed** (all installed classes), and **Same class** opponent car choices. Mixed/class grids retain the chosen player car and randomize other installed models, repeating small pools as needed. Solo practice stays solo. Desktop mixed/class gameplay and crowded-grid VR acceptance are pending. Local package version: `0.1.0-alpha.5`.
+
 - Diagnostic logging toggle in Settings, off by default for new and existing preferences. Disables preflight log files, native trace/CSV/binary output and captures while preserving recovery journals and a single latest headset refresh summary. Existing logs are not deleted. Native logging-on/off and launcher preference tests pass; desktop tests created or changed zero diagnostic files. VR gameplay with logging disabled still needs a headset check.
 - Launcher minimizes after starting desktop or VR play and does not restore itself during session-status updates. A focus trace identified DiRT 2 replacing its startup window and leaving another app active. Added a single startup focus handoff to the replacement game window; switching away from the existing game window with new input or a 30-second timeout cancels it. The tester confirmed an acceptable brief focus drop followed by immediate return on desktop. VR focus acceptance remains pending.
 
