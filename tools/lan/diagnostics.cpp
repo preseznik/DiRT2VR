@@ -18,7 +18,9 @@ constexpr DWORD limit = 4 * 1024 * 1024;
 #else
 constexpr DWORD limit = DIRT2VR_LAN_LOG_LIMIT;
 #endif
-bool NetworkFunction(const char* function) {
+bool NetworkFunction(const char* function, uint32_t level) {
+    // Session API errors can explain a game-requested teardown. Do not log profile/property data.
+    if (strncmp(function, "XSession", 8) == 0) return (level & 0x10) != 0;
     const char* prefixes[] = {"XSocket", "XWSA", "XNet", "XLiveInitialize", "XLiveUninitialize",
         "XllnThread", "Thread", "ParseNetworkData", "SendPacket", "XllnNetEntity", "SocketMain",
         "BindTitleSocket", "ImplicitlyBindTitleSocket", "ShutdownTitleSocket", "DiRT2VRLanLog"};
@@ -42,7 +44,7 @@ void DiRT2VRLanLogPacket(const char* function, uintptr_t socket, const void* dat
     DiRT2VRLanLog(4, 0, function, "title boundary socket=%zx bytes=%zu checksum=%08x caller_rva=%zx", socket, size, hash, reinterpret_cast<uintptr_t>(caller) - base);
     SetLastError(savedError);
 }
-void DiRT2VRLanLogClose(uintptr_t socket, const void* caller) {
+void DiRT2VRLanLogClose(uintptr_t socket, const void* caller, const void* returnSlot) {
     if (!DiRT2VRLanLogEnabled()) return;
     const DWORD savedError = GetLastError();
     const auto base = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
@@ -53,6 +55,33 @@ void DiRT2VRLanLogClose(uintptr_t socket, const void* caller) {
         HMODULE module = nullptr;
         if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPCWSTR>(frames[i]), &module) && reinterpret_cast<uintptr_t>(module) == base)
             DiRT2VRLanLog(4, 0, "XSocketClose", "close stack socket=%zx frame=%u game_rva=%zx", socket, i, reinterpret_cast<uintptr_t>(frames[i]) - base);
+    }
+    // Optimized x86 game functions omit frame pointers, so Windows' stack walk often stops
+    // at the first game frame. Record bounded code-pointer candidates, not a claimed unwind
+    // or a raw stack dump. The caller supplies its own return-address slot.
+    const auto* tib = reinterpret_cast<const NT_TIB*>(NtCurrentTeb());
+    const auto start = reinterpret_cast<uintptr_t>(returnSlot);
+    const auto low = reinterpret_cast<uintptr_t>(tib->StackLimit);
+    const auto high = reinterpret_cast<uintptr_t>(tib->StackBase);
+    if (start >= low && start < high && start % sizeof(uintptr_t) == 0) {
+        const auto* dos = reinterpret_cast<const IMAGE_DOS_HEADER*>(base);
+        const auto* nt = reinterpret_cast<const IMAGE_NT_HEADERS*>(base + dos->e_lfanew);
+        const auto* sections = IMAGE_FIRST_SECTION(nt);
+        const auto available = (high - start) / sizeof(uintptr_t);
+        const auto words = available < 256 ? available : 256;
+        unsigned matches = 0;
+        for (size_t index = 0; index < words && matches < 32; ++index) {
+            uintptr_t value{};
+            std::memcpy(&value, reinterpret_cast<const void*>(start + index * sizeof(uintptr_t)), sizeof(value));
+            for (unsigned section = 0; section < nt->FileHeader.NumberOfSections; ++section) {
+                const auto& entry = sections[section];
+                const auto begin = base + entry.VirtualAddress;
+                if (!(entry.Characteristics & IMAGE_SCN_MEM_EXECUTE) || value < begin || value - begin >= entry.Misc.VirtualSize) continue;
+                DiRT2VRLanLog(4, 0, "XSocketClose", "close code candidate socket=%zx stack_offset=%zu game_rva=%zx", socket, index * sizeof(uintptr_t), value - base);
+                ++matches;
+                break;
+            }
+        }
     }
     SetLastError(savedError);
 }
@@ -89,7 +118,7 @@ void DiRT2VRLanLogStop() {
     SetLastError(savedError);
 }
 void DiRT2VRLanLog(uint32_t level, uint32_t error, const char* function, const char* format, ...) {
-    if (!enabled.load(std::memory_order_relaxed) || !(level & 0x3e) || !NetworkFunction(function)) return;
+    if (!enabled.load(std::memory_order_relaxed) || !(level & 0x3e) || !NetworkFunction(function, level)) return;
     const DWORD savedError = GetLastError(); // Includes Winsock's thread-local error; logging must preserve it.
     char message[2048]{};
     va_list args;

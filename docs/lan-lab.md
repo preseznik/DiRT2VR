@@ -1,5 +1,11 @@
 # LAN baseline prototype
 
+## 0.6.9 follow-up: disconnect persists
+
+The tester confirmed both PCs ran 0.6.9 and still disconnected during loading, with PC2 showing the failure later. The host was left on the disconnected screen. The retained trace (`artifacts/lan-battersea-069/pc1.log`) shows successful title-level reads, a final 13-byte title send acknowledged by the peer, then game-requested socket closure. Read-only inspection of PID 9908 confirmed all title sockets were already closed while the process remained running, before the tester was asked to quit. The machine-identity correction does not resolve this reproduction.
+
+The next PC1 diagnostic supplements the incomplete optimized-x86 stack walk with at most 32 game-code pointer candidates from at most 256 words on the calling thread's stack. These are explicitly candidates, not an unwound call chain. Non-code stack contents are never logged, pointers outside the thread's stack are rejected, and logging remains opt-in and bounded by the existing rotation policy. Session API errors are also retained; routine session properties and user/profile APIs remain excluded. Six native tests cover filtering, stack bounds, error preservation, rotation and existing transport behavior. PC2 can retain 0.6.9 because the wire protocol is unchanged.
+
 ## Machine identity correction (0.6.9 candidate)
 
 The 0.6.8 follow-up confirms successful title-level reads and writes, not merely queued transport delivery. In the repeat left on the disconnected screen, a read-only inspection initially found a connected stream with empty receive/send queues and no lost-connection flag. The first run's final socket closures cannot establish the original cause: the tester quit immediately after seeing the failure. Later teardown in the repeat is likewise not sufficient to identify the initial game-side rejection. Local evidence is retained under `artifacts/lan-battersea-068/`.

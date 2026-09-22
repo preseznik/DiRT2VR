@@ -6,6 +6,11 @@
 #include <string>
 #include <cstdio>
 #include <thread>
+#include <intrin.h>
+
+__declspec(noinline) void LogCallerStack() {
+    DiRT2VRLanLogClose(43, _ReturnAddress(), _AddressOfReturnAddress());
+}
 
 void Check(bool ok, const char* message) {
     if (!ok) { std::fprintf(stderr, "FAIL: %s\n", message); ExitProcess(10); }
@@ -32,14 +37,21 @@ int wmain(int argc, wchar_t** argv) {
     const auto caller = reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr)) + 0x1234);
     DiRT2VRLanLogPacket("XSocketRecvFrom", 42, packet, sizeof(packet) - 1, caller);
     DiRT2VRLanLogClose(42, caller);
+    LogCallerStack();
+    DiRT2VRLanLogClose(44, caller, reinterpret_cast<const void*>(1));
     Check(WSAGetLastError() == WSAEWOULDBLOCK, "packet and stack diagnostics preserve Winsock error");
     DiRT2VRLanLog(1, 0, "XSocketRecv", "excluded trace");
     DiRT2VRLanLog(4, 0, "XUserAnything", "excluded user data");
+    DiRT2VRLanLog(16, 87, "XSessionStart", "invalid start flags");
+    DiRT2VRLanLog(4, 0, "XSessionAnything", "excluded session properties");
     DiRT2VRLanLogStop();
     Check(WSAGetLastError() == WSAEWOULDBLOCK, "stop preserves Winsock error");
     auto contents = Read(log);
     Check(contents.find("error=10060 XSocketRecv: socket=0000002a") != std::string::npos, "socket and error metadata recorded");
     Check(contents.find("excluded") == std::string::npos, "trace and unrelated APIs excluded");
+    Check(contents.find("error=87 XSessionStart: invalid start flags") != std::string::npos, "session errors included");
+    Check(contents.find("close code candidate socket=2b stack_offset=0") != std::string::npos, "caller return slot recorded despite omitted frame pointers");
+    Check(contents.find("close code candidate socket=2c") == std::string::npos, "non-stack input ignored");
     Check(contents.find(packet) == std::string::npos && contents.find("checksum=") != std::string::npos && contents.find("caller_rva=1234") != std::string::npos, "packet checksum and caller recorded without payload");
     Check(contents.find("utc_ms=") != std::string::npos && contents.find("tick_ms=") != std::string::npos, "correlation timestamps recorded");
     DiRT2VRLanLogStart();

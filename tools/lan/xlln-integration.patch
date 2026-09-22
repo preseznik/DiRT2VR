@@ -39,7 +39,7 @@ index 5c806a3..71167d4 100644
  }
  
 diff --git a/xlivelessness/xlive/xsocket.cpp b/xlivelessness/xlive/xsocket.cpp
-index dda6a11..e5c6150 100644
+index dda6a11..ff660eb 100644
 --- a/xlivelessness/xlive/xsocket.cpp
 +++ b/xlivelessness/xlive/xsocket.cpp
 @@ -15,6 +15,7 @@
@@ -54,7 +54,7 @@ index dda6a11..e5c6150 100644
  // #4
  int32_t WINAPI XSocketClose(SOCKET title_socket_handle)
  {
-+	DiRT2VRLanLogClose(title_socket_handle, _ReturnAddress());
++	DiRT2VRLanLogClose(title_socket_handle, _ReturnAddress(), _AddressOfReturnAddress());
 +	XLLN_DEBUG_LOG(XLLN_LOG_LEVEL_INFO, "Game closing socket=%08x.", title_socket_handle);
  	TRACE_FX();
  	
