@@ -1,3 +1,25 @@
+diff --git a/xlivelessness/xlive/xlive.cpp b/xlivelessness/xlive/xlive.cpp
+index 5c806a3..0b34628 100644
+--- a/xlivelessness/xlive/xlive.cpp
++++ b/xlivelessness/xlive/xlive.cpp
+@@ -309,6 +309,8 @@ HRESULT WINAPI XLiveInput(XLIVE_INPUT_INFO* xlive_input_info)
+ // #5003
+ void WINAPI XLiveUninitialize()
+ {
++	extern void DiRT2VRLanBrowserStop();
++	DiRT2VRLanBrowserStop();
+ 	TRACE_FX();
+ 	
+ 	XllnModulesPreXLiveUninitialize();
+@@ -1722,6 +1724,8 @@ HRESULT WINAPI XLiveInitializeEx(XLIVE_INITIALIZE_INFO* xlive_initialise_info, u
+ 	}
+ 	
+ 	xlive_initialised = true;
++	extern void DiRT2VRLanBrowserSeedPeer();
++	DiRT2VRLanBrowserSeedPeer();
+ 	return S_OK;
+ }
+ 
 diff --git a/xlivelessness/xlln/xlln-modules.cpp b/xlivelessness/xlln/xlln-modules.cpp
 index ff68ad3..8c0a533 100644
 --- a/xlivelessness/xlln/xlln-modules.cpp

@@ -19,3 +19,4 @@ foreach ($name in @('xlivelessness','cmake','CMakeLists.txt','README.md','LICENS
 Copy-Item -LiteralPath $PSScriptRoot -Destination "$source/tools/lan" -Recurse
 Copy-Item -LiteralPath "$repo/src/common.cpp","$repo/src/common.h" -Destination "$source/src"
 Copy-Item -LiteralPath "$repo/tests/lan_profile_test.cpp","$repo/tests/lan_intro_test.cpp","$repo/tests/lan_files.ps1","$repo/tests/lan_settings.ps1" -Destination "$source/tests"
+Copy-Item -LiteralPath "$repo/tests/lan_browser_test.cpp" -Destination "$source/tests"

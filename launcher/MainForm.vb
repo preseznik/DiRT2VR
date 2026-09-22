@@ -10,7 +10,13 @@ Public Class MainForm
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
     Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (all launch modes)", .Name = "SkipStartupMovies", .AutoSize = True}
-    Private ReadOnly lanHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0), .Name = "LanHint"}
+    Private ReadOnly serverList As New ListView With {.Name = "LanServers", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Top, .Height = 300}
+    Private ReadOnly hostButton As New Button With {.Name = "HostLAN", .Text = "HOST", .AutoSize = True}
+    Private ReadOnly joinButton As New Button With {.Name = "JoinLAN", .Text = "JOIN", .AutoSize = True, .Enabled = False}
+    Private ReadOnly refreshServers As New Button With {.Name = "RefreshLAN", .Text = "Refresh", .AutoSize = True}
+    Private ReadOnly browserStatus As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0), .Text = "Open Multiplayer to find LAN hosts."}
+    Private scanning As Boolean
+    Private nextScan As DateTime
     Private ReadOnly stateLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly inputLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly bindingLists As ListBox() = {New ListBox(), New ListBox()}
@@ -58,7 +64,7 @@ Public Class MainForm
         Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi
         MinimumSize = New Size(820, 690)
-        ClientSize = New Size(840, 700)
+        ClientSize = New Size(900, 1040)
         StartPosition = FormStartPosition.CenterScreen
         KeyPreview = True
         Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .Padding = New Padding(20), .ColumnCount = 1, .RowCount = 4}
@@ -81,6 +87,7 @@ Public Class MainForm
         layout.Controls.Add(stateLabel)
         layout.Controls.Add(tabs)
         BuildLaunchTab()
+        BuildMultiplayerTab()
         BuildGraphicsTab()
         BuildControlsTab()
         BuildSettingsTab()
@@ -88,6 +95,8 @@ Public Class MainForm
                                                   keyboardCapture = -1 : controllerCapture = -1 : capturedDevice = Nothing
                                                   inputLabel.Text = "Select a binding to change it."
                                                   RefreshBindings()
+                                                  desktopButton.Visible = tabs.SelectedIndex <> 1
+                                                  launchButton.Visible = tabs.SelectedIndex <> 1
                                               End Sub
         Dim commands As New TableLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill, .ColumnCount = 3, .RowCount = 1, .Margin = New Padding(0, 16, 0, 0)}
         commands.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
@@ -121,6 +130,7 @@ Public Class MainForm
         AddHandler timer.Tick, Sub()
                                   input.Poll()
                                   RefreshStatus()
+                                  If tabs.SelectedIndex = 1 AndAlso Not busy AndAlso Not scanning AndAlso DateTime.UtcNow >= nextScan Then RefreshServerList()
                               End Sub
         AddHandler FormClosed, Sub()
                                   updateCancellation.Cancel() : updateCancellation.Dispose()
@@ -128,6 +138,7 @@ Public Class MainForm
                                   Icon.Dispose()
                               End Sub
         timer.Start() : RefreshStatus()
+        AddHandler Shown, Sub() FitInitialWindow()
         AddHandler Shown, Async Sub() Await CheckStartupUpdate()
     End Sub
     Private Shared Async Function CheckReleaseAsync(token As CancellationToken) As Task(Of ReleaseUpdate)
@@ -162,6 +173,72 @@ Public Class MainForm
     Private Shared Function Note(text As String) As Label
         Return New Label With {.Text = text, .AutoSize = True, .MaximumSize = New Size(710, 0), .Margin = New Padding(0, 8, 0, 12)}
     End Function
+    Private Sub FitInitialWindow()
+        ' Size from the laid-out Settings content at the actual display DPI, then cap to the monitor.
+        Dim page = tabs.TabPages.Cast(Of TabPage).Single(Function(p) p.Text = "Settings")
+        Dim content = page.Controls(0)
+        Dim desiredHeight = Height + Math.Max(0, content.PreferredSize.Height + page.Padding.Vertical + 12 - page.ClientSize.Height)
+        Dim work = Screen.FromControl(Me).WorkingArea
+        MinimumSize = New Size(Math.Min(MinimumSize.Width, work.Width), Math.Min(MinimumSize.Height, work.Height))
+        Size = New Size(Math.Min(Width, work.Width), Math.Min(desiredHeight, work.Height))
+        Location = New Point(work.Left + (work.Width - Width) \ 2, work.Top + (work.Height - Height) \ 2)
+    End Sub
+    Private Sub BuildMultiplayerTab()
+        Dim content = TabLayout("Multiplayer")
+        content.Controls.Add(New Label With {.Text = "LAN servers", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
+        serverList.Columns.Add("Host", 240) : serverList.Columns.Add("Address", 170)
+        serverList.Columns.Add("Players", 85) : serverList.Columns.Add("Status", 180)
+        serverList.BackColor = BackColor : serverList.ForeColor = ForeColor
+        content.Controls.Add(serverList)
+        Dim buttons As New FlowLayoutPanel With {.Dock = DockStyle.Top, .AutoSize = True}
+        buttons.Controls.AddRange({hostButton, joinButton, refreshServers}) : content.Controls.Add(buttons)
+        content.Controls.Add(browserStatus)
+        content.Controls.Add(Note("HOST opens DiRT 2 and lists this PC while the game is running. Create a lobby in the game's Multiplayer / LAN menu. 'HOST game running' does not confirm a lobby or player count."))
+        content.Controls.Add(Note("JOIN opens LAN play and adds the selected PC to the game's network peers. Finish joining through the game's Multiplayer / LAN menu. Automatic lobby entry is not available yet."))
+        content.Controls.Add(Note("Uses your normal career. Multiplayer is desktop-only for now. Both PCs need this build and the same local network. Allow DiRT 2 on your Windows Private network if prompted; guest Wi-Fi can block discovery."))
+        AddHandler refreshServers.Click, Sub() RefreshServerList()
+        AddHandler serverList.SelectedIndexChanged, Sub() joinButton.Enabled = Not busy AndAlso If(SelectedHost()?.Joinable, False)
+        AddHandler hostButton.Click, Sub() SafeAction(Sub()
+                                                         SaveSettings()
+                                                         Spawn("--launch", "--desktop", "--no-ui", "--lan-host")
+                                                     End Sub)
+        AddHandler joinButton.Click, Sub() SafeAction(Sub()
+                                                         Dim host = SelectedHost()
+                                                         If host Is Nothing OrElse Not host.Joinable Then Throw New IOException("Refresh and select an available LAN host.")
+                                                         SaveSettings()
+                                                         Spawn("--launch", "--desktop", "--no-ui", "--lan-join", host.Endpoint.ToString())
+                                                     End Sub)
+    End Sub
+    Private Function SelectedHost() As LanHost
+        Return If(serverList.SelectedItems.Count = 1, TryCast(serverList.SelectedItems(0).Tag, LanHost), Nothing)
+    End Function
+    Private Async Sub RefreshServerList()
+        If scanning OrElse busy OrElse IsDisposed Then Return
+        scanning = True : refreshServers.Enabled = False : browserStatus.Text = "Searching LAN…"
+        Dim previous = SelectedHost()?.Endpoint.ToString()
+        Try
+            Dim hosts = Await LanBrowser.ScanAsync(updateCancellation.Token)
+            If IsDisposed Then Return
+            serverList.BeginUpdate() : serverList.Items.Clear()
+            For Each host In hosts
+                Dim players = If(host.HostGame, "—", host.Players & "/" & host.Capacity)
+                Dim status = If(host.HostGame, "HOST game running", If(host.Racing, "Racing", If(Not host.Joinable, "Full", If(host.Advertised, "Hosting", "Lobby"))))
+                Dim row As New ListViewItem({host.Name, host.Endpoint.ToString(), players, status}) With {.Tag = host}
+                serverList.Items.Add(row)
+                If host.Endpoint.ToString() = previous Then row.Selected = True
+            Next
+            serverList.EndUpdate()
+            browserStatus.Text = If(hosts.Count = 0, "No LAN hosts found. Launch with HOST on the other PC, then refresh.", hosts.Count & " LAN host(s). Refreshes automatically while this tab is open.")
+        Catch ex As OperationCanceledException
+        Catch ex As Exception
+            If Not IsDisposed Then
+                serverList.Items.Clear() : browserStatus.Text = "Discovery failed: " & ex.Message
+            End If
+        Finally
+            scanning = False : nextScan = DateTime.UtcNow.AddSeconds(4)
+            If Not IsDisposed Then refreshServers.Enabled = Not busy
+        End Try
+    End Sub
     Private Sub BuildLaunchTab()
         Dim content = TabLayout("Launcher")
         Dim grid As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True, .Dock = DockStyle.Top}
@@ -187,7 +264,7 @@ Public Class MainForm
         laps.Value = settings.Laps
         grid.Controls.Add(laps, 1, 6)
         AddHandler trackChoice.SelectedIndexChanged, Sub() RefreshLaps()
-        launchMode.Items.AddRange({"Normal Launch", "Direct practice (experimental)", "Race (experimental)", "LAN multiplayer (desktop)"})
+        launchMode.Items.AddRange({"Normal Launch", "Direct practice (experimental)", "Race (experimental)"})
         opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
         opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, settings.OpponentCars)
         AddHandler opponentCars.SelectedIndexChanged, Sub() RefreshOpponentHint()
@@ -216,16 +293,13 @@ Public Class MainForm
                                                         RefreshOpponentHint()
                                                         RefreshLaps()
                                                     End Sub
-        launchMode.SelectedIndex = Array.IndexOf({"menus", "practice", "race", "lan"}, settings.LaunchMode)
-        lanHint.Text = "Click Launch, then host or join in the game's Multiplayer / LAN menus. Choose event, track and cars there. Your normal career is used automatically. Introduction and startup movie options are in Settings. Launcher lobbies/browser and VR support are still in development."
-        content.Controls.Add(lanHint)
+        launchMode.SelectedIndex = Math.Max(0, Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode))
         content.Controls.Add(opponentHint)
         content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
         content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Sessions loop after finishing; pause only offers Continue. Alt+F4 quits. Use Normal Launch for full event options and results."))
     End Sub
     Private Sub RefreshOpponentHint()
-        lanHint.Visible = launchMode.SelectedIndex = 3
-        launchButton.Enabled = Not busy AndAlso launchMode.SelectedIndex <> 3
+        launchButton.Enabled = Not busy
         Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "Opponent car selection applies only to Race.", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed draws from all installed classes; vehicle performance can differ substantially.", "All opponents use the same car as the driver.")))
     End Sub
@@ -400,7 +474,7 @@ Public Class MainForm
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
-        settings.LaunchMode = {"menus", "practice", "race", "lan"}(launchMode.SelectedIndex)
+        settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
         settings.Opponents = CInt(opponents.Value)
         settings.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         settings.Laps = CInt(laps.Value)
@@ -518,7 +592,9 @@ Public Class MainForm
                 Catch
                 End Try
             End If
-            desktopButton.Enabled = Not busy : launchButton.Enabled = Not busy AndAlso launchMode.SelectedIndex <> 3 : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
+            desktopButton.Enabled = Not busy : launchButton.Enabled = Not busy : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
+            hostButton.Enabled = Not busy : refreshServers.Enabled = Not busy AndAlso Not scanning
+            joinButton.Enabled = Not busy AndAlso If(SelectedHost()?.Joinable, False)
             tabs.Enabled = Not busy
             Dim currentStatus = If(status Is Nothing, "", status.State & status.UpdatedUtc.ToString("O"))
             If currentStatus <> lastStatus Then

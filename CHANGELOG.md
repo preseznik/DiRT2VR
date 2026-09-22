@@ -4,6 +4,9 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Enlarged the launcher's initial window and fitted Settings content to the display's working area; smaller monitors retain scrolling.
+- Moved multiplayer out of the Launcher mode list into a neighboring **Multiplayer** tab with **HOST**, **JOIN**, **Refresh** and a LAN server browser. HOST retains the native-menu launch flow and advertises a **HOST game running** entry, without claiming a lobby or player count. JOIN adds the selected LAN PC to the game's network peers; players finish joining through the game's Multiplayer / LAN menu. Both PCs need the updated package. Automatic lobby entry remains unfinished. Native/launcher tests and loopback UDP checks cover discovery, expiry and peer setup; two-PC browser/JOIN acceptance is pending.
+
 - LAN now uses the same normal career and graphics settings as desktop/VR play, with the game's Documents lookup unchanged. Removed the temporary import/profile-copy workflow and its controls. Old copy selections are ignored on upgrade; existing copies are left untouched. LAN identity and startup status remain in AppData. Shared-career native and launcher tests pass. The tester confirmed a change saved with the game's **Save Profile** action persisted from LAN into Normal Launch; automatic saving was not established. Post-exit checks confirmed original game-file restoration.
 - Added **Skip startup logo movies (all launch modes)**, off by default. Temporarily replaces only the four logo-video states with immediate transitions; legal, attract, first-race and other video states remain intact. Uses guarded, journaled recovery through the normal file worker. Structural/restoration tests pass, and the tester confirmed the logos were skipped during LAN startup. Post-exit checks confirmed original game files restored and all 61 original career files unchanged.
 

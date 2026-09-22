@@ -81,8 +81,9 @@ Public Module LanSession
     Public Function ReceiptPath(context As InstallContext) As String
         Return IO.Path.Combine(ProfileRoot(context), "profile-ready.txt")
     End Function
-    Public Function StartInfo(context As InstallContext, skipIntroduction As Boolean) As ProcessStartInfo
+    Public Function StartInfo(context As InstallContext, skipIntroduction As Boolean, Optional joinTarget As String = Nothing) As ProcessStartInfo
         context.RequireClosed()
+        If joinTarget IsNot Nothing Then joinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
         If skipIntroduction Then
             Dim assets As New Dictionary(Of String, String) From {
                 {"system/states.bin", "62606A2C6A09F8E9E7AF172141418812E95337672BB31102849C59FD6676D3AD"},
@@ -107,6 +108,9 @@ Public Module LanSession
         start.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1"
         start.Environment("DIRT2VR_LAN_RECEIPT") = ReceiptPath(context)
         start.Environment("DIRT2VR_LAN_SKIP_INTRO") = If(skipIntroduction, "1", "0")
+        start.Environment("DIRT2VR_LAN_DISCOVERY") = "1"
+        start.Environment("DIRT2VR_LAN_HOST") = If(joinTarget Is Nothing, "1", "0")
+        If joinTarget IsNot Nothing Then start.Environment("DIRT2VR_LAN_JOIN") = joinTarget
         Return start
     End Function
 End Module

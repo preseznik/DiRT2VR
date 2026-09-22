@@ -58,12 +58,15 @@ Module LanTests
             File.Copy(IO.Path.Combine(repo, "artifacts/game", relative), destination)
         Next
         Dim start = LanSession.StartInfo(context, True)
+        check(start.Environment("DIRT2VR_LAN_HOST") = "1" AndAlso Not start.Environment.ContainsKey("DIRT2VR_LAN_JOIN"), "HOST explicitly advertises launch intent")
             check(start.ArgumentList.Count = 0 AndAlso start.Environment("DIRT2VR_ACTIVE") = "0" AndAlso Not start.Environment.ContainsKey("DIRT2VR_DIRECT_PRACTICE"), "LAN starts native menus without demo or VR")
             check(start.Environment("DIRT2VR_LAN_SKIP_INTRO") = "1" AndAlso start.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1" AndAlso Not start.Environment.ContainsKey("DIRT2VR_LAN_DOCUMENTS"), "LAN uses normal career without a Documents redirect or import")
             check(start.Environment("DIRT2VR_LAN_RECEIPT") = LanSession.ReceiptPath(context) AndAlso Not Directory.Exists(IO.Path.Combine(LanSession.ProfileRoot(context), "Documents")), "LAN readiness stays in AppData and no separate save folder is created")
 
         Dim config = IO.Path.Combine(LanSession.ProfileRoot(context), "xlln.ini")
         Dim configHash = Files.Hash(config)
+        Dim joining = LanSession.StartInfo(context, False, "192.168.1.25:39000")
+        check(joining.Environment("DIRT2VR_LAN_JOIN") = "192.168.1.25:39000" AndAlso joining.Environment("DIRT2VR_LAN_DISCOVERY") = "1" AndAlso joining.Environment("DIRT2VR_LAN_HOST") = "0", "JOIN passes a validated native endpoint without advertising host intent")
         File.WriteAllText(LanSession.ReceiptPath(context), "stale receipt")
         start = LanSession.StartInfo(context, False)
             check(start.Environment("DIRT2VR_LAN_SKIP_INTRO") = "0" AndAlso Files.Hash(config) = configHash AndAlso Not File.Exists(LanSession.ReceiptPath(context)), "LAN off toggle keeps identity and discards stale readiness receipt")

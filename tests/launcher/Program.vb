@@ -28,6 +28,7 @@ Module Program
         Directory.CreateDirectory(root)
         UpdateTests.Run(folder, AddressOf Check, args.Contains("--live-updates"))
         LanTests.Run(repo, folder, AddressOf Check)
+        LanBrowserTests.Run(AddressOf Check)
         StartupMovieTests.Run(repo, folder, AddressOf Check)
         For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars\sti\cameras.xml", "cars\n12\cameras.xml", "postprocess\effects.xml"}
             Dim target = IO.Path.Combine(root, relative)
@@ -321,7 +322,8 @@ Module Program
                 about.Close()
             End Using
             Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
-            Check(tabs.TabPages.Cast(Of TabPage).Select(Function(page) page.Text).SequenceEqual({"Launcher", "Graphics", "Controls", "Settings"}), "launcher tabs present in order")
+            Check(tabs.TabPages.Cast(Of TabPage).Select(Function(page) page.Text).SequenceEqual({"Launcher", "Multiplayer", "Graphics", "Controls", "Settings"}), "launcher tabs present in order")
+            Check(Screen.FromControl(form).WorkingArea.Contains(form.Bounds), "initial window fits the monitor work area")
             Dim launch = form.Controls.Find("LaunchDesktop", True).Single()
             Dim launchVr = form.Controls.Find("LaunchVR", True).Single()
             Dim save = form.Controls.Find("SaveSettings", True).Single()
@@ -343,9 +345,10 @@ Module Program
             Check(mode.Items(0).ToString() = "Normal Launch" AndAlso Not opponentCars.Enabled, "Normal Launch label and inactive opponent model choice")
             Check(mode.SelectedIndex = 0 AndAlso Not routes.Enabled AndAlso Not vehicles.Enabled, "menu mode keeps practice selectors inactive")
             Check(Not opponents.Enabled, "menus disable opponent choice")
-            mode.SelectedIndex = 3 : Application.DoEvents()
-            Check(Not routes.Enabled AndAlso Not vehicles.Enabled AndAlso Not laps.Enabled AndAlso Not launchVr.Enabled AndAlso launch.Enabled, "LAN mode uses desktop launch and native race choices")
-            Check(form.Controls.Find("LanHint", True).Single().Visible, "LAN mode explains native hosting and joining")
+            tabs.SelectedIndex = 1 : Application.DoEvents()
+            Check(mode.Items.Count = 3 AndAlso Not launch.Visible AndAlso Not launchVr.Visible, "Multiplayer replaces main-tab LAN mode and hides solo launch buttons")
+            Check(form.Controls.Find("HostLAN", True).Single().Enabled AndAlso Not form.Controls.Find("JoinLAN", True).Single().Enabled, "Multiplayer has HOST and requires an available host for JOIN")
+            tabs.SelectedIndex = 0 : Application.DoEvents()
             Dim introToggle = DirectCast(form.Controls.Find("SkipIntroduction", True).Single(), CheckBox)
             Check(Not introToggle.Checked, "launcher Skip introduction checkbox defaults off")
             introToggle.Checked = True
@@ -374,7 +377,7 @@ Module Program
                     Check(bitmap.GetPixel(4, page.Height - 8).ToArgb() = form.BackColor.ToArgb(), page.Text & " page background matches app theme")
                 End Using
             Next
-            tabs.SelectedIndex = 1
+            tabs.SelectedIndex = 2
             Dim logToggle = DirectCast(form.Controls.Find("LoggingEnabled", True).Single(), CheckBox)
             Check(Not logToggle.Checked, "Settings logging checkbox starts off")
             logToggle.Checked = True
@@ -401,10 +404,10 @@ Module Program
             Check(saved.LaunchMode = "race" AndAlso saved.GridOpponents = 3, "race mode and grid persist for both launch buttons")
             Check(saved.OpponentCars = "class", "opponent model choice persists across tabs and launch modes")
             Check(saved.Laps = 3 AndAlso saved.SessionLaps = 1, "saved circuit laps survive point-to-point selection")
-            mode.SelectedIndex = 3
+            tabs.SelectedIndex = 1
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             saved = VrSettings.Load(context)
-            Check(saved.LaunchMode = "lan" AndAlso saved.SkipIntroduction AndAlso saved.TrackId = "129", "LAN GUI saves launch mode and preserves previous solo selection")
+            Check(saved.LaunchMode = "race" AndAlso saved.SkipIntroduction AndAlso saved.TrackId = "129", "Multiplayer tab preserves solo selection when saving settings")
             Check(saved.SkipStartupMovies, "Settings saves startup movie skip")
             form.Close()
         End Using

@@ -33,4 +33,6 @@ void DiRT2VRLanInitialize() {
     receipt << "Introduction bypass: " << (skipIntro ? "enabled" : "disabled") << '\n';
     receipt.flush();
     if (!receipt) ExitProcess(ERROR_WRITE_FAULT);
+    extern void DiRT2VRLanBrowserConfigure();
+    DiRT2VRLanBrowserConfigure();
 }

@@ -1,10 +1,28 @@
 # LAN baseline prototype
 
-Implementation status, 2026-09-22: the desktop LAN backend and introduction bypass are now integrated into the normal launcher package. The lab kits below are historical development evidence, not the user workflow. Launcher lobby/discovery and automatic host/join are not implemented; the game's LAN menus remain in use. Two-PC driving passed; race results remain a gate as described in [the multiplayer plan](lan-multiplayer-plan.md).
+Implementation status, 2026-09-22: desktop LAN, the shared career and introduction bypass are integrated into the normal launcher package. The Multiplayer tab adds HOST game discovery and peer-targeted JOIN. Both still use the game's Multiplayer / LAN menus. Two-PC browser/JOIN validation is pending; earlier native-menu two-PC driving passed. Race results remain a gate in [the multiplayer plan](lan-multiplayer-plan.md). Older lab kits below are historical evidence.
+
+## Multiplayer tab and discovery
+
+The form requests a 900x1040 logical client area, measures Settings after DPI/layout, and caps the window to the monitor's working area. Multiplayer is the second tab. HOST/JOIN pass explicit command-line roles to the session manager without overwriting solo selections. Legacy saved LAN mode still works in quick launch; the GUI maps it to Normal Launch.
+
+`LanBrowser.vb` sends a 16-byte `D2VRLAN?` query with a random 64-bit nonce to UDP 39820 on active private IPv4 adapters' broadcast addresses. Each scan lasts 2.4 seconds and holds at most 64 hosts; absent entries disappear on refresh. Replies are exactly 104 packed little-endian bytes: magic (8), echoed nonce (8), protocol=2 (4), game UDP port (2), state (1), reserved (1), players (4), capacity (4), session ID (8), computer name (64). Invalid lengths, versions, nonces, counts and non-LAN sources are rejected. Entries older than 12 seconds cannot be joined.
+
+States 0/1/2 represent native XSession lobby/racing or XLocator availability if exposed. State 3 represents explicit HOST launch intent, with both counts zero and a process identifier for scan deduplication. The UI displays **HOST game running** and a dash for players. This does not establish that a lobby exists, has space or is waiting rather than racing. Only HOST sessions advertise this fallback; JOIN clients do not.
+
+`tools/lan/browser.cpp` uses a dedicated worker and nonblocking UDP socket, polling every 25 ms and handling at most ten valid queries per second. Native descriptors are read under the backend's locks. Shutdown signals and joins the worker before XLive teardown. No game simulation state is altered. The original XLLN gameplay transport stays separate.
+
+JOIN passes a validated private IPv4 endpoint in the local game environment. After `XLiveInitializeEx` loads the normal network configuration, a one-shot callback appends that endpoint to XLLN's in-memory broadcast peers. Existing configured peers remain; no saved network configuration is replaced. The player completes joining in the game's LAN menu. No invitation claim, key synthesis, automatic lobby entry or peer-supplied command execution is involved.
+
+### Why this release uses HOST intent
+
+Three local waiting-lobby checks did not expose a native XSession or XLocator descriptor. An independent query to XLLN's existing direct-IP protocol returned a 13-byte type-16 response with zero InstanceId and TitleId, despite an open DiRT 2 LAN lobby (`artifacts/native-direct-ip-probe.json`). This demonstrates that the backend's invitation descriptor was unavailable in that run; the native game's system-link lobby needs further game-specific investigation. The user explicitly approved publishing HOST intent plus native-menu joining as the interim flow.
+
+Launcher checks cover real loopback query/reply exchange, duplicate suppression, expiry, malformed packets, honest HOST intent without player counts, target validation, tab order and monitor bounds. Native tests cover profile and intro guards, idle discovery without notification polling, HOST fallback, silent JOIN clients, one-shot peer insertion retaining existing peers, and worker shutdown. Offscreen Settings and Multiplayer renders are checked without computer-use automation. Two-PC update/discovery/JOIN remains the next acceptance step.
 
 ## Launcher integration
 
-`VrSettings.LaunchMode = "lan"` selects the native desktop multiplayer path. `SkipIntroduction` defaults false in the existing per-installation preferences. The main form disables direct-race selectors and the VR button for LAN, with explicit native-menu instructions. Quick launch uses the saved LAN mode and also runs desktop. No `-demo` or VR environment flags are passed.
+`VrSettings.LaunchMode = "lan"` selects the native desktop multiplayer path. `SkipIntroduction` defaults false in the existing per-installation preferences. The Multiplayer tab exposes desktop HOST/JOIN with native-menu instructions; its footer hides the independent solo Launch/Launch VR buttons. Quick launch uses the saved LAN mode and also runs desktop. No `-demo` or VR environment flags are passed.
 
 `LanSession` keeps a stable random XLLN identity under `InstallContext.UserRoot/lan`. Current launcher sessions use the normal career and do not redirect Documents or create save copies. The launcher remains unelevated. `LanTransaction` ports the proven lab transaction into VB, using the existing narrow file worker for elevation when required. It keeps the version-1 lab journal schema and fixed paths, so normal launch/recovery/removal can resolve earlier interrupted lab sessions. Process lifetime and focus handling reuse the normal session manager. The native startup supports shared-career launcher sessions and retains the old isolated mode only for legacy diagnostic scripts.
 

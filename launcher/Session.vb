@@ -15,9 +15,12 @@ End Class
 Public Class Session
     Private ReadOnly context As InstallContext
     Private ReadOnly settings As VrSettings
+    Private ReadOnly lanJoinTarget As String
     Private focusStatus As String = ""
-    Public Sub New(value As InstallContext)
+    Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing)
         context = value : settings = VrSettings.Load(context)
+        If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
+        If multiplayer OrElse joinTarget IsNot Nothing Then settings.LaunchMode = "lan"
     End Sub
     Private Sub Status(state As String, Optional message As String = "")
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message, .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus})
@@ -126,7 +129,7 @@ Public Class Session
     Private Sub RunDesktop()
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
-            Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction)
+            Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
             Worker.Invoke(context, "prepare-lan")
             If settings.SkipStartupMovies Then Worker.Invoke(context, "prepare-movies")
             WaitForGame(lanStart)
