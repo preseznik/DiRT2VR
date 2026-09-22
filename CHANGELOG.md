@@ -4,7 +4,9 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
-- Added an optional **Skip introduction** checkbox to the separate LAN test kit (`Lan-Settings.cmd`), off by default. It bypasses the first-run movie and career tutorial decision in process memory, with executable/asset guards; it does not change game files or grant progression. Native guard and settings tests pass. The tester confirmed reaching LAN from a fresh profile without the movie or forced race. The main launcher does not yet expose this lab option.
+- Integrated desktop LAN multiplayer into the normal launcher, installer and ZIP. Select **LAN multiplayer (desktop)** and use **Launch**; the intro-skip checkbox is now under **Settings**. Native host/join/event selection still use the game's LAN menus; launcher lobbies/browser and LAN VR remain unfinished. Persistent LAN profiles live in AppData, and the launcher session manager/file worker perform journaled shim restoration, including recovery of older kit journals. New launcher transaction, settings and offscreen UI tests pass; integrated gameplay acceptance is pending.
+
+- Added an optional **Skip introduction** checkbox, initially in the separate LAN test kit, off by default. It bypasses the first-run movie and career tutorial decision in process memory, with executable/asset guards; it does not change game files or grant progression. Native guard and settings tests pass. The tester confirmed reaching LAN from a fresh profile without the movie or forced race. This option is now integrated into the launcher as described above.
 
 - LAN test update: the tester confirmed hosting on PC1, joining on PC2 and both driving/seeing each other in the same race. Race completion and results remain untested. Post-exit checks confirmed exact `xlive.dll` restoration and unchanged existing career files.
 

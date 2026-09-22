@@ -20,7 +20,7 @@ Tested with **Quest 3 through SteamVR**, primarily in the Subaru Impreza STI. Xb
 
 **ZIP:** extract the complete ZIP into that same game folder. Open `DiRT2VR.exe`. The first VR launch checks compatibility and installs the proxy from `DiRT2VR/payload`.
 
-The game folder will contain `DiRT2VR.exe`, `Start-DiRT2VR.cmd`, a `DiRT2VR` subfolder, and an installed `d3d11.dll`. Most mod files stay in the subfolder. Your game executables, `xlive.dll` and save profile are preserved.
+The game folder will contain `DiRT2VR.exe`, `Start-DiRT2VR.cmd`, a `DiRT2VR` subfolder, and an installed `d3d11.dll`. Most mod files stay in the subfolder. Game executables and the existing career profile are preserved. LAN mode temporarily swaps `xlive.dll` and restores its original bytes after play; other modes leave it unchanged.
 
 If another `d3d11.dll` is present, setup refuses to overwrite it. Remove the conflicting graphics mod using its own instructions first; automatic proxy chaining is not supported.
 
@@ -139,11 +139,22 @@ If recovery reports a conflict, it preserves unexpected asset edits and backups 
 
 **ZIP removal:** with the game closed, run `DiRT2VR.exe --remove-proxy` from the game folder. After it succeeds, remove `DiRT2VR.exe`, `Start-DiRT2VR.cmd` and the `DiRT2VR` subfolder. Do not remove game files. AppData preferences/logs may be retained or removed separately once recovery is complete.
 
-## LAN multiplayer test kit
+## LAN multiplayer
 
-LAN multiplayer is currently a separate desktop test ZIP, not a tab in the normal launcher. Two PCs have successfully hosted/joined and driven in the same race; race completion and results still need testing. Use the kit's `README.txt` for setup and recovery instructions. Keep its runner open until the game exits, and do not use the normal launcher concurrently.
+LAN support is included in the launcher package; no separate test kit or PowerShell window is needed. Both PCs need the supported game and the current launcher package on the same LAN.
 
-The kit's **Lan-Settings.cmd** opens an optional **Skip introduction** checkbox, off by default. It skips the opening first-race movie and forced career tutorial while retaining profile creation; reaching LAN this way is confirmed on a fresh profile. Save the setting, then use **Start-LanTest.cmd**. The option applies only to this isolated LAN profile and changes game code only while that process is running. Turning it off restores normal onboarding checks; it does not undo saved progress. See the [LAN implementation and test status](docs/lan-lab.md).
+1. In **Settings**, optionally enable **Skip introduction for LAN multiplayer**. It defaults off and skips the opening first-race movie and forced career tutorial while retaining profile creation.
+2. On **Launcher**, choose **LAN multiplayer (desktop)**, then **Launch**.
+3. Use the game's **Multiplayer / LAN** menus to host on one PC and join on the other. Select the event, track and cars inside the game.
+4. Quit normally after playing. The background launcher restores the original `xlive.dll`, even if you closed its settings window.
+
+Each installation keeps a separate, persistent LAN profile under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\lan`. It survives launcher updates and does not use your existing career. Do not copy this folder between players; it includes their LAN identity. Turning intro skipping off restores normal onboarding checks on the next LAN launch; it does not undo saved progress. Other launch modes are unaffected by this checkbox.
+
+**LAN is currently desktop-only.** Launch VR is disabled for this mode. Launcher lobbies, automatic event setup and a LAN server browser are still in development. The native networking path passed two-PC hosting/joining and both players driving/seeing each other; finishing/results still need testing. The introduction bypass reached LAN on a fresh profile. The integrated launcher path is undergoing acceptance; see [test status](docs/lan-lab.md).
+
+After a crash or power failure, close any remaining game processes and choose **Restore original files** before ordinary play. The launcher also recovers interrupted sessions from the older LAN kits. Keep `DiRT2VR/lan-backups`; conflicting edits are preserved and reported. If Windows asks about network access, allow DiRT 2 on your Private/home network rather than disabling the firewall.
+
+Existing kit profiles are not imported automatically. To retain one, with the game closed, copy that same PC's kit `user` folder contents into the launcher's `lan` folder before its first LAN launch. Do not overwrite an existing launcher LAN profile. Future launcher updates preserve this folder automatically.
 
 ## Limitations and troubleshooting
 

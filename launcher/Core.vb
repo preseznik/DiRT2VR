@@ -93,6 +93,7 @@ End Class
 Public Class VrSettings
     Public Property Version As Integer = 3
     Public Property LoggingEnabled As Boolean = False
+    Public Property SkipIntroduction As Boolean = False
     Public Property Runtime As String = Discovery.RuntimePath()
     Public Property ToggleKey As Integer = 120
     Public Property ToggleModifiers As Integer
@@ -110,9 +111,15 @@ Public Class VrSettings
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
     <Serialization.JsonIgnore>
+    Public ReadOnly Property DirectMode As Boolean
+        Get
+            Return LaunchMode = "practice" OrElse LaunchMode = "race"
+        End Get
+    End Property
+    <Serialization.JsonIgnore>
     Public ReadOnly Property SessionLaps As Integer
         Get
-            Return If(LaunchMode <> "menus" AndAlso RaceCatalog.Current.Track(TrackId).Circuit, Laps, 1)
+            Return If(DirectMode AndAlso RaceCatalog.Current.Track(TrackId).Circuit, Laps, 1)
         End Get
     End Property
     <Serialization.JsonIgnore>
@@ -135,7 +142,7 @@ Public Class VrSettings
     End Property
     Public Sub Validate()
         If Version <> 3 Then Throw New IOException("Unsupported settings version.")
-        If Not {"menus", "practice", "race"}.Contains(LaunchMode) Then Throw New IOException("Unknown launch mode.")
+        If Not {"menus", "practice", "race", "lan"}.Contains(LaunchMode) Then Throw New IOException("Unknown launch mode.")
         If Opponents < 1 OrElse Opponents > 7 Then Throw New IOException("Choose between one and seven race opponents.")
         If Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Unknown opponent car selection.")
         If Laps < 1 OrElse Laps > 20 Then Throw New IOException("Choose between one and twenty laps.")

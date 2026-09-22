@@ -17,6 +17,8 @@ if ($LanLab) {
 if (!$SkipNativeBuild) {
     & (Join-Path $PSScriptRoot 'build-distribution.cmd')
     if ($LASTEXITCODE) { throw 'Native distribution build/tests failed' }
+    & (Join-Path $PSScriptRoot 'lan/build.cmd')
+    if ($LASTEXITCODE) { throw 'Native LAN build/tests failed' }
 }
 $output=Join-Path $root ('artifacts\packages\'+$version+'-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
 $stage=Join-Path $output 'stage'
@@ -27,6 +29,7 @@ $buildUtc=[DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
 if ($LASTEXITCODE) { throw 'Launcher publish failed' }
 Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
 Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
+& (Join-Path $PSScriptRoot 'lan/Stage-LauncherPayload.ps1') -Stage $stage
 Copy-Item -LiteralPath 'README.md','CHANGELOG.md' -Destination "$stage\DiRT2VR"
 Copy-Item -LiteralPath 'docs' -Destination "$stage\DiRT2VR\docs" -Recurse
 @'

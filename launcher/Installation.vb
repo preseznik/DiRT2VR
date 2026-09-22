@@ -42,6 +42,7 @@ Public Class Installation
     End Sub
     Public Sub RemoveProxy()
         context.RequireClosed()
+        Call (New LanTransaction(context)).Recover()
         Call (New AssetTransaction(context)).Recover()
         Dim receiptPath = IO.Path.Combine(context.ModRoot, "installation.json")
         Dim target = IO.Path.Combine(context.GameRoot, "d3d11.dll")
@@ -64,7 +65,11 @@ Public Module Worker
             Case "prepare", "prepare-desktop"
                 Dim transaction As New AssetTransaction(context)
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars)
-            Case "recover" : Call (New AssetTransaction(context)).Recover()
+            Case "prepare-lan"
+                Call (New LanTransaction(context)).Prepare()
+            Case "recover"
+                Call (New LanTransaction(context)).Recover()
+                Call (New AssetTransaction(context)).Recover()
             Case "remove" : Call (New Installation(context)).RemoveProxy()
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select

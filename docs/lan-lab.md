@@ -1,6 +1,18 @@
 # LAN baseline prototype
 
-Implementation status, 2026-09-22: first-stage desktop lab kit `0.2.0`. Launcher lobby/discovery and automatic host/join are not implemented. The two-PC native race is the acceptance gate before that work, as described in [the multiplayer plan](lan-multiplayer-plan.md).
+Implementation status, 2026-09-22: the desktop LAN backend and introduction bypass are now integrated into the normal launcher package. The lab kits below are historical development evidence, not the user workflow. Launcher lobby/discovery and automatic host/join are not implemented; the game's LAN menus remain in use. Two-PC driving passed; race results remain a gate as described in [the multiplayer plan](lan-multiplayer-plan.md).
+
+## Launcher integration
+
+`VrSettings.LaunchMode = "lan"` selects the native desktop multiplayer path. `SkipIntroduction` defaults false in the existing per-installation preferences. The main form disables direct-race selectors and the VR button for LAN, with explicit native-menu instructions. Quick launch uses the saved LAN mode and also runs desktop. No `-demo` or VR environment flags are passed.
+
+`LanSession` creates a stable random XLLN identity and isolated Documents folder under `InstallContext.UserRoot/lan`, rather than a new profile per kit version. The launcher remains unelevated. `LanTransaction` ports the proven lab transaction into VB, using the existing narrow file worker for elevation when required. It keeps the version-1 lab journal schema and fixed paths, so normal launch/recovery/removal can resolve earlier interrupted lab sessions. Process lifetime and focus handling reuse the normal session manager. Native isolation/intro code remains the tested XLLN integration.
+
+Normal packaging stages `xlive-lan.dll`, licenses and corresponding source beneath `DiRT2VR`. `tools/lan/Stage-LauncherPayload.ps1` verifies the pinned dependency and integration patch before staging; the source is included in repository layout at `DiRT2VR/lan-source`. No separate kit is needed. Source builds need the pinned XLLN checkout and legacy SDK headers as described below; `tools/package.ps1` builds both native targets unless explicitly reusing existing binaries.
+
+Launcher tests cover prepare/restore/repeat, journal-before-write failure, conflict preservation, corrupt payload rejection, legacy-journal compatibility, original absence, native start arguments, persistent identity, stale receipt clearing, asset guards, default-off settings and the real form's LAN control states. Integrated live launch, protected-folder/elevation, failure recovery and two-PC regression remain acceptance items.
+
+Normal package `0.4.0` is at `artifacts/packages/0.4.0-20260922-095606`, with both installer and ZIP. It passed 284 launcher checks in each of dark/light mode and all 11 native distribution CTests. Its LAN DLL matches the accepted `0.3.1` kit hash. ZIP inspection confirmed the corresponding source/licenses and absence of profiles/backups. The package was deployed only to the isolated development game, preserving the original `xlive.dll`; the integrated launcher is open for user acceptance. No new standalone kit was produced for this integration.
 
 ## Implemented
 

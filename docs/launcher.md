@@ -89,6 +89,8 @@ Controller actions use a session-specific, 16-byte shared mapping: uint32 magic 
 
 ## Accepted checks and remaining gates
 
+Desktop LAN is now a launcher mode; see [LAN integration](lan-lab.md#launcher-integration). It uses the main session manager and a fixed-purpose `prepare-lan` worker, with the old lab journal schema supported by normal recovery/removal. The skip-introduction checkbox applies only to LAN. Host/join/event selection remain in the game's menus, and LAN VR is not enabled yet.
+
 - Seven native CTests passed, including inactive-proxy WARP device creation without diagnostic output.
 - Launcher tests cover installation/owned upgrade/foreign conflicts, Unicode and spaced paths, partial preparation, exact restoration, external-edit conflicts, graphics merging and binding arming/release/reconnect rules. Fixtures use local game files and synthetic graphics XML.
 - Real Inno setup, repeat upgrade, foreign-proxy rejection and uninstall passed in a writable isolated fixture. Uninstall preserved original game files.

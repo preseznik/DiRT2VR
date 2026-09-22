@@ -27,6 +27,7 @@ Module Program
         Dim root = IO.Path.Combine(folder, "DiRT 2 Ž test")
         Directory.CreateDirectory(root)
         UpdateTests.Run(folder, AddressOf Check, args.Contains("--live-updates"))
+        LanTests.Run(repo, folder, AddressOf Check)
         For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars\sti\cameras.xml", "cars\n12\cameras.xml", "postprocess\effects.xml"}
             Dim target = IO.Path.Combine(root, relative)
             Directory.CreateDirectory(IO.Path.GetDirectoryName(target))
@@ -341,6 +342,12 @@ Module Program
             Check(mode.Items(0).ToString() = "Normal Launch" AndAlso Not opponentCars.Enabled, "Normal Launch label and inactive opponent model choice")
             Check(mode.SelectedIndex = 0 AndAlso Not routes.Enabled AndAlso Not vehicles.Enabled, "menu mode keeps practice selectors inactive")
             Check(Not opponents.Enabled, "menus disable opponent choice")
+            mode.SelectedIndex = 3 : Application.DoEvents()
+            Check(Not routes.Enabled AndAlso Not vehicles.Enabled AndAlso Not laps.Enabled AndAlso Not launchVr.Enabled AndAlso launch.Enabled, "LAN mode uses desktop launch and native race choices")
+            Check(form.Controls.Find("LanHint", True).Single().Visible, "LAN mode explains native hosting and joining")
+            Dim introToggle = DirectCast(form.Controls.Find("SkipIntroduction", True).Single(), CheckBox)
+            Check(Not introToggle.Checked, "launcher Skip introduction checkbox defaults off")
+            introToggle.Checked = True
             mode.SelectedIndex = 2 : opponents.Value = 3
             Check(opponentCars.Enabled AndAlso opponentCars.Items.Cast(Of String).SequenceEqual({"Same as driver", "Mixed", "Same class"}), "Race offers three opponent model modes")
             opponentCars.SelectedIndex = 2
@@ -379,6 +386,7 @@ Module Program
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             Dim saved = VrSettings.Load(context)
             Check(saved.LoggingEnabled, "Settings logging opt-in persists")
+            Check(saved.SkipIntroduction, "launcher intro toggle persists across modes")
             Check(saved.RenderWidth = 960 AndAlso saved.RenderHeight = 720 AndAlso saved.HeadsetScale = 60 AndAlso saved.Mirrors = "off", "Graphics tab saves selected values")
             Check(saved.Bindings.Count = 1 AndAlso saved.Bindings(0).Buttons.SequenceEqual({16, 32}), "tab save preserves existing controller pair")
             Check(saved.LaunchMode = "practice" AndAlso saved.TrackId = "129" AndAlso saved.CarCode = "n12" AndAlso saved.Opponents = 3, "launcher selection persists for GUI and quick launch")
@@ -388,6 +396,10 @@ Module Program
             Check(saved.LaunchMode = "race" AndAlso saved.GridOpponents = 3, "race mode and grid persist for both launch buttons")
             Check(saved.OpponentCars = "class", "opponent model choice persists across tabs and launch modes")
             Check(saved.Laps = 3 AndAlso saved.SessionLaps = 1, "saved circuit laps survive point-to-point selection")
+            mode.SelectedIndex = 3
+            DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
+            saved = VrSettings.Load(context)
+            Check(saved.LaunchMode = "lan" AndAlso saved.SkipIntroduction AndAlso saved.TrackId = "129", "LAN GUI saves launch mode and preserves previous solo selection")
             form.Close()
         End Using
         ' Exercise the real entry point in a child process, not only MainForm in this harness.

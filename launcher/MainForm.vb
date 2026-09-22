@@ -8,6 +8,8 @@ Public Class MainForm
     Private settings As VrSettings
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
+    Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
+    Private ReadOnly lanHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0), .Name = "LanHint"}
     Private ReadOnly stateLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly inputLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly bindingLists As ListBox() = {New ListBox(), New ListBox()}
@@ -184,7 +186,7 @@ Public Class MainForm
         laps.Value = settings.Laps
         grid.Controls.Add(laps, 1, 6)
         AddHandler trackChoice.SelectedIndexChanged, Sub() RefreshLaps()
-        launchMode.Items.AddRange({"Normal Launch", "Direct practice (experimental)", "Race (experimental)"})
+        launchMode.Items.AddRange({"Normal Launch", "Direct practice (experimental)", "Race (experimental)", "LAN multiplayer (desktop)"})
         opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
         opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, settings.OpponentCars)
         AddHandler opponentCars.SelectedIndexChanged, Sub() RefreshOpponentHint()
@@ -206,19 +208,23 @@ Public Class MainForm
         If carChoice.SelectedIndex < 0 AndAlso carChoice.Items.Count > 0 Then carChoice.SelectedIndex = 0
         AddHandler launchMode.SelectedIndexChanged, Sub()
                                                         For Each control In {eventChoice, trackChoice, carChoice}
-                                                            control.Enabled = launchMode.SelectedIndex > 0
+                                                            control.Enabled = launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2
                                                         Next
                                                         opponents.Enabled = launchMode.SelectedIndex = 2
                                                         opponentCars.Enabled = launchMode.SelectedIndex = 2
                                                         RefreshOpponentHint()
                                                         RefreshLaps()
                                                     End Sub
-        launchMode.SelectedIndex = Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode)
+        launchMode.SelectedIndex = Array.IndexOf({"menus", "practice", "race", "lan"}, settings.LaunchMode)
+        lanHint.Text = "LAN uses a separate persistent profile on this PC. Click Launch, then host or join in the game's Multiplayer / LAN menus. Choose event, track and cars there. Skip introduction is in Settings. Launcher lobbies/browser and VR support are still in development."
+        content.Controls.Add(lanHint)
         content.Controls.Add(opponentHint)
         content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
         content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Sessions loop after finishing; pause only offers Continue. Alt+F4 quits. Use Normal Launch for full event options and results."))
     End Sub
     Private Sub RefreshOpponentHint()
+        lanHint.Visible = launchMode.SelectedIndex = 3
+        launchButton.Enabled = Not busy AndAlso launchMode.SelectedIndex <> 3
         Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "Opponent car selection applies only to Race.", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed draws from all installed classes; vehicle performance can differ substantially.", "All opponents use the same car as the driver.")))
     End Sub
@@ -229,7 +235,7 @@ Public Class MainForm
     End Sub
     Private Sub RefreshLaps()
         Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
-        laps.Enabled = launchMode.SelectedIndex > 0 AndAlso track IsNot Nothing AndAlso track.Circuit
+        laps.Enabled = (launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2) AndAlso track IsNot Nothing AndAlso track.Circuit
     End Sub
     Private Sub DrawChoice(sender As Object, e As DrawItemEventArgs)
         Dim box = DirectCast(sender, ComboBox)
@@ -261,6 +267,8 @@ Public Class MainForm
                                      End Using
                                  End Sub
         runtimeRow.Controls.Add(browse) : content.Controls.Add(runtimeRow)
+        skipIntroduction.Checked = settings.SkipIntroduction : content.Controls.Add(skipIntroduction)
+        content.Controls.Add(Note("LAN only: skip the opening movie and forced tutorial while keeping profile creation. Applies on the next LAN launch; turning it off does not undo saved progress. Normal Launch, Practice and Race are unaffected."))
         logging.Checked = settings.LoggingEnabled : content.Controls.Add(logging)
         content.Controls.Add(Note("Logging is off by default. Enable it only when troubleshooting, then save before launching. Recovery records are always kept; existing logs are not deleted."))
         content.Controls.Add(Note("For Launch VR, start SteamVR and connect your headset first. Use the Subaru STI cockpit for the tested setup. Regular Launch does not require a headset."))
@@ -384,13 +392,14 @@ Public Class MainForm
     Private Sub SaveSettings()
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
+        settings.SkipIntroduction = skipIntroduction.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
-        settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
+        settings.LaunchMode = {"menus", "practice", "race", "lan"}(launchMode.SelectedIndex)
         settings.Opponents = CInt(opponents.Value)
         settings.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         settings.Laps = CInt(laps.Value)
-        If settings.LaunchMode <> "menus" Then
+        If settings.DirectMode Then
             Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)
             If track Is Nothing OrElse car Is Nothing Then Throw New IOException("Select an installed track and car, or use Normal Launch.")
@@ -504,7 +513,7 @@ Public Class MainForm
                 Catch
                 End Try
             End If
-            desktopButton.Enabled = Not busy : launchButton.Enabled = Not busy : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
+            desktopButton.Enabled = Not busy : launchButton.Enabled = Not busy AndAlso launchMode.SelectedIndex <> 3 : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
             tabs.Enabled = Not busy
             Dim currentStatus = If(status Is Nothing, "", status.State & status.UpdatedUtc.ToString("O"))
             If currentStatus <> lastStatus Then
@@ -512,7 +521,7 @@ Public Class MainForm
             End If
             If busy Then
                 stateLabel.Text = status.State & If(status.Message <> "", ": " & status.Message, "")
-            ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending Then
+            ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending Then
                 stateLabel.Text = "Recovery pending. Close the game and choose Restore original files."
             ElseIf status IsNot Nothing AndAlso status.State = "Failed" Then
                 stateLabel.Text = "Failed: " & status.Message

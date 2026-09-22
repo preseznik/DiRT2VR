@@ -35,6 +35,8 @@ Public Class Session
             Try
                 Status("Checking")
                 context.ValidateGame() : context.RequireClosed()
+                ' The saved LAN mode also works through the quick-launch script; it is desktop-only for now.
+                If settings.LaunchMode = "lan" Then vr = False
                 If Not vr Then
                     Status("Restoring", "Checking for an interrupted session")
                     graphics.Recover() : Worker.Invoke(context, "recover")
@@ -72,7 +74,7 @@ Public Class Session
                     start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
                     start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
                     start.Environment("XR_RUNTIME_JSON") = settings.Runtime
-                    If settings.LaunchMode <> "menus" Then
+                    If settings.DirectMode Then
                         Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
                         start.ArgumentList.Add("-demo")
                         start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
@@ -121,9 +123,17 @@ Public Class Session
         End Using
     End Sub
     Private Sub RunDesktop()
+        If settings.LaunchMode = "lan" Then
+            Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
+            Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction)
+            Worker.Invoke(context, "prepare-lan")
+            WaitForGame(lanStart)
+            If Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN profile isolation was confirmed.")
+            Return
+        End If
         Dim config As String = Nothing
         Dim logFolder As String = Nothing
-        If settings.LaunchMode <> "menus" Then
+        If settings.DirectMode Then
             ' Human control is enabled by the DX11 proxy; desktop rendering settings
             ' stay untouched rather than silently running an AI-driven DX9 session.
             If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before using Direct practice or Race.")
