@@ -1,5 +1,11 @@
 # LAN baseline prototype
 
+## Client ordinal-43 startup investigation
+
+The tester confirmed that the host appears in PC2's launcher browser, but both HOST and JOIN fail there with `Ordinal 43` missing from `C:\WINDOWS\SYSTEM32\xlive.dll`. This establishes cross-PC discovery, not successful launcher JOIN. The locally fingerprinted `dirt2_game.exe` import table has no xlive ordinal-43 import, so do not assume that adding a stub export or changing system DLLs fixes the reported path. We need the actual failing process and dependency paths from PC2.
+
+Run `tools/Collect-LanStartup.ps1` while the loader error and launcher remain open. It collects only relevant process/module paths, game/mod/system-xlive file hashes and versions, the LAN pending journal, package version and session status. No save contents, network identity settings or Windows/game modifications are involved. It writes `DiRT2VR-LAN-startup.json` on the Desktop and opens it in Notepad. Optional `-GameRoot`, `-OutputPath` and `-NoOpen` support local validation. Windows PowerShell 5.1 execution was checked against the isolated installation. The report is needed to distinguish an alternate executable path, missing/replaced local DLL, dependency load and premature recovery; no root cause has been confirmed yet.
+
 Implementation status, 2026-09-22: desktop LAN, the shared career and introduction bypass are integrated into the normal launcher package. The Multiplayer tab adds HOST game discovery and peer-targeted JOIN. Both still use the game's Multiplayer / LAN menus. Two-PC browser/JOIN validation is pending; earlier native-menu two-PC driving passed. Race results remain a gate in [the multiplayer plan](lan-multiplayer-plan.md). Older lab kits below are historical evidence.
 
 ## Multiplayer tab and discovery
