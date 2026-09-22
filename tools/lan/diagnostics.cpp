@@ -32,6 +32,30 @@ void Close() {
 }
 
 bool DiRT2VRLanLogEnabled() { return enabled.load(std::memory_order_relaxed); }
+void DiRT2VRLanLogPacket(const char* function, uintptr_t socket, const void* data, size_t size, const void* caller) {
+    if (!DiRT2VRLanLogEnabled()) return;
+    const DWORD savedError = GetLastError();
+    uint32_t hash = 2166136261u;
+    const auto* bytes = static_cast<const unsigned char*>(data);
+    for (size_t i = 0; i < size; ++i) hash = (hash ^ bytes[i]) * 16777619u;
+    const auto base = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+    DiRT2VRLanLog(4, 0, function, "title boundary socket=%zx bytes=%zu checksum=%08x caller_rva=%zx", socket, size, hash, reinterpret_cast<uintptr_t>(caller) - base);
+    SetLastError(savedError);
+}
+void DiRT2VRLanLogClose(uintptr_t socket, const void* caller) {
+    if (!DiRT2VRLanLogEnabled()) return;
+    const DWORD savedError = GetLastError();
+    const auto base = reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+    DiRT2VRLanLog(4, 0, "XSocketClose", "close caller socket=%zx caller_rva=%zx", socket, reinterpret_cast<uintptr_t>(caller) - base);
+    void* frames[12]{};
+    const auto count = CaptureStackBackTrace(0, 12, frames, nullptr);
+    for (USHORT i = 0; i < count; ++i) {
+        HMODULE module = nullptr;
+        if (GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_UNCHANGED_REFCOUNT, reinterpret_cast<LPCWSTR>(frames[i]), &module) && reinterpret_cast<uintptr_t>(module) == base)
+            DiRT2VRLanLog(4, 0, "XSocketClose", "close stack socket=%zx frame=%u game_rva=%zx", socket, i, reinterpret_cast<uintptr_t>(frames[i]) - base);
+    }
+    SetLastError(savedError);
+}
 void DiRT2VRLanLogStart() {
     const DWORD savedError = GetLastError();
     AcquireSRWLockExclusive(&lock);

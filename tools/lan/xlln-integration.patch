@@ -39,18 +39,27 @@ index 5c806a3..71167d4 100644
  }
  
 diff --git a/xlivelessness/xlive/xsocket.cpp b/xlivelessness/xlive/xsocket.cpp
-index dda6a11..5807611 100644
+index dda6a11..e5c6150 100644
 --- a/xlivelessness/xlive/xsocket.cpp
 +++ b/xlivelessness/xlive/xsocket.cpp
-@@ -277,6 +277,7 @@ static void PassthroughStopReader_(XLIVE_TITLE_SOCKET* title_socket)
+@@ -15,6 +15,7 @@
+ #include "../utils/utils.hpp"
+ #include "../utils/util-socket.hpp"
+ #include <map>
++#include <intrin.h>
+ 
+ uint16_t xlive_port_online = 3074;
+ uint16_t xlive_port_system_link = 0;
+@@ -277,6 +278,8 @@ static void PassthroughStopReader_(XLIVE_TITLE_SOCKET* title_socket)
  // #4
  int32_t WINAPI XSocketClose(SOCKET title_socket_handle)
  {
++	DiRT2VRLanLogClose(title_socket_handle, _ReturnAddress());
 +	XLLN_DEBUG_LOG(XLLN_LOG_LEVEL_INFO, "Game closing socket=%08x.", title_socket_handle);
  	TRACE_FX();
  	
  	const size_t packetSizeType = sizeof(XllnNetworkPacket::TYPE);
-@@ -440,6 +441,7 @@ int32_t WINAPI XSocketClose(SOCKET title_socket_handle)
+@@ -440,6 +443,7 @@ int32_t WINAPI XSocketClose(SOCKET title_socket_handle)
  // #5
  int32_t WINAPI XSocketShutdown(SOCKET title_socket_handle, int32_t how)
  {
@@ -58,6 +67,22 @@ index dda6a11..5807611 100644
  	TRACE_FX();
  	if (
  		how != SD_BOTH
+@@ -2479,6 +2483,7 @@ int32_t WINAPI XSocketRecvFrom(SOCKET title_socket_handle, char* data_buffer, in
+ 	uint32_t received_size = 0;
+ 	int32_t resultXWsaRecvFrom = XWSARecvFrom(title_socket_handle, &wsabuf, 1, &received_size, &wsaFlags, address_from, address_from_size, 0, 0);
+ 	if (resultXWsaRecvFrom == ERROR_SUCCESS) {
++		DiRT2VRLanLogPacket(__func__, title_socket_handle, data_buffer, received_size, _ReturnAddress());
+ 		return received_size;
+ 	}
+ 	return SOCKET_ERROR;
+@@ -2512,6 +2517,7 @@ int32_t WINAPI XSocketSendTo(SOCKET title_socket_handle, const char* data_buffer
+ 	uint32_t sent_size = 0;
+ 	int32_t resultXWsaRecvFrom = XWSASendTo(title_socket_handle, &wsabuf, 1, &sent_size, flags, address_to, address_to_size, 0, 0);
+ 	if (resultXWsaRecvFrom == ERROR_SUCCESS) {
++		DiRT2VRLanLogPacket(__func__, title_socket_handle, data_buffer, sent_size, _ReturnAddress());
+ 		return sent_size;
+ 	}
+ 	return SOCKET_ERROR;
 diff --git a/xlivelessness/xlln/debug-log.hpp b/xlivelessness/xlln/debug-log.hpp
 index 9754a81..d68f18f 100644
 --- a/xlivelessness/xlln/debug-log.hpp

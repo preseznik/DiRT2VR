@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Extended opt-in LAN diagnostics with game-facing send/receive sizes and checksums, plus socket-close call sites. Paired Battersea traces show the host closing its sockets while transport acknowledgements are still flowing; the later client timeout is a consequence. The cause of the host's closure remains under investigation.
+
 - Added opt-in LAN network traces through Settings → Enable diagnostic logging. Each session keeps at most two 4 MiB files containing socket, packet-header, acknowledgement and timeout metadata, without packet payloads. Logging remains off by default. Native logging/transport and launcher tests pass. The two-PC follow-up reached race loading but disconnected at Battersea Rallycross before the grid; that failure remains under investigation.
 
 - Fixed a LAN transport keepalive defect that could time out an otherwise reachable idle peer. Receiving a probe now schedules an acknowledgement through the existing protocol. A regression against the actual DLL fails on the released build and passes with the fix, including ordered data, selective acknowledgements, bounded replies and disconnected-peer timeout. Two-PC lobby/race confirmation is pending.

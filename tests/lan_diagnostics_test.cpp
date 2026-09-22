@@ -28,6 +28,11 @@ int wmain(int argc, wchar_t** argv) {
     Check(WSAGetLastError() == WSAEWOULDBLOCK, "start preserves Winsock error");
     DiRT2VRLanLog(16, 10060, "XSocketRecv", "socket=%08x", 42);
     Check(WSAGetLastError() == WSAEWOULDBLOCK, "write preserves Winsock error");
+    const char packet[] = "private test payload";
+    const auto caller = reinterpret_cast<const void*>(reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr)) + 0x1234);
+    DiRT2VRLanLogPacket("XSocketRecvFrom", 42, packet, sizeof(packet) - 1, caller);
+    DiRT2VRLanLogClose(42, caller);
+    Check(WSAGetLastError() == WSAEWOULDBLOCK, "packet and stack diagnostics preserve Winsock error");
     DiRT2VRLanLog(1, 0, "XSocketRecv", "excluded trace");
     DiRT2VRLanLog(4, 0, "XUserAnything", "excluded user data");
     DiRT2VRLanLogStop();
@@ -35,6 +40,7 @@ int wmain(int argc, wchar_t** argv) {
     auto contents = Read(log);
     Check(contents.find("error=10060 XSocketRecv: socket=0000002a") != std::string::npos, "socket and error metadata recorded");
     Check(contents.find("excluded") == std::string::npos, "trace and unrelated APIs excluded");
+    Check(contents.find(packet) == std::string::npos && contents.find("checksum=") != std::string::npos && contents.find("caller_rva=1234") != std::string::npos, "packet checksum and caller recorded without payload");
     Check(contents.find("utc_ms=") != std::string::npos && contents.find("tick_ms=") != std::string::npos, "correlation timestamps recorded");
     DiRT2VRLanLogStart();
     auto write = [] { for (int i = 0; i < 300; ++i) DiRT2VRLanLog(4, 0, "ParseNetworkData", "rotation sample %d", i); };
