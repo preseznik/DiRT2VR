@@ -1,6 +1,6 @@
 # Launcher and distribution implementation
 
-Status: experimental `0.1.0-alpha.1`. End-user instructions are in [README](../README.md). The launcher works in the existing game folder; retain `artifacts/game` only for development and failure testing.
+End-user instructions are in [README](../README.md). The launcher works in the existing game folder; retain `artifacts/game` only for development and failure testing. Version numbering does not imply hardware or feature acceptance beyond the checks documented below.
 
 ## Appearance
 
@@ -13,6 +13,8 @@ Startup calls `Application.SetColorMode(SystemColorMode.System)` before creating
 The generated artwork and its prompt are in [launcher/assets](../launcher/assets/README.md). `tools/make-launcher-icon.ps1` re-encodes the PNG into a multi-resolution ICO. The project embeds the icon in both PE and managed resources, so the main form and Explorer/shortcuts use the same artwork even with single-file publishing. Inno Setup uses the same ICO for setup and the launcher executable for the uninstall display icon.
 
 ## Build and package
+
+Use plain `major.minor.patch`, without alpha/beta suffixes. `package.ps1` reserves the next patch version in the launcher project before building. Use `-VersionBump Minor` for a completely new feature, resetting patch to zero; use `-VersionBump Major` only at the user's explicit request, resetting minor and patch. For example, `0.1.0` becomes `0.1.1`, a new feature becomes `0.2.0`, and a requested major becomes `1.0.0`. Failed package attempts retain their reserved version, so retries advance it. Internal compile/test iterations are part of the same distribution build and do not increment independently. Commit the resulting project version after packaging. The launcher, manifest, filenames and installer share this version; Inno has no independent fallback version. Future GitHub releases use `v<version>` without the prerelease flag. Existing alpha tags/assets remain unchanged.
 
 Prerequisites: the pinned dependencies from `tools/bootstrap.ps1`, Visual Studio x86 C++ tools, Windows SDK, CMake/Ninja, Python, .NET SDK 10, and Inno Setup. No development dependencies are required by packaged users.
 

@@ -1,9 +1,15 @@
-param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild)
+param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild,[ValidateSet('Patch','Minor','Major')][string]$VersionBump='Patch')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $root
-[xml]$project=Get-Content -LiteralPath (Join-Path $root 'launcher\DiRT2VR.vbproj') -Raw
-$version=[string]$project.Project.PropertyGroup.Version
+$projectPath=Join-Path $root 'launcher\DiRT2VR.vbproj'
+$projectText=Get-Content -LiteralPath $projectPath -Raw
+[xml]$project=$projectText
+$current=[string]$project.Project.PropertyGroup.Version
+$version=& (Join-Path $PSScriptRoot 'next-version.ps1') -Current $current -Bump $VersionBump
+# Reserve the version before building. Failed attempts keep their number; retries advance it.
+[IO.File]::WriteAllText($projectPath,$projectText.Replace('<Version>'+$current+'</Version>','<Version>'+$version+'</Version>'))
+Write-Host "Build version: $current -> $version"
 if (!$SkipNativeBuild) {
     & (Join-Path $PSScriptRoot 'build-distribution.cmd')
     if ($LASTEXITCODE) { throw 'Native distribution build/tests failed' }
