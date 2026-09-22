@@ -84,6 +84,7 @@ Public Class Session
                         Worker.Invoke(context, "prepare")
                     End If
                     graphics.Prepare(settings)
+                    If settings.SkipStartupMovies Then Worker.Invoke(context, "prepare-movies")
                     Using input As New ControllerInput(), machine As New BindingMachine(settings.Bindings)
                         Dim counts As UInteger() = {0UI, 0UI}
                         AddHandler input.StateChanged, Sub(sample)
@@ -127,8 +128,9 @@ Public Class Session
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction)
             Worker.Invoke(context, "prepare-lan")
+            If settings.SkipStartupMovies Then Worker.Invoke(context, "prepare-movies")
             WaitForGame(lanStart)
-            If Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN profile isolation was confirmed.")
+            If Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN startup was confirmed.")
             Return
         End If
         Dim config As String = Nothing
@@ -147,6 +149,7 @@ Public Class Session
             logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
+        If settings.SkipStartupMovies Then Worker.Invoke(context, "prepare-movies")
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
         WaitForGame(start)
     End Sub

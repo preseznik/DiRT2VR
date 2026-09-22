@@ -79,7 +79,7 @@ Public Module LanSession
         Return IO.Path.Combine(context.UserRoot, "lan")
     End Function
     Public Function ReceiptPath(context As InstallContext) As String
-        Return IO.Path.Combine(ProfileRoot(context), "Documents", "profile-ready.txt")
+        Return IO.Path.Combine(ProfileRoot(context), "profile-ready.txt")
     End Function
     Public Function StartInfo(context As InstallContext, skipIntroduction As Boolean) As ProcessStartInfo
         context.RequireClosed()
@@ -93,9 +93,9 @@ Public Module LanSession
                 If Not File.Exists(path) OrElse Files.Hash(path) <> pair.Value Then Throw New IOException("Skip introduction requires the original supported flow/states files. Turn it off in Settings to use normal onboarding.")
             Next
         End If
-        Dim root = ProfileRoot(context), documents = IO.Path.Combine(root, "Documents"), config = IO.Path.Combine(root, "xlln.ini")
-        Files.NoLinks(documents) : Files.NoLinks(config) : Files.NoLinks(ReceiptPath(context))
-        Directory.CreateDirectory(documents)
+        Dim root = ProfileRoot(context), config = IO.Path.Combine(root, "xlln.ini")
+        Files.NoLinks(config) : Files.NoLinks(ReceiptPath(context))
+        Directory.CreateDirectory(root)
         If Not File.Exists(config) Then
             Dim name = "LAN-" & Guid.NewGuid().ToString("N").Substring(0, 8)
             Dim lines = {"[XLLN-Config-Version:1.6.2.1]", "xlive_username_p1 = " & name, "xlive_user_live_enabled_p1 = 0", "xlive_user_online_enabled_p1 = 0", "xlive_user_auto_login_p1 = 1", "xlive_fps_limit = 0", "xlive_net_disable = 0", "xlive_xhv_engine_enabled = 0", "xlln_debug_log_level = 0x00000000", ""}
@@ -104,7 +104,8 @@ Public Module LanSession
         If File.Exists(ReceiptPath(context)) Then File.Delete(ReceiptPath(context))
         Dim start = Session.DesktopStartInfo(context, Nothing, Nothing)
         start.Environment("DIRT2VR_LAN_CONFIG") = config
-        start.Environment("DIRT2VR_LAN_DOCUMENTS") = documents
+        start.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1"
+        start.Environment("DIRT2VR_LAN_RECEIPT") = ReceiptPath(context)
         start.Environment("DIRT2VR_LAN_SKIP_INTRO") = If(skipIntroduction, "1", "0")
         Return start
     End Function

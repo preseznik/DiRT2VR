@@ -14,6 +14,10 @@ HRESULT WINAPI GetFolder(HWND window, int folder, HANDLE token, DWORD flags, LPS
 }
 }
 
+bool ConfigureLanDocuments(HMODULE host, bool sharedCareer, const std::wstring& documents) {
+    return sharedCareer || InstallLanDocumentsRedirect(host,documents);
+}
+
 bool InstallLanDocumentsRedirect(HMODULE host, const std::wstring& documents) {
     if (original || documents.size()<3 || documents.size()>=MAX_PATH || documents[1]!=L':' || documents[2]!=L'\\') return false;
     const auto attrs=GetFileAttributesW(documents.c_str());

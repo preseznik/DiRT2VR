@@ -9,6 +9,7 @@ Public Class MainForm
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
+    Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (all launch modes)", .Name = "SkipStartupMovies", .AutoSize = True}
     Private ReadOnly lanHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0), .Name = "LanHint"}
     Private ReadOnly stateLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly inputLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
@@ -216,7 +217,7 @@ Public Class MainForm
                                                         RefreshLaps()
                                                     End Sub
         launchMode.SelectedIndex = Array.IndexOf({"menus", "practice", "race", "lan"}, settings.LaunchMode)
-        lanHint.Text = "LAN uses a separate persistent profile on this PC. Click Launch, then host or join in the game's Multiplayer / LAN menus. Choose event, track and cars there. Skip introduction is in Settings. Launcher lobbies/browser and VR support are still in development."
+        lanHint.Text = "Click Launch, then host or join in the game's Multiplayer / LAN menus. Choose event, track and cars there. Your normal career is used automatically. Introduction and startup movie options are in Settings. Launcher lobbies/browser and VR support are still in development."
         content.Controls.Add(lanHint)
         content.Controls.Add(opponentHint)
         content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
@@ -267,6 +268,9 @@ Public Class MainForm
                                      End Using
                                  End Sub
         runtimeRow.Controls.Add(browse) : content.Controls.Add(runtimeRow)
+        skipStartupMovies.Checked = settings.SkipStartupMovies : content.Controls.Add(skipStartupMovies)
+        content.Controls.Add(Note("Skip the Codemasters, Intel, AMD and EGO startup movies. Other videos and the legal screen remain. Original movie definitions are restored after play."))
+        content.Controls.Add(Note("LAN uses the same career and graphics settings as normal play. No import or separate save is needed."))
         skipIntroduction.Checked = settings.SkipIntroduction : content.Controls.Add(skipIntroduction)
         content.Controls.Add(Note("LAN only: skip the opening movie and forced tutorial while keeping profile creation. Applies on the next LAN launch; turning it off does not undo saved progress. Normal Launch, Practice and Race are unaffected."))
         logging.Checked = settings.LoggingEnabled : content.Controls.Add(logging)
@@ -393,6 +397,7 @@ Public Class MainForm
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
         settings.SkipIntroduction = skipIntroduction.Checked
+        settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.LaunchMode = {"menus", "practice", "race", "lan"}(launchMode.SelectedIndex)
@@ -521,7 +526,7 @@ Public Class MainForm
             End If
             If busy Then
                 stateLabel.Text = status.State & If(status.Message <> "", ": " & status.Message, "")
-            ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending Then
+            ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending OrElse New StartupMovies(context).Pending Then
                 stateLabel.Text = "Recovery pending. Close the game and choose Restore original files."
             ElseIf status IsNot Nothing AndAlso status.State = "Failed" Then
                 stateLabel.Text = "Failed: " & status.Message

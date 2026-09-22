@@ -143,18 +143,21 @@ If recovery reports a conflict, it preserves unexpected asset edits and backups 
 
 LAN support is included in the launcher package; no separate test kit or PowerShell window is needed. Both PCs need the supported game and the current launcher package on the same LAN.
 
-1. In **Settings**, optionally enable **Skip introduction for LAN multiplayer**. It defaults off and skips the opening first-race movie and forced career tutorial while retaining profile creation.
-2. On **Launcher**, choose **LAN multiplayer (desktop)**, then **Launch**.
-3. Use the game's **Multiplayer / LAN** menus to host on one PC and join on the other. Select the event, track and cars inside the game.
-4. Quit normally after playing. The background launcher restores the original `xlive.dll`, even if you closed its settings window.
+1. LAN uses your normal DiRT 2 career automatically, in `Documents\My Games\DiRT2`. There is one save for normal play and LAN; no import or profile selection is needed. If you have no career yet, create it in the game as usual.
+2. Optionally enable **Skip introduction for LAN multiplayer**. It defaults off and skips the opening first-race movie and forced career tutorial while retaining profile creation.
+3. On **Launcher**, choose **LAN multiplayer (desktop)**, then **Launch**.
+4. Use the game's **Multiplayer / LAN** menus to host on one PC and join on the other. Select the event, track and cars inside the game.
+5. Quit normally after playing. The background launcher restores the original `xlive.dll`, even if you closed its settings window.
 
-Each installation keeps a separate, persistent LAN profile under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\lan`. It survives launcher updates and does not use your existing career. Do not copy this folder between players; it includes their LAN identity. Turning intro skipping off restores normal onboarding checks on the next LAN launch; it does not undo saved progress. Other launch modes are unaffected by this checkbox.
+The game reads and saves the same career and graphics settings in both modes. LAN connection settings and this PC's network identity live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\lan`; do not copy that folder between players. The launcher does not copy, move or rewrite career files.
 
-**LAN is currently desktop-only.** Launch VR is disabled for this mode. Launcher lobbies, automatic event setup and a LAN server browser are still in development. The native networking path passed two-PC hosting/joining and both players driving/seeing each other; finishing/results still need testing. The introduction bypass reached LAN on a fresh profile. The integrated launcher path is undergoing acceptance; see [test status](docs/lan-lab.md).
+**Skip startup logo movies (all launch modes)** is a separate Settings checkbox, off by default. It skips the Codemasters, Intel, AMD and EGO logo movies while retaining the legal screen, attract video and other cinematics. It temporarily changes the supported startup definitions and restores them after play. Intro skipping still controls the LAN first-run movie/tutorial independently. Turning either setting off does not undo saved progress.
+
+**LAN is currently desktop-only.** Launch VR is disabled for this mode. Launcher lobbies, automatic event setup and a LAN server browser are still in development. The native networking path passed two-PC hosting/joining and both players driving/seeing each other; finishing/results still need testing. The introduction bypass reached LAN on a fresh profile. Loading an imported career and skipping startup logos passed the launcher test; see [test status](docs/lan-lab.md).
 
 After a crash or power failure, close any remaining game processes and choose **Restore original files** before ordinary play. The launcher also recovers interrupted sessions from the older LAN kits. Keep `DiRT2VR/lan-backups`; conflicting edits are preserved and reported. If Windows asks about network access, allow DiRT 2 on your Private/home network rather than disabling the firewall.
 
-Existing kit profiles are not imported automatically. To retain one, with the game closed, copy that same PC's kit `user` folder contents into the launcher's `lan` folder before its first LAN launch. Do not overwrite an existing launcher LAN profile. Future launcher updates preserve this folder automatically.
+Older test-kit profiles and imported copies are no longer used. They are left on disk unchanged; the launcher always uses the normal career.
 
 ## Limitations and troubleshooting
 

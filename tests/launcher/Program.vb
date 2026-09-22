@@ -28,6 +28,7 @@ Module Program
         Directory.CreateDirectory(root)
         UpdateTests.Run(folder, AddressOf Check, args.Contains("--live-updates"))
         LanTests.Run(repo, folder, AddressOf Check)
+        StartupMovieTests.Run(repo, folder, AddressOf Check)
         For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars\sti\cameras.xml", "cars\n12\cameras.xml", "postprocess\effects.xml"}
             Dim target = IO.Path.Combine(root, relative)
             Directory.CreateDirectory(IO.Path.GetDirectoryName(target))
@@ -387,6 +388,10 @@ Module Program
             Dim saved = VrSettings.Load(context)
             Check(saved.LoggingEnabled, "Settings logging opt-in persists")
             Check(saved.SkipIntroduction, "launcher intro toggle persists across modes")
+            Dim startupToggle = DirectCast(form.Controls.Find("SkipStartupMovies", True).Single(), CheckBox)
+            Check(Not startupToggle.Checked, "startup toggle defaults off")
+            Check(form.Controls.Find("ImportLanCareer", True).Length = 0 AndAlso form.Controls.Find("LanProfile", True).Length = 0, "shared career needs no import or profile selection controls")
+            startupToggle.Checked = True
             Check(saved.RenderWidth = 960 AndAlso saved.RenderHeight = 720 AndAlso saved.HeadsetScale = 60 AndAlso saved.Mirrors = "off", "Graphics tab saves selected values")
             Check(saved.Bindings.Count = 1 AndAlso saved.Bindings(0).Buttons.SequenceEqual({16, 32}), "tab save preserves existing controller pair")
             Check(saved.LaunchMode = "practice" AndAlso saved.TrackId = "129" AndAlso saved.CarCode = "n12" AndAlso saved.Opponents = 3, "launcher selection persists for GUI and quick launch")
@@ -400,6 +405,7 @@ Module Program
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             saved = VrSettings.Load(context)
             Check(saved.LaunchMode = "lan" AndAlso saved.SkipIntroduction AndAlso saved.TrackId = "129", "LAN GUI saves launch mode and preserves previous solo selection")
+            Check(saved.SkipStartupMovies, "Settings saves startup movie skip")
             form.Close()
         End Using
         ' Exercise the real entry point in a child process, not only MainForm in this harness.

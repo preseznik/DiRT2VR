@@ -13,13 +13,15 @@ int main() {
     auto folder=std::filesystem::current_path()/L"isolated-documents-test";
     std::filesystem::create_directories(folder);
     auto host=GetModuleHandleW(nullptr);
+    if (!ConfigureLanDocuments(host,true,L"")) return 8;
+    if (FAILED(ReadFolder(CSIDL_PERSONAL,after)) || strcmp(before,after)) return 9;
     if (InstallLanDocumentsRedirect(host,L"relative") || InstallLanDocumentsRedirect(host,folder.wstring()+L"\\missing")) return 2;
-    if (!InstallLanDocumentsRedirect(host,folder.wstring())) return 3;
+    if (!ConfigureLanDocuments(host,false,folder.wstring())) return 3;
     if (FAILED(ReadFolder(CSIDL_PERSONAL|CSIDL_FLAG_CREATE,after)) || folder!=std::filesystem::path(after)) return 4;
     if (FAILED(ReadFolder(CSIDL_LOCAL_APPDATA,appDataAfter)) || strcmp(appData,appDataAfter)) return 5;
     using FolderPath=HRESULT(WINAPI*)(HWND,int,HANDLE,DWORD,LPSTR);
     auto system=reinterpret_cast<FolderPath>(GetProcAddress(GetModuleHandleW(L"shell32.dll"),"SHGetFolderPathA"));
     if (FAILED(system(nullptr,CSIDL_PERSONAL,nullptr,0,after)) || strcmp(before,after)) return 6;
     if (InstallLanDocumentsRedirect(host,folder.wstring())) return 7;
-    std::cout << "Profile redirected; system Documents and other folders unchanged; invalid paths and repeated installation rejected.\n";
+    std::cout << "Shared career keeps normal Documents; isolated mode still redirects; other folders unchanged; invalid paths and repeated installation rejected.\n";
 }

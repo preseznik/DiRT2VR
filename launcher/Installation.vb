@@ -42,6 +42,7 @@ Public Class Installation
     End Sub
     Public Sub RemoveProxy()
         context.RequireClosed()
+        Call (New StartupMovies(context)).Recover()
         Call (New LanTransaction(context)).Recover()
         Call (New AssetTransaction(context)).Recover()
         Dim receiptPath = IO.Path.Combine(context.ModRoot, "installation.json")
@@ -67,7 +68,10 @@ Public Module Worker
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars)
             Case "prepare-lan"
                 Call (New LanTransaction(context)).Prepare()
+            Case "prepare-movies"
+                Call (New StartupMovies(context)).Prepare()
             Case "recover"
+                Call (New StartupMovies(context)).Recover()
                 Call (New LanTransaction(context)).Recover()
                 Call (New AssetTransaction(context)).Recover()
             Case "remove" : Call (New Installation(context)).RemoveProxy()

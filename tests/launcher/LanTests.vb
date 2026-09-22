@@ -59,7 +59,8 @@ Module LanTests
         Next
         Dim start = LanSession.StartInfo(context, True)
             check(start.ArgumentList.Count = 0 AndAlso start.Environment("DIRT2VR_ACTIVE") = "0" AndAlso Not start.Environment.ContainsKey("DIRT2VR_DIRECT_PRACTICE"), "LAN starts native menus without demo or VR")
-            check(start.Environment("DIRT2VR_LAN_SKIP_INTRO") = "1" AndAlso start.Environment("DIRT2VR_LAN_DOCUMENTS").StartsWith(context.UserRoot), "LAN passes saved skip toggle and private profile")
+            check(start.Environment("DIRT2VR_LAN_SKIP_INTRO") = "1" AndAlso start.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1" AndAlso Not start.Environment.ContainsKey("DIRT2VR_LAN_DOCUMENTS"), "LAN uses normal career without a Documents redirect or import")
+            check(start.Environment("DIRT2VR_LAN_RECEIPT") = LanSession.ReceiptPath(context) AndAlso Not Directory.Exists(IO.Path.Combine(LanSession.ProfileRoot(context), "Documents")), "LAN readiness stays in AppData and no separate save folder is created")
 
         Dim config = IO.Path.Combine(LanSession.ProfileRoot(context), "xlln.ini")
         Dim configHash = Files.Hash(config)
@@ -78,6 +79,8 @@ Module LanTests
         settings.Validate() : Files.SaveJson(context.PreferencesPath, settings)
         check(VrSettings.Load(context).SkipIntroduction AndAlso Not settings.DirectMode AndAlso settings.GridOpponents = 0 AndAlso settings.SessionLaps = 1, "LAN preference is distinct from direct race mode")
         check(Not (New VrSettings()).SkipIntroduction, "launcher intro skip defaults off")
+        File.WriteAllText(context.PreferencesPath, "{""Version"":3,""LaunchMode"":""lan"",""LanProfileId"":""obsolete-copy"",""LanProfileInitialized"":true}")
+        check(VrSettings.Load(context).LaunchMode = "lan", "old imported-profile preferences are ignored on upgrade")
         Dim empty As New InstallContext(IO.Path.Combine(folder, "LAN no original"), IO.Path.Combine(folder, "LAN preferences"))
         Directory.CreateDirectory(IO.Path.Combine(empty.ModRoot, "payload"))
         File.Copy(payload, IO.Path.Combine(empty.ModRoot, "payload", "xlive-lan.dll"))
