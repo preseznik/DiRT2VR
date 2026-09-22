@@ -1,6 +1,7 @@
-param([string]$GameRoot=(Split-Path $PSScriptRoot -Parent),[switch]$RecoverOnly)
+param([string]$GameRoot=(Split-Path $PSScriptRoot -Parent),[switch]$RecoverOnly,[switch]$Configure)
 $ErrorActionPreference='Stop'
 . (Join-Path $PSScriptRoot 'LanFiles.ps1')
+. (Join-Path $PSScriptRoot 'LanSettings.ps1')
 $GameRoot=[IO.Path]::GetFullPath($GameRoot)
 $guard=New-Object Threading.Mutex($false,'Global\DiRT2VR.Session')
 $held=$false
@@ -22,6 +23,21 @@ try {
     }
     $payload=Join-Path $PSScriptRoot 'xlive-lan.dll'
     $user=Join-Path $PSScriptRoot 'user'
+    $settingsPath=Join-Path $user 'lan-settings.json'
+    Assert-LanPath $settingsPath
+    if ($Configure) { Show-LanSettings $settingsPath; return }
+    $settings=Read-LanSettings $settingsPath
+    if ($settings.SkipIntroduction) {
+        $introAssets=@{
+            'system/states.bin'='62606A2C6A09F8E9E7AF172141418812E95337672BB31102849C59FD6676D3AD'
+            'system/flow.bin'='D261EA3394627188AF47DBF8F36F22FDF3B99E70835921B8590D739220DC601F'
+        }
+        foreach ($asset in $introAssets.Keys) {
+            if ((Get-LanHash (Join-Path $GameRoot $asset)) -ne $introAssets[$asset]) {
+                throw 'Skip introduction requires the original supported flow/states files. Disable it in LAN settings to use normal onboarding.'
+            }
+        }
+    }
     $documents=Join-Path $user 'Documents'
     Assert-LanPath $documents
     [IO.Directory]::CreateDirectory($documents) | Out-Null
@@ -40,6 +56,7 @@ try {
     $start.EnvironmentVariables['DIRT2VR_ACTIVE']='0'
     $start.EnvironmentVariables['DIRT2VR_LAN_CONFIG']=$config
     $start.EnvironmentVariables['DIRT2VR_LAN_DOCUMENTS']=$documents
+    $start.EnvironmentVariables['DIRT2VR_LAN_SKIP_INTRO']=$(if ($settings.SkipIntroduction) {'1'} else {'0'})
     Write-Host 'LAN desktop test: use the native Multiplayer/LAN menus. This is a separate fresh profile.'
     Write-Host 'Keep this window open. Quit DiRT 2 normally to restore xlive.dll.'
     $child=[Diagnostics.Process]::Start($start)

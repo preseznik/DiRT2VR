@@ -4,9 +4,13 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Added an optional **Skip introduction** checkbox to the separate LAN test kit (`Lan-Settings.cmd`), off by default. It bypasses the first-run movie and career tutorial decision in process memory, with executable/asset guards; it does not change game files or grant progression. Native guard and settings tests pass. The tester confirmed reaching LAN from a fresh profile without the movie or forced race. The main launcher does not yet expose this lab option.
+
+- LAN test update: the tester confirmed hosting on PC1, joining on PC2 and both driving/seeing each other in the same race. Race completion and results remain untested. Post-exit checks confirmed exact `xlive.dll` restoration and unchanged existing career files.
+
 - Added a separate `0.2.0` desktop LAN test kit using pinned XLiveLessNess, a fresh process-isolated profile, opt-in launch and journaled restoration of `xlive.dll`. Native profile isolation and eight recovery checks pass; local startup created only isolated save/settings files and left existing career files unchanged. Two-PC race acceptance is pending. Launcher multiplayer lobbies, LAN browser and automatic race startup are not yet implemented. See `docs/lan-lab.md`.
 
-- Added a LAN multiplayer feasibility plan covering XLiveLessNess reuse, launcher host/join and discovery, native race-start integration, profile/DLL recovery and staged acceptance. This is a researched proposal; multiplayer has not been implemented or locally validated.
+- Added a LAN multiplayer feasibility plan covering XLiveLessNess reuse, launcher host/join and discovery, native race-start integration, profile/DLL recovery and staged acceptance. The separate native test kit described above implements the first stage; launcher multiplayer integration remains planned.
 
 - Adopt plain `major.minor.patch` versions starting from `0.1.0`, without alpha suffixes. Packaging increments patch for each distribution build; entirely new features increment minor and reset patch, and major changes require an explicit user request. Existing alpha release history is preserved.
 

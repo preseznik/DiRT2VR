@@ -139,6 +139,12 @@ If recovery reports a conflict, it preserves unexpected asset edits and backups 
 
 **ZIP removal:** with the game closed, run `DiRT2VR.exe --remove-proxy` from the game folder. After it succeeds, remove `DiRT2VR.exe`, `Start-DiRT2VR.cmd` and the `DiRT2VR` subfolder. Do not remove game files. AppData preferences/logs may be retained or removed separately once recovery is complete.
 
+## LAN multiplayer test kit
+
+LAN multiplayer is currently a separate desktop test ZIP, not a tab in the normal launcher. Two PCs have successfully hosted/joined and driven in the same race; race completion and results still need testing. Use the kit's `README.txt` for setup and recovery instructions. Keep its runner open until the game exits, and do not use the normal launcher concurrently.
+
+The kit's **Lan-Settings.cmd** opens an optional **Skip introduction** checkbox, off by default. It skips the opening first-race movie and forced career tutorial while retaining profile creation; reaching LAN this way is confirmed on a fresh profile. Save the setting, then use **Start-LanTest.cmd**. The option applies only to this isolated LAN profile and changes game code only while that process is running. Turning it off restores normal onboarding checks; it does not undo saved progress. See the [LAN implementation and test status](docs/lan-lab.md).
+
 ## Limitations and troubleshooting
 
 - Game-menu launches prepare the Subaru STI camera. Direct practice prepares the selected car, but other interiors and broader stage coverage are not yet visually verified.
