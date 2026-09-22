@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Client startup investigation: the supplied PC2 wrapper explicitly loads `rld.dll` and calls its initializer before normal startup. That additional component still needs inspection; no ordinal-error fix or new release is claimed.
+
 - PC2's ordinal-43 report confirms correct game/shim files and an active recovery journal, with a different startup wrapper from the working PC. A direct-start candidate reached LAN initialization but failed the local game check; it was reverted and package 0.6.5 was not released. The client startup issue remains under investigation.
 
 - Added a read-only LAN startup report tool for ordinal/DLL-loading failures. It records running game/launcher paths, relevant loaded DLLs, file hashes and recovery state without reading saves or changing the installation. The reported client ordinal-43 failure remains under investigation.
