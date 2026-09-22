@@ -35,6 +35,30 @@ index ff68ad3..8c0a533 100644
  	XLLN_DEBUG_LOG(XLLN_LOG_CONTEXT_XLLN_MODULE | XLLN_LOG_LEVEL_TRACE | XLLN_LOG_LEVEL_DEBUG
  		, "Hooked PE entry point invoked %s()."
  		, __func__
+diff --git a/xlivelessness/xlln/xlln-network.cpp b/xlivelessness/xlln/xlln-network.cpp
+index d4e8114..8c8d824 100644
+--- a/xlivelessness/xlln/xlln-network.cpp
++++ b/xlivelessness/xlln/xlln-network.cpp
+@@ -732,8 +732,17 @@ static bool ParseNetworkData(uint8_t* data_buffer, size_t data_size, SOCKADDR_ST
+ 									
+ 									return true;
+ 								}
+-								case XllnNetworkPacket::TCP_RESPONSE_CODE::XLLN_NP_TRC_KEEP_ALIVE: {
+-									XLLN_DEBUG_LOG(XLLN_LOG_CONTEXT_XLIVE | XLLN_LOG_LEVEL_DEBUG
++								case XllnNetworkPacket::TCP_RESPONSE_CODE::XLLN_NP_TRC_KEEP_ALIVE: {
++									// Receiving a probe resets our idle timer above. Without a reply,
++									// a peer probing first can keep us silent until it times out.
++									// Use the existing ACK path, not another KEEP_ALIVE (which would echo).
++									if (titleSocket->tcpIsConnected) {
++										if (IsTimeUnset(titleSocket->tcpRecvLastAck)) {
++											TimeAddMillis(titleSocket->tcpRecvLastAck, 1000);
++										}
++										SetEvent(xlln_tcp_sockets_update);
++									}
++									XLLN_DEBUG_LOG(XLLN_LOG_CONTEXT_XLIVE | XLLN_LOG_LEVEL_DEBUG
+ 										, "%s %s packet %s from instanceId (0x%08x) titlePort (%hu)."
+ 										, __func__
+ 										, packetName
 diff --git a/xlivelessness/xlln/xlln.cpp b/xlivelessness/xlln/xlln.cpp
 index d16db16..664319c 100644
 --- a/xlivelessness/xlln/xlln.cpp
