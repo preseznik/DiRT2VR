@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- HOST and JOIN now ask for Desktop or VR on every launch, with Cancel available. LAN VR uses the existing SteamVR preflight, graphics/controls settings and combined recovery of VR assets, graphics, startup movies and the LAN DLL. The shared career and HOST/JOIN endpoint are preserved. Launcher tests pass; multiplayer headset testing is deferred, and the race-loading disconnect remains unresolved.
+
 - The 0.6.10 host diagnostic captured the game's session teardown path, but the two-PC loading disconnect persists. The next investigation targets the preceding session-state change; further gameplay testing is deferred.
 
 - Two-PC 0.6.9 testing still disconnects during Battersea loading: PC1 first, PC2 later. Extended opt-in host diagnostics with bounded game-code stack candidates and session API errors to investigate the game's teardown decision. All six native tests pass; this diagnostic change does not claim to fix multiplayer behavior.

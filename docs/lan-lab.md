@@ -1,5 +1,11 @@
 # LAN baseline prototype
 
+## Launcher display choice
+
+HOST/JOIN now share `LanLaunchForm`: Desktop, VR or Cancel, asked each time. Cancel returns before saving or spawning a session. `LanSession.LaunchArguments` passes `--desktop` or explicit `--vr` while retaining the selected native LAN endpoint. Older LAN quick-launch commands without `--vr` remain desktop launches.
+
+`Session.VrStartInfo` starts from the sanitized native LAN environment when appropriate, preserving discovery, shared career and readiness flags while adding the existing VR settings/input channel. The standard VR preflight and preparation run, followed by journaled LAN DLL preparation. Normal/failure cleanup restores graphics and all worker transactions. No native network or rendering code changed. Tests cover both display choices for HOST/JOIN, cancellation, preserved endpoints/identity, settings propagation and original-file restoration after each combined preparation stage. Multiplayer headset tests are deferred; the existing loading-disconnect investigation remains open. The native payload is unchanged from PC1's 0.6.10 diagnostic, so the targeted state-write capture can still use this launcher with Desktop selected and PC2 on 0.6.9.
+
 ## 0.6.10 host trace and next capture
 
 PC1 0.6.10 / PC2 0.6.9 still reproduced the failure. `artifacts/lan-battersea-0610/pc1.log` captures the initial close through candidate RVAs `abad8b`, `abe22d`, `ac6d5b`, `acc06e`, `424baf`, `462b55`. Static inspection confirms the first six are compatible with the nested call sites. In particular, the session update at `acc000` reaches this close loop only when its field at `+0x60` is zero (`acc024`). The trace identifies teardown after that state change, not the code that caused the change. No XSession errors were recorded. The user again reports PC1 disconnecting before PC2.

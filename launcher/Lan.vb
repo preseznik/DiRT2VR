@@ -75,6 +75,15 @@ Public Class LanTransaction
 End Class
 
 Public Module LanSession
+    Public Function LaunchArguments(vr As Boolean, Optional joinTarget As String = Nothing) As String()
+        Dim arguments As New List(Of String) From {"--launch", If(vr, "--vr", "--desktop"), "--no-ui"}
+        If joinTarget Is Nothing Then
+            arguments.Add("--lan-host")
+        Else
+            arguments.Add("--lan-join") : arguments.Add(LanBrowser.ParseEndpoint(joinTarget).ToString())
+        End If
+        Return arguments.ToArray()
+    End Function
     Public Function ProfileRoot(context As InstallContext) As String
         Return IO.Path.Combine(context.UserRoot, "lan")
     End Function

@@ -195,19 +195,25 @@ Public Class MainForm
         content.Controls.Add(browserStatus)
         content.Controls.Add(Note("HOST opens DiRT 2 and lists this PC while the game is running. Create a lobby in the game's Multiplayer / LAN menu. 'HOST game running' does not confirm a lobby or player count."))
         content.Controls.Add(Note("JOIN opens LAN play and adds the selected PC to the game's network peers. Finish joining through the game's Multiplayer / LAN menu. Automatic lobby entry is not available yet."))
-        content.Controls.Add(Note("Uses your normal career. Multiplayer is desktop-only for now. Both PCs need this build and the same local network. Allow DiRT 2 on your Windows Private network if prompted; guest Wi-Fi can block discovery."))
+        content.Controls.Add(Note("HOST and JOIN ask you to choose Desktop or VR each time. Both use your normal career. Multiplayer VR is untested, and the race-loading disconnect remains under investigation. Both PCs need the same local network; allow DiRT 2 on your Windows Private network if prompted."))
         AddHandler refreshServers.Click, Sub() RefreshServerList()
         AddHandler serverList.SelectedIndexChanged, Sub() joinButton.Enabled = Not busy AndAlso If(SelectedHost()?.Joinable, False)
         AddHandler hostButton.Click, Sub() SafeAction(Sub()
-                                                         SaveSettings()
-                                                         Spawn("--launch", "--desktop", "--no-ui", "--lan-host")
+                                                         LaunchMultiplayer()
                                                      End Sub)
         AddHandler joinButton.Click, Sub() SafeAction(Sub()
                                                          Dim host = SelectedHost()
                                                          If host Is Nothing OrElse Not host.Joinable Then Throw New IOException("Refresh and select an available LAN host.")
-                                                         SaveSettings()
-                                                         Spawn("--launch", "--desktop", "--no-ui", "--lan-join", host.Endpoint.ToString())
+                                                         LaunchMultiplayer(host.Endpoint.ToString())
                                                      End Sub)
+    End Sub
+    Private Sub LaunchMultiplayer(Optional joinTarget As String = Nothing)
+        Using choice As New LanLaunchForm(joinTarget IsNot Nothing)
+            Dim result = choice.ShowDialog(Me)
+            If result <> DialogResult.Yes AndAlso result <> DialogResult.No Then Return
+            SaveSettings()
+            Spawn(LanSession.LaunchArguments(result = DialogResult.Yes, joinTarget))
+        End Using
     End Sub
     Private Function SelectedHost() As LanHost
         Return If(serverList.SelectedItems.Count = 1, TryCast(serverList.SelectedItems(0).Tag, LanHost), Nothing)

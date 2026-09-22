@@ -4,7 +4,7 @@ Imports DiRT2VR
 Module LanTests
     Public Sub Run(repo As String, folder As String, check As Action(Of Boolean, String))
         Dim root = IO.Path.Combine(folder, "LAN fixture Ž")
-        Dim context As New InstallContext(root, IO.Path.Combine(folder, "LAN preferences"))
+        Dim context As New InstallContext(root, IO.Path.Combine(folder, "LAN preferences"), IO.Path.Combine(folder, "LAN graphics.xml"))
         Directory.CreateDirectory(IO.Path.Combine(context.ModRoot, "payload"))
         Dim payload = IO.Path.Combine(context.ModRoot, "payload", "xlive-lan.dll")
         Dim target = IO.Path.Combine(root, "xlive.dll")
@@ -70,6 +70,42 @@ Module LanTests
 
         Dim config = IO.Path.Combine(LanSession.ProfileRoot(context), "xlln.ini")
         Dim configHash = Files.Hash(config)
+        For Each vr In {False, True}
+            For Each peer In New String() {Nothing, "192.168.1.25:39000"}
+                Dim arguments = LanSession.LaunchArguments(vr, peer)
+                check(arguments.Contains(If(vr, "--vr", "--desktop")) AndAlso Not arguments.Contains(If(vr, "--desktop", "--vr")), "LAN choice selects exactly one display mode")
+                check(arguments.Contains(If(peer Is Nothing, "--lan-host", "--lan-join")) AndAlso (peer Is Nothing OrElse arguments.Last() = peer), "display choice retains HOST/JOIN target")
+            Next
+        Next
+        Dim vrSettings As New VrSettings With {.LaunchMode = "lan", .SkipIntroduction = True, .Runtime = "test/steamxr_win32.json", .HeadsetScale = 75, .FieldOfView = 80, .ToggleKey = 118, .RecenterKey = 119}
+        Dim vrHost = Session.VrStartInfo(context, vrSettings, "Local.TestInput", Nothing)
+        Dim vrJoin = Session.VrStartInfo(context, vrSettings, "Local.TestInput", logFolder, "192.168.1.25:39000")
+        For Each launch In {vrHost, vrJoin}
+            check(launch.Environment("DIRT2VR_ACTIVE") = "1" AndAlso launch.Environment("DIRT2VR_HEADSET") = "1" AndAlso launch.Environment("DIRT2VR_INPUT_CHANNEL") = "Local.TestInput", "LAN VR activates headset and controller channel together")
+            check(launch.ArgumentList.Count = 0 AndAlso launch.Environment("DIRT2VR_LAN_CONFIG") = config AndAlso launch.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1", "LAN VR retains native menu startup and shared career")
+            check(launch.Environment("DIRT2VR_HEADSET_SCALE") = "0.75" AndAlso launch.Environment("DIRT2VR_FOV_SCALE") = "0.8" AndAlso launch.Environment("DIRT2VR_KEYS") = "118:0,119:0" AndAlso launch.Environment("XR_RUNTIME_JSON") = vrSettings.Runtime, "LAN VR uses saved graphics keys and runtime")
+        Next
+        check(vrHost.Environment("DIRT2VR_LAN_HOST") = "1" AndAlso vrHost.Environment("DIRT2VR_LOGGING") = "0", "VR HOST supports disabled logging")
+        check(vrJoin.Environment("DIRT2VR_LAN_HOST") = "0" AndAlso vrJoin.Environment("DIRT2VR_LAN_JOIN") = "192.168.1.25:39000" AndAlso vrJoin.Environment("DIRT2VR_OUTPUT") = logFolder, "VR JOIN preserves peer and diagnostic folder")
+        check(Files.Hash(config) = configHash, "display mode does not replace LAN identity")
+        For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars/sti/cameras.xml", "postprocess/effects.xml"}
+            Dim destination = IO.Path.Combine(root, relative)
+            Directory.CreateDirectory(IO.Path.GetDirectoryName(destination))
+            File.Copy(IO.Path.Combine(repo, "artifacts/game", relative), destination)
+        Next
+        File.WriteAllText(context.GraphicsPath, "<hardware_settings_config><crowd enabled='true'/><particles enabled='true'/><shadows enabled='true'/><postprocess quality='2'/><cpu><threadStrategy parallelUpdateRender='true'/></cpu><dynamic_ambient_occ enabled='true'/><graphics_card><resolution width='1920' height='1080' fullscreen='true' vsync='1'/></graphics_card></hardware_settings_config>")
+        Dim originals = {target, context.GraphicsPath, IO.Path.Combine(root, "cars/sti/cameras.xml"), IO.Path.Combine(root, "postprocess/effects.xml"), IO.Path.Combine(root, "system/states.bin")}.ToDictionary(Function(path) path, Function(path) Files.Hash(path))
+        For preparedSteps = 1 To 4
+            Worker.Run(context, "prepare")
+            Dim graphics As New GraphicsTransaction(context)
+            If preparedSteps >= 2 Then graphics.Prepare(vrSettings)
+            If preparedSteps >= 3 Then Worker.Run(context, "prepare-lan")
+            If preparedSteps >= 4 Then Worker.Run(context, "prepare-movies")
+            ' Same cleanup as Session.Run after failure at each preparation stage or normal exit.
+            graphics.Recover() : Worker.Run(context, "recover")
+            check(originals.All(Function(entry) Files.Hash(entry.Key) = entry.Value), "combined VR/LAN preparation restores every original at stage " & preparedSteps)
+            check(Not graphics.Pending AndAlso Not transaction.Pending AndAlso Not (New AssetTransaction(context)).Pending AndAlso Not (New StartupMovies(context)).Pending, "combined cleanup clears all transaction journals")
+        Next
         Dim joining = LanSession.StartInfo(context, False, "192.168.1.25:39000")
         check(joining.Environment("DIRT2VR_LAN_JOIN") = "192.168.1.25:39000" AndAlso joining.Environment("DIRT2VR_LAN_DISCOVERY") = "1" AndAlso joining.Environment("DIRT2VR_LAN_HOST") = "0", "JOIN passes a validated native endpoint without advertising host intent")
         File.WriteAllText(LanSession.ReceiptPath(context), "stale receipt")

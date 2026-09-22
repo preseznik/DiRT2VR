@@ -25,7 +25,7 @@ Public Class Session
     Private Sub Status(state As String, Optional message As String = "")
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message, .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus})
     End Sub
-    Public Sub Run(Optional vr As Boolean = True)
+    Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
             Dim held As Boolean
             Try
@@ -38,8 +38,8 @@ Public Class Session
             Try
                 Status("Checking")
                 context.ValidateGame() : context.RequireClosed()
-                ' The saved LAN mode also works through the quick-launch script; it is desktop-only for now.
-                If settings.LaunchMode = "lan" Then vr = False
+                ' Preserve desktop behavior for older LAN quick-launch commands; VR is an explicit choice.
+                If settings.LaunchMode = "lan" Then vr = vr AndAlso lanVr
                 If Not vr Then
                     Status("Restoring", "Checking for an interrupted session")
                     graphics.Recover() : Worker.Invoke(context, "recover")
@@ -59,24 +59,7 @@ Public Class Session
                 Dim channel = "Local\DiRT2VR.Input." & Guid.NewGuid().ToString("N")
                 Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor()
                     view.Write(0, &H32565244) : view.Write(4, 1) : view.Write(8, 0UI) : view.Write(12, 0UI)
-                    Dim start As New ProcessStartInfo(IO.Path.Combine(context.GameRoot, "dirt2.exe")) With {.UseShellExecute = False, .WorkingDirectory = context.GameRoot}
-                    ' Whitelist launch options. Do not inherit developer experiments.
-                    For Each name In start.Environment.Keys.Where(Function(k) k.StartsWith("DIRT2VR_", StringComparison.OrdinalIgnoreCase)).ToArray()
-                        start.Environment.Remove(name)
-                    Next
-                    For Each name In {"ACTIVE", "REPLAY_PROBE", "INNER_REPLAY", "CONTINUOUS_REPLAY", "HEADSET", "INTERACTIVE", "SKIP_WATER", "WIDE_VISIBILITY"}
-                        start.Environment("DIRT2VR_" & name) = "1"
-                    Next
-                    start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"
-                    start.Environment("DIRT2VR_CAPTURE_REQUESTS") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
-                    start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
-                    start.Environment("DIRT2VR_WORLD_SCALE") = "1"
-                    start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
-                    start.Environment("DIRT2VR_FOV_SCALE") = (settings.FieldOfView / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
-                    ConfigureLogging(start, logFolder)
-                    start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
-                    start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
-                    start.Environment("XR_RUNTIME_JSON") = settings.Runtime
+                    Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
                     If settings.DirectMode Then
                         Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
                         start.ArgumentList.Add("-demo")
@@ -87,6 +70,7 @@ Public Class Session
                         Worker.Invoke(context, "prepare")
                     End If
                     graphics.Prepare(settings)
+                    If settings.LaunchMode = "lan" Then Worker.Invoke(context, "prepare-lan")
                     If settings.SkipStartupMovies Then Worker.Invoke(context, "prepare-movies")
                     Using input As New ControllerInput(), machine As New BindingMachine(settings.Bindings)
                         Dim counts As UInteger() = {0UI, 0UI}
@@ -98,6 +82,7 @@ Public Class Session
                             Next
                         End Sub
                         WaitForGame(start, AddressOf input.Poll)
+                        If settings.LaunchMode = "lan" AndAlso Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN startup was confirmed.")
                     End Using
                 End Using
                 Status("Restoring")
@@ -126,6 +111,24 @@ Public Class Session
             End Try
         End Using
     End Sub
+    Public Shared Function VrStartInfo(context As InstallContext, settings As VrSettings, channel As String, logFolder As String, Optional joinTarget As String = Nothing) As ProcessStartInfo
+        ' Both factories clear inherited experiments before setting their explicit launch flags.
+        Dim start = If(settings.LaunchMode = "lan", LanSession.StartInfo(context, settings.SkipIntroduction, joinTarget), DesktopStartInfo(context, Nothing, Nothing))
+        For Each name In {"ACTIVE", "REPLAY_PROBE", "INNER_REPLAY", "CONTINUOUS_REPLAY", "HEADSET", "INTERACTIVE", "SKIP_WATER", "WIDE_VISIBILITY"}
+            start.Environment("DIRT2VR_" & name) = "1"
+        Next
+        start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"
+        start.Environment("DIRT2VR_CAPTURE_REQUESTS") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
+        start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
+        start.Environment("DIRT2VR_WORLD_SCALE") = "1"
+        start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
+        start.Environment("DIRT2VR_FOV_SCALE") = (settings.FieldOfView / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
+        ConfigureLogging(start, logFolder)
+        start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
+        start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
+        start.Environment("XR_RUNTIME_JSON") = settings.Runtime
+        Return start
+    End Function
     Private Sub RunDesktop()
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")

@@ -348,6 +348,21 @@ Module Program
             tabs.SelectedIndex = 1 : Application.DoEvents()
             Check(mode.Items.Count = 3 AndAlso Not launch.Visible AndAlso Not launchVr.Visible, "Multiplayer replaces main-tab LAN mode and hides solo launch buttons")
             Check(form.Controls.Find("HostLAN", True).Single().Enabled AndAlso Not form.Controls.Find("JoinLAN", True).Single().Enabled, "Multiplayer has HOST and requires an available host for JOIN")
+            For Each joining In {False, True}
+                For Each choiceButton As String In {"ChooseDesktop", "ChooseVR", "CancelLaunch"}
+                    Using choice As New LanLaunchForm(joining), click As New System.Windows.Forms.Timer With {.Interval = 30}
+                        choice.StartPosition = FormStartPosition.Manual : choice.Location = New Drawing.Point(-32000, -32000)
+                        AddHandler click.Tick, Sub()
+                                                   click.Stop()
+                                                   DirectCast(choice.Controls.Find(choiceButton, True).Single(), Button).PerformClick()
+                                               End Sub
+                        click.Start()
+                        Dim result = choice.ShowDialog(form)
+                        Check(result = If(choiceButton = "ChooseVR", DialogResult.Yes, If(choiceButton = "ChooseDesktop", DialogResult.No, DialogResult.Cancel)), "HOST/JOIN dialog returns selected mode or cancels")
+                        Check(choice.CancelButton Is choice.Controls.Find("CancelLaunch", True).Single(), "Escape cancels multiplayer launch")
+                    End Using
+                Next
+            Next
             tabs.SelectedIndex = 0 : Application.DoEvents()
             Dim introToggle = DirectCast(form.Controls.Find("SkipIntroduction", True).Single(), CheckBox)
             Check(Not introToggle.Checked, "launcher Skip introduction checkbox defaults off")
