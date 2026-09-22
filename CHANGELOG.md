@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Added a LAN multiplayer feasibility plan covering XLiveLessNess reuse, launcher host/join and discovery, native race-start integration, profile/DLL recovery and staged acceptance. This is a researched proposal; multiplayer has not been implemented or locally validated.
+
 - Adopt plain `major.minor.patch` versions starting from `0.1.0`, without alpha suffixes. Packaging increments patch for each distribution build; entirely new features increment minor and reset patch, and major changes require an explicit user request. Existing alpha release history is preserved.
 
 ## 0.1.0-alpha.5 — 2026-09-22
