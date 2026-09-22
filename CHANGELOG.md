@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- The 0.6.10 host diagnostic captured the game's session teardown path, but the two-PC loading disconnect persists. The next investigation targets the preceding session-state change; further gameplay testing is deferred.
+
 - Two-PC 0.6.9 testing still disconnects during Battersea loading: PC1 first, PC2 later. Extended opt-in host diagnostics with bounded game-code stack candidates and session API errors to investigate the game's teardown decision. All six native tests pass; this diagnostic change does not claim to fix multiplayer behavior.
 
 - Corrected generated LAN peer addresses so different PCs have distinct, nonzero machine identities. The actual-DLL regression fails on 0.6.8 and passes with the correction; all six native checks pass. Both PCs must update for the next test. Whether this resolves the Battersea race-loading disconnect still requires two-PC confirmation.

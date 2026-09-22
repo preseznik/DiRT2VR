@@ -1,5 +1,13 @@
 # LAN baseline prototype
 
+## 0.6.10 host trace and next capture
+
+PC1 0.6.10 / PC2 0.6.9 still reproduced the failure. `artifacts/lan-battersea-0610/pc1.log` captures the initial close through candidate RVAs `abad8b`, `abe22d`, `ac6d5b`, `acc06e`, `424baf`, `462b55`. Static inspection confirms the first six are compatible with the nested call sites. In particular, the session update at `acc000` reaches this close loop only when its field at `+0x60` is zero (`acc024`). The trace identifies teardown after that state change, not the code that caused the change. No XSession errors were recorded. The user again reports PC1 disconnecting before PC2.
+
+The next diagnostic is a local debugger helper retained at `artifacts/lan-battersea-0610/watch-state.cpp` / `watch-state.exe`. It is not distributed or installed. It restricts the target path to the isolated game, checks five complete state-write instructions before setting temporary breakpoints (RVAs `ac96ed`, `acaed0`, `acb00a`, `acbaef`, `acc402`), and uses the actual process image base. At the first hit it records the writer, selected session fields/registers and possible code return addresses, restores its breakpoints, resumes the original instruction and detaches. It disables debugger kill-on-exit and has a five-minute capture limit. Its separate child-process self-test confirmed capture of a `4 -> 0` state write, execution of the restored instruction and normal child exit. No game attach with this helper has happened yet.
+
+Resume with the current builds: have both players join the lobby and wait before starting the race. Verify the game executable fingerprint and PID/path, then run `watch-state.exe <PC1-game-PID>` with output redirected under the evidence folder. Confirm attachment before asking the tester to start Battersea. Do not deploy new files or start a game while the user is unavailable. Testing was deferred at the user's request; the actual disconnect remains unresolved.
+
 ## 0.6.9 follow-up: disconnect persists
 
 The tester confirmed both PCs ran 0.6.9 and still disconnected during loading, with PC2 showing the failure later. The host was left on the disconnected screen. The retained trace (`artifacts/lan-battersea-069/pc1.log`) shows successful title-level reads, a final 13-byte title send acknowledged by the peer, then game-requested socket closure. Read-only inspection of PID 9908 confirmed all title sockets were already closed while the process remained running, before the tester was asked to quit. The machine-identity correction does not resolve this reproduction.
