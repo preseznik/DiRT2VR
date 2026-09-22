@@ -8,7 +8,7 @@
     <OptionStrict>On</OptionStrict>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AssemblyName>DiRT2VR</AssemblyName>
-    <Version>0.1.0</Version>
+    <Version>0.2.0</Version>
     <BuildUtc Condition="'$(BuildUtc)' == ''">Development build</BuildUtc>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>assets\DiRT2VR.ico</ApplicationIcon>

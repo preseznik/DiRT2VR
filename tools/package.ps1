@@ -1,4 +1,4 @@
-param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild,[ValidateSet('Patch','Minor','Major')][string]$VersionBump='Patch')
+param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild,[ValidateSet('Patch','Minor','Major')][string]$VersionBump='Patch',[switch]$LanLab)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $root
@@ -10,6 +10,10 @@ $version=& (Join-Path $PSScriptRoot 'next-version.ps1') -Current $current -Bump 
 # Reserve the version before building. Failed attempts keep their number; retries advance it.
 [IO.File]::WriteAllText($projectPath,$projectText.Replace('<Version>'+$current+'</Version>','<Version>'+$version+'</Version>'))
 Write-Host "Build version: $current -> $version"
+if ($LanLab) {
+    & (Join-Path $PSScriptRoot 'lan/Package-LanTest.ps1') -Version $version -SkipNativeBuild:$SkipNativeBuild
+    return
+}
 if (!$SkipNativeBuild) {
     & (Join-Path $PSScriptRoot 'build-distribution.cmd')
     if ($LASTEXITCODE) { throw 'Native distribution build/tests failed' }
