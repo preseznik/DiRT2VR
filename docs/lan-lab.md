@@ -1,5 +1,13 @@
 # LAN baseline prototype
 
+## Machine identity correction (0.6.9 candidate)
+
+The 0.6.8 follow-up confirms successful title-level reads and writes, not merely queued transport delivery. In the repeat left on the disconnected screen, a read-only inspection initially found a connected stream with empty receive/send queues and no lost-connection flag. The first run's final socket closures cannot establish the original cause: the tester quit immediately after seeing the failure. Later teardown in the repeat is likewise not sufficient to identify the initial game-side rejection. Local evidence is retained under `artifacts/lan-battersea-068/`.
+
+Inspection found a separate concrete address-contract defect: `XllnNetEntityGetXnaddrXnkidByInstanceId` left `XNADDR.abOnline[8..15]` zero, while `XNetXnAddrToMachineId` reads exactly those bytes. Distinct generated peer addresses therefore returned the same null machine identity. DiRT 2 uses this API when constructing peer records. The integration patch now writes the existing instance identifier into that field as a 64-bit value. Routing addresses, protocol messages, timeouts and career handling remain unchanged. Both peers need the corrected DLL because each advertises its own address.
+
+`tests/lan_identity_test.cpp` loads the real DLL and verifies nonzero/distinct/repeat-stable identities, routing round trips and null-pointer rejection. It fails against the packaged 0.6.8 DLL and passes with the correction; all six native CTests pass, including real peer timeout coverage. This proves the address-contract correction, not the proposed explanation for the race-start failure. Two-PC Battersea Rallycross loading, driving and completion remain required acceptance checks.
+
 ## Battersea loading disconnect and bounded trace
 
 Paired 0.6.7 traces are retained locally in `artifacts/lan-battersea-067/pc1.log` and `pc2.log`. Do not compare their UTC values directly: matching stream exchanges indicate PC2's clock is about 13.2 seconds ahead. PC1 sends stream sequence 9, receives cumulative acknowledgement 10, then calls XSocketClose about 8 ms later (`utc_ms=1790078664303`). There is no preceding transport timeout. Both directions still deliver eight-byte title datagrams on port 1000. PC1 subsequently rejects probes to the closed stream; PC2 eventually times out. This proves live transport up to the host's explicit closure, not successful game consumption of the queued datagrams or the reason for closing. The next local diagnostic adds game-facing successful send/receive sizes/checksums and close caller/stack RVAs without changing protocol or timeouts; PC2 can retain 0.6.7.

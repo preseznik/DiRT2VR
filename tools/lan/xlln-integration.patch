@@ -120,10 +120,23 @@ index ff68ad3..8c0a533 100644
  		, "Hooked PE entry point invoked %s()."
  		, __func__
 diff --git a/xlivelessness/xlln/xlln-network.cpp b/xlivelessness/xlln/xlln-network.cpp
-index d4e8114..8c8d824 100644
+index d4e8114..08e3d37 100644
 --- a/xlivelessness/xlln/xlln-network.cpp
 +++ b/xlivelessness/xlln/xlln-network.cpp
-@@ -732,8 +732,17 @@ static bool ParseNetworkData(uint8_t* data_buffer, size_t data_size, SOCKADDR_ST
+@@ -88,7 +88,11 @@ bool XllnNetEntityGetXnaddrXnkidByInstanceId(const uint32_t instanceId, XNADDR*
+ 		memcpy(&(xnaddr->abOnline), &instanceId, 4);
+ 		
+ 		memcpy((uint8_t*)&(xnaddr->abEnet) + 3, (uint8_t*)&mac_fix + 1, 3);
+-		memcpy((uint8_t*)&(xnaddr->abOnline) + 17, (uint8_t*)&mac_fix + 1, 3);
++		memcpy((uint8_t*)&(xnaddr->abOnline) + 17, (uint8_t*)&mac_fix + 1, 3);
++		// XNetXnAddrToMachineId reads these eight bytes. Leaving them zero makes
++		// every generated peer address resolve to the same null machine identity.
++		const uint64_t machineId = instanceId;
++		memcpy(&xnaddr->abOnline[8], &machineId, sizeof(machineId));
+ 	}
+ 	
+ 	if (xnkid) {
+@@ -732,8 +736,17 @@ static bool ParseNetworkData(uint8_t* data_buffer, size_t data_size, SOCKADDR_ST
  									
  									return true;
  								}

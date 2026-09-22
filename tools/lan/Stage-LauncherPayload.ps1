@@ -22,3 +22,4 @@ Copy-Item -LiteralPath "$repo/tests/lan_profile_test.cpp","$repo/tests/lan_intro
 Copy-Item -LiteralPath "$repo/tests/lan_browser_test.cpp" -Destination "$source/tests"
 Copy-Item -LiteralPath "$repo/tests/lan_keepalive_test.cpp" -Destination "$source/tests"
 Copy-Item -LiteralPath "$repo/tests/lan_diagnostics_test.cpp" -Destination "$source/tests"
+Copy-Item -LiteralPath "$repo/tests/lan_identity_test.cpp" -Destination "$source/tests"
