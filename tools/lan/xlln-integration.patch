@@ -1,17 +1,35 @@
 diff --git a/xlivelessness/xlive/xlive.cpp b/xlivelessness/xlive/xlive.cpp
-index 5c806a3..0b34628 100644
+index 5c806a3..71167d4 100644
 --- a/xlivelessness/xlive/xlive.cpp
 +++ b/xlivelessness/xlive/xlive.cpp
-@@ -309,6 +309,8 @@ HRESULT WINAPI XLiveInput(XLIVE_INPUT_INFO* xlive_input_info)
+@@ -309,6 +309,9 @@ HRESULT WINAPI XLiveInput(XLIVE_INPUT_INFO* xlive_input_info)
  // #5003
  void WINAPI XLiveUninitialize()
  {
++	DiRT2VRLanLog(4, 0, __func__, "Game requested network teardown.");
 +	extern void DiRT2VRLanBrowserStop();
 +	DiRT2VRLanBrowserStop();
  	TRACE_FX();
  	
  	XllnModulesPreXLiveUninitialize();
-@@ -1722,6 +1724,8 @@ HRESULT WINAPI XLiveInitializeEx(XLIVE_INITIALIZE_INFO* xlive_initialise_info, u
+@@ -358,6 +361,7 @@ void WINAPI XLiveUninitialize()
+ 	xlln_remote_user_usernames.clear();
+ 	
+ 	LeaveCriticalSection(&xlive_critsec_remote_user);
++	DiRT2VRLanLogStop();
+ }
+ 
+ // #5010: This function is deprecated.
+@@ -1616,6 +1620,8 @@ HRESULT WINAPI XLiveSignin(wchar_t* live_id_name, wchar_t* live_id_password, uin
+ // #5297
+ HRESULT WINAPI XLiveInitializeEx(XLIVE_INITIALIZE_INFO* xlive_initialise_info, uint32_t title_xlive_version)
+ {
++	DiRT2VRLanLogStart();
++	DiRT2VRLanLog(4, 0, __func__, "instance=%08x transport_port=%hu title_version=%08x", xlln_global_instance_id, xlln_network_instance_port, title_xlive_version);
+ 	TRACE_FX();
+ 	
+ 	// if (IsDebuggerPresent())
+@@ -1722,6 +1728,8 @@ HRESULT WINAPI XLiveInitializeEx(XLIVE_INITIALIZE_INFO* xlive_initialise_info, u
  	}
  	
  	xlive_initialised = true;
@@ -20,6 +38,47 @@ index 5c806a3..0b34628 100644
  	return S_OK;
  }
  
+diff --git a/xlivelessness/xlive/xsocket.cpp b/xlivelessness/xlive/xsocket.cpp
+index dda6a11..5807611 100644
+--- a/xlivelessness/xlive/xsocket.cpp
++++ b/xlivelessness/xlive/xsocket.cpp
+@@ -277,6 +277,7 @@ static void PassthroughStopReader_(XLIVE_TITLE_SOCKET* title_socket)
+ // #4
+ int32_t WINAPI XSocketClose(SOCKET title_socket_handle)
+ {
++	XLLN_DEBUG_LOG(XLLN_LOG_LEVEL_INFO, "Game closing socket=%08x.", title_socket_handle);
+ 	TRACE_FX();
+ 	
+ 	const size_t packetSizeType = sizeof(XllnNetworkPacket::TYPE);
+@@ -440,6 +441,7 @@ int32_t WINAPI XSocketClose(SOCKET title_socket_handle)
+ // #5
+ int32_t WINAPI XSocketShutdown(SOCKET title_socket_handle, int32_t how)
+ {
++	XLLN_DEBUG_LOG(XLLN_LOG_LEVEL_INFO, "Game shutting down socket=%08x how=%d.", title_socket_handle, how);
+ 	TRACE_FX();
+ 	if (
+ 		how != SD_BOTH
+diff --git a/xlivelessness/xlln/debug-log.hpp b/xlivelessness/xlln/debug-log.hpp
+index 9754a81..d68f18f 100644
+--- a/xlivelessness/xlln/debug-log.hpp
++++ b/xlivelessness/xlln/debug-log.hpp
+@@ -46,8 +46,14 @@ void XllnTraceFunc(const char* function_name);
+ #define XLLN_DEBUG_LOG(log_level, message_format, ...) XLLNDebugLogF(log_level, message_format, __VA_ARGS__)
+ #define XLLN_DEBUG_LOG_ECODE(error_code, log_level, message_format, ...) XllnDebugLogECodeF(log_level, error_code, message_format, __VA_ARGS__)
+ #define GET_SOCKADDR_INFO(sockAddrStorage) GetSockAddrInfo(sockAddrStorage)
+-#define TRACE_FX() XllnTraceFunc(__func__)
+-#else
++#define TRACE_FX() XllnTraceFunc(__func__)
++#elif defined(DIRT2VR_LAN_DIAGNOSTICS)
++#include "diagnostics.h"
++#define XLLN_DEBUG_LOG(log_level, message_format, ...) do { if (DiRT2VRLanLogEnabled()) DiRT2VRLanLog(log_level, 0, __func__, message_format, __VA_ARGS__); } while (0)
++#define XLLN_DEBUG_LOG_ECODE(error_code, log_level, message_format, ...) do { if (DiRT2VRLanLogEnabled()) DiRT2VRLanLog(log_level, error_code, __func__, message_format, __VA_ARGS__); } while (0)
++#define GET_SOCKADDR_INFO(sockAddrStorage) (DiRT2VRLanLogEnabled() ? GetSockAddrInfo(sockAddrStorage) : nullptr)
++#define TRACE_FX()
++#else
+ #define XLLN_DEBUG_LOG(log_level, message_format, ...)
+ #define XLLN_DEBUG_LOG_ECODE(error_code, log_level, message_format, ...)
+ #define GET_SOCKADDR_INFO(sockAddrStorage) (0)
 diff --git a/xlivelessness/xlln/xlln-modules.cpp b/xlivelessness/xlln/xlln-modules.cpp
 index ff68ad3..8c0a533 100644
 --- a/xlivelessness/xlln/xlln-modules.cpp

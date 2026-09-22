@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Added opt-in LAN network traces through Settings → Enable diagnostic logging. Each session keeps at most two 4 MiB files containing socket, packet-header, acknowledgement and timeout metadata, without packet payloads. Logging remains off by default. Native logging/transport and launcher tests pass. The two-PC follow-up reached race loading but disconnected at Battersea Rallycross before the grid; that failure remains under investigation.
+
 - Fixed a LAN transport keepalive defect that could time out an otherwise reachable idle peer. Receiving a probe now schedules an acknowledgement through the existing protocol. A regression against the actual DLL fails on the released build and passes with the fix, including ordered data, selective acknowledgements, bounded replies and disconnected-peer timeout. Two-PC lobby/race confirmation is pending.
 
 - Client startup investigation: the supplied alternate wrapper and its two companions successfully reached regular menus in an authorized separate local test with the unchanged LAN shim. Both client variants are retained. PC2's ordinal-43 failure remains unresolved; a system GFWL identity-library dependency is now a concrete lead. Expanded the read-only report to capture companion files, compatibility settings and mapped DLLs even before normal loader initialization. No compatibility fix or new release is claimed.

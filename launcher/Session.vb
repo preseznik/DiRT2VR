@@ -130,6 +130,7 @@ Public Class Session
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
+            ConfigureLogging(lanStart, CreateLogFolder(context, settings.LoggingEnabled))
             Worker.Invoke(context, "prepare-lan")
             If settings.SkipStartupMovies Then Worker.Invoke(context, "prepare-movies")
             WaitForGame(lanStart)

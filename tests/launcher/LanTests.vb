@@ -58,6 +58,11 @@ Module LanTests
             File.Copy(IO.Path.Combine(repo, "artifacts/game", relative), destination)
         Next
         Dim start = LanSession.StartInfo(context, True)
+        Session.ConfigureLogging(start, Session.CreateLogFolder(context, False))
+        check(start.Environment("DIRT2VR_LOGGING") = "0" AndAlso Not start.Environment.ContainsKey("DIRT2VR_OUTPUT") AndAlso Not Directory.Exists(IO.Path.Combine(context.UserRoot, "logs")), "LAN logging off creates no session folder")
+        Dim logFolder = Session.CreateLogFolder(context, True)
+        Session.ConfigureLogging(start, logFolder)
+        check(start.Environment("DIRT2VR_LOGGING") = "1" AndAlso start.Environment("DIRT2VR_OUTPUT") = logFolder AndAlso Directory.Exists(logFolder), "LAN logging opt-in uses launcher session folder")
         check(start.Environment("DIRT2VR_LAN_HOST") = "1" AndAlso Not start.Environment.ContainsKey("DIRT2VR_LAN_JOIN"), "HOST explicitly advertises launch intent")
             check(start.ArgumentList.Count = 0 AndAlso start.Environment("DIRT2VR_ACTIVE") = "0" AndAlso Not start.Environment.ContainsKey("DIRT2VR_DIRECT_PRACTICE"), "LAN starts native menus without demo or VR")
             check(start.Environment("DIRT2VR_LAN_SKIP_INTRO") = "1" AndAlso start.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1" AndAlso Not start.Environment.ContainsKey("DIRT2VR_LAN_DOCUMENTS"), "LAN uses normal career without a Documents redirect or import")

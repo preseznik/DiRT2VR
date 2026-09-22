@@ -1,5 +1,13 @@
 # LAN baseline prototype
 
+## Battersea loading disconnect and bounded trace
+
+After the 0.6.6 keepalive correction, the tester joined the lobby and started Rallycross at Battersea, but the peer disconnected as the event loaded, before the grid. The report does not establish both machines' exact loading state or prove a cause. No timeout or gameplay behavior is changed by the diagnostic build.
+
+The existing launcher logging preference now applies to LAN. `tools/lan/diagnostics.cpp` routes selected release-build XLLN network messages into the launcher's session folder. It excludes API-call tracing and unrelated user APIs, records UTC/monotonic timestamps, process/thread IDs, socket/packet metadata and errors, and never dumps payload bytes. A locked writer rotates `lan-network.log` into `lan-network.previous.log` at 4 MiB each. Disabled logging creates neither files nor a session folder. Failure to write disables logging without stopping play. Normal teardown closes the file after network workers stop. Release logging does not enable upstream debug windows or its unbounded logger.
+
+Five native CTests pass, including opt-in/error-preservation/filtering/concurrent-rotation tests. The real-DLL keepalive regression also passes with logging enabled: 40 probes/40 acknowledgements, ordered data, selective acknowledgements and genuine peer timeout; its trace contains the expected lost-connection and teardown sequence. All 334 launcher checks pass. Evidence is retained locally in `artifacts/test-lan-diagnostics-build.log`, `artifacts/test-lan-network-enabled.log`, `artifacts/lan-network-loopback` and `artifacts/test-launcher-network.log`. Next acceptance requires paired traces from the same two-PC Battersea event, with both clients on the trace build. This is diagnostic coverage, not a confirmed loading-disconnect fix.
+
 ## Idle lobby disconnect investigation
 
 The tester reports that PC2 now discovers the host in the launcher, starts through JOIN and joins the native lobby, but both players see the other disappear after a few seconds while waiting without starting a race. They reported no deliberate PC2 change between the startup failure and successful join. The new collector report (2026-09-22 11:15 UTC, retained locally as `artifacts/lan-startup-pc2-working-20260922.json`) shows only the game's local `xlive.dll` mapped, with the expected packaged SHA-256 `BA29750B...76BE7F`; the system GFWL DLL is not mapped. Its supported game/companion files match the separate local client test. `E:\Games\Dirt 2` also matches that alternate client and was inspected read-only. No client-specific LAN backend or executable replacement is needed.
