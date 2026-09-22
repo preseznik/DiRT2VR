@@ -24,7 +24,9 @@ Startup logo skipping applies to all launcher modes through a separate fixed-pur
 
 The current launcher suite passes 301 checks, including normal-career launch environment, no private Documents creation, ignored old copy preferences, retained network identity, removed import controls and startup movie structural/recovery tests.
 
-On 2026-09-22, the tester confirmed an intermediate 0.5.1 build loaded a copy of their usual career, skipped startup logos and reached LAN. They then explicitly requested a single shared career, replacing the copy workflow. That earlier run restored original xlive/states files and left the 61 original career files unchanged. The shared-career revision still needs a live LAN-to-normal-play save check; it must not be inferred from the earlier copy test.
+On 2026-09-22, the tester confirmed an intermediate 0.5.1 build loaded a copy of their usual career, skipped startup logos and reached LAN. They then explicitly requested a single shared career, replacing the copy workflow. That earlier run restored original xlive/states files and left the 61 original career files unchanged.
+
+Shared-career package `0.5.3` passed both native LAN tests and 301 launcher checks; its manifest hashes verified and its ZIP contained no save or recovery data. The native receipt confirmed `Normal career: system Documents lookup unchanged` during the live test. The tester confirmed a change persisted from LAN into Normal Launch after using the game's **Save Profile** action. This proves manually saved cross-mode continuity, not automatic saving or complete race progression. After normal shutdown, the session returned Ready, original `xlive.dll` and `system/states.bin` hashes matched, and both pending journals were absent.
 
 ## Implemented
 
