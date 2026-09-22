@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- PC2's ordinal-43 report confirms correct game/shim files and an active recovery journal, with a different startup wrapper from the working PC. A direct-start candidate reached LAN initialization but failed the local game check; it was reverted and package 0.6.5 was not released. The client startup issue remains under investigation.
+
 - Added a read-only LAN startup report tool for ordinal/DLL-loading failures. It records running game/launcher paths, relevant loaded DLLs, file hashes and recovery state without reading saves or changing the installation. The reported client ordinal-43 failure remains under investigation.
 
 - Fixed blocking updater work after download: verification, recovery and installer startup now run off the window thread, with separate status messages. Recovery retains the session guard and checksum checks; cancellation or recovery errors prevent setup. Older installed launchers need a manual installer update if their updater freezes.
