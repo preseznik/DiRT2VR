@@ -1,5 +1,13 @@
 # Launcher releases and updates
 
+## Post-download responsiveness
+
+The old updater performed its synchronous file flush/hash, recovery worker wait and shell installer startup on the WinForms thread. A user reported the alpha.5 launcher becoming unresponsive at the end of the download, with no other dialog. The exact blocking operation on that PC was not captured. All three potentially blocking phases now run off the UI thread, and the dialog labels verification, restoration and setup startup separately. Download progress is limited to changed percentages and the complete HTTP body transfer has a ten-minute cancellation deadline.
+
+`PrepareInstallerAsync` acquires and releases the thread-affine session mutex within one background delegate. It restores graphics under the user's account, invokes the fixed-purpose file worker without hidden error dialogs, and propagates errors. Cancellation is checked before and after recovery; it does not terminate a worker midway through a journaled restoration. Recovery failure or cancellation prevents installer startup. Existing installed binaries cannot receive this fix until upgraded, so affected users must run the published installer directly once.
+
+Regression tests deliberately block recovery while pumping a WinForms timer, verify the session guard remains held, cancel and verify release, reject competing sessions, propagate recovery errors and retry successfully. A synchronous HTTP fixture also verifies download/verification work leaves the UI thread, alongside the existing checksum, size and cancellation checks.
+
 The Help / About panel reads the assembly informational version. Packaged builds also include their UTC build timestamp and Git revision. `launcher/DiRT2VR.vbproj` is the version source; Inno Setup and `package.json` receive that same version. Use a new SemVer version for every published update; metadata or a replacement asset under the same version is not considered newer.
 
 ## Publish

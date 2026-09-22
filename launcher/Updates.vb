@@ -123,33 +123,69 @@ Public Class UpdateService
             End Using
         End Using
     End Function
-    Public Async Function DownloadAsync(update As ReleaseUpdate, folder As String, progress As IProgress(Of Integer), token As CancellationToken) As Task(Of String)
+    Public Function DownloadAsync(update As ReleaseUpdate, folder As String, progress As IProgress(Of Integer), token As CancellationToken) As Task(Of String)
+        ' Disk flush, hashing and antivirus inspection must not block the window thread.
+        Return Task.Run(Function() DownloadCoreAsync(update, folder, progress, token), token)
+    End Function
+    Private Async Function DownloadCoreAsync(update As ReleaseUpdate, folder As String, progress As IProgress(Of Integer), token As CancellationToken) As Task(Of String)
         If update.Download Is Nothing Then Throw New IOException("This release has no verifiable installer. Open Releases for manual installation.")
         Files.NoLinks(folder) : Directory.CreateDirectory(folder)
         Dim target = IO.Path.Combine(folder, Guid.NewGuid().ToString("N") & "-" & update.AssetName)
         Dim temporary = target & ".part"
         Try
-            Using response = Await client.GetAsync(update.Download, HttpCompletionOption.ResponseHeadersRead, token)
-                response.EnsureSuccessStatusCode()
-                Using source = Await response.Content.ReadAsStreamAsync(token), output As New FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, True)
-                    Dim buffer(81919) As Byte, total As Long
-                    While True
-                        Dim count = Await source.ReadAsync(buffer, token)
-                        If count = 0 Then Exit While
-                        total += count
-                        If total > update.Size OrElse total > MaxDownload Then Throw New IOException("Update download exceeded its expected size.")
-                        Await output.WriteAsync(buffer.AsMemory(0, count), token)
-                        progress?.Report(CInt(total * 100 \ update.Size))
-                    End While
-                    output.Flush(True)
-                    If total <> update.Size Then Throw New IOException("Update download was incomplete. Please retry.")
+            Using timeout = CancellationTokenSource.CreateLinkedTokenSource(token)
+                timeout.CancelAfter(TimeSpan.FromMinutes(10))
+                token = timeout.Token
+                Using response = Await client.GetAsync(update.Download, HttpCompletionOption.ResponseHeadersRead, token)
+                    response.EnsureSuccessStatusCode()
+                    Using source = Await response.Content.ReadAsStreamAsync(token), output As New FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None, 81920, True)
+                        Dim buffer(81919) As Byte, total As Long, lastPercent As Integer = -1
+                        While True
+                            Dim count = Await source.ReadAsync(buffer, token)
+                            If count = 0 Then Exit While
+                            total += count
+                            If total > update.Size OrElse total > MaxDownload Then Throw New IOException("Update download exceeded its expected size.")
+                            Await output.WriteAsync(buffer.AsMemory(0, count), token)
+                            Dim percent = CInt(total * 100 \ update.Size)
+                            If percent <> lastPercent Then progress?.Report(percent)
+                            lastPercent = percent
+                        End While
+                        output.Flush(True)
+                        If total <> update.Size Then Throw New IOException("Update download was incomplete. Please retry.")
+                    End Using
                 End Using
+                token.ThrowIfCancellationRequested()
+                If Not String.Equals(Files.Hash(temporary), update.Digest, StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Update checksum does not match GitHub. The download was discarded.")
+                token.ThrowIfCancellationRequested()
+                File.Move(temporary, target)
+                Return target
             End Using
-            If Not String.Equals(Files.Hash(temporary), update.Digest, StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Update checksum does not match GitHub. The download was discarded.")
-            File.Move(temporary, target)
-            Return target
         Finally
             If File.Exists(temporary) Then File.Delete(temporary)
         End Try
+    End Function
+    Public Shared Function PrepareInstallerAsync(context As InstallContext, recoverFiles As Action, token As CancellationToken) As Task
+        Return Task.Run(Sub()
+                            token.ThrowIfCancellationRequested()
+                            ' Mutex ownership is thread-affine: acquire and release inside this one worker.
+                            Using guard As New Mutex(False, "Global\DiRT2VR.Session")
+                                Dim held As Boolean
+                                Try
+                                    held = guard.WaitOne(0)
+                                Catch ex As AbandonedMutexException
+                                    held = True
+                                End Try
+                                If Not held Then Throw New IOException("Close the running DiRT2VR session before updating.")
+                                Try
+                                    context.RequireClosed()
+                                    Call (New GraphicsTransaction(context)).Recover()
+                                    token.ThrowIfCancellationRequested()
+                                    recoverFiles()
+                                    token.ThrowIfCancellationRequested()
+                                Finally
+                                    guard.ReleaseMutex()
+                                End Try
+                            End Using
+                        End Sub, token)
     End Function
 End Class

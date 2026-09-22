@@ -104,6 +104,7 @@ Module UpdateTests
         check(UpdateService.SelectUpdate("[{""tag_name"":""unrelated""}]", "0.1.0", True) Is Nothing, "unrelated release ignored")
         Dim start = AboutForm.InstallerStartInfo("C:\download folder\setup.exe", "F:\Games Ž\DiRT 2")
         check(start.UseShellExecute AndAlso start.ArgumentList.SequenceEqual({"/DIR=F:\Games Ž\DiRT 2", "/NORESTART"}), "installer handoff preserves Unicode/spaces and is interactive")
+        BackgroundPhases(folder, check)
         Task.Run(Async Function()
                      Await NetworkTests(folder, check)
                      If live Then
@@ -114,6 +115,74 @@ Module UpdateTests
                          End Using
                      End If
                  End Function).GetAwaiter().GetResult()
+    End Sub
+
+    Private Sub BackgroundPhases(folder As String, check As Action(Of Boolean, String))
+        Dim context As New InstallContext(Path.Combine(folder, "update recovery game"), Path.Combine(folder, "update recovery user"))
+        Dim uiThread = Environment.CurrentManagedThreadId, workerThread As Integer, ticks As Integer
+        Using window As New Form(), timer As New System.Windows.Forms.Timer With {.Interval = 10}, entered As New ManualResetEventSlim(), release As New ManualResetEventSlim(), cancel As New CancellationTokenSource()
+            window.ShowInTaskbar = False : window.StartPosition = FormStartPosition.Manual : window.Location = New Drawing.Point(-32000, -32000)
+            window.Show()
+            AddHandler timer.Tick, Sub() ticks += 1
+            timer.Start()
+            Dim preparation = UpdateService.PrepareInstallerAsync(context, Sub()
+                                                                              workerThread = Environment.CurrentManagedThreadId
+                                                                              entered.Set()
+                                                                              If Not release.Wait(5000) Then Throw New TimeoutException("Recovery test gate timed out")
+                                                                          End Sub, cancel.Token)
+            Try
+                PumpUntil(Function() preparation.IsCompleted OrElse (entered.IsSet AndAlso ticks > 1))
+                If preparation.IsCompleted Then preparation.GetAwaiter().GetResult()
+                check(entered.IsSet AndAlso ticks > 1 AndAlso Not preparation.IsCompleted AndAlso workerThread <> uiThread, "update recovery keeps the Windows message loop responsive while worker is blocked")
+                Using guard As New Mutex(False, "Global\DiRT2VR.Session")
+                    Dim acquired = guard.WaitOne(0)
+                    If acquired Then guard.ReleaseMutex()
+                    check(Not acquired, "update recovery holds the session guard on its worker thread")
+                End Using
+                cancel.Cancel()
+            Finally
+                release.Set()
+            End Try
+            Dim canceled As Boolean
+            Try
+                preparation.GetAwaiter().GetResult()
+            Catch ex As OperationCanceledException
+                canceled = True
+            End Try
+            check(canceled, "cancel during recovery prevents proceeding to installer")
+            window.Close()
+        End Using
+        Dim called As Boolean, rejected As Boolean
+        Using guard As New Mutex(False, "Global\DiRT2VR.Session")
+            check(guard.WaitOne(0), "canceled update releases its session guard")
+            Try
+                UpdateService.PrepareInstallerAsync(context, Sub() called = True, CancellationToken.None).GetAwaiter().GetResult()
+            Catch ex As IOException
+                rejected = True
+            Finally
+                guard.ReleaseMutex()
+            End Try
+        End Using
+        check(rejected AndAlso Not called, "update refuses recovery while another session holds the guard")
+        rejected = False
+        Try
+            UpdateService.PrepareInstallerAsync(context, Sub() Throw New IOException("recovery conflict"), CancellationToken.None).GetAwaiter().GetResult()
+        Catch ex As IOException
+            rejected = ex.Message = "recovery conflict"
+        End Try
+        check(rejected, "recovery errors propagate to the updater instead of starting setup")
+        UpdateService.PrepareInstallerAsync(context, Sub() called = True, CancellationToken.None).GetAwaiter().GetResult()
+        check(called, "a recovery failure releases the guard and allows a retry")
+        Dim downloadThread As Integer, payload = Encoding.UTF8.GetBytes("verified update test")
+        Dim update As New ReleaseUpdate With {.Download = "https://github.com/preseznik/DiRT2VR/test", .AssetName = "test-setup.exe", .Size = payload.Length, .Digest = Convert.ToHexString(SHA256.HashData(payload))}
+        Using client As New HttpClient(New ReplyHandler(Function()
+                                                           downloadThread = Environment.CurrentManagedThreadId
+                                                           Return New HttpResponseMessage(HttpStatusCode.OK) With {.Content = New ByteArrayContent(payload)}
+                                                       End Function))
+            Dim download = New UpdateService(client).DownloadAsync(update, Path.Combine(folder, "background update"), Nothing, CancellationToken.None)
+            check(download.Wait(5000) AndAlso downloadThread <> uiThread, "download and verification run off the UI even when HTTP operations complete synchronously")
+            check(File.ReadAllBytes(download.Result).SequenceEqual(payload), "background download still verifies and preserves installer bytes")
+        End Using
     End Sub
 
     Private Async Function NetworkTests(folder As String, check As Action(Of Boolean, String)) As Task

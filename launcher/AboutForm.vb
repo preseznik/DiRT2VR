@@ -114,36 +114,33 @@ Public Class AboutForm
     Private Async Function InstallUpdate() As Task
         If working OrElse availableUpdate?.Download Is Nothing Then Return
         SetWorking(True) : progress.Value = 0 : progress.Visible = True
+        Dim downloading = True
         Try
             context.RequireClosed()
             status.Text = "Downloading update… Close this window to cancel."
             Dim reporter As New Progress(Of Integer)(Sub(value)
-                                                        If Not IsDisposed Then progress.Value = value
+                                                        If Not IsDisposed AndAlso downloading Then
+                                                            progress.Value = value
+                                                            If value = 100 Then status.Text = "Verifying download… Close this window to cancel."
+                                                        End If
                                                     End Sub)
             Dim installer = Await New UpdateService(client).DownloadAsync(availableUpdate, IO.Path.Combine(context.UserRoot, "updates"), reporter, cancellation.Token)
+            downloading = False
             cancellation.Token.ThrowIfCancellationRequested()
+            status.Text = "Restoring original files before setup… Close this window to cancel setup."
             ' Restore under the playing user's account before the installer can elevate.
-            Using guard As New Mutex(False, "Global\DiRT2VR.Session")
-                Dim held As Boolean
-                Try
-                    held = guard.WaitOne(0)
-                Catch ex As AbandonedMutexException
-                    held = True
-                End Try
-                If Not held Then Throw New IOException("Close the running DiRT2VR session before updating.")
-                Try
-                    context.RequireClosed()
-                    Call (New GraphicsTransaction(context)).Recover()
-                    Worker.Invoke(context, "recover")
-                Finally
-                    guard.ReleaseMutex()
-                End Try
-            End Using
-            Process.Start(InstallerStartInfo(installer, context.GameRoot))
+            Await UpdateService.PrepareInstallerAsync(context, Sub() Worker.Invoke(context, "recover", quiet:=True), cancellation.Token)
+            cancellation.Token.ThrowIfCancellationRequested()
+            status.Text = "Opening setup… Windows may request administrator approval."
             Dim launcher = Owner
-            Close() : launcher?.Close()
+            Await Task.Run(Sub()
+                               cancellation.Token.ThrowIfCancellationRequested()
+                               Process.Start(InstallerStartInfo(installer, context.GameRoot))
+                           End Sub, cancellation.Token)
+            If Not IsDisposed Then Close()
+            launcher?.Close()
         Catch ex As OperationCanceledException
-            If Not IsDisposed Then status.Text = "Update canceled. The current installation is unchanged."
+            If Not IsDisposed Then status.Text = "Update canceled or timed out. Setup was not started."
         Catch ex As Exception
             If Not IsDisposed Then status.Text = "Update could not start: " & ex.Message
         Finally

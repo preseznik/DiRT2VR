@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Fixed blocking updater work after download: verification, recovery and installer startup now run off the window thread, with separate status messages. Recovery retains the session guard and checksum checks; cancellation or recovery errors prevent setup. Older installed launchers need a manual installer update if their updater freezes.
+
 - Enlarged the launcher's initial window and fitted Settings content to the display's working area; smaller monitors retain scrolling.
 - Moved multiplayer out of the Launcher mode list into a neighboring **Multiplayer** tab with **HOST**, **JOIN**, **Refresh** and a LAN server browser. HOST retains the native-menu launch flow and advertises a **HOST game running** entry, without claiming a lobby or player count. JOIN adds the selected LAN PC to the game's network peers; players finish joining through the game's Multiplayer / LAN menu. Both PCs need the updated package. Automatic lobby entry remains unfinished. Native/launcher tests and loopback UDP checks cover discovery, expiry and peer setup; two-PC browser/JOIN acceptance is pending.
 

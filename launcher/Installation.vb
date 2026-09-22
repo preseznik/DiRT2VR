@@ -78,7 +78,7 @@ Public Module Worker
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same")
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False)
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
@@ -91,11 +91,11 @@ Public Module Worker
                 start.ArgumentList.Add("--track") : start.ArgumentList.Add(trackId)
             End If
         End If
-        If Environment.GetCommandLineArgs().Contains("--quiet") Then start.ArgumentList.Add("--quiet")
+        If quiet OrElse Environment.GetCommandLineArgs().Contains("--quiet") Then start.ArgumentList.Add("--quiet")
         Using child = Process.Start(start)
             child.WaitForExit()
             If child.ExitCode = 0 Then Return
-            If child.ExitCode <> 5 Then Throw New IOException("File operation failed: " & operation & ". See the worker error message; backups were preserved.")
+            If child.ExitCode <> 5 Then Throw New IOException("File operation failed: " & operation & If(quiet, ". Use Restore original files in the launcher to see the recovery error; backups were preserved.", ". See the worker error message; backups were preserved."))
         End Using
         ' Only this fixed-purpose worker elevates; it never starts the game.
         start.UseShellExecute = True : start.Verb = "runas" : start.WindowStyle = ProcessWindowStyle.Hidden
