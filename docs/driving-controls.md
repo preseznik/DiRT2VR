@@ -40,5 +40,5 @@ The static-runtime Release DLL was checked in `artifacts/controls-probe-20260923
 
 The release-source launcher suite passed 492 checks in each Windows theme; the native suite passed all 15 tests. The genuine-GFWL integrity regression also passed. The optional capture helper loaded successfully, but no controller was attached during that local check; axis/button cases used synthetic samples.
 
-Validation of the revised capture: 528 release-source launcher checks passed in rtifacts/launcher-tests-20260923-210009 (light theme); the preceding dark run passed 526 checks before adding the two final button-filter tests. Offscreen editor/wizard renders were inspected. The live XInput device sample marshalled correctly, but in-game steering and the physical Fanatec handbrake require user acceptance.
+Validation of the revised capture: 528 release-source launcher checks passed in artifacts/launcher-tests-20260923-210009 (light theme); the preceding dark run passed 526 checks before adding the two final button-filter tests. Offscreen editor/wizard renders were inspected. The live XInput device sample marshalled correctly, but in-game steering and the physical Fanatec handbrake require user acceptance.
 
