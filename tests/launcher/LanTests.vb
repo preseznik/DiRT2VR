@@ -100,12 +100,41 @@ Module LanTests
             Dim graphics As New GraphicsTransaction(context)
             If preparedSteps >= 2 Then graphics.Prepare(vrSettings)
             If preparedSteps >= 3 Then Worker.Run(context, "prepare-lan")
-            If preparedSteps >= 4 Then Worker.Run(context, "prepare-movies")
+            If preparedSteps >= 4 Then
+                rejected = False
+                Try
+                    Worker.Run(context, "prepare-movies")
+                Catch ex As IOException
+                    rejected = True
+                End Try
+                check(rejected AndAlso Files.Hash(IO.Path.Combine(root, "system/states.bin")) = StartupMovies.OriginalHash AndAlso Not (New StartupMovies(context)).Pending, "LAN rejects startup edits before journaling or modifying validated states")
+            End If
             ' Same cleanup as Session.Run after failure at each preparation stage or normal exit.
             graphics.Recover() : Worker.Run(context, "recover")
             check(originals.All(Function(entry) Files.Hash(entry.Key) = entry.Value), "combined VR/LAN preparation restores every original at stage " & preparedSteps)
             check(Not graphics.Pending AndAlso Not transaction.Pending AndAlso Not (New AssetTransaction(context)).Pending AndAlso Not (New StartupMovies(context)).Pending, "combined cleanup clears all transaction journals")
         Next
+        Worker.Run(context, "prepare-movies")
+        rejected = False
+        Try
+            Worker.Run(context, "prepare-lan")
+        Catch ex As IOException
+            rejected = True
+        End Try
+        check(rejected AndAlso Not transaction.Pending AndAlso Files.Hash(target) = original, "LAN preparation rejects pending startup edits without replacing xlive")
+        For Each skipIntro In {False, True}
+            For Each peer In New String() {Nothing, "192.168.1.25:39000"}
+                rejected = False
+                Try
+                    LanSession.StartInfo(context, skipIntro, peer)
+                Catch ex As IOException
+                    rejected = True
+                End Try
+                check(rejected, "HOST/JOIN rejects altered states regardless of introduction setting")
+            Next
+        Next
+        Worker.Run(context, "recover")
+        check(Files.Hash(IO.Path.Combine(root, "system/states.bin")) = StartupMovies.OriginalHash, "old movie transaction restores the LAN-compatible original")
         Dim joining = LanSession.StartInfo(context, False, "192.168.1.25:39000")
         check(joining.Environment("DIRT2VR_LAN_JOIN") = "192.168.1.25:39000" AndAlso joining.Environment("DIRT2VR_LAN_DISCOVERY") = "1" AndAlso joining.Environment("DIRT2VR_LAN_HOST") = "0", "JOIN passes a validated native endpoint without advertising host intent")
         File.WriteAllText(LanSession.ReceiptPath(context), "stale receipt")

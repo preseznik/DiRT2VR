@@ -9,7 +9,7 @@ Public Class MainForm
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
-    Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (all launch modes)", .Name = "SkipStartupMovies", .AutoSize = True}
+    Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (single-player launches)", .Name = "SkipStartupMovies", .AutoSize = True}
     Private ReadOnly serverList As New ListView With {.Name = "LanServers", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Top, .Height = 300}
     Private ReadOnly hostButton As New Button With {.Name = "HostLAN", .Text = "HOST", .AutoSize = True}
     Private ReadOnly joinButton As New Button With {.Name = "JoinLAN", .Text = "JOIN", .AutoSize = True, .Enabled = False}
@@ -349,7 +349,7 @@ Public Class MainForm
                                  End Sub
         runtimeRow.Controls.Add(browse) : content.Controls.Add(runtimeRow)
         skipStartupMovies.Checked = settings.SkipStartupMovies : content.Controls.Add(skipStartupMovies)
-        content.Controls.Add(Note("Skip the Codemasters, Intel, AMD and EGO startup movies. Other videos and the legal screen remain. Original movie definitions are restored after play."))
+        content.Controls.Add(Note("Skip the Codemasters, Intel, AMD and EGO startup movies in single-player launches. LAN keeps these movies because changing their definitions fails the game's race-loading checks. Other videos and the legal screen remain. Original definitions are restored after play."))
         content.Controls.Add(Note("LAN uses the same career and graphics settings as normal play. No import or separate save is needed."))
         skipIntroduction.Checked = settings.SkipIntroduction : content.Controls.Add(skipIntroduction)
         content.Controls.Add(Note("LAN only: skip the opening movie and forced tutorial while keeping profile creation. Applies on the next LAN launch; turning it off does not undo saved progress. Normal Launch, Practice and Race are unaffected."))

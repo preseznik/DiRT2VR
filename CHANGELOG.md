@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Fixed the identified LAN race-loading disconnect caused by startup logo skipping. Live 0.7.0 captures identified modified `system\states.bin` as the failed validation record; disabling logo skipping on both PCs allowed both players to drive, finish Battersea and reach results. LAN launches now preserve that file even when the preference is enabled. HOST/JOIN preflight rejects altered definitions, and preparation guards prevent combining LAN and movie edits. Single-player logo skipping and LAN's separate introduction skip remain available. All 378 launcher checks pass; LAN VR remains unverified.
+
 - HOST and JOIN now ask for Desktop or VR on every launch, with Cancel available. LAN VR uses the existing SteamVR preflight, graphics/controls settings and combined recovery of VR assets, graphics, startup movies and the LAN DLL. The shared career and HOST/JOIN endpoint are preserved. Launcher tests pass; multiplayer headset testing is deferred, and the race-loading disconnect remains unresolved.
 
 - The 0.6.10 host diagnostic captured the game's session teardown path, but the two-PC loading disconnect persists. The next investigation targets the preceding session-state change; further gameplay testing is deferred.

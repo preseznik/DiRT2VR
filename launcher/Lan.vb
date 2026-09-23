@@ -35,6 +35,7 @@ Public Class LanTransaction
     Public Sub Prepare(Optional afterJournal As Action = Nothing)
         CheckPaths()
         If Pending Then Throw New IOException("LAN recovery is pending.")
+        If New StartupMovies(context).Pending Then Throw New IOException("Restore startup movie files before preparing LAN play.")
         Const relative As String = "DiRT2VR/payload/xlive-lan.dll"
         Dim payload = IO.Path.Combine(context.GameRoot, relative)
         Files.NoLinks(payload)
@@ -93,6 +94,9 @@ Public Module LanSession
     Public Function StartInfo(context As InstallContext, skipIntroduction As Boolean, Optional joinTarget As String = Nothing) As ProcessStartInfo
         context.RequireClosed()
         If joinTarget IsNot Nothing Then joinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
+        Dim statesPath = IO.Path.Combine(context.GameRoot, "system", "states.bin")
+        Files.NoLinks(statesPath)
+        If Not File.Exists(statesPath) OrElse Files.Hash(statesPath) <> StartupMovies.OriginalHash Then Throw New IOException("LAN requires the original system\states.bin; modified startup definitions cause a disconnect when loading a race. Use Restore original files, or restore this file from your game installation.")
         If skipIntroduction Then
             Dim assets As New Dictionary(Of String, String) From {
                 {"system/states.bin", "62606A2C6A09F8E9E7AF172141418812E95337672BB31102849C59FD6676D3AD"},
