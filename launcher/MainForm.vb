@@ -34,7 +34,7 @@ Public Class MainForm
     Private ReadOnly opponentHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
-    Private ReadOnly hudDistance As New ValueSlider("HudDistance", 2, 40, 8, " m", 2D)
+    Private ReadOnly hudDistance As New ValueSlider("HudDistance", 2, 40, 2, " m", 2D)
     Private ReadOnly hudGauges As New CheckBox With {.Text = "Speedometer / gear / revs", .Name = "HudGauges", .AutoSize = True}
     Private ReadOnly hudLapTime As New CheckBox With {.Text = "Lap / time", .Name = "HudLapTime", .AutoSize = True}
     Private ReadOnly hudPosition As New CheckBox With {.Text = "Race position", .Name = "HudPosition", .AutoSize = True}
@@ -382,7 +382,7 @@ Public Class MainForm
         AddGraphicsRow(grid, "Field of view (%)", fieldOfView, "Experimental crop. 100% = full view. Lower = fewer pixels, narrower view.")
         AddGraphicsRow(grid, "Car mirrors", mirrors, "Disabling mirrors may reduce GPU work.")
         hudDistance.Value = CInt(settings.HudDistance * 2D)
-        AddGraphicsRow(grid, "HUD distance", hudDistance, "1–20 metres, in 0.5 m steps. Keeps the HUD's apparent size. Default: 4 m.")
+        AddGraphicsRow(grid, "HUD distance", hudDistance, "1–20 metres, in 0.5 m steps. Keeps the HUD's apparent size. Default: 1 m.")
         content.Controls.Add(grid)
         hudFollow.Checked = settings.HudFollowView : content.Controls.Add(hudFollow)
         content.Controls.Add(New Label With {.Text = "Show HUD areas", .AutoSize = True})
@@ -401,8 +401,9 @@ Public Class MainForm
         AddHandler defaults.Click, Sub()
                                        renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False
-                                       hudDistance.Value = 8
-                                       For Each element In {hudGauges, hudLapTime, hudPosition, hudMap, hudProgress}
+                                       hudDistance.Value = 2
+                                       hudGauges.Checked = False
+                                       For Each element In {hudLapTime, hudPosition, hudMap, hudProgress}
                                            element.Checked = True
                                        Next
                                    End Sub

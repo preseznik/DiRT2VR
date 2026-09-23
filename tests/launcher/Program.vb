@@ -1,4 +1,4 @@
-Imports System.IO
+﻿Imports System.IO
 Imports System.Windows.Forms
 Imports DiRT2VR
 
@@ -95,14 +95,14 @@ Module Program
         Check(document.DocumentElement.GetAttribute("unrelatedTest") = "keep", "unrelated graphics changes retained")
         Check(DirectCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/resolution"), Xml.XmlElement).GetAttribute("width") <> "1600", "VR resolution restored during merge")
         Dim setting As New VrSettings()
-        Check(setting.HiddenHudElements = 0, "new settings keep every HUD element visible")
-        Check(setting.HudDistance = 4D AndAlso System.Text.Json.JsonSerializer.Deserialize(Of VrSettings)("{}").HudDistance = 4D, "HUD distance defaults to four metres for new and old settings")
+        Check(setting.HiddenHudElements = 1, "new settings hide gauges and keep other HUD areas visible")
+        Check(setting.HudDistance = 1D AndAlso System.Text.Json.JsonSerializer.Deserialize(Of VrSettings)("{}").HudDistance = 1D, "HUD distance defaults to one metre when not previously saved")
         For Each pair In {(-1D, 1D), (100D, 20D), (3.3D, 3.5D)}
             Dim distanceSettings As New VrSettings With {.HudDistance = pair.Item1}
             distanceSettings.Validate()
             Check(distanceSettings.HudDistance = pair.Item2, "HUD distance is bounded and rounded to half-metre steps")
         Next
-        Check(System.Text.Json.JsonSerializer.Deserialize(Of VrSettings)("{}").HiddenHudElements = 0, "older settings retain all HUD elements")
+        Check(System.Text.Json.JsonSerializer.Deserialize(Of VrSettings)("{}").HiddenHudElements = 1, "absent HUD preferences use the new defaults")
         Dim focus As New StartupFocusPolicy(0, 10)
         Check(Not focus.ShouldActivate(New IntPtr(11), New IntPtr(11), 10, 100), "initial game window does not force focus")
         Check(Not focus.ShouldActivate(IntPtr.Zero, New IntPtr(20), 10, 200), "window replacement gap does not activate another app")
@@ -412,13 +412,13 @@ Module Program
             Check(hudToggle.Parent.Parent.Text = "Graphics", "HUD follow control is on Graphics tab")
             hudToggle.Checked = True
             Dim distanceSlider = DirectCast(form.Controls.Find("HudDistance", True).Single(), ValueSlider)
-            Check(distanceSlider.Value = 8, "HUD distance slider defaults to four metres")
+            Check(distanceSlider.Value = 2, "HUD distance slider defaults to one metre")
             distanceSlider.Value = 13
             Check(form.Controls.Find("HudDistanceValue", True).Single().Text = 6.5D.ToString("0.0") & " m", "HUD distance slider displays metres")
             Dim hudNames = {"HudGauges", "HudLapTime", "HudPosition", "HudMap", "HudProgress"}
             For Each name In hudNames
                 Dim element = DirectCast(form.Controls.Find(name, True).Single(), CheckBox)
-                Check(element.Checked AndAlso element.Parent.Parent Is hudToggle.Parent, name & " starts checked below follow-view on Graphics")
+                Check(element.Checked = (name <> "HudGauges") AndAlso element.Parent.Parent Is hudToggle.Parent, name & " uses its default below follow-view on Graphics")
                 element.Checked = False
             Next
             Dim scaleSlider = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
@@ -460,8 +460,8 @@ Module Program
             tabs.SelectedIndex = 2
             form.Controls.Find("HudFollowView", True).Single().Parent.Controls.OfType(Of Button).Single(Function(b) b.Text = "Restore graphics defaults").PerformClick()
             Check(Not hudToggle.Checked, "Restore graphics defaults returns HUD to fixed placement")
-            Check(distanceSlider.Value = 8, "Restore graphics defaults restores four metre HUD distance")
-            Check(hudNames.All(Function(name) DirectCast(form.Controls.Find(name, True).Single(), CheckBox).Checked), "Restore graphics defaults shows all HUD elements")
+            Check(distanceSlider.Value = 2, "Restore graphics defaults restores one metre HUD distance")
+            Check(hudNames.All(Function(name) DirectCast(form.Controls.Find(name, True).Single(), CheckBox).Checked = (name <> "HudGauges")), "Restore graphics defaults hides only the gauges")
             form.Close()
         End Using
         ' Exercise the real entry point in a child process, not only MainForm in this harness.

@@ -105,8 +105,8 @@ Public Class VrSettings
     Public Property HeadsetScale As Integer = 50
     Public Property FieldOfView As Integer = 100
     Public Property HudFollowView As Boolean = False
-    Public Property HudDistance As Decimal = 4D
-    Public Property HudGauges As Boolean = True
+    Public Property HudDistance As Decimal = 1D
+    Public Property HudGauges As Boolean = False
     Public Property HudLapTime As Boolean = True
     Public Property HudPosition As Boolean = True
     Public Property HudMap As Boolean = True

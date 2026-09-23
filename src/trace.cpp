@@ -317,7 +317,7 @@ bool HudProbe() {
     return DetailedTrace() && enabled;
 }
 unsigned HiddenHudElements() {
-    static const unsigned mask=[] { char text[16]{}; auto n=GetEnvironmentVariableA("DIRT2VR_HUD_HIDE",text,sizeof(text)); return n>0 && n<sizeof(text) ? ParseHudHidden(text) : 0; }();
+    static const unsigned mask=[] { char text[16]{}; auto n=GetEnvironmentVariableA("DIRT2VR_HUD_HIDE",text,sizeof(text)); return n>0 && n<sizeof(text) ? ParseHudHidden(text) : 1; }();
     return mask;
 }
 bool RequestedCapturesEnabled() {
@@ -523,7 +523,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     groundCoverPair.Begin();
     XrFrames::Overlay hud;
     const bool captureHud=hudCapture.Begin(back.Get(),f,HiddenHudElements());
-    static const float hudDistance=GraphicsScale(L"DIRT2VR_HUD_DISTANCE",4.f,1.f,20.f);
+    static const float hudDistance=GraphicsScale(L"DIRT2VR_HUD_DISTANCE",1.f,1.f,20.f);
     // Preserve the angular size of the existing 4 m wide, 4 m distant panel.
     hud.size={hudDistance,hudDistance/hudCapture.Aspect()};
     hud.draw=[&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {

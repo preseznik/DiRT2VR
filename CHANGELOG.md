@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Changed fresh/default HUD settings to **1 metre** with **Speedometer / gear / revs** off. Restore graphics defaults uses the same settings; other HUD areas remain enabled. Explicitly saved preferences are preserved on upgrade. Apparent text size is unchanged.
+
 - Added a **HUD distance** slider on Graphics: 1–20 metres in 0.5 m steps, default 4 m. It preserves apparent HUD size, as requested, and supports fixed and follow-view placement. Save and relaunch VR to apply; graphics defaults restore 4 m. Launcher, camera-math and OpenXR submission tests cover the setting. The user's 20 m check did not show an obvious distance change; added a one-time placement receipt when diagnostic logging is enabled. Perceptual headset acceptance remains unresolved.
 - The user confirms water no longer appears to pop in with the partial filter removed, but reflections still differ between eyes. Requested input captures reproduce a shared original-camera reflection sampled using different eye projections. A separate per-eye reflection prototype lost vehicle batches in the second view even with identical cameras, so it was removed; no reflection fix is claimed. Normal play produces no capture files. Evidence and next steps are in `docs/water-visibility.md`.
 
