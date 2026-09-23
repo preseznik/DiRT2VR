@@ -34,7 +34,7 @@ The launcher minimizes after starting either mode and stays minimized during pla
 
 DiRT 2 may briefly fall behind other windows as it replaces its startup window. The launcher hands focus to the replacement once; the brief drop followed by immediate return has been confirmed on desktop.
 
-Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and use only the human-control fix and a temporary race file. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
+Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and temporarily enable human control, the selected race and the direct-session menus. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.
 2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Normal Launch** on **Launcher**, and select **Launch VR**.
@@ -62,7 +62,7 @@ The launcher matches the Windows app light/dark setting when opened. Reopen it a
 
 On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**, and a **Car**, then **Launch VR**. Event filters the track list by discipline; this is solo practice, not a career event. The launcher lists installed routes and cars from the supported game's catalog. The Subaru STI is the tested cockpit; other car interiors are experimental.
 
-Direct practice bypasses the trailer menus and loads a player-driven car. Select cockpit view and use Toggle VR as usual. **Practice loops after the finish, and its pause menu only offers Continue. Press Alt+F4 to quit.** The session manager restores temporary files after exit. Use **Normal Launch** for full race options. Saved practice selections also work with `Start-DiRT2VR.cmd`.
+Direct practice bypasses the trailer menus and loads a player-driven car. Select cockpit view and use Toggle VR as usual. At the finish, choose **Restart** or **Return to menus**. The pause menu also provides Continue, Restart and Return to menus. **Return to menus closes the game and automatically reopens Normal Launch**, keeping Desktop or VR mode; expect another loading sequence. Your saved launcher selections stay unchanged. Alt+F4 quits without reopening. Saved practice selections also work with `Start-DiRT2VR.cmd`.
 
 Desktop steering/throttle, pause/resume and finishing have been confirmed in the Subaru at Baja. The packaged direct-practice route in VR, other cars and broader stage coverage still need testing.
 
@@ -78,7 +78,7 @@ Mixed/class grids are randomized each launch, repeating models if the available 
 
 Use **Laps (circuits)** to choose 1–20 laps in either **Race** or **Direct practice**. On point-to-point stages this control is disabled and the session is one stage run; your saved circuit lap preference is retained. The three-lap HUD and continuation into lap 2 have been confirmed on desktop at Baja – Ensenada Sprint. Other counts, complete multi-lap finishes and VR still need testing.
 
-Race uses the same direct-start route as practice: it bypasses menus, repeats after finishing, and only offers Continue when paused. **Alt+F4 quits.** Difficulty, career progression and normal results screens are not configurable here; use Normal Launch for the full event flow. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Mixed opponent models also passed a desktop race check. Same-class gameplay and crowded-grid VR performance still need testing.
+Race uses the same finish and pause choices as practice. It stops at the finish menu rather than automatically repeating. Return to menus restarts the game in Normal Launch; this return path has been confirmed on desktop, while headset validation is pending. **Alt+F4 quits.** Custom races do not award career progress or use the normal results flow; use Normal Launch for full career events. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Mixed opponent models also passed a desktop race check. Same-class gameplay and crowded-grid VR performance still need testing.
 
 ### Graphics
 
@@ -88,11 +88,15 @@ Race uses the same direct-start route as practice: it bypasses menus, repeats af
 | Headset texture | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
 | Car mirrors | Use game setting | Optionally force mirrors on or off during VR sessions. |
+| Tree detail | Game | Choose the game's Ultra low–Ultra vegetation detail presets. Higher values keep detailed vegetation farther away. |
+| Object detail | Game | Choose the game's Ultra low–Ultra trackside-object detail presets. Higher values cost performance. |
 | HUD follows view | Off | Keep the cockpit HUD fixed relative to the car at the selected distance. Enable to have it follow your head instead. |
 | HUD distance | 1 m | Move the cockpit HUD between 1–20 metres in 0.5 m steps. Its apparent size stays constant. Applies to fixed and follow-view modes. |
 | Show HUD areas | Gauges off; others on | Show or hide gauges, lap/time, race position, route map and stage progress in the cockpit HUD. |
 
 Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. The Graphics tab shows the effective scene resolution and pixel count. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore graphics defaults** returns to the tested baseline; save afterward.
+
+For vegetation and object pop-in, try **Tree detail → Ultra** and **Object detail → Ultra**, save, then relaunch VR. **Game** keeps your existing game settings. These overrides are restored after play. Some tracks also impose their own draw distances, so Ultra may reduce transitions without eliminating all pop-in. Compare performance on the same section of track before keeping higher settings.
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
 
@@ -136,7 +140,7 @@ Updates require a published [GitHub Release](https://github.com/preseznik/DiRT2V
 
 ### Restore or remove
 
-VR sessions temporarily adjust the Subaru camera (or the selected car's camera for direct practice), motion-blur asset and selected graphics settings. Originals and a recovery journal are saved before changes. Normal exits and detected game crashes trigger restoration. Unrelated graphics-settings edits are retained. Direct practice temporarily creates `DiRT2VR/p.xml` and removes it during recovery. An existing file at that path is preserved and blocks preparation.
+VR sessions temporarily adjust the Subaru camera (or the selected car's camera for direct practice), motion-blur asset and selected graphics settings. Direct practice and Race also temporarily adjust the game's menu definitions and create `DiRT2VR/p.xml`. Originals and recovery journals are saved before changes. Normal exits and detected game crashes trigger restoration; Return to menus restores the direct-session files before reopening the game. Unrelated graphics-settings edits are retained. An existing `DiRT2VR/p.xml` is preserved and blocks preparation.
 
 After a power failure or forced session-manager termination, close any remaining DiRT 2 processes and choose **Restore original files**. A new launch also checks for pending recovery. Do not delete `DiRT2VR/backups` or the corresponding AppData folder while recovery is pending.
 

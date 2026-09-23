@@ -4,6 +4,10 @@ End-user instructions are in [README](../README.md). The launcher works in the e
 
 ## Appearance
 
+Tree detail and Object detail are independent named sliders in Graphics. Zero preserves the user's setting; levels 1–5 map the installed native presets to `lod` 0.5/0.75/1.0/1.25/1.5 and `maxlod` 1/1/0/0/0. Overrides enter the existing graphics journal only for VR. Exact restoration and merging unrelated XML edits are covered in launcher tests. Track-specific distance limits remain; no track assets are edited and headset performance comparison is pending.
+
+Direct-session menu asset recovery and the process restart used by Return to menus are documented in [direct practice](direct-practice.md#finish-and-return-lifecycle--2026-09-23).
+
 Tabs are Launcher, Graphics, Controls and Settings. Each TabPage disables the native visual-style background and uses the form's resolved palette, including unused page space. Practice combo text is owner-drawn with that palette because native combo text areas can keep a light brush. These controls retain normal keyboard navigation; contrast selection uses system colors. Tests render all tabs offscreen in both light and dark modes.
 
 Startup calls `Application.SetColorMode(SystemColorMode.System)` before creating controls. This uses the Windows app color preference with native Windows Forms controls and title-bar theming. The framework reads the setting at startup, requires Windows 11 for dark mode and respects contrast themes; it does not switch a running application when Windows changes theme. See [Microsoft's API documentation](https://learn.microsoft.com/en-us/dotnet/api/system.windows.forms.application.setcolormode?view=windowsdesktop-10.0). No Windows preference is written by the launcher.

@@ -36,59 +36,71 @@ Public Class Session
             If Not held Then Throw New IOException("A DiRT2VR session or recovery is already running.")
             Dim graphics As New GraphicsTransaction(context)
             Try
-                Status("Checking")
-                context.ValidateGame() : context.RequireClosed()
-                ' Preserve desktop behavior for older LAN quick-launch commands; VR is an explicit choice.
-                If settings.LaunchMode = "lan" Then vr = vr AndAlso lanVr
-                If Not vr Then
+                Do
+                    Status("Checking")
+                    context.ValidateGame() : context.RequireClosed()
+                    ' Preserve desktop behavior for older LAN quick-launch commands; VR is an explicit choice.
+                    If settings.LaunchMode = "lan" Then vr = vr AndAlso lanVr
+                    If Not vr Then
+                        Status("Restoring", "Checking for an interrupted session")
+                        graphics.Recover() : Worker.Invoke(context, "recover")
+                        Dim returnToMenus = RunDesktop()
+                        Status("Restoring") : Worker.Invoke(context, "recover")
+                        If returnToMenus Then
+                            settings.LaunchMode = "menus"
+                            Continue Do
+                        End If
+                        Status("Ready", "Desktop session ended")
+                        Return
+                    End If
+                    If Not File.Exists(settings.Runtime) OrElse IO.Path.GetFileName(settings.Runtime) <> "steamxr_win32.json" Then Throw New IOException("Select SteamVR's steamxr_win32.json runtime, then start SteamVR and connect your headset.")
+                    If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once to create graphics settings.")
                     Status("Restoring", "Checking for an interrupted session")
                     graphics.Recover() : Worker.Invoke(context, "recover")
-                    RunDesktop()
-                    Status("Restoring") : Worker.Invoke(context, "recover")
-                    Status("Ready", "Desktop session ended")
-                    Return
-                End If
-                If Not File.Exists(settings.Runtime) OrElse IO.Path.GetFileName(settings.Runtime) <> "steamxr_win32.json" Then Throw New IOException("Select SteamVR's steamxr_win32.json runtime, then start SteamVR and connect your headset.")
-                If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once to create graphics settings.")
-                Status("Restoring", "Checking for an interrupted session")
-                graphics.Recover() : Worker.Invoke(context, "recover")
-                Worker.Invoke(context, "setup")
-                Status("Preparing")
-                Dim logFolder = CreateLogFolder(context, settings.LoggingEnabled OrElse Environment.GetCommandLineArgs().Contains("--diagnostic-capture"))
-                ProbeRuntime(logFolder)
-                Dim channel = "Local\DiRT2VR.Input." & Guid.NewGuid().ToString("N")
-                Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor()
-                    view.Write(0, &H32565244) : view.Write(4, 1) : view.Write(8, 0UI) : view.Write(12, 0UI)
-                    Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
-                    If settings.DirectMode Then
-                        Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
-                        start.ArgumentList.Add("-demo")
-                        start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
-                        start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
-                        start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
-                    Else
-                        Worker.Invoke(context, "prepare")
-                    End If
-                    graphics.Prepare(settings)
-                    If settings.LaunchMode = "lan" Then Worker.Invoke(context, "prepare-lan")
-                    ' LAN validates states.bin against the game's original checksum.
-                    If settings.SkipStartupMovies AndAlso settings.LaunchMode <> "lan" Then Worker.Invoke(context, "prepare-movies")
-                    Using input As New ControllerInput(), machine As New BindingMachine(settings.Bindings)
-                        Dim counts As UInteger() = {0UI, 0UI}
-                        AddHandler input.StateChanged, Sub(sample)
-                            For Each action In machine.Update(sample)
-                                If Not ControllerInput.GameFocused() Then Continue For
-                                counts(action) = CUInt((CLng(counts(action)) + 1) And &HFFFFFFFFL)
-                                view.Write(8 + action * 4, counts(action))
-                            Next
-                        End Sub
-                        WaitForGame(start, AddressOf input.Poll)
-                        If settings.LaunchMode = "lan" AndAlso Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN startup was confirmed.")
+                    Worker.Invoke(context, "setup")
+                    Status("Preparing")
+                    Dim logFolder = CreateLogFolder(context, settings.LoggingEnabled OrElse Environment.GetCommandLineArgs().Contains("--diagnostic-capture"))
+                    ProbeRuntime(logFolder)
+                    Dim channel = "Local\DiRT2VR.Input." & Guid.NewGuid().ToString("N")
+                    Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor()
+                        view.Write(0, &H32565244) : view.Write(4, 1) : view.Write(8, 0UI) : view.Write(12, 0UI)
+                        Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
+                        If settings.DirectMode Then
+                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
+                            start.ArgumentList.Add("-demo")
+                            start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
+                            start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
+                            start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
+                        Else
+                            Worker.Invoke(context, "prepare")
+                        End If
+                        graphics.Prepare(settings)
+                        If settings.LaunchMode = "lan" Then Worker.Invoke(context, "prepare-lan")
+                        ' LAN validates states.bin against the game's original checksum.
+                        PrepareMenus()
+                        Dim returnToMenus As Boolean
+                        Using input As New ControllerInput(), machine As New BindingMachine(settings.Bindings)
+                            Dim counts As UInteger() = {0UI, 0UI}
+                            AddHandler input.StateChanged, Sub(sample)
+                                For Each action In machine.Update(sample)
+                                    If Not ControllerInput.GameFocused() Then Continue For
+                                    counts(action) = CUInt((CLng(counts(action)) + 1) And &HFFFFFFFFL)
+                                    view.Write(8 + action * 4, counts(action))
+                                Next
+                            End Sub
+                            returnToMenus = WaitForGame(start, AddressOf input.Poll)
+                            If settings.LaunchMode = "lan" AndAlso Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN startup was confirmed.")
+                        End Using
+                        Status("Restoring")
+                        graphics.Recover() : Worker.Invoke(context, "recover")
+                        If returnToMenus Then
+                            settings.LaunchMode = "menus"
+                            Continue Do
+                        End If
                     End Using
-                End Using
-                Status("Restoring")
-                graphics.Recover() : Worker.Invoke(context, "recover")
-                Status("Ready", "Original files restored")
+                    Status("Ready", "Original files restored")
+                    Exit Do
+                Loop
             Catch ex As Exception
                 Dim message = ex.Message
                 If Not context.GameRunning() Then
@@ -134,7 +146,7 @@ Public Class Session
         start.Environment("XR_RUNTIME_JSON") = settings.Runtime
         Return start
     End Function
-    Private Sub RunDesktop()
+    Private Function RunDesktop() As Boolean
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
@@ -142,7 +154,7 @@ Public Class Session
             Worker.Invoke(context, "prepare-lan")
             WaitForGame(lanStart)
             If Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN startup was confirmed.")
-            Return
+            Return False
         End If
         Dim config As String = Nothing
         Dim logFolder As String = Nothing
@@ -160,9 +172,16 @@ Public Class Session
             logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
-        If settings.SkipStartupMovies Then Worker.Invoke(context, "prepare-movies")
+        PrepareMenus()
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
-        WaitForGame(start)
+        Return WaitForGame(start)
+    End Function
+    Private Sub PrepareMenus()
+        If settings.DirectMode Then
+            Worker.Invoke(context, If(settings.SkipStartupMovies, "prepare-direct-menus-movies", "prepare-direct-menus"))
+        ElseIf settings.SkipStartupMovies AndAlso settings.LaunchMode <> "lan" Then
+            Worker.Invoke(context, "prepare-movies")
+        End If
     End Sub
     Public Shared Function DesktopStartInfo(context As InstallContext, config As String, logFolder As String) As ProcessStartInfo
         Dim start As New ProcessStartInfo(IO.Path.Combine(context.GameRoot, "dirt2.exe")) With {.UseShellExecute = False, .WorkingDirectory = context.GameRoot}
@@ -180,31 +199,34 @@ Public Class Session
         End If
         Return start
     End Function
-    Private Sub WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing)
+    Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
         Dim focus As New StartupFocus(context)
-        Using child = Process.Start(start)
-            Status("Running")
-            Dim seenGame As Boolean
-            Dim gameAlive As Boolean = True
-            Dim nextProcessCheck = DateTime.MinValue
-            Dim deadline = DateTime.UtcNow.AddSeconds(30)
-            Do
-                Application.DoEvents() : poll?.Invoke()
-                If DateTime.UtcNow >= nextProcessCheck Then
-                    focus.Poll()
-                    If focusStatus <> focus.Outcome Then
-                        focusStatus = focus.Outcome : Status("Running")
+        Using returnChannel As New DirectReturnChannel(start, settings.DirectMode)
+            Using child = Process.Start(start)
+                Status("Running")
+                Dim seenGame As Boolean
+                Dim gameAlive As Boolean = True
+                Dim nextProcessCheck = DateTime.MinValue
+                Dim deadline = DateTime.UtcNow.AddSeconds(30)
+                Do
+                    Application.DoEvents() : poll?.Invoke()
+                    If DateTime.UtcNow >= nextProcessCheck Then
+                        focus.Poll()
+                        If focusStatus <> focus.Outcome Then
+                            focusStatus = focus.Outcome : Status("Running")
+                        End If
+                        gameAlive = context.GameRunning()
+                        seenGame = seenGame Or gameAlive
+                        nextProcessCheck = DateTime.UtcNow.AddMilliseconds(250)
                     End If
-                    gameAlive = context.GameRunning()
-                    seenGame = seenGame Or gameAlive
-                    nextProcessCheck = DateTime.UtcNow.AddMilliseconds(250)
-                End If
-                If child.HasExited AndAlso Not gameAlive AndAlso (seenGame OrElse DateTime.UtcNow > deadline) Then Exit Do
-                Thread.Sleep(8)
-            Loop
-            If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")
+                    If child.HasExited AndAlso Not gameAlive AndAlso (seenGame OrElse DateTime.UtcNow > deadline) Then Exit Do
+                    Thread.Sleep(8)
+                Loop
+                If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")
+            End Using
+            Return returnChannel.Requested
         End Using
-    End Sub
+    End Function
     Public Shared Function CreateLogFolder(context As InstallContext, enabled As Boolean) As String
         If Not enabled Then Return Nothing
         Dim folder = IO.Path.Combine(context.UserRoot, "logs", DateTime.Now.ToString("yyyyMMdd-HHmmss-fff"))

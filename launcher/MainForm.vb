@@ -35,6 +35,8 @@ Public Class MainForm
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
     Private ReadOnly hudDistance As New ValueSlider("HudDistance", 2, 40, 2, " m", 2D)
+    Private ReadOnly treeDetail As New ValueSlider("TreeDetail", 0, 5, 0, valueLabels:={"Game", "Ultra low", "Low", "Medium", "High", "Ultra"})
+    Private ReadOnly objectDetail As New ValueSlider("ObjectDetail", 0, 5, 0, valueLabels:={"Game", "Ultra low", "Low", "Medium", "High", "Ultra"})
     Private ReadOnly hudGauges As New CheckBox With {.Text = "Speedometer / gear / revs", .Name = "HudGauges", .AutoSize = True}
     Private ReadOnly hudLapTime As New CheckBox With {.Text = "Lap / time", .Name = "HudLapTime", .AutoSize = True}
     Private ReadOnly hudPosition As New CheckBox With {.Text = "Race position", .Name = "HudPosition", .AutoSize = True}
@@ -309,7 +311,7 @@ Public Class MainForm
         launchMode.SelectedIndex = Math.Max(0, Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode))
         content.Controls.Add(opponentHint)
         content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
-        content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Sessions loop after finishing; pause only offers Continue. Alt+F4 quits. Use Normal Launch for full event options and results."))
+        content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Finish with Restart or Return to menus. Pause also offers both choices. Return to menus closes the session and reopens Normal Launch in the same Desktop/VR mode; Alt+F4 quits without reopening. Custom races do not award career progress."))
     End Sub
     Private Sub RefreshOpponentHint()
         launchButton.Enabled = Not busy
@@ -381,6 +383,9 @@ Public Class MainForm
         AddGraphicsRow(grid, "Headset texture (%)", headsetScale, "Relative to SteamVR's recommended size. Default: 50%.")
         AddGraphicsRow(grid, "Field of view (%)", fieldOfView, "Experimental crop. 100% = full view. Lower = fewer pixels, narrower view.")
         AddGraphicsRow(grid, "Car mirrors", mirrors, "Disabling mirrors may reduce GPU work.")
+        treeDetail.Value = settings.TreeDetail : objectDetail.Value = settings.ObjectDetail
+        AddGraphicsRow(grid, "Tree detail", treeDetail, "VR only. Higher detail keeps detailed vegetation farther away. Game preserves your game setting.")
+        AddGraphicsRow(grid, "Object detail", objectDetail, "VR only. Try Ultra for trackside pop-in; costs performance. Track-specific distance limits still apply.")
         hudDistance.Value = CInt(settings.HudDistance * 2D)
         AddGraphicsRow(grid, "HUD distance", hudDistance, "1–20 metres, in 0.5 m steps. Keeps the HUD's apparent size. Default: 1 m.")
         content.Controls.Add(grid)
@@ -402,6 +407,7 @@ Public Class MainForm
                                        renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False
                                        hudDistance.Value = 2
+                                       treeDetail.Value = 0 : objectDetail.Value = 0
                                        hudGauges.Checked = False
                                        For Each element In {hudLapTime, hudPosition, hudMap, hudProgress}
                                            element.Checked = True
@@ -506,6 +512,7 @@ Public Class MainForm
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.HudFollowView = hudFollow.Checked
         settings.HudDistance = hudDistance.Value / 2D
+        settings.TreeDetail = treeDetail.Value : settings.ObjectDetail = objectDetail.Value
         settings.HudGauges = hudGauges.Checked : settings.HudLapTime = hudLapTime.Checked : settings.HudPosition = hudPosition.Checked
         settings.HudMap = hudMap.Checked : settings.HudProgress = hudProgress.Checked
         settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
@@ -637,7 +644,7 @@ Public Class MainForm
             End If
             If busy Then
                 stateLabel.Text = status.State & If(status.Message <> "", ": " & status.Message, "")
-            ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending OrElse New StartupMovies(context).Pending Then
+            ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending OrElse New StartupMovies(context).Pending OrElse New DirectMenus(context).Pending Then
                 stateLabel.Text = "Recovery pending. Close the game and choose Restore original files."
             ElseIf status IsNot Nothing AndAlso status.State = "Failed" Then
                 stateLabel.Text = "Failed: " & status.Message

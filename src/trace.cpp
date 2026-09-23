@@ -10,6 +10,7 @@
 #include "vr_hotkeys.h"
 #include "light_replay.h"
 #include "ground_cover.h"
+#include "direct_menus.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -87,6 +88,10 @@ void EnableDirectPractice() {
         const bool protectedAgain=VirtualProtect(base+0x72a5a1,1,previous,&ignored)!=0;
         const bool flushed=FlushInstructionCache(GetCurrentProcess(),base+0x72a5a1,1)!=0;
         if(protectedAgain && flushed) {
+            if(!EnableDirectReturn()) {
+                Log("direct session: return-to-menus hook guard failed");
+                ExitProcess(ERROR_BAD_EXE_FORMAT);
+            }
             wchar_t text[16]{};
             const auto length=GetEnvironmentVariableW(L"DIRT2VR_LAPS",text,16);
             if(length) {

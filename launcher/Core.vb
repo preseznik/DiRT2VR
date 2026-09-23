@@ -118,6 +118,9 @@ Public Class VrSettings
         End Get
     End Property
     Public Property Mirrors As String = "game"
+    ' Zero preserves the game's setting; 1..5 match its native quality presets.
+    Public Property TreeDetail As Integer = 0
+    Public Property ObjectDetail As Integer = 0
     Public Property LaunchMode As String = "menus"
     Public Property TrackId As String = "127"
     Public Property CarCode As String = "sti"
@@ -163,6 +166,7 @@ Public Class VrSettings
         If Laps < 1 OrElse Laps > 20 Then Throw New IOException("Choose between one and twenty laps.")
         RaceCatalog.Current.Track(TrackId) : RaceCatalog.Current.Car(CarCode)
         If RenderScale < 50 OrElse RenderScale > 150 OrElse HeadsetScale < 25 OrElse HeadsetScale > 100 OrElse FieldOfView < 70 OrElse FieldOfView > 100 OrElse Not {"game", "on", "off"}.Contains(Mirrors) Then Throw New IOException("Invalid VR graphics settings.")
+        If TreeDetail < 0 OrElse TreeDetail > 5 OrElse ObjectDetail < 0 OrElse ObjectDetail > 5 Then Throw New IOException("Invalid scenery detail settings.")
         If Not ValidKey(ToggleKey) OrElse Not ValidKey(RecenterKey) OrElse ToggleModifiers < 0 OrElse ToggleModifiers > 7 OrElse RecenterModifiers < 0 OrElse RecenterModifiers > 7 Then Throw New IOException("Choose valid keyboard shortcuts.")
         If ToggleKey = RecenterKey AndAlso ToggleModifiers = RecenterModifiers Then Throw New IOException("Toggle VR and recenter must have different shortcuts.")
         If Bindings Is Nothing OrElse Bindings.Count > 32 Then Throw New IOException("Invalid controller bindings.")

@@ -229,6 +229,12 @@ Public Class GraphicsTransaction
         Dim journal As New GraphicsJournal()
         Dim specs As New List(Of String) From {"crowd|enabled|false", "particles|enabled|false", "shadows|enabled|false", "postprocess|quality|0", "cpu/threadStrategy|parallelUpdateRender|false", "dynamic_ambient_occ|enabled|false", $"graphics_card/resolution|width|{settings.RenderWidth}", $"graphics_card/resolution|height|{settings.RenderHeight}", "graphics_card/resolution|fullscreen|false", "graphics_card/resolution|vsync|0"}
         If settings.Mirrors <> "game" Then specs.Add("mirrors|enabled|" & If(settings.Mirrors = "on", "true", "false"))
+        ' Values from the supported game's hardware_settings_options.xml.
+        For Each detail In {("trees", settings.TreeDetail), ("objects", settings.ObjectDetail)}
+            If detail.Item2 = 0 Then Continue For
+            specs.Add(detail.Item1 & "|lod|" & {"0.5", "0.75", "1.0", "1.25", "1.5"}(detail.Item2 - 1))
+            specs.Add(detail.Item1 & "|maxlod|" & If(detail.Item2 <= 2, "1", "0"))
+        Next
         For Each spec In specs
             Dim parts = spec.Split("|"c)
             Dim node = TryCast(document.SelectSingleNode("/hardware_settings_config/" & parts(0)), XmlElement)

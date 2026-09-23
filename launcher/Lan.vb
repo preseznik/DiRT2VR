@@ -36,6 +36,7 @@ Public Class LanTransaction
         CheckPaths()
         If Pending Then Throw New IOException("LAN recovery is pending.")
         If New StartupMovies(context).Pending Then Throw New IOException("Restore startup movie files before preparing LAN play.")
+        If New DirectMenus(context).Pending Then Throw New IOException("Restore direct-session menus before preparing LAN play.")
         Const relative As String = "DiRT2VR/payload/xlive-lan.dll"
         Dim payload = IO.Path.Combine(context.GameRoot, relative)
         Files.NoLinks(payload)

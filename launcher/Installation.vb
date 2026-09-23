@@ -42,6 +42,7 @@ Public Class Installation
     End Sub
     Public Sub RemoveProxy()
         context.RequireClosed()
+        Call (New DirectMenus(context)).Recover()
         Call (New StartupMovies(context)).Recover()
         Call (New LanTransaction(context)).Recover()
         Call (New AssetTransaction(context)).Recover()
@@ -70,7 +71,10 @@ Public Module Worker
                 Call (New LanTransaction(context)).Prepare()
             Case "prepare-movies"
                 Call (New StartupMovies(context)).Prepare()
+            Case "prepare-direct-menus", "prepare-direct-menus-movies"
+                Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies")
             Case "recover"
+                Call (New DirectMenus(context)).Recover()
                 Call (New StartupMovies(context)).Recover()
                 Call (New LanTransaction(context)).Recover()
                 Call (New AssetTransaction(context)).Recover()

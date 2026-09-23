@@ -1,5 +1,17 @@
 # Direct practice investigation and implementation
 
+## Finish and return lifecycle — 2026-09-23
+
+Current direct sessions stop at a dedicated finish menu with Restart and Return to menus. Pause also offers Continue. This supersedes the looping/Continue-only limitations in the historical investigation below. Career rewards and the normal results flow remain outside direct sessions.
+
+`DirectMenus.vb` patches the two supported race-flow branches in `system/flow.bin` and their menu definitions in `system/states.bin`. Each menu row has its own glyph, one-element data index and pill link. Return unpauses and ends the race before entering the dedicated `d2vr_return` shutdown state. The finish node stops before career-results advancement. All changes are generated locally from fingerprinted original files; no game assets ship.
+
+The two-file transaction stores originals and applied hashes in `DiRT2VR/backups/direct-menus-pending.json` before writing. Recovery validates both assets before restoring either, preserves conflicts and handles interrupted preparation/recovery. Logo skipping is composed into the same states transaction where enabled. LAN and Normal Launch never receive these menu edits. LAN preparation rejects a pending direct-menu transaction.
+
+Returning inside the same process stalled or crashed even after loading frontend resources. The supported return therefore uses the game's ordinary shutdown and a fresh Normal Launch. `src/direct_menus.cpp` guards the executable fingerprint, shutdown prologue at RVA `0x22ca10` and vtable slot `0xf18f94`, then signals a per-launch named event only for `d2vr_return`. Ordinary exit states and Alt+F4 do not signal. The session manager waits for the wrapper and game to exit, restores all temporary files, then relaunches with only its in-memory mode changed to menus. It retains Desktop/VR mode, the session mutex and saved user selections; new VR input and XR lifetimes are created on relaunch.
+
+Validation covers menu links, file ownership, conflicts, partial writes, repeated recovery and per-process return signals. Desktop acceptance on the saved Novigrad/Ford F-150 race confirmed Pause → Return to menus closes the direct race and opens usable normal menus. Normal exit afterward ended the session and restored the original files (`artifacts/direct-return-probe-20260923-152841/restored.json`). An earlier AI diagnostic reached the finish menu; final Restart/full-race finish and the VR relaunch remain separate gameplay checks. The custom Return to menus label may appear in angle brackets because it has no original localization key.
+
 ## Race grid extension — 2026-09-21
 
 The installed `example_benchmark.xml` documents a maximum of eight cars per track, including `<car name="sti" number="8" />`. Its supplied example also lists eight separate car entries. Race mode uses the existing `-demo` parser. Same-as-driver uses one selected car entry and `number = Opponents + 1`. Mixed/class grids put the driver first, followed by one entry per opponent, each with `number = 1`; the grid itself adds no native patches. The existing controller change skips only the direct-start forced-AI assignment, preserving the vehicle's human/AI role. The tester confirmed human driving and seven active AI opponents in the packaged desktop launcher at Baja with the Subaru STI.

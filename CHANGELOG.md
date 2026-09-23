@@ -4,6 +4,9 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Graphics: add Tree detail and Object detail sliders using the game's native quality presets. Default to the existing game settings, apply only during VR sessions, and restore original values after play. Higher detail can reduce scenery pop-in; track-specific distance limits and headset performance still need comparison.
+- Direct practice and Race: stop at a finish menu instead of automatically repeating. Add Restart and Return to menus to the pause menu too. Return to menus closes the direct session, restores temporary files and relaunches Normal Launch in the same Desktop/VR mode; Alt+F4 and ordinary quits do not relaunch. The desktop return path has been tested; headset validation is pending. Custom sessions remain separate from career rewards/results.
+
 - Fixed the tested Ensenada Sprint puddle reflection mismatch by rendering the reflected camera separately for each VR eye while retaining the original reflection draw lists. Water remains visible. Identical-camera/asymmetric desktop benchmarks pass, and the user confirms the reflections look good in Quest 3. Enabled for normal VR launches; desktop rendering is unchanged. Broader tracks, reflection visibility when looking behind, and performance still need coverage. See `docs/water-visibility.md`.
 
 - Changed fresh/default HUD settings to **1 metre** with **Speedometer / gear / revs** off. Restore graphics defaults uses the same settings; other HUD areas remain enabled. Explicitly saved preferences are preserved on upgrade. Apparent text size is unchanged.

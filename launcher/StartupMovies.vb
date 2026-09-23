@@ -43,6 +43,7 @@ Public Class StartupMovies
     Public Sub Prepare(Optional afterJournal As Action = Nothing)
         CheckPaths()
         If Pending Then Throw New IOException("Startup movie recovery is pending.")
+        If New DirectMenus(context).Pending Then Throw New IOException("Direct-session menu recovery is pending.")
         If New LanTransaction(context).Pending Then Throw New IOException("Startup logo skipping cannot change game files during a LAN session.")
         Dim original = File.ReadAllBytes(target), modified = Patch(original)
         If File.Exists(backup) Then

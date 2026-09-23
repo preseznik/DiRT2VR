@@ -30,6 +30,7 @@ Module Program
         LanTests.Run(repo, folder, AddressOf Check)
         LanBrowserTests.Run(AddressOf Check)
         StartupMovieTests.Run(repo, folder, AddressOf Check)
+        DirectMenuTests.Run(repo, folder, AddressOf Check)
         For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars\sti\cameras.xml", "cars\n12\cameras.xml", "postprocess\effects.xml"}
             Dim target = IO.Path.Combine(root, relative)
             Directory.CreateDirectory(IO.Path.GetDirectoryName(target))
@@ -274,6 +275,10 @@ Module Program
         Files.AtomicWrite(graphics, XmlPatches.Bytes(document))
         Dim beforeCustom = Files.Hash(graphics)
         Dim custom As New VrSettings With {.RenderScale = 75, .HeadsetScale = 60, .FieldOfView = 80, .Mirrors = "off"}
+        Check(custom.TreeDetail = 0 AndAlso custom.ObjectDetail = 0, "scenery detail defaults preserve the game's settings")
+        For Each badDetail In {New VrSettings With {.TreeDetail = -1}, New VrSettings With {.TreeDetail = 6}, New VrSettings With {.ObjectDetail = -1}, New VrSettings With {.ObjectDetail = 6}}
+            Reject(Sub() badDetail.Validate(), "out-of-range scenery preset rejected")
+        Next
         gt.Prepare(custom)
         document = XmlPatches.Read(File.ReadAllBytes(graphics))
         Dim resolution = DirectCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/resolution"), Xml.XmlElement)
@@ -287,6 +292,29 @@ Module Program
         Files.AtomicWrite(graphics, XmlPatches.Bytes(document)) : gt.Recover()
         document = XmlPatches.Read(File.ReadAllBytes(graphics))
         Check(document.DocumentElement.GetAttribute("anotherUnrelatedChange") = "preserve" AndAlso DirectCast(document.SelectSingleNode("/hardware_settings_config/mirrors"), Xml.XmlElement).GetAttribute("enabled") = "true", "custom graphics recovery merges unrelated edits")
+        For Each name In {"trees", "objects"}
+            Dim detail = document.CreateElement(name) : detail.SetAttribute("lod", "1.0") : detail.SetAttribute("maxlod", "0")
+            document.DocumentElement.AppendChild(detail)
+        Next
+        Files.AtomicWrite(graphics, XmlPatches.Bytes(document))
+        Dim beforeDetail = Files.Hash(graphics)
+        For level = 1 To 5
+            custom.TreeDetail = level : custom.ObjectDetail = 6 - level
+            gt.Prepare(custom)
+            document = XmlPatches.Read(File.ReadAllBytes(graphics))
+            For Each entry In {("trees", level), ("objects", 6 - level)}
+                Dim detail = DirectCast(document.SelectSingleNode("/hardware_settings_config/" & entry.Item1), Xml.XmlElement)
+                Check(detail.GetAttribute("lod") = {"0.5", "0.75", "1.0", "1.25", "1.5"}(entry.Item2 - 1) AndAlso detail.GetAttribute("maxlod") = If(entry.Item2 <= 2, "1", "0"), "native scenery preset mapping: " & entry.Item1 & entry.Item2)
+            Next
+            gt.Recover() : Check(Files.Hash(graphics) = beforeDetail, "scenery override restores exact original bytes")
+        Next
+        custom.TreeDetail = 5 : custom.ObjectDetail = 5 : gt.Prepare(custom)
+        document = XmlPatches.Read(File.ReadAllBytes(graphics))
+        document.DocumentElement.SetAttribute("detailUnrelated", "keep")
+        DirectCast(document.SelectSingleNode("/hardware_settings_config/objects"), Xml.XmlElement).SetAttribute("lod", "1.25")
+        Files.AtomicWrite(graphics, XmlPatches.Bytes(document)) : gt.Recover()
+        document = XmlPatches.Read(File.ReadAllBytes(graphics))
+        Check(document.DocumentElement.GetAttribute("detailUnrelated") = "keep" AndAlso DirectCast(document.SelectSingleNode("/hardware_settings_config/trees"), Xml.XmlElement).GetAttribute("lod") = "1.0" AndAlso DirectCast(document.SelectSingleNode("/hardware_settings_config/objects"), Xml.XmlElement).GetAttribute("lod") = "1.25", "scenery recovery preserves unrelated and later user edits")
         setting.Bindings.Add(New ControllerBinding With {.Action = 0, .Source = "xinput", .Device = "0", .Buttons = New List(Of Integer) From {16, 32}})
         setting.Validate()
         setting.Bindings.Add(New ControllerBinding With {.Action = 1, .Source = "xinput", .Device = "0", .Buttons = New List(Of Integer) From {16}})
@@ -411,6 +439,9 @@ Module Program
             DirectCast(form.Controls.Find("RenderScale", True).Single(), ValueSlider).Value = 75
             DirectCast(form.Controls.Find("HeadsetScale", True).Single(), ValueSlider).Value = 60
             DirectCast(form.Controls.Find("FieldOfView", True).Single(), ValueSlider).Value = 80
+            DirectCast(form.Controls.Find("TreeDetail", True).Single(), ValueSlider).Value = 5
+            DirectCast(form.Controls.Find("ObjectDetail", True).Single(), ValueSlider).Value = 4
+            Check(form.Controls.Find("TreeDetailValue", True).Single().Text = "Ultra" AndAlso form.Controls.Find("ObjectDetailValue", True).Single().Text = "High", "scenery sliders display named presets")
             Dim hudToggle = DirectCast(form.Controls.Find("HudFollowView", True).Single(), CheckBox)
             Check(Not hudToggle.Checked AndAlso Not (New VrSettings()).HudFollowView, "HUD follows view defaults off for existing and new settings")
             Check(hudToggle.Parent.Parent.Text = "Graphics", "HUD follow control is on Graphics tab")
@@ -431,6 +462,7 @@ Module Program
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             Dim saved = VrSettings.Load(context)
             Check(saved.LoggingEnabled, "Settings logging opt-in persists")
+            Check(saved.TreeDetail = 5 AndAlso saved.ObjectDetail = 4, "scenery detail choices persist independently")
             Check(saved.HudFollowView, "HUD follows view setting persists")
             Check(saved.HiddenHudElements = 31, "all five HUD visibility choices persist")
             Dim hudStart = Session.VrStartInfo(context, saved, "Local.TestHud", Nothing)

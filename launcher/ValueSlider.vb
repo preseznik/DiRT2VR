@@ -8,9 +8,12 @@ Public Class ValueSlider
     Private ReadOnly valueText As New Label With {.AutoSize = True, .Anchor = AnchorStyles.Right, .TextAlign = ContentAlignment.MiddleRight, .Margin = New Padding(8, 0, 0, 0)}
     Private ReadOnly suffix As String
     Private ReadOnly divisor As Decimal
+    Private ReadOnly labels As String()
     Public Event ValueChanged As EventHandler
-    Public Sub New(controlName As String, low As Integer, high As Integer, initial As Integer, Optional unit As String = "", Optional displayDivisor As Decimal = 1D)
+    Public Sub New(controlName As String, low As Integer, high As Integer, initial As Integer, Optional unit As String = "", Optional displayDivisor As Decimal = 1D, Optional valueLabels As String() = Nothing)
         If displayDivisor <= 0D Then Throw New ArgumentOutOfRangeException(NameOf(displayDivisor))
+        If valueLabels IsNot Nothing AndAlso valueLabels.Length <> high - low + 1 Then Throw New ArgumentException("One label is required per slider value.", NameOf(valueLabels))
+        labels = valueLabels
         Name = controlName : suffix = unit : divisor = displayDivisor
         Height = 38 : Width = 280 : MinimumSize = New Size(150, 38) : Dock = DockStyle.Top
         TabStop = False
@@ -39,7 +42,7 @@ Public Class ValueSlider
         End Set
     End Property
     Private Sub RefreshValue()
-        valueText.Text = (track.Value / divisor).ToString(If(divisor = 1D, "0", "0.0")) & suffix
+        valueText.Text = If(labels Is Nothing, (track.Value / divisor).ToString(If(divisor = 1D, "0", "0.0")) & suffix, labels(track.Value - track.Minimum))
         AccessibleDescription = valueText.Text
     End Sub
     Protected Overrides Sub OnBackColorChanged(e As EventArgs)
