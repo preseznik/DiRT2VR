@@ -26,6 +26,11 @@ Module Program
         Dim folder = IO.Path.Combine(repo, "artifacts", "launcher-tests-" & DateTime.Now.ToString("yyyyMMdd-HHmmss"))
         Dim root = IO.Path.Combine(folder, "DiRT 2 Ž test")
         Directory.CreateDirectory(root)
+        If args.Contains("--controls-only") Then
+            DrivingControlTests.Run(repo, folder, AddressOf Check)
+            Console.WriteLine(passed & " driving-control checks passed. Artifacts: " & folder)
+            Return
+        End If
         UpdateTests.Run(folder, AddressOf Check, args.Contains("--live-updates"))
         LanTests.Run(repo, folder, AddressOf Check)
         LanBrowserTests.Run(AddressOf Check)

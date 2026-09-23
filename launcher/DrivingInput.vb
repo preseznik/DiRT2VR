@@ -16,7 +16,7 @@ Public Class DrivingInput
         Public Property Id As String
         Public Property Name As String
         Public Overrides Function ToString() As String
-            Return If(Name = "win_xinput", "Xbox controller " & (Integer.Parse(Id.Substring(7), Globalization.CultureInfo.InvariantCulture) + 1).ToString(), Name) & " [" & Id & "]"
+            Return If(Name = "win_xinput", "Xbox controller " & (Integer.Parse(Id.Substring(7), Globalization.CultureInfo.InvariantCulture) + 1).ToString(), Name)
         End Function
     End Class
     <UnmanagedFunctionPointer(CallingConvention.Cdecl)> Private Delegate Function OpenFn(window As IntPtr) As IntPtr
@@ -61,9 +61,15 @@ Public Class DrivingInput
         reader(handle, device.Index, state)
         Return state
     End Function
-    Public Shared Function Detect(action As String, device As Device, baseline As Sample, current As Sample) As DrivingBinding
+    Public Shared Function Detect(action As String, device As Device, baseline As Sample, current As Sample, Optional axesOnly As Boolean = False, Optional buttonsOnly As Boolean = False) As DrivingBinding
         If baseline.Connected = 0 OrElse current.Connected = 0 Then Return Nothing
         Dim binding As New DrivingBinding With {.Action = action, .DeviceId = device.Id, .Device = device.Name}
+        ' Prefer analog travel for steering/pedals: some devices also emit a button at the threshold.
+        If Not buttonsOnly Then
+            Dim analog = DetectAxis(action, device, baseline, current)
+            If analog IsNot Nothing Then Return analog
+        End If
+        If axesOnly Then Return Nothing
         For i = 0 To current.Buttons.Length - 1
             If current.Buttons(i) = 0 OrElse baseline.Buttons(i) <> 0 Then Continue For
             If device.Name = "win_xinput" Then
@@ -75,7 +81,11 @@ Public Class DrivingInput
             End If
             Return binding
         Next
-        Dim best = -1, movement As Single = 0.3F
+        Return Nothing
+    End Function
+    Private Shared Function DetectAxis(action As String, device As Device, baseline As Sample, current As Sample) As DrivingBinding
+        Dim binding As New DrivingBinding With {.Action = action, .DeviceId = device.Id, .Device = device.Name}
+        Dim best = -1, movement As Single = 0.4F
         For i = 0 To 7
             If (current.Axes And baseline.Axes And (1UI << i)) = 0 Then Continue For
             Dim delta = Math.Abs(current.Values(i) - baseline.Values(i))
@@ -88,12 +98,31 @@ Public Class DrivingInput
             Dim names = {"analogLeftStickX", "analogLeftStickY", "analogRightStickX", "analogRightStickY", "buttonLeftTrigger", "buttonRightTrigger"}
             If best >= names.Length Then Return Nothing
             binding.Input = "win_con_xi_" & names(best)
-            If best >= 4 Then centered = False
+            ' XInput has a known zero, unlike wheel/pedal axes. Never bind trigger release as inverted.
+            If best >= 4 Then
+                If current.Values(best) < 0.4F OrElse baseline.Values(best) > 0.15F Then Return Nothing
+                centered = False : negative = False
+            Else
+                If Math.Abs(baseline.Values(best)) > 0.25F Then Return Nothing
+                negative = current.Values(best) < 0
+                ' DiRT's Y convention is down-positive (its stock Look Up binding uses Lower).
+                If best = 1 OrElse best = 3 Then negative = Not negative
+                centered = True
+            End If
         Else
             binding.Input = "win_con_di_axis" & {"X", "Y", "Z", "Rx", "Ry", "Rz", "Slider0", "Slider1"}(best)
         End If
         binding.Calibration = If(centered, If(negative, "biDirectionalLower", "biDirectionalUpper"), If(negative, "uniDirectionalNegative", "uniDirectionalPositive"))
+        binding.DeadZone = If(device.Name = "win_xinput" AndAlso best < 4, 0.2D, 0.03D)
         Return binding
+    End Function
+    Public Shared Function Description(binding As DrivingBinding) As String
+        If binding Is Nothing Then Return "Use game binding"
+        If binding.Keyboard Then Return binding.Input.Replace("win_key_", "").ToUpperInvariant()
+        Dim control = binding.Input.Replace("win_con_xi_", "").Replace("win_con_di_", "")
+        control = control.Replace("analogLeftStick", "Left stick ").Replace("analogRightStick", "Right stick ").Replace("button", "Button ").Replace("axis", "Axis ")
+        Dim direction = If(binding.Calibration = "biDirectionalLower", " (−)", If(binding.Calibration = "biDirectionalUpper", " (+)", If(binding.Calibration = "uniDirectionalNegative", " (inverted)", "")))
+        Return If(binding.Device = "win_xinput", "Xbox", binding.Device) & " · " & control & direction
     End Function
     Public Sub Dispose() Implements IDisposable.Dispose
         If handle <> IntPtr.Zero Then closer(handle) : handle = IntPtr.Zero

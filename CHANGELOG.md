@@ -4,6 +4,9 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Replace driving-input capture with a guided binding wizard: learn a stable resting position, capture deliberate travel or a button press, and require release before advancing. Walk through all actions, skip/back/review without saving partial changes, detect separate devices automatically, and offer axis/button filters. Constant high handbrake axes and held switches no longer appear as newly engaged controls. Physical Fanatec validation remains pending.
+- Add a stock Xbox driving preset and reject identical left/right steering directions or inverted Xbox triggers when enabling overrides. Prevent capturing Xbox stick/trigger return motion as the intended direction; use the game's standard 20% Xbox stick dead zone. Regression tests cover the reported configuration and resting/inverted inputs.
+
 - Direct practice and Race now load the existing profile through the game's native loader before starting the selected event, so saved driving controls can be applied. Local isolated-profile loading succeeds; PC3/Fanatec acceptance is deferred. No extra end-user career or encrypted-save editing is introduced.
 - Add Controls → Configure driving controls with optional keyboard, Xbox and DirectInput wheel/pedal assignments, separate-device support, clutch/H-pattern actions and calibration sliders. Overrides apply through the native action parser in DX11 launcher sessions, including desktop launches without OpenXR. Actual-game parsing, native input-helper interop and launcher tests pass; physical wheel and combined LAN/VR acceptance remain pending.
 - PC3's user reports no crashes so far with 0.10.2. This is encouraging follow-up evidence; longer-session coverage remains pending.

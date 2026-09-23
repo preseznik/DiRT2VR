@@ -48,8 +48,35 @@ Public Class DrivingControls
         result.Validate() : Return result
     End Function
     Public Sub Save(context As InstallContext)
-        Validate() : Files.SaveJson(IO.Path.Combine(context.UserRoot, "driving-controls.json"), Me)
+        Validate()
+        If Enabled AndAlso Problems().Count > 0 Then Throw New IOException(String.Join(Environment.NewLine, Problems()))
+        Files.SaveJson(IO.Path.Combine(context.UserRoot, "driving-controls.json"), Me)
     End Sub
+    Public Function Problems() As List(Of String)
+        Dim result As New List(Of String)
+        Dim left = Bindings.FirstOrDefault(Function(b) b.Action = "Steer Left" AndAlso Not b.Keyboard)
+        Dim right = Bindings.FirstOrDefault(Function(b) b.Action = "Steer Right" AndAlso Not b.Keyboard)
+        If left IsNot Nothing AndAlso right IsNot Nothing AndAlso left.Device = right.Device AndAlso left.DeviceId = right.DeviceId AndAlso left.Input = right.Input AndAlso left.Calibration = right.Calibration Then
+            result.Add("Left and right steering use the same direction. Rebind steering or use the Xbox preset.")
+        End If
+        For Each binding In Bindings
+            If binding.Device = "win_xinput" AndAlso binding.Input.EndsWith("Trigger", StringComparison.Ordinal) AndAlso binding.Calibration <> "uniDirectionalPositive" Then
+                result.Add(binding.Action & ": Xbox triggers must increase when pressed. Rebind this input or use the Xbox preset.")
+            End If
+        Next
+        Return result
+    End Function
+    Public Shared Function XboxPreset() As List(Of DrivingBinding)
+        ' Match the game's shipped Windows XInput action map (one device input per action).
+        Dim result As New List(Of DrivingBinding)
+        Dim actions = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Hand Brake", "Gear Up", "Gear Down", "Change View", "Look Back", "Horn"}
+        Dim inputs = {"analogLeftStickX", "analogLeftStickX", "buttonRightTrigger", "buttonLeftTrigger", "buttonA", "buttonB", "buttonX", "buttonLeftShoulder", "buttonY", "buttonRightStick"}
+        For i = 0 To actions.Length - 1
+            result.Add(New DrivingBinding With {.Action = actions(i), .DeviceId = "xinput:0", .Device = "win_xinput", .Input = "win_con_xi_" & inputs(i),
+                .Calibration = If(i = 0, "biDirectionalLower", If(i = 1, "biDirectionalUpper", "uniDirectionalPositive")), .DeadZone = If(i < 2, 0.2D, 0D)})
+        Next
+        Return result
+    End Function
     Public Function ToXml() As Byte()
         Validate()
         Dim root As New XElement("ActionMap")
@@ -68,6 +95,7 @@ Public Class DrivingControls
         start.Environment.Remove("DIRT2VR_DRIVING_CONTROLS")
         If Not Enabled OrElse Bindings.Count = 0 Then Return
         Validate()
+        If Problems().Count > 0 Then Throw New IOException(String.Join(Environment.NewLine, Problems()) & Environment.NewLine & "Open Controls → Configure driving controls to fix these bindings.")
         If Not vr Then
             If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before using launcher driving bindings.")
             Dim doc = XmlPatches.Read(File.ReadAllBytes(context.GraphicsPath))

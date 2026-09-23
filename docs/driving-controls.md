@@ -20,6 +20,14 @@ The XML constructor/parser (`0xaf3740` / `0xb01a80`), attributes (`0xaf39e0`), i
 
 ## Capture and validation
 
+### Revised capture after 0.11.0 feedback
+
+The reported saved configuration contained `biDirectionalUpper` for both steering directions and `uniDirectionalNegative` for the Xbox accelerator. Sampling a displaced baseline and then its return could create these assignments. `DrivingCapture` now learns a stable rest for 600 ms, accepts deliberate axis movement held for 100 ms (buttons use a press edge), then requires 160 ms at rest before completion. Returning to an unknown DirectInput axis's measured baseline is the release condition; an endpoint resting at +1 is not inherently engaged. Existing held buttons are ignored until released and pressed again. Disconnection and focus loss discard incomplete captures. An unrelated held switch cannot prevent completion.
+
+Xbox sticks must be centered and triggers released before learning completes. Trigger release cannot produce a negative calibration. The stock Xbox preset is checked against the installed game's `actionmap/Windows XInput.xml`, including its 20% stick dead zone. The capture preview displays travel relative to rest, not raw axis magnitude. The wizard accepts any connected device by default, supports keyboard mode and optional device/axis/button filters, and only returns staged assignments after review/Apply. Cancel never writes settings. Save and launch reject the known conflicting steering halves and inverted Xbox trigger configuration, while Load still allows opening and repairing old settings.
+
+Input references: Microsoft's [XInput guidance](https://learn.microsoft.com/en-us/windows/win32/xinput/getting-started-with-xinput) explains resting thumbstick drift and application-defined dead zones. [DirectInput/XUSB guidance](https://learn.microsoft.com/en-us/windows/win32/xinput/directinput-and-xusb-devices) explains why Xbox triggers should be read separately through XInput. DirectInput axes do not share Xbox's known neutral position; the rest/move/release state machine is our application-level policy, not a claim that Windows calibrates the physical hardware for us.
+
 `tools/driving-input/input.cpp` is a separate x64 static-runtime DLL used by the launcher capture dialog. It enumerates DirectInput product/instance names, reads `DIJOYSTATE2` non-exclusively in the background and uses XInput for Xbox devices. It never injects keys, installs a driver, grabs devices exclusively, or changes game Raw Input registrations. The helper is loaded by absolute path only after checking its package-manifest hash.
 
 Axis capture records movement relative to the released/centered baseline. Disconnection cancels capture; reconnecting does not assign an input. Separate wheels, pedals and button shifters are supported by the model. Native game device lookup uses product names, so identical product names remain ambiguous. POV/hat capture is not included. Hardware acceptance is still required for Fanatec CSL and Logitech devices.
@@ -31,3 +39,6 @@ Build the helper with `tools/driving-input/build.cmd` before launcher tests. Pac
 The static-runtime Release DLL was checked in `artifacts/controls-probe-20260923-200248` with the production `DirectMenus` assets. After profile loading, the live event configuration remained Baja / `baja_iron` / `route_0` / Subaru STI. The native parser accepted the configured actions, all isolated save hashes were unchanged, and the original proxy, LAN backend and flow/state files were restored. No physical wheel or headset acceptance is implied.
 
 The release-source launcher suite passed 492 checks in each Windows theme; the native suite passed all 15 tests. The genuine-GFWL integrity regression also passed. The optional capture helper loaded successfully, but no controller was attached during that local check; axis/button cases used synthetic samples.
+
+Validation of the revised capture: 528 release-source launcher checks passed in rtifacts/launcher-tests-20260923-210009 (light theme); the preceding dark run passed 526 checks before adding the two final button-filter tests. Offscreen editor/wizard renders were inspected. The live XInput device sample marshalled correctly, but in-game steering and the physical Fanatec handbrake require user acceptance.
+

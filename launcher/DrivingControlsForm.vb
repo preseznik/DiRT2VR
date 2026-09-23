@@ -8,7 +8,6 @@ Public Class DrivingControlsForm
     Private ReadOnly enabledBox As New CheckBox With {.Text = "Use launcher driving bindings (all launcher modes, DX11)", .AutoSize = True}
     Private ReadOnly list As New ListView With {.View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Fill}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(820, 0)}
-    Private keyAction As String
     Public Sub New(value As InstallContext)
         context = value : settings = DrivingControls.Load(context)
         Text = "DiRT2VR — Driving controls" : Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
@@ -20,15 +19,19 @@ Public Class DrivingControlsForm
             layout.RowStyles.Add(New RowStyle(sizing, If(sizing = SizeType.Percent, 100, 0)))
         Next
         enabledBox.Checked = settings.Enabled : layout.Controls.Add(enabledBox)
-        layout.Controls.Add(New Label With {.Text = "Unassigned actions use the game's saved controls. An assigned action replaces its saved bindings: assign both keyboard and controller inputs if you want both. Steering, pedals and shifters can use different devices.", .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
+        layout.Controls.Add(New Label With {.Text = "Start with the Binding wizard or Xbox preset. Unassigned actions use the game's saved controls. An assigned action replaces its saved bindings: assign both keyboard and controller inputs if you want both. Save below when finished.", .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
         list.Columns.Add("Action", 160) : list.Columns.Add("Keyboard", 200) : list.Columns.Add("Controller / wheel / pedals", 470)
         list.AccessibleName = "Driving bindings" : layout.Controls.Add(list)
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill}
-        AddButton(buttons, "Bind keyboard…", Sub()
-                                                   keyAction = SelectedAction()
-                                                   status.Text = If(keyAction Is Nothing, "Select an action first.", "Press a single key for " & keyAction & ". Escape cancels.")
-                                               End Sub)
-        AddButton(buttons, "Bind device…", AddressOf BindDevice)
+        AddButton(buttons, "Binding wizard…", Sub() BindActions())
+        AddButton(buttons, "Xbox preset", Sub()
+                                               settings.Bindings.RemoveAll(Function(b) Not b.Keyboard)
+                                               settings.Bindings.AddRange(DrivingControls.XboxPreset())
+                                               enabledBox.Checked = True : RefreshRows()
+                                               status.Text = "Standard Xbox driving controls applied (left stick, RT/LT, A handbrake, B/X gears). Keyboard bindings retained. Save to use them."
+                                           End Sub)
+        AddButton(buttons, "Bind keyboard…", Sub() BindSelected(True))
+        AddButton(buttons, "Bind device…", Sub() BindSelected(False))
         AddButton(buttons, "Calibration…", AddressOf Calibrate)
         AddButton(buttons, "Use game binding", Sub()
                                                      Dim action = SelectedAction()
@@ -50,6 +53,7 @@ Public Class DrivingControlsForm
         layout.Controls.Add(buttons) : layout.Controls.Add(status) : Controls.Add(layout)
         status.Text = "H-pattern and clutch bindings still require the appropriate transmission/assist settings in the game. Save to apply on the next launch. Turning overrides off does not undo controls already saved by the game."
         RefreshRows()
+        If settings.Problems().Count > 0 Then status.Text = String.Join(" ", settings.Problems())
     End Sub
     Private Shared Sub AddButton(panel As FlowLayoutPanel, text As String, action As Action)
         Dim button As New Button With {.Text = text, .AutoSize = True}
@@ -65,37 +69,29 @@ Public Class DrivingControlsForm
             Dim bindings = settings.Bindings.Where(Function(b) b.Action = action).ToArray()
             Dim keyboard = bindings.FirstOrDefault(Function(b) b.Keyboard), device = bindings.FirstOrDefault(Function(b) Not b.Keyboard)
             Dim row As New ListViewItem(action)
-            row.SubItems.Add(If(keyboard Is Nothing, "—", keyboard.Input.Replace("win_key_", "")))
-            row.SubItems.Add(If(device Is Nothing, "—", device.Device & " / " & device.Input.Replace("win_con_", "")))
+            row.SubItems.Add(If(keyboard Is Nothing AndAlso bindings.Length > 0, "—", DrivingInput.Description(keyboard)))
+            row.SubItems.Add(If(device Is Nothing AndAlso bindings.Length > 0, "—", DrivingInput.Description(device)))
             list.Items.Add(row) : row.Selected = action = selected
         Next
         list.EndUpdate()
     End Sub
-    Protected Overrides Function ProcessCmdKey(ByRef message As Message, keyData As Keys) As Boolean
-        If keyAction Is Nothing Then Return MyBase.ProcessCmdKey(message, keyData)
-        Dim key = keyData And Keys.KeyCode
-        If key = Keys.Escape Then keyAction = Nothing : status.Text = "Binding cancelled." : Return True
-        If key = Keys.ShiftKey Then key = Keys.LShiftKey
-        If key = Keys.ControlKey Then key = Keys.LControlKey
-        Dim native = DrivingControls.KeyInput(key)
-        If native Is Nothing Then status.Text = "That key is not supported here. Try another key, or Escape to cancel." : Return True
-        Dim action = keyAction : keyAction = Nothing
-        settings.Bindings.RemoveAll(Function(b) b.Action = action AndAlso b.Keyboard)
-        settings.Bindings.Add(New DrivingBinding With {.Action = action, .DeviceId = "Keyboard", .Device = "Keyboard", .Input = native})
-        status.Text = "Assigned " & key.ToString() & " to " & action & "."
-        RefreshRows(action) : Return True
-    End Function
-    Private Sub BindDevice()
-        keyAction = Nothing
+    Private Sub BindSelected(keyboard As Boolean)
         Dim action = SelectedAction()
         If action Is Nothing Then status.Text = "Select an action first." : Return
+        BindActions(action, keyboard)
+    End Sub
+    Private Sub BindActions(Optional action As String = Nothing, Optional keyboard As Boolean = False)
         Try
-            Using dialog As New DrivingCaptureForm(context, action)
+            Using dialog As New DrivingBindingWizard(context, action, keyboard)
                 If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
-                settings.Bindings.RemoveAll(Function(b) b.Action = action AndAlso Not b.Keyboard)
-                settings.Bindings.Add(dialog.Binding)
+                For Each binding In dialog.Bindings
+                    settings.Bindings.RemoveAll(Function(b) b.Action = binding.Action AndAlso b.Keyboard = binding.Keyboard)
+                    settings.Bindings.Add(binding)
+                Next
+                If dialog.Bindings.Count > 0 Then enabledBox.Checked = True
             End Using
             RefreshRows(action)
+            status.Text = If(settings.Problems().Count > 0, String.Join(" ", settings.Problems()), "Bindings applied. Save driving controls to use them on the next launch.")
         Catch ex As Exception
             status.Text = ex.Message
         End Try
@@ -121,75 +117,6 @@ Public Class DrivingControlsForm
             panel.Controls.AddRange({mode, New Label With {.Text = "Dead zone", .AutoSize = True}, dead, New Label With {.Text = "Saturation", .AutoSize = True}, saturation, apply, errorLabel})
             dialog.Controls.Add(panel) : dialog.ShowDialog(Me)
         End Using
-    End Sub
-End Class
-
-Public Class DrivingCaptureForm
-    Inherits Form
-    <System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)>
-    Public Property Binding As DrivingBinding
-    Private ReadOnly context As InstallContext
-    Private ReadOnly action As String
-    Private ReadOnly devices As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Width = 530}
-    Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(530, 0)}
-    Private ReadOnly live As New Label With {.AutoSize = True, .MaximumSize = New Size(530, 0)}
-    Private ReadOnly timer As New System.Windows.Forms.Timer With {.Interval = 40}
-    Private input As DrivingInput
-    Private baseline As DrivingInput.Sample
-    Private capturing As Boolean
-    Public Sub New(value As InstallContext, actionName As String)
-        context = value : action = actionName
-        Text = "Bind " & actionName : ClientSize = New Size(570, 330)
-        AutoScaleMode = AutoScaleMode.Dpi : StartPosition = FormStartPosition.CenterParent
-        MinimizeBox = False : MaximizeBox = False
-        Dim panel As New FlowLayoutPanel With {.Dock = DockStyle.Fill, .FlowDirection = FlowDirection.TopDown, .WrapContents = False, .Padding = New Padding(16)}
-        Dim capture As New Button With {.Text = "Capture input", .AutoSize = True}
-        Dim refresh As New Button With {.Text = "Refresh devices", .AutoSize = True}
-        Dim cancel As New Button With {.Text = "Cancel", .AutoSize = True, .DialogResult = DialogResult.Cancel}
-        CancelButton = cancel
-        status.Text = "Choose the device. Center the wheel / release the pedal, then click Capture input. Turn or press in the direction for this action. Buttons also work. The controller still reaches the game."
-        AddHandler devices.SelectedIndexChanged, Sub() capturing = False
-        AddHandler capture.Click, Sub()
-                                      If devices.SelectedItem Is Nothing Then Return
-                                      baseline = input.Read(DirectCast(devices.SelectedItem, DrivingInput.Device))
-                                      capturing = baseline.Connected <> 0
-                                      status.Text = If(capturing, "Move the selected input now. Escape cancels.", "Device disconnected. Reconnect and refresh devices.")
-                                  End Sub
-        AddHandler refresh.Click, AddressOf RefreshDevices
-        AddHandler Shown, AddressOf RefreshDevices
-        AddHandler timer.Tick, AddressOf Poll
-        panel.Controls.AddRange({devices, status, capture, refresh, live, cancel}) : Controls.Add(panel)
-    End Sub
-    Private Sub RefreshDevices(sender As Object, e As EventArgs)
-        timer.Stop() : capturing = False : input?.Dispose() : input = Nothing : devices.Items.Clear()
-        Try
-            input = New DrivingInput(context, Handle)
-            devices.Items.AddRange(input.Devices.Cast(Of Object)().ToArray())
-            If devices.Items.Count > 0 Then devices.SelectedIndex = 0
-            If devices.Items.Count = 0 Then status.Text = "No connected controllers found. Connect the wheel/pedals or wake the gamepad, then Refresh devices."
-            timer.Start()
-        Catch ex As Exception
-            status.Text = ex.Message
-        End Try
-    End Sub
-    Private Sub Poll(sender As Object, e As EventArgs)
-        If devices.SelectedItem Is Nothing OrElse input Is Nothing Then Return
-        Dim device = DirectCast(devices.SelectedItem, DrivingInput.Device), current = input.Read(device)
-        If current.Connected = 0 Then
-            capturing = False : live.Text = "Disconnected — capture cancelled. Reconnect and capture again." : Return
-        End If
-        live.Text = "Axes: " & String.Join("  ", Enumerable.Range(0, 8).Where(Function(i) (current.Axes And (1UI << i)) <> 0).Select(Function(i) current.Values(i).ToString("0.00"))) & vbCrLf &
-            "Pressed buttons: " & String.Join(", ", Enumerable.Range(0, 128).Where(Function(i) current.Buttons(i) <> 0).Select(Function(i) (i + 1).ToString()))
-        If Not capturing Then Return
-        For i = 0 To baseline.Buttons.Length - 1
-            If current.Buttons(i) = 0 Then baseline.Buttons(i) = 0
-        Next
-        Binding = DrivingInput.Detect(action, device, baseline, current)
-        If Binding IsNot Nothing Then timer.Stop() : DialogResult = DialogResult.OK : Close()
-    End Sub
-    Protected Overrides Sub Dispose(disposing As Boolean)
-        If disposing Then timer.Dispose() : input?.Dispose()
-        MyBase.Dispose(disposing)
     End Sub
 End Class
 
