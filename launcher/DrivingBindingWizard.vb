@@ -6,7 +6,9 @@ Public Class DrivingBindingWizard
     Private ReadOnly context As InstallContext
     Private ReadOnly actions As String()
     Private ReadOnly answers As DrivingBinding()
-    Private ReadOnly heading As New Label With {.AutoSize = True, .Font = New Font(SystemFonts.MessageBoxFont.FontFamily, 16, FontStyle.Bold)}
+    Private ReadOnly stepLabel As New Label With {.AutoSize = True}
+    Private ReadOnly heading As New Label With {.AutoSize = True, .MaximumSize = New Size(540, 0), .Font = New Font(SystemFonts.MessageBoxFont.FontFamily, 30, FontStyle.Bold), .Anchor = AnchorStyles.Left}
+    Private ReadOnly actionIcon As New DrivingActionIcon With {.Size = New Size(80, 80), .Margin = New Padding(0, 0, 12, 8)}
     Private ReadOnly instruction As New Label With {.AutoSize = True, .MaximumSize = New Size(650, 0)}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(650, 0)}
     Private ReadOnly source As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Width = 290}
@@ -51,8 +53,11 @@ Public Class DrivingBindingWizard
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Width = 660}
         Dim cancel As New Button With {.Text = "Cancel", .AutoSize = True, .DialogResult = DialogResult.Cancel}
         buttons.Controls.AddRange({back, skip, retry, apply, cancel}) : CancelButton = cancel
-        panel.Controls.AddRange({heading, source, selection, instruction, status, travel, review, buttons,
-            New Label With {.AutoSize = True, .MaximumSize = New Size(650, 0), .Text = "Skip leaves the current assignment unchanged. Back revisits a step. Cancel discards this wizard. Review and Apply at the end, then Save driving controls. Controller input still reaches other applications."}})
+        Dim title As New TableLayoutPanel With {.AutoSize = True, .ColumnCount = 2, .RowCount = 1, .Width = 660}
+        title.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize)) : title.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
+        title.Controls.Add(actionIcon, 0, 0) : title.Controls.Add(heading, 1, 0)
+        panel.Controls.AddRange({stepLabel, title, source, selection, instruction, status, travel, review, buttons,
+            New Label With {.AutoSize = True, .MaximumSize = New Size(650, 0), .Text = "Skip keeps your current binding. Changes are reviewed before saving."}})
         Controls.Add(panel)
         AddHandler Shown, Sub() RefreshDevices()
         AddHandler refresh.Click, Sub() RefreshDevices()
@@ -73,7 +78,7 @@ Public Class DrivingBindingWizard
     Private Sub RefreshDevices()
         timer.Stop() : input?.Dispose() : input = Nothing : updating = True
         Dim selected = TryCast(devices.SelectedItem, DrivingInput.Device)?.Id
-        devices.Items.Clear() : devices.Items.Add("All connected devices (automatic)")
+        devices.Items.Clear() : devices.Items.Add("All connected devices")
         Try
             input = New DrivingInput(context, Handle)
             For Each device In input.Devices
@@ -96,20 +101,22 @@ Public Class DrivingBindingWizard
         source.Enabled = Not finished : devices.Enabled = Not finished AndAlso source.SelectedIndex = 0 : filter.Enabled = devices.Enabled
         back.Enabled = index > 0
         If finished Then
-            heading.Text = "Review your bindings"
-            instruction.Text = "Nothing has been saved yet. Check the assignments below."
+            stepLabel.Text = "Final step" : actionIcon.Visible = False
+            heading.Text = "REVIEW BINDINGS"
+            instruction.Text = "Check your assignments."
             review.Items.Clear()
             For i = 0 To actions.Length - 1
                 Dim row As New ListViewItem(actions(i))
                 row.SubItems.Add(If(answers(i) Is Nothing, "Unchanged (skipped)", DrivingInput.Description(answers(i)))) : review.Items.Add(row)
             Next
-            status.Text = "Apply returns these changes to the controls editor. Save there to use them on the next launch."
+            status.Text = "Apply, then Save in the controls editor."
             Return
         End If
-        heading.Text = $"{index + 1} / {actions.Length} — {actions(index)}"
-        instruction.Text = If(source.SelectedIndex = 1, "Press and release the key you want to assign. Escape cancels; Tab moves focus.",
-            "First center the wheel / stick, release pedals and handbrake, and leave the shifter in neutral. Wait for ‘Ready’, then " & Gesture(actions(index)) & ". Return to rest to continue automatically.")
-        status.Text = If(source.SelectedIndex = 1, "Ready for a key.", "Learning the resting positions… Nonzero resting axes and held switches are ignored.")
+        stepLabel.Text = $"Step {index + 1} of {actions.Length}"
+        heading.Text = actions(index).ToUpperInvariant()
+        actionIcon.Visible = True : actionIcon.SetAction(actions(index))
+        instruction.Text = If(source.SelectedIndex = 1, "Press and release a key.", "Center steering. Release pedals and handbrake. Shifter in neutral.")
+        status.Text = If(source.SelectedIndex = 1, "Ready", "Keep still for a moment…")
     End Sub
     Private Shared Function Gesture(action As String) As String
         Select Case action
@@ -118,8 +125,8 @@ Public Class DrivingBindingWizard
             Case "Accelerate" : Return "press the accelerator fully"
             Case "Brake" : Return "press the brake fully"
             Case "Clutch" : Return "press the clutch fully"
-            Case "Hand Brake" : Return "pull the handbrake fully (or hold its button)"
-            Case Else : Return "press the button or select the gear and hold briefly"
+            Case "Hand Brake" : Return "pull the handbrake or press its button"
+            Case Else : Return "press a button or select the gear"
         End Select
     End Function
     Private Sub CompleteStep(binding As DrivingBinding)
@@ -132,7 +139,7 @@ Public Class DrivingBindingWizard
         If key <> Keys.None Then Return True
         Dim mapped = If(pressed = Keys.ShiftKey, Keys.LShiftKey, If(pressed = Keys.ControlKey, Keys.LControlKey, pressed))
         Dim native = DrivingControls.KeyInput(mapped)
-        If native Is Nothing Then status.Text = "That key is not supported. Try another key." : Return True
+        If native Is Nothing Then status.Text = "Unsupported key. Try another." : Return True
         key = pressed : keyReleased = -1
         pendingKey = New DrivingBinding With {.Action = actions(index), .DeviceId = "Keyboard", .Device = "Keyboard", .Input = native}
         status.Text = DrivingInput.Description(pendingKey) & " — release to continue." : Return True
@@ -148,7 +155,7 @@ Public Class DrivingBindingWizard
             Return
         End If
         If input Is Nothing OrElse input.Devices.Count = 0 Then
-            status.Text = "No controllers connected. Connect a device and Refresh, or choose Keyboard." : Return
+            status.Text = "Connect a controller and Refresh, or choose Keyboard." : Return
         End If
         Dim selected = TryCast(devices.SelectedItem, DrivingInput.Device), ready As Integer, connected As Integer
         For Each device In input.Devices
@@ -158,18 +165,19 @@ Public Class DrivingBindingWizard
             capture.Update(sample, now)
             If sample.Connected <> 0 Then connected += 1
             If active Is capture AndAlso sample.Connected = 0 Then
-                active = Nothing : status.Text = "Device disconnected. Capture cancelled; reconnect and try again." : Return
+                active = Nothing : status.Text = "Disconnected. Reconnect and try again." : Return
             End If
             If capture.Ready Then ready += 1
             If active Is Nothing AndAlso capture.WaitingForRelease Then active = capture
         Next
         If active IsNot Nothing Then
             travel.Value = active.Travel
-            status.Text = DrivingInput.Description(active.Detected) & " — release / return to rest to continue."
+            instruction.Text = "Release / return to rest to continue."
+            status.Text = DrivingInput.Description(active.Detected)
             If active.Completed IsNot Nothing Then CompleteStep(active.Completed)
         Else
-            status.Text = If(ready > 0, "Ready — " & Gesture(actions(index)) & ". Resting inputs will not be assigned.",
-                If(connected = 0, "Disconnected. Reconnect and Refresh devices.", "Keep controls at rest briefly. Center Xbox sticks and release triggers."))
+            instruction.Text = If(ready > 0, Gesture(actions(index)) & ".", "Center steering. Release pedals and handbrake. Shifter in neutral.")
+            status.Text = If(ready > 0, "Ready", If(connected = 0, "Disconnected. Reconnect and Refresh.", "Keep still for a moment…"))
         End If
     End Sub
     Protected Overrides Sub OnDeactivate(e As EventArgs)
@@ -179,5 +187,58 @@ Public Class DrivingBindingWizard
     Protected Overrides Sub Dispose(disposing As Boolean)
         If disposing Then timer.Dispose() : input?.Dispose()
         MyBase.Dispose(disposing)
+    End Sub
+End Class
+
+' Simple vector symbols remain sharp at high DPI and follow the Windows text color.
+Friend Class DrivingActionIcon
+    Inherits Control
+    Private action As String = ""
+    Public Sub New()
+        DoubleBuffered = True : AccessibleRole = AccessibleRole.Graphic
+    End Sub
+    Public Sub SetAction(value As String)
+        action = value : AccessibleName = value : Invalidate()
+    End Sub
+    Protected Overrides Sub OnPaint(e As PaintEventArgs)
+        MyBase.OnPaint(e)
+        Dim g = e.Graphics
+        g.SmoothingMode = Drawing2D.SmoothingMode.AntiAlias
+        g.ScaleTransform(ClientSize.Width / 80.0F, ClientSize.Height / 80.0F)
+        Using pen As New Pen(ForeColor, 3.5F), brush As New SolidBrush(ForeColor)
+            pen.StartCap = Drawing2D.LineCap.Round : pen.EndCap = Drawing2D.LineCap.Round
+            Select Case action
+                Case "Steer Left", "Steer Right"
+                    g.DrawEllipse(pen, 17, 23, 46, 46) : g.DrawEllipse(pen, 35, 41, 10, 10)
+                    g.DrawLine(pen, 18, 39, 35, 45) : g.DrawLine(pen, 62, 39, 45, 45) : g.DrawLine(pen, 40, 51, 40, 68)
+                    Dim left = action = "Steer Left", tip = If(left, 13, 67), tail = If(left, 62, 18), wing = If(left, 24, 56)
+                    g.DrawLine(pen, tail, 12, tip, 12) : g.DrawLine(pen, tip, 12, wing, 5) : g.DrawLine(pen, tip, 12, wing, 19)
+                Case "Accelerate", "Brake", "Clutch"
+                    Dim selected = If(action = "Clutch", 0, If(action = "Brake", 1, 2))
+                    For i = 0 To 2
+                        Dim box As New Rectangle(9 + i * 24, 16, 14, 35)
+                        If i = selected Then g.FillRectangle(brush, box) Else g.DrawRectangle(pen, box)
+                        g.DrawLine(pen, box.X + 7, 53, box.X + 7, 65)
+                    Next
+                Case "Hand Brake"
+                    g.DrawLine(pen, 16, 66, 64, 66) : g.DrawEllipse(pen, 23, 52, 14, 14)
+                    g.DrawLine(pen, 30, 55, 53, 21) : g.DrawLine(pen, 49, 17, 61, 25)
+                Case "Gear Up", "Gear Down"
+                    Dim tip = If(action = "Gear Up", 13, 65), tail = If(action = "Gear Up", 65, 13), wing = If(action = "Gear Up", 28, 50)
+                    g.DrawLine(pen, 40, tail, 40, tip) : g.DrawLine(pen, 25, wing, 40, tip) : g.DrawLine(pen, 55, wing, 40, tip)
+                Case "Change View"
+                    g.DrawRectangle(pen, 12, 24, 56, 38) : g.DrawEllipse(pen, 30, 32, 20, 20) : g.DrawRectangle(pen, 22, 16, 20, 8)
+                Case "Look Back"
+                    g.DrawArc(pen, 20, 18, 44, 42, -90, 270) : g.DrawLine(pen, 20, 39, 12, 29) : g.DrawLine(pen, 20, 39, 30, 31)
+                Case "Horn"
+                    g.DrawPolygon(pen, {New Point(15, 31), New Point(28, 31), New Point(42, 20), New Point(42, 60), New Point(28, 49), New Point(15, 49)})
+                    g.DrawArc(pen, 40, 25, 20, 30, -65, 130) : g.DrawArc(pen, 45, 17, 28, 46, -65, 130)
+                Case Else
+                    g.DrawLine(pen, 16, 40, 64, 40)
+                    For Each x In {16, 40, 64}
+                        g.DrawLine(pen, x, 18, x, 62)
+                    Next
+            End Select
+        End Using
     End Sub
 End Class

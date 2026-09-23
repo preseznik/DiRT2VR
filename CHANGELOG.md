@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Simplify the driving-binding wizard with a large bold action title, action pictograms, a separate step counter and short capture prompts. Binding behavior is unchanged.
+
 - Replace driving-input capture with a guided binding wizard: learn a stable resting position, capture deliberate travel or a button press, and require release before advancing. Walk through all actions, skip/back/review without saving partial changes, detect separate devices automatically, and offer axis/button filters. Constant high handbrake axes and held switches no longer appear as newly engaged controls. Physical Fanatec validation remains pending.
 - Add a stock Xbox driving preset and reject identical left/right steering directions or inverted Xbox triggers when enabling overrides. Prevent capturing Xbox stick/trigger return motion as the intended direction; use the game's standard 20% Xbox stick dead zone. Regression tests cover the reported configuration and resting/inverted inputs.
 
