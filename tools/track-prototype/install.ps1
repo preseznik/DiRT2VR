@@ -18,7 +18,7 @@ $validation=Get-Content (Join-Path $candidatePath 'validation.json') -Raw | Conv
 if($validation.Passed -ne $true) { throw 'Candidate static validation did not pass' }
 $staged = Join-Path $trackRoot ('route-staging-'+[Guid]::NewGuid().ToString('N'))
 $backup = Join-Path $trackRoot ('donor-route-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
-$required=@('routesplit.pssg','track.jpk','grids.pssg','ai_track.xml','dev_ai_track.xml','ai_vehicle_track.xml','progress_track.xml','boundarylines.cqtc','resetlines.cqtc','cameralines.cqtc','route_overrides.xml')
+$required=@('routesplit.pssg','track.jpk','grids.pssg','ai_track.xml','dev_ai_track.xml','ai_vehicle_track.xml','progress_track.xml','boundarylines.cqtc','resetlines.cqtc','cameralines.cqtc','route_overrides.xml','track.vis','objects.ens','ornaments.xml','ornaments.bin')
 foreach($name in $required) {
     $asset=Join-Path $candidatePath $name
     if ((Get-Item -LiteralPath $asset).Attributes -band [IO.FileAttributes]::ReparsePoint) { throw "Linked candidate asset: $name" }
@@ -27,7 +27,7 @@ foreach($name in $required) {
 Copy-Item -LiteralPath $route -Destination $staged -Recurse
 foreach($name in $required) { Copy-Item -LiteralPath (Join-Path $candidatePath $name) -Destination (Join-Path $staged $name) }
 $hashes=[ordered]@{}
-foreach($name in @($required)+@('track.vis')) { $hashes[$name]=(Get-FileHash -LiteralPath (Join-Path $staged $name)).Hash }
+foreach($name in $required) { $hashes[$name]=(Get-FileHash -LiteralPath (Join-Path $staged $name)).Hash }
 [ordered]@{Schema=1;TrackId='d2vr_test';Files=$hashes} | ConvertTo-Json -Depth 4 | Set-Content -LiteralPath (Join-Path $staged 'prototype.json') -Encoding utf8
 # All three absolute paths are under the checked lab; moves retain the donor for rollback.
 foreach($path in @($staged,$backup,$route)) {

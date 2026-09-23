@@ -120,7 +120,19 @@ Controller shortcuts start unassigned. Choose **Bind…** in the desired action'
 
 **Assigned controller buttons still perform their normal game actions.** Choose buttons or combinations that avoid unwanted driving/menu actions. Shortcuts fire once per press and require release before firing again. Keep the game window focused.
 
-Assignments stay attached to the selected device. A disconnected device is not replaced automatically; Xbox controller slot changes may require rebinding. For standard HID wheels, press and release a button so the launcher can detect the device. Wheel shortcut support is implemented but not yet hardware-verified; normal game driving controls remain managed by DiRT 2.
+Assignments stay attached to the selected device. A disconnected device is not replaced automatically; Xbox controller slot changes may require rebinding. For standard HID wheels, press and release a button so the launcher can detect the device. Wheel shortcut support still needs hardware validation.
+
+**Driving controls:** Direct practice and Race now load the existing saved profile before the event, including its control settings. Save your profile after configuring controls in the game. No additional career save is created. If no profile can be loaded, the event uses the game's defaults. Fanatec pedal validation is pending.
+
+For optional launcher assignments, open **Controls → Configure driving controls…**. For Xbox controllers, **Xbox preset** applies the game's standard layout: left-stick steering, RT accelerator, LT brake, A handbrake and B/X shifting. It retains keyboard assignments. Choose **Save driving controls**, then launch again.
+
+**Binding wizard…** walks through the actions in order, automatically listening to all connected controllers. Center the wheel/stick, release pedals and handbrake, and wait for **Ready**. Move the requested control, hold an axis briefly, then return to rest; the wizard advances automatically. A nonzero resting handbrake axis or held switch does not count as a new input. Choose a specific device or **Axis only / Button only** if necessary. Steering, pedals and shifters may use separate devices. For keyboard assignments, select **Keyboard** in the wizard. **Skip** keeps the current assignment; **Back** revisits a step; **Cancel** discards the wizard's changes. Review, **Apply bindings**, then **Save driving controls**. Applying bindings enables launcher overrides.
+
+To change just one action, select it and choose **Bind keyboard…** or **Bind device…**. **Calibration…** adjusts direction, dead zone and saturation. The editor warns about identical left/right steering directions and inverted Xbox triggers; repair old assignments with the wizard or Xbox preset. The revised capture has automated coverage; physical Fanatec handbrake validation remains pending.
+
+The editor includes steering, accelerator, brake, clutch, handbrake, sequential shifts and H-pattern gears. Select the appropriate transmission/assist settings in the game as well. It applies to Normal Launch, Practice, Race and HOST/JOIN, in desktop and VR modes, using the DX11 renderer. Unassigned actions retain game settings; assigning an action replaces that action's saved inputs, so assign both keyboard and controller inputs if wanted. **Use game binding** removes that action's launcher override. Disabling overrides does not undo bindings subsequently saved by the game.
+
+Driving capture uses XInput for Xbox controllers and non-exclusive DirectInput for wheels/pedals. Wheel models and the combined LAN/VR binding path still need hardware acceptance. The game identifies DirectInput devices by product name; two identical models cannot be distinguished reliably. POV/hat capture and force-feedback tuning are not included. Technical validation is recorded in [Driving controls](docs/driving-controls.md).
 
 ## Recovery, upgrades and removal
 
@@ -201,3 +213,5 @@ Older test-kit profiles and imported copies are no longer used. They are left on
 See the [changelog](CHANGELOG.md). Build instructions and diagnostic details are in the [development guide](docs/development.md) and [launcher implementation notes](docs/launcher.md).
 
 Third-party license notices are included in `DiRT2VR/licenses` in packaged builds. This product includes software developed by Jon Skeet and Marc Gravell. Contact skeet@pobox.com, or see https://jonskeet.uk).
+
+Microsoft GFWL 3.5.95.0: this build includes a candidate fix for crashes during VR sessions. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3 gameplay confirmation is still pending; see [investigation status](docs/pc3-crash.md).

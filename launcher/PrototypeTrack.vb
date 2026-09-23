@@ -2,7 +2,7 @@ Public NotInheritable Class PrototypeTrack
     Private Sub New()
     End Sub
     Public Const Id As String = "d2vr_test"
-    Public Shared ReadOnly RequiredFiles As String() = {"routesplit.pssg", "track.jpk", "grids.pssg", "ai_track.xml", "dev_ai_track.xml", "ai_vehicle_track.xml", "progress_track.xml", "boundarylines.cqtc", "resetlines.cqtc", "cameralines.cqtc", "route_overrides.xml", "track.vis"}
+    Public Shared ReadOnly RequiredFiles As String() = {"routesplit.pssg", "track.jpk", "grids.pssg", "ai_track.xml", "dev_ai_track.xml", "ai_vehicle_track.xml", "progress_track.xml", "boundarylines.cqtc", "resetlines.cqtc", "cameralines.cqtc", "route_overrides.xml", "track.vis", "objects.ens", "ornaments.xml", "ornaments.bin"}
 
     Public Class Receipt
         Public Property Schema As Integer

@@ -5,6 +5,23 @@ using EgoEngineLibrary.Formats.TrackQuadTree.Static;
 using EgoEngineLibrary.Graphics.Pssg;
 using EgoEngineLibrary.Xml;
 
+if (args.Length == 2 && args[0] == "mask-test")
+{
+    VisibilityMasks.Test(args[1]);
+    return 0;
+}
+
+if (args.Length == 3 && args[0] == "pssg-xml")
+{
+    using var input = File.OpenRead(args[1]);
+    using var outputXml = new FileStream(args[2], FileMode.CreateNew);
+    PssgFile.Open(input).WriteXml(outputXml);
+    return 0;
+}
+
+if (args.Length == 3 && args[0] == "visual-check")
+    return VisualCheck.Run(args[1], args[2]);
+
 if (args.Length == 4 && args[0] == "clearance")
 {
     ClearanceCheck.Run(args[1],args[2],args[3]);

@@ -27,9 +27,11 @@ Public Module PrototypeTrackTests
         Files.SaveJson(marker, receipt)
         PrototypeTrack.Validate(route)
         check(PrototypeTrack.Installed(track, context), "complete prototype is selectable")
-        File.AppendAllText(Path.Combine(route, "track.jpk"), "changed")
-        reject(Sub() PrototypeTrack.Validate(route), "changed collision is rejected")
-        File.WriteAllText(Path.Combine(route, "track.jpk"), "fixture: track.jpk")
+        For Each name In {"track.jpk", "track.vis", "objects.ens", "ornaments.xml", "ornaments.bin"}
+            File.AppendAllText(Path.Combine(route, name), "changed")
+            reject(Sub() PrototypeTrack.Validate(route), "changed prototype asset is rejected: " & name)
+            File.WriteAllText(Path.Combine(route, name), "fixture: " & name)
+        Next
         receipt.Schema = 2 : Files.SaveJson(marker, receipt)
         reject(Sub() PrototypeTrack.Validate(route), "unknown receipt schema rejected")
         receipt.Schema = 1 : Files.SaveJson(marker, receipt)

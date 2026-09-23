@@ -15,10 +15,12 @@ End Class
 Public Class Session
     Private ReadOnly context As InstallContext
     Private ReadOnly settings As VrSettings
+    Private ReadOnly driving As DrivingControls
     Private ReadOnly lanJoinTarget As String
     Private focusStatus As String = ""
     Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing)
         context = value : settings = VrSettings.Load(context)
+        driving = DrivingControls.Load(context)
         If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
         If multiplayer OrElse joinTarget IsNot Nothing Then settings.LaunchMode = "lan"
     End Sub
@@ -148,6 +150,7 @@ Public Class Session
         Return start
     End Function
     Private Function RunDesktop() As Boolean
+        If driving.Enabled AndAlso driving.Bindings.Count > 0 Then Worker.Invoke(context, "setup")
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
@@ -201,6 +204,7 @@ Public Class Session
         Return start
     End Function
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
+        driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         Dim focus As New StartupFocus(context)
         Using returnChannel As New DirectReturnChannel(start, settings.DirectMode)
             Using child = Process.Start(start)

@@ -1,3 +1,4 @@
+#include "gfwl_compat.h"
 #include "direct_menus.h"
 #include "common.h"
 #include <MinHook.h>
@@ -45,7 +46,7 @@ bool EnableDirectReturn() {
     auto status=MH_Initialize();
     if(status==MH_OK || status==MH_ERROR_ALREADY_INITIALIZED) {
         status=MH_CreateHook(base+0x22ca10,reinterpret_cast<void*>(Shutdown),reinterpret_cast<void**>(&originalShutdown));
-        if(status==MH_OK) status=MH_EnableHook(base+0x22ca10);
+        if(status==MH_OK) status=EnableRecordedHook(base+0x22ca10);
     }
     if(status!=MH_OK) { CloseHandle(returnEvent); returnEvent=nullptr; }
     Log("direct session: return-to-menus hook=%s",MH_StatusToString(status));

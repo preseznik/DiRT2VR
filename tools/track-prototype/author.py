@@ -92,6 +92,16 @@ for side in (-1,1):
     mat=bpy.data.materials.get('CON+') or bpy.data.materials.new('CON+')
     mat.diffuse_color=(0.8,0.65,0.1,1)
     mesh.materials.append(mat)
+# A simple ground apron replaces the local donor scenery beneath the raised loop.
+verts=[[0,0,-65],[0,0,150],[200,0,150],[200,0,-65]]
+faces=[[0,1,2],[0,2,3]]
+meshes.append({'name':'ground','surface':'DRT+','vertices':verts,'triangles':faces})
+mesh=bpy.data.meshes.new('ground')
+mesh.from_pydata([(v[0],-v[2],v[1]) for v in verts],[],faces)
+mesh.update()
+obj=bpy.data.objects.new('ground',mesh)
+bpy.context.collection.objects.link(obj)
+mesh.materials.append(bpy.data.materials['DRT+'])
 spec={'schema':1,'length':length,'width':10,'baseHeight':base_y,'points':points,'meshes':meshes,
       'coordinateSystem':'right-handed Y-up metres','runtimeValidated':False}
 (out/'mesh.json').write_text(json.dumps(spec,indent=2)+'\n',encoding='utf-8')

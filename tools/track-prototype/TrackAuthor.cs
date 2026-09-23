@@ -39,8 +39,12 @@ internal static class TrackAuthor
         TrackGroundGltfConverter.Convert(ground).SaveGLB(Path.Combine(output,"ground-readback.glb"));
         WriteVisuals(source,output,spec);
         WriteRoute(source,output,spec);
+        TrackVisibility.Write(Path.Combine(source,"track.vis"),Path.Combine(output,"track.vis"),
+            spec.meshes.SelectMany(m=>m.vertices).Select(V).Aggregate(Vector3.Min),
+            spec.meshes.SelectMany(m=>m.vertices).Select(V).Aggregate(Vector3.Max));
+        Scenery.Write(source,output);
         Validate(authored,output,spec);
-        File.WriteAllText(Path.Combine(output,"authoring.json"),JsonSerializer.Serialize(new { schema=1, track="d2vr_test", route="route_0", length=spec.length, runtimeValidated=false, visibility="Donor track.vis and scenery retained; in-game verification required" },new JsonSerializerOptions{WriteIndented=true}));
+        File.WriteAllText(Path.Combine(output,"authoring.json"),JsonSerializer.Serialize(new { schema=1, track="d2vr_test", route="route_0", length=spec.length, runtimeValidated=false, visibility="Terrain tile bounds expanded; all donor PVS leaves use all-visible masks", scenery="Local placements suppressed; distant backdrop, sky and trees retained" },new JsonSerializerOptions{WriteIndented=true}));
     }
     static void Validate(string authored,string output,Spec spec)
     {
@@ -49,6 +53,7 @@ internal static class TrackAuthor
         if(GeometryCheck.Unmatched(original,rebuilt)!=0 || GeometryCheck.Unmatched(rebuilt,original)!=0) throw new InvalidDataException("Generated collision differs from Blender geometry.");
         var expected=spec.meshes.SelectMany(m=>m.triangles.Select(t=>new GeometryCheck.Triangle(V(m.vertices[t[0]]),V(m.vertices[t[1]]),V(m.vertices[t[2]]),"visual"))).ToList();
         var pssg=Open(Path.Combine(output,"routesplit.pssg"));
+        VisualCheck.Validate(pssg);
         var reader=new RenderDataSourceReader(pssg.GetObject<PssgRenderDataSource>("prototype_road".AsMemory()));
         var actual=new List<GeometryCheck.Triangle>();
         for(int i=0;i<reader.IndexCount;i+=3) actual.Add(new(reader.GetPosition(reader.GetIndex(i)),reader.GetPosition(reader.GetIndex(i+1)),reader.GetPosition(reader.GetIndex(i+2)),"visual"));
@@ -64,7 +69,7 @@ internal static class TrackAuthor
             using var input=File.OpenRead(Path.Combine(output,name)); var xml=new XmlFile(input);
             if(xml.Document.DocumentElement is null) throw new InvalidDataException("Empty route data.");
         }
-        var hashes=Directory.GetFiles(output).Where(p=>new[]{".pssg",".jpk",".xml",".cqtc"}.Contains(Path.GetExtension(p))).Order().ToDictionary(p=>Path.GetFileName(p),p=>Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
+        var hashes=Directory.GetFiles(output).Where(p=>new[]{".pssg",".jpk",".xml",".cqtc",".vis",".ens",".bin"}.Contains(Path.GetExtension(p))).Order().ToDictionary(p=>Path.GetFileName(p),p=>Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(p))));
         File.WriteAllText(Path.Combine(output,"validation.json"),JsonSerializer.Serialize(new { Passed=true, RuntimeValidated=false, AuthoredTriangles=expected.Count, CollisionTriangles=rebuilt.Count, GateCount=spec.points.Length, LengthMetres=spec.length, GeometryToleranceMetres=0.02, SurfaceAndWindingChecked=true, GridDeterminant=slot.GetDeterminant(), Files=hashes },new JsonSerializerOptions { WriteIndented=true }));
     }
     static void WriteVisuals(string source,string output,Spec spec)
@@ -105,6 +110,12 @@ internal static class TrackAuthor
         rdsLib.RemoveChildElements(); dataLib.RemoveChildElements();
         var segment=new PssgSegmentSet(file,rdsLib){Id="prototype_segments",SegmentCount=1}; rdsLib.AppendChild(segment);
         writer.Write(input,segment,dataLib,new WriterState());
+        // The car-oriented writer derives the index ID by replacing "RDS" in its
+        // name. Our name has no such token, so assign a distinct ID explicitly.
+        var dataSource=segment.Segments.Single();
+        dataSource.IndexSource!.Id="prototype_road_indices";
+        // DiRT 2 terrain declares the primitive on both the source and its indices.
+        dataSource.Primitive="triangles";
         foreach(var node in new[]{high,low})
         {
             node.Transform.Transform=Matrix4x4.Identity; node.BoundingBox.BoundsMin=min; node.BoundingBox.BoundsMax=max;
