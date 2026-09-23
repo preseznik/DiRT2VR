@@ -17,12 +17,19 @@ V vs(uint id:SV_VertexID) { V v; v.uv=float2((id<<1)&2,id&2); v.position=float4(
 float4 ps(V v):SV_Target {
     float3 c=image.Sample(linearClamp,v.uv).rgb;
     return float4(lerp(c/12.92,pow((c+0.055)/1.055,2.4),step(0.04045,c)),1);
+}
+float4 alphaPs(V v):SV_Target {
+    float4 texel=image.Sample(linearClamp,v.uv);
+    float3 c=texel.a>0.00001 ? saturate(texel.rgb/texel.a) : 0;
+    return float4(lerp(c/12.92,pow((c+0.055)/1.055,2.4),step(0.04045,c)),texel.a);
 })";
-    ComPtr<ID3DBlob> vertex,pixel,error;
+    ComPtr<ID3DBlob> vertex,pixel,alpha,error;
     if(FAILED(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"vs","vs_5_0",0,0,&vertex,&error)) ||
-       FAILED(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"ps","ps_5_0",0,0,&pixel,&error))) return false;
+       FAILED(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"ps","ps_5_0",0,0,&pixel,&error)) ||
+       FAILED(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"alphaPs","ps_5_0",0,0,&alpha,&error))) return false;
     if(FAILED(device->CreateVertexShader(vertex->GetBufferPointer(),vertex->GetBufferSize(),nullptr,&vs_)) ||
-       FAILED(device->CreatePixelShader(pixel->GetBufferPointer(),pixel->GetBufferSize(),nullptr,&ps_))) return false;
+       FAILED(device->CreatePixelShader(pixel->GetBufferPointer(),pixel->GetBufferSize(),nullptr,&ps_)) ||
+       FAILED(device->CreatePixelShader(alpha->GetBufferPointer(),alpha->GetBufferSize(),nullptr,&alphaPs_))) return false;
     D3D11_SAMPLER_DESC sample{}; sample.Filter=D3D11_FILTER_MIN_MAG_MIP_LINEAR;
     sample.AddressU=sample.AddressV=sample.AddressW=D3D11_TEXTURE_ADDRESS_CLAMP; sample.MaxLOD=D3D11_FLOAT32_MAX;
     D3D11_RASTERIZER_DESC raster{}; raster.FillMode=D3D11_FILL_SOLID; raster.CullMode=D3D11_CULL_NONE; raster.DepthClipEnable=TRUE;
@@ -31,8 +38,8 @@ float4 ps(V v):SV_Target {
        FAILED(device->CreateDepthStencilState(&depth,&depth_))) return false;
     device_=device; return true;
 }
-bool EyeBlit::Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* target,unsigned width,unsigned height) {
-    if(!device_ || eye>=2 || !source || !target || !width || !height) return false;
+bool EyeBlit::Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* target,unsigned width,unsigned height,bool alpha) {
+    if(!device_ || eye>=sources_.size() || !source || !target || !width || !height) return false;
     if(sources_[eye].Get()!=source) {
         ComPtr<ID3D11ShaderResourceView> view;
         if(FAILED(device_->CreateShaderResourceView(source,nullptr,&view))) return false;
@@ -45,7 +52,7 @@ bool EyeBlit::Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* 
     D3D11_VIEWPORT viewport{0,0,static_cast<float>(width),static_cast<float>(height),0,1};
     context_->RSSetViewports(1,&viewport); context_->RSSetState(raster_.Get());
     context_->IASetInputLayout(nullptr); context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-    context_->VSSetShader(vs_.Get(),nullptr,0); context_->PSSetShader(ps_.Get(),nullptr,0);
+    context_->VSSetShader(vs_.Get(),nullptr,0); context_->PSSetShader(alpha ? alphaPs_.Get() : ps_.Get(),nullptr,0);
     auto view=views_[eye].Get(); auto sampler=sampler_.Get();
     context_->PSSetShaderResources(0,1,&view); context_->PSSetSamplers(0,1,&sampler);
     context_->Draw(3,0);

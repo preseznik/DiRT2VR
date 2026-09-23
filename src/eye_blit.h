@@ -8,16 +8,17 @@
 class EyeBlit {
 public:
     bool Initialize(ID3D11Device* device);
-    bool Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* target,unsigned width,unsigned height);
+    bool Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* target,unsigned width,unsigned height,bool alpha=false);
 private:
     Microsoft::WRL::ComPtr<ID3D11Device> device_;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext1> context_;
     Microsoft::WRL::ComPtr<ID3DDeviceContextState> state_;
     Microsoft::WRL::ComPtr<ID3D11VertexShader> vs_;
     Microsoft::WRL::ComPtr<ID3D11PixelShader> ps_;
+    Microsoft::WRL::ComPtr<ID3D11PixelShader> alphaPs_;
     Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler_;
     Microsoft::WRL::ComPtr<ID3D11RasterizerState> raster_;
     Microsoft::WRL::ComPtr<ID3D11DepthStencilState> depth_;
-    std::array<Microsoft::WRL::ComPtr<ID3D11Texture2D>,2> sources_;
-    std::array<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>,2> views_;
+    std::array<Microsoft::WRL::ComPtr<ID3D11Texture2D>,3> sources_;
+    std::array<Microsoft::WRL::ComPtr<ID3D11ShaderResourceView>,3> views_;
 };

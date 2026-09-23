@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Added a transparent cockpit HUD layer about four metres ahead, fixed relative to the car by default. Graphics → **HUD follows view** optionally follows head movement; Recenter repositions the fixed layer. HUD drawing is captured once per frame and composed for both eyes, separately from the scene. Desktop captures verify separation of the Baja lap/time, position, route map and speedometer from scenery; GPU, OpenXR lifecycle and launcher tests cover the implementation. Headset readability, placement, follow mode and broader event coverage remain unverified; the user deferred headset testing.
+
 - Fixed the identified LAN race-loading disconnect caused by startup logo skipping. Live 0.7.0 captures identified modified `system\states.bin` as the failed validation record; disabling logo skipping on both PCs allowed both players to drive, finish Battersea and reach results. LAN launches now preserve that file even when the preference is enabled. HOST/JOIN preflight rejects altered definitions, and preparation guards prevent combining LAN and movie edits. Single-player logo skipping and LAN's separate introduction skip remain available. All 378 launcher checks pass; LAN VR remains unverified.
 
 - HOST and JOIN now ask for Desktop or VR on every launch, with Cancel available. LAN VR uses the existing SteamVR preflight, graphics/controls settings and combined recovery of VR assets, graphics, startup movies and the LAN DLL. The shared career and HOST/JOIN endpoint are preserved. Launcher tests pass; multiplayer headset testing is deferred, and the race-loading disconnect remains unresolved.

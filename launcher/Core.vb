@@ -104,6 +104,7 @@ Public Class VrSettings
     Public Property RenderScale As Integer = 100
     Public Property HeadsetScale As Integer = 50
     Public Property FieldOfView As Integer = 100
+    Public Property HudFollowView As Boolean = False
     Public Property Mirrors As String = "game"
     Public Property LaunchMode As String = "menus"
     Public Property TrackId As String = "127"

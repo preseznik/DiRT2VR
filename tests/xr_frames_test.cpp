@@ -13,7 +13,7 @@ struct XrFramesTestAccess {
         frames.instance_=static_cast<XrInstance>(1);
         frames.session_=static_cast<XrSession>(2);
         frames.space_=static_cast<XrSpace>(3);
-        for(unsigned i=0;i<2;++i) {
+        for(unsigned i=0;i<3;++i) {
             frames.eyes_[i].chain=static_cast<XrSwapchain>(10+i);
             frames.eyes_[i].width=frames.eyes_[i].height=1;
             frames.eyes_[i].targets.resize(1);
@@ -25,6 +25,7 @@ std::vector<std::string> calls;
 XrSessionState event=XR_SESSION_STATE_READY;
 bool render=true, tracking=true, timeoutOnce=false;
 bool expectScreen=false;
+bool expectHud=false;
 int acquireFailure=-1;
 uint32_t imageIndex=0, submittedLayers=0;
 float expectedFovScale=1.f;
@@ -32,7 +33,7 @@ XrFovf renderedFov[2]{};
 void Require(bool value,const char* message) { if(!value) throw std::runtime_error(message); }
 void Reset() {
     calls.clear(); event=XR_SESSION_STATE_READY; render=tracking=true;
-    acquireFailure=-1; imageIndex=submittedLayers=0; timeoutOnce=false; expectScreen=false; expectedFovScale=1.f;
+    acquireFailure=-1; imageIndex=submittedLayers=0; timeoutOnce=false; expectScreen=expectHud=false; expectedFovScale=1.f;
 }
 unsigned Eye(XrSwapchain chain) { return static_cast<unsigned>(static_cast<uint64_t>(chain)-10); }
 }
@@ -72,6 +73,14 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEndFrame(XrSession,const XrFrameEndInfo* info) 
     calls.emplace_back("endFrame"); submittedLayers=info->layerCount;
     Require(info->displayTime==123,"must submit at predicted time");
     if(info->layerCount) {
+        Require(info->layerCount==(expectHud && !expectScreen ? 2u : 1u),"HUD must be an additional layer only in cockpit mode");
+        if(expectHud && !expectScreen) {
+            const auto* hud=reinterpret_cast<const XrCompositionLayerQuad*>(info->layers[1]);
+            Require(hud->type==XR_TYPE_COMPOSITION_LAYER_QUAD && hud->space==static_cast<XrSpace>(3),"HUD must be a separate LOCAL quad");
+            Require(hud->subImage.swapchain==static_cast<XrSwapchain>(12) && hud->eyeVisibility==XR_EYE_VISIBILITY_BOTH,"HUD must have a distinct image visible in both eyes");
+            Require(hud->pose.position.z==-4 && hud->size.width==4,"distant HUD placement changed");
+            Require(hud->layerFlags==(XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT|XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT),"HUD transparency flags missing");
+        }
         if(expectScreen) {
             Require(info->layers[0]->type==XR_TYPE_COMPOSITION_LAYER_QUAD,"screen must be a quad");
             auto layer=reinterpret_cast<const XrCompositionLayerQuad*>(info->layers[0]);
@@ -191,6 +200,26 @@ int main() {
             Require(frames.Tick(draw,{},&screen),"cropping must not narrow menu FOV");
             expectScreen=false;
             Require(frames.Tick(draw),"crop must return on resume");
+        }
+        Reset(); expectHud=true;
+        {
+            XrFrames frames; XrFramesTestAccess::Seed(frames);
+            XrFrames::Overlay hud; hud.pose.position.z=-4; hud.size={4,2.25f};
+            hud.draw=[](unsigned eye,const XrView&,ID3D11RenderTargetView*,uint32_t,uint32_t) { Require(eye==2,"HUD image must not reuse an eye"); calls.emplace_back("hud"); };
+            Require(frames.Tick(draw,{},nullptr,&hud) && submittedLayers==2,"HUD stereo composition failed");
+            Require(calls[calls.size()-4]=="wait2" && calls[calls.size()-3]=="hud" && calls[calls.size()-2]=="release2","HUD swapchain ordering incorrect");
+            expectScreen=true; XrFrames::Screen screen;
+            Require(frames.Tick(draw,{},&screen,&hud) && submittedLayers==1,"menus must suppress cockpit HUD");
+            expectScreen=false; acquireFailure=2;
+            Require(!frames.Tick(draw,{},nullptr,&hud) && submittedLayers==0,"failed HUD acquire must end frame without stale composition");
+        }
+        Reset(); expectHud=true;
+        {
+            XrFrames frames; XrFramesTestAccess::Seed(frames);
+            XrFrames::Overlay hud;
+            hud.draw=[](unsigned,const XrView&,ID3D11RenderTargetView*,uint32_t,uint32_t) { throw std::runtime_error("HUD copy failed"); };
+            Require(!frames.Tick(draw,{},nullptr,&hud),"failed HUD draw must not submit");
+            Require(frames.Exiting() && submittedLayers==0 && calls[calls.size()-2]=="release2","failed HUD must release its own image");
         }
         puts("OpenXR frame lifecycle tests passed"); return 0;
     } catch(const std::exception& e) { fprintf(stderr,"FAIL: %s\n",e.what()); return 1; }

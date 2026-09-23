@@ -88,10 +88,13 @@ Race uses the same direct-start route as practice: it bypasses menus, repeats af
 | Headset texture | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
 | Car mirrors | Use game setting | Optionally force mirrors on or off during VR sessions. |
+| HUD follows view | Off | Keep the cockpit HUD fixed relative to the car, about four metres ahead. Enable to have it follow your head instead. |
 
 Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. The Graphics tab shows the effective scene resolution and pixel count. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore graphics defaults** returns to the tested baseline; save afterward.
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
+
+The cockpit HUD is a transparent panel showing the game's race information. **Recenter** places the fixed HUD ahead of your seated position. **HUD follows view** applies on the next VR launch; it is off by default, including after restoring graphics defaults. Pause menus still use the virtual screen. Desktop HUD capture and automated rendering checks pass, but this new HUD's headset readability, placement and follow mode still need testing. Technical details are in [HUD implementation notes](docs/vr-hud.md).
 
 Field-of-view cropping keeps a narrower cockpit view rather than stretching the full image. Menus remain on their normal virtual screen, although reducing render resolution also lowers their image detail. Cropping and nondefault graphics values have automated coverage but still await an in-headset check. Keep the defaults for the established setup.
 
@@ -174,7 +177,7 @@ Older test-kit profiles and imported copies are no longer used. They are left on
 - Game-menu launches prepare the Subaru STI camera. Direct practice prepares the selected car, but other interiors and broader stage coverage are not yet visually verified.
 - Scenery visibility and car-aligned headlights passed the reported tests; other lighting, mirrors and interiors need testing.
 - Road rubble is retained in both eyes in the tested Novigrad scene. Other stages and ground-cover variants still need testing.
-- Crowds, particles, shadows and motion blur are reduced or disabled. Water, HUD placement, seat adjustment, replay transitions and calibrated world scale remain unfinished.
+- Crowds, particles, shadows and motion blur are reduced or disabled. The new HUD layer awaits headset validation. Water, seat adjustment, replay transitions and calibrated world scale remain unfinished.
 - Occasional hitching remains; a steady headset frame rate is not guaranteed.
 - Headset reconnection during play is unsupported. Quit and relaunch after reconnecting.
 - Installation acceptance in protected folders and interruption scenarios is still in progress. Packages are experimental.

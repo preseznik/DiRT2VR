@@ -37,9 +37,9 @@ bool GameXr::Initialize(ID3D11Device* device,float scale,float fovScale) {
     if(!frames_->Initialize(instance_,system,session_,device,scale,fovScale) || !blit_.Initialize(device)) { Shutdown(); return false; }
     vr::Log("OpenXR game session initialized; experimental cameras, visibility unvalidated"); return true;
 }
-bool GameXr::Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare,const XrFrames::Screen* screen) { return frames_ && frames_->Tick(draw,prepare,screen); }
-bool GameXr::CopyEye(unsigned eye,ID3D11Texture2D* image,ID3D11RenderTargetView* target,unsigned w,unsigned h) {
-    return blit_.Draw(eye,image,target,w,h);
+bool GameXr::Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare,const XrFrames::Screen* screen,const XrFrames::Overlay* overlay) { return frames_ && frames_->Tick(draw,prepare,screen,overlay); }
+bool GameXr::CopyEye(unsigned eye,ID3D11Texture2D* image,ID3D11RenderTargetView* target,unsigned w,unsigned h,bool alpha) {
+    return blit_.Draw(eye,image,target,w,h,alpha);
 }
 void GameXr::Shutdown() {
     frames_.reset();

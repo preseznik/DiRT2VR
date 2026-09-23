@@ -32,6 +32,13 @@ int main() {
         auto screen=vr::ScreenPose({{0,s,0,s},{5,2,1}},2);
         Check(Near(screen.position.x,3) && Near(screen.position.y,2) && Near(screen.position.z,1));
         Check(Near(screen.orientation.y,s) && Near(screen.orientation.w,s));
+        XrPosef reference{{0,0,0,1},{0,1,0}},turned{{0,s,0,s},{.2f,1,0}};
+        auto fixedHud=vr::ScreenPose(reference,4),followingHud=vr::ScreenPose(turned,4);
+        Check(Near(fixedHud.position.z,-4) && Near(fixedHud.position.x,0));
+        Check(Near(followingHud.position.x,-3.8f) && Near(followingHud.position.z,0));
+        auto seenFixed=vr::RelativePose(turned,fixedHud),seenFollowing=vr::RelativePose(turned,followingHud);
+        Check(Near(seenFixed.position.x,4) && Near(seenFixed.position.z,-.2f));
+        Check(Near(seenFollowing.position.x,0) && Near(seenFollowing.position.z,-4));
         std::array<float,28> a{},b{}; a[21]=b[21]=.075f;
         Check(vr::CockpitCameraCandidate(a.data(),b.data()));
         for(float nearPlane:{.2f,.1f,.05f}) {

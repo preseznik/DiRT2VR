@@ -33,6 +33,7 @@ Public Class MainForm
     Private ReadOnly opponentCars As ComboBox = Choice("OpponentCars")
     Private ReadOnly opponentHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
+    Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
     Private ReadOnly graphicsSummary As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly refreshLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private lastStatus As String = ""
@@ -375,6 +376,8 @@ Public Class MainForm
         AddGraphicsRow(grid, "Field of view (%)", fieldOfView, "Experimental crop. 100% = full view. Lower = fewer pixels, narrower view.")
         AddGraphicsRow(grid, "Car mirrors", mirrors, "Disabling mirrors may reduce GPU work.")
         content.Controls.Add(grid)
+        hudFollow.Checked = settings.HudFollowView : content.Controls.Add(hudFollow)
+        content.Controls.Add(Note("The cockpit HUD appears about four metres ahead, fixed relative to the car. Enable HUD follows view to keep it in front of your head. Recenter resets its position. Applies on the next VR launch; headset validation is pending."))
         content.Controls.Add(Note("Render resolution controls scene detail. Raising headset texture scale alone cannot add missing detail. Cropping reduces peripheral vision; performance gains depend on the scene."))
         content.Controls.Add(New Label With {.Text = "Headset refresh rate", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
         content.Controls.Add(refreshLabel)
@@ -382,6 +385,7 @@ Public Class MainForm
         Dim defaults As New Button With {.Text = "Restore graphics defaults", .AutoSize = True}
         AddHandler defaults.Click, Sub()
                                        renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
+                                       hudFollow.Checked = False
                                    End Sub
         content.Controls.Add(defaults)
         content.Controls.Add(Note("Save settings to apply on the next launch. Crowds, particles, shadows and motion blur retain the current reduced-effects setup."))
@@ -480,6 +484,7 @@ Public Class MainForm
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
+        settings.HudFollowView = hudFollow.Checked
         settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
         settings.Opponents = CInt(opponents.Value)
         settings.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)

@@ -399,12 +399,21 @@ Module Program
             DirectCast(form.Controls.Find("RenderScale", True).Single(), ValueSlider).Value = 75
             DirectCast(form.Controls.Find("HeadsetScale", True).Single(), ValueSlider).Value = 60
             DirectCast(form.Controls.Find("FieldOfView", True).Single(), ValueSlider).Value = 80
+            Dim hudToggle = DirectCast(form.Controls.Find("HudFollowView", True).Single(), CheckBox)
+            Check(Not hudToggle.Checked AndAlso Not (New VrSettings()).HudFollowView, "HUD follows view defaults off for existing and new settings")
+            Check(hudToggle.Parent.Parent.Text = "Graphics", "HUD follow control is on Graphics tab")
+            hudToggle.Checked = True
             Dim scaleSlider = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
             Check(scaleSlider.Minimum = 50 AndAlso scaleSlider.Maximum = 150 AndAlso scaleSlider.SmallChange = 1 AndAlso form.Controls.Find("RenderScaleValue", True).Single().Text = "75%", "native graphics slider retains range precision and visible value")
             DirectCast(form.Controls.Find("Mirrors", True).Single(), ComboBox).SelectedIndex = 2
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             Dim saved = VrSettings.Load(context)
             Check(saved.LoggingEnabled, "Settings logging opt-in persists")
+            Check(saved.HudFollowView, "HUD follows view setting persists")
+            Dim hudStart = Session.VrStartInfo(context, saved, "Local.TestHud", Nothing)
+            Check(hudStart.Environment("DIRT2VR_HUD_FOLLOW") = "1", "VR session forwards HUD follow choice")
+            saved.HudFollowView = False
+            Check(Session.VrStartInfo(context, saved, "Local.TestHud", Nothing).Environment("DIRT2VR_HUD_FOLLOW") = "0", "fixed HUD explicitly overrides inherited follow choice")
             Check(saved.SkipIntroduction, "launcher intro toggle persists across modes")
             Dim startupToggle = DirectCast(form.Controls.Find("SkipStartupMovies", True).Single(), CheckBox)
             Check(Not startupToggle.Checked, "startup toggle defaults off")
@@ -424,6 +433,9 @@ Module Program
             saved = VrSettings.Load(context)
             Check(saved.LaunchMode = "race" AndAlso saved.SkipIntroduction AndAlso saved.TrackId = "129", "Multiplayer tab preserves solo selection when saving settings")
             Check(saved.SkipStartupMovies, "Settings saves startup movie skip")
+            tabs.SelectedIndex = 2
+            form.Controls.Find("HudFollowView", True).Single().Parent.Controls.OfType(Of Button).Single(Function(b) b.Text = "Restore graphics defaults").PerformClick()
+            Check(Not hudToggle.Checked, "Restore graphics defaults returns HUD to fixed placement")
             form.Close()
         End Using
         ' Exercise the real entry point in a child process, not only MainForm in this harness.

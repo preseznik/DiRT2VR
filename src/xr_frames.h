@@ -27,9 +27,10 @@ public:
         XrPosef pose{{0,0,0,1},{0,0,-2}};
         XrExtent2Df size{2.4f,1.8f};
     };
+    struct Overlay : Screen { Draw draw; };
     ~XrFrames();
     bool Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale,float fovScale=1.f);
-    bool Tick(const Draw& draw,const Prepare& prepare={},const Screen* screen=nullptr);
+    bool Tick(const Draw& draw,const Prepare& prepare={},const Screen* screen=nullptr,const Overlay* overlay=nullptr);
     bool Exiting() const { return exiting_; }
     uint64_t Submitted() const { return submitted_; }
     bool Visible() const { return visible_; }
@@ -41,7 +42,7 @@ private:
     XrInstance instance_{};
     XrSession session_{};
     XrSpace space_{};
-    std::array<Eye,2> eyes_;
+    std::array<Eye,3> eyes_; // stereo pair plus transparent HUD
     bool running_{},exiting_{},visible_{};
     uint64_t submitted_{};
     float fovScale_=1.f;

@@ -3,6 +3,7 @@
 #include "eye_pair.h"
 #include "camera_math.h"
 #include "game_xr.h"
+#include "hud_capture.h"
 #include "gpu_timer.h"
 #include "vr_hotkeys.h"
 #include "light_replay.h"
@@ -292,7 +293,7 @@ thread_local bool sampleInner{};
 thread_local bool continuousMain{};
 IDXGISwapChain* gameSwapchain{}; // Diagnostic run owns one swapchain until process exit.
 void Screenshot(IDXGISwapChain*,unsigned long long);
-void ScreenshotTexture(ID3D11Texture2D*,unsigned long long);
+void ScreenshotTexture(ID3D11Texture2D*,unsigned long long,bool alpha=false);
 bool ContinuousReplayEnabled() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_CONTINUOUS_REPLAY",value,16)>0 && wcscmp(value,L"1")==0; }();
     return enabled;
@@ -308,6 +309,10 @@ bool InteractiveEnabled() {
 bool DetailedTrace() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_CAPTURE_DIAGNOSTICS",value,16)>0 ? wcscmp(value,L"1")==0 : !InteractiveEnabled(); }();
     return LoggingEnabled() && enabled;
+}
+bool HudProbe() {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_HUD_PROBE",value,8)==1 && value[0]==L'1'; }();
+    return DetailedTrace() && enabled;
 }
 bool RequestedCapturesEnabled() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_CAPTURE_REQUESTS",value,8)>0 && wcscmp(value,L"1")==0; }();
@@ -326,6 +331,28 @@ bool TakeCaptureRequest(uint64_t f) {
 // Process-owned diagnostic session. Never invoke the runtime under DLL detach's
 // loader lock; explicit runtime stop/error is handled on the rendering thread.
 GameXr* gameXr{};
+HudCapture hudCapture;
+uint64_t hudSceneFrame=~uint64_t{};
+thread_local bool hudProbeDrawing{};
+thread_local unsigned hudEye{};
+bool HudShader(ID3D11DeviceContext* context) {
+    ComPtr<ID3D11VertexShader> shader; context->VSGetShader(&shader,nullptr,nullptr);
+    std::lock_guard lock(shaderMutex);
+    auto found=shaderNames.find(shader.Get());
+    if(found==shaderNames.end()) return false;
+    // EGO UI image, ramp, distance-field font and lit dial shader variants.
+    switch(found->second) {
+    case 0xbef999561247f2d5ull: case 0x9d4dd795ddf7c656ull:
+    case 0x47b5203eae84ab0full: case 0xedfda3c33aa2b9fcull:
+    case 0xce4f6cb0ec7d5697ull: return true;
+    default: return false;
+    }
+}
+bool CaptureHudDraw(ID3D11DeviceContext* context,const std::function<void()>& draw) {
+    if((!hudProbeDrawing && !hudEye) || !HudShader(context)) return false;
+    const bool captured=hudCapture.Draw(context,draw,hudEye!=2);
+    return hudEye && captured; // route HUD to the quad instead of either world image
+}
 uint64_t xrTickFrame=~uint64_t{};
 XrPosef headsetReference{};
 bool recenterRequested=true;
@@ -488,6 +515,19 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     alignas(16) std::array<unsigned char,0x1a0> originalLightContext;
     memcpy(originalLightContext.data(),context,originalLightContext.size());
     groundCoverPair.Begin();
+    XrFrames::Overlay hud;
+    const bool captureHud=hudCapture.Begin(back.Get(),f);
+    hud.size={4.f,4.f/hudCapture.Aspect()};
+    hud.draw=[&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
+        hudCapture.End(true);
+        if(auto image=hudCapture.Current(f)) {
+            if(!gameXr->CopyEye(2,image,target,w,h,true)) throw std::runtime_error("HUD presentation");
+        } else {
+            ComPtr<ID3D11Device> device; back->GetDevice(&device);
+            ComPtr<ID3D11DeviceContext> immediate; device->GetImmediateContext(&immediate);
+            const float clear[4]{}; immediate->ClearRenderTargetView(target,clear);
+        }
+    };
     const bool submitted=gameXr->Tick([&](unsigned eye,const XrView& view,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
         const auto before=draws.load(); scenePass=(requestedCapture || (DetailedTrace() && f==3000)) ? eye+1 : 0;
         eyeProjectionUploads=0;
@@ -495,7 +535,9 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         {
             ScopedEyePose pose(cameraA,cameraB,RelativePose(headsetReference,view.pose),scale);
             eyeRenderer=self; eyeFov=&view.fov; lightingEye=eye+1; lightsRefreshed=false;
+            hudEye=captureHud ? eye+1 : 0;
             realInner(self,lists,cameraA,cameraB,context,scene,flags);
+            hudEye=0;
             rendered=true;
         }
         counts[eye]=draws.load()-before; scenePass=0;
@@ -512,7 +554,12 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             ApplyFov(projection.data(),view.fov);
         }
         PrepareHeadsetViews(views);
-    });
+        static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;
+        hud.pose=ScreenPose(follow ? CenterPose(views) : headsetReference,4.f);
+    },nullptr,captureHud ? &hud : nullptr);
+    hudEye=0;
+    if(!submitted) hudCapture.End(false);
+    if(submitted) hudSceneFrame=f;
     groundCoverPair.End();
     if(!eyeLights.empty()) {
         lightsRefreshed=false;
@@ -624,6 +671,16 @@ void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,v
         if(!HeadsetScene(self,lists,cameraA,cameraB,context,scene,flags)) realInner(self,lists,cameraA,cameraB,context,scene,flags);
         return;
     }
+    if(HudProbe()) {
+        const auto f=frame.load();
+        if(continuousMain && (f==300 || f==1200 || f==3000) && gameSwapchain) {
+            ComPtr<ID3D11Texture2D> back;
+            if(SUCCEEDED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) hudProbeDrawing=hudCapture.Begin(back.Get(),f);
+        }
+        realInner(self,lists,cameraA,cameraB,context,scene,flags);
+        hudProbeDrawing=false;
+        return;
+    }
     if(ContinuousScene(self,lists,cameraA,cameraB,context,scene,flags)) return;
     static bool tested=false;
     const bool test=sampleInner && !tested && gameSwapchain;
@@ -681,7 +738,7 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     const auto start=draws.load();
     if(DetailedTrace() && mainView && f==3000) scenePass=1;
     sampleInner=mainView && f==3000 && InnerReplayEnabled() && !ContinuousReplayEnabled();
-    continuousMain=mainView && ContinuousReplayEnabled();
+    continuousMain=mainView && (ContinuousReplayEnabled() || HudProbe());
     realScene(self,a,b,c,d,e);
     sampleInner=false;
     continuousMain=false;
@@ -846,7 +903,7 @@ void Screenshot(IDXGISwapChain* swapchain, unsigned long long number) {
     if(FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return;
     ScreenshotTexture(back.Get(),number);
 }
-void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number) {
+void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alpha) {
     if(!LoggingEnabled()) return;
     ComPtr<ID3D11Texture2D> source,staging;
     ComPtr<ID3D11Device> device; back->GetDevice(&device);
@@ -869,12 +926,15 @@ void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number) {
     // PPM is intentionally simple and keeps screenshot support out of the render hook's dependencies.
     auto out=TraceFile(Output()/("frame-"+std::to_string(number)+".ppm"),std::ios::binary);
     out << "P6\n" << desc.Width << " " << desc.Height << "\n255\n";
+    auto alphaOut=alpha ? TraceFile(Output()/("frame-"+std::to_string(number)+"-alpha.pgm"),std::ios::binary) : std::ofstream{};
+    if(alpha) alphaOut << "P5\n" << desc.Width << " " << desc.Height << "\n255\n";
     std::vector<char> row(desc.Width*3);
     for(UINT y=0;y<desc.Height;++y) {
         auto p=static_cast<const unsigned char*>(mapped.pData)+y*mapped.RowPitch;
         for(UINT x=0;x<desc.Width;++x) {
             bool bgra=desc.Format==DXGI_FORMAT_B8G8R8A8_UNORM;
             row[x*3]=p[x*4+(bgra?2:0)]; row[x*3+1]=p[x*4+1]; row[x*3+2]=p[x*4+(bgra?0:2)];
+            if(alpha) alphaOut.put(static_cast<char>(p[x*4+3]));
         }
         out.write(row.data(),row.size());
     }
@@ -884,6 +944,12 @@ void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number) {
 
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
+    if(HudProbe()) hudCapture.End(true);
+    if(HudProbe() && Sample()) {
+        Log("HUD probe frame=%llu captured draws=%u",frame.load(),hudCapture.Draws());
+        if(auto hud=hudCapture.Current(frame.load())) ScreenshotTexture(hud,920000+frame.load(),true);
+    }
+    if(hudSceneFrame==frame.load() && frame.load()%120==0) Log("HUD captured draws=%u frame=%llu",hudCapture.Draws(),frame.load());
     if(HeadsetEnabled() && EnsureGameXr()) {
         PollHeadsetKeys();
         if(xrTickFrame!=frame.load()) HeadsetScreen();
@@ -929,10 +995,11 @@ HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT f
     return realPresent(swapchain,interval,flags);
 }
 void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT base) {
-    if(Sample() && draws.load()<3) Stack("DrawIndexed"); if(!RecordDraw(c,"indexed",n,1,start,base)) return; ++draws; realDrawIndexed(c,n,start,base);
+    if(Sample() && draws.load()<3) Stack("DrawIndexed"); if(!RecordDraw(c,"indexed",n,1,start,base)) return;
+    if(CaptureHudDraw(c,[&] { realDrawIndexed(c,n,start,base); })) return; ++draws; realDrawIndexed(c,n,start,base);
 }
-void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) { if(!RecordDraw(c,"draw",n,1,start)) return; ++draws; realDraw(c,n,start); }
-void STDMETHODCALLTYPE DrawInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,UINT e) { if(!RecordDraw(c,"instanced",a,b,d,0,e)) return; ++draws; realDrawInstanced(c,a,b,d,e); }
+void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) { if(!RecordDraw(c,"draw",n,1,start) || CaptureHudDraw(c,[&] { realDraw(c,n,start); })) return; ++draws; realDraw(c,n,start); }
+void STDMETHODCALLTYPE DrawInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,UINT e) { if(!RecordDraw(c,"instanced",a,b,d,0,e) || CaptureHudDraw(c,[&] { realDrawInstanced(c,a,b,d,e); })) return; ++draws; realDrawInstanced(c,a,b,d,e); }
 void STDMETHODCALLTYPE DrawIndexedInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,INT e,UINT f) {
     if(lightingEye) {
         ComPtr<ID3D11VertexShader> vs; ComPtr<ID3D11PixelShader> ps;
@@ -962,7 +1029,7 @@ void STDMETHODCALLTYPE DrawIndexedInstanced(ID3D11DeviceContext* c,UINT a,UINT b
             }
         }
     }
-    if(!RecordDraw(c,"indexed_instanced",a,b,d,e,f)) return; ++draws; realDrawIndexedInstanced(c,a,b,d,e,f);
+    if(!RecordDraw(c,"indexed_instanced",a,b,d,e,f) || CaptureHudDraw(c,[&] { realDrawIndexedInstanced(c,a,b,d,e,f); })) return; ++draws; realDrawIndexedInstanced(c,a,b,d,e,f);
 }
 void STDMETHODCALLTYPE Dispatch(ID3D11DeviceContext* c,UINT x,UINT y,UINT z) { ++dispatches; realDispatch(c,x,y,z); }
 void STDMETHODCALLTYPE Targets(ID3D11DeviceContext* c,UINT n,ID3D11RenderTargetView* const* views,ID3D11DepthStencilView* depth) {
@@ -1041,7 +1108,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         }
         auto inner=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr))+0x336be0;
         const unsigned char innerPrologue[]={0x53,0x55,0x8b,0x6c,0x24,0x14,0x56,0x57,0x8b,0x7c,0x24,0x20};
-        if(!realInner && InnerReplayEnabled() && memcmp(inner,innerPrologue,sizeof(innerPrologue))==0) {
+        if(!realInner && (InnerReplayEnabled() || HudProbe()) && memcmp(inner,innerPrologue,sizeof(innerPrologue))==0) {
             auto status=MH_CreateHook(inner,reinterpret_cast<void*>(Inner),reinterpret_cast<void**>(&realInner));
             if(status==MH_OK) status=MH_EnableHook(inner);
             Log("inner scene trace RVA=0x336be0 status=%s",MH_StatusToString(status));

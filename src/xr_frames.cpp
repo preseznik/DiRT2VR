@@ -42,10 +42,11 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
     XrReferenceSpaceCreateInfo reference{XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
     reference.referenceSpaceType=XR_REFERENCE_SPACE_TYPE_LOCAL; reference.poseInReferenceSpace.orientation.w=1;
     if(!Check(xrCreateReferenceSpace(session,&reference,&space_),"create LOCAL space")) return false;
-    for(unsigned i=0;i<2;++i) {
+    for(unsigned i=0;i<eyes_.size();++i) {
         auto& eye=eyes_[i];
-        eye.width=std::max(1u,static_cast<uint32_t>(views[i].recommendedImageRectWidth*scale));
-        eye.height=std::max(1u,static_cast<uint32_t>(views[i].recommendedImageRectHeight*scale));
+        const auto& view=views[i%2];
+        eye.width=std::max(1u,static_cast<uint32_t>(view.recommendedImageRectWidth*scale));
+        eye.height=std::max(1u,static_cast<uint32_t>(view.recommendedImageRectHeight*scale));
         XrSwapchainCreateInfo info{XR_TYPE_SWAPCHAIN_CREATE_INFO};
         info.usageFlags=XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT|XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
         info.format=format; info.sampleCount=1; info.width=eye.width; info.height=eye.height;
@@ -65,7 +66,8 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
     }
     return true;
 }
-bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen) {
+bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen,const Overlay* overlay) {
+    if(screen || (overlay && !overlay->draw)) overlay=nullptr;
     XrEventDataBuffer event{XR_TYPE_EVENT_DATA_BUFFER};
     XrResult eventResult{};
     while((eventResult=xrPollEvent(instance_,&event))==XR_SUCCESS) {
@@ -116,7 +118,7 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         catch(...) { valid=false; exiting_=true; Report("frame preparation failed: unknown exception"); }
     }
     std::array<XrCompositionLayerProjectionView,2> projectionViews{{{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW},{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}}};
-    for(unsigned i=0;valid && i<(screen ? 1u : 2u);++i) {
+    for(unsigned i=0;valid && i<(screen ? 1u : overlay ? 3u : 2u);++i) {
         auto& eye=eyes_[i]; uint32_t index{};
         XrSwapchainImageAcquireInfo acquire{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
         if(!Check(xrAcquireSwapchainImage(eye.chain,&acquire,&index),"acquire image")) { valid=false; break; }
@@ -126,15 +128,17 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         if(!Check(waited,"wait image")) { valid=false; exiting_=true; break; }
         try {
             if(index>=eye.targets.size()) throw std::out_of_range("OpenXR image index");
-            draw(i,views[i],eye.targets[index].Get(),eye.width,eye.height);
+            (i==2 ? overlay->draw : draw)(i,views[i%2],eye.targets[index].Get(),eye.width,eye.height);
         }
         catch(const std::exception& error) { valid=false; exiting_=true; Report("eye %u failed: %s",i,error.what()); }
         catch(...) { valid=false; exiting_=true; Report("eye %u failed: unknown exception",i); }
         XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
         if(!Check(xrReleaseSwapchainImage(eye.chain,&release),"release image")) { valid=false; exiting_=true; }
-        projectionViews[i].pose=views[i].pose; projectionViews[i].fov=views[i].fov;
-        projectionViews[i].subImage.swapchain=eye.chain;
-        projectionViews[i].subImage.imageRect.extent={static_cast<int32_t>(eye.width),static_cast<int32_t>(eye.height)};
+        if(i<2) {
+            projectionViews[i].pose=views[i].pose; projectionViews[i].fov=views[i].fov;
+            projectionViews[i].subImage.swapchain=eye.chain;
+            projectionViews[i].subImage.imageRect.extent={static_cast<int32_t>(eye.width),static_cast<int32_t>(eye.height)};
+        }
     }
     XrCompositionLayerProjection projection{XR_TYPE_COMPOSITION_LAYER_PROJECTION};
     projection.space=space_; projection.viewCount=2; projection.views=projectionViews.data();
@@ -144,9 +148,17 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         quad.subImage=projectionViews[0].subImage;
         quad.pose=screen->pose; quad.size=screen->size;
     }
-    const XrCompositionLayerBaseHeader* layers[]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&projection)};
+    XrCompositionLayerQuad hud{XR_TYPE_COMPOSITION_LAYER_QUAD};
+    if(overlay) {
+        hud.space=space_; hud.eyeVisibility=XR_EYE_VISIBILITY_BOTH;
+        hud.layerFlags=XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT|XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+        hud.pose=overlay->pose; hud.size=overlay->size;
+        hud.subImage.swapchain=eyes_[2].chain;
+        hud.subImage.imageRect.extent={static_cast<int32_t>(eyes_[2].width),static_cast<int32_t>(eyes_[2].height)};
+    }
+    const XrCompositionLayerBaseHeader* layers[]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&projection),reinterpret_cast<const XrCompositionLayerBaseHeader*>(&hud)};
     if(screen) layers[0]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quad);
-    if(valid) { end.layerCount=1; end.layers=layers; }
+    if(valid) { end.layerCount=overlay ? 2 : 1; end.layers=layers; }
     if(!Check(xrEndFrame(session_,&end),"xrEndFrame")) { exiting_=true; return false; }
     if(valid) ++submitted_;
     return valid;
