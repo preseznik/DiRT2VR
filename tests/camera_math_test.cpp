@@ -39,6 +39,12 @@ int main() {
         auto seenFixed=vr::RelativePose(turned,fixedHud),seenFollowing=vr::RelativePose(turned,followingHud);
         Check(Near(seenFixed.position.x,4) && Near(seenFixed.position.z,-.2f));
         Check(Near(seenFollowing.position.x,0) && Near(seenFollowing.position.z,-4));
+        for(float distance:{1.f,6.5f,20.f}) {
+            auto fixed=vr::ScreenPose(reference,distance),follow=vr::ScreenPose(turned,distance);
+            Check(Near(fixed.position.z,-distance));
+            auto relativeFollow=vr::RelativePose(turned,follow);
+            Check(Near(relativeFollow.position.x,0) && Near(relativeFollow.position.z,-distance));
+        }
         std::array<float,28> a{},b{}; a[21]=b[21]=.075f;
         Check(vr::CockpitCameraCandidate(a.data(),b.data()));
         for(float nearPlane:{.2f,.1f,.05f}) {

@@ -160,6 +160,15 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
     if(screen) layers[0]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quad);
     if(valid) { end.layerCount=overlay ? 2 : 1; end.layers=layers; }
     if(!Check(xrEndFrame(session_,&end),"xrEndFrame")) { exiting_=true; return false; }
+    if(valid && overlay && !hudPlacementReported_) {
+        const XrVector3f centre{(views[0].pose.position.x+views[1].pose.position.x)*.5f,
+            (views[0].pose.position.y+views[1].pose.position.y)*.5f,(views[0].pose.position.z+views[1].pose.position.z)*.5f};
+        const auto& p=hud.pose.position;
+        Report("HUD quad submitted centre=(%.3f,%.3f,%.3f) size=%.3fx%.3f metres distance_from_head=%.3f metres",
+            p.x,p.y,p.z,hud.size.width,hud.size.height,
+            std::sqrt((p.x-centre.x)*(p.x-centre.x)+(p.y-centre.y)*(p.y-centre.y)+(p.z-centre.z)*(p.z-centre.z)));
+        hudPlacementReported_=true;
+    }
     if(valid) ++submitted_;
     return valid;
 }

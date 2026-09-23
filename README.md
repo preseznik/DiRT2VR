@@ -88,14 +88,15 @@ Race uses the same direct-start route as practice: it bypasses menus, repeats af
 | Headset texture | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
 | Car mirrors | Use game setting | Optionally force mirrors on or off during VR sessions. |
-| HUD follows view | Off | Keep the cockpit HUD fixed relative to the car, about four metres ahead. Enable to have it follow your head instead. |
+| HUD follows view | Off | Keep the cockpit HUD fixed relative to the car at the selected distance. Enable to have it follow your head instead. |
+| HUD distance | 4 m | Move the cockpit HUD between 1–20 metres in 0.5 m steps. Its apparent size stays constant. Applies to fixed and follow-view modes. |
 | Show HUD areas | All on | Show or hide gauges, lap/time, race position, route map and stage progress in the cockpit HUD. |
 
 Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. The Graphics tab shows the effective scene resolution and pixel count. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore graphics defaults** returns to the tested baseline; save afterward.
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
 
-The cockpit HUD is a transparent panel showing the game's race information. **Recenter** places the fixed HUD ahead of your seated position. **HUD follows view** applies on the next VR launch; it is off by default, including after restoring graphics defaults. Pause menus still use the virtual screen. Desktop HUD capture and automated rendering checks pass, but this new HUD's headset readability, placement and follow mode still need testing. Technical details are in [HUD implementation notes](docs/vr-hud.md).
+The cockpit HUD is a transparent panel showing the game's race information. **HUD distance** changes its depth without shrinking the text. **Recenter** places the fixed HUD ahead of your seated position at that distance. Save and relaunch VR to apply. **HUD follows view** is off by default; Restore graphics defaults also resets distance to 4 m. Pause menus still use their separate virtual screen. Desktop HUD capture and automated rendering checks pass, but headset placement and distance changes still need testing. Technical details are in [HUD implementation notes](docs/vr-hud.md).
 
 Under **HUD follows view**, uncheck the HUD areas you want hidden. These controls mask areas of the standard race HUD, so another overlay in the same area is hidden too. They do not change menus, the virtual screen, desktop play or the centre of the HUD. Save and relaunch to apply. Restore graphics defaults shows every area again. Alternative HUD layouts and headset use still need validation.
 

@@ -96,6 +96,12 @@ Module Program
         Check(DirectCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/resolution"), Xml.XmlElement).GetAttribute("width") <> "1600", "VR resolution restored during merge")
         Dim setting As New VrSettings()
         Check(setting.HiddenHudElements = 0, "new settings keep every HUD element visible")
+        Check(setting.HudDistance = 4D AndAlso System.Text.Json.JsonSerializer.Deserialize(Of VrSettings)("{}").HudDistance = 4D, "HUD distance defaults to four metres for new and old settings")
+        For Each pair In {(-1D, 1D), (100D, 20D), (3.3D, 3.5D)}
+            Dim distanceSettings As New VrSettings With {.HudDistance = pair.Item1}
+            distanceSettings.Validate()
+            Check(distanceSettings.HudDistance = pair.Item2, "HUD distance is bounded and rounded to half-metre steps")
+        Next
         Check(System.Text.Json.JsonSerializer.Deserialize(Of VrSettings)("{}").HiddenHudElements = 0, "older settings retain all HUD elements")
         Dim focus As New StartupFocusPolicy(0, 10)
         Check(Not focus.ShouldActivate(New IntPtr(11), New IntPtr(11), 10, 100), "initial game window does not force focus")
@@ -405,6 +411,10 @@ Module Program
             Check(Not hudToggle.Checked AndAlso Not (New VrSettings()).HudFollowView, "HUD follows view defaults off for existing and new settings")
             Check(hudToggle.Parent.Parent.Text = "Graphics", "HUD follow control is on Graphics tab")
             hudToggle.Checked = True
+            Dim distanceSlider = DirectCast(form.Controls.Find("HudDistance", True).Single(), ValueSlider)
+            Check(distanceSlider.Value = 8, "HUD distance slider defaults to four metres")
+            distanceSlider.Value = 13
+            Check(form.Controls.Find("HudDistanceValue", True).Single().Text = 6.5D.ToString("0.0") & " m", "HUD distance slider displays metres")
             Dim hudNames = {"HudGauges", "HudLapTime", "HudPosition", "HudMap", "HudProgress"}
             For Each name In hudNames
                 Dim element = DirectCast(form.Controls.Find(name, True).Single(), CheckBox)
@@ -420,6 +430,7 @@ Module Program
             Check(saved.HudFollowView, "HUD follows view setting persists")
             Check(saved.HiddenHudElements = 31, "all five HUD visibility choices persist")
             Dim hudStart = Session.VrStartInfo(context, saved, "Local.TestHud", Nothing)
+            Check(saved.HudDistance = 6.5D AndAlso hudStart.Environment("DIRT2VR_HUD_DISTANCE") = "6.5", "HUD distance persists and reaches native runtime with invariant decimal separator")
             Check(Not hudStart.Environment.ContainsKey("DIRT2VR_SKIP_WATER"), "VR launch keeps water visible without legacy partial shader suppression")
             Check(hudStart.Environment("DIRT2VR_HUD_HIDE") = "31", "VR session forwards hidden HUD components")
             saved.HudGauges = True : saved.HudPosition = True : saved.HudProgress = True
@@ -449,6 +460,7 @@ Module Program
             tabs.SelectedIndex = 2
             form.Controls.Find("HudFollowView", True).Single().Parent.Controls.OfType(Of Button).Single(Function(b) b.Text = "Restore graphics defaults").PerformClick()
             Check(Not hudToggle.Checked, "Restore graphics defaults returns HUD to fixed placement")
+            Check(distanceSlider.Value = 8, "Restore graphics defaults restores four metre HUD distance")
             Check(hudNames.All(Function(name) DirectCast(form.Controls.Find(name, True).Single(), CheckBox).Checked), "Restore graphics defaults shows all HUD elements")
             form.Close()
         End Using

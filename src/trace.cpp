@@ -5,6 +5,7 @@
 #include "game_xr.h"
 #include "hud_capture.h"
 #include "hud_elements.h"
+#include "water_trace.h"
 #include "gpu_timer.h"
 #include "vr_hotkeys.h"
 #include "light_replay.h"
@@ -522,7 +523,9 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     groundCoverPair.Begin();
     XrFrames::Overlay hud;
     const bool captureHud=hudCapture.Begin(back.Get(),f,HiddenHudElements());
-    hud.size={4.f,4.f/hudCapture.Aspect()};
+    static const float hudDistance=GraphicsScale(L"DIRT2VR_HUD_DISTANCE",4.f,1.f,20.f);
+    // Preserve the angular size of the existing 4 m wide, 4 m distant panel.
+    hud.size={hudDistance,hudDistance/hudCapture.Aspect()};
     hud.draw=[&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
         hudCapture.End(true);
         if(auto image=hudCapture.Current(f)) {
@@ -560,7 +563,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         }
         PrepareHeadsetViews(views);
         static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;
-        hud.pose=ScreenPose(follow ? CenterPose(views) : headsetReference,4.f);
+        hud.pose=ScreenPose(follow ? CenterPose(views) : headsetReference,hudDistance);
     },nullptr,captureHud ? &hud : nullptr);
     hudEye=0;
     if(!submitted) hudCapture.End(false);
@@ -889,6 +892,7 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
     }
     if(!scenePass) return true;
     if(requestedCaptureFrame==frame.load()) {
+        TraceWaterInputs(context,ph,frame.load(),scenePass);
         ComPtr<ID3D11Buffer> vertex,index; UINT stride{},offset{},indexOffset{}; DXGI_FORMAT format{};
         D3D11_PRIMITIVE_TOPOLOGY topology{};
         context->IAGetVertexBuffers(0,1,vertex.GetAddressOf(),&stride,&offset);

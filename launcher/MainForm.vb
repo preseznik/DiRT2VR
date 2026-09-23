@@ -34,6 +34,7 @@ Public Class MainForm
     Private ReadOnly opponentHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
+    Private ReadOnly hudDistance As New ValueSlider("HudDistance", 2, 40, 8, " m", 2D)
     Private ReadOnly hudGauges As New CheckBox With {.Text = "Speedometer / gear / revs", .Name = "HudGauges", .AutoSize = True}
     Private ReadOnly hudLapTime As New CheckBox With {.Text = "Lap / time", .Name = "HudLapTime", .AutoSize = True}
     Private ReadOnly hudPosition As New CheckBox With {.Text = "Race position", .Name = "HudPosition", .AutoSize = True}
@@ -380,6 +381,8 @@ Public Class MainForm
         AddGraphicsRow(grid, "Headset texture (%)", headsetScale, "Relative to SteamVR's recommended size. Default: 50%.")
         AddGraphicsRow(grid, "Field of view (%)", fieldOfView, "Experimental crop. 100% = full view. Lower = fewer pixels, narrower view.")
         AddGraphicsRow(grid, "Car mirrors", mirrors, "Disabling mirrors may reduce GPU work.")
+        hudDistance.Value = CInt(settings.HudDistance * 2D)
+        AddGraphicsRow(grid, "HUD distance", hudDistance, "1–20 metres, in 0.5 m steps. Keeps the HUD's apparent size. Default: 4 m.")
         content.Controls.Add(grid)
         hudFollow.Checked = settings.HudFollowView : content.Controls.Add(hudFollow)
         content.Controls.Add(New Label With {.Text = "Show HUD areas", .AutoSize = True})
@@ -389,7 +392,7 @@ Public Class MainForm
         hudElements.Controls.AddRange({hudGauges, hudLapTime, hudPosition, hudMap, hudProgress})
         content.Controls.Add(hudElements)
         content.Controls.Add(Note("Uncheck to hide that area of the cockpit HUD. Other overlays in the same area are hidden too. The centre, menus, virtual screen and desktop HUD stay unchanged. Uses the standard race HUD layout."))
-        content.Controls.Add(Note("The cockpit HUD appears about four metres ahead, fixed relative to the car. Enable HUD follows view to keep it in front of your head. Recenter resets its position. Applies on the next VR launch; headset validation is pending."))
+        content.Controls.Add(Note("The cockpit HUD is fixed relative to the car at your chosen distance. Enable HUD follows view to keep it in front of your head. Recenter resets its position. Save and relaunch VR to apply."))
         content.Controls.Add(Note("Render resolution controls scene detail. Raising headset texture scale alone cannot add missing detail. Cropping reduces peripheral vision; performance gains depend on the scene."))
         content.Controls.Add(New Label With {.Text = "Headset refresh rate", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
         content.Controls.Add(refreshLabel)
@@ -398,6 +401,7 @@ Public Class MainForm
         AddHandler defaults.Click, Sub()
                                        renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False
+                                       hudDistance.Value = 8
                                        For Each element In {hudGauges, hudLapTime, hudPosition, hudMap, hudProgress}
                                            element.Checked = True
                                        Next
@@ -500,6 +504,7 @@ Public Class MainForm
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.HudFollowView = hudFollow.Checked
+        settings.HudDistance = hudDistance.Value / 2D
         settings.HudGauges = hudGauges.Checked : settings.HudLapTime = hudLapTime.Checked : settings.HudPosition = hudPosition.Checked
         settings.HudMap = hudMap.Checked : settings.HudProgress = hudProgress.Checked
         settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
@@ -522,6 +527,7 @@ Public Class MainForm
         For Each arg In arguments.Concat({"--game", context.GameRoot})
             start.ArgumentList.Add(arg)
         Next
+        If arguments.Contains("--launch") AndAlso Not arguments.Contains("--desktop") AndAlso Environment.GetCommandLineArgs().Contains("--diagnostic-capture") Then start.ArgumentList.Add("--diagnostic-capture")
         Using child = Process.Start(start)
             If arguments.Contains("--launch") Then
                 StartupFocus.AllowSetForegroundWindow(CUInt(child.Id))

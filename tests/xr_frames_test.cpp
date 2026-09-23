@@ -29,11 +29,12 @@ bool expectHud=false;
 int acquireFailure=-1;
 uint32_t imageIndex=0, submittedLayers=0;
 float expectedFovScale=1.f;
+float expectedHudDistance=4.f;
 XrFovf renderedFov[2]{};
 void Require(bool value,const char* message) { if(!value) throw std::runtime_error(message); }
 void Reset() {
     calls.clear(); event=XR_SESSION_STATE_READY; render=tracking=true;
-    acquireFailure=-1; imageIndex=submittedLayers=0; timeoutOnce=false; expectScreen=expectHud=false; expectedFovScale=1.f;
+    acquireFailure=-1; imageIndex=submittedLayers=0; timeoutOnce=false; expectScreen=expectHud=false; expectedFovScale=1.f; expectedHudDistance=4.f;
 }
 unsigned Eye(XrSwapchain chain) { return static_cast<unsigned>(static_cast<uint64_t>(chain)-10); }
 }
@@ -78,8 +79,8 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEndFrame(XrSession,const XrFrameEndInfo* info) 
             const auto* hud=reinterpret_cast<const XrCompositionLayerQuad*>(info->layers[1]);
             Require(hud->type==XR_TYPE_COMPOSITION_LAYER_QUAD && hud->space==static_cast<XrSpace>(3),"HUD must be a separate LOCAL quad");
             Require(hud->subImage.swapchain==static_cast<XrSwapchain>(12) && hud->eyeVisibility==XR_EYE_VISIBILITY_BOTH,"HUD must have a distinct image visible in both eyes");
-            Require(hud->pose.position.z==-4 && hud->size.width==4,"distant HUD placement changed");
             Require(hud->layerFlags==(XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT|XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT),"HUD transparency flags missing");
+            Require(hud->pose.position.z==-expectedHudDistance && hud->size.width==expectedHudDistance,"HUD distance and stable angular size must reach xrEndFrame unchanged");
         }
         if(expectScreen) {
             Require(info->layers[0]->type==XR_TYPE_COMPOSITION_LAYER_QUAD,"screen must be a quad");
@@ -208,6 +209,12 @@ int main() {
             hud.draw=[](unsigned eye,const XrView&,ID3D11RenderTargetView*,uint32_t,uint32_t) { Require(eye==2,"HUD image must not reuse an eye"); calls.emplace_back("hud"); };
             Require(frames.Tick(draw,{},nullptr,&hud) && submittedLayers==2,"HUD stereo composition failed");
             Require(calls[calls.size()-4]=="wait2" && calls[calls.size()-3]=="hud" && calls[calls.size()-2]=="release2","HUD swapchain ordering incorrect");
+            for(float distance:{1.f,6.5f,20.f}) {
+                expectedHudDistance=distance;
+                Require(frames.Tick(draw,[&](const std::array<XrView,2>&) {
+                    hud.pose.position.z=-distance; hud.size={distance,distance*.5625f};
+                },nullptr,&hud),"HUD placement prepared for this frame must be submitted");
+            }
             expectScreen=true; XrFrames::Screen screen;
             Require(frames.Tick(draw,{},&screen,&hud) && submittedLayers==1,"menus must suppress cockpit HUD");
             expectScreen=false; acquireFailure=2;

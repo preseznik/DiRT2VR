@@ -44,6 +44,7 @@ private:
     XrSpace space_{};
     std::array<Eye,3> eyes_; // stereo pair plus transparent HUD
     bool running_{},exiting_{},visible_{};
+    bool hudPlacementReported_{};
     uint64_t submitted_{};
     float fovScale_=1.f;
 };

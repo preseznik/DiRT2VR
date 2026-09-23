@@ -7,9 +7,11 @@ Public Class ValueSlider
     Private ReadOnly track As New TrackBar With {.Dock = DockStyle.Fill, .AutoSize = False, .TickStyle = TickStyle.None, .SmallChange = 1, .LargeChange = 5, .Margin = New Padding(0)}
     Private ReadOnly valueText As New Label With {.AutoSize = True, .Anchor = AnchorStyles.Right, .TextAlign = ContentAlignment.MiddleRight, .Margin = New Padding(8, 0, 0, 0)}
     Private ReadOnly suffix As String
+    Private ReadOnly divisor As Decimal
     Public Event ValueChanged As EventHandler
-    Public Sub New(controlName As String, low As Integer, high As Integer, initial As Integer, Optional unit As String = "")
-        Name = controlName : suffix = unit
+    Public Sub New(controlName As String, low As Integer, high As Integer, initial As Integer, Optional unit As String = "", Optional displayDivisor As Decimal = 1D)
+        If displayDivisor <= 0D Then Throw New ArgumentOutOfRangeException(NameOf(displayDivisor))
+        Name = controlName : suffix = unit : divisor = displayDivisor
         Height = 38 : Width = 280 : MinimumSize = New Size(150, 38) : Dock = DockStyle.Top
         TabStop = False
         track.Name = controlName & "Slider" : track.AccessibleName = controlName
@@ -37,7 +39,7 @@ Public Class ValueSlider
         End Set
     End Property
     Private Sub RefreshValue()
-        valueText.Text = track.Value.ToString() & suffix
+        valueText.Text = (track.Value / divisor).ToString(If(divisor = 1D, "0", "0.0")) & suffix
         AccessibleDescription = valueText.Text
     End Sub
     Protected Overrides Sub OnBackColorChanged(e As EventArgs)

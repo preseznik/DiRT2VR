@@ -105,6 +105,7 @@ Public Class VrSettings
     Public Property HeadsetScale As Integer = 50
     Public Property FieldOfView As Integer = 100
     Public Property HudFollowView As Boolean = False
+    Public Property HudDistance As Decimal = 4D
     Public Property HudGauges As Boolean = True
     Public Property HudLapTime As Boolean = True
     Public Property HudPosition As Boolean = True
@@ -154,6 +155,7 @@ Public Class VrSettings
         End Get
     End Property
     Public Sub Validate()
+        HudDistance = Math.Round(Math.Clamp(HudDistance, 1D, 20D) * 2D, MidpointRounding.AwayFromZero) / 2D
         If Version <> 3 Then Throw New IOException("Unsupported settings version.")
         If Not {"menus", "practice", "race", "lan"}.Contains(LaunchMode) Then Throw New IOException("Unknown launch mode.")
         If Opponents < 1 OrElse Opponents > 7 Then Throw New IOException("Choose between one and seven race opponents.")

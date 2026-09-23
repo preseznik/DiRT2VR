@@ -1,6 +1,6 @@
 # Cockpit HUD layer
 
-The HUD uses a transparent OpenXR quad, four metres wide and four metres ahead of the recentered seated pose. Its height follows the game's render-target aspect ratio. The default pose stays in LOCAL space; because game eye transforms are relative to the car, the HUD stays with the car when the player looks or leans. `HudFollowView` instead places the quad ahead of the predicted head centre on each frame. Recenter updates the fixed reference. Neither setting changes normal desktop rendering.
+The HUD uses a transparent OpenXR quad, by default four metres wide and four metres ahead of the recentered seated pose. `HudDistance` sets distance in metres (1–20 in half-metre steps), passed through `DIRT2VR_HUD_DISTANCE`; native parsing rejects invalid/nonfinite/out-of-range values to the 4 m default. Width scales in proportion to distance, retaining the original angular size; height follows the game's render-target aspect ratio. The default pose stays in LOCAL space; because game eye transforms are relative to the car, the HUD stays with the car when the player looks or leans. `HudFollowView` instead places the quad ahead of the predicted head centre on each frame. Recenter updates the fixed reference. These settings do not change normal desktop rendering or the virtual menu screen.
 
 ## Capture and presentation
 
@@ -23,7 +23,7 @@ This adds one game-sized capture texture and one runtime HUD swapchain. Runtime 
 
 For bounded capture diagnostics only, `DIRT2VR_HUD_PROBE=1` together with logging and detailed captures duplicates the identified HUD draws in the main desktop scene at frames 300, 1200 and 3000, saving RGB/alpha images. The diagnostic leaves desktop HUD drawing intact and does not initialize OpenXR. Ordinary launcher sessions do not set this flag, and logging remains off by default.
 
-The user deferred headset acceptance. Still required: readability at four metres, stable car-relative placement while looking/leaning, recenter, following mode, asymmetric eye projections, pause/resume and Toggle VR transitions, crop/resolution changes, other event HUD variants, long-session memory/performance and LAN VR. Desktop capture and synthetic-runtime tests do not establish those results.
+In the 0.9.1 headset check, the user selected 20 m but did not perceive a distance change. They explicitly prefer keeping the text's apparent size stable. Treat perceptual distance acceptance as unresolved, not passed. The frame-lifecycle test now checks that 1, 6.5 and 20 m placements reach `xrEndFrame` unchanged, including preparation-callback updates; opt-in logging records the first submitted HUD quad's position, physical size and distance from the predicted head centre. Still required: a logged live comparison, readability, stable car-relative placement while looking/leaning, recenter, following mode, pause/resume and Toggle VR transitions, crop/resolution changes, other event HUD variants, long-session memory/performance and LAN VR. Desktop capture and synthetic-runtime tests do not establish those results.
 
 ## Optional HUD areas
 
