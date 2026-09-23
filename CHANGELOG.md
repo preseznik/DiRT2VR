@@ -4,6 +4,7 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Add isolated custom-track authoring tools and an optional experimental prototype entry for desktop Direct practice. The new 356 m circuit has matching visual/collision geometry, route data and hash-checked installation. Original tracks remain available. Static validation and headless launcher tests pass; generated-track gameplay, visibility, resets and lap completion remain unverified. See [technical status](docs/custom-tracks.md).
 - Graphics: add Tree detail and Object detail sliders using the game's native quality presets. Default to the existing game settings, apply only during VR sessions, and restore original values after play. Higher detail can reduce scenery pop-in; track-specific distance limits and headset performance still need comparison.
 - Direct practice and Race: stop at a finish menu instead of automatically repeating. Add Restart and Return to menus to the pause menu too. Return to menus closes the direct session, restores temporary files and relaunches Normal Launch in the same Desktop/VR mode; Alt+F4 and ordinary quits do not relaunch. The desktop return path has been tested; headset validation is pending. Custom sessions remain separate from career rewards/results.
 

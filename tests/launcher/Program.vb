@@ -26,6 +26,20 @@ Module Program
         Dim folder = IO.Path.Combine(repo, "artifacts", "launcher-tests-" & DateTime.Now.ToString("yyyyMMdd-HHmmss"))
         Dim root = IO.Path.Combine(folder, "DiRT 2 Ž test")
         Directory.CreateDirectory(root)
+        PrototypeTrackTests.Run(folder, AddressOf Check)
+        If args.Contains("--prototype-only") Then
+            If args.Contains("--installed-prototype") Then
+                Dim prototypeGame As New InstallContext(IO.Path.Combine(repo, "artifacts/track-prototype/game"))
+                RaceCatalog.Current.ValidateInstalled(prototypeGame, PrototypeTrack.Id, "sti")
+                Check(True, "installed candidate passes launcher file validation")
+                For Each original In RaceCatalog.Current.Tracks.Where(Function(t) t.Id <> PrototypeTrack.Id)
+                    RaceCatalog.Current.ValidateInstalled(prototypeGame, original.Id, "sti")
+                Next
+                Check(True, "all original routes remain installed alongside prototype")
+            End If
+            Console.WriteLine("All " & passed & " prototype checks passed")
+            Return
+        End If
         UpdateTests.Run(folder, AddressOf Check, args.Contains("--live-updates"))
         LanTests.Run(repo, folder, AddressOf Check)
         LanBrowserTests.Run(AddressOf Check)
@@ -163,10 +177,10 @@ Module Program
         Check((New VrSettings With {.LaunchMode = "practice", .Opponents = 7}).GridOpponents = 0 AndAlso (New VrSettings With {.LaunchMode = "race", .Opponents = 3}).GridOpponents = 3, "solo mode ignores saved race grid")
         Reject(Sub() Call (New VrSettings With {.Laps = 0}).Validate(), "zero laps rejected")
         Reject(Sub() Call (New VrSettings With {.Laps = 21}).Validate(), "excessive laps rejected")
-        Check(catalog.Tracks.Where(Function(t) t.Circuit).Count() = 14 AndAlso catalog.Track("127").Circuit AndAlso Not catalog.Track("129").Circuit, "catalog identifies circuit and point-to-point routes")
+        Check(catalog.Tracks.Where(Function(t) t.Circuit AndAlso t.Id <> PrototypeTrack.Id).Count() = 14 AndAlso catalog.Track("127").Circuit AndAlso Not catalog.Track("129").Circuit, "catalog identifies original circuit and point-to-point routes")
         Check((New VrSettings With {.LaunchMode = "practice", .TrackId = "127", .Laps = 3}).SessionLaps = 3 AndAlso (New VrSettings With {.LaunchMode = "race", .TrackId = "127", .Laps = 5}).SessionLaps = 5, "both direct modes use circuit lap choice")
         Check((New VrSettings With {.LaunchMode = "race", .TrackId = "129", .Laps = 5}).SessionLaps = 1, "point-to-point stages ignore saved circuit laps")
-        Check(catalog.Tracks.Count = 41 AndAlso catalog.Cars.Count = 43 AndAlso catalog.Tracks.Select(Function(t) t.Id).Distinct().Count() = 41 AndAlso catalog.Cars.Select(Function(c) c.Code).Distinct().Count() = 43, "practice catalog has unique route and car IDs")
+        Check(catalog.Tracks.Count = 42 AndAlso catalog.Cars.Count = 43 AndAlso catalog.Tracks.Select(Function(t) t.Id).Distinct().Count() = 42 AndAlso catalog.Cars.Select(Function(c) c.Code).Distinct().Count() = 43, "practice catalog has unique original and prototype route IDs")
         Dim game As New InstallContext(IO.Path.Combine(repo, "artifacts/game"))
         For Each driver In catalog.Cars
             Dim classGrid = XmlPatches.Read(catalog.Config("127", driver.Code, 7, "class", game))
@@ -181,7 +195,7 @@ Module Program
             Dim bytes = File.ReadAllBytes(IO.Path.Combine(game.GameRoot, "cars", car.Code, "cameras.xml"))
             Check(XmlPatches.Asset(bytes, True).Length > 0, "camera preparation accepts " & car.Code & " (not visual acceptance)")
         Next
-        For Each route In catalog.Tracks
+        For Each route In catalog.Tracks.Where(Function(t) t.Id <> PrototypeTrack.Id)
             catalog.ValidateInstalled(game, route.Id, "sti")
         Next
         Check(True, "catalog routes exist in supported installation")
@@ -337,6 +351,10 @@ Module Program
         Check(File.Exists(IO.Path.Combine(root, "dirt2_game.exe")), "game executable survives removal")
         Files.SaveJson(context.PreferencesPath, setting)
         Check(VrSettings.Load(context).Bindings.Count = 1, "settings persist per installation")
+        If args.Contains("--headless") Then
+            Console.WriteLine("All " & passed & " headless launcher checks passed")
+            Return
+        End If
         Using input As New ControllerInput()
             input.Poll()
             For Each sampleState In input.Snapshot()

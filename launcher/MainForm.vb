@@ -289,7 +289,7 @@ Public Class MainForm
         AddHandler eventChoice.SelectedIndexChanged, Sub()
                                                         Dim previous = TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id
                                                         trackChoice.Items.Clear()
-                                                        trackChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) t.Event = CStr(eventChoice.SelectedItem) AndAlso Directory.Exists(t.Folder(context))).OrderBy(Function(t) t.Label).Cast(Of Object).ToArray())
+                                                        trackChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) t.Event = CStr(eventChoice.SelectedItem) AndAlso PrototypeTrack.Installed(t, context)).OrderBy(Function(t) t.Label).Cast(Of Object).ToArray())
                                                         trackChoice.SelectedItem = trackChoice.Items.Cast(Of PracticeTrack).FirstOrDefault(Function(t) t.Id = previous)
                                                         If trackChoice.SelectedIndex < 0 AndAlso trackChoice.Items.Count > 0 Then trackChoice.SelectedIndex = 0
                                                     End Sub

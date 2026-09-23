@@ -92,6 +92,7 @@ Public Class AssetTransaction
         Files.NoLinks(folder)
         RaceCatalog.Current.Car(carCode)
         If configOnly AndAlso trackId Is Nothing Then Throw New IOException("Desktop practice requires a track selection.")
+        If trackId = PrototypeTrack.Id AndAlso Not configOnly Then Throw New IOException("The prototype track supports desktop preparation only.")
         If trackId IsNot Nothing Then RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
         Dim configBytes = If(trackId Is Nothing, Nothing, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context))
         ' Version 4 journals own only a desktop practice config, with no asset entries.

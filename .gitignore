@@ -11,3 +11,5 @@ tools/ego-xml/bin/
 tools/ego-xml/obj/
 tests/launcher/bin/
 tests/launcher/obj/
+tools/track-prototype/bin/
+tools/track-prototype/obj/

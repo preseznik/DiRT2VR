@@ -50,11 +50,13 @@ Public Class RaceCatalog
         Dim camera = IO.Path.Combine(context.GameRoot, "cars", Car(carCode).Code, "cameras.xml")
         Files.NoLinks(route) : Files.NoLinks(camera)
         If Not Directory.Exists(route) OrElse Not File.Exists(camera) Then Throw New IOException("The selected track or car is missing from this game installation.")
+        If trackId = PrototypeTrack.Id Then PrototypeTrack.Validate(route)
     End Sub
     Public Function Config(trackId As String, carCode As String, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional context As InstallContext = Nothing) As Byte()
         If opponents < 0 OrElse opponents > 7 Then Throw New IOException("Choose between zero and seven opponents.")
         If Not {"same", "mixed", "class"}.Contains(opponentCars) Then Throw New IOException("Unknown opponent car selection.")
         Dim route = Track(trackId)
+        If trackId = PrototypeTrack.Id AndAlso opponents <> 0 Then Throw New IOException("The prototype track supports solo driving only.")
         Dim vehicle = Car(carCode)
         Dim entries As New List(Of XElement)
         If opponents = 0 OrElse opponentCars = "same" Then

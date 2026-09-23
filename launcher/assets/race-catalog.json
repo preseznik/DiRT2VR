@@ -1,6 +1,15 @@
 {
   "Tracks": [
     {
+      "Id": "d2vr_test",
+      "Circuit": true,
+      "Event": "Rallycross",
+      "Label": "Prototype circuit (experimental, desktop solo)",
+      "Country": "london",
+      "Track": "d2vr_test",
+      "Route": "route_0"
+    },
+    {
       "Id": "127",
       "Circuit": true,
       "Event": "Landrush",

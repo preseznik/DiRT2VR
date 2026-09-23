@@ -39,6 +39,7 @@ Public Class Session
                 Do
                     Status("Checking")
                     context.ValidateGame() : context.RequireClosed()
+                    If settings.DirectMode Then PrototypeTrack.ValidateMode(settings.TrackId, settings.LaunchMode, vr)
                     ' Preserve desktop behavior for older LAN quick-launch commands; VR is an explicit choice.
                     If settings.LaunchMode = "lan" Then vr = vr AndAlso lanVr
                     If Not vr Then
