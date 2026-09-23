@@ -34,6 +34,11 @@ Public Class MainForm
     Private ReadOnly opponentHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
+    Private ReadOnly hudGauges As New CheckBox With {.Text = "Speedometer / gear / revs", .Name = "HudGauges", .AutoSize = True}
+    Private ReadOnly hudLapTime As New CheckBox With {.Text = "Lap / time", .Name = "HudLapTime", .AutoSize = True}
+    Private ReadOnly hudPosition As New CheckBox With {.Text = "Race position", .Name = "HudPosition", .AutoSize = True}
+    Private ReadOnly hudMap As New CheckBox With {.Text = "Route map", .Name = "HudMap", .AutoSize = True}
+    Private ReadOnly hudProgress As New CheckBox With {.Text = "Stage progress bar", .Name = "HudProgress", .AutoSize = True}
     Private ReadOnly graphicsSummary As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly refreshLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private lastStatus As String = ""
@@ -377,6 +382,13 @@ Public Class MainForm
         AddGraphicsRow(grid, "Car mirrors", mirrors, "Disabling mirrors may reduce GPU work.")
         content.Controls.Add(grid)
         hudFollow.Checked = settings.HudFollowView : content.Controls.Add(hudFollow)
+        content.Controls.Add(New Label With {.Text = "Show HUD areas", .AutoSize = True})
+        hudGauges.Checked = settings.HudGauges : hudLapTime.Checked = settings.HudLapTime : hudPosition.Checked = settings.HudPosition
+        hudMap.Checked = settings.HudMap : hudProgress.Checked = settings.HudProgress
+        Dim hudElements As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top, .WrapContents = True, .Margin = New Padding(12, 0, 0, 0)}
+        hudElements.Controls.AddRange({hudGauges, hudLapTime, hudPosition, hudMap, hudProgress})
+        content.Controls.Add(hudElements)
+        content.Controls.Add(Note("Uncheck to hide that area of the cockpit HUD. Other overlays in the same area are hidden too. The centre, menus, virtual screen and desktop HUD stay unchanged. Uses the standard race HUD layout."))
         content.Controls.Add(Note("The cockpit HUD appears about four metres ahead, fixed relative to the car. Enable HUD follows view to keep it in front of your head. Recenter resets its position. Applies on the next VR launch; headset validation is pending."))
         content.Controls.Add(Note("Render resolution controls scene detail. Raising headset texture scale alone cannot add missing detail. Cropping reduces peripheral vision; performance gains depend on the scene."))
         content.Controls.Add(New Label With {.Text = "Headset refresh rate", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
@@ -386,6 +398,9 @@ Public Class MainForm
         AddHandler defaults.Click, Sub()
                                        renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False
+                                       For Each element In {hudGauges, hudLapTime, hudPosition, hudMap, hudProgress}
+                                           element.Checked = True
+                                       Next
                                    End Sub
         content.Controls.Add(defaults)
         content.Controls.Add(Note("Save settings to apply on the next launch. Crowds, particles, shadows and motion blur retain the current reduced-effects setup."))
@@ -485,6 +500,8 @@ Public Class MainForm
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.HudFollowView = hudFollow.Checked
+        settings.HudGauges = hudGauges.Checked : settings.HudLapTime = hudLapTime.Checked : settings.HudPosition = hudPosition.Checked
+        settings.HudMap = hudMap.Checked : settings.HudProgress = hudProgress.Checked
         settings.LaunchMode = {"menus", "practice", "race"}(launchMode.SelectedIndex)
         settings.Opponents = CInt(opponents.Value)
         settings.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)

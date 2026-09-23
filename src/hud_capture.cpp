@@ -1,9 +1,10 @@
 #include "hud_capture.h"
+#include "hud_elements.h"
 #include <array>
 #include <cstring>
 using Microsoft::WRL::ComPtr;
 
-bool HudCapture::Begin(ID3D11Texture2D* back,uint64_t frame) {
+bool HudCapture::Begin(ID3D11Texture2D* back,uint64_t frame,unsigned hidden) {
     active_=ready_=false; draws_=0;
     if(!back) return false;
     D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
@@ -15,13 +16,25 @@ bool HudCapture::Begin(ID3D11Texture2D* back,uint64_t frame) {
         ComPtr<ID3D11Texture2D> image; ComPtr<ID3D11RenderTargetView> target;
         if(FAILED(device->CreateTexture2D(&desc,nullptr,&image)) || FAILED(device->CreateRenderTargetView(image.Get(),nullptr,&target))) return false;
         image_=image; target_=target; back_=back; width_=desc.Width; height_=desc.Height;
-        blend_.Reset(); depth_.Reset();
+        blend_.Reset(); depth_.Reset(); context1_.Reset();
     }
     ComPtr<ID3D11DeviceContext> context; device->GetImmediateContext(&context);
     const float clear[4]{}; context->ClearRenderTargetView(target_.Get(),clear);
-    frame_=frame; active_=true; return true;
+    if(!context1_) context.As(&context1_);
+    hidden_=hidden; frame_=frame; active_=true; return true;
 }
-void HudCapture::End(bool cockpit) { ready_=active_ && cockpit && draws_!=0; active_=false; }
+void HudCapture::End(bool cockpit) {
+    ready_=active_ && cockpit && draws_!=0;
+    if(ready_ && hidden_ && context1_) {
+        const float clear[4]{};
+        for(const auto& region:vr::HudRegions) if(hidden_&region.bit) {
+            const D3D11_RECT rect{LONG(region.left*width_),LONG(region.top*height_),
+                LONG(region.right*width_),LONG(region.bottom*height_)};
+            context1_->ClearView(target_.Get(),clear,&rect,1);
+        }
+    }
+    active_=false;
+}
 ID3D11Texture2D* HudCapture::Current(uint64_t frame) const {
     return ready_ && frame==frame_ ? image_.Get() : nullptr;
 }

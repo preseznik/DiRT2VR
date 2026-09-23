@@ -13,7 +13,7 @@ if ($Interactive) { $Headset=$true }
 if ($Headset) {
     if (!(Test-Path -LiteralPath $Runtime)) { throw "SteamVR x86 manifest not found: $Runtime" }
     $ContinuousReplay=$true; $SerialRender=$true; $Cockpit=$true; $ReducedEffects=$true
-    $LowPost=$true; $NoAmbientOcclusion=$true; $NoMotionBlur=$true; $SkipWater=$true
+    $LowPost=$true; $NoAmbientOcclusion=$true; $NoMotionBlur=$true
     if (!$RenderWidth -and !$RenderHeight) { $RenderWidth=1600; $RenderHeight=1200 }
 }
 if (($RenderWidth -eq 0) -ne ($RenderHeight -eq 0) -or

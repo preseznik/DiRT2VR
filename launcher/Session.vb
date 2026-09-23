@@ -115,7 +115,7 @@ Public Class Session
     Public Shared Function VrStartInfo(context As InstallContext, settings As VrSettings, channel As String, logFolder As String, Optional joinTarget As String = Nothing) As ProcessStartInfo
         ' Both factories clear inherited experiments before setting their explicit launch flags.
         Dim start = If(settings.LaunchMode = "lan", LanSession.StartInfo(context, settings.SkipIntroduction, joinTarget), DesktopStartInfo(context, Nothing, Nothing))
-        For Each name In {"ACTIVE", "REPLAY_PROBE", "INNER_REPLAY", "CONTINUOUS_REPLAY", "HEADSET", "INTERACTIVE", "SKIP_WATER", "WIDE_VISIBILITY"}
+        For Each name In {"ACTIVE", "REPLAY_PROBE", "INNER_REPLAY", "CONTINUOUS_REPLAY", "HEADSET", "INTERACTIVE", "WIDE_VISIBILITY"}
             start.Environment("DIRT2VR_" & name) = "1"
         Next
         start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"
@@ -125,6 +125,7 @@ Public Class Session
         start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_FOV_SCALE") = (settings.FieldOfView / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_HUD_FOLLOW") = If(settings.HudFollowView, "1", "0")
+        start.Environment("DIRT2VR_HUD_HIDE") = settings.HiddenHudElements.ToString(Globalization.CultureInfo.InvariantCulture)
         ConfigureLogging(start, logFolder)
         start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
         start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"

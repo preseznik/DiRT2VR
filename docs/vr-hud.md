@@ -24,3 +24,15 @@ This adds one game-sized capture texture and one runtime HUD swapchain. Runtime 
 For bounded capture diagnostics only, `DIRT2VR_HUD_PROBE=1` together with logging and detailed captures duplicates the identified HUD draws in the main desktop scene at frames 300, 1200 and 3000, saving RGB/alpha images. The diagnostic leaves desktop HUD drawing intact and does not initialize OpenXR. Ordinary launcher sessions do not set this flag, and logging remains off by default.
 
 The user deferred headset acceptance. Still required: readability at four metres, stable car-relative placement while looking/leaning, recenter, following mode, asymmetric eye projections, pause/resume and Toggle VR transitions, crop/resolution changes, other event HUD variants, long-session memory/performance and LAN VR. Desktop capture and synthetic-runtime tests do not establish those results.
+
+## Optional HUD areas
+
+Five launcher booleans default true, including when absent in older settings. `HiddenHudElements` becomes the session-only `DIRT2VR_HUD_HIDE` mask: gauges=1, lap/time=2, position=4, map=8, progress=16. Invalid masks preserve everything. At the end of HUD capture, D3D11.1 `ClearView` clears the chosen normalized rectangles to transparent before XR submission. It changes no game UI objects, asset files, world-eye textures, menus or virtual-screen images. The hook-free implementation uses the existing five HUD shader identifiers and capture lifecycle.
+
+These are **area masks**, not semantic widget switches. Any other content occupying a disabled rectangle is also hidden. The launcher and README disclose this limitation. The central HUD area remains intact. Different event layouts and headset readability still require testing. If the D3D11.1 context is unavailable, filtering is skipped and the HUD stays visible.
+
+The standard-layout rectangles are recorded in `src/hud_elements.h`. WARP pixel readback covers all 32 combinations and the unmasked centre; launcher tests cover migration defaults, placement, persistence, session forwarding and reset. `artifacts/hud-elements-20260923-130057` captures gauges/position/progress hidden with lap/time/map retained. The game UI continues to render normally on the desktop.
+
+The complementary mask (lap/time and map hidden) was captured at the launcher's 4:3 scene aspect ratio, 800x600, in `artifacts/trace-20260923-130649-490`. Position, gauges and progress markers remain. Both 4:3 and 16:9 desktop captures pass; neither is a headset test. Final native checks: 13/13, including all 32 GPU visibility combinations. Launcher checks: 396.
+
+Investigation rejected altering named OSD interfaces in the game: initial visibility holds are reset, the common show method is bypassed, and returning a null interface from its factory caused a startup failure in the isolated test. Those hooks are not retained. The diagnostic originals were restored and checked.

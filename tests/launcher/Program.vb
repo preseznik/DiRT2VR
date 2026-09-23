@@ -95,6 +95,8 @@ Module Program
         Check(document.DocumentElement.GetAttribute("unrelatedTest") = "keep", "unrelated graphics changes retained")
         Check(DirectCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/resolution"), Xml.XmlElement).GetAttribute("width") <> "1600", "VR resolution restored during merge")
         Dim setting As New VrSettings()
+        Check(setting.HiddenHudElements = 0, "new settings keep every HUD element visible")
+        Check(System.Text.Json.JsonSerializer.Deserialize(Of VrSettings)("{}").HiddenHudElements = 0, "older settings retain all HUD elements")
         Dim focus As New StartupFocusPolicy(0, 10)
         Check(Not focus.ShouldActivate(New IntPtr(11), New IntPtr(11), 10, 100), "initial game window does not force focus")
         Check(Not focus.ShouldActivate(IntPtr.Zero, New IntPtr(20), 10, 200), "window replacement gap does not activate another app")
@@ -403,6 +405,12 @@ Module Program
             Check(Not hudToggle.Checked AndAlso Not (New VrSettings()).HudFollowView, "HUD follows view defaults off for existing and new settings")
             Check(hudToggle.Parent.Parent.Text = "Graphics", "HUD follow control is on Graphics tab")
             hudToggle.Checked = True
+            Dim hudNames = {"HudGauges", "HudLapTime", "HudPosition", "HudMap", "HudProgress"}
+            For Each name In hudNames
+                Dim element = DirectCast(form.Controls.Find(name, True).Single(), CheckBox)
+                Check(element.Checked AndAlso element.Parent.Parent Is hudToggle.Parent, name & " starts checked below follow-view on Graphics")
+                element.Checked = False
+            Next
             Dim scaleSlider = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
             Check(scaleSlider.Minimum = 50 AndAlso scaleSlider.Maximum = 150 AndAlso scaleSlider.SmallChange = 1 AndAlso form.Controls.Find("RenderScaleValue", True).Single().Text = "75%", "native graphics slider retains range precision and visible value")
             DirectCast(form.Controls.Find("Mirrors", True).Single(), ComboBox).SelectedIndex = 2
@@ -410,7 +418,12 @@ Module Program
             Dim saved = VrSettings.Load(context)
             Check(saved.LoggingEnabled, "Settings logging opt-in persists")
             Check(saved.HudFollowView, "HUD follows view setting persists")
+            Check(saved.HiddenHudElements = 31, "all five HUD visibility choices persist")
             Dim hudStart = Session.VrStartInfo(context, saved, "Local.TestHud", Nothing)
+            Check(Not hudStart.Environment.ContainsKey("DIRT2VR_SKIP_WATER"), "VR launch keeps water visible without legacy partial shader suppression")
+            Check(hudStart.Environment("DIRT2VR_HUD_HIDE") = "31", "VR session forwards hidden HUD components")
+            saved.HudGauges = True : saved.HudPosition = True : saved.HudProgress = True
+            Check(saved.HiddenHudElements = 10, "HUD elements remain independently configurable")
             Check(hudStart.Environment("DIRT2VR_HUD_FOLLOW") = "1", "VR session forwards HUD follow choice")
             saved.HudFollowView = False
             Check(Session.VrStartInfo(context, saved, "Local.TestHud", Nothing).Environment("DIRT2VR_HUD_FOLLOW") = "0", "fixed HUD explicitly overrides inherited follow choice")
@@ -436,6 +449,7 @@ Module Program
             tabs.SelectedIndex = 2
             form.Controls.Find("HudFollowView", True).Single().Parent.Controls.OfType(Of Button).Single(Function(b) b.Text = "Restore graphics defaults").PerformClick()
             Check(Not hudToggle.Checked, "Restore graphics defaults returns HUD to fixed placement")
+            Check(hudNames.All(Function(name) DirectCast(form.Controls.Find(name, True).Single(), CheckBox).Checked), "Restore graphics defaults shows all HUD elements")
             form.Close()
         End Using
         ' Exercise the real entry point in a child process, not only MainForm in this harness.

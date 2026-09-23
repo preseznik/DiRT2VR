@@ -4,6 +4,7 @@
 #include "camera_math.h"
 #include "game_xr.h"
 #include "hud_capture.h"
+#include "hud_elements.h"
 #include "gpu_timer.h"
 #include "vr_hotkeys.h"
 #include "light_replay.h"
@@ -314,6 +315,10 @@ bool HudProbe() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_HUD_PROBE",value,8)==1 && value[0]==L'1'; }();
     return DetailedTrace() && enabled;
 }
+unsigned HiddenHudElements() {
+    static const unsigned mask=[] { char text[16]{}; auto n=GetEnvironmentVariableA("DIRT2VR_HUD_HIDE",text,sizeof(text)); return n>0 && n<sizeof(text) ? ParseHudHidden(text) : 0; }();
+    return mask;
+}
 bool RequestedCapturesEnabled() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_CAPTURE_REQUESTS",value,8)>0 && wcscmp(value,L"1")==0; }();
     return LoggingEnabled() && enabled;
@@ -516,7 +521,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     memcpy(originalLightContext.data(),context,originalLightContext.size());
     groundCoverPair.Begin();
     XrFrames::Overlay hud;
-    const bool captureHud=hudCapture.Begin(back.Get(),f);
+    const bool captureHud=hudCapture.Begin(back.Get(),f,HiddenHudElements());
     hud.size={4.f,4.f/hudCapture.Aspect()};
     hud.draw=[&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
         hudCapture.End(true);
@@ -675,7 +680,7 @@ void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,v
         const auto f=frame.load();
         if(continuousMain && (f==300 || f==1200 || f==3000) && gameSwapchain) {
             ComPtr<ID3D11Texture2D> back;
-            if(SUCCEEDED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) hudProbeDrawing=hudCapture.Begin(back.Get(),f);
+            if(SUCCEEDED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) hudProbeDrawing=hudCapture.Begin(back.Get(),f,HiddenHudElements());
         }
         realInner(self,lists,cameraA,cameraB,context,scene,flags);
         hudProbeDrawing=false;

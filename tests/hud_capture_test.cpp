@@ -22,12 +22,12 @@ int main() {
     ComPtr<ID3D11RenderTargetView> target,other;
     CHECK(SUCCEEDED(device->CreateRenderTargetView(back.Get(),nullptr,&target)));
     CHECK(SUCCEEDED(device->CreateRenderTargetView(output.Get(),nullptr,&other)));
-    auto pixel=[&](ID3D11Texture2D* image,unsigned x) {
+    auto pixel=[&](ID3D11Texture2D* image,unsigned x,unsigned y=0) {
         context->CopyResource(staging.Get(),image);
         D3D11_MAPPED_SUBRESOURCE mapped{};
         CHECK(SUCCEEDED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped)));
         std::array<unsigned char,4> result{};
-        std::memcpy(result.data(),static_cast<unsigned char*>(mapped.pData)+x*4,4);
+        std::memcpy(result.data(),static_cast<unsigned char*>(mapped.pData)+y*mapped.RowPitch+x*4,4);
         context->Unmap(staging.Get(),0); return result;
     };
     const char shader[]=R"(
@@ -98,5 +98,17 @@ float4 ps():SV_Target { return float4(1,0,0,0.5); }
     capture.Draw(context.Get(),[&] { context->Draw(3,0); }); capture.End(false);
     CHECK(!capture.Current(12)); // pause/menu transition discards any captured HUD
     CHECK(!capture.Begin(nullptr,13)); CHECK(!capture.Current(13));
-    std::puts("HUD alpha, untouched background, GPU state restoration, filtering and stale-frame rejection passed.");
+    viewport.Width=16; context->RSSetViewports(1,&viewport);
+    for(unsigned hidden=0;hidden<32;++hidden) {
+        CHECK(capture.Begin(back.Get(),20,hidden));
+        CHECK(capture.Draw(context.Get(),[&] { context->Draw(3,0); }));
+        capture.End(true); auto image=capture.Current(20); CHECK(image);
+        CHECK((pixel(image,14,6)[3]==0)==bool(hidden&1));
+        CHECK((pixel(image,2,0)[3]==0)==bool(hidden&2));
+        CHECK((pixel(image,14,0)[3]==0)==bool(hidden&4));
+        CHECK((pixel(image,8,0)[3]==0)==bool(hidden&8));
+        CHECK((pixel(image,0,6)[3]==0)==bool(hidden&16));
+        CHECK(pixel(image,8,4)[3]==128); // central messages remain
+    }
+    std::puts("HUD capture and all 32 visibility combinations passed GPU readback.");
 }

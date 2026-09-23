@@ -105,6 +105,17 @@ Public Class VrSettings
     Public Property HeadsetScale As Integer = 50
     Public Property FieldOfView As Integer = 100
     Public Property HudFollowView As Boolean = False
+    Public Property HudGauges As Boolean = True
+    Public Property HudLapTime As Boolean = True
+    Public Property HudPosition As Boolean = True
+    Public Property HudMap As Boolean = True
+    Public Property HudProgress As Boolean = True
+    <Serialization.JsonIgnore>
+    Public ReadOnly Property HiddenHudElements As Integer
+        Get
+            Return If(HudGauges, 0, 1) Or If(HudLapTime, 0, 2) Or If(HudPosition, 0, 4) Or If(HudMap, 0, 8) Or If(HudProgress, 0, 16)
+        End Get
+    End Property
     Public Property Mirrors As String = "game"
     Public Property LaunchMode As String = "menus"
     Public Property TrackId As String = "127"
