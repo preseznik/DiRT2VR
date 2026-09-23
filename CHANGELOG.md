@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Fixed the tested Ensenada Sprint puddle reflection mismatch by rendering the reflected camera separately for each VR eye while retaining the original reflection draw lists. Water remains visible. Identical-camera/asymmetric desktop benchmarks pass, and the user confirms the reflections look good in Quest 3. Enabled for normal VR launches; desktop rendering is unchanged. Broader tracks, reflection visibility when looking behind, and performance still need coverage. See `docs/water-visibility.md`.
+
 - Changed fresh/default HUD settings to **1 metre** with **Speedometer / gear / revs** off. Restore graphics defaults uses the same settings; other HUD areas remain enabled. Explicitly saved preferences are preserved on upgrade. Apparent text size is unchanged.
 
 - Added a **HUD distance** slider on Graphics: 1–20 metres in 0.5 m steps, default 4 m. It preserves apparent HUD size, as requested, and supports fixed and follow-view placement. Save and relaunch VR to apply; graphics defaults restore 4 m. Launcher, camera-math and OpenXR submission tests cover the setting. The user's 20 m check did not show an obvious distance change; added a one-time placement receipt when diagnostic logging is enabled. Perceptual headset acceptance remains unresolved.

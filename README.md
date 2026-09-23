@@ -181,7 +181,7 @@ Older test-kit profiles and imported copies are no longer used. They are left on
 - Game-menu launches prepare the Subaru STI camera. Direct practice prepares the selected car, but other interiors and broader stage coverage are not yet visually verified.
 - Scenery visibility and car-aligned headlights passed the reported tests; other lighting, mirrors and interiors need testing.
 - Road rubble is retained in both eyes in the tested Novigrad scene. Other stages and ground-cover variants still need testing.
-- Crowds, particles, shadows and motion blur are reduced or disabled. Water is kept visible; puddle reflections may differ between eyes, and water/scenery pop-in remains under investigation. The HUD layer awaits headset validation. Seat adjustment, replay transitions and calibrated world scale remain unfinished.
+- Crowds, particles, shadows and motion blur are reduced or disabled. Water stays visible and uses per-eye reflections in VR; the Ensenada Sprint puddle fix has been checked in Quest 3. Other tracks, reflected objects when looking behind, and scenery pop-in still need testing. The HUD layer awaits full headset validation. Seat adjustment, replay transitions and calibrated world scale remain unfinished.
 - Occasional hitching remains; a steady headset frame rate is not guaranteed.
 - Headset reconnection during play is unsupported. Quit and relaunch after reconnecting.
 - Installation acceptance in protected folders and interruption scenarios is still in progress. Packages are experimental.

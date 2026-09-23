@@ -142,6 +142,51 @@ using CameraUploadFn = void (__thiscall*)(void*,void*);
 CameraUploadFn realCameraUpload{};
 thread_local void* eyeRenderer{};
 thread_local bool eyeCameraSetup{};
+thread_local void* waterEyeRenderer{};
+void* waterRenderer{};
+uint64_t waterRendererFrame=~uint64_t{};
+bool WaterReflectionsEnabled() {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_WATER_REFLECTIONS",value,8)==1 && value[0]==L'1'; }();
+    return enabled;
+}
+std::array<std::vector<std::string>,2> waterProbeDraws;
+bool waterProbeRecording{};
+// 0x33ad10 builds this scalar-pointer list header on its stack. The linked
+// batches belong to the reflection renderer and remain intact until its next
+// preparation. Copy the header only; never rerun queue construction mid-frame.
+std::array<unsigned char,0xf4> waterLists;
+uint64_t waterListsFrame=~uint64_t{};
+void *waterCameraA{},*waterCameraB{},*waterContext{},*waterScene{},*waterFlags{};
+bool waterCameraOnly{};
+DWORD waterCameraThread{};
+bool __stdcall WaterCameraOnlyFor(void* renderer) {
+    return waterCameraOnly && renderer==waterEyeRenderer && GetCurrentThreadId()==waterCameraThread;
+}
+void *waterPrepareTail{},*waterPrepareExit{};
+__declspec(naked) void WaterPrepareTail() {
+    __asm {
+        pushfd
+        cmp byte ptr [waterCameraOnly],0
+        je normal
+        pushad
+        push esi
+        call WaterCameraOnlyFor
+        test eax,eax
+        jz otherThread
+        popad
+        popfd
+        // Balance the FPU load preceding the intercepted LEA, as the original
+        // tail does, then use the game's own saved-register epilogue.
+        fstp dword ptr [ebx+0xf0]
+        jmp dword ptr [waterPrepareExit]
+    otherThread:
+        popad
+    normal:
+        popfd
+        jmp dword ptr [waterPrepareTail]
+    }
+}
+
 thread_local float projectionShift{};
 thread_local const XrFovf* eyeFov{};
 thread_local unsigned eyeProjectionUploads{};
@@ -270,9 +315,10 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
 void __fastcall CameraSetup(void* self,void*,void* context,void* camera,float nearPlane,bool upload) {
     const bool previous=eyeCameraSetup;
     auto bytes=static_cast<unsigned char*>(self);
-    eyeCameraSetup=self==eyeRenderer && (camera==bytes+0x5e0 || camera==bytes+0x650);
+    eyeCameraSetup=(self==eyeRenderer && (camera==bytes+0x5e0 || camera==bytes+0x650)) ||
+        (self==waterEyeRenderer && camera==*reinterpret_cast<void**>(bytes+0x940));
     realCameraSetup(self,context,camera,nearPlane,upload);
-    if(eyeCameraSetup && lightingEye && upload) RefreshLights(context);
+    if(eyeCameraSetup && !waterEyeRenderer && lightingEye && upload) RefreshLights(context);
     eyeCameraSetup=previous;
 }
 void __fastcall CameraUpload(void* self,void*,void* context) {
@@ -466,6 +512,34 @@ public:
     }
 };
 
+void RenderEyeReflection(void* mainCamera) {
+    if(!WaterReflectionsEnabled() || !waterPrepareTail || !waterCameraA || !waterRenderer || waterRendererFrame!=frame.load() || waterListsFrame!=frame.load()) return;
+    auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+    auto renderer=static_cast<unsigned char*>(waterRenderer);
+    const unsigned char prepare[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0xb4,0x01,0,0};
+    const unsigned char render[]={0x53,0x56,0x8b,0xf1,0x33,0xdb};
+    if(*reinterpret_cast<void**>(renderer)!=base+0xf262f8 ||
+       *reinterpret_cast<void**>(renderer+0x940)!=mainCamera ||
+       *reinterpret_cast<void**>(renderer+0x95c) ||
+       memcmp(base+0x2e22d0,prepare,sizeof(prepare)) || memcmp(base+0x2d1d40,render,sizeof(render))) return;
+    const auto pass=scenePass;
+    const bool main=continuousMain;
+    const auto before=draws.load();
+    const auto reflectionSerial=*reinterpret_cast<unsigned*>(renderer+0xc8);
+    waterEyeRenderer=renderer;
+    using Method=void (__thiscall*)(void*);
+    waterCameraThread=GetCurrentThreadId();
+    waterCameraOnly=true;
+    reinterpret_cast<Method>(base+0x2e22d0)(renderer);
+    waterCameraOnly=false;
+    realInner(renderer,waterLists.data(),waterCameraA,waterCameraB,waterContext,waterScene,waterFlags);
+    *reinterpret_cast<unsigned*>(renderer+0xc8)=reflectionSerial;
+    waterEyeRenderer=nullptr;
+    continuousMain=main;
+    scenePass=pass;
+    if(frame.load()%120==0) Log("water per-eye reflection frame=%llu draws=%llu pending=%p",frame.load(),draws.load()-before,*reinterpret_cast<void**>(renderer+0x95c));
+}
+
 bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
     const auto f=frame.load();
     PollHeadsetKeys();
@@ -543,6 +617,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         {
             ScopedEyePose pose(cameraA,cameraB,RelativePose(headsetReference,view.pose),scale);
             eyeRenderer=self; eyeFov=&view.fov; lightingEye=eye+1; lightsRefreshed=false;
+            RenderEyeReflection(cameraA);
             hudEye=captureHud ? eye+1 : 0;
             realInner(self,lists,cameraA,cameraB,context,scene,flags);
             hudEye=0;
@@ -638,20 +713,26 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
     LARGE_INTEGER start{},end{},frequency{}; QueryPerformanceFrequency(&frequency); QueryPerformanceCounter(&start);
     bool restored=true;
     HRESULT capture=S_OK;
+    if(WaterReflectionsEnabled()) groundCoverPair.Begin();
+    if(WaterReflectionsEnabled()) { waterProbeDraws={}; waterProbeRecording=true; }
     for(unsigned eye=0;eye<2;++eye) {
-        scenePass=sampled ? eye+1 : 0;
+        scenePass=(sampled || WaterReflectionsEnabled()) ? eye+1 : 0;
         const auto before=draws.load();
         {
             ScopedCameraTranslation translation(cameraA,cameraB,(eye==0?-0.5f:0.5f)*separation);
             eyeRenderer=self; projectionShift=(eye==0?-1.f:1.f)*shift;
+            if(WaterReflectionsEnabled()) lightingEye=eye+1;
+            RenderEyeReflection(cameraA);
             realInner(self,lists,cameraA,cameraB,context,scene,flags);
-            eyeRenderer=nullptr; projectionShift=0;
+            eyeRenderer=nullptr; projectionShift=0; lightingEye=0;
         }
         eyeDraws[eye]=draws.load()-before;
         restored &= memcmp(originalA.data(),cameraA,112)==0 && memcmp(originalB.data(),cameraB,112)==0;
         capture=eyes.Capture(back.Get(),eye,f);
         if(FAILED(capture) || !restored) break;
     }
+    if(WaterReflectionsEnabled()) groundCoverPair.End();
+    waterProbeRecording=false;
     scenePass=sampled ? 1 : 0;
     QueryPerformanceCounter(&end);
     const bool ready=SUCCEEDED(capture) && eyes.Ready(f) && restored;
@@ -670,11 +751,23 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         ScreenshotTexture(eyes.Texture(0),900001+2*(f-3000));
         ScreenshotTexture(eyes.Texture(1),900002+2*(f-3000));
     }
-    if(!ready || !matched) { Log("CONTINUOUS disabled after failed pair; inspect stereo-frames.csv"); disabled=true; }
+    if(!ready || !matched) {
+        if(WaterReflectionsEnabled()) for(unsigned eye=0;eye<2;++eye) {
+            auto diagnostic=TraceFile(Output()/("water-probe-failed-eye-"+std::to_string(eye+1)+".txt"));
+            for(const auto& draw:waterProbeDraws[eye]) diagnostic << draw << '\n';
+        }
+        Log("CONTINUOUS disabled after failed pair; inspect stereo-frames.csv"); disabled=true;
+    }
+    if(WaterReflectionsEnabled() && (disabled || f>=6000)) { DXGI_SWAP_CHAIN_DESC desc{}; if(SUCCEEDED(gameSwapchain->GetDesc(&desc))) PostMessageW(desc.OutputWindow,WM_CLOSE,0,0); }
     return true;
 }
 
 void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
+    if(WaterReflectionsEnabled() && self==waterRenderer && !waterEyeRenderer) {
+        memcpy(waterLists.data(),lists,waterLists.size());
+        waterListsFrame=frame.load();
+        waterCameraA=cameraA; waterCameraB=cameraB; waterContext=context; waterScene=scene; waterFlags=flags;
+    }
     if(HeadsetEnabled()) {
         if(!HeadsetScene(self,lists,cameraA,cameraB,context,scene,flags)) realInner(self,lists,cameraA,cameraB,context,scene,flags);
         return;
@@ -727,6 +820,7 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     const auto f=frame.load();
     const auto caller=reinterpret_cast<uintptr_t>(_ReturnAddress())-reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
     const bool mainView=caller==0x2889c0;
+    if(WaterReflectionsEnabled() && caller==0x2d1daf && !waterEyeRenderer) { waterRenderer=self; waterRendererFrame=f; }
     const bool sample=DetailedTrace() && (f==300 || f==1200 || f==3000);
     if(sample) {
         Log("scene_enter frame=%llu caller=0x%zx main=%d self=%p args=%p,%p,%p,%p,%p",f,caller,mainView,self,a,b,c,d,e);
@@ -891,6 +985,11 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
         return false;
     }
     if(!scenePass) return true;
+    if(waterProbeRecording && scenePass<=2 && waterProbeDraws[scenePass-1].size()<10000) {
+        char line[160]{}; snprintf(line,sizeof(line),"%s count=%u instances=%u vs=%llx ps=%llx reflection=%d",kind,count,instances,vh,ph,waterEyeRenderer!=nullptr);
+        waterProbeDraws[scenePass-1].emplace_back(line);
+    }
+    if(WaterReflectionsEnabled() && Sample() && frame.load()==3000) TraceWaterInputs(context,ph,frame.load(),scenePass);
     if(requestedCaptureFrame==frame.load()) {
         TraceWaterInputs(context,ph,frame.load(),scenePass);
         ComPtr<ID3D11Buffer> vertex,index; UINT stride{},offset{},indexOffset{}; DXGI_FORMAT format{};
@@ -902,6 +1001,7 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
             << ',' << start << ',' << base << ',' << firstInstance << ',' << topology << ',' << vertex.Get()
             << ',' << stride << ',' << offset << ',' << index.Get() << ',' << format << ',' << indexOffset << '\n';
     }
+    if(waterProbeRecording && !Sample()) return true;
     auto out=TraceFile(Output()/("draws-pass-"+std::to_string(scenePass)+".csv"),std::ios::app);
     out << kind << ',' << count << ',' << instances << ',' << std::hex << vh << ',' << ph << '\n';
     return true;
@@ -1162,6 +1262,17 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                 const bool m=hook(0x7c7fa0,projected,sizeof(projected),reinterpret_cast<void*>(ProjectedSetup),reinterpret_cast<void**>(&realProjectedSetup));
                 lightingHooksReady=p && s && m;
                 Log("lighting parameter hooks ready=%d",lightingHooksReady);
+            }
+            if(WaterReflectionsEnabled() && !waterPrepareTail) {
+                const unsigned char tail[]={0x8d,0x8e,0x60,0x09,0,0};
+                const unsigned char exit[]={0x5f,0x5e,0x5b,0x8b,0xe5,0x5d,0xc3};
+                if(!memcmp(base+0x2e2975,tail,sizeof(tail)) && !memcmp(base+0x2e2a5d,exit,sizeof(exit))) {
+                    waterPrepareExit=base+0x2e2a5d;
+                    auto status=MH_CreateHook(base+0x2e2975,reinterpret_cast<void*>(WaterPrepareTail),&waterPrepareTail);
+                    if(status==MH_OK) status=MH_EnableHook(base+0x2e2975);
+                    Log("water camera-only hook status=%s",MH_StatusToString(status));
+                    if(status!=MH_OK) waterPrepareTail=nullptr;
+                }
             }
             const unsigned char setupPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0xe4,0,0,0};
             const unsigned char uploadPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x54};

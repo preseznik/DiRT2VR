@@ -31,12 +31,38 @@ The decisive trace is `artifacts/trace-20260923-135449-106`, frame 1411, 330/328
 
 The prototype was removed from runtime source; `artifacts/water-reflection-probe-trace.cpp` preserves it locally for investigation. Normal rendering remains unchanged. Next work is to locate the reflected vehicle queue ownership/frame stamps, retain those batches across the pair, and rebuild the reflected camera/clipping matrices without consuming them. The reflection draw copies prepared matrices over ordinary camera setup, so both concerns must be handled together. All diagnostic games exited and their wrapper restored the original proxy, camera/effects assets and graphics settings.
 
-## Next proof required
+## Retained-list implementation, 2026-09-23
 
-Follow-up: the user reports that water no longer seems to pop in, while reflections remain different between eyes. Preserve the visible surfaces while investigating.
+The new diagnostic keeps the reflection renderer's original prepared draw lists. The copied 0xf4-byte header originates on the outer renderer's stack; its linked batches remain owned by the reflection renderer. Capture and replay require the same frame, renderer, and source camera, with no pending preparation. No simulation update is invoked.
+
+A guarded detour at RVA `0x2e2975` makes an explicit camera-only preparation exit through the original epilogue at `0x2e2a5d`. It balances the preceding FPU load and preserves registers/flags. Only the invoking render thread and identified reflection renderer take this branch. Ordinary preparation still follows its original trampoline. This retains reflected-camera/frustum/clipping calculations while avoiding queue construction and worker dispatch. The original prepared inner renderer then draws the reflection immediately before its corresponding main eye. The renderer's render serial is restored after each extra pass.
+
+Evidence from isolated desktop tests:
+
+- `trace-20260923-141228-940`: identical-camera full preparation still loses two reflected vehicle draws. Renderer-state snapshots and draw stacks are saved. Restoring the render serial alone (`trace-20260923-141735-246`) does not resolve it.
+- `trace-20260923-141847-583`: queue diagnostics show different reflected-vehicle draw objects between passes. Rebuilding the full reflection twice is unsafe. The exact shared vehicle-cache mutation is not yet established.
+- `trace-20260923-142008-264`: moving both full preparations before the main pair avoids unequal draw counts, but does not establish a safe retained scene. This ordering experiment is not used.
+- `trace-20260923-142355-516`: camera-only preparation and retained lists complete **5,582 pairs** through frame 6000, with matching draw counts and restored main camera records. At frame 3000, both 200x150 RGBA16F reflection inputs are byte-identical for identical cameras. Main colour images still have small rendering differences (mean absolute channel difference 0.485/255, maximum 59); whole-image pixel identity is not claimed. An apparent doubled HUD glyph is also present in the earlier baseline and is not evidence of new queue corruption.
+- `trace-20260923-142624-694`: **5,583 pairs** pass with 0.064 game-unit eye separation and projection shifts -0.24/+0.24. Both water batches remain present; reflection input bytes differ (9,070 bytes in the captured padded buffers), and camera constants carry the selected offsets. This proves a regenerated per-eye input, not headset alignment or reflection parallax acceptance.
+
+The final thread/renderer-guarded hook repeats the asymmetric test in `trace-20260923-142929-422`: **5,584 matching pairs** through frame 6000. Native checks and 405 launcher checks pass, including default-off activation.
+
+These tests temporarily used serial rendering, reduced effects, no motion blur, the isolated Subaru cockpit and an 800x600 window. Capture/readback stalls invalidate performance conclusions. The wrappers restore the original proxy, camera/effects files and graphics XML on normal exit.
+
+### Quest 3 check and normal activation
+
+The user tested local build 0.9.3 in the saved Ensenada Sprint / Subaru Group N practice session and reported: “water puddle reflections look good now.” Trace `logs/20260923-143255-393` records a visible OpenXR session, successful camera-only hook installation and per-eye reflection draws. The game exited normally and the session manager reported original files restored. No new stopped-puddle capture was made before exit, so this is user visual acceptance plus runtime receipts, not a new image-based comparison.
+
+Following that check, normal launcher VR sessions enable `DIRT2VR_WATER_REFLECTIONS=1`; desktop launches clear inherited VR flags. No additional user setting is needed. Native standalone forwarding remains inactive without session activation. Developer desktop comparisons can opt in to the same flag; the old `--diagnostic-water` candidate switch is no longer needed. Normal play does not write capture files. Use `--diagnostic-capture` and `capture.request` only when gathering a requested pair.
+
+Original reflection visibility lists are retained. Adequate reflected-object coverage when looking far away from the original camera is not yet established. Test other tracks, water shaders, night lighting and reflected vehicles before describing the whole reflection system as verified. A separate reflection-frustum expansion may still be needed. The captures used synchronous readbacks; no VR performance claim is made from those runs.
+
+## Broader coverage still required
+
+The original report combined close-range pop-in with mismatched eye reflections. The user now reports improved pop-in and accepts the tested reflection fix. Keep surfaces visible while extending coverage.
 
 Requested stereo captures now also write `water-<frame>-eye-<1|2>-draw-<0..3>` files for up to four known water draws per eye. Text metadata identifies pixel shader, reflection slot and bound SRV dimensions/formats/resources. Binary buffers contain VS/PS slots 0â€“3. Simple single-mip, single-sample 2D reflection/depth inputs are read back with row pitch recorded; unsupported cube/array/multisample inputs are metadata only. These synchronous readbacks are diagnostic stalls, not performance measurements. The normal launch path never calls the water-input capture.
 
 Capture both eyes at a stationary puddle, with the legacy filter disabled, using the existing opt-in `--diagnostic-capture` and `capture.request` workflow described in rendering notes. Compare the full water shader family, depth/reflection SRVs, camera constants, and first/second-eye draw counts at the same simulation instant. Separate an absent surface from a present surface sampling stale reflection or depth data. Fix or regenerate the identified per-eye inputs rather than hiding water or suppressing generic depth passes.
 
-For scenery, compare the same stopped position and approach at the game's existing object/tree quality presets; record the exact disappearing asset and threshold before deciding whether the cause is LOD, object-size rejection or streaming. Any increased visibility distance needs frame-time and address-space measurements. Headset testing was deferred; no claim of a complete water/scenery fix is made.
+For scenery, compare the same stopped position and approach at the game's existing object/tree quality presets; record the exact disappearing asset and threshold before deciding whether the cause is LOD, object-size rejection or streaming. Any increased visibility distance needs frame-time and address-space measurements. The tested Ensenada reflection now has user headset acceptance; broad water/scenery coverage remains incomplete.

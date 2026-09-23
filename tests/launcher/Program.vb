@@ -252,17 +252,21 @@ Module Program
         transaction.Recover()
         Check(Not transaction.Pending, "interrupted config creation/removal recovers")
         Dim inherited = Environment.GetEnvironmentVariable("DIRT2VR_HEADSET")
+        Dim inheritedReflections = Environment.GetEnvironmentVariable("DIRT2VR_WATER_REFLECTIONS")
         Try
             Environment.SetEnvironmentVariable("DIRT2VR_HEADSET", "1")
+            Environment.SetEnvironmentVariable("DIRT2VR_WATER_REFLECTIONS", "1")
             Dim desktopMenu = Session.DesktopStartInfo(context, Nothing, Nothing)
             Check(desktopMenu.ArgumentList.Count = 0 AndAlso desktopMenu.Environment("DIRT2VR_ACTIVE") = "0" AndAlso Not desktopMenu.Environment.ContainsKey("DIRT2VR_HEADSET"), "regular menu launch disables inherited VR activation")
             Dim desktopRace = Session.DesktopStartInfo(context, "DiRT2VR/p.xml", folder)
+            Check(Not desktopMenu.Environment.ContainsKey("DIRT2VR_WATER_REFLECTIONS") AndAlso Not desktopRace.Environment.ContainsKey("DIRT2VR_WATER_REFLECTIONS"), "desktop menus and races clear inherited reflection replay")
             Check(desktopRace.Environment("DIRT2VR_LOGGING") = "1", "desktop direct start supports opt-in logs")
             Dim quietRace = Session.DesktopStartInfo(context, "DiRT2VR/p.xml", Nothing)
             Check(quietRace.Environment("DIRT2VR_LOGGING") = "0" AndAlso Not quietRace.Environment.ContainsKey("DIRT2VR_OUTPUT"), "desktop direct start honors disabled logs")
             Check(desktopRace.ArgumentList.SequenceEqual({"-demo", "DiRT2VR/p.xml"}) AndAlso desktopRace.Environment("DIRT2VR_DESKTOP_PRACTICE") = "1" AndAlso Not desktopRace.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso Not desktopRace.Environment.ContainsKey("DIRT2VR_INPUT_CHANNEL"), "desktop practice enables human control without headset or VR input")
         Finally
             Environment.SetEnvironmentVariable("DIRT2VR_HEADSET", inherited)
+            Environment.SetEnvironmentVariable("DIRT2VR_WATER_REFLECTIONS", inheritedReflections)
         End Try
         document = XmlPatches.Read(File.ReadAllBytes(graphics))
         Dim mirror = document.CreateElement("mirrors") : mirror.SetAttribute("enabled", "true")
@@ -432,6 +436,7 @@ Module Program
             Dim hudStart = Session.VrStartInfo(context, saved, "Local.TestHud", Nothing)
             Check(saved.HudDistance = 6.5D AndAlso hudStart.Environment("DIRT2VR_HUD_DISTANCE") = "6.5", "HUD distance persists and reaches native runtime with invariant decimal separator")
             Check(Not hudStart.Environment.ContainsKey("DIRT2VR_SKIP_WATER"), "VR launch keeps water visible without legacy partial shader suppression")
+            Check(hudStart.Environment("DIRT2VR_WATER_REFLECTIONS") = "1", "VR launch enables validated per-eye reflection path")
             Check(hudStart.Environment("DIRT2VR_HUD_HIDE") = "31", "VR session forwards hidden HUD components")
             saved.HudGauges = True : saved.HudPosition = True : saved.HudProgress = True
             Check(saved.HiddenHudElements = 10, "HUD elements remain independently configurable")
