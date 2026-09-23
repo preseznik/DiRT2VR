@@ -15,6 +15,10 @@ Module DirectMenuTests
         Dim transaction As New DirectMenus(context)
         For Each skip In {False, True}
             transaction.Prepare(skip)
+            If Not skip Then
+                File.Copy(targets(0), Path.Combine(folder, "direct-controls-states.bin"))
+                File.Copy(targets(1), Path.Combine(folder, "direct-controls-flow.bin"))
+            End If
             Using input = File.OpenRead(targets(0))
                 Dim doc = (New XmlFile(input)).Document
                 check(doc.SelectNodes("//ScreenPauseDecorator[@id='benchmark_pause_menu']//IBSelectableSimple").Count = 3, "direct pause has Continue, Restart and menu return")
@@ -32,6 +36,13 @@ Module DirectMenuTests
                 check(ids.Count = doc.SelectNodes("//node").Count, "direct flow has unique node identities")
                 ' The original graph already has an unresolved 2FK error link. Do not fix unrelated game data.
                 check(doc.SelectNodes("//link").Cast(Of XmlElement)().Where(Function(l) l.GetAttribute("target") <> "2FK").All(Function(l) ids.Contains(l.GetAttribute("target"))), "direct menus introduce no dangling transition targets")
+                check(doc.SelectSingleNode("//node[@id='c']/link[@id='skip_no_garage']").Attributes("target").Value = "d2vr_control_context", "direct startup enters native saved-profile loading")
+                check(doc.SelectSingleNode("//node[@id='d2vr_control_context']").Attributes("state").Value = "create_protected_data_context" AndAlso
+                      doc.SelectSingleNode("//node[@id='d2vr_control_dataset']").Attributes("state").Value = "load_profile_dataset_to_ep", "direct profile uses the existing protected-data backend")
+                check(doc.SelectSingleNode("//node[@id='d2vr_control_load']").Attributes("state").Value = "auto_load_profile", "direct startup loads the existing career's control settings")
+                check(doc.SelectNodes("//node[starts-with(@id,'d2vr_control_')]").Cast(Of XmlElement)().All(Function(n) Not n.GetAttribute("state").Contains("save") AndAlso Not n.GetAttribute("state").Contains("reset")), "direct control loading neither saves nor resets the career")
+                check(doc.SelectNodes("//node[@id='d2vr_control_load']/link").Cast(Of XmlElement)().All(Function(l) l.GetAttribute("target") = "2FG") AndAlso
+                      doc.SelectSingleNode("//node[@id='d2vr_control_enum']/link[@id='nonefound']").Attributes("target").Value = "2FG", "missing/cancelled profiles retain the original selected-event path")
                 For Each id In {"11e", "27q"}
                     Dim n = DirectCast(doc.SelectSingleNode("//node[@id='" & id & "']"), XmlElement)
                     check(n.GetAttribute("state") = "d2vr_finish_menu" AndAlso n.SelectSingleNode("link[@id='next']") Is Nothing, "direct finish waits for a choice instead of advancing career or repeating")

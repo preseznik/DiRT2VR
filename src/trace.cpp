@@ -12,6 +12,7 @@
 #include "ground_cover.h"
 #include "direct_menus.h"
 #include "gfwl_compat.h"
+#include "driving_controls.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -1183,8 +1184,10 @@ template<class F> void Hook(void* object,unsigned index,void* replacement,F& ori
 }
 void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChain* swapchain) {
     std::lock_guard lock(attachMutex);
+    if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
     wchar_t desktop[8]{};
-    if(GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1') {
+    const bool desktopControls=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_CONTROLS",desktop,8)==1 && desktop[0]==L'1';
+    if(desktopControls || (GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1')) {
         EnableDirectPractice();
         Log("desktop practice: no rendering hooks, VR hotkeys or OpenXR initialization");
         return;

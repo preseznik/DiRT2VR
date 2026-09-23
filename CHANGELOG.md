@@ -4,6 +4,10 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Direct practice and Race now load the existing profile through the game's native loader before starting the selected event, so saved driving controls can be applied. Local isolated-profile loading succeeds; PC3/Fanatec acceptance is deferred. No extra end-user career or encrypted-save editing is introduced.
+- Add Controls → Configure driving controls with optional keyboard, Xbox and DirectInput wheel/pedal assignments, separate-device support, clutch/H-pattern actions and calibration sliders. Overrides apply through the native action parser in DX11 launcher sessions, including desktop launches without OpenXR. Actual-game parsing, native input-helper interop and launcher tests pass; physical wheel and combined LAN/VR acceptance remain pending.
+- PC3's user reports no crashes so far with 0.10.2. This is encouraging follow-up evidence; longer-session coverage remains pending.
+
 - Add a candidate VR compatibility fix for Microsoft GFWL 3.5.95.0: its in-memory checksum accounts for intact, recorded mod hooks while retaining checks on other bytes and preserving the original profile APIs. No Windows DLL or career files are replaced. Native checksum/hook tests pass; PC3 crash acceptance remains pending.
 
 - Graphics: add Tree detail and Object detail sliders using the game's native quality presets. Default to the existing game settings, apply only during VR sessions, and restore original values after play. Higher detail can reduce scenery pop-in; track-specific distance limits and headset performance still need comparison.

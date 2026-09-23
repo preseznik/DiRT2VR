@@ -31,6 +31,7 @@ Module Program
         LanBrowserTests.Run(AddressOf Check)
         StartupMovieTests.Run(repo, folder, AddressOf Check)
         DirectMenuTests.Run(repo, folder, AddressOf Check)
+        DrivingControlTests.Run(repo, folder, AddressOf Check)
         For Each relative In {"dirt2_game.exe", "dirt2.exe", "cars\sti\cameras.xml", "cars\n12\cameras.xml", "postprocess\effects.xml"}
             Dim target = IO.Path.Combine(root, relative)
             Directory.CreateDirectory(IO.Path.GetDirectoryName(target))

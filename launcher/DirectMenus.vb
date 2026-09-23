@@ -39,6 +39,7 @@ Public Class DirectMenus
             Dim binary As New XmlFile(input), document = binary.Document
             If flow Then
                 Dim root = One(document, "//node[@id='S']")
+                LoadDrivingProfile(document, root)
                 ' The native hook identifies this dedicated shutdown state. The session
                 ' manager restores files before starting a fresh Normal Launch process.
                 Dim leave = Node(root, "d2vr_leave", "d2vr_return")
@@ -69,6 +70,24 @@ Public Class DirectMenus
             End Using
         End Using
     End Function
+    Private Shared Sub LoadDrivingProfile(document As XmlDocument, root As XmlElement)
+        ' Demo startup skips the press-start/profile sequence. Use the native loader
+        ' before constructing the selected event; never create or save a career here.
+        Dim entry = One(document, "//node[@id='c']/link[@id='skip_no_garage']")
+        If entry.GetAttribute("target") <> "2FG" Then Throw New IOException("Unsupported direct profile entry.")
+        entry.SetAttribute("target", "d2vr_control_context")
+        Link(Node(root, "d2vr_control_context", "create_protected_data_context"), "next", "d2vr_control_dataset")
+        Link(Node(root, "d2vr_control_dataset", "load_profile_dataset_to_ep"), "next", "d2vr_control_enum")
+        Dim enumerate = Node(root, "d2vr_control_enum", "enumerateprofiles")
+        Link(enumerate, "next", "d2vr_control_load")
+        Link(enumerate, "nonefound", "2FG")
+        ' The regular half-second enumeration popup needs the frontend screen stack.
+        ' Stay in enumeration until it completes; its overlay is unnecessary here.
+        Dim load = Node(root, "d2vr_control_load", "auto_load_profile")
+        For Each outcome In {"success", "cancelled", "skipped", "x360fail", "pcfail", "no_existing_save"}
+            Link(load, outcome, "2FG")
+        Next
+    End Sub
     Private Shared Sub BuildMenu(screen As XmlElement, paused As Boolean)
         Dim generic = DirectCast(screen.SelectSingleNode("ScreenGeneric"), XmlElement)
         Dim template = DirectCast(generic.SelectSingleNode("Item[@id='item_0']"), XmlElement)

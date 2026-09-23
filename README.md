@@ -120,7 +120,15 @@ Controller shortcuts start unassigned. Choose **Bind…** in the desired action'
 
 **Assigned controller buttons still perform their normal game actions.** Choose buttons or combinations that avoid unwanted driving/menu actions. Shortcuts fire once per press and require release before firing again. Keep the game window focused.
 
-Assignments stay attached to the selected device. A disconnected device is not replaced automatically; Xbox controller slot changes may require rebinding. For standard HID wheels, press and release a button so the launcher can detect the device. Wheel shortcut support is implemented but not yet hardware-verified; normal game driving controls remain managed by DiRT 2.
+Assignments stay attached to the selected device. A disconnected device is not replaced automatically; Xbox controller slot changes may require rebinding. For standard HID wheels, press and release a button so the launcher can detect the device. Wheel shortcut support still needs hardware validation.
+
+**Driving controls:** Direct practice and Race now load the existing saved profile before the event, including its control settings. Save your profile after configuring controls in the game. No additional career save is created. If no profile can be loaded, the event uses the game's defaults. Fanatec pedal validation is pending.
+
+For optional launcher assignments, open **Controls → Configure driving controls…** and enable **Use launcher driving bindings**. Select an action, then **Bind keyboard…** or **Bind device…**. For a wheel or pedal, select its device, center/release it, click **Capture input**, then move it in the intended direction. Steering, pedals and shifters may use separate devices. **Calibration…** adjusts direction, dead zone and saturation. Choose **Save driving controls**, then launch again.
+
+The editor includes steering, accelerator, brake, clutch, handbrake, sequential shifts and H-pattern gears. Select the appropriate transmission/assist settings in the game as well. It applies to Normal Launch, Practice, Race and HOST/JOIN, in desktop and VR modes, using the DX11 renderer. Unassigned actions retain game settings; assigning an action replaces that action's saved inputs, so assign both keyboard and controller inputs if wanted. **Use game binding** removes that action's launcher override. Disabling overrides does not undo bindings subsequently saved by the game.
+
+Driving capture uses XInput for Xbox controllers and non-exclusive DirectInput for wheels/pedals. Wheel models and the combined LAN/VR binding path still need hardware acceptance. The game identifies DirectInput devices by product name; two identical models cannot be distinguished reliably. POV/hat capture and force-feedback tuning are not included. Technical validation is recorded in [Driving controls](docs/driving-controls.md).
 
 ## Recovery, upgrades and removal
 

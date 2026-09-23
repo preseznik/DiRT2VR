@@ -495,6 +495,18 @@ Public Class MainForm
         content.Controls.Add(Note("Click a keyboard binding to assign a key with optional Ctrl/Alt/Shift. Use Bind… for one controller button or a two-button combination, then release. Escape cancels. Multiple devices can be assigned to an action."))
         content.Controls.Add(Note("Controller buttons still perform their normal game actions. Avoid driving/menu conflicts. Disconnected assignments are kept; Xbox slot changes may require rebinding."))
         content.Controls.Add(Note("Save settings to keep changes. Bindings apply on the next launch."))
+        content.Controls.Add(New Label With {.Text = "Driving controls", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
+        content.Controls.Add(Note("Direct practice and Race load your existing profile's controls before the event. Use the optional editor below to assign steering, pedals, clutch, handbrake and gears across launcher modes."))
+        Dim driving As New Button With {.Text = "Configure driving controls…", .AutoSize = True, .Name = "DrivingControls"}
+        AddHandler driving.Click, Sub()
+                                     If busy Then Return
+                                     SafeAction(Sub()
+                                                    Using dialog As New DrivingControlsForm(context)
+                                                        dialog.ShowDialog(Me)
+                                                    End Using
+                                                End Sub)
+                                 End Sub
+        content.Controls.Add(driving)
     End Sub
     Private Sub SafeAction(action As Action)
         Try

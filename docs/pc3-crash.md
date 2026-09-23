@@ -1,5 +1,7 @@
 # PC3 VR crash investigation
 
+Follow-up after release 0.10.2: the user reports that it seems to work, with no crashes so far. The test duration was not specified; do not convert this into a guarantee of long-session stability. Subsequent optional launcher driving hooks also register their code changes with the same GFWL compatibility layer.
+
 The supplied `C:\Temp\delete` logs from 2026-09-23 end abruptly at frame 4440. They identify the supported game hash, SteamVR/OpenXR 2.17.10, PSVR2 at 90 Hz, and 1700×1734 submitted eye textures. The last recorded stereo pair is complete; eye draw and projection counts match. There is no exception code, crash stack, GPU removal result or orderly XR shutdown in these files.
 
 The final address-space sample has 762,703,872 free bytes, including a 235,536,384-byte contiguous free region. Private memory is about 728 MiB. This does not establish out-of-memory as the cause, though the game retains its 2 GiB address-space limit. Do not apply a Large Address Aware patch based on these logs.
