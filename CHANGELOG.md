@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Add a candidate VR compatibility fix for Microsoft GFWL 3.5.95.0: its in-memory checksum accounts for intact, recorded mod hooks while retaining checks on other bytes and preserving the original profile APIs. No Windows DLL or career files are replaced. Native checksum/hook tests pass; PC3 crash acceptance remains pending.
+
 - Graphics: add Tree detail and Object detail sliders using the game's native quality presets. Default to the existing game settings, apply only during VR sessions, and restore original values after play. Higher detail can reduce scenery pop-in; track-specific distance limits and headset performance still need comparison.
 - Direct practice and Race: stop at a finish menu instead of automatically repeating. Add Restart and Return to menus to the pause menu too. Return to menus closes the direct session, restores temporary files and relaunches Normal Launch in the same Desktop/VR mode; Alt+F4 and ordinary quits do not relaunch. The desktop return path has been tested; headset validation is pending. Custom sessions remain separate from career rewards/results.
 

@@ -201,3 +201,5 @@ Older test-kit profiles and imported copies are no longer used. They are left on
 See the [changelog](CHANGELOG.md). Build instructions and diagnostic details are in the [development guide](docs/development.md) and [launcher implementation notes](docs/launcher.md).
 
 Third-party license notices are included in `DiRT2VR/licenses` in packaged builds. This product includes software developed by Jon Skeet and Marc Gravell. Contact skeet@pobox.com, or see https://jonskeet.uk).
+
+Microsoft GFWL 3.5.95.0: this build includes a candidate fix for crashes during VR sessions. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3 gameplay confirmation is still pending; see [investigation status](docs/pc3-crash.md).

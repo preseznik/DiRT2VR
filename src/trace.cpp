@@ -11,6 +11,7 @@
 #include "light_replay.h"
 #include "ground_cover.h"
 #include "direct_menus.h"
+#include "gfwl_compat.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -66,7 +67,7 @@ bool EnableDirectLaps(unsigned char* base,unsigned laps) {
     directLaps=laps;
     directLapCaller=base+0x344cd5;
     status=MH_CreateHook(base+0x36a3d0,reinterpret_cast<void*>(LapDescriptorCopy),reinterpret_cast<void**>(&realLapDescriptorCopy));
-    if(status==MH_OK) status=MH_EnableHook(base+0x36a3d0);
+    if(status==MH_OK) status=EnableRecordedHook(base+0x36a3d0);
     Log("direct start: demo lap override=%u hook=%s",laps,MH_StatusToString(status));
     return status==MH_OK;
 }
@@ -84,6 +85,7 @@ void EnableDirectPractice() {
        memcmp(base+0x72a580,update,sizeof(update))==0 &&
        VirtualProtect(base+0x72a5a1,1,PAGE_EXECUTE_READWRITE,&previous)) {
         base[0x72a5a1]=0xeb;
+        RecordCodeByte(base+0x72a5a1,0x74,0xeb);
         DWORD ignored{};
         const bool protectedAgain=VirtualProtect(base+0x72a5a1,1,previous,&ignored)!=0;
         const bool flushed=FlushInstructionCache(GetCurrentProcess(),base+0x72a5a1,1)!=0;
@@ -1174,7 +1176,7 @@ template<class F> void Hook(void* object,unsigned index,void* replacement,F& ori
     auto target=(*static_cast<void***>(object))[index];
     if(targets.contains(target)) return;
     auto status=MH_CreateHook(target,replacement,reinterpret_cast<void**>(&original));
-    if(status==MH_OK) status=MH_EnableHook(target);
+    if(status==MH_OK) status=EnableRecordedHook(target);
     Log("hook slot=%u status=%s",index,MH_StatusToString(status));
     if(status==MH_OK) targets.insert(target);
 }
@@ -1187,8 +1189,9 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         Log("desktop practice: no rendering hooks, VR hotkeys or OpenXR initialization");
         return;
     }
-    static bool initialized=MH_Initialize()==MH_OK;
+    static bool initialized=[] { auto status=MH_Initialize(); return status==MH_OK||status==MH_ERROR_ALREADY_INITIALIZED; }();
     if(!initialized) { Log("MinHook initialization failed"); return; }
+    if(HeadsetEnabled() && !EnableGfwlCompatibility()) { Log("GFWL compatibility: initialization failed; stopping VR launch"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
     EnableDirectPractice();
     Log("DX11 device=%p feature_level=0x%x context=%p swapchain=%p",device,device->GetFeatureLevel(),context,swapchain);
     Hook(device,12,reinterpret_cast<void*>(CreateVS),realVS);
@@ -1217,14 +1220,14 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         const unsigned char prologue[]={0x81,0xec,0xf8,0,0,0,0x56,0x8b,0xf1};
         if(!realScene && memcmp(entry,prologue,sizeof(prologue))==0) {
             auto status=MH_CreateHook(entry,reinterpret_cast<void*>(Scene),reinterpret_cast<void**>(&realScene));
-            if(status==MH_OK) status=MH_EnableHook(entry);
+            if(status==MH_OK) status=EnableRecordedHook(entry);
             Log("scene trace RVA=0x33ad10 status=%s",MH_StatusToString(status));
         }
         auto inner=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr))+0x336be0;
         const unsigned char innerPrologue[]={0x53,0x55,0x8b,0x6c,0x24,0x14,0x56,0x57,0x8b,0x7c,0x24,0x20};
         if(!realInner && (InnerReplayEnabled() || HudProbe()) && memcmp(inner,innerPrologue,sizeof(innerPrologue))==0) {
             auto status=MH_CreateHook(inner,reinterpret_cast<void*>(Inner),reinterpret_cast<void**>(&realInner));
-            if(status==MH_OK) status=MH_EnableHook(inner);
+            if(status==MH_OK) status=EnableRecordedHook(inner);
             Log("inner scene trace RVA=0x336be0 status=%s",MH_StatusToString(status));
         }
         if(ContinuousReplayEnabled()) {
@@ -1234,7 +1237,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                     0x8a,0x8e,0x96,0,0,0,0x88,0x96,0x96,0,0,0};
                 if(memcmp(base+0x16ec90,pause,sizeof(pause))==0) {
                     auto status=MH_CreateHook(base+0x16ec90,reinterpret_cast<void*>(PauseWorld),reinterpret_cast<void**>(&realPauseWorld));
-                    if(status==MH_OK) status=MH_EnableHook(base+0x16ec90);
+                    if(status==MH_OK) status=EnableRecordedHook(base+0x16ec90);
                     pauseHookReady=status==MH_OK;
                     Log("pause world hook RVA=0x16ec90 status=%s",MH_StatusToString(status));
                 } else Log("pause world hook rejected instruction guard; using virtual screen");
@@ -1245,7 +1248,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                 if(memcmp(base+0x2b7db0,copy,sizeof(copy))==0 && memcmp(base+0xd26c40,build,sizeof(build))==0) {
                     buildFrustum=reinterpret_cast<FrustumCopyFn>(base+0xd26c40);
                     auto status=MH_CreateHook(base+0x2b7db0,reinterpret_cast<void*>(FrustumCopy),reinterpret_cast<void**>(&realFrustumCopy));
-                    if(status==MH_OK) status=MH_EnableHook(base+0x2b7db0);
+                    if(status==MH_OK) status=EnableRecordedHook(base+0x2b7db0);
                     Log("visibility frustum hook status=%s",MH_StatusToString(status));
                 } else Log("visibility frustum hook rejected instruction guard");
             }
@@ -1257,7 +1260,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                     if(*original) return true;
                     if(memcmp(base+rva,signature,size)!=0) return false;
                     auto status=MH_CreateHook(base+rva,replacement,original);
-                    if(status==MH_OK) status=MH_EnableHook(base+rva);
+                    if(status==MH_OK) status=EnableRecordedHook(base+rva);
                     Log("lighting parameter hook RVA=0x%x status=%s",rva,MH_StatusToString(status));
                     if(status!=MH_OK) *original=nullptr;
                     return status==MH_OK;
@@ -1274,7 +1277,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                 if(!memcmp(base+0x2e2975,tail,sizeof(tail)) && !memcmp(base+0x2e2a5d,exit,sizeof(exit))) {
                     waterPrepareExit=base+0x2e2a5d;
                     auto status=MH_CreateHook(base+0x2e2975,reinterpret_cast<void*>(WaterPrepareTail),&waterPrepareTail);
-                    if(status==MH_OK) status=MH_EnableHook(base+0x2e2975);
+                    if(status==MH_OK) status=EnableRecordedHook(base+0x2e2975);
                     Log("water camera-only hook status=%s",MH_StatusToString(status));
                     if(status!=MH_OK) waterPrepareTail=nullptr;
                 }
@@ -1283,13 +1286,13 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
             const unsigned char uploadPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x54};
             if(!realCameraSetup && memcmp(base+0x330b70,setupPrologue,sizeof(setupPrologue))==0) {
                 auto status=MH_CreateHook(base+0x330b70,reinterpret_cast<void*>(CameraSetup),reinterpret_cast<void**>(&realCameraSetup));
-                if(status==MH_OK) status=MH_EnableHook(base+0x330b70);
+                if(status==MH_OK) status=EnableRecordedHook(base+0x330b70);
                 Log("camera setup hook status=%s",MH_StatusToString(status));
                 cameraSetupHookReady=status==MH_OK;
             }
             if(!realCameraUpload && memcmp(base+0xba12d0,uploadPrologue,sizeof(uploadPrologue))==0) {
                 auto status=MH_CreateHook(base+0xba12d0,reinterpret_cast<void*>(CameraUpload),reinterpret_cast<void**>(&realCameraUpload));
-                if(status==MH_OK) status=MH_EnableHook(base+0xba12d0);
+                if(status==MH_OK) status=EnableRecordedHook(base+0xba12d0);
                 Log("camera upload hook status=%s",MH_StatusToString(status));
                 cameraHooksReady=status==MH_OK && cameraSetupHookReady;
             }
