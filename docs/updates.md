@@ -12,11 +12,11 @@ The Help / About panel reads the assembly informational version. Packaged builds
 
 ## Publish
 
-1. Update the project version (and the installer fallback), changelog and end-user instructions. Commit the source so the embedded revision identifies it.
+1. Determine the next distribution version with `tools/next-version.ps1` (patch by default; minor for a new feature); `tools/package.ps1` reserves that number when it runs. Before packaging, move the changes being shipped from **Unreleased** into a `## <version> — YYYY-MM-DD` changelog section and add its GitHub Release link. Keep unrelated unpublished work under **Unreleased**. Use the publication date, and label internal experiments as development notes rather than published releases. Update end-user instructions and commit the source so the embedded revision identifies it.
 2. Run `tools/package.ps1` using the installed .NET, Visual Studio and Inno Setup tooling. Use `-SkipNativeBuild` only when the existing native distribution matches this source revision's native code.
 3. Test the resulting installer/ZIP in an isolated supported game installation. Keep game files and generated assets out of the package.
 4. Create a GitHub Release in `preseznik/DiRT2VR`, tagged `v<version>` at the tested source commit, without the prerelease flag. Upload the exact `DiRT2VR-<version>-Setup.exe`, `DiRT2VR-<version>.zip` and `SHA256SUMS.txt` from the same package output directory. Publish release notes stating remaining acceptance limitations.
-5. Check the public Releases API: the installer asset must be fully uploaded and have a `sha256:` digest. Check that the README's [Latest release](https://github.com/preseznik/DiRT2VR/releases/latest) link opens the newly published release with both packaged downloads under Assets. Confirm the launcher detects it from an older version and test the complete setup handoff before advertising automatic updates as release-tested.
+5. Confirm the changelog has a dated heading matching the published tag and no shipped changes still classified as **Unreleased**. Check the public Releases API: the installer asset must be fully uploaded and have a `sha256:` digest. Check that the README's [Latest release](https://github.com/preseznik/DiRT2VR/releases/latest) link opens the newly published release with both packaged downloads under Assets. Confirm the launcher detects it from an older version and test the complete setup handoff before advertising automatic updates as release-tested.
 
 Do not commit distributable binaries to the source tree. The updater does not build source or execute files from a branch. It requires Release assets. The package script creates files locally; it does not tag, push or publish a release.
 
