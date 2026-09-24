@@ -6,4 +6,8 @@ call "%DIRT2VR_VS_ROOT%\VC\Auxiliary\Build\vcvars64.bat"
 if errorlevel 1 exit /b 1
 if not exist build\driving-input mkdir build\driving-input
 cl /nologo /std:c++20 /EHsc /W4 /O2 /MT /LD /DUNICODE /D_UNICODE /DNOMINMAX tools\driving-input\input.cpp /Fobuild\driving-input\input.obj /Febuild\driving-input\driving_input.dll /link dinput8.lib dxguid.lib xinput.lib ole32.lib user32.lib
+if errorlevel 1 exit /b 1
+cl /nologo /std:c++20 /EHsc /W4 /O2 /MT /DUNICODE /D_UNICODE /DNOMINMAX tools\driving-input\axes_test.cpp /Fobuild\driving-input\axes_test.obj /Febuild\driving-input\axes_test.exe /link dxguid.lib
+if errorlevel 1 exit /b 1
+build\driving-input\axes_test.exe
 exit /b %errorlevel%

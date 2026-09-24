@@ -148,7 +148,7 @@ Module DrivingControlTests
         capture = New DrivingCapture(xbox, "Steer Right")
         rest = State() : rest.Values(0) = 0.8F
         capture.Update(rest, 0) : capture.Update(rest, 800)
-        check(Not capture.Ready, "held Xbox stick does not become neutral")
+        check(capture.Detected Is Nothing, "held Xbox stick does not become neutral or capture itself")
         rest.Values(0) = 0 : capture.Update(rest, 840) : capture.Update(rest, 1480)
         check(capture.Ready, "Xbox stick arms only after stable center")
         moved = State() : moved.Values(0) = 0.9F
@@ -178,5 +178,24 @@ Module DrivingControlTests
         moved.Buttons(2) = 1 : capture.Update(moved, 680)
         moved.Buttons(2) = 0 : capture.Update(moved, 720) : capture.Update(moved, 880)
         check(capture.Completed IsNot Nothing, "ordinary short button press completes without requiring a long hold")
+        rest = State() : moved = State() : rest.Values(2) = -0.9F : moved.Values(2) = -0.3F
+        check(DrivingInput.Detect("Accelerate", wheel, rest, moved) Is Nothing, "partial pedal movement below 45 percent travel is ignored")
+        moved.Values(2) = 0.5F
+        check(DrivingInput.Detect("Accelerate", wheel, rest, moved)?.Input = "win_con_di_axisZ", "deliberate larger pedal movement binds")
+        rest = State() : moved = State() : moved.Values(0) = -0.2F
+        check(DrivingInput.Detect("Steer Left", wheel, rest, moved)?.Calibration = "biDirectionalLower", "wheel steering needs only modest centered rotation")
+        Dim displaced = State() : displaced.Values(0) = -0.25F
+        check(DrivingInput.Detect("Steer Left", wheel, displaced, rest) Is Nothing, "returning a wheel to center cannot bind the opposite direction")
+        rest.Values(2) = -1 : moved.Values(2) = 0.8F
+        check(DrivingInput.Detect("Steer Left", wheel, rest, moved)?.Input = "win_con_di_axisX", "endpoint-resting pedal cannot steal a steering assignment")
+        capture = New DrivingCapture(wheel, "Steer Left")
+        capture.Update(rest, 0)
+        Dim noisy = State() : noisy.Values(2) = -0.75F
+        capture.Update(noisy, 300) : capture.Update(rest, 600) : capture.Update(noisy, 640)
+        noisy.Values(0) = -0.2F
+        capture.Update(noisy, 680) : capture.Update(noisy, 800)
+        check(capture.WaitingForRelease AndAlso capture.Detected.Input = "win_con_di_axisX", "pedal rest noise cannot keep a stable steering axis unarmed")
+        noisy.Values(0) = 0 : capture.Update(noisy, 840) : capture.Update(noisy, 1000)
+        check(capture.Completed IsNot Nothing, "wheel completes independently of noisy pedal")
     End Sub
 End Module

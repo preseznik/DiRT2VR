@@ -8,6 +8,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include "axes.h"
 
 struct Sample {
     unsigned connected{}, axes{};
@@ -19,6 +20,7 @@ struct Device {
     IDirectInputDevice8W* input{};
     std::wstring id, name;
     unsigned axes{};
+    AxisLayout layout;
     int xbox{-1};
     ~Device() { if(input) { input->Unacquire(); input->Release(); } }
 };
@@ -28,15 +30,6 @@ struct Capture {
     std::vector<std::unique_ptr<Device>> devices;
     ~Capture() { devices.clear(); if(input) input->Release(); }
 };
-BOOL CALLBACK Axis(const DIDEVICEOBJECTINSTANCEW* object, void* user) {
-    auto& device=*static_cast<Device*>(user);
-    if((object->dwType & DIDFT_AXIS)==0 || object->dwOfs>DIJOFS_SLIDER(1)) return DIENUM_CONTINUE;
-    DIPROPRANGE range{};
-    range.diph={sizeof(range),sizeof(range.diph),object->dwType,DIPH_BYID};
-    range.lMin=0; range.lMax=65535;
-    if(SUCCEEDED(device.input->SetProperty(DIPROP_RANGE,&range.diph))) device.axes|=1u<<(object->dwOfs/4);
-    return DIENUM_CONTINUE;
-}
 BOOL CALLBACK Enumerate(const DIDEVICEINSTANCEW* info, void* user) {
     auto& capture=*static_cast<Capture*>(user);
     auto device=std::make_unique<Device>();
@@ -50,7 +43,7 @@ BOOL CALLBACK Enumerate(const DIDEVICEINSTANCEW* info, void* user) {
     wchar_t guid[40]{};
     StringFromGUID2(info->guidInstance,guid,40);
     device->id=guid; device->name=info->tszProductName;
-    device->input->EnumObjects(Axis,device.get(),DIDFT_AXIS);
+    device->layout=ReadAxes(device->input); device->axes=device->layout.mask;
     device->input->Acquire();
     capture.devices.push_back(std::move(device));
     return DIENUM_CONTINUE;
@@ -103,7 +96,7 @@ extern "C" __declspec(dllexport) int __cdecl CaptureRead(void* capture,unsigned 
         DIJOYSTATE2 state{};
         if(FAILED(device.input->GetDeviceState(sizeof(state),&state))) return 0;
         const LONG axes[]={state.lX,state.lY,state.lZ,state.lRx,state.lRy,state.lRz,state.rglSlider[0],state.rglSlider[1]};
-        for(unsigned i=0;i<8;++i) result->values[i]=std::clamp(axes[i]/32767.5f-1.f,-1.f,1.f);
+        for(unsigned i=0;i<8;++i) if(device.axes&(1u<<i)) result->values[i]=NormalizeAxis(axes[i],device.layout.ranges[i]);
         for(unsigned i=0;i<128;++i) result->buttons[i]=(state.rgbButtons[i]&0x80)?1:0;
         std::copy(std::begin(state.rgdwPOV),std::end(state.rgdwPOV),result->pov);
     }

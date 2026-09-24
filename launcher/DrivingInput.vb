@@ -85,14 +85,25 @@ Public Class DrivingInput
     End Function
     Private Shared Function DetectAxis(action As String, device As Device, baseline As Sample, current As Sample) As DrivingBinding
         Dim binding As New DrivingBinding With {.Action = action, .DeviceId = device.Id, .Device = device.Name}
-        Dim best = -1, movement As Single = 0.4F
+        Dim best = -1, movement As Single = 0
+        Dim steering = action.StartsWith("Steer ", StringComparison.Ordinal)
         For i = 0 To 7
             If (current.Axes And baseline.Axes And (1UI << i)) = 0 Then Continue For
             Dim delta = Math.Abs(current.Values(i) - baseline.Values(i))
-            If delta > movement Then best = i : movement = delta
+            Dim centeredAxis = Math.Abs(baseline.Values(i)) < 0.35F
+            If steering AndAlso (Not centeredAxis OrElse (device.Name = "win_xinput" AndAlso i >= 4)) Then Continue For
+            ' Wheel rotation needs less travel than a pedal. End-resting DI pedals
+            ' span two normalized units; require almost half their full travel.
+            Dim threshold = If(steering AndAlso device.Name <> "win_xinput", 0.15F,
+                               If(centeredAxis OrElse device.Name = "win_xinput", 0.55F, 0.9F))
+            If delta >= threshold AndAlso delta > movement Then best = i : movement = delta
         Next
         If best < 0 Then Return Nothing
         Dim negative = current.Values(best) < baseline.Values(best)
+        If steering Then
+            If Math.Abs(current.Values(best)) < 0.15F Then Return Nothing
+            negative = current.Values(best) < 0
+        End If
         Dim centered = action.StartsWith("Steer ", StringComparison.Ordinal) OrElse Math.Abs(baseline.Values(best)) < 0.35F
         If device.Name = "win_xinput" Then
             Dim names = {"analogLeftStickX", "analogLeftStickY", "analogRightStickX", "analogRightStickY", "buttonLeftTrigger", "buttonRightTrigger"}

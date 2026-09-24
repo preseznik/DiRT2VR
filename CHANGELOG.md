@@ -4,6 +4,8 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Fix driving capture for wheel drivers with nonstandard native offsets or read-only axis ranges. Learn each axis independently so pedal noise cannot block steering. Use modest steering rotation, but require a larger pedal press (45% of full endpoint-resting DirectInput travel) and ignore smaller movement. Game driving sensitivity is unchanged; physical Fanatec validation remains pending.
+
 - Simplify the driving-binding wizard with a large bold action title, action pictograms, a separate step counter and short capture prompts. Binding behavior is unchanged.
 
 - Replace driving-input capture with a guided binding wizard: learn a stable resting position, capture deliberate travel or a button press, and require release before advancing. Walk through all actions, skip/back/review without saving partial changes, detect separate devices automatically, and offer axis/button filters. Constant high handbrake axes and held switches no longer appear as newly engaged controls. Physical Fanatec validation remains pending.

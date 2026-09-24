@@ -20,6 +20,12 @@ The XML constructor/parser (`0xaf3740` / `0xb01a80`), attributes (`0xaf39e0`), i
 
 ## Capture and validation
 
+### Wheel axis and pedal-threshold correction
+
+The original native reader incorrectly used `EnumObjects.dwOfs` as a `DIJOYSTATE2` slot and omitted axes when `SetProperty(DIPROP_RANGE)` failed. The helper now queries each selected-format axis with `GetObjectInfo(DIPH_BYOFFSET)` and reads its actual range, retaining read-only ranges. Normalization uses those limits. A native fake-driver regression covers nonstandard raw offsets, signed read-only ranges, absent axes and failed property queries. See Microsoft's [object layout documentation](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee416612(v=vs.85)) and [range-setting documentation](https://learn.microsoft.com/en-us/previous-versions/windows/desktop/ee417929(v=vs.85)).
+
+Rest learning is per axis, so noise on a pedal does not keep stable steering unarmed. DirectInput steering captures at 15% of center-to-lock travel; endpoint-resting pedals need 45% of full travel from their learned rest (center-resting inputs and Xbox controls use 55% of one-sided travel). These thresholds affect assignment only, not driving sensitivity. Endpoint-resting pedals are excluded during steering capture. Wheel return to center cannot select the opposite direction. Regression coverage includes noisy/partly depressed pedals, modest steering rotation, independent release, and unchanged Xbox mappings; real Fanatec acceptance remains pending.
+
 ### Revised capture after 0.11.0 feedback
 
 The reported saved configuration contained `biDirectionalUpper` for both steering directions and `uniDirectionalNegative` for the Xbox accelerator. Sampling a displaced baseline and then its return could create these assignments. `DrivingCapture` now learns a stable rest for 600 ms, accepts deliberate axis movement held for 100 ms (buttons use a press edge), then requires 160 ms at rest before completion. Returning to an unknown DirectInput axis's measured baseline is the release condition; an endpoint resting at +1 is not inherently engaged. Existing held buttons are ignored until released and pressed again. Disconnection and focus loss discard incomplete captures. An unrelated held switch cannot prevent completion.
