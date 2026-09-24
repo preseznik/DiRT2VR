@@ -5,7 +5,10 @@ Public Class DrivingCapture
     Private ReadOnly action As String
     Private baseline As DrivingInput.Sample
     Private initialized As Boolean
-    Private stableSince As Long
+    Private ReadOnly axisSince(7) As Long
+    Private buttonsSince As Long
+    Private buttonsReady As Boolean
+    Private presentAxes As UInteger
     Private candidateSince As Long
     Private releasedSince As Long = -1
     Private candidate As DrivingBinding
@@ -35,31 +38,37 @@ Public Class DrivingCapture
     Public Sub Reset()
         initialized = False : Ready = False : WaitingForRelease = False : Completed = Nothing
         candidate = Nothing : releasedSince = -1 : Travel = 0 : activeAxis = -1 : activeButton = -1 : peak = 0
+        buttonsReady = False
     End Sub
     Public Sub Update(current As DrivingInput.Sample, now As Long)
         If current.Connected = 0 Then Reset() : Return
         If Completed IsNot Nothing Then Return
         If Not initialized Then
-            baseline = Clone(current) : stableSince = now : initialized = True : Return
+            baseline = Clone(current) : presentAxes = current.Axes : baseline.Axes = 0
+            Array.Fill(axisSince, now) : buttonsSince = now : initialized = True : Return
         End If
-        If Not Ready Then
-            Dim changed = current.Axes <> baseline.Axes OrElse (Not AxesOnly AndAlso Not current.Buttons.SequenceEqual(baseline.Buttons))
-            If Not ButtonsOnly Then
-                For i = 0 To 7
-                    If (current.Axes And (1UI << i)) <> 0 AndAlso Math.Abs(current.Values(i) - baseline.Values(i)) > 0.06F Then changed = True
-                    If device.Name = "win_xinput" AndAlso i < 6 AndAlso Math.Abs(current.Values(i)) > If(i < 4, 0.25F, 0.15F) Then changed = True
-                Next
-            End If
-            If changed Then baseline = Clone(current) : stableSince = now
-            Ready = now - stableSince >= 600
-            Return
+        If presentAxes <> current.Axes Then Reset() : Return
+        ' Learn each axis independently: pedal noise must not prevent wheel capture.
+        For i = 0 To 7
+            Dim bit = 1UI << i
+            If ButtonsOnly OrElse (presentAxes And bit) = 0 OrElse (baseline.Axes And bit) <> 0 Then Continue For
+            Dim shifted = Math.Abs(current.Values(i) - baseline.Values(i)) > 0.06F
+            If device.Name = "win_xinput" AndAlso i < 6 AndAlso Math.Abs(current.Values(i)) > If(i < 4, 0.25F, 0.15F) Then shifted = True
+            If shifted Then baseline.Values(i) = current.Values(i) : axisSince(i) = now
+            If now - axisSince(i) >= 600 Then baseline.Axes = baseline.Axes Or bit
+        Next
+        If Not buttonsReady AndAlso Not AxesOnly Then
+            If Not current.Buttons.SequenceEqual(baseline.Buttons) Then baseline.Buttons = CType(current.Buttons.Clone(), Byte()) : buttonsSince = now
+            buttonsReady = now - buttonsSince >= 600
         End If
+        Ready = (Not ButtonsOnly AndAlso baseline.Axes <> 0) OrElse buttonsReady
+        If Not Ready Then Return
         ' A button already held at rest is ignored until it has been released.
         For i = 0 To baseline.Buttons.Length - 1
             If current.Buttons(i) = 0 Then baseline.Buttons(i) = 0
         Next
         If Not WaitingForRelease Then
-            Dim detected = DrivingInput.Detect(action, device, baseline, current, AxesOnly, ButtonsOnly)
+            Dim detected = DrivingInput.Detect(action, device, baseline, current, AxesOnly OrElse Not buttonsReady, ButtonsOnly)
             If detected Is Nothing Then candidate = Nothing : Return
             If candidate Is Nothing OrElse candidate.Input <> detected.Input OrElse candidate.Calibration <> detected.Calibration Then
                 candidate = detected : candidateSince = now
