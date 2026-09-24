@@ -2,80 +2,123 @@
 
 Notable changes to DiRT2VR are recorded here, newest first. Versioned releases remain experimental; older dated entries are development milestones. Headset checks refer to Quest 3 through SteamVR unless stated otherwise.
 
+Version headings below identify published GitHub packages. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
+
 ## Unreleased
+
+- Correct release history: assign shipped changes to their published versions and dates; retain only unpublished work here.
+
+## 0.12.5 — 2026-09-24
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.12.5)
 
 - Use the working DirectInput wheel reader for Toggle VR and Recenter capture and background session input. Preserve existing Xbox/HID assignments, ignore held switches during capture, and require fresh presses after connection or reconnection. Physical Fanatec shortcut acceptance remains pending.
 - VR launches request the real cockpit camera when the game restores its starting view, and start with cockpit VR enabled. Menus and pause screens retain their flat-screen handling; desktop launches retain their saved camera. Headset startup acceptance remains pending.
 
+## 0.12.3 — 2026-09-24
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.12.3)
+
 - Fix driving capture for wheel drivers with nonstandard native offsets or read-only axis ranges. Learn each axis independently so pedal noise cannot block steering. Use modest steering rotation, but require a larger pedal press (45% of full endpoint-resting DirectInput travel) and ignore smaller movement. Game driving sensitivity is unchanged; physical Fanatec validation remains pending.
 
-- Simplify the driving-binding wizard with a large bold action title, action pictograms, a separate step counter and short capture prompts. Binding behavior is unchanged.
+## 0.12.2 — 2026-09-23
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.12.2)
+
+- Simplify the driving-binding wizard with a large bold action title, action pictograms, a separate step counter and short capture prompts. Binding behavior is unchanged.
 - Replace driving-input capture with a guided binding wizard: learn a stable resting position, capture deliberate travel or a button press, and require release before advancing. Walk through all actions, skip/back/review without saving partial changes, detect separate devices automatically, and offer axis/button filters. Constant high handbrake axes and held switches no longer appear as newly engaged controls. Physical Fanatec validation remains pending.
 - Add a stock Xbox driving preset and reject identical left/right steering directions or inverted Xbox triggers when enabling overrides. Prevent capturing Xbox stick/trigger return motion as the intended direction; use the game's standard 20% Xbox stick dead zone. Regression tests cover the reported configuration and resting/inverted inputs.
-
 - Direct practice and Race now load the existing profile through the game's native loader before starting the selected event, so saved driving controls can be applied. Local isolated-profile loading succeeds; PC3/Fanatec acceptance is deferred. No extra end-user career or encrypted-save editing is introduced.
 - Add Controls → Configure driving controls with optional keyboard, Xbox and DirectInput wheel/pedal assignments, separate-device support, clutch/H-pattern actions and calibration sliders. Overrides apply through the native action parser in DX11 launcher sessions, including desktop launches without OpenXR. Actual-game parsing, native input-helper interop and launcher tests pass; physical wheel and combined LAN/VR acceptance remain pending.
 - PC3's user reports no crashes so far with 0.10.2. This is encouraging follow-up evidence; longer-session coverage remains pending.
 
+## 0.10.2 — 2026-09-23
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.10.2)
+
 - Add a candidate VR compatibility fix for Microsoft GFWL 3.5.95.0: its in-memory checksum accounts for intact, recorded mod hooks while retaining checks on other bytes and preserving the original profile APIs. No Windows DLL or career files are replaced. Native checksum/hook tests pass; PC3 crash acceptance remains pending.
+
+### Earlier development and validation notes
+
+- Add opt-in PC3 crash evidence tools and document repeated faults in the system GFWL DLL. Full-dump capture is temporary, limited to the game, and separate from normal diagnostic logging. The underlying VR crash and direct-event wheel-binding issue remain under investigation; no fix is claimed.
+
+## 0.10.0 — 2026-09-23
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.10.0)
 
 - Graphics: add Tree detail and Object detail sliders using the game's native quality presets. Default to the existing game settings, apply only during VR sessions, and restore original values after play. Higher detail can reduce scenery pop-in; track-specific distance limits and headset performance still need comparison.
 - Direct practice and Race: stop at a finish menu instead of automatically repeating. Add Restart and Return to menus to the pause menu too. Return to menus closes the direct session, restores temporary files and relaunches Normal Launch in the same Desktop/VR mode; Alt+F4 and ordinary quits do not relaunch. The desktop return path has been tested; headset validation is pending. Custom sessions remain separate from career rewards/results.
-
 - Fixed the tested Ensenada Sprint puddle reflection mismatch by rendering the reflected camera separately for each VR eye while retaining the original reflection draw lists. Water remains visible. Identical-camera/asymmetric desktop benchmarks pass, and the user confirms the reflections look good in Quest 3. Enabled for normal VR launches; desktop rendering is unchanged. Broader tracks, reflection visibility when looking behind, and performance still need coverage. See `docs/water-visibility.md`.
-
 - Changed fresh/default HUD settings to **1 metre** with **Speedometer / gear / revs** off. Restore graphics defaults uses the same settings; other HUD areas remain enabled. Explicitly saved preferences are preserved on upgrade. Apparent text size is unchanged.
+
+### Earlier development and validation notes
 
 - Added a **HUD distance** slider on Graphics: 1–20 metres in 0.5 m steps, default 4 m. It preserves apparent HUD size, as requested, and supports fixed and follow-view placement. Save and relaunch VR to apply; graphics defaults restore 4 m. Launcher, camera-math and OpenXR submission tests cover the setting. The user's 20 m check did not show an obvious distance change; added a one-time placement receipt when diagnostic logging is enabled. Perceptual headset acceptance remains unresolved.
 - The user confirms water no longer appears to pop in with the partial filter removed, but reflections still differ between eyes. Requested input captures reproduce a shared original-camera reflection sampled using different eye projections. A separate per-eye reflection prototype lost vehicle batches in the second view even with identical cameras, so it was removed; no reflection fix is claimed. Normal play produces no capture files. Evidence and next steps are in `docs/water-visibility.md`.
-
 - Added five visibility toggles below **HUD follows view** for the cockpit HUD's gauges, lap/time, race position, route map and stage progress areas. All start enabled and reset with graphics defaults. These mask the standard HUD layout, including any other overlay sharing a hidden area; menus, virtual-screen and desktop HUDs are unchanged. Desktop captures and all 32 GPU-tested combinations pass; headset and alternative-layout checks remain pending.
 - Stopped enabling the legacy two-shader water filter on normal VR launches. It hid some water variants while leaving others visible, a candidate cause of distance-dependent appearance. An unfiltered same-camera inner-scene replay now has matching draw lists. Water remains visible as requested; this is not a verified fix for stereo puddle reflections or straight-line scenery pop-in. See `docs/water-visibility.md` for evidence and remaining work.
-
 - Added a transparent cockpit HUD layer about four metres ahead, fixed relative to the car by default. Graphics → **HUD follows view** optionally follows head movement; Recenter repositions the fixed layer. HUD drawing is captured once per frame and composed for both eyes, separately from the scene. Desktop captures verify separation of the Baja lap/time, position, route map and speedometer from scenery; GPU, OpenXR lifecycle and launcher tests cover the implementation. Headset readability, placement, follow mode and broader event coverage remain unverified; the user deferred headset testing.
 
-- Fixed the identified LAN race-loading disconnect caused by startup logo skipping. Live 0.7.0 captures identified modified `system\states.bin` as the failed validation record; disabling logo skipping on both PCs allowed both players to drive, finish Battersea and reach results. LAN launches now preserve that file even when the preference is enabled. HOST/JOIN preflight rejects altered definitions, and preparation guards prevent combining LAN and movie edits. Single-player logo skipping and LAN's separate introduction skip remain available. All 378 launcher checks pass; LAN VR remains unverified.
+## 0.7.2 — 2026-09-23
 
-- HOST and JOIN now ask for Desktop or VR on every launch, with Cancel available. LAN VR uses the existing SteamVR preflight, graphics/controls settings and combined recovery of VR assets, graphics, startup movies and the LAN DLL. The shared career and HOST/JOIN endpoint are preserved. Launcher tests pass; multiplayer headset testing is deferred, and the race-loading disconnect remains unresolved.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.7.2)
+
+- Fixed the identified LAN race-loading disconnect caused by startup logo skipping. Live 0.7.0 captures identified modified `system\states.bin` as the failed validation record; disabling logo skipping on both PCs allowed both players to drive, finish Battersea and reach results. LAN launches now preserve that file even when the preference is enabled. HOST/JOIN preflight rejects altered definitions, and preparation guards prevent combining LAN and movie edits. Single-player logo skipping and LAN's separate introduction skip remain available. All 378 launcher checks pass; LAN VR remains unverified.
+- HOST and JOIN now ask for Desktop or VR on every launch, with Cancel available. LAN VR uses the existing SteamVR preflight, graphics/controls settings and combined recovery of VR assets, graphics, startup movies and the LAN DLL. The shared career and HOST/JOIN endpoint are preserved. Launcher tests pass; multiplayer headset testing is deferred. The loading disconnect is addressed by the startup-definition fix above.
+
+### Earlier development and validation notes
 
 - The 0.6.10 host diagnostic captured the game's session teardown path, but the two-PC loading disconnect persists. The next investigation targets the preceding session-state change; further gameplay testing is deferred.
-
 - Two-PC 0.6.9 testing still disconnects during Battersea loading: PC1 first, PC2 later. Extended opt-in host diagnostics with bounded game-code stack candidates and session API errors to investigate the game's teardown decision. All six native tests pass; this diagnostic change does not claim to fix multiplayer behavior.
 
-- Corrected generated LAN peer addresses so different PCs have distinct, nonzero machine identities. The actual-DLL regression fails on 0.6.8 and passes with the correction; all six native checks pass. Both PCs must update for the next test. Whether this resolves the Battersea race-loading disconnect still requires two-PC confirmation.
+## 0.6.9 — 2026-09-22
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.6.9)
+
+- Corrected generated LAN peer addresses so different PCs have distinct, nonzero machine identities. The actual-DLL regression fails on 0.6.8 and passes with the correction; all six native checks pass. Both PCs must update for the next test. Whether this resolves the Battersea race-loading disconnect still requires two-PC confirmation.
 - Extended opt-in LAN diagnostics with game-facing send/receive sizes and checksums, plus socket-close call sites. Paired Battersea traces show the host closing its sockets while transport acknowledgements are still flowing; the later client timeout is a consequence. The cause of the host's closure remains under investigation.
+
+## 0.6.7 — 2026-09-22
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.6.7)
 
 - Added opt-in LAN network traces through Settings → Enable diagnostic logging. Each session keeps at most two 4 MiB files containing socket, packet-header, acknowledgement and timeout metadata, without packet payloads. Logging remains off by default. Native logging/transport and launcher tests pass. The two-PC follow-up reached race loading but disconnected at Battersea Rallycross before the grid; that failure remains under investigation.
 
+## 0.6.6 — 2026-09-22
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.6.6)
+
 - Fixed a LAN transport keepalive defect that could time out an otherwise reachable idle peer. Receiving a probe now schedules an acknowledgement through the existing protocol. A regression against the actual DLL fails on the released build and passes with the fix, including ordered data, selective acknowledgements, bounded replies and disconnected-peer timeout. Two-PC lobby/race confirmation is pending.
+- Added a read-only LAN startup report tool for ordinal/DLL-loading failures. It records running game/launcher paths, relevant loaded DLLs, file hashes and recovery state without reading saves or changing the installation. The reported client ordinal-43 failure remains under investigation.
+
+### Earlier development and validation notes
 
 - Client startup investigation: the supplied alternate wrapper and its two companions successfully reached regular menus in an authorized separate local test with the unchanged LAN shim. Both client variants are retained. PC2's ordinal-43 failure remains unresolved; a system GFWL identity-library dependency is now a concrete lead. Expanded the read-only report to capture companion files, compatibility settings and mapped DLLs even before normal loader initialization. No compatibility fix or new release is claimed.
-
 - PC2's ordinal-43 report confirms correct game/shim files and an active recovery journal, with a different startup wrapper from the working PC. A direct-start candidate reached LAN initialization but failed the local game check; it was reverted and package 0.6.5 was not released. The client startup issue remains under investigation.
 
-- Added a read-only LAN startup report tool for ordinal/DLL-loading failures. It records running game/launcher paths, relevant loaded DLLs, file hashes and recovery state without reading saves or changing the installation. The reported client ordinal-43 failure remains under investigation.
+## 0.6.4 — 2026-09-22
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.6.4)
 
 - Fixed blocking updater work after download: verification, recovery and installer startup now run off the window thread, with separate status messages. Recovery retains the session guard and checksum checks; cancellation or recovery errors prevent setup. Older installed launchers need a manual installer update if their updater freezes.
 
+## 0.6.3 — 2026-09-22
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.6.3)
+
 - Enlarged the launcher's initial window and fitted Settings content to the display's working area; smaller monitors retain scrolling.
 - Moved multiplayer out of the Launcher mode list into a neighboring **Multiplayer** tab with **HOST**, **JOIN**, **Refresh** and a LAN server browser. HOST retains the native-menu launch flow and advertises a **HOST game running** entry, without claiming a lobby or player count. JOIN adds the selected LAN PC to the game's network peers; players finish joining through the game's Multiplayer / LAN menu. Both PCs need the updated package. Automatic lobby entry remains unfinished. Native/launcher tests and loopback UDP checks cover discovery, expiry and peer setup; two-PC browser/JOIN acceptance is pending.
-
 - LAN now uses the same normal career and graphics settings as desktop/VR play, with the game's Documents lookup unchanged. Removed the temporary import/profile-copy workflow and its controls. Old copy selections are ignored on upgrade; existing copies are left untouched. LAN identity and startup status remain in AppData. Shared-career native and launcher tests pass. The tester confirmed a change saved with the game's **Save Profile** action persisted from LAN into Normal Launch; automatic saving was not established. Post-exit checks confirmed original game-file restoration.
 - Added **Skip startup logo movies (all launch modes)**, off by default. Temporarily replaces only the four logo-video states with immediate transitions; legal, attract, first-race and other video states remain intact. Uses guarded, journaled recovery through the normal file worker. Structural/restoration tests pass, and the tester confirmed the logos were skipped during LAN startup. Post-exit checks confirmed original game files restored and all 61 original career files unchanged.
+- Added an optional **Skip introduction** checkbox, initially in the separate LAN test kit, off by default. It bypasses the first-run movie and career tutorial decision in process memory, with executable/asset guards; it does not change game files or grant progression. Native guard and settings tests pass. The tester confirmed reaching LAN from a fresh profile without the movie or forced race. This option is now integrated into the launcher as described above.
+- Adopt plain `major.minor.patch` versions starting from `0.1.0`, without alpha suffixes. Packaging increments patch for each distribution build; entirely new features increment minor and reset patch, and major changes require an explicit user request. Existing alpha release history is preserved.
+
+### Earlier development and validation notes
 
 - Integrated desktop LAN multiplayer into the normal launcher, installer and ZIP. Select **LAN multiplayer (desktop)** and use **Launch**; the intro-skip checkbox is now under **Settings**. Native host/join/event selection still use the game's LAN menus; launcher lobbies/browser and LAN VR remain unfinished. Persistent LAN profiles live in AppData, and the launcher session manager/file worker perform journaled shim restoration, including recovery of older kit journals. New launcher transaction, settings and offscreen UI tests pass; integrated gameplay acceptance is pending.
-
-- Added an optional **Skip introduction** checkbox, initially in the separate LAN test kit, off by default. It bypasses the first-run movie and career tutorial decision in process memory, with executable/asset guards; it does not change game files or grant progression. Native guard and settings tests pass. The tester confirmed reaching LAN from a fresh profile without the movie or forced race. This option is now integrated into the launcher as described above.
-
 - LAN test update: the tester confirmed hosting on PC1, joining on PC2 and both driving/seeing each other in the same race. Race completion and results remain untested. Post-exit checks confirmed exact `xlive.dll` restoration and unchanged existing career files.
-
 - Added a separate `0.2.0` desktop LAN test kit using pinned XLiveLessNess, a fresh process-isolated profile, opt-in launch and journaled restoration of `xlive.dll`. Native profile isolation and eight recovery checks pass; local startup created only isolated save/settings files and left existing career files unchanged. Two-PC race acceptance is pending. Launcher multiplayer lobbies, LAN browser and automatic race startup are not yet implemented. See `docs/lan-lab.md`.
-
 - Added a LAN multiplayer feasibility plan covering XLiveLessNess reuse, launcher host/join and discovery, native race-start integration, profile/DLL recovery and staged acceptance. The separate native test kit described above implements the first stage; launcher multiplayer integration remains planned.
-
-- Adopt plain `major.minor.patch` versions starting from `0.1.0`, without alpha suffixes. Packaging increments patch for each distribution build; entirely new features increment minor and reset patch, and major changes require an explicit user request. Existing alpha release history is preserved.
 
 ## 0.1.0-alpha.5 — 2026-09-22
 
