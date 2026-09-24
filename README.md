@@ -2,6 +2,8 @@
 
 An experimental cockpit VR mod for **DiRT 2**, with stereoscopic rendering, head tracking and a virtual screen for menus.
 
+**Download:** [Latest release (Setup EXE and ZIP)](https://github.com/preseznik/DiRT2VR/releases/latest) · [All releases](https://github.com/preseznik/DiRT2VR/releases). Choose the packaged installer or ZIP under **Assets**; GitHub's source-code archives are not playable packages.
+
 Tested with **Quest 3 through SteamVR**, primarily in the Subaru Impreza STI. Xbox-compatible controller binding, launching, Toggle VR and Recenter have been tested in game. Other headsets and wheel button bindings need testing; **PSVR2, Logitech and Fanatec hardware are not yet verified**. This remains an experimental build.
 
 ## Requirements
