@@ -4,6 +4,9 @@ Notable changes to DiRT2VR are recorded here, newest first. Versioned releases r
 
 ## Unreleased
 
+- Use the working DirectInput wheel reader for Toggle VR and Recenter capture and background session input. Preserve existing Xbox/HID assignments, ignore held switches during capture, and require fresh presses after connection or reconnection. Physical Fanatec shortcut acceptance remains pending.
+- VR launches request the real cockpit camera when the game restores its starting view, and start with cockpit VR enabled. Menus and pause screens retain their flat-screen handling; desktop launches retain their saved camera. Headset startup acceptance remains pending.
+
 - Fix driving capture for wheel drivers with nonstandard native offsets or read-only axis ranges. Learn each axis independently so pedal noise cannot block steering. Use modest steering rotation, but require a larger pedal press (45% of full endpoint-resting DirectInput travel) and ignore smaller movement. Game driving sensitivity is unchanged; physical Fanatec validation remains pending.
 
 - Add prominent latest-release and all-releases links near the top of the README, and document the publishing check that keeps the latest link current.

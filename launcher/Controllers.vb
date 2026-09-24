@@ -15,6 +15,40 @@ Public Class ControllerSample
     Public Property Connected As Boolean = True
     Public Property Buttons As New HashSet(Of Integer)
 End Class
+Public Class ControllerCapture
+    Private ReadOnly blocked As New Dictionary(Of String, HashSet(Of Integer))
+    Private ReadOnly preferWheels As Boolean
+    Private selected As String
+    Private buttons As New HashSet(Of Integer)
+    Public Sub New(snapshot As IEnumerable(Of ControllerSample))
+        preferWheels = snapshot.Any(Function(s) s.Source = "dinput" AndAlso s.Connected)
+        For Each sample In snapshot.Where(Function(s) s.Connected)
+            blocked(sample.Source & ":" & sample.Device) = New HashSet(Of Integer)(sample.Buttons)
+        Next
+    End Sub
+    Public Function Update(sample As ControllerSample, action As Integer) As ControllerBinding
+        If preferWheels AndAlso sample.Source = "hid" Then Return Nothing
+        Dim key = sample.Source & ":" & sample.Device
+        If Not sample.Connected Then
+            blocked.Remove(key)
+            If selected = key Then selected = Nothing : buttons.Clear()
+            Return Nothing
+        End If
+        If Not blocked.ContainsKey(key) Then
+            blocked(key) = New HashSet(Of Integer)(sample.Buttons)
+            Return Nothing ' A newly connected device must release first.
+        End If
+        blocked(key).IntersectWith(sample.Buttons)
+        Dim pressed = sample.Buttons.Except(blocked(key)).ToHashSet()
+        If selected Is Nothing AndAlso pressed.Count > 0 Then selected = key
+        If selected <> key Then Return Nothing
+        buttons.UnionWith(pressed)
+        If buttons.Any(Function(b) sample.Buttons.Contains(b)) Then Return Nothing
+        Dim result As New ControllerBinding With {.Action = action, .Source = sample.Source, .Device = sample.Device, .Label = sample.Label, .Buttons = buttons.Order().ToList()}
+        selected = Nothing : buttons.Clear()
+        Return result
+    End Function
+End Class
 Public Class BindingMachine
     Implements IDisposable
     Private ReadOnly bindings As List(Of ControllerBinding)
@@ -92,10 +126,15 @@ Public Class ControllerInput
     Private ReadOnly hidDevices As New Dictionary(Of IntPtr, HidDevice)
     Private ReadOnly lastX As New Dictionary(Of Integer, String)
     Private ReadOnly samples As New Dictionary(Of String, ControllerSample)
+    Private ReadOnly context As InstallContext
+    Private driving As DrivingInput
+    Private refreshAt As Long
     Public Event StateChanged(sample As ControllerSample)
     Public Property LastError As String = ""
-    Public Sub New()
-        CreateHandle(New CreateParams With {.Caption = "DiRT2VR controller input", .Parent = New IntPtr(-3)})
+    Public Sub New(Optional installation As InstallContext = Nothing)
+        context = installation
+        ' DirectInput requires a top-level window; keep this helper window hidden.
+        CreateHandle(New CreateParams With {.Caption = "DiRT2VR controller input"})
         Dim devices = {New RawDevice With {.Page = 1, .Usage = 4, .Flags = &H2100UI, .Window = Handle}, New RawDevice With {.Page = 1, .Usage = 5, .Flags = &H2100UI, .Window = Handle}, New RawDevice With {.Page = 1, .Usage = 8, .Flags = &H2100UI, .Window = Handle}}
         If Not RegisterRawInputDevices(devices, CUInt(devices.Length), CUInt(Marshal.SizeOf(Of RawDevice)())) Then LastError = "HID registration failed: " & Marshal.GetLastWin32Error().ToString()
     End Sub
@@ -118,6 +157,7 @@ Public Class ControllerInput
         RaiseEvent StateChanged(sample)
     End Sub
     Public Sub Poll()
+        If context IsNot Nothing Then PollWheels()
         For index = 0 To 3
             Dim state As New XState
             Dim connected = XInputGetState(CUInt(index), state) = 0
@@ -127,8 +167,42 @@ Public Class ControllerInput
             Emit(New ControllerSample With {.Source = "xinput", .Device = index.ToString(), .Label = "Xbox controller " & (index + 1).ToString(), .Connected = connected, .Buttons = New HashSet(Of Integer)(ControllerNames.XButtons.Where(Function(b) (CInt(state.Pad.Buttons) And b) <> 0))})
         Next
     End Sub
+    Private Sub PollWheels()
+        Try
+            If refreshAt <> 0 AndAlso Environment.TickCount64 < refreshAt Then Return
+            If driving Is Nothing OrElse refreshAt <> 0 Then
+                refreshAt = 0
+                For Each old In Snapshot().Where(Function(s) s.Source = "dinput" AndAlso s.Connected)
+                    Emit(New ControllerSample With {.Source = old.Source, .Device = old.Device, .Label = old.Label, .Connected = False})
+                Next
+                driving?.Dispose()
+                driving = Nothing
+                driving = New DrivingInput(context, Handle)
+            End If
+            For Each device In driving.Devices.Where(Function(d) d.Name <> "win_xinput")
+                Dim state = driving.Read(device)
+                Dim sample As New ControllerSample With {.Source = "dinput", .Device = device.Id, .Label = device.ToString(), .Connected = state.Connected <> 0}
+                If sample.Connected Then
+                    For i = 0 To state.Buttons.Length - 1
+                        If state.Buttons(i) <> 0 Then sample.Buttons.Add(i + 1)
+                    Next
+                End If
+                Dim previous As ControllerSample = Nothing
+                If Not samples.TryGetValue("dinput:" & device.Id, previous) OrElse previous.Connected <> sample.Connected OrElse Not previous.Buttons.SetEquals(sample.Buttons) Then Emit(sample)
+            Next
+        Catch ex As Exception
+            LastError = ex.Message
+            driving?.Dispose() : driving = Nothing
+            refreshAt = Environment.TickCount64 + 3000
+            For Each old In Snapshot().Where(Function(s) s.Source = "dinput" AndAlso s.Connected)
+                Emit(New ControllerSample With {.Source = old.Source, .Device = old.Device, .Label = old.Label, .Connected = False})
+            Next
+        End Try
+    End Sub
     Protected Overrides Sub WndProc(ByRef message As Message)
         Try
+            If message.Msg = &HFE Then refreshAt = Environment.TickCount64 + 500
+            If message.Msg = &H219 AndAlso {7L, &H8000L, &H8004L}.Contains(message.WParam.ToInt64()) Then refreshAt = Environment.TickCount64 + 500
             If message.Msg = &HFF Then ReadHid(message.LParam)
             If message.Msg = &HFE AndAlso message.WParam.ToInt64() = 2 Then
                 Dim device As HidDevice = Nothing
@@ -206,6 +280,7 @@ Public Class ControllerInput
         End Try
     End Sub
     Public Sub Dispose() Implements IDisposable.Dispose
+        driving?.Dispose() : driving = Nothing
         If Handle <> IntPtr.Zero Then DestroyHandle()
         For Each device In hidDevices.Values
             Marshal.FreeHGlobal(device.Preparsed)

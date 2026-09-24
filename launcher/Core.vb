@@ -172,9 +172,11 @@ Public Class VrSettings
         If Bindings Is Nothing OrElse Bindings.Count > 32 Then Throw New IOException("Invalid controller bindings.")
         For i = 0 To Bindings.Count - 1
             Dim a = Bindings(i)
-            If a Is Nothing OrElse a.Action < 0 OrElse a.Action > 1 OrElse (a.Source <> "xinput" AndAlso a.Source <> "hid") OrElse String.IsNullOrEmpty(a.Device) OrElse a.Buttons Is Nothing OrElse a.Buttons.Count < 1 OrElse a.Buttons.Count > 2 OrElse a.Buttons.Distinct().Count() <> a.Buttons.Count Then Throw New IOException("Invalid controller binding.")
+            If a Is Nothing OrElse a.Action < 0 OrElse a.Action > 1 OrElse Not {"xinput", "hid", "dinput"}.Contains(a.Source) OrElse String.IsNullOrEmpty(a.Device) OrElse a.Buttons Is Nothing OrElse a.Buttons.Count < 1 OrElse a.Buttons.Count > 2 OrElse a.Buttons.Distinct().Count() <> a.Buttons.Count Then Throw New IOException("Invalid controller binding.")
             If a.Source = "xinput" AndAlso (Not {"0", "1", "2", "3"}.Contains(a.Device) OrElse a.Buttons.Any(Function(b) Not ControllerNames.XButtons.Contains(b))) Then Throw New IOException("Invalid Xbox binding.")
             If a.Source = "hid" AndAlso a.Buttons.Any(Function(b) b < 1 OrElse b > 65535) Then Throw New IOException("Invalid HID button.")
+            Dim deviceGuid As Guid
+            If a.Source = "dinput" AndAlso (Not Guid.TryParse(a.Device, deviceGuid) OrElse a.Buttons.Any(Function(b) b < 1 OrElse b > 128)) Then Throw New IOException("Invalid wheel button binding.")
             For j = 0 To i - 1
                 Dim b = Bindings(j)
                 If a.Source = b.Source AndAlso a.Device = b.Device AndAlso (a.Buttons.All(Function(k) b.Buttons.Contains(k)) OrElse b.Buttons.All(Function(k) a.Buttons.Contains(k))) Then Throw New IOException("Controller assignments overlap. Choose distinct buttons or pairs.")

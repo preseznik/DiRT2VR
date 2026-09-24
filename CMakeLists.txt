@@ -25,7 +25,7 @@ endif()
 execute_process(COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/generate_exports.py"
   "$ENV{WINDIR}/SysWOW64/d3d11.dll" "${CMAKE_BINARY_DIR}" COMMAND_ERROR_IS_FATAL ANY)
 add_library(d3d11 SHARED src/proxy.cpp src/trace.cpp src/direct_menus.cpp src/gfwl_compat.cpp src/water_trace.cpp src/common.cpp src/eye_pair.cpp src/eye_blit.cpp src/hud_capture.cpp src/camera_math.cpp src/game_xr.cpp src/xr_frames.cpp src/vr_hotkeys.cpp "${CMAKE_BINARY_DIR}/exports.def")
-target_sources(d3d11 PRIVATE src/driving_controls.cpp)
+target_sources(d3d11 PRIVATE src/driving_controls.cpp src/cockpit_start.cpp)
 target_include_directories(d3d11 PRIVATE "${CMAKE_BINARY_DIR}" src)
 target_link_libraries(d3d11 PRIVATE minhook d3dcompiler dxguid psapi bcrypt openxr_loader)
 target_compile_definitions(d3d11 PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX XR_USE_PLATFORM_WIN32 XR_USE_GRAPHICS_API_D3D11)

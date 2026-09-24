@@ -82,7 +82,7 @@ Public Class Session
                         ' LAN validates states.bin against the game's original checksum.
                         PrepareMenus()
                         Dim returnToMenus As Boolean
-                        Using input As New ControllerInput(), machine As New BindingMachine(settings.Bindings)
+                        Using input As New ControllerInput(context), machine As New BindingMachine(settings.Bindings)
                             Dim counts As UInteger() = {0UI, 0UI}
                             AddHandler input.StateChanged, Sub(sample)
                                 For Each action In machine.Update(sample)
@@ -130,7 +130,7 @@ Public Class Session
     Public Shared Function VrStartInfo(context As InstallContext, settings As VrSettings, channel As String, logFolder As String, Optional joinTarget As String = Nothing) As ProcessStartInfo
         ' Both factories clear inherited experiments before setting their explicit launch flags.
         Dim start = If(settings.LaunchMode = "lan", LanSession.StartInfo(context, settings.SkipIntroduction, joinTarget), DesktopStartInfo(context, Nothing, Nothing))
-        For Each name In {"ACTIVE", "REPLAY_PROBE", "INNER_REPLAY", "CONTINUOUS_REPLAY", "HEADSET", "INTERACTIVE", "WIDE_VISIBILITY"}
+        For Each name In {"ACTIVE", "REPLAY_PROBE", "INNER_REPLAY", "CONTINUOUS_REPLAY", "HEADSET", "INTERACTIVE", "WIDE_VISIBILITY", "AUTO_COCKPIT"}
             start.Environment("DIRT2VR_" & name) = "1"
         Next
         start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"

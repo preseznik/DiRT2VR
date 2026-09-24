@@ -1,6 +1,6 @@
 Imports System.Text
 
-' This helper is used only while the capture dialog is open, never by the game.
+' Nonexclusive launcher-side input, shared by driving capture and VR shortcuts.
 Public Class DrivingInput
     Implements IDisposable
     <StructLayout(LayoutKind.Sequential)>

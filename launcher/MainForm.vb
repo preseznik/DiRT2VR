@@ -51,12 +51,13 @@ Public Class MainForm
     Private ReadOnly launchButton As New Button With {.Text = "Launch VR", .AutoSize = True, .Name = "LaunchVR"}
     Private ReadOnly saveButton As New Button With {.Text = "Save settings", .AutoSize = True, .Name = "SaveSettings"}
     Private ReadOnly recoverButton As New Button With {.Text = "Restore original files", .AutoSize = True}
-    Private ReadOnly input As New ControllerInput()
+    Private ReadOnly input As ControllerInput
     Private ReadOnly timer As New System.Windows.Forms.Timer With {.Interval = 100}
+    Private ReadOnly inputTimer As New System.Windows.Forms.Timer With {.Interval = 20}
     Private keyboardCapture As Integer = -1
     Private controllerCapture As Integer = -1
     Private capturedDevice As ControllerSample
-    Private capturedButtons As New HashSet(Of Integer)
+    Private buttonCapture As ControllerCapture
     Private busy As Boolean
     Private ReadOnly updateNotice As New Button With {.Text = "New version available", .Name = "UpdateAvailable", .AutoSize = True, .Visible = False, .Anchor = AnchorStyles.Right}
     Private ReadOnly updateCancellation As New CancellationTokenSource()
@@ -64,6 +65,7 @@ Public Class MainForm
     Private availableUpdate As ReleaseUpdate
     Public Sub New(value As InstallContext, Optional releaseCheck As Func(Of CancellationToken, Task(Of ReleaseUpdate)) = Nothing)
         context = value
+        input = New ControllerInput(context)
         checkForUpdate = If(releaseCheck, AddressOf CheckReleaseAsync)
         settings = VrSettings.Load(context)
         Text = "DiRT2VR — Experimental launcher"
@@ -136,17 +138,17 @@ Public Class MainForm
         Controls.Add(layout)
         RefreshBindings() : RefreshDisplayRate()
         AddHandler input.StateChanged, AddressOf OnController
+        AddHandler inputTimer.Tick, Sub() input.Poll()
         AddHandler timer.Tick, Sub()
-                                  input.Poll()
                                   RefreshStatus()
                                   If tabs.SelectedIndex = 1 AndAlso Not busy AndAlso Not scanning AndAlso DateTime.UtcNow >= nextScan Then RefreshServerList()
                               End Sub
         AddHandler FormClosed, Sub()
                                   updateCancellation.Cancel() : updateCancellation.Dispose()
-                                  timer.Stop() : timer.Dispose() : input.Dispose()
+                                  timer.Stop() : timer.Dispose() : inputTimer.Stop() : inputTimer.Dispose() : input.Dispose()
                                   Icon.Dispose()
                               End Sub
-        timer.Start() : RefreshStatus()
+        inputTimer.Start() : timer.Start() : RefreshStatus()
         AddHandler Shown, Sub() FitInitialWindow()
         AddHandler Shown, Async Sub() Await CheckStartupUpdate()
     End Sub
@@ -365,7 +367,7 @@ Public Class MainForm
         logging.Checked = settings.LoggingEnabled : content.Controls.Add(logging)
         content.Controls.Add(Note("Logging is off by default. Enable it only when troubleshooting, then save before launching. Recovery records are always kept; existing logs are not deleted."))
         content.Controls.Add(Note("For Launch VR, start SteamVR and connect your headset first. Use the Subaru STI cockpit for the tested setup. Regular Launch does not require a headset."))
-        content.Controls.Add(Note("In VR, the game starts on the virtual menu screen. Use Toggle VR to enter cockpit VR, and Recenter when seated facing forward. Pause menus return to the screen automatically."))
+        content.Controls.Add(Note("VR launches enter races in cockpit VR automatically. Toggle VR switches to the flat screen; Recenter resets your seated position. Menus and pause screens appear on the flat screen."))
         content.Controls.Add(Note("Quit the game normally to restore temporary files. You can close this settings window while playing; the background session manager stays running."))
     End Sub
     Private Sub BuildGraphicsTab()
@@ -606,7 +608,9 @@ Public Class MainForm
     End Sub
     Private Sub BeginControllerCapture(action As Integer)
         If busy Then Return
-        keyboardCapture = -1 : controllerCapture = action : capturedDevice = Nothing : capturedButtons.Clear()
+        input.Poll()
+        keyboardCapture = -1 : controllerCapture = action : capturedDevice = Nothing
+        buttonCapture = New ControllerCapture(input.Snapshot())
         inputLabel.Text = "Press one or two buttons together, then release them. Escape cancels."
         RefreshBindings()
     End Sub
@@ -617,12 +621,8 @@ Public Class MainForm
             If keyboardCapture < 0 Then inputLabel.Text = If(available.Length = 0, "No controller detected. Connect a device; press and release a wheel button to detect it.", String.Join("; ", available))
             Return
         End If
-        If Not sample.Connected Then Return
-        If capturedDevice Is Nothing AndAlso sample.Buttons.Count > 0 Then capturedDevice = sample
-        If capturedDevice Is Nothing OrElse capturedDevice.Device <> sample.Device OrElse capturedDevice.Source <> sample.Source Then Return
-        capturedButtons.UnionWith(sample.Buttons)
-        If sample.Buttons.Count > 0 Then Return
-        Dim binding As New ControllerBinding With {.Action = controllerCapture, .Source = sample.Source, .Device = sample.Device, .Label = sample.Label, .Buttons = capturedButtons.Order().ToList()}
+        Dim binding = buttonCapture.Update(sample, controllerCapture)
+        If binding Is Nothing Then Return
         controllerCapture = -1 : capturedDevice = Nothing
         settings.Bindings.Add(binding)
         Try

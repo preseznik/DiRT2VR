@@ -13,6 +13,7 @@
 #include "direct_menus.h"
 #include "gfwl_compat.h"
 #include "driving_controls.h"
+#include "cockpit_start.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -416,7 +417,11 @@ bool CaptureHudDraw(ID3D11DeviceContext* context,const std::function<void()>& dr
 uint64_t xrTickFrame=~uint64_t{};
 XrPosef headsetReference{};
 bool recenterRequested=true;
-bool& ScreenMode() { static bool screen=InteractiveEnabled(); return screen; }
+bool AutoCockpitEnabled() {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_AUTO_COCKPIT",value,8)==1 && value[0]==L'1'; }();
+    return enabled;
+}
+bool& ScreenMode() { static bool screen=InteractiveEnabled() && !AutoCockpitEnabled(); return screen; }
 float GraphicsScale(const wchar_t* name,float fallback,float minimum,float maximum) {
     wchar_t value[32]{}; const auto length=GetEnvironmentVariableW(name,value,32);
     if(!length || length>=32) return fallback;
@@ -1185,6 +1190,7 @@ template<class F> void Hook(void* object,unsigned index,void* replacement,F& ori
 void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChain* swapchain) {
     std::lock_guard lock(attachMutex);
     if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
+    if(AutoCockpitEnabled() && !EnableCockpitStart()) { Log("VR starting camera: incompatible process"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
     wchar_t desktop[8]{};
     const bool desktopControls=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_CONTROLS",desktop,8)==1 && desktop[0]==L'1';
     if(desktopControls || (GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1')) {

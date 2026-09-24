@@ -41,8 +41,8 @@ Regular Launch needs no SteamVR or headset and keeps your normal camera, effects
 1. Start SteamVR and connect your headset.
 2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Normal Launch** on **Launcher**, and select **Launch VR**.
 3. Navigate the original game on the virtual screen using your usual controls.
-4. Enter a **Subaru Impreza STI** event and select cockpit view for the tested setup.
-5. With the game window focused, press **F9** (or your Toggle VR binding). Sit facing forward and press **F10** (or Recenter).
+4. Enter a **Subaru Impreza STI** event for the tested setup. VR launches select cockpit view automatically.
+5. Cockpit VR starts enabled. Sit facing forward and press **F10** (or Recenter). **F9** (Toggle VR) switches between cockpit VR and the flat screen; keep the game window focused.
 6. Pause/options menus automatically use the virtual screen; resuming restores your selected cockpit VR mode. Use Toggle VR if another menu, replay or flashback looks incorrect.
 7. Quit normally. The background session manager restores temporary files when the game exits. You may close the settings window while playing.
 
@@ -64,7 +64,7 @@ The launcher matches the Windows app light/dark setting when opened. Reopen it a
 
 On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**, and a **Car**, then **Launch VR**. Event filters the track list by discipline; this is solo practice, not a career event. The launcher lists installed routes and cars from the supported game's catalog. The Subaru STI is the tested cockpit; other car interiors are experimental.
 
-Direct practice bypasses the trailer menus and loads a player-driven car. Select cockpit view and use Toggle VR as usual. At the finish, choose **Restart** or **Return to menus**. The pause menu also provides Continue, Restart and Return to menus. **Return to menus closes the game and automatically reopens Normal Launch**, keeping Desktop or VR mode; expect another loading sequence. Your saved launcher selections stay unchanged. Alt+F4 quits without reopening. Saved practice selections also work with `Start-DiRT2VR.cmd`.
+Direct practice bypasses the trailer menus and loads a player-driven car. Launch VR selects the cockpit and enables VR automatically; regular Launch retains your desktop camera. At the finish, choose **Restart** or **Return to menus**. The pause menu also provides Continue, Restart and Return to menus. **Return to menus closes the game and automatically reopens Normal Launch**, keeping Desktop or VR mode; expect another loading sequence. Your saved launcher selections stay unchanged. Alt+F4 quits without reopening. Saved practice selections also work with `Start-DiRT2VR.cmd`.
 
 Desktop steering/throttle, pause/resume and finishing have been confirmed in the Subaru at Baja. The packaged direct-practice route in VR, other cars and broader stage coverage still need testing.
 
@@ -122,7 +122,7 @@ Controller shortcuts start unassigned. Choose **Bind…** in the desired action'
 
 **Assigned controller buttons still perform their normal game actions.** Choose buttons or combinations that avoid unwanted driving/menu actions. Shortcuts fire once per press and require release before firing again. Keep the game window focused.
 
-Assignments stay attached to the selected device. A disconnected device is not replaced automatically; Xbox controller slot changes may require rebinding. For standard HID wheels, press and release a button so the launcher can detect the device. Wheel shortcut support still needs hardware validation.
+Assignments stay attached to the selected device. A disconnected device is not replaced automatically; Xbox controller slot changes may require rebinding. Wheel shortcuts use the same non-exclusive DirectInput reader as driving bindings. Connect the wheel, choose Bind, then press and release a button or pair. Already-held switches are ignored. Existing HID and Xbox assignments remain supported. This updated VR shortcut path still needs physical Fanatec validation.
 
 **Driving controls:** Direct practice and Race now load the existing saved profile before the event, including its control settings. Save your profile after configuring controls in the game. No additional career save is created. If no profile can be loaded, the event uses the game's defaults. Fanatec pedal validation is pending.
 
@@ -178,7 +178,7 @@ LAN support is included in the launcher package; no separate test kit or PowerSh
 4. On the other PC, select the host in the LAN server list and click **JOIN**, then choose **Desktop** or **VR**. Discovery refreshes automatically while this tab is open; **Refresh** starts another scan. JOIN opens LAN play and adds the selected PC to the game's network peers. Complete any startup/profile prompts, then finish joining through the game's **Multiplayer / LAN** menu. It does not enter the lobby automatically.
 5. Quit normally after playing. The background launcher restores the original `xlive.dll`, even if you closed its settings window.
 
-HOST and JOIN ask for the display mode every time. Desktop requires no headset. For VR, start SteamVR and connect your headset first; the launcher uses your saved Graphics and Controls settings. Menus start on the virtual screen; use Toggle VR for cockpit view and Recenter when seated. The Subaru STI remains the tested single-player cockpit; multiplayer headset acceptance is pending. VR graphics and asset changes are restored alongside the LAN DLL after play.
+HOST and JOIN ask for the display mode every time. Desktop requires no headset. For VR, start SteamVR and connect your headset first; the launcher uses your saved Graphics and Controls settings. Menus use the virtual screen; races start in cockpit VR automatically. Use Recenter when seated. The Subaru STI remains the tested single-player cockpit; multiplayer headset acceptance is pending. VR graphics and asset changes are restored alongside the LAN DLL after play.
 
 The game reads and saves the same career and graphics settings in both modes. Use the game's **Save Profile** action to explicitly save changes before quitting; the launcher does not force an autosave. LAN connection settings and this PC's network identity live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\lan`; do not copy that folder between players. The launcher does not copy, move or rewrite career files.
 
