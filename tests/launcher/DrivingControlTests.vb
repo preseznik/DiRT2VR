@@ -8,6 +8,7 @@ Module DrivingControlTests
         Return New DrivingInput.Sample With {.Connected = 1, .Axes = 255, .Values = New Single(7) {}, .Buttons = New Byte(127) {}, .Pov = New UInteger(3) {}}
     End Function
     Public Sub Run(repo As String, folder As String, check As Action(Of Boolean, String))
+        VrShortcutTests.Run(check)
         Dim context As New InstallContext(IO.Path.Combine(folder, "driving game"), IO.Path.Combine(folder, "driving user"), IO.Path.Combine(folder, "driving graphics.xml"))
         Dim config = DrivingControls.Load(context)
         check(Not config.Enabled AndAlso config.Bindings.Count = 0, "driving overrides default off and preserve game controls")
@@ -66,6 +67,10 @@ Module DrivingControlTests
         Directory.CreateDirectory(IO.Path.GetDirectoryName(payload))
         File.Copy(IO.Path.Combine(repo, "build/driving-input/driving_input.dll"), payload)
         Files.SaveJson(IO.Path.Combine(context.ModRoot, "package.json"), New PackageManifest With {.Files = New Dictionary(Of String, String) From {{"DiRT2VR/payload/driving_input.dll", Files.Hash(payload)}}})
+        Using shortcuts As New ControllerInput(context)
+            shortcuts.Poll()
+            check(shortcuts.LastError = "", "VR shortcut reader loads verified DirectInput helper on its hidden window")
+        End Using
         Using window As New Form
             window.CreateControl()
             Using input As New DrivingInput(context, window.Handle)

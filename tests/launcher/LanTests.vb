@@ -81,6 +81,7 @@ Module LanTests
         Dim vrHost = Session.VrStartInfo(context, vrSettings, "Local.TestInput", Nothing)
         Dim vrJoin = Session.VrStartInfo(context, vrSettings, "Local.TestInput", logFolder, "192.168.1.25:39000")
         For Each launch In {vrHost, vrJoin}
+            check(launch.Environment("DIRT2VR_AUTO_COCKPIT") = "1", "HOST and JOIN VR request automatic cockpit startup")
             check(launch.Environment("DIRT2VR_ACTIVE") = "1" AndAlso launch.Environment("DIRT2VR_HEADSET") = "1" AndAlso launch.Environment("DIRT2VR_INPUT_CHANNEL") = "Local.TestInput", "LAN VR activates headset and controller channel together")
             check(launch.ArgumentList.Count = 0 AndAlso launch.Environment("DIRT2VR_LAN_CONFIG") = config AndAlso launch.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1", "LAN VR retains native menu startup and shared career")
             check(launch.Environment("DIRT2VR_HEADSET_SCALE") = "0.75" AndAlso launch.Environment("DIRT2VR_FOV_SCALE") = "0.8" AndAlso launch.Environment("DIRT2VR_KEYS") = "118:0,119:0" AndAlso launch.Environment("XR_RUNTIME_JSON") = vrSettings.Runtime, "LAN VR uses saved graphics keys and runtime")
