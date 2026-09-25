@@ -6,6 +6,12 @@ Version headings below identify published GitHub packages. Earlier local-build e
 
 ## Unreleased
 
+No pending changes.
+
+## 0.14.1 — 2026-09-25
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.14.1)
+
 - Add a separate desktop VSync toggle, on by default, independent of borderless. Desktop launches temporarily apply the choice and restore original settings after play; VR retains its own timing setup.
 - Reorganize Graphics into compact Desktop, VR rendering and VR HUD groups. Move detailed guidance into the offline ? → Instructions tab.
 - Adapt Launcher, Multiplayer, Graphics, Controls, Settings and Help to wide, portrait and compact windows. Groups reflow, bindings stack and LAN rows become tiles at narrow widths; action buttons remain outside scrolling content. Resize checks preserve unsaved settings and keyboard capture.
