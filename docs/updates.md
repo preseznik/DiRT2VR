@@ -20,6 +20,8 @@ The Help / About panel reads the assembly informational version. Packaged builds
 
 Do not commit distributable binaries to the source tree. The updater does not build source or execute files from a branch. It requires Release assets. The package script creates files locally; it does not tag, push or publish a release.
 
+End-user packages exclude the repository's `docs/` directory. Only the README and changelog are copied as top-level Markdown; their technical-document links are rewritten to the matching release tag on GitHub. Keep licenses and dependency source required by the existing distribution intact. Both ZIP and installer consume the same checked staging directory. Omitting docs from a new package does not delete documentation left by an older installation.
+
 ## Update behavior
 
 - Checks are anonymous against `https://api.github.com/repos/preseznik/DiRT2VR/releases?per_page=100`, with a 20-second timeout. The launcher window starts one asynchronous check on `Shown`; quick launch, workers and game sessions do not. Alpha builds include prereleases; stable builds exclude them. No account credentials or local settings are sent. Drafts are ignored. The newest valid SemVer among those 100 entries wins, regardless of API ordering.
