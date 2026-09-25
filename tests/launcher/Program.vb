@@ -1,4 +1,4 @@
-﻿Imports System.IO
+Imports System.IO
 Imports System.Windows.Forms
 Imports DiRT2VR
 
@@ -26,6 +26,11 @@ Module Program
         Dim folder = IO.Path.Combine(repo, "artifacts", "launcher-tests-" & DateTime.Now.ToString("yyyyMMdd-HHmmss"))
         Dim root = IO.Path.Combine(folder, "DiRT 2 Ž test")
         Directory.CreateDirectory(root)
+        If args.Contains("--layout-only") Then
+            ResponsiveTests.Run(New InstallContext(IO.Path.Combine(repo, "artifacts/game"), IO.Path.Combine(folder, "layout-user")), folder, AddressOf Check)
+            Console.WriteLine(passed & " responsive checks passed. Artifacts: " & folder)
+            Return
+        End If
         If args.Contains("--controls-only") Then
             DrivingControlTests.Run(repo, folder, AddressOf Check)
             Console.WriteLine(passed & " driving-control checks passed. Artifacts: " & folder)
@@ -477,10 +482,13 @@ Module Program
             Check(form.Controls.Find("TreeDetailValue", True).Single().Text = "Ultra" AndAlso form.Controls.Find("ObjectDetailValue", True).Single().Text = "High", "scenery sliders display named presets")
             Dim hudToggle = DirectCast(form.Controls.Find("HudFollowView", True).Single(), CheckBox)
             Dim borderlessToggle = DirectCast(form.Controls.Find("BorderlessDesktop", True).Single(), CheckBox)
-            Check(Not borderlessToggle.Checked AndAlso borderlessToggle.Parent Is hudToggle.Parent, "desktop borderless toggle defaults off on Graphics")
+            Check(Not borderlessToggle.Checked AndAlso tabs.TabPages(2).Contains(borderlessToggle), "desktop borderless toggle defaults off on Graphics")
+            Dim vsyncToggle = DirectCast(form.Controls.Find("DesktopVSync", True).Single(), CheckBox)
+            Check(vsyncToggle.Checked, "desktop VSync defaults on in Graphics")
+            vsyncToggle.Checked = False
             borderlessToggle.Checked = True
             Check(Not hudToggle.Checked AndAlso Not (New VrSettings()).HudFollowView, "HUD follows view defaults off for existing and new settings")
-            Check(hudToggle.Parent.Parent.Text = "Graphics", "HUD follow control is on Graphics tab")
+            Check(tabs.TabPages(2).Contains(hudToggle), "HUD follow control is on Graphics tab")
             hudToggle.Checked = True
             Dim distanceSlider = DirectCast(form.Controls.Find("HudDistance", True).Single(), ValueSlider)
             Check(distanceSlider.Value = 2, "HUD distance slider defaults to one metre")
@@ -489,7 +497,7 @@ Module Program
             Dim hudNames = {"HudGauges", "HudLapTime", "HudPosition", "HudMap", "HudProgress"}
             For Each name In hudNames
                 Dim element = DirectCast(form.Controls.Find(name, True).Single(), CheckBox)
-                Check(element.Checked = (name <> "HudGauges") AndAlso element.Parent.Parent Is hudToggle.Parent, name & " uses its default below follow-view on Graphics")
+                Check(element.Checked = (name <> "HudGauges") AndAlso tabs.TabPages(2).Contains(element), name & " uses its default below follow-view on Graphics")
                 element.Checked = False
             Next
             Dim scaleSlider = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
@@ -497,6 +505,7 @@ Module Program
             DirectCast(form.Controls.Find("Mirrors", True).Single(), ComboBox).SelectedIndex = 2
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             Dim saved = VrSettings.Load(context)
+            Check(Not saved.DesktopVSync, "Graphics tab persists VSync off")
             Check(saved.BorderlessDesktop, "Graphics tab persists borderless preference")
             Check(saved.LoggingEnabled, "Settings logging opt-in persists")
             Check(saved.TreeDetail = 5 AndAlso saved.ObjectDetail = 4, "scenery detail choices persist independently")
@@ -532,9 +541,10 @@ Module Program
             Check(saved.LaunchMode = "race" AndAlso saved.SkipIntroduction AndAlso saved.TrackId = "129", "Multiplayer tab preserves solo selection when saving settings")
             Check(saved.SkipStartupMovies, "Settings saves startup movie skip")
             tabs.SelectedIndex = 2
-            form.Controls.Find("HudFollowView", True).Single().Parent.Controls.OfType(Of Button).Single(Function(b) b.Text = "Restore graphics defaults").PerformClick()
+            DirectCast(form.Controls.Find("GraphicsDefaults", True).Single(), Button).PerformClick()
             Check(Not hudToggle.Checked, "Restore graphics defaults returns HUD to fixed placement")
             Check(Not borderlessToggle.Checked, "Restore graphics defaults turns borderless off")
+            Check(vsyncToggle.Checked, "Restore graphics defaults turns VSync on")
             Check(distanceSlider.Value = 2, "Restore graphics defaults restores one metre HUD distance")
             Check(hudNames.All(Function(name) DirectCast(form.Controls.Find(name, True).Single(), CheckBox).Checked = (name <> "HudGauges")), "Restore graphics defaults hides only the gauges")
             form.Close()

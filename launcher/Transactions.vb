@@ -233,9 +233,11 @@ Public Class GraphicsTransaction
         Next
         PrepareChanges(specs)
     End Sub
-    Public Sub PrepareDesktop(width As Integer, height As Integer)
-        If width <= 0 OrElse height <= 0 Then Throw New IOException("The primary display has no usable resolution.")
-        PrepareChanges({$"graphics_card/resolution|width|{width}", $"graphics_card/resolution|height|{height}", "graphics_card/resolution|fullscreen|false", "graphics_card/resolution|vsync|0"})
+    Public Sub PrepareDesktop(Optional width As Integer = 0, Optional height As Integer = 0, Optional vsync As Boolean = True)
+        If width < 0 OrElse height < 0 OrElse (width = 0) <> (height = 0) Then Throw New IOException("The primary display has no usable resolution.")
+        Dim changes As New List(Of String) From {"graphics_card/resolution|vsync|" & If(vsync, "1", "0")}
+        If width > 0 Then changes.AddRange({$"graphics_card/resolution|width|{width}", $"graphics_card/resolution|height|{height}", "graphics_card/resolution|fullscreen|false"})
+        PrepareChanges(changes)
     End Sub
     Private Sub PrepareChanges(specs As IEnumerable(Of String))
         context.RequireClosed()

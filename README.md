@@ -84,7 +84,9 @@ Race uses the same finish and pause choices as practice. It stops at the finish 
 
 ### Graphics
 
-**Borderless fullscreen (desktop only)** is off by default. Enable it to fill the primary monitor at its current desktop resolution without window borders. It applies to desktop Normal Launch, Practice, Race and multiplayer HOST/JOIN, including desktop quick launch. It temporarily disables in-game VSync and restores the original display settings after play. Windows resolution/refresh rate and VR launches stay unchanged. Save and relaunch to apply; Restore graphics defaults turns it off.
+Graphics groups settings into **Desktop**, **VR rendering** and **VR HUD**. Open **? → Instructions** for explanations and troubleshooting. Tabs adapt to wide and portrait windows; smaller windows scroll vertically while the action buttons remain available.
+
+**Borderless fullscreen** is off by default. Enable it to fill the primary monitor at its current desktop resolution without window borders. It applies to desktop Normal Launch, Practice, Race and multiplayer HOST/JOIN, including desktop quick launch. The separate **VSync** toggle defaults to **On** for desktop play, with or without borderless. Turn it off for uncapped rendering. Both settings are temporary and the original display settings are restored after play. Windows resolution/refresh rate and VR launches stay unchanged. Save and relaunch to apply; Restore defaults turns it off.
 
 Borderless mode uses the game's windowed rendering path as a workaround for its exclusive-fullscreen frame-rate limitation. Driver limits, desktop composition and performance can still affect FPS; a frame rate above 60 is not guaranteed. Native desktop resolution may cost more GPU time than your previous game resolution. If Windows rejects the window change, the launcher reports a warning and leaves ordinary windowed play available. Alt+Tab and minimization remain available.
 
@@ -93,24 +95,24 @@ The following settings apply to VR:
 | Setting | Default | Effect |
 |---|---|---|
 | Render resolution | 100% | 1600 × 1200 per eye at full field of view. Adjust from 50–150%; lower values reduce scene detail and pixel work. |
-| Headset texture | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
+| Headset texture scale | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
-| Car mirrors | Use game setting | Optionally force mirrors on or off during VR sessions. |
+| Car mirrors | Game setting | Optionally force mirrors on or off during VR sessions. |
 | Tree detail | Game | Choose the game's Ultra low–Ultra vegetation detail presets. Higher values keep detailed vegetation farther away. |
 | Object detail | Game | Choose the game's Ultra low–Ultra trackside-object detail presets. Higher values cost performance. |
-| HUD follows view | Off | Keep the cockpit HUD fixed relative to the car at the selected distance. Enable to have it follow your head instead. |
-| HUD distance | 1 m | Move the cockpit HUD between 1–20 metres in 0.5 m steps. Its apparent size stays constant. Applies to fixed and follow-view modes. |
+| Follow view | Off | Keep the cockpit HUD fixed relative to the car at the selected distance. Enable to have it follow your head instead. |
+| Distance (VR HUD) | 1 m | Move the cockpit HUD between 1–20 metres in 0.5 m steps. Its apparent size stays constant. Applies to fixed and follow-view modes. |
 | Show HUD areas | Gauges off; others on | Show or hide gauges, lap/time, race position, route map and stage progress in the cockpit HUD. |
 
-Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. The Graphics tab shows the effective scene resolution and pixel count. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore graphics defaults** returns to the tested baseline; save afterward.
+Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore defaults** restores the VR baseline, turns desktop VSync on and borderless off; save afterward.
 
 For vegetation and object pop-in, try **Tree detail → Ultra** and **Object detail → Ultra**, save, then relaunch VR. **Game** keeps your existing game settings. These overrides are restored after play. Some tracks also impose their own draw distances, so Ultra may reduce transitions without eliminating all pop-in. Compare performance on the same section of track before keeping higher settings.
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
 
-The cockpit HUD is a transparent panel showing the game's race information. **HUD distance** changes its depth without shrinking the text. **Recenter** places the fixed HUD ahead of your seated position at that distance. Save and relaunch VR to apply. **HUD follows view** is off by default; Restore graphics defaults also resets distance to 1 m. Pause menus still use their separate virtual screen. Desktop HUD capture and automated rendering checks pass, but headset placement and distance changes still need testing. Technical details are in [HUD implementation notes](docs/vr-hud.md).
+The cockpit HUD is a transparent panel showing the game's race information. **VR HUD → Distance** changes its depth without shrinking the text. **Recenter** places the fixed HUD ahead of your seated position at that distance. Save and relaunch VR to apply. **Follow view** is off by default; Restore defaults also resets distance to 1 m. Pause menus still use their separate virtual screen. Desktop HUD capture and automated rendering checks pass, but headset placement and distance changes still need testing. Technical details are in [HUD implementation notes](docs/vr-hud.md).
 
-Under **HUD follows view**, uncheck the HUD areas you want hidden. These controls mask areas of the standard race HUD, so another overlay in the same area is hidden too. They do not change menus, the virtual screen, desktop play or the centre of the HUD. Save and relaunch to apply. Restore graphics defaults hides the speedometer/gear/revs area and shows the other areas. Existing saved choices are preserved on upgrade. Alternative HUD layouts and headset use still need validation.
+Under **Follow view**, uncheck the HUD areas you want hidden. These controls mask areas of the standard race HUD, so another overlay in the same area is hidden too. They do not change menus, the virtual screen, desktop play or the centre of the HUD. Save and relaunch to apply. Restore defaults hides the speedometer/gear/revs area and shows the other areas. Existing saved choices are preserved on upgrade. Alternative HUD layouts and headset use still need validation.
 
 Field-of-view cropping keeps a narrower cockpit view rather than stretching the full image. Menus remain on their normal virtual screen, although reducing render resolution also lowers their image detail. Cropping and nondefault graphics values have automated coverage but still await an in-headset check. Keep the defaults for the established setup.
 

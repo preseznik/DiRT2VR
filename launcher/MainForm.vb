@@ -10,7 +10,7 @@ Public Class MainForm
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
     Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (single-player launches)", .Name = "SkipStartupMovies", .AutoSize = True}
-    Private ReadOnly serverList As New ListView With {.Name = "LanServers", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Top, .Height = 300}
+    Private ReadOnly serverList As New LanServerList With {.Name = "LanServers", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Top, .Height = 300, .ShowItemToolTips = True}
     Private ReadOnly hostButton As New Button With {.Name = "HostLAN", .Text = "HOST", .AutoSize = True}
     Private ReadOnly joinButton As New Button With {.Name = "JoinLAN", .Text = "JOIN", .AutoSize = True, .Enabled = False}
     Private ReadOnly refreshServers As New Button With {.Name = "RefreshLAN", .Text = "Refresh", .AutoSize = True}
@@ -28,6 +28,7 @@ Public Class MainForm
     Private ReadOnly opponents As New ValueSlider("Opponents", 1, 7, 7) With {.AccessibleName = "AI opponents"}
     Private ReadOnly laps As New ValueSlider("Laps", 1, 20, 1) With {.AccessibleName = "Laps"}
     Private ReadOnly borderless As New CheckBox With {.Text = "Borderless fullscreen (desktop only)", .Name = "BorderlessDesktop", .AutoSize = True}
+    Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 150, 100, "%")
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 50, "%")
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
@@ -43,7 +44,6 @@ Public Class MainForm
     Private ReadOnly hudPosition As New CheckBox With {.Text = "Race position", .Name = "HudPosition", .AutoSize = True}
     Private ReadOnly hudMap As New CheckBox With {.Text = "Route map", .Name = "HudMap", .AutoSize = True}
     Private ReadOnly hudProgress As New CheckBox With {.Text = "Stage progress bar", .Name = "HudProgress", .AutoSize = True}
-    Private ReadOnly graphicsSummary As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private ReadOnly refreshLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
     Private lastStatus As String = ""
     Private ReadOnly toggleButton As New Button With {.AutoSize = True}
@@ -75,8 +75,8 @@ Public Class MainForm
         End Using
         Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi
-        MinimumSize = New Size(820, 690)
-        ClientSize = New Size(900, 1040)
+        MinimumSize = New Size(560, 540)
+        ClientSize = New Size(900, 960)
         StartPosition = FormStartPosition.CenterScreen
         KeyPreview = True
         Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .Padding = New Padding(20), .ColumnCount = 1, .RowCount = 4}
@@ -110,16 +110,8 @@ Public Class MainForm
                                                   desktopButton.Visible = tabs.SelectedIndex <> 1
                                                   launchButton.Visible = tabs.SelectedIndex <> 1
                                               End Sub
-        Dim commands As New TableLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill, .ColumnCount = 3, .RowCount = 1, .Margin = New Padding(0, 16, 0, 0)}
-        commands.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
-        commands.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
-        commands.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
-        Dim launches As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0)}
-        Dim utilities As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0), .Anchor = AnchorStyles.Right}
         Dim logs As New Button With {.Text = "Open logs", .AutoSize = True, .Name = "OpenLogs"}
-        launches.Controls.AddRange({desktopButton, launchButton})
-        utilities.Controls.AddRange({saveButton, recoverButton, logs})
-        commands.Controls.Add(launches, 0, 0) : commands.Controls.Add(utilities, 2, 0)
+        Dim commands As New LauncherFooter(desktopButton, launchButton, saveButton, recoverButton, logs)
         AddHandler desktopButton.Click, Sub() SafeAction(Sub()
                                                             SaveSettings()
                                                             Spawn("--launch", "--desktop", "--no-ui")
@@ -137,6 +129,7 @@ Public Class MainForm
                                                End Sub)
         layout.Controls.Add(commands)
         Controls.Add(layout)
+        AddHandler SizeChanged, Sub() stateLabel.MaximumSize = New Size(Math.Max(1, ClientSize.Width - layout.Padding.Horizontal), 0)
         RefreshBindings() : RefreshDisplayRate()
         AddHandler input.StateChanged, AddressOf OnController
         AddHandler inputTimer.Tick, Sub() input.Poll()
@@ -173,26 +166,27 @@ Public Class MainForm
     Private Shared Function Choice(name As String) As ComboBox
         Return New ComboBox With {.Name = name, .AccessibleName = name, .DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Fill, .DropDownWidth = 600}
     End Function
-    Private Function TabLayout(title As String) As TableLayoutPanel
-        ' Native themed TabPages still paint a light background in Windows dark mode.
-        ' Inherit the form's resolved system palette instead of the visual-style brush.
+    Private Function TabLayout(title As String) As VerticalStack
         Dim page As New TabPage(title) With {.Padding = New Padding(16), .UseVisualStyleBackColor = False, .BackColor = BackColor, .AutoScroll = True}
-        Dim content As New TableLayoutPanel With {.Dock = DockStyle.Top, .AutoSize = True, .ColumnCount = 1}
-        content.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
+        Dim content = Stack()
         page.Controls.Add(content) : tabs.TabPages.Add(page)
+        AddHandler page.SizeChanged, Sub()
+                                         Dim inset = Math.Max(Px(Me, 16), (page.ClientSize.Width - Px(Me, 1360)) \ 2)
+                                         page.Padding = New Padding(inset, Px(Me, 12), inset, Px(Me, 12))
+                                     End Sub
+        AddHandler content.SizeChanged, Sub() FitLabels(content)
         Return content
     End Function
-    Private Shared Function Note(text As String) As Label
-        Return New Label With {.Text = text, .AutoSize = True, .MaximumSize = New Size(710, 0), .Margin = New Padding(0, 8, 0, 12)}
-    End Function
+    Private Shared Sub FitLabels(parent As Control)
+        For Each child As Control In parent.Controls
+            If TypeOf child Is Label AndAlso child.AutoSize Then child.MaximumSize = New Size(Math.Max(1, parent.ClientSize.Width - child.Margin.Horizontal), 0)
+            If Not TypeOf child Is SettingRow Then FitLabels(child)
+        Next
+    End Sub
     Private Sub FitInitialWindow()
-        ' Size from the laid-out Settings content at the actual display DPI, then cap to the monitor.
-        Dim page = tabs.TabPages.Cast(Of TabPage).Single(Function(p) p.Text = "Settings")
-        Dim content = page.Controls(0)
-        Dim desiredHeight = Height + Math.Max(0, content.PreferredSize.Height + page.Padding.Vertical + 12 - page.ClientSize.Height)
         Dim work = Screen.FromControl(Me).WorkingArea
-        MinimumSize = New Size(Math.Min(MinimumSize.Width, work.Width), Math.Min(MinimumSize.Height, work.Height))
-        Size = New Size(Math.Min(Width, work.Width), Math.Min(desiredHeight, work.Height))
+        MinimumSize = New Size(Math.Min(Px(Me, 560), work.Width), Math.Min(Px(Me, 540), work.Height))
+        Size = New Size(Math.Min(Width, work.Width), Math.Min(Height, work.Height))
         Location = New Point(work.Left + (work.Width - Width) \ 2, work.Top + (work.Height - Height) \ 2)
     End Sub
     Private Sub BuildMultiplayerTab()
@@ -205,9 +199,9 @@ Public Class MainForm
         Dim buttons As New FlowLayoutPanel With {.Dock = DockStyle.Top, .AutoSize = True}
         buttons.Controls.AddRange({hostButton, joinButton, refreshServers}) : content.Controls.Add(buttons)
         content.Controls.Add(browserStatus)
-        content.Controls.Add(Note("HOST opens DiRT 2 and lists this PC while the game is running. Create a lobby in the game's Multiplayer / LAN menu. 'HOST game running' does not confirm a lobby or player count."))
-        content.Controls.Add(Note("JOIN opens LAN play and adds the selected PC to the game's network peers. Finish joining through the game's Multiplayer / LAN menu. Automatic lobby entry is not available yet."))
-        content.Controls.Add(Note("HOST and JOIN ask you to choose Desktop or VR each time. Both use your normal career. Multiplayer VR is untested, and the race-loading disconnect remains under investigation. Both PCs need the same local network; allow DiRT 2 on your Windows Private network if prompted."))
+        content.Controls.Add(HelpLink(Sub() ShowAbout("Multiplayer")))
+        Dim page = DirectCast(content.Parent, TabPage)
+        AddHandler page.SizeChanged, Sub() serverList.Height = Math.Max(Px(Me, 160), page.ClientSize.Height - Px(Me, 180))
         AddHandler refreshServers.Click, Sub() RefreshServerList()
         AddHandler serverList.SelectedIndexChanged, Sub() joinButton.Enabled = Not busy AndAlso If(SelectedHost()?.Joinable, False)
         AddHandler hostButton.Click, Sub() SafeAction(Sub()
@@ -242,6 +236,7 @@ Public Class MainForm
                 Dim players = If(host.HostGame, "—", host.Players & "/" & host.Capacity)
                 Dim status = If(host.HostGame, "HOST game running", If(host.Racing, "Racing", If(Not host.Joinable, "Full", If(host.Advertised, "Hosting", "Lobby"))))
                 Dim row As New ListViewItem({host.Name, host.Endpoint.ToString(), players, status}) With {.Tag = host}
+                row.ToolTipText = host.Name & Environment.NewLine & host.Endpoint.ToString() & Environment.NewLine & players & " players — " & status
                 serverList.Items.Add(row)
                 If host.Endpoint.ToString() = previous Then row.Selected = True
             Next
@@ -259,28 +254,25 @@ Public Class MainForm
     End Sub
     Private Sub BuildLaunchTab()
         Dim content = TabLayout("Launcher")
-        Dim grid As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True, .Dock = DockStyle.Top}
-        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 140))
-        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
+        Dim columns As New ResponsiveColumns()
+        content.Controls.Add(columns)
+        Dim selection = Section(columns.First, "Event selection")
+        Dim race = Section(columns.Second, "Race options")
         Dim labels = {"Launch mode", "Event", "Track", "Car", "Opponent cars"}
         Dim choices = {launchMode, eventChoice, trackChoice, carChoice, opponentCars}
         For i = 0 To choices.Length - 1
-            grid.Controls.Add(New Label With {.Text = labels(i), .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, i)
-            choices(i).Margin = New Padding(3, 8, 3, 10)
             choices(i).FlatStyle = FlatStyle.Flat
             choices(i).BackColor = BackColor : choices(i).ForeColor = ForeColor
-            ' Some native combo text areas retain a light brush even in app dark mode.
             choices(i).DrawMode = DrawMode.OwnerDrawFixed
             AddHandler choices(i).DrawItem, AddressOf DrawChoice
-            grid.Controls.Add(choices(i), 1, i)
+            AddHandler choices(i).DropDown, Sub(sender, e)
+                                               Dim box = DirectCast(sender, ComboBox)
+                                               box.DropDownWidth = Math.Min(Px(Me, 600), Screen.FromControl(box).WorkingArea.Width)
+                                           End Sub
+            Field(If(i = 4, race, selection), labels(i), choices(i))
         Next
-        content.Controls.Add(grid)
-        grid.Controls.Add(New Label With {.Text = "AI opponents", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 5)
-        opponents.Value = settings.Opponents
-        grid.Controls.Add(opponents, 1, 5)
-        grid.Controls.Add(New Label With {.Text = "Laps (circuits)", .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, 6)
-        laps.Value = settings.Laps
-        grid.Controls.Add(laps, 1, 6)
+        opponents.Value = settings.Opponents : Field(race, "AI opponents", opponents)
+        laps.Value = settings.Laps : Field(race, "Laps (circuits)", laps)
         AddHandler trackChoice.SelectedIndexChanged, Sub() RefreshLaps()
         launchMode.Items.AddRange({"Normal Launch", "Direct practice (experimental)", "Race (experimental)"})
         opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
@@ -313,16 +305,16 @@ Public Class MainForm
                                                     End Sub
         launchMode.SelectedIndex = Math.Max(0, Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode))
         content.Controls.Add(opponentHint)
-        content.Controls.Add(Note("Launch plays on your monitor; Launch VR uses SteamVR. Practice is solo; Race adds AI opponents. Start with Landrush or Rallycross; other event grids and VR cockpits remain experimental."))
-        content.Controls.Add(Note("Laps apply to circuits in both Practice and Race; point-to-point stages are one run. Finish with Restart or Return to menus. Pause also offers both choices. Return to menus closes the session and reopens Normal Launch in the same Desktop/VR mode; Alt+F4 quits without reopening. Custom races do not award career progress."))
+        content.Controls.Add(HelpLink(Sub() ShowAbout("Getting started")))
     End Sub
     Private Sub RefreshOpponentHint()
         launchButton.Enabled = Not busy
         Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
-        opponentHint.Text = If(launchMode.SelectedIndex <> 2, "Opponent car selection applies only to Race.", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed draws from all installed classes; vehicle performance can differ substantially.", "All opponents use the same car as the driver.")))
+        opponentHint.Text = If(launchMode.SelectedIndex <> 2, "", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
     End Sub
-    Private Sub ShowAbout()
+    Private Sub ShowAbout(Optional topic As String = Nothing)
         Using dialog As New AboutForm(context, availableUpdate)
+            If topic IsNot Nothing Then dialog.ShowInstructions(topic)
             dialog.ShowDialog(Me)
         End Using
     End Sub
@@ -345,13 +337,12 @@ Public Class MainForm
     End Sub
     Private Sub BuildSettingsTab()
         Dim content = TabLayout("Settings")
-        content.Controls.Add(Note("Game folder" & Environment.NewLine & context.GameRoot))
-        Dim runtimeRow As New TableLayoutPanel With {.ColumnCount = 3, .Dock = DockStyle.Top, .AutoSize = True, .Margin = New Padding(0, 12, 0, 12)}
-        runtimeRow.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
-        runtimeRow.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
-        runtimeRow.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
-        runtimeRow.Controls.Add(New Label With {.Text = "SteamVR runtime", .AutoSize = True, .Anchor = AnchorStyles.Left})
-        runtimeBox.Text = settings.Runtime
+        Dim columns As New ResponsiveColumns() : content.Controls.Add(columns)
+        Dim paths = Section(columns.First, "Locations")
+        Field(paths, "Game folder", New TextBox With {.Text = context.GameRoot, .ReadOnly = True, .Name = "GameFolder"})
+        Dim runtimeRow As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True}
+        runtimeRow.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100)) : runtimeRow.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
+        runtimeBox.Text = settings.Runtime : runtimeBox.Name = "RuntimePath"
         runtimeRow.Controls.Add(runtimeBox)
         Dim browse As New Button With {.Text = "Browse…", .AutoSize = True}
         AddHandler browse.Click, Sub()
@@ -359,95 +350,69 @@ Public Class MainForm
                                          If dialog.ShowDialog(Me) = DialogResult.OK Then runtimeBox.Text = dialog.FileName
                                      End Using
                                  End Sub
-        runtimeRow.Controls.Add(browse) : content.Controls.Add(runtimeRow)
-        skipStartupMovies.Checked = settings.SkipStartupMovies : content.Controls.Add(skipStartupMovies)
-        content.Controls.Add(Note("Skip the Codemasters, Intel, AMD and EGO startup movies in single-player launches. LAN keeps these movies because changing their definitions fails the game's race-loading checks. Other videos and the legal screen remain. Original definitions are restored after play."))
-        content.Controls.Add(Note("LAN uses the same career and graphics settings as normal play. No import or separate save is needed."))
-        skipIntroduction.Checked = settings.SkipIntroduction : content.Controls.Add(skipIntroduction)
-        content.Controls.Add(Note("LAN only: skip the opening movie and forced tutorial while keeping profile creation. Applies on the next LAN launch; turning it off does not undo saved progress. Normal Launch, Practice and Race are unaffected."))
-        logging.Checked = settings.LoggingEnabled : content.Controls.Add(logging)
-        content.Controls.Add(Note("Logging is off by default. Enable it only when troubleshooting, then save before launching. Recovery records are always kept; existing logs are not deleted."))
-        content.Controls.Add(Note("For Launch VR, start SteamVR and connect your headset first. Use the Subaru STI cockpit for the tested setup. Regular Launch does not require a headset."))
-        content.Controls.Add(Note("VR launches enter races in cockpit VR automatically. Toggle VR switches to the flat screen; Recenter resets your seated position. Menus and pause screens appear on the flat screen."))
-        content.Controls.Add(Note("Quit the game normally to restore temporary files. You can close this settings window while playing; the background session manager stays running."))
+        runtimeRow.Controls.Add(browse) : Field(paths, "SteamVR runtime", runtimeRow)
+        Dim options = Section(columns.Second, "Startup & diagnostics")
+        skipStartupMovies.Text = "On" : skipStartupMovies.Checked = settings.SkipStartupMovies : Field(options, "Skip logos (single player)", skipStartupMovies)
+        skipIntroduction.Text = "On" : skipIntroduction.Checked = settings.SkipIntroduction : Field(options, "Skip introduction (LAN)", skipIntroduction)
+        logging.Text = "On" : logging.Checked = settings.LoggingEnabled : Field(options, "Diagnostic logging", logging)
+        content.Controls.Add(HelpLink(Sub() ShowAbout("Getting started")))
     End Sub
     Private Sub BuildGraphicsTab()
         Dim content = TabLayout("Graphics")
-        content.Controls.Add(New Label With {.Text = "Desktop display", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
-        borderless.Checked = settings.BorderlessDesktop : content.Controls.Add(borderless)
-        content.Controls.Add(Note("Fill the primary monitor at desktop resolution, with window borders and in-game VSync off. Applies to desktop Launch and HOST/JOIN; original display settings are restored after play."))
-        content.Controls.Add(New Label With {.Text = "VR graphics", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
-        graphicsSummary.Margin = New Padding(0, 0, 0, 12)
-        content.Controls.Add(graphicsSummary)
-        Dim grid As New TableLayoutPanel With {.ColumnCount = 3, .Dock = DockStyle.Top, .AutoSize = True}
-        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 215))
-        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 195))
-        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
+        Dim columns As New ResponsiveColumns() : content.Controls.Add(columns)
+        Dim desktop = Section(columns.First, "Desktop")
+        borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen", borderless)
+        desktopVSync.Checked = settings.DesktopVSync : Field(desktop, "VSync", desktopVSync)
+        Dim render = Section(columns.First, "VR rendering")
         renderScale.Value = settings.RenderScale : headsetScale.Value = settings.HeadsetScale : fieldOfView.Value = settings.FieldOfView
-        mirrors.Items.AddRange({"Use game setting", "Enabled", "Disabled"})
+        mirrors.Items.AddRange({"Game setting", "On", "Off"})
         mirrors.SelectedIndex = Array.IndexOf({"game", "on", "off"}, settings.Mirrors)
-        AddGraphicsRow(grid, "Render resolution (%)", renderScale, "Lower for performance; higher for detail. Default: 100%.")
-        AddGraphicsRow(grid, "Headset texture (%)", headsetScale, "Relative to SteamVR's recommended size. Default: 50%.")
-        AddGraphicsRow(grid, "Field of view (%)", fieldOfView, "Experimental crop. 100% = full view. Lower = fewer pixels, narrower view.")
-        AddGraphicsRow(grid, "Car mirrors", mirrors, "Disabling mirrors may reduce GPU work.")
+        mirrors.DrawMode = DrawMode.OwnerDrawFixed : AddHandler mirrors.DrawItem, AddressOf DrawChoice
+        Field(render, "Render resolution", renderScale) : Field(render, "Headset texture scale", headsetScale)
+        Field(render, "Field of view", fieldOfView) : Field(render, "Car mirrors", mirrors)
         treeDetail.Value = settings.TreeDetail : objectDetail.Value = settings.ObjectDetail
-        AddGraphicsRow(grid, "Tree detail", treeDetail, "VR only. Higher detail keeps detailed vegetation farther away. Game preserves your game setting.")
-        AddGraphicsRow(grid, "Object detail", objectDetail, "VR only. Try Ultra for trackside pop-in; costs performance. Track-specific distance limits still apply.")
-        hudDistance.Value = CInt(settings.HudDistance * 2D)
-        AddGraphicsRow(grid, "HUD distance", hudDistance, "1–20 metres, in 0.5 m steps. Keeps the HUD's apparent size. Default: 1 m.")
-        content.Controls.Add(grid)
-        hudFollow.Checked = settings.HudFollowView : content.Controls.Add(hudFollow)
-        content.Controls.Add(New Label With {.Text = "Show HUD areas", .AutoSize = True})
+        Field(render, "Tree detail", treeDetail) : Field(render, "Object detail", objectDetail)
+        Field(render, "Headset refresh rate", refreshLabel)
+        Dim hud = Section(columns.Second, "VR HUD")
+        hudDistance.Value = CInt(settings.HudDistance * 2D) : Field(hud, "Distance", hudDistance)
+        hudFollow.Text = "On" : hudFollow.Checked = settings.HudFollowView : Field(hud, "Follow view", hudFollow)
+        hudGauges.Text = "Gauges" : hudPosition.Text = "Position" : hudProgress.Text = "Progress"
         hudGauges.Checked = settings.HudGauges : hudLapTime.Checked = settings.HudLapTime : hudPosition.Checked = settings.HudPosition
         hudMap.Checked = settings.HudMap : hudProgress.Checked = settings.HudProgress
-        Dim hudElements As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top, .WrapContents = True, .Margin = New Padding(12, 0, 0, 0)}
-        hudElements.Controls.AddRange({hudGauges, hudLapTime, hudPosition, hudMap, hudProgress})
-        content.Controls.Add(hudElements)
-        content.Controls.Add(Note("Uncheck to hide that area of the cockpit HUD. Other overlays in the same area are hidden too. The centre, menus, virtual screen and desktop HUD stay unchanged. Uses the standard race HUD layout."))
-        content.Controls.Add(Note("The cockpit HUD is fixed relative to the car at your chosen distance. Enable HUD follows view to keep it in front of your head. Recenter resets its position. Save and relaunch VR to apply."))
-        content.Controls.Add(Note("Render resolution controls scene detail. Raising headset texture scale alone cannot add missing detail. Cropping reduces peripheral vision; performance gains depend on the scene."))
-        content.Controls.Add(New Label With {.Text = "Headset refresh rate", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
-        content.Controls.Add(refreshLabel)
-        content.Controls.Add(Note("Set refresh rate in SteamVR or your headset connection software before launching. DiRT2VR follows the runtime; the game's desktop refresh setting does not select headset Hz."))
-        Dim defaults As New Button With {.Text = "Restore graphics defaults", .AutoSize = True}
+        Dim hudElements As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
+        For Each element In {hudGauges, hudLapTime, hudPosition, hudMap, hudProgress}
+            element.Margin = New Padding(0, 4, 16, 4) : hudElements.Controls.Add(element)
+        Next
+        Field(hud, "Show", hudElements)
+        Dim defaults As New Button With {.Text = "Restore defaults", .Name = "GraphicsDefaults", .AutoSize = True}
         AddHandler defaults.Click, Sub()
-                                       borderless.Checked = False
+                                       borderless.Checked = False : desktopVSync.Checked = True
                                        renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
-                                       hudFollow.Checked = False
-                                       hudDistance.Value = 2
-                                       treeDetail.Value = 0 : objectDetail.Value = 0
-                                       hudGauges.Checked = False
+                                       hudFollow.Checked = False : hudDistance.Value = 2
+                                       treeDetail.Value = 0 : objectDetail.Value = 0 : hudGauges.Checked = False
                                        For Each element In {hudLapTime, hudPosition, hudMap, hudProgress}
                                            element.Checked = True
                                        Next
                                    End Sub
-        content.Controls.Add(defaults)
-        content.Controls.Add(Note("Save settings to apply on the next launch. VR crowds, particles, shadows and motion blur retain the current reduced-effects setup."))
+        columns.Second.Controls.Add(defaults)
+        columns.Second.Controls.Add(HelpLink(Sub() ShowAbout("VR rendering")))
         AddHandler renderScale.ValueChanged, Sub() RefreshGraphicsSummary()
         AddHandler headsetScale.ValueChanged, Sub() RefreshGraphicsSummary()
         AddHandler fieldOfView.ValueChanged, Sub() RefreshGraphicsSummary()
         RefreshGraphicsSummary()
     End Sub
-    Private Shared Sub AddGraphicsRow(grid As TableLayoutPanel, title As String, control As Control, description As String)
-        Dim row = grid.RowCount
-        grid.RowCount += 1 : grid.RowStyles.Add(New RowStyle(SizeType.AutoSize))
-        grid.Controls.Add(New Label With {.Text = title, .AutoSize = True, .Anchor = AnchorStyles.Left}, 0, row)
-        control.Margin = New Padding(3, 6, 3, 12)
-        grid.Controls.Add(control, 1, row)
-        grid.Controls.Add(New Label With {.Text = description, .AutoSize = True, .MaximumSize = New Size(290, 0), .Margin = New Padding(4, 6, 0, 12)}, 2, row)
-    End Sub
     Private Sub RefreshGraphicsSummary()
         Dim preview As New VrSettings With {.RenderScale = CInt(renderScale.Value), .FieldOfView = CInt(fieldOfView.Value)}
         Dim pixels = preview.RenderWidth * CDbl(preview.RenderHeight) / (1600 * 1200)
-        graphicsSummary.Text = $"Scene per eye: {preview.RenderWidth} × {preview.RenderHeight} ({pixels:P0} of default pixels). Headset texture: {headsetScale.Value}% of recommended width and height."
+        renderScale.AccessibleDescription = $"Scene per eye: {preview.RenderWidth} × {preview.RenderHeight} ({pixels:P0} of default pixels). Headset texture: {headsetScale.Value}% of recommended width and height."
     End Sub
     Private Sub RefreshDisplayRate()
-        refreshLabel.Text = "Runtime-controlled. Launch once to record the headset's reported refresh rate."
+        refreshLabel.Text = "SteamVR controlled"
         Try
             Dim summaryPath = IO.Path.Combine(context.UserRoot, "headset.json")
             If File.Exists(summaryPath) Then
                 Dim summary = Files.ReadJson(Of HeadsetStatus)(summaryPath)
-                refreshLabel.Text = If(summary.RefreshHz <> "", $"Last launch reported {summary.RefreshHz} Hz ({summary.UpdatedUtc.ToLocalTime():g}). This is not a live reading.", "The last preflight did not report headset Hz. Check SteamVR or your headset connection software.")
+                refreshLabel.Text = If(summary.RefreshHz <> "", $"{summary.RefreshHz} Hz (last launch)", "SteamVR controlled")
                 Return
             End If
             Dim logs = IO.Path.Combine(context.UserRoot, "logs")
@@ -457,7 +422,7 @@ Public Class MainForm
             Dim report = IO.Path.Combine(latest, "preflight.txt")
             If Not File.Exists(report) Then Return
             Dim match = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(report), "(?m)^display_refresh_hz=([0-9.]+)")
-            refreshLabel.Text = If(match.Success, $"Last launch reported {match.Groups(1).Value} Hz ({IO.Path.GetFileName(latest)}). This is not a live reading.", "The last preflight did not report headset Hz. Check SteamVR or your headset connection software.")
+            refreshLabel.Text = If(match.Success, $"{match.Groups(1).Value} Hz (last launch)", "SteamVR controlled")
         Catch ex As IOException
             refreshLabel.Text = "Headset refresh report is unavailable. Check SteamVR or your headset connection software."
         Catch ex As UnauthorizedAccessException
@@ -468,23 +433,17 @@ Public Class MainForm
         Dim content = TabLayout("Controls")
         inputLabel.Margin = New Padding(0, 0, 0, 12)
         content.Controls.Add(inputLabel)
-        Dim grid As New TableLayoutPanel With {.ColumnCount = 3, .RowCount = 3, .Dock = DockStyle.Top, .AutoSize = True}
-        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 110))
-        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Absolute, 170))
-        grid.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
-        For Each title In {"Action", "Keyboard", "Controller / wheel"}
-            grid.Controls.Add(New Label With {.Text = title, .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(3, 0, 3, 10)})
-        Next
+
         For action = 0 To 1
             Dim selectedAction = action
-            grid.Controls.Add(New Label With {.Text = If(action = 0, "Toggle VR", "Recenter"), .AutoSize = True, .Margin = New Padding(3, 9, 3, 0)}, 0, action + 1)
+
             Dim keyButton = If(action = 0, toggleButton, recenterButton)
             keyButton.AccessibleName = If(action = 0, "Toggle VR keyboard binding", "Recenter keyboard binding")
             AddHandler keyButton.Click, Sub() BeginKeyCapture(selectedAction)
-            grid.Controls.Add(keyButton, 1, action + 1)
+
             Dim cell As New TableLayoutPanel With {.Dock = DockStyle.Fill, .AutoSize = True, .ColumnCount = 1, .Margin = New Padding(3, 3, 0, 14)}
             Dim list = bindingLists(action)
-            list.Dock = DockStyle.Fill : list.Height = 78 : list.IntegralHeight = False : list.HorizontalScrollbar = True
+            list.Dock = DockStyle.Fill : list.Height = Px(Me, 78) : list.IntegralHeight = False : list.HorizontalScrollbar = True
             list.AccessibleName = If(action = 0, "Toggle VR controller bindings", "Recenter controller bindings")
             cell.Controls.Add(list)
             Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top}
@@ -497,14 +456,10 @@ Public Class MainForm
                                          settings.Bindings.Remove(assignments(list.SelectedIndex)) : RefreshBindings()
                                      End Sub
             buttons.Controls.AddRange({bind, remove}) : cell.Controls.Add(buttons)
-            grid.Controls.Add(cell, 2, action + 1)
+            content.Controls.Add(New BindingRow(If(action = 0, "Toggle VR", "Recenter"), keyButton, cell))
         Next
-        content.Controls.Add(grid)
-        content.Controls.Add(Note("Click a keyboard binding to assign a key with optional Ctrl/Alt/Shift. Use Bind… for one controller button or a two-button combination, then release. Escape cancels. Multiple devices can be assigned to an action."))
-        content.Controls.Add(Note("Controller buttons still perform their normal game actions. Avoid driving/menu conflicts. Disconnected assignments are kept; Xbox slot changes may require rebinding."))
-        content.Controls.Add(Note("Save settings to keep changes. Bindings apply on the next launch."))
+
         content.Controls.Add(New Label With {.Text = "Driving controls", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
-        content.Controls.Add(Note("Direct practice and Race load your existing profile's controls before the event. Use the optional editor below to assign steering, pedals, clutch, handbrake and gears across launcher modes."))
         Dim driving As New Button With {.Text = "Configure driving controls…", .AutoSize = True, .Name = "DrivingControls"}
         AddHandler driving.Click, Sub()
                                      If busy Then Return
@@ -515,6 +470,7 @@ Public Class MainForm
                                                 End Sub)
                                  End Sub
         content.Controls.Add(driving)
+        content.Controls.Add(HelpLink(Sub() ShowAbout("Controls")))
     End Sub
     Private Sub SafeAction(action As Action)
         Try
@@ -529,6 +485,7 @@ Public Class MainForm
         settings.SkipIntroduction = skipIntroduction.Checked
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.BorderlessDesktop = borderless.Checked
+        settings.DesktopVSync = desktopVSync.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.HudFollowView = hudFollow.Checked

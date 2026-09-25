@@ -55,7 +55,12 @@ Public Class Session
                             If Screen.PrimaryScreen Is Nothing Then Throw New IOException("The primary display is unavailable.")
                             desktopBounds = Screen.PrimaryScreen.Bounds
                             Status("Preparing", "Desktop borderless fullscreen")
-                            graphics.PrepareDesktop(desktopBounds.Value.Width, desktopBounds.Value.Height)
+                        End If
+                        If File.Exists(context.GraphicsPath) OrElse settings.BorderlessDesktop Then
+                            graphics.PrepareDesktop(desktopBounds.GetValueOrDefault().Width, desktopBounds.GetValueOrDefault().Height, settings.DesktopVSync)
+                        Else
+                            ' Let a first Normal Launch create its graphics file; apply the preference on the next session.
+                            displayWarning = "Run the game once to create graphics settings; desktop VSync will apply on your next launch."
                         End If
                         Dim returnToMenus = RunDesktop()
                         Status("Restoring") : graphics.Recover() : Worker.Invoke(context, "recover")

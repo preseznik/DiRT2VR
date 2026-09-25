@@ -6,7 +6,11 @@ Version headings below identify published GitHub packages. Earlier local-build e
 
 ## Unreleased
 
-- Add optional desktop borderless fullscreen under Graphics, off by default. Desktop launches use the primary monitor's native desktop size with in-game VSync off; display overrides recover after play. VR is unchanged. Desktop borderless display, Alt+Tab and Return to menus passed a local 0.13.0 check; frame-rate comparison is recorded in the launcher implementation notes.
+- Add a separate desktop VSync toggle, on by default, independent of borderless. Desktop launches temporarily apply the choice and restore original settings after play; VR retains its own timing setup.
+- Reorganize Graphics into compact Desktop, VR rendering and VR HUD groups. Move detailed guidance into the offline ? → Instructions tab.
+- Adapt Launcher, Multiplayer, Graphics, Controls, Settings and Help to wide, portrait and compact windows. Groups reflow, bindings stack and LAN rows become tiles at narrow widths; action buttons remain outside scrolling content. Resize checks preserve unsaved settings and keyboard capture.
+
+- Add optional desktop borderless fullscreen under Graphics, off by default. Desktop launches use the primary monitor's native desktop size and the separate VSync preference; display overrides recover after play. VR is unchanged. Desktop borderless display, Alt+Tab and Return to menus passed a local 0.13.0 check; frame-rate comparison is recorded in the launcher implementation notes.
 - Correct release history: assign shipped changes to their published versions and dates; retain only unpublished work here.
 
 - Add prominent latest-release and all-releases links near the top of the README, and document the publishing check that keeps the latest link current.
