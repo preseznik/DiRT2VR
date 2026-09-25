@@ -15,6 +15,8 @@ Public Class AboutForm
     Private ReadOnly progress As New ProgressBar With {.Dock = DockStyle.Top, .Visible = False}
     Private availableUpdate As ReleaseUpdate
     Private working As Boolean
+    Private ReadOnly helpTabs As New TabControl With {.Dock = DockStyle.Fill, .Name = "HelpTabs"}
+    Private ReadOnly instructions As New InstructionsView()
     Public Sub New(value As InstallContext, Optional knownUpdate As ReleaseUpdate = Nothing)
         context = value
         Text = "DiRT2VR — Help / About"
@@ -23,10 +25,17 @@ Public Class AboutForm
         End Using
         Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi
-        ClientSize = New Size(640, Math.Min(740, Screen.PrimaryScreen.WorkingArea.Height - 100)) : MinimumSize = New Size(600, 540)
+        ClientSize = New Size(900, Math.Min(820, Screen.PrimaryScreen.WorkingArea.Height - 100)) : MinimumSize = New Size(560, 540)
         StartPosition = FormStartPosition.CenterParent
-        ShowInTaskbar = False : MinimizeBox = False : MaximizeBox = False
-        Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .Padding = New Padding(20), .ColumnCount = 1, .AutoScroll = True}
+        ShowInTaskbar = False : MinimizeBox = False : MaximizeBox = True
+        Dim aboutPage As New TabPage("About") With {.UseVisualStyleBackColor = False, .BackColor = BackColor, .AutoScroll = True}
+        Dim instructionsPage As New TabPage("Instructions") With {.UseVisualStyleBackColor = False, .BackColor = BackColor, .Padding = New Padding(16)}
+        helpTabs.TabPages.AddRange({aboutPage, instructionsPage})
+        instructions.Font = Font : instructions.BackColor = BackColor : instructions.ForeColor = ForeColor
+        instructions.ShowTopic("Getting started")
+        instructionsPage.Controls.Add(instructions)
+        Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Top, .AutoSize = True, .Padding = New Padding(20), .ColumnCount = 1}
+        aboutPage.Controls.Add(layout)
         layout.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
         AddText(layout, "DiRT2VR", 20, True)
         Dim revision = BuildInfo.FullVersion.Split("+"c).Skip(1).FirstOrDefault()
@@ -35,21 +44,31 @@ Public Class AboutForm
         AddText(layout, "Developed by Bohloney", 11, True)
         AddText(layout, BuildInfo.Description)
         Dim links As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top}
-        Link(links, "Instructions", Sub() OpenInstructions())
+        Link(links, "Instructions", Sub() ShowInstructions())
+        Link(links, "Open README", Sub() OpenReadme())
         Link(links, "GitHub / report an issue", Sub() OpenUrl(UpdateService.Repository & "/issues"))
         Link(links, "Releases", Sub() OpenUrl(UpdateService.Releases))
         layout.Controls.Add(links)
-        AddText(layout, "Launch plays on your monitor; Launch VR uses SteamVR. Toggle VR switches the view; Recenter sets your seated position. Controls can be changed on the Controls tab.")
         layout.Controls.Add(preview)
         Dim actions As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top}
         actions.Controls.AddRange({checkButton, installButton}) : layout.Controls.Add(actions)
         layout.Controls.Add(status) : layout.Controls.Add(progress)
-        AddText(layout, "Close the game before updating. Downloads are verified before setup opens. Settings are kept. ZIP installs become installer-managed. Windows may request administrator approval.")
+        AddText(layout, "Close the game before updating. Your settings are kept.")
         Dim closeButton As New Button With {.Text = "Close", .AutoSize = True, .DialogResult = DialogResult.Cancel, .Name = "CloseAbout"}
         Dim footer As New FlowLayoutPanel With {.Dock = DockStyle.Bottom, .AutoSize = True, .FlowDirection = FlowDirection.RightToLeft, .Padding = New Padding(12)}
         footer.Controls.Add(closeButton) : CancelButton = closeButton
-        Controls.Add(layout)
+        Controls.Add(helpTabs)
         Controls.Add(footer)
+        AddHandler aboutPage.SizeChanged, Sub()
+                                              For Each label In layout.Controls.OfType(Of Label)()
+                                                  label.MaximumSize = New Size(Math.Max(1, aboutPage.ClientSize.Width - layout.Padding.Horizontal - Px(Me, 16)), 0)
+                                              Next
+                                          End Sub
+        AddHandler Shown, Sub()
+                              Dim work = Screen.FromControl(Me).WorkingArea
+                              MinimumSize = New Size(Math.Min(MinimumSize.Width, work.Width), Math.Min(MinimumSize.Height, work.Height))
+                              Size = New Size(Math.Min(Width, work.Width), Math.Min(Height, work.Height))
+                          End Sub
         AddHandler checkButton.Click, Async Sub() Await CheckUpdate()
         AddHandler installButton.Click, Async Sub() Await InstallUpdate()
         AddHandler preview.CheckedChanged, Sub()
@@ -80,7 +99,11 @@ Public Class AboutForm
     Private Shared Sub OpenUrl(url As String)
         Process.Start(New ProcessStartInfo(url) With {.UseShellExecute = True})
     End Sub
-    Private Sub OpenInstructions()
+    Public Sub ShowInstructions(Optional topic As String = "Getting started")
+        helpTabs.SelectedIndex = 1
+        instructions.ShowTopic(topic)
+    End Sub
+    Private Sub OpenReadme()
         Dim readme = IO.Path.Combine(context.ModRoot, "README.md")
         If File.Exists(readme) Then
             Dim start As New ProcessStartInfo("notepad.exe") With {.UseShellExecute = False}

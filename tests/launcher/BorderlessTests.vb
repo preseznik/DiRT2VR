@@ -25,7 +25,7 @@ Public Module BorderlessTests
         Dim original = System.Text.Encoding.UTF8.GetBytes("<hardware_settings_config><graphics_card><resolution width='1280' height='720' fullscreen='true' vsync='1' multisampling='4xmsaa'><refreshRate rate='120'/></resolution></graphics_card><shadows enabled='true'/><particles enabled='true'/></hardware_settings_config>")
         Files.AtomicWrite(graphics, original)
         Dim transaction As New GraphicsTransaction(context)
-        transaction.PrepareDesktop(2560, 1440)
+        transaction.PrepareDesktop(2560, 1440, False)
         Dim changed = XmlPatches.Read(IO.File.ReadAllBytes(graphics))
         Dim resolution = DirectCast(changed.SelectSingleNode("//resolution"), Xml.XmlElement)
         check(resolution.GetAttribute("width") = "2560" AndAlso resolution.GetAttribute("height") = "1440" AndAlso resolution.GetAttribute("fullscreen") = "false" AndAlso resolution.GetAttribute("vsync") = "0", "borderless sets only the desktop display overrides")
@@ -40,7 +40,7 @@ Public Module BorderlessTests
         ' A new manager instance recovers after an interrupted preparation/failed launch.
         Call (New GraphicsTransaction(context)).Recover()
         check(IO.File.ReadAllBytes(graphics).SequenceEqual(original), "interrupted desktop preparation restores exact original bytes")
-        transaction.PrepareDesktop(2560, 1440)
+        transaction.PrepareDesktop(2560, 1440, False)
         changed = XmlPatches.Read(IO.File.ReadAllBytes(graphics))
         DirectCast(changed.SelectSingleNode("//shadows"), Xml.XmlElement).SetAttribute("enabled", "false")
         DirectCast(changed.SelectSingleNode("//resolution"), Xml.XmlElement).SetAttribute("multisampling", "8xmsaa")
@@ -51,11 +51,33 @@ Public Module BorderlessTests
         check(changed.SelectSingleNode("//shadows/@enabled").Value = "false" AndAlso changed.SelectSingleNode("//resolution/@multisampling").Value = "8xmsaa", "desktop recovery preserves unrelated game setting edits")
         transaction.Recover()
         check(Not transaction.Pending, "desktop repeat recovery is harmless")
+        For Each borderless In {False, True}
+            For Each vsync In {False, True}
+                Files.AtomicWrite(graphics, original)
+                transaction.PrepareDesktop(If(borderless, 2560, 0), If(borderless, 1440, 0), vsync)
+                changed = XmlPatches.Read(IO.File.ReadAllBytes(graphics))
+                resolution = DirectCast(changed.SelectSingleNode("//resolution"), Xml.XmlElement)
+                check(resolution.GetAttribute("vsync") = If(vsync, "1", "0"), "desktop VSync " & vsync & " independent of borderless " & borderless)
+                check(resolution.GetAttribute("width") = If(borderless, "2560", "1280") AndAlso resolution.GetAttribute("fullscreen") = If(borderless, "false", "true"), "VSync-only override preserves display mode")
+                Call (New GraphicsTransaction(context)).Recover()
+                check(IO.File.ReadAllBytes(graphics).SequenceEqual(original), "VSync interrupted/failed-launch recovery restores original bytes")
+            Next
+        Next
+        transaction.PrepareDesktop(vsync:=False)
+        changed = XmlPatches.Read(IO.File.ReadAllBytes(graphics))
+        DirectCast(changed.SelectSingleNode("//resolution"), Xml.XmlElement).SetAttribute("width", "1920")
+        Files.AtomicWrite(graphics, XmlPatches.Bytes(changed))
+        transaction.Recover()
+        changed = XmlPatches.Read(IO.File.ReadAllBytes(graphics))
+        check(changed.SelectSingleNode("//resolution/@vsync").Value = "1" AndAlso changed.SelectSingleNode("//resolution/@width").Value = "1920", "VSync-only recovery preserves in-game resolution changes")
         Dim settings = System.Text.Json.JsonSerializer.Deserialize(Of VrSettings)("{""Version"":3}")
         check(Not settings.BorderlessDesktop, "older settings and new installs default borderless off")
+        check(settings.DesktopVSync, "older settings and new installs default desktop VSync on")
         settings.BorderlessDesktop = True
+        settings.DesktopVSync = False
         Files.SaveJson(context.PreferencesPath, settings)
         check(VrSettings.Load(context).BorderlessDesktop, "desktop borderless preference survives saving")
+        check(Not VrSettings.Load(context).DesktopVSync, "explicit VSync off survives saving")
 
         Dim target As New Rectangle(Screen.PrimaryScreen.Bounds.Right + 200, 50, 640, 480)
         Dim manager As New BorderlessWindow(context, target)
