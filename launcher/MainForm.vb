@@ -27,6 +27,7 @@ Public Class MainForm
     Private ReadOnly carChoice As ComboBox = Choice("PracticeCar")
     Private ReadOnly opponents As New ValueSlider("Opponents", 1, 7, 7) With {.AccessibleName = "AI opponents"}
     Private ReadOnly laps As New ValueSlider("Laps", 1, 20, 1) With {.AccessibleName = "Laps"}
+    Private ReadOnly borderless As New CheckBox With {.Text = "Borderless fullscreen (desktop only)", .Name = "BorderlessDesktop", .AutoSize = True}
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 150, 100, "%")
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 50, "%")
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
@@ -372,6 +373,10 @@ Public Class MainForm
     End Sub
     Private Sub BuildGraphicsTab()
         Dim content = TabLayout("Graphics")
+        content.Controls.Add(New Label With {.Text = "Desktop display", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
+        borderless.Checked = settings.BorderlessDesktop : content.Controls.Add(borderless)
+        content.Controls.Add(Note("Fill the primary monitor at desktop resolution, with window borders and in-game VSync off. Applies to desktop Launch and HOST/JOIN; original display settings are restored after play."))
+        content.Controls.Add(New Label With {.Text = "VR graphics", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
         graphicsSummary.Margin = New Padding(0, 0, 0, 12)
         content.Controls.Add(graphicsSummary)
         Dim grid As New TableLayoutPanel With {.ColumnCount = 3, .Dock = DockStyle.Top, .AutoSize = True}
@@ -406,6 +411,7 @@ Public Class MainForm
         content.Controls.Add(Note("Set refresh rate in SteamVR or your headset connection software before launching. DiRT2VR follows the runtime; the game's desktop refresh setting does not select headset Hz."))
         Dim defaults As New Button With {.Text = "Restore graphics defaults", .AutoSize = True}
         AddHandler defaults.Click, Sub()
+                                       borderless.Checked = False
                                        renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False
                                        hudDistance.Value = 2
@@ -416,7 +422,7 @@ Public Class MainForm
                                        Next
                                    End Sub
         content.Controls.Add(defaults)
-        content.Controls.Add(Note("Save settings to apply on the next launch. Crowds, particles, shadows and motion blur retain the current reduced-effects setup."))
+        content.Controls.Add(Note("Save settings to apply on the next launch. VR crowds, particles, shadows and motion blur retain the current reduced-effects setup."))
         AddHandler renderScale.ValueChanged, Sub() RefreshGraphicsSummary()
         AddHandler headsetScale.ValueChanged, Sub() RefreshGraphicsSummary()
         AddHandler fieldOfView.ValueChanged, Sub() RefreshGraphicsSummary()
@@ -522,6 +528,7 @@ Public Class MainForm
         settings.LoggingEnabled = logging.Checked
         settings.SkipIntroduction = skipIntroduction.Checked
         settings.SkipStartupMovies = skipStartupMovies.Checked
+        settings.BorderlessDesktop = borderless.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.HudFollowView = hudFollow.Checked
@@ -660,6 +667,8 @@ Public Class MainForm
                 stateLabel.Text = "Recovery pending. Close the game and choose Restore original files."
             ElseIf status IsNot Nothing AndAlso status.State = "Failed" Then
                 stateLabel.Text = "Failed: " & status.Message
+            ElseIf status IsNot Nothing AndAlso status.DisplayWarning <> "" Then
+                stateLabel.Text = "Ready — " & status.DisplayWarning
             ElseIf Not File.Exists(IO.Path.Combine(context.GameRoot, "dirt2_game.exe")) Then
                 stateLabel.Text = "Extract the complete package into your DiRT 2 game folder."
             Else

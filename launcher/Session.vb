@@ -6,6 +6,7 @@ Public Class SessionStatus
     Public Property Message As String = ""
     Public Property ProcessId As Integer
     Public Property StartupFocus As String = ""
+    Public Property DisplayWarning As String = ""
     Public Property UpdatedUtc As DateTime = DateTime.UtcNow
 End Class
 Public Class HeadsetStatus
@@ -18,6 +19,8 @@ Public Class Session
     Private ReadOnly driving As DrivingControls
     Private ReadOnly lanJoinTarget As String
     Private focusStatus As String = ""
+    Private displayWarning As String = ""
+    Private desktopBounds As Drawing.Rectangle?
     Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing)
         context = value : settings = VrSettings.Load(context)
         driving = DrivingControls.Load(context)
@@ -25,7 +28,7 @@ Public Class Session
         If multiplayer OrElse joinTarget IsNot Nothing Then settings.LaunchMode = "lan"
     End Sub
     Private Sub Status(state As String, Optional message As String = "")
-        Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message, .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus})
+        Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message & If(displayWarning = "", "", " " & displayWarning), .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus, .DisplayWarning = displayWarning})
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
@@ -43,11 +46,18 @@ Public Class Session
                     context.ValidateGame() : context.RequireClosed()
                     ' Preserve desktop behavior for older LAN quick-launch commands; VR is an explicit choice.
                     If settings.LaunchMode = "lan" Then vr = vr AndAlso lanVr
+                    desktopBounds = Nothing
                     If Not vr Then
                         Status("Restoring", "Checking for an interrupted session")
                         graphics.Recover() : Worker.Invoke(context, "recover")
+                        If settings.BorderlessDesktop Then
+                            If Screen.PrimaryScreen Is Nothing Then Throw New IOException("The primary display is unavailable.")
+                            desktopBounds = Screen.PrimaryScreen.Bounds
+                            Status("Preparing", "Desktop borderless fullscreen")
+                            graphics.PrepareDesktop(desktopBounds.Value.Width, desktopBounds.Value.Height)
+                        End If
                         Dim returnToMenus = RunDesktop()
-                        Status("Restoring") : Worker.Invoke(context, "recover")
+                        Status("Restoring") : graphics.Recover() : Worker.Invoke(context, "recover")
                         If returnToMenus Then
                             settings.LaunchMode = "menus"
                             Continue Do
@@ -205,6 +215,7 @@ Public Class Session
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         Dim focus As New StartupFocus(context)
+        Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using returnChannel As New DirectReturnChannel(start, settings.DirectMode)
             Using child = Process.Start(start)
                 Status("Running")
@@ -215,6 +226,11 @@ Public Class Session
                 Do
                     Application.DoEvents() : poll?.Invoke()
                     If DateTime.UtcNow >= nextProcessCheck Then
+                        borderless?.Poll()
+                        If borderless IsNot Nothing AndAlso borderless.Warning <> "" AndAlso displayWarning <> borderless.Warning Then
+                            displayWarning = borderless.Warning : Status("Running")
+                            Console.Error.WriteLine(displayWarning)
+                        End If
                         focus.Poll()
                         If focusStatus <> focus.Outcome Then
                             focusStatus = focus.Outcome : Status("Running")

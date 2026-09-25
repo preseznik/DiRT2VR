@@ -101,6 +101,7 @@ Public Class VrSettings
     Public Property RecenterKey As Integer = 121
     Public Property RecenterModifiers As Integer
     Public Property Bindings As New List(Of ControllerBinding)
+    Public Property BorderlessDesktop As Boolean = False
     Public Property RenderScale As Integer = 100
     Public Property HeadsetScale As Integer = 50
     Public Property FieldOfView As Integer = 100

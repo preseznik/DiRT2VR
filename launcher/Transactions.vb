@@ -220,13 +220,8 @@ Public Class GraphicsTransaction
         End Get
     End Property
     Public Sub Prepare(Optional settings As VrSettings = Nothing)
-        context.RequireClosed()
-        If Pending Then Throw New IOException("Graphics settings recovery is pending.")
         settings = If(settings, New VrSettings())
         settings.Validate()
-        Dim original = File.ReadAllBytes(context.GraphicsPath)
-        Dim document = XmlPatches.Read(original)
-        Dim journal As New GraphicsJournal()
         Dim specs As New List(Of String) From {"crowd|enabled|false", "particles|enabled|false", "shadows|enabled|false", "postprocess|quality|0", "cpu/threadStrategy|parallelUpdateRender|false", "dynamic_ambient_occ|enabled|false", $"graphics_card/resolution|width|{settings.RenderWidth}", $"graphics_card/resolution|height|{settings.RenderHeight}", "graphics_card/resolution|fullscreen|false", "graphics_card/resolution|vsync|0"}
         If settings.Mirrors <> "game" Then specs.Add("mirrors|enabled|" & If(settings.Mirrors = "on", "true", "false"))
         ' Values from the supported game's hardware_settings_options.xml.
@@ -235,6 +230,19 @@ Public Class GraphicsTransaction
             specs.Add(detail.Item1 & "|lod|" & {"0.5", "0.75", "1.0", "1.25", "1.5"}(detail.Item2 - 1))
             specs.Add(detail.Item1 & "|maxlod|" & If(detail.Item2 <= 2, "1", "0"))
         Next
+        PrepareChanges(specs)
+    End Sub
+    Public Sub PrepareDesktop(width As Integer, height As Integer)
+        If width <= 0 OrElse height <= 0 Then Throw New IOException("The primary display has no usable resolution.")
+        PrepareChanges({$"graphics_card/resolution|width|{width}", $"graphics_card/resolution|height|{height}", "graphics_card/resolution|fullscreen|false", "graphics_card/resolution|vsync|0"})
+    End Sub
+    Private Sub PrepareChanges(specs As IEnumerable(Of String))
+        context.RequireClosed()
+        If Pending Then Throw New IOException("Graphics settings recovery is pending.")
+        If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once to create graphics settings.")
+        Dim original = File.ReadAllBytes(context.GraphicsPath)
+        Dim document = XmlPatches.Read(original)
+        Dim journal As New GraphicsJournal()
         For Each spec In specs
             Dim parts = spec.Split("|"c)
             Dim node = TryCast(document.SelectSingleNode("/hardware_settings_config/" & parts(0)), XmlElement)

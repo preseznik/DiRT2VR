@@ -4,6 +4,18 @@ End-user instructions are in [README](../README.md). The launcher works in the e
 
 ## Appearance
 
+### Desktop borderless fullscreen
+
+`VrSettings.BorderlessDesktop` is an additive, default-false preference. Graphics separates Desktop display from VR graphics. Desktop Normal Launch, direct sessions, HOST/JOIN and quick launch share the desktop branch in `Session.Run`; each pass through the Return to menus restart loop takes a fresh primary-monitor bounds snapshot. VR ignores the option.
+
+`GraphicsTransaction.PrepareDesktop` journals only resolution width/height, fullscreen=false and vsync=0, reusing version-1 recovery and exact-byte/attribute-merge restoration. It does not override effects, antialiasing, adapter, refresh rate or the Windows display mode. Desktop cleanup now recovers this journal on exit as well as before launch; exception and interrupted-session recovery use the existing path.
+
+`BorderlessWindow` checks the installation's executable path before touching its main HWND. It removes frame/edge styles and queues `SetWindowPos` with FRAMECHANGED, NOACTIVATE, NOOWNERZORDER and ASYNCWINDOWPOS; Z order is preserved unless removing an existing topmost flag. Replacement HWNDs are handled independently. Hidden, minimized, hung windows and standard error dialogs are skipped. Position/style acceptance has a five-second deadline, with rollback and a persistent session warning on rejection. Completed windows are not continually resized or activated. The startup-focus handoff remains separate.
+
+Regression coverage includes missing-preference defaults, UI saving/reset, VR resolution isolation, display-only preparation, interrupted/repeated recovery, unrelated XML edits, and real owned Windows Forms windows for frame removal, bounds, foreground/topmost invariants, minimization, replacement and rejection rollback. Actual DiRT 2 presentation, return-to-menus, mixed-DPI and high-refresh FPS acceptance remain pending until recorded here; window-style success alone is not FPS proof.
+
+### Existing appearance and graphics behavior
+
 Tree detail and Object detail are independent named sliders in Graphics. Zero preserves the user's setting; levels 1–5 map the installed native presets to `lod` 0.5/0.75/1.0/1.25/1.5 and `maxlod` 1/1/0/0/0. Overrides enter the existing graphics journal only for VR. Exact restoration and merging unrelated XML edits are covered in launcher tests. Track-specific distance limits remain; no track assets are edited and headset performance comparison is pending.
 
 Direct-session menu asset recovery and the process restart used by Return to menus are documented in [direct practice](direct-practice.md#finish-and-return-lifecycle--2026-09-23).
@@ -45,9 +57,9 @@ A desktop focus trace showed DiRT 2 replacing its first foreground HWND with a s
 
 `VrSettings.LoggingEnabled` defaults to false, including for saved JSON without that field. The launcher passes explicit `DIRT2VR_LOGGING=0/1` to active VR and desktop-practice sessions and omits their output path when disabled. All native diagnostic streams go through `TraceFile`; `Log` is also gated. Screenshot/shader capture and expensive memory/GPU instrumentation are disabled with logging. Rendering, shader identities, head tracking and recovery are independent of that flag. `tools/run-trace.ps1` explicitly enables logs, as does the developer-only `--diagnostic-capture` VR launch option. Disabled logging preserves old files; no automatic deletion occurs. Automated tests cover absent/disabled/enabled native logging, existing-file preservation, preference migration, UI saving and both active launch paths.
 
-Desktop mode recovers pending VR changes first, then skips runtime validation/preflight, VR input polling and graphics/camera preparation. Normal menu launch passes `DIRT2VR_ACTIVE=0` after removing inherited mod flags and does not deploy a proxy. Desktop practice requires `graphics_card/directx@forcedx9=false`, deploys the recognized proxy and passes `DIRT2VR_DESKTOP_PRACTICE=1` with the direct-practice flag. The proxy takes an early path that applies the guarded human-control byte only, before MinHook, render hooks, hotkeys or OpenXR initialization. When logging is enabled, desktop session logs therefore contain only compatibility/control diagnostics.
+Desktop mode recovers pending VR changes first, then skips runtime validation/preflight, VR input polling and VR graphics/camera preparation. Optional desktop borderless preparation is described above. Normal menu launch passes `DIRT2VR_ACTIVE=0` after removing inherited mod flags and does not deploy a proxy. Desktop practice requires `graphics_card/directx@forcedx9=false`, deploys the recognized proxy and passes `DIRT2VR_DESKTOP_PRACTICE=1` with the direct-practice flag. The proxy takes an early path that applies the guarded human-control byte only, before MinHook, render hooks, hotkeys or OpenXR initialization. When logging is enabled, desktop session logs therefore contain only compatibility/control diagnostics.
 
-Version 4 recovery journals own only the desktop practice config, with no game-asset entries or graphics journal. They retain the short-path hash/ownership and existing-file conflict checks. Versions 1–3 continue to recover as before. Desktop and VR sessions share the mutex and process-wait routine, including cleanup on launch failure and game exit.
+Version 4 recovery journals own only the desktop practice config, with no game-asset entries; the separate graphics journal is used only if desktop borderless is enabled. They retain the short-path hash/ownership and existing-file conflict checks. Versions 1–3 continue to recover as before. Desktop and VR sessions share the mutex and process-wait routine, including cleanup on launch failure and game exit.
 
 The package carries its x86 D3D11 proxy under `DiRT2VR/payload`. Setup validates the supported executable SHA256, rejects linked paths and foreign proxies, then records the installed proxy hash in `DiRT2VR/installation.json`. Upgrades accept the current packaged hash or a matching installed ownership receipt.
 
