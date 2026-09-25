@@ -33,8 +33,13 @@ Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
 Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
 Copy-Item -LiteralPath 'build\driving-input\driving_input.dll' -Destination "$stage\DiRT2VR\payload"
 & (Join-Path $PSScriptRoot 'lan/Stage-LauncherPayload.ps1') -Stage $stage
-Copy-Item -LiteralPath 'README.md','CHANGELOG.md' -Destination "$stage\DiRT2VR"
-Copy-Item -LiteralPath 'docs' -Destination "$stage\DiRT2VR\docs" -Recurse
+# Ship user-facing guidance only. Technical documentation stays in the repository;
+# versioned web links keep the packaged Markdown useful without a local docs folder.
+foreach ($name in @('README.md','CHANGELOG.md')) {
+    $text=Get-Content -LiteralPath $name -Raw
+    $text=$text.Replace('](docs/', "](https://github.com/preseznik/DiRT2VR/blob/v$version/docs/")
+    [IO.File]::WriteAllText((Join-Path "$stage\DiRT2VR" $name),$text)
+}
 @'
 @echo off
 start "" /wait "%~dp0DiRT2VR.exe" --launch --no-ui
@@ -64,6 +69,7 @@ foreach ($name in @('Microsoft.NETCore.App.Runtime.win-x64','Microsoft.WindowsDe
     if (Test-Path -LiteralPath $notices) { Copy-Item -LiteralPath $notices -Destination "$stage\DiRT2VR\licenses\$name-NOTICES.txt" }
 }
 $hashes=[ordered]@{}
+if (Test-Path -LiteralPath "$stage\DiRT2VR\docs") { throw 'Developer docs must not be included in end-user packages.' }
 Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {
     $relative=[IO.Path]::GetRelativePath($stage,$_.FullName).Replace('\','/')
     $hashes[$relative]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
