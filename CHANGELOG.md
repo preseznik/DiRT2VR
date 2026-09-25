@@ -6,7 +6,7 @@ Version headings below identify published GitHub packages. Earlier local-build e
 
 ## Unreleased
 
-No pending changes.
+- Distribute matching LAN library source as a separate versioned release ZIP instead of installing `lan-source`. Retain LGPL notices and a source-download link with its checksum under `DiRT2VR/licenses`.
 
 ## 0.14.2 — 2026-09-25
 

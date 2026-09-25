@@ -228,4 +228,6 @@ See the [changelog](CHANGELOG.md). Build instructions and diagnostic details are
 
 Third-party license notices are included in `DiRT2VR/licenses` in packaged builds. This product includes software developed by Jon Skeet and Marc Gravell. Contact skeet@pobox.com, or see https://jonskeet.uk).
 
+Matching LAN library source is available separately as `DiRT2VR-<version>-LAN-source.zip` on the same GitHub release. It is not needed to play. `DiRT2VR/licenses/LAN-source.txt` contains the exact download link and checksum.
+
 Microsoft GFWL 3.5.95.0: this build includes a candidate fix for crashes during VR sessions. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3 gameplay confirmation is still pending; see [investigation status](docs/pc3-crash.md).
