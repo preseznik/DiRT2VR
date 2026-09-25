@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$Stage)
+param([Parameter(Mandatory)][string]$Stage,[Parameter(Mandatory)][string]$SourceStage,[Parameter(Mandatory)][string]$Version)
 $ErrorActionPreference='Stop'
 $repo=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $upstream=Join-Path $repo '.deps/xlivelessness'
@@ -10,8 +10,10 @@ Copy-Item -LiteralPath "$upstream/LICENSE.md" -Destination "$Stage/DiRT2VR/licen
 Copy-Item -LiteralPath "$repo/build/lan/_deps/opus-src/COPYING" -Destination "$Stage/DiRT2VR/licenses/Opus.txt"
 Copy-Item -LiteralPath "$repo/build/lan/_deps/rapidxml-src/license.txt" -Destination "$Stage/DiRT2VR/licenses/RapidXML.txt"
 Copy-Item -LiteralPath "$repo/build/lan/_deps/rapidjson-src/license.txt" -Destination "$Stage/DiRT2VR/licenses/RapidJSON.txt"
-# Corresponding source in its buildable repository layout. No game/profile/SDK files.
-$source=Join-Path $Stage 'DiRT2VR/lan-source'
+# Corresponding source is a separate release asset, never part of the installed payload.
+$source=[IO.Path]::GetFullPath($SourceStage)
+$payloadRoot=[IO.Path]::GetFullPath($Stage).TrimEnd('\','/')
+if ($source -eq $payloadRoot -or $source.StartsWith($payloadRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'LAN source staging must be outside the installed payload.' }
 New-Item -ItemType Directory -Path "$source/.deps/xlivelessness","$source/tools","$source/src","$source/tests" -Force | Out-Null
 foreach ($name in @('xlivelessness','cmake','CMakeLists.txt','README.md','LICENSE.md')) {
     Copy-Item -LiteralPath (Join-Path $upstream $name) -Destination "$source/.deps/xlivelessness" -Recurse
@@ -23,3 +25,11 @@ Copy-Item -LiteralPath "$repo/tests/lan_browser_test.cpp" -Destination "$source/
 Copy-Item -LiteralPath "$repo/tests/lan_keepalive_test.cpp" -Destination "$source/tests"
 Copy-Item -LiteralPath "$repo/tests/lan_diagnostics_test.cpp" -Destination "$source/tests"
 Copy-Item -LiteralPath "$repo/tests/lan_identity_test.cpp" -Destination "$source/tests"
+Copy-Item -LiteralPath "$PSScriptRoot/SOURCE-README.md" -Destination "$source/README.md"
+[ordered]@{
+    Version=$Version
+    ProjectCommit=(git -C $repo rev-parse HEAD)
+    UpstreamCommit=(git -C $upstream rev-parse HEAD)
+    BinarySha256=(Get-FileHash -LiteralPath "$Stage/DiRT2VR/payload/xlive-lan.dll").Hash
+    IntegrationPatchSha256=(Get-FileHash -LiteralPath "$PSScriptRoot/xlln-integration.patch").Hash
+} | ConvertTo-Json | Set-Content -LiteralPath "$source/source-info.json" -Encoding utf8

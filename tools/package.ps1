@@ -32,7 +32,24 @@ if ($LASTEXITCODE) { throw 'Launcher publish failed' }
 Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
 Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
 Copy-Item -LiteralPath 'build\driving-input\driving_input.dll' -Destination "$stage\DiRT2VR\payload"
-& (Join-Path $PSScriptRoot 'lan/Stage-LauncherPayload.ps1') -Stage $stage
+$sourceStage=Join-Path $output 'lan-source'
+& (Join-Path $PSScriptRoot 'lan/Stage-LauncherPayload.ps1') -Stage $stage -SourceStage $sourceStage -Version $version
+$sourceName="DiRT2VR-$version-LAN-source.zip"
+$sourceZip=Join-Path $output $sourceName
+# ZipFile includes dot-directories such as .deps; do not use a wildcard archive input.
+[IO.Compression.ZipFile]::CreateFromDirectory($sourceStage,$sourceZip)
+$sourceHash=(Get-FileHash -LiteralPath $sourceZip).Hash.ToLowerInvariant()
+@"
+DiRT2VR $version LAN library source (XLiveLessNess, LGPL 2.1)
+
+Matching source and build instructions:
+https://github.com/preseznik/DiRT2VR/releases/download/v$version/$sourceName
+SHA-256: $sourceHash
+
+Release page: https://github.com/preseznik/DiRT2VR/releases/tag/v$version
+Source is an optional download; it is not needed to play or installed by setup.
+License: XLLN-LGPL-2.1.txt in this directory.
+"@ | Set-Content -LiteralPath "$stage/DiRT2VR/licenses/LAN-source.txt" -Encoding utf8
 # Ship user-facing guidance only. Technical documentation stays in the repository;
 # versioned web links keep the packaged Markdown useful without a local docs folder.
 foreach ($name in @('README.md','CHANGELOG.md')) {
@@ -70,6 +87,7 @@ foreach ($name in @('Microsoft.NETCore.App.Runtime.win-x64','Microsoft.WindowsDe
 }
 $hashes=[ordered]@{}
 if (Test-Path -LiteralPath "$stage\DiRT2VR\docs") { throw 'Developer docs must not be included in end-user packages.' }
+if (Test-Path -LiteralPath "$stage\DiRT2VR\lan-source") { throw 'LAN source must be distributed as a separate release asset.' }
 Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {
     $relative=[IO.Path]::GetRelativePath($stage,$_.FullName).Replace('\','/')
     $hashes[$relative]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
