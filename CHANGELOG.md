@@ -6,6 +6,7 @@ Version headings below identify published GitHub packages. Earlier local-build e
 
 ## Unreleased
 
+- Add optional desktop borderless fullscreen under Graphics, off by default. Desktop launches use the primary monitor's native desktop size with in-game VSync off; display overrides recover after play. VR is unchanged. Actual game presentation and high-refresh performance acceptance are pending.
 - Correct release history: assign shipped changes to their published versions and dates; retain only unpublished work here.
 
 - Add prominent latest-release and all-releases links near the top of the README, and document the publishing check that keeps the latest link current.

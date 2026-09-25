@@ -84,6 +84,12 @@ Race uses the same finish and pause choices as practice. It stops at the finish 
 
 ### Graphics
 
+**Borderless fullscreen (desktop only)** is off by default. Enable it to fill the primary monitor at its current desktop resolution without window borders. It applies to desktop Normal Launch, Practice, Race and multiplayer HOST/JOIN, including desktop quick launch. It temporarily disables in-game VSync and restores the original display settings after play. Windows resolution/refresh rate and VR launches stay unchanged. Save and relaunch to apply; Restore graphics defaults turns it off.
+
+Borderless mode uses the game's windowed rendering path as a workaround for its exclusive-fullscreen frame-rate limitation. Driver limits, desktop composition and performance can still affect FPS; a frame rate above 60 is not guaranteed. Native desktop resolution may cost more GPU time than your previous game resolution. If Windows rejects the window change, the launcher reports a warning and leaves ordinary windowed play available. Alt+Tab and minimization remain available.
+
+The following settings apply to VR:
+
 | Setting | Default | Effect |
 |---|---|---|
 | Render resolution | 100% | 1600 × 1200 per eye at full field of view. Adjust from 50–150%; lower values reduce scene detail and pixel work. |

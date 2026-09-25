@@ -45,6 +45,11 @@ Module Program
             Console.WriteLine("All " & passed & " prototype checks passed")
             Return
         End If
+        BorderlessTests.Run(folder, AddressOf Check)
+        If args.Contains("--borderless-only") Then
+            Console.WriteLine(passed & " borderless checks passed. Artifacts: " & folder)
+            Return
+        End If
         UpdateTests.Run(folder, AddressOf Check, args.Contains("--live-updates"))
         LanTests.Run(repo, folder, AddressOf Check)
         LanBrowserTests.Run(AddressOf Check)
@@ -107,6 +112,10 @@ Module Program
         gt.Prepare() : Reject(Sub() gt.Prepare(), "graphics originals protected")
         gt.Recover()
         Check(Files.Hash(graphics) = graphicsHash, "graphics bytes restored exactly")
+        gt.Prepare(New VrSettings With {.BorderlessDesktop = True})
+        Dim vrDisplay = XmlPatches.Read(File.ReadAllBytes(graphics))
+        Check(vrDisplay.SelectSingleNode("//resolution/@width").Value = "1600" AndAlso vrDisplay.SelectSingleNode("//resolution/@height").Value = "1200", "desktop borderless preference does not change VR resolution")
+        gt.Recover()
         gt.Prepare()
         Dim document = XmlPatches.Read(File.ReadAllBytes(graphics))
         DirectCast(document.DocumentElement, Xml.XmlElement).SetAttribute("unrelatedTest", "keep")
@@ -467,6 +476,9 @@ Module Program
             DirectCast(form.Controls.Find("ObjectDetail", True).Single(), ValueSlider).Value = 4
             Check(form.Controls.Find("TreeDetailValue", True).Single().Text = "Ultra" AndAlso form.Controls.Find("ObjectDetailValue", True).Single().Text = "High", "scenery sliders display named presets")
             Dim hudToggle = DirectCast(form.Controls.Find("HudFollowView", True).Single(), CheckBox)
+            Dim borderlessToggle = DirectCast(form.Controls.Find("BorderlessDesktop", True).Single(), CheckBox)
+            Check(Not borderlessToggle.Checked AndAlso borderlessToggle.Parent Is hudToggle.Parent, "desktop borderless toggle defaults off on Graphics")
+            borderlessToggle.Checked = True
             Check(Not hudToggle.Checked AndAlso Not (New VrSettings()).HudFollowView, "HUD follows view defaults off for existing and new settings")
             Check(hudToggle.Parent.Parent.Text = "Graphics", "HUD follow control is on Graphics tab")
             hudToggle.Checked = True
@@ -485,6 +497,7 @@ Module Program
             DirectCast(form.Controls.Find("Mirrors", True).Single(), ComboBox).SelectedIndex = 2
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             Dim saved = VrSettings.Load(context)
+            Check(saved.BorderlessDesktop, "Graphics tab persists borderless preference")
             Check(saved.LoggingEnabled, "Settings logging opt-in persists")
             Check(saved.TreeDetail = 5 AndAlso saved.ObjectDetail = 4, "scenery detail choices persist independently")
             Check(saved.HudFollowView, "HUD follows view setting persists")
@@ -521,6 +534,7 @@ Module Program
             tabs.SelectedIndex = 2
             form.Controls.Find("HudFollowView", True).Single().Parent.Controls.OfType(Of Button).Single(Function(b) b.Text = "Restore graphics defaults").PerformClick()
             Check(Not hudToggle.Checked, "Restore graphics defaults returns HUD to fixed placement")
+            Check(Not borderlessToggle.Checked, "Restore graphics defaults turns borderless off")
             Check(distanceSlider.Value = 2, "Restore graphics defaults restores one metre HUD distance")
             Check(hudNames.All(Function(name) DirectCast(form.Controls.Find(name, True).Single(), CheckBox).Checked = (name <> "HudGauges")), "Restore graphics defaults hides only the gauges")
             form.Close()
