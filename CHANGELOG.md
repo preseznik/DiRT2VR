@@ -6,6 +6,12 @@ Version headings below identify published GitHub packages. Earlier local-build e
 
 ## Unreleased
 
+No pending changes.
+
+## 0.14.2 — 2026-09-25
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.14.2)
+
 - Exclude developer `/docs` from installer and ZIP packages. Keep the end-user README, changelog, licenses and in-app Instructions; packaged technical-document links point to the matching GitHub release source.
 
 ## 0.14.1 — 2026-09-25
