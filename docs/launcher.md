@@ -12,7 +12,17 @@ End-user instructions are in [README](../README.md). The launcher works in the e
 
 `BorderlessWindow` checks the installation's executable path before touching its main HWND. It removes frame/edge styles and queues `SetWindowPos` with FRAMECHANGED, NOACTIVATE, NOOWNERZORDER and ASYNCWINDOWPOS; Z order is preserved unless removing an existing topmost flag. Replacement HWNDs are handled independently. Hidden, minimized, hung windows and standard error dialogs are skipped. Position/style acceptance has a five-second deadline, with rollback and a persistent session warning on rejection. Completed windows are not continually resized or activated. The startup-focus handoff remains separate.
 
-Regression coverage includes missing-preference defaults, UI saving/reset, VR resolution isolation, display-only preparation, interrupted/repeated recovery, unrelated XML edits, and real owned Windows Forms windows for frame removal, bounds, foreground/topmost invariants, minimization, replacement and rejection rollback. Actual DiRT 2 presentation, return-to-menus, mixed-DPI and high-refresh FPS acceptance remain pending until recorded here; window-style success alone is not FPS proof.
+Regression coverage includes missing-preference defaults, UI saving/reset, VR resolution isolation, display-only preparation, interrupted/repeated recovery, unrelated XML edits, and real owned Windows Forms windows for frame removal, bounds, foreground/topmost invariants, minimization, replacement and rejection rollback. Local 0.13.0 desktop acceptance on 2026-09-25 confirmed full-screen coverage without borders, Alt+Tab away/back and Return to menus. The completed session had no display warning or pending recovery. Original resolution (2560x1440), VSync=1, antialiasing and refresh-rate attributes were restored; the recovered XML was semantically identical to its backup (the game changed serialization). A separate live window probe recorded both startup HWNDs at 3840x2160 with no frame or topmost flag on a 120 Hz desktop. Mixed-DPI/multiple-monitor moves and multiplayer gameplay still need acceptance; window-style success alone is not FPS proof. Main-workspace dark-theme tests passed 596 checks; the scoped distribution suite passed 573.
+
+The built-in Baja / Ensenada Sprint benchmark ran once per mode on the RTX 4080 SUPER at 3840x2160, desktop 120 Hz, 8x MSAA and in-game VSync off, using the same original effects settings. It reported:
+
+| Requested display mode | Average FPS | Minimum FPS |
+|---|---:|---:|
+| Borderless | 438.84 | 260.51 |
+| Ordinary windowed | 453.59 | 366.95 |
+| Game fullscreen setting | 465.12 | 377.75 |
+
+These are game-reported benchmark results, not measured display scanout or a statistically controlled performance comparison. The fullscreen 60 FPS cap was **not reproduced** in this benchmark on this machine; do not advertise a universal cap fix. All runs exited normally, the display XML recovered to its original semantic contents, and the temporary benchmark config was removed. Evidence is under `artifacts/borderless-benchmark/` (ignored local logs, original result XML and `acceptance.json`). The 0.13.0 installer/ZIP were packaged before this acceptance record and remain unpublished.
 
 ### Existing appearance and graphics behavior
 
