@@ -69,3 +69,14 @@ overrides enabled and disabled. Retain unrelated bindings and Xbox calibration.
 See [driving controls](driving-controls.md). No blanket zero-deadzone or
 profile-loading change is included. Full interactive updater-to-installer
 handoff remains untested for this version.
+
+## Publication
+
+Published [0.15.2](https://github.com/preseznik/DiRT2VR/releases/tag/v0.15.2)
+as a normal release, with tag commit `c69d312b8f1fdd8a792e084e0eec4109842fc4bd`.
+The anonymous latest-release API and web redirect both select 0.15.2. All three
+uploaded asset digests match the local package; an anonymous download of the
+tagged LAN source archive matches its recorded hash. The launcher's actual
+HTTP client and update selector successfully detect the verified 0.15.2
+installer from installed version 0.15.1 (`artifacts/release-0.15.2/update-check.log`).
+Issues #2 and #3 were confirmed open after publication.
