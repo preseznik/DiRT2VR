@@ -63,7 +63,9 @@ Public Class VerticalStack
         End Try
     End Sub
     Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
-        Return New Size(proposedSize.Width, Height)
+        ' Scroll layout probes with unconstrained widths (65535). Do not turn that
+        ' measurement into a transient giant window for every native child.
+        Return New Size(Width, Height)
     End Function
 End Class
 
@@ -101,7 +103,7 @@ Public Class SettingRow
         End Try
     End Sub
     Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
-        Return New Size(proposedSize.Width, Height)
+        Return New Size(Width, Height)
     End Function
 End Class
 
@@ -133,7 +135,7 @@ Public Class ResponsiveColumns
         End Try
     End Sub
     Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
-        Return New Size(proposedSize.Width, Height)
+        Return New Size(Width, Height)
     End Function
 End Class
 
@@ -172,7 +174,7 @@ Public Class LauncherFooter
         End Try
     End Sub
     Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
-        Return New Size(proposedSize.Width, Height)
+        Return New Size(Width, Height)
     End Function
 End Class
 
@@ -208,7 +210,7 @@ Public Class BindingRow
         End Try
     End Sub
     Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
-        Return New Size(proposedSize.Width, Height)
+        Return New Size(Width, Height)
     End Function
 End Class
 

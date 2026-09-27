@@ -153,6 +153,7 @@ Public Class Session
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
         start.Environment("DIRT2VR_WORLD_SCALE") = "1"
         start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
+        start.Environment("DIRT2VR_SCENE_SIZE") = $"{settings.RenderWidth}x{settings.RenderHeight}"
         start.Environment("DIRT2VR_FOV_SCALE") = (settings.FieldOfView / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_HUD_FOLLOW") = If(settings.HudFollowView, "1", "0")
         start.Environment("DIRT2VR_HUD_DISTANCE") = settings.HudDistance.ToString(Globalization.CultureInfo.InvariantCulture)

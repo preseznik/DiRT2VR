@@ -22,9 +22,21 @@ Evidence is in `%LOCALAPPDATA%/DiRT2VR/AB7025AA8C9222C378C5D88E/logs`. All rows 
 
 The source mismatch exists on the first observed Present and persists: increasing headset texture scale successfully increases the output texture, but still scales a 720p game image. In `src/trace.cpp`, each eye renders through `realInner` and captures the game backbuffer before `CopyEye` presents it, so the backbuffer is part of the actual stereo image path, not just an unrelated desktop mirror.
 
-A read-only Windows display-mode enumeration on this PC includes 800 × 600 and 1600 × 1200, but excludes the failed 2400 × 1800, 3200 × 2400 and 4800 × 3600 sizes. The list also includes 1920 × 1440 and 2048 × 1536. This strongly suggests game-side validation against display modes. It does not yet establish the exact validation instruction or whether an additional size restriction applies. `hardware_settings_restrictions.xml` only supplies minimum size and aspect constraints, not this upper-size fallback.
+## Engine fix, 2026-09-27
 
-Next: trace requested-size selection before swapchain creation, compare a supported larger 4:3 mode with the failed arbitrary sizes, and apply a guarded VR-only change at the engine's resolution-selection point. Verify scene/depth target sizes and viewports as well as the backbuffer. Enlarging only the final OpenXR texture or forcing only the swapchain dimensions would not establish higher-resolution scene rendering. Preserve desktop behavior and existing graphics recovery. No resolution-enforcement patch is included here.
+Disassembly corrects the earlier display-mode-list hypothesis: windowed validation at RVA `0xac3b52` compares the XML dimensions with `GetSystemMetrics(0/1)` (desktop width/height). An oversized request fails and is replaced by 1280 × 720. The D3D11 proxy loads after that decision.
+
+At the verified `D3D11CreateDeviceAndSwapChain` call (return RVA `0xd29b55`), the proxy now sets the renderer's width/height, windowed dimensions and resident swapchain descriptor together, before the engine allocates its colour/depth targets. This is a process-local data change, gated by VR activation, the supported executable hash, call site and renderer layout. It changes neither executable bytes nor Windows display modes. Desktop startup clears the requested VR dimensions. Existing graphics recovery remains in use.
+
+Bounded isolated-copy tests with the actual game:
+
+- `artifacts/scene-resolution-2400x1800-234502`: fallback 1280 × 720 corrected to 2400 × 1800; colour targets, including 2x MSAA HDR, render at that size.
+- `artifacts/scene-resolution-3200x2400-234725`: fallback corrected to 3200 × 2400; scene colour targets, depth buffer and draw-time viewport agree. Captured frame 1200 is 3200 × 2400.
+- These are rendering/allocation checks, not headset image-quality or sustained performance acceptance. The runtime was not visible/focused, so eye submission is not claimed. The diagnostic restored the original proxy and graphics XML bytes after each run.
+
+## Launcher layout fix
+
+The Launcher regression reproduced 84 sibling control resizes, including temporary dropdown widths around 65,000 pixels. Responsive containers returned the unconstrained measurement width as their preferred size, causing a real resize before layout corrected it. They now return their current managed width; opponent descriptions also keep allocated bounds. Launcher slider and opponent-choice changes cause zero sibling resizes. Both light and dark layout suites pass 577 checks. Human flashing confirmation remains pending.
 
 ## Local delivery
 

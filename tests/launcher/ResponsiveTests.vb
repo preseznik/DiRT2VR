@@ -19,6 +19,7 @@ Public Module ResponsiveTests
             check(form.Controls.Find("ActualResolution", True).Single().Text.Contains("1280 × 720") AndAlso form.Controls.Find("ActualResolution", True).Single().Text.Contains("differs"), "actual dimensions and mismatch are visible independently of requested slider")
             CheckResolutionRefresh(form, context, check)
             CheckSliderRedraws(form, check)
+            CheckLauncherRedraws(form, check)
             Dim renderTrack = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
             Dim recommendation = form.Controls.Find("RenderScaleRecommendation", True).Single()
             check(recommendation.Text = "150% recommended", "render resolution displays recommendation independently of selected value")
@@ -107,6 +108,35 @@ Public Module ResponsiveTests
             End Using
             form.Close()
         End Using
+    End Sub
+    Private Sub CheckLauncherRedraws(form As MainForm, check As Action(Of Boolean, String))
+        Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
+        tabs.SelectedTab = tabs.TabPages.Cast(Of TabPage)().Single(Function(page) page.Text = "Launcher")
+        Dim mode = DirectCast(form.Controls.Find("LaunchMode", True).Single(), ComboBox)
+        Dim opponents = DirectCast(form.Controls.Find("OpponentCars", True).Single(), ComboBox)
+        Dim savedMode = mode.SelectedIndex, savedOpponents = opponents.SelectedIndex
+        mode.SelectedIndex = 2 : Application.DoEvents()
+        CheckSliderRedraws(form, check)
+        Dim moves As Integer
+        Dim peers = Descendants(tabs.SelectedTab).Where(Function(control) TypeOf control Is TrackBar OrElse TypeOf control Is ComboBox).ToArray()
+        Dim moved As EventHandler = Sub(sender, e)
+                                        moves += 1
+                                    End Sub
+        For Each peer In peers
+            AddHandler peer.SizeChanged, moved
+        Next
+        Try
+            For Each value In {0, 1, 2, 0}
+                opponents.SelectedIndex = value : Application.DoEvents()
+            Next
+            check(moves = 0, $"Launcher hint changes leave controls at stable sizes (resizes={moves})")
+        Finally
+            For Each peer In peers
+                RemoveHandler peer.SizeChanged, moved
+            Next
+            opponents.SelectedIndex = savedOpponents : mode.SelectedIndex = savedMode
+            tabs.SelectedTab = tabs.TabPages.Cast(Of TabPage)().Single(Function(page) page.Text = "Graphics")
+        End Try
     End Sub
     Private Sub CheckSliderRedraws(form As MainForm, check As Action(Of Boolean, String))
         Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
