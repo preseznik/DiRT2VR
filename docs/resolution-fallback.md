@@ -25,3 +25,7 @@ The source mismatch exists on the first observed Present and persists: increasin
 A read-only Windows display-mode enumeration on this PC includes 800 × 600 and 1600 × 1200, but excludes the failed 2400 × 1800, 3200 × 2400 and 4800 × 3600 sizes. The list also includes 1920 × 1440 and 2048 × 1536. This strongly suggests game-side validation against display modes. It does not yet establish the exact validation instruction or whether an additional size restriction applies. `hardware_settings_restrictions.xml` only supplies minimum size and aspect constraints, not this upper-size fallback.
 
 Next: trace requested-size selection before swapchain creation, compare a supported larger 4:3 mode with the failed arbitrary sizes, and apply a guarded VR-only change at the engine's resolution-selection point. Verify scene/depth target sizes and viewports as well as the backbuffer. Enlarging only the final OpenXR texture or forcing only the swapchain dimensions would not establish higher-resolution scene rendering. Preserve desktop behavior and existing graphics recovery. No resolution-enforcement patch is included here.
+
+## Local delivery
+
+The package script reserved 0.15.4. Package hashes, source provenance, ZIP setup/repeat setup and the installer pass. Deployment to artifacts/game exited 0 and preserved 15,551 protected files, including game data, saves and settings. Native payloads match 0.15.3; only launcher/readout behavior and documentation change. Evidence: artifacts/slider-redraw-0.15.4. This patch has not been published as a GitHub release.
