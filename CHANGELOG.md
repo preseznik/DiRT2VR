@@ -6,11 +6,13 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Keep release assets to the installer, player ZIP and checksums. Move matching LAN source archives into the repository and remove standalone diagnostic downloads from past and future releases; retain installed licenses and source references.
+No pending changes.
 
 ## 0.15.0 — 2026-09-27
 
-Local test build; not yet published to GitHub.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.15.0)
+
+- Keep release assets to the installer, player ZIP and checksums. Move matching LAN source archives into the repository and remove standalone diagnostic downloads from past and future releases; retain installed licenses and source references.
 
 - Add a VR anti-aliasing slider (Off/2×/4×/8×), defaulting to 2× with high-memory warnings at 4× and 8×. Restore the original desktop MSAA after play.
 - Size the HUD's OpenXR texture independently of the eyes, using the source image capped at 2048 pixels on its longest edge. HUD distance and apparent size remain unchanged.
