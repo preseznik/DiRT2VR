@@ -35,7 +35,10 @@ Copy-Item -LiteralPath 'build\driving-input\driving_input.dll' -Destination "$st
 $sourceStage=Join-Path $output 'lan-source'
 & (Join-Path $PSScriptRoot 'lan/Stage-LauncherPayload.ps1') -Stage $stage -SourceStage $sourceStage -Version $version
 $sourceName="DiRT2VR-$version-LAN-source.zip"
-$sourceZip=Join-Path $output $sourceName
+$sourceArchive=Join-Path $root 'source-archives/lan'
+New-Item -ItemType Directory -Path $sourceArchive -Force | Out-Null
+$sourceZip=Join-Path $sourceArchive $sourceName
+if (Test-Path -LiteralPath $sourceZip) { throw "Refusing to replace an existing source archive: $sourceZip" }
 # ZipFile includes dot-directories such as .deps; do not use a wildcard archive input.
 [IO.Compression.ZipFile]::CreateFromDirectory($sourceStage,$sourceZip)
 $sourceHash=(Get-FileHash -LiteralPath $sourceZip).Hash.ToLowerInvariant()
@@ -43,11 +46,11 @@ $sourceHash=(Get-FileHash -LiteralPath $sourceZip).Hash.ToLowerInvariant()
 DiRT2VR $version LAN library source (XLiveLessNess, LGPL 2.1)
 
 Matching source and build instructions:
-https://github.com/preseznik/DiRT2VR/releases/download/v$version/$sourceName
+https://github.com/preseznik/DiRT2VR/raw/refs/tags/v$version/source-archives/lan/$sourceName
 SHA-256: $sourceHash
 
 Release page: https://github.com/preseznik/DiRT2VR/releases/tag/v$version
-Source is an optional download; it is not needed to play or installed by setup.
+Source is preserved in the repository; it is not a release asset or needed to play.
 License: XLLN-LGPL-2.1.txt in this directory.
 "@ | Set-Content -LiteralPath "$stage/DiRT2VR/licenses/LAN-source.txt" -Encoding utf8
 # Ship user-facing guidance only. Technical documentation stays in the repository;
@@ -100,7 +103,8 @@ if (!(Test-Path -LiteralPath $InnoCompiler)) { throw "Inno compiler not found: $
 if ($LASTEXITCODE) { throw 'Installer compile failed' }
 Get-ChildItem -LiteralPath $output -File | Get-FileHash | Format-Table -AutoSize
 # Upload these exact versioned assets to a GitHub Release tagged v<PackageVersion>.
-Get-ChildItem -LiteralPath $output -File | Where-Object Extension -In '.exe','.zip' | ForEach-Object {
+Get-Item -LiteralPath (Join-Path $output "DiRT2VR-$version-Setup.exe"),$zip | ForEach-Object {
     (Get-FileHash -LiteralPath $_.FullName).Hash.ToLowerInvariant()+'  '+$_.Name
 } | Set-Content -LiteralPath (Join-Path $output 'SHA256SUMS.txt') -Encoding ascii
 Write-Host "Package output: $output"
+Write-Host "Commit matching LAN source before tagging the release: $sourceZip"
