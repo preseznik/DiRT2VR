@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-No pending changes.
+- Keep release assets to the installer, player ZIP and checksums. Move matching LAN source archives into the repository and remove standalone diagnostic downloads from past and future releases; retain installed licenses and source references.
 
 ## 0.15.0 — 2026-09-27
 

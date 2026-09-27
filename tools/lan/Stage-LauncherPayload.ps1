@@ -10,7 +10,7 @@ Copy-Item -LiteralPath "$upstream/LICENSE.md" -Destination "$Stage/DiRT2VR/licen
 Copy-Item -LiteralPath "$repo/build/lan/_deps/opus-src/COPYING" -Destination "$Stage/DiRT2VR/licenses/Opus.txt"
 Copy-Item -LiteralPath "$repo/build/lan/_deps/rapidxml-src/license.txt" -Destination "$Stage/DiRT2VR/licenses/RapidXML.txt"
 Copy-Item -LiteralPath "$repo/build/lan/_deps/rapidjson-src/license.txt" -Destination "$Stage/DiRT2VR/licenses/RapidJSON.txt"
-# Corresponding source is a separate release asset, never part of the installed payload.
+# Corresponding source is archived in the repository, never in the player package or release assets.
 $source=[IO.Path]::GetFullPath($SourceStage)
 $payloadRoot=[IO.Path]::GetFullPath($Stage).TrimEnd('\','/')
 if ($source -eq $payloadRoot -or $source.StartsWith($payloadRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'LAN source staging must be outside the installed payload.' }
