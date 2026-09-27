@@ -24,7 +24,7 @@ Save settings, then launch a new session. Quit the game normally so temporary fi
 Startup options
 Skip startup logo movies affects single-player launches. LAN ignores it to preserve the game's content checks. Skip introduction applies to LAN's opening movie/tutorial; it keeps profile creation and does not undo saved career progress.",
         "Borderless fullscreen
-Fills the primary monitor at its current desktop resolution. It applies to desktop Normal Launch, Practice, Race and HOST/JOIN. Windows resolution and refresh rate stay unchanged. A higher resolution may cost performance.
+Fills the primary monitor at its current desktop resolution. It applies to desktop Normal Launch, Practice, Race and HOST/JOIN, not Launch VR. The VR mirror remains windowed. Windows resolution and refresh rate stay unchanged. A higher resolution may cost performance.
 
 VSync
 On by default for desktop play, independently of borderless. Turn it off to allow uncapped rendering. The preference is temporary and the original game setting is restored after play. VR keeps its own timing and VSync setup.
@@ -35,10 +35,10 @@ Driver settings, Windows and your monitor can affect frame rate and presentation
 First launch and recovery
 If the game has not created a graphics file yet, use Normal Launch once before applying display overrides. If Windows rejects a borderless window change, the launcher reports a warning and keeps ordinary windowed play available. Alt+Tab and minimization remain available.",
         "Render resolution
-100% renders 1600 × 1200 per eye at full field of view. The 50–300% slider scales width and height. 150% is marked recommended; the default remains 100%. 300% renders 4800 × 3600 per eye, nine times the baseline pixels, and needs substantially more memory and GPU time. Lower values reduce pixel work and detail.
+100% requests 1600 × 1200 per eye at full field of view. The 50–300% slider scales width and height. 150% is marked recommended; the default remains 100%. 300% requests 4800 × 3600 per eye, nine times the baseline pixels, and needs substantially more memory and GPU time if applied. Graphics shows the requested scene size and the last VR launch's measured game and headset dimensions. A mismatch means the game did not retain the requested size; the apparent mirror window size alone is not proof. Enable diagnostic logging before a troubleshooting run to record startup size changes.
 
 Headset texture scale
-25–100% of SteamVR's recommended width and height. Increasing this alone cannot add detail missing from the scene render. Default: 50%. The HUD has an independent texture sized from the game image, capped at 2048 pixels on its longest edge; this does not change HUD distance or apparent size.
+25–100% of SteamVR's recommended width and height. Increasing this alone cannot add detail missing from the scene render; a low value can also limit detail from a larger scene. Default: 50%. Change one setting at a time when comparing clarity. The HUD has an independent texture sized from the game image, capped at 2048 pixels on its longest edge; this does not change HUD distance or apparent size.
 
 Anti-aliasing (MSAA)
 VR uses its own Off / 2× / 4× / 8× setting. Default: 2×. Higher values smooth edges but cost memory and GPU time; 4× and especially 8× may make VR unstable in this 32-bit game. Reduce MSAA first if VR crashes. Your desktop MSAA is restored after play.
@@ -73,6 +73,9 @@ Controller buttons still reach DiRT 2. Avoid combinations that also trigger driv
 
 Driving controls
 Direct practice and Race load the existing profile's controls. Configure driving controls opens the optional editor and binding wizard for steering, pedals, clutch, handbrake and gears. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings.
+
+Deadzone resets
+Enabled launcher assignments and calibration reapply on every launch. The editor shows dead zone and saturation beside each controller assignment. To retain zero steering deadzone with launcher bindings, set Calibration to 0% for both Steer Left and Steer Right, then Save driving controls. Alternatively, disable launcher bindings and use the game's saved controls. If a reset persists with overrides disabled, report the wheel model, launch mode and whether the game's Save Profile action retains the setting across two launches.
 
 Analogue capture
 Leave axes at rest before starting, then move the requested axis deliberately. Small movements are ignored. Follow the wizard prompts for steering directions and pedals.

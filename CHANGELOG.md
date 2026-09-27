@@ -8,6 +8,13 @@ Version headings identify distribution builds; published packages include a GitH
 
 No pending changes.
 
+## 0.15.2 — 2026-09-27
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.15.2)
+
+- Add requested-versus-measured VR resolution to Graphics, including the game backbuffer and both OpenXR eye sizes. Keep one latest summary with logging off and cap opt-in startup/resize history at 32 changes. Clarify that borderless fullscreen is desktop-only. Native reporting, cross-process and launcher checks cover the diagnostic path; issue #2's unchanged clarity at 300% still needs affected-headset reproduction.
+- Show saved dead zone and saturation beside driving assignments, refresh them after calibration, and explain that enabled launcher bindings reapply on launch. Add repeated-launch-preparation coverage for 0% steering, disabled overrides and retained pedal/Xbox settings. Issue #3's reported in-game reset to 5% remains unverified; no controller defaults or profile-loading behavior change.
+
 ## 0.15.1 — 2026-09-27
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.15.1)

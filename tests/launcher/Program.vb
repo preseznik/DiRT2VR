@@ -26,6 +26,11 @@ Module Program
         Dim folder = IO.Path.Combine(repo, "artifacts", "launcher-tests-" & DateTime.Now.ToString("yyyyMMdd-HHmmss"))
         Dim root = IO.Path.Combine(folder, "DiRT 2 Ž test")
         Directory.CreateDirectory(root)
+        If args.Contains("--resolution-only") Then
+            ResolutionTests.Run(repo, folder, AddressOf Check)
+            Console.WriteLine(passed & " resolution checks passed. Artifacts: " & folder)
+            Return
+        End If
         If args.Contains("--layout-only") Then
             ResponsiveTests.Run(New InstallContext(IO.Path.Combine(repo, "artifacts/game"), IO.Path.Combine(folder, "layout-user")), folder, AddressOf Check)
             Console.WriteLine(passed & " responsive checks passed. Artifacts: " & folder)
@@ -37,6 +42,7 @@ Module Program
             Return
         End If
         BorderlessTests.Run(folder, AddressOf Check)
+        ResolutionTests.Run(repo, folder, AddressOf Check)
         VrMemoryTests.Run(folder, AddressOf Check)
         If args.Contains("--borderless-only") Then
             Console.WriteLine(passed & " borderless checks passed. Artifacts: " & folder)

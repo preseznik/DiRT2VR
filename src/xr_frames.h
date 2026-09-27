@@ -34,6 +34,7 @@ public:
     bool Exiting() const { return exiting_; }
     uint64_t Submitted() const { return submitted_; }
     bool Visible() const { return visible_; }
+    std::array<uint32_t,4> EyeDimensions() const { return {eyes_[0].width,eyes_[0].height,eyes_[1].width,eyes_[1].height}; }
 private:
     void Report(const char* format,...);
     bool Check(XrResult result,const char* operation);

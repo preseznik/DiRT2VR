@@ -14,9 +14,11 @@ public:
     bool Exiting() const { return frames_ && frames_->Exiting(); }
     bool Visible() const { return frames_ && frames_->Visible(); }
     uint64_t Submitted() const { return frames_ ? frames_->Submitted() : 0; }
+    std::array<uint32_t,4> EyeDimensions() const { return eyeDimensions_; }
 private:
     XrInstance instance_{};
     XrSession session_{};
     std::unique_ptr<XrFrames> frames_;
     EyeBlit blit_;
+    std::array<uint32_t,4> eyeDimensions_{}; // Retain the last allocation for the final session report.
 };

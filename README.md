@@ -60,7 +60,7 @@ The launcher matches the Windows app light/dark setting when opened. Reopen it a
 
 **Launcher** selects how to start. **Settings** contains the game location, SteamVR runtime and setup instructions. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts and graphics preferences are preserved when upgrading.
 
-**Settings → Enable diagnostic logging** is off by default, including when upgrading older settings. Enable it and save before a troubleshooting run to collect preflight details and game-side logs in **Open logs**. Turn it off afterward to stop generating session logs, frame CSVs and diagnostic captures. Existing logs are kept; you can remove them yourself when no longer needed. Settings, the latest session/refresh-rate summary and recovery journals remain available with logging off so the launcher can restore your game files safely.
+**Settings → Enable diagnostic logging** is off by default, including when upgrading older settings. Enable it and save before a troubleshooting run to collect preflight details and game-side logs in **Open logs**. Turn it off afterward to stop generating session logs, frame CSVs and diagnostic captures. Existing logs are kept; you can remove them yourself when no longer needed. Settings, the latest session/refresh-rate/resolution summaries and recovery journals remain available with logging off so the launcher can restore your game files safely.
 
 ### Direct practice (experimental)
 
@@ -96,7 +96,7 @@ The following settings apply to VR:
 
 | Setting | Default | Effect |
 |---|---|---|
-| Render resolution | 100% | 1600 × 1200 per eye at full field of view. Adjust from 50–300%, with a notch marking 150% recommended. The default remains 100%; 300% renders 4800 × 3600 per eye (nine times the baseline pixels). |
+| Render resolution | 100% | Requests 1600 × 1200 per eye at full field of view. Adjust from 50–300%, with a notch marking 150% recommended. The default remains 100%; 300% requests 4800 × 3600 per eye (nine times the baseline pixels). Graphics also shows the measured size from the last VR launch. |
 | Headset texture scale | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
 | Anti-aliasing (MSAA) | 2× | VR-only: Off, 2×, 4× or 8×. High values cost memory and may cause crashes; the launcher warns at 4× and 8×. Desktop MSAA is restored after play. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
@@ -143,7 +143,7 @@ For optional launcher assignments, open **Controls → Configure driving control
 
 During capture, turn the wheel clearly left/right and press pedals fully. Small pedal movements are ignored; these capture thresholds do not change driving sensitivity.
 
-To change just one action, select it and choose **Bind keyboard…** or **Bind device…**. **Calibration…** adjusts direction, dead zone and saturation. The editor warns about identical left/right steering directions and inverted Xbox triggers; repair old assignments with the wizard or Xbox preset. The revised capture has automated coverage; physical Fanatec handbrake validation remains pending.
+To change just one action, select it and choose **Bind keyboard…** or **Bind device…**. **Calibration…** adjusts direction, dead zone and saturation; saved values are shown beside each controller assignment. Enabled launcher assignments and calibration reapply on every launch, replacing in-game changes for those actions. To retain zero steering deadzone, set 0% for both **Steer Left** and **Steer Right**, then **Save driving controls**. Alternatively, disable launcher driving bindings and use the game's saved controls. The editor warns about identical left/right steering directions and inverted Xbox triggers; repair old assignments with the wizard or Xbox preset. Physical Fanatec handbrake validation remains pending.
 
 The editor includes steering, accelerator, brake, clutch, handbrake, sequential shifts and H-pattern gears. Select the appropriate transmission/assist settings in the game as well. It applies to Normal Launch, Practice, Race and HOST/JOIN, in desktop and VR modes, using the DX11 renderer. Unassigned actions retain game settings; assigning an action replaces that action's saved inputs, so assign both keyboard and controller inputs if wanted. **Use game binding** removes that action's launcher override. Disabling overrides does not undo bindings subsequently saved by the game.
 

@@ -6,7 +6,7 @@ Public Class DrivingControlsForm
     Private ReadOnly context As InstallContext
     Private ReadOnly settings As DrivingControls
     Private ReadOnly enabledBox As New CheckBox With {.Text = "Use launcher driving bindings (all launcher modes, DX11)", .AutoSize = True}
-    Private ReadOnly list As New ListView With {.View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Fill}
+    Private ReadOnly list As New ListView With {.Name = "DrivingBindings", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .ShowItemToolTips = True, .Dock = DockStyle.Fill}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(820, 0)}
     Public Sub New(value As InstallContext)
         context = value : settings = DrivingControls.Load(context)
@@ -19,8 +19,10 @@ Public Class DrivingControlsForm
             layout.RowStyles.Add(New RowStyle(sizing, If(sizing = SizeType.Percent, 100, 0)))
         Next
         enabledBox.Checked = settings.Enabled : layout.Controls.Add(enabledBox)
-        layout.Controls.Add(New Label With {.Text = "Start with the Binding wizard or Xbox preset. Unassigned actions use the game's saved controls. An assigned action replaces its saved bindings: assign both keyboard and controller inputs if you want both. Save below when finished.", .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
-        list.Columns.Add("Action", 160) : list.Columns.Add("Keyboard", 200) : list.Columns.Add("Controller / wheel / pedals", 470)
+        layout.Controls.Add(New Label With {.Text = "Launcher assignments and calibration reapply on every launch, replacing in-game changes for those actions. Unassigned actions use the game's saved controls. Assign both keyboard and controller inputs if you want both. Save below when finished.", .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
+        list.Columns.Add("Action", 125) : list.Columns.Add("Keyboard", 100) : list.Columns.Add("Controller / wheel / pedals", 190)
+        list.Columns.Add("Dead zone", 110) : list.Columns.Add("Saturation", 110)
+        AddHandler list.Resize, Sub() list.Columns(2).Width = Math.Max(190, list.ClientSize.Width - 125 - 100 - 110 - 110 - 24)
         list.AccessibleName = "Driving bindings" : layout.Controls.Add(list)
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill}
         AddButton(buttons, "Binding wizard…", Sub() BindActions())
@@ -69,8 +71,11 @@ Public Class DrivingControlsForm
             Dim bindings = settings.Bindings.Where(Function(b) b.Action = action).ToArray()
             Dim keyboard = bindings.FirstOrDefault(Function(b) b.Keyboard), device = bindings.FirstOrDefault(Function(b) Not b.Keyboard)
             Dim row As New ListViewItem(action)
-            row.SubItems.Add(If(keyboard Is Nothing AndAlso bindings.Length > 0, "—", DrivingInput.Description(keyboard)))
+            row.SubItems.Add(If(keyboard Is Nothing, If(bindings.Length > 0, "—", "Game"), DrivingInput.Description(keyboard)))
             row.SubItems.Add(If(device Is Nothing AndAlso bindings.Length > 0, "—", DrivingInput.Description(device)))
+            row.SubItems.Add(If(device Is Nothing, "—", device.DeadZone.ToString("P0")))
+            row.SubItems.Add(If(device Is Nothing, "—", device.Saturation.ToString("P0")))
+            row.ToolTipText = String.Join(" · ", row.SubItems.Cast(Of ListViewItem.ListViewSubItem)().Select(Function(cell) cell.Text))
             list.Items.Add(row) : row.Selected = action = selected
         Next
         list.EndUpdate()
@@ -117,6 +122,7 @@ Public Class DrivingControlsForm
             panel.Controls.AddRange({mode, New Label With {.Text = "Dead zone", .AutoSize = True}, dead, New Label With {.Text = "Saturation", .AutoSize = True}, saturation, apply, errorLabel})
             dialog.Controls.Add(panel) : dialog.ShowDialog(Me)
         End Using
+        RefreshRows(action)
     End Sub
 End Class
 
