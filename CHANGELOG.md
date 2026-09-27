@@ -11,6 +11,12 @@ Version headings identify distribution builds; published packages include a GitH
 - Correct the experimental track PSSG writer's duplicate data/index object ID and missing terrain primitive declaration after a manual test showed invisible road collision. Add saved-file structure checks that reject the previous candidate. The repaired candidate still needs in-game rendering validation.
 - Add isolated custom-track authoring tools and an optional experimental prototype entry for desktop Direct practice. The new 356 m circuit has matching visual/collision geometry, route data and hash-checked installation. Original tracks remain available. Static validation and headless launcher tests pass; generated-track gameplay, visibility, resets and lap completion remain unverified. See [technical status](docs/custom-tracks.md).
 
+## 0.15.4 — 2026-09-27
+
+Local test build; not yet published to GitHub.
+
+- Keep Graphics slider changes local to their value/readout controls instead of resizing neighbouring sliders and dropdowns. Confirm that unsupported render sizes can fall back to 1280 × 720; check measured resolution before increasing headset texture scale. The game-side resolution fallback is not fixed yet.
+
 ## 0.15.3 — 2026-09-27
 
 Local test build; not yet published to GitHub.

@@ -32,7 +32,7 @@ Public Class MainForm
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 50, "%")
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
-    Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = True}
+    Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = False}
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
     Private ReadOnly opponentCars As ComboBox = Choice("OpponentCars")
     Private ReadOnly opponentHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
@@ -47,7 +47,8 @@ Public Class MainForm
     Private ReadOnly hudMap As New CheckBox With {.Text = "Route map", .Name = "HudMap", .AutoSize = True}
     Private ReadOnly hudProgress As New CheckBox With {.Text = "Stage progress bar", .Name = "HudProgress", .AutoSize = True}
     Private ReadOnly refreshLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
-    Private ReadOnly requestedResolution As New Label With {.Name = "RequestedResolution", .AutoSize = True}
+    ' SettingRow owns these readout bounds; AutoSize would reflow every sibling on text changes.
+    Private ReadOnly requestedResolution As New Label With {.Name = "RequestedResolution", .AutoSize = False}
     Private ReadOnly actualResolution As New Label With {.Name = "ActualResolution", .AutoSize = True}
     Private nextResolutionRefresh As DateTime
     Private lastStatus As String = ""
