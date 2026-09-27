@@ -159,7 +159,7 @@ Module Program
         Dim migrated = VrSettings.Load(context)
         Check(Not migrated.LoggingEnabled, "existing preferences migrate with logging off")
         Check(migrated.Version = 3 AndAlso migrated.ToggleKey = 118 AndAlso migrated.RecenterKey = 119 AndAlso migrated.RenderWidth = 1600 AndAlso migrated.LaunchMode = "menus", "legacy settings migrate without changing keys")
-        For Each invalid In {New VrSettings With {.RenderScale = 49}, New VrSettings With {.RenderScale = 151}, New VrSettings With {.HeadsetScale = 24}, New VrSettings With {.HeadsetScale = 101}, New VrSettings With {.FieldOfView = 69}, New VrSettings With {.FieldOfView = 101}, New VrSettings With {.Mirrors = "invalid"}, New VrSettings With {.Version = 4}, New VrSettings With {.LaunchMode = "benchmark"}, New VrSettings With {.CarCode = "..\other"}, New VrSettings With {.TrackId = "999999"}}
+        For Each invalid In {New VrSettings With {.RenderScale = 49}, New VrSettings With {.RenderScale = 301}, New VrSettings With {.HeadsetScale = 24}, New VrSettings With {.HeadsetScale = 101}, New VrSettings With {.FieldOfView = 69}, New VrSettings With {.FieldOfView = 101}, New VrSettings With {.Mirrors = "invalid"}, New VrSettings With {.Version = 4}, New VrSettings With {.LaunchMode = "benchmark"}, New VrSettings With {.CarCode = "..\other"}, New VrSettings With {.TrackId = "999999"}}
             Reject(Sub() invalid.Validate(), "out-of-range graphics/settings rejected")
         Next
         Files.AtomicWrite(context.PreferencesPath, Text.Encoding.UTF8.GetBytes("{""Version"":2,""RenderScale"":75,""FieldOfView"":80}"))
@@ -485,7 +485,7 @@ Module Program
                 element.Checked = False
             Next
             Dim scaleSlider = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
-            Check(scaleSlider.Minimum = 50 AndAlso scaleSlider.Maximum = 150 AndAlso scaleSlider.SmallChange = 1 AndAlso form.Controls.Find("RenderScaleValue", True).Single().Text = "75%", "native graphics slider retains range precision and visible value")
+            Check(scaleSlider.Minimum = 50 AndAlso scaleSlider.Maximum = 300 AndAlso scaleSlider.SmallChange = 1 AndAlso form.Controls.Find("RenderScaleValue", True).Single().Text = "75%", "native graphics slider retains range precision and visible value")
             DirectCast(form.Controls.Find("Mirrors", True).Single(), ComboBox).SelectedIndex = 2
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             Dim saved = VrSettings.Load(context)

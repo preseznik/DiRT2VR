@@ -29,7 +29,7 @@ Public Class MainForm
     Private ReadOnly laps As New ValueSlider("Laps", 1, 20, 1) With {.AccessibleName = "Laps"}
     Private ReadOnly borderless As New CheckBox With {.Text = "Borderless fullscreen (desktop only)", .Name = "BorderlessDesktop", .AutoSize = True}
     Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
-    Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 150, 100, "%")
+    Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 50, "%")
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
     Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = True}

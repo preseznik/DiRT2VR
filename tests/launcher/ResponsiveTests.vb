@@ -1,15 +1,25 @@
 Imports System.Drawing
 Imports System.Windows.Forms
 Imports DiRT2VR
+Imports System.Runtime.InteropServices
 
 Public Module ResponsiveTests
+    <DllImport("user32.dll", EntryPoint:="SendMessageW")>
+    Private Function SendMessage(window As IntPtr, message As UInteger, wParam As IntPtr, lParam As IntPtr) As IntPtr
+    End Function
     Public Sub Run(context As InstallContext, folder As String, check As Action(Of Boolean, String))
         Using form As New MainForm(context, Function(token) Threading.Tasks.Task.FromResult(Of ReleaseUpdate)(Nothing))
             form.ShowInTaskbar = False : form.Show() : Application.DoEvents()
             form.Location = New Point(-30000, -30000)
             Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
             Dim resolution = DirectCast(form.Controls.Find("RenderScale", True).Single(), ValueSlider)
-            resolution.Value = 85
+            resolution.Value = 300
+            Dim renderTrack = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
+            Dim recommendation = form.Controls.Find("RenderScaleRecommendation", True).Single()
+            check(recommendation.Text = "150% recommended", "render resolution displays recommendation independently of selected value")
+            check(SendMessage(renderTrack.Handle, &H403UI, New IntPtr(1), IntPtr.Zero).ToInt32() = -1 AndAlso SendMessage(renderTrack.Handle, &H403UI, IntPtr.Zero, IntPtr.Zero).ToInt32() = 150, "native render slider has a single interior notch at 150")
+            GetType(Control).GetMethod("RecreateHandle", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance).Invoke(renderTrack, Nothing)
+            check(SendMessage(renderTrack.Handle, &H403UI, IntPtr.Zero, IntPtr.Zero).ToInt32() = 150, "recommendation notch survives native handle recreation")
             Dim msaa = DirectCast(form.Controls.Find("VrMsaa", True).Single(), ValueSlider)
             Dim warning = form.Controls.Find("MsaaWarning", True).Single()
             check(msaa.Value = 1 AndAlso warning.Text = "", "2x MSAA default has no warning")
@@ -27,6 +37,7 @@ Public Module ResponsiveTests
                 form.ClientSize = New Size(CInt(size.Width * factor), CInt(size.Height * factor))
                 For Each page As TabPage In tabs.TabPages
                     tabs.SelectedTab = page : Application.DoEvents() : form.PerformLayout() : Application.DoEvents()
+                    If page.Text = "Graphics" Then check(SendMessage(renderTrack.Handle, &H403UI, IntPtr.Zero, IntPtr.Zero).ToInt32() = 150, $"recommended notch survives layout at {size}")
                     check(Not page.HorizontalScroll.Visible, $"{page.Text} has no horizontal page scrolling at {size}")
                     For Each name In {"SaveSettings", "OpenLogs"}.Concat(If(page.Text = "Multiplayer", Array.Empty(Of String)(), {"LaunchDesktop", "LaunchVR"}))
                         Dim button = form.Controls.Find(name, True).Single()
@@ -40,16 +51,18 @@ Public Module ResponsiveTests
                         bitmap.Save(IO.Path.Combine(folder, $"responsive-{page.Text}-{size.Width}x{size.Height}.png"))
                     End Using
                 Next
-                check(resolution.Value = 85 AndAlso Not vsync.Checked AndAlso msaa.Value = 3, "resizing preserves unsaved values")
+                check(resolution.Value = 300 AndAlso Not vsync.Checked AndAlso msaa.Value = 3, "resizing preserves unsaved values")
             Next
             tabs.SelectedIndex = 2
             form.ClientSize = New Size(CInt(900 * factor), CInt(1040 * factor)) : Application.DoEvents()
             check(Not tabs.SelectedTab.VerticalScroll.Visible, "widening restores compact Graphics rows without stale vertical spacing")
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             check(VrSettings.Load(context).VrMsaa = 8, "Graphics slider saves chosen MSAA")
+            check(VrSettings.Load(context).RenderScale = 300, "Graphics slider saves 300 percent render resolution")
             msaa.Value = 0 : check(warning.Text = "", "Off clears MSAA warning")
             DirectCast(form.Controls.Find("GraphicsDefaults", True).Single(), Button).PerformClick()
             check(msaa.Value = 1 AndAlso warning.Text = "", "restore defaults resets MSAA to 2x")
+            check(resolution.Value = 100, "restore defaults preserves 100 percent rather than selecting recommendation")
             ' Resizing itself must not cancel a keyboard capture.
             tabs.SelectedIndex = 3
             Dim key = Descendants(tabs.SelectedTab).OfType(Of Button)().First(Function(b) b.AccessibleName = "Toggle VR keyboard binding")

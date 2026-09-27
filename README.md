@@ -96,7 +96,7 @@ The following settings apply to VR:
 
 | Setting | Default | Effect |
 |---|---|---|
-| Render resolution | 100% | 1600 × 1200 per eye at full field of view. Adjust from 50–150%; lower values reduce scene detail and pixel work. |
+| Render resolution | 100% | 1600 × 1200 per eye at full field of view. Adjust from 50–300%, with a notch marking 150% recommended. The default remains 100%; 300% renders 4800 × 3600 per eye (nine times the baseline pixels). |
 | Headset texture scale | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
 | Anti-aliasing (MSAA) | 2× | VR-only: Off, 2×, 4× or 8×. High values cost memory and may cause crashes; the launcher warns at 4× and 8×. Desktop MSAA is restored after play. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |

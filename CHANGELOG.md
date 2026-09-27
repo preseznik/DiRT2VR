@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-No pending changes.
+- Extend VR render resolution to 300%, with a native notch and “150% recommended” label. Preserve saved values and the 100% default. High-resolution headset and memory acceptance remain pending.
 
 ## 0.15.0 — 2026-09-27
 
