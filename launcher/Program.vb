@@ -17,8 +17,21 @@ Public Module Program
                 Try
                     Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"))
                     Return 0
-                Catch ex As UnauthorizedAccessException
-                    Return 5
+                Catch ex As Exception
+                    Dim failure = WorkerFailure.FromException(Argument(args, "--worker", ""), args.Contains("--worker-elevated"), ex)
+                    Dim resultToken = Argument(args, "--worker-result", "")
+                    If resultToken <> "" Then
+                        Try
+                            Dim path = WorkerFailure.ResultPath(context, resultToken)
+                            Files.NoLinks(path)
+                            Files.SaveJson(path, failure)
+                        Catch
+                            ' The parent still reports the exit code if writing fails.
+                        End Try
+                    ElseIf Not args.Contains("--quiet") AndAlso failure.ExitCode <> 5 Then
+                        MessageBox.Show(ex.Message, "DiRT2VR", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                    End If
+                    Return failure.ExitCode
                 End Try
             End If
             If args.Contains("--check-install") Then

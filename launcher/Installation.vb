@@ -96,16 +96,39 @@ Public Module Worker
             End If
         End If
         If quiet OrElse Environment.GetCommandLineArgs().Contains("--quiet") Then start.ArgumentList.Add("--quiet")
-        Using child = Process.Start(start)
-            child.WaitForExit()
-            If child.ExitCode = 0 Then Return
-            If child.ExitCode <> 5 Then Throw New IOException("File operation failed: " & operation & If(quiet, ". Use Restore original files in the launcher to see the recovery error; backups were preserved.", ". See the worker error message; backups were preserved."))
-        End Using
-        ' Only this fixed-purpose worker elevates; it never starts the game.
-        start.UseShellExecute = True : start.Verb = "runas" : start.WindowStyle = ProcessWindowStyle.Hidden
-        Using child = Process.Start(start)
-            child.WaitForExit()
-            If child.ExitCode <> 0 Then Throw New IOException("File operation did not finish: " & operation & ". Recovery may still be pending.")
-        End Using
+        Dim token = Guid.NewGuid().ToString("N")
+        Dim resultPath = WorkerFailure.ResultPath(context, token)
+        start.ArgumentList.Add("--worker-result") : start.ArgumentList.Add(token)
+        Dim attempts As New List(Of WorkerFailure)
+        Try
+            For Each elevated In {False, True}
+                ' Pre-create under the owning user; the elevated worker replaces only this result.
+                Files.SaveJson(resultPath, New WorkerFailure)
+                If elevated Then
+                    ' Only this fixed-purpose worker elevates; it never starts the game.
+                    start.UseShellExecute = True : start.Verb = "runas" : start.WindowStyle = ProcessWindowStyle.Hidden
+                    start.ArgumentList.Add("--worker-elevated")
+                End If
+                Dim exitCode As Integer
+                Try
+                    Using child = Process.Start(start)
+                        child.WaitForExit() : exitCode = child.ExitCode
+                    End Using
+                Catch ex As ComponentModel.Win32Exception
+                    Dim failure = WorkerFailure.FromException(operation, elevated, ex)
+                    failure.ExitCode = ex.NativeErrorCode : attempts.Add(failure)
+                    Throw New IOException(WorkerFailure.FailureMessage(context, attempts), ex)
+                End Try
+                If exitCode = 0 Then Return
+                attempts.Add(WorkerFailure.ReadResult(resultPath, operation, elevated, exitCode))
+                If elevated OrElse exitCode <> 5 Then Throw New IOException(WorkerFailure.FailureMessage(context, attempts))
+            Next
+        Finally
+            Try
+                File.Delete(resultPath)
+            Catch
+                ' Preserve the operation's result if temporary-report cleanup fails.
+            End Try
+        End Try
     End Sub
 End Module

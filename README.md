@@ -220,6 +220,8 @@ Older test-kit profiles and imported copies are no longer used. They are left on
 
 **Unsupported executable or foreign proxy:** use the supported game build and resolve the reported conflict. Do not bypass compatibility checks or download replacement game executables from an untrusted source.
 
+**File preparation failed:** the error includes the affected file and failure details when available. Close the game and use **Restore original files**. Include `%LOCALAPPDATA%\DiRT2VR\<installation-id>\worker-error.json` in your report; it contains the latest failed operation, including any administrator retry. This small recovery diagnostic is kept even with logging off. Keep the original backups and do not change permissions across the whole game folder.
+
 **Report a problem:** enable diagnostic logging in **Settings**, save, and reproduce the issue. Then use **Open logs** and include the relevant `trace.log`, car/event, headset, steps to reproduce, and whether the problem affects cockpit VR or the virtual screen in a [GitHub issue](https://github.com/preseznik/DiRT2VR/issues). Turn logging off afterward. Logs live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\logs`. Do not upload game files or save profiles.
 
 See the [changelog](CHANGELOG.md). Build instructions and diagnostic details are in the [development guide](docs/development.md) and [launcher implementation notes](docs/launcher.md).
@@ -228,4 +230,4 @@ Third-party license notices are included in `DiRT2VR/licenses` in packaged build
 
 Matching LAN library source is available separately as `DiRT2VR-<version>-LAN-source.zip` on the same GitHub release. It is not needed to play. `DiRT2VR/licenses/LAN-source.txt` contains the exact download link and checksum.
 
-Microsoft GFWL 3.5.95.0: this build includes a candidate fix for crashes during VR sessions. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3 gameplay confirmation is still pending; see [investigation status](docs/pc3-crash.md).
+Microsoft GFWL 3.5.95.0: this build corrects a startup-order defect in the VR compatibility fix. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3/PC4 gameplay confirmation is still pending; see [investigation status](docs/pc3-crash.md).

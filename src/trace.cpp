@@ -14,6 +14,7 @@
 #include "gfwl_compat.h"
 #include "driving_controls.h"
 #include "cockpit_start.h"
+#include "startup_hooks.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -1189,8 +1190,7 @@ template<class F> void Hook(void* object,unsigned index,void* replacement,F& ori
 }
 void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChain* swapchain) {
     std::lock_guard lock(attachMutex);
-    if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
-    if(AutoCockpitEnabled() && !EnableCockpitStart()) { Log("VR starting camera: incompatible process"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
+    if(!EnableStartupHooks(HeadsetEnabled(),AutoCockpitEnabled())) ExitProcess(ERROR_BAD_EXE_FORMAT);
     wchar_t desktop[8]{};
     const bool desktopControls=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_CONTROLS",desktop,8)==1 && desktop[0]==L'1';
     if(desktopControls || (GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1')) {
@@ -1200,7 +1200,6 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     }
     static bool initialized=[] { auto status=MH_Initialize(); return status==MH_OK||status==MH_ERROR_ALREADY_INITIALIZED; }();
     if(!initialized) { Log("MinHook initialization failed"); return; }
-    if(HeadsetEnabled() && !EnableGfwlCompatibility()) { Log("GFWL compatibility: initialization failed; stopping VR launch"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
     EnableDirectPractice();
     Log("DX11 device=%p feature_level=0x%x context=%p swapchain=%p",device,device->GetFeatureLevel(),context,swapchain);
     Hook(device,12,reinterpret_cast<void*>(CreateVS),realVS);

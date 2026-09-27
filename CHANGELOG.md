@@ -6,6 +6,8 @@ Version headings below identify published GitHub packages. Earlier local-build e
 
 ## Unreleased
 
+- Correct VR startup ordering so the automatic cockpit hook is recorded by the GFWL compatibility layer even without launcher driving overrides. This addresses a concrete regression candidate for PC3/PC4 VR crashes; affected-PC gameplay confirmation remains pending.
+- Report file-worker failures with the affected path, exception/HRESULT, exit code and administrator-retry stage. Keep one `worker-error.json` with both attempts, preserve recovery backups, and expand the optional crash collector with preparation diagnostics.
 - Replace the prototype's donor PVS masks with all-visible masks to isolate persistent angular disappearance. Normal frustum culling remains active; only the prototype visibility file changes. Add raw/RLE mask regression checks. Runtime confirmation and performance assessment remain pending.
 - Expand the prototype terrain's stale visibility bounds to contain its elevated road. Add a ground apron and suppress local Battersea structures/props while retaining distant scenery, sky and trees. Installation now verifies visibility and scenery files too. Runtime culling and cleanup acceptance remain pending.
 - Correct the experimental track PSSG writer's duplicate data/index object ID and missing terrain primitive declaration after a manual test showed invisible road collision. Add saved-file structure checks that reject the previous candidate. The repaired candidate still needs in-game rendering validation.
