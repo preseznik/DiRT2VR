@@ -51,6 +51,7 @@ Module Program
             Return
         End If
         BorderlessTests.Run(folder, AddressOf Check)
+        VrMemoryTests.Run(folder, AddressOf Check)
         If args.Contains("--borderless-only") Then
             Console.WriteLine(passed & " borderless checks passed. Artifacts: " & folder)
             Return

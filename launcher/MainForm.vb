@@ -31,6 +31,8 @@ Public Class MainForm
     Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 150, 100, "%")
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 50, "%")
+    Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
+    Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = True}
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
     Private ReadOnly opponentCars As ComboBox = Choice("OpponentCars")
     Private ReadOnly opponentHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
@@ -369,6 +371,11 @@ Public Class MainForm
         mirrors.SelectedIndex = Array.IndexOf({"game", "on", "off"}, settings.Mirrors)
         mirrors.DrawMode = DrawMode.OwnerDrawFixed : AddHandler mirrors.DrawItem, AddressOf DrawChoice
         Field(render, "Render resolution", renderScale) : Field(render, "Headset texture scale", headsetScale)
+        msaa.Value = Array.IndexOf({0, 2, 4, 8}, settings.VrMsaa)
+        Field(render, "Anti-aliasing (MSAA)", msaa)
+        Field(render, "", msaaWarning)
+        AddHandler msaa.ValueChanged, Sub() RefreshMsaaWarning()
+        RefreshMsaaWarning()
         Field(render, "Field of view", fieldOfView) : Field(render, "Car mirrors", mirrors)
         treeDetail.Value = settings.TreeDetail : objectDetail.Value = settings.ObjectDetail
         Field(render, "Tree detail", treeDetail) : Field(render, "Object detail", objectDetail)
@@ -387,6 +394,7 @@ Public Class MainForm
         Dim defaults As New Button With {.Text = "Restore defaults", .Name = "GraphicsDefaults", .AutoSize = True}
         AddHandler defaults.Click, Sub()
                                        borderless.Checked = False : desktopVSync.Checked = True
+                                       msaa.Value = 1
                                        renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False : hudDistance.Value = 2
                                        treeDetail.Value = 0 : objectDetail.Value = 0 : hudGauges.Checked = False
@@ -405,6 +413,9 @@ Public Class MainForm
         Dim preview As New VrSettings With {.RenderScale = CInt(renderScale.Value), .FieldOfView = CInt(fieldOfView.Value)}
         Dim pixels = preview.RenderWidth * CDbl(preview.RenderHeight) / (1600 * 1200)
         renderScale.AccessibleDescription = $"Scene per eye: {preview.RenderWidth} × {preview.RenderHeight} ({pixels:P0} of default pixels). Headset texture: {headsetScale.Value}% of recommended width and height."
+    End Sub
+    Private Sub RefreshMsaaWarning()
+        msaaWarning.Text = If(msaa.Value >= 2, If(msaa.Value = 3, "8×: very high memory cost; may cause VR crashes.", "4×: higher memory cost; reduce if VR is unstable."), "")
     End Sub
     Private Sub RefreshDisplayRate()
         refreshLabel.Text = "SteamVR controlled"
@@ -487,6 +498,7 @@ Public Class MainForm
         settings.BorderlessDesktop = borderless.Checked
         settings.DesktopVSync = desktopVSync.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
+        settings.VrMsaa = {0, 2, 4, 8}(msaa.Value)
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.HudFollowView = hudFollow.Checked
         settings.HudDistance = hudDistance.Value / 2D

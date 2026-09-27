@@ -10,6 +10,13 @@ Public Module ResponsiveTests
             Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
             Dim resolution = DirectCast(form.Controls.Find("RenderScale", True).Single(), ValueSlider)
             resolution.Value = 85
+            Dim msaa = DirectCast(form.Controls.Find("VrMsaa", True).Single(), ValueSlider)
+            Dim warning = form.Controls.Find("MsaaWarning", True).Single()
+            check(msaa.Value = 1 AndAlso warning.Text = "", "2x MSAA default has no warning")
+            msaa.Value = 2
+            check(warning.Text.Contains("4×"), "4x MSAA shows a memory warning")
+            msaa.Value = 3
+            check(warning.Text.Contains("8×") AndAlso warning.Text.Contains("crashes"), "8x MSAA shows stronger warning")
             Dim vsync = DirectCast(form.Controls.Find("DesktopVSync", True).Single(), CheckBox)
             vsync.Checked = False
             Dim server = DirectCast(form.Controls.Find("LanServers", True).Single(), ListView)
@@ -33,11 +40,16 @@ Public Module ResponsiveTests
                         bitmap.Save(IO.Path.Combine(folder, $"responsive-{page.Text}-{size.Width}x{size.Height}.png"))
                     End Using
                 Next
-                check(resolution.Value = 85 AndAlso Not vsync.Checked, "resizing preserves unsaved values")
+                check(resolution.Value = 85 AndAlso Not vsync.Checked AndAlso msaa.Value = 3, "resizing preserves unsaved values")
             Next
             tabs.SelectedIndex = 2
             form.ClientSize = New Size(CInt(900 * factor), CInt(1040 * factor)) : Application.DoEvents()
             check(Not tabs.SelectedTab.VerticalScroll.Visible, "widening restores compact Graphics rows without stale vertical spacing")
+            DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
+            check(VrSettings.Load(context).VrMsaa = 8, "Graphics slider saves chosen MSAA")
+            msaa.Value = 0 : check(warning.Text = "", "Off clears MSAA warning")
+            DirectCast(form.Controls.Find("GraphicsDefaults", True).Single(), Button).PerformClick()
+            check(msaa.Value = 1 AndAlso warning.Text = "", "restore defaults resets MSAA to 2x")
             ' Resizing itself must not cancel a keyboard capture.
             tabs.SelectedIndex = 3
             Dim key = Descendants(tabs.SelectedTab).OfType(Of Button)().First(Function(b) b.AccessibleName = "Toggle VR keyboard binding")

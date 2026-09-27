@@ -1,4 +1,5 @@
 #include "hud_capture.h"
+#include "graphics_diagnostics.h"
 #include "hud_elements.h"
 #include <array>
 #include <cstring>
@@ -11,10 +12,11 @@ bool HudCapture::Begin(ID3D11Texture2D* back,uint64_t frame,unsigned hidden) {
     if(desc.SampleDesc.Count!=1 || desc.ArraySize!=1 || desc.MipLevels!=1) return false;
     ComPtr<ID3D11Device> device; back->GetDevice(&device);
     if(back_.Get()!=back) {
+        vr::graphics::Allocation allocation("HUD capture");
         desc.Usage=D3D11_USAGE_DEFAULT; desc.CPUAccessFlags=desc.MiscFlags=0;
         desc.BindFlags=D3D11_BIND_RENDER_TARGET|D3D11_BIND_SHADER_RESOURCE;
         ComPtr<ID3D11Texture2D> image; ComPtr<ID3D11RenderTargetView> target;
-        if(FAILED(device->CreateTexture2D(&desc,nullptr,&image)) || FAILED(device->CreateRenderTargetView(image.Get(),nullptr,&target))) return false;
+        if(vr::graphics::Failed(device->CreateTexture2D(&desc,nullptr,&image),device.Get(),"HUD capture texture",&desc) || vr::graphics::Failed(device->CreateRenderTargetView(image.Get(),nullptr,&target),device.Get(),"HUD capture RTV",&desc)) return false;
         image_=image; target_=target; back_=back; width_=desc.Width; height_=desc.Height;
         blend_.Reset(); depth_.Reset(); context1_.Reset();
     }
@@ -73,12 +75,12 @@ bool HudCapture::Draw(ID3D11DeviceContext* context,const std::function<void()>& 
     ComPtr<ID3D11Device> device; context->GetDevice(&device);
     if(!blend_ || std::memcmp(&blend,&blendDesc_,sizeof(blend))) {
         ComPtr<ID3D11BlendState> replacement;
-        if(FAILED(device->CreateBlendState(&blend,&replacement))) return false;
+        if(vr::graphics::Failed(device->CreateBlendState(&blend,&replacement),device.Get(),"HUD blend state")) return false;
         blend_=replacement; blendDesc_=blend;
     }
     if(!depth_ || std::memcmp(&depth,&depthDesc_,sizeof(depth))) {
         ComPtr<ID3D11DepthStencilState> replacement;
-        if(FAILED(device->CreateDepthStencilState(&depth,&replacement))) return false;
+        if(vr::graphics::Failed(device->CreateDepthStencilState(&depth,&replacement),device.Get(),"HUD depth state")) return false;
         depth_=replacement; depthDesc_=depth;
     }
     auto target=target_.Get();
