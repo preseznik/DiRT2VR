@@ -23,7 +23,7 @@ Public Module WorkerFailureTests
             Worker.Run(context, "recover")
             check(Files.Hash(camera) = cameraHash AndAlso Files.Hash(effects) = effectsHash, "partial preparation restores original bytes with read-only untouched asset")
 
-            Dim executable = Path.Combine(repo, "launcher/bin/Release/net10.0-windows/win-x64/DiRT2VR.exe")
+            Dim executable = Path.Combine(AppContext.BaseDirectory, "DiRT2VR.exe")
             check(File.Exists(executable), "built launcher available for real worker IPC test")
             For Each elevatedLabel In {False, True}
                 Dim token = Guid.NewGuid().ToString("N")
