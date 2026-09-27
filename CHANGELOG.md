@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Extend VR render resolution to 300%, with a native notch and “150% recommended” label. Preserve saved values and the 100% default. High-resolution headset and memory acceptance remain pending.
+
 - Replace the prototype's donor PVS masks with all-visible masks to isolate persistent angular disappearance. Normal frustum culling remains active; only the prototype visibility file changes. Add raw/RLE mask regression checks. Runtime confirmation and performance assessment remain pending.
 - Expand the prototype terrain's stale visibility bounds to contain its elevated road. Add a ground apron and suppress local Battersea structures/props while retaining distant scenery, sky and trees. Installation now verifies visibility and scenery files too. Runtime culling and cleanup acceptance remain pending.
 - Correct the experimental track PSSG writer's duplicate data/index object ID and missing terrain primitive declaration after a manual test showed invisible road collision. Add saved-file structure checks that reject the previous candidate. The repaired candidate still needs in-game rendering validation.

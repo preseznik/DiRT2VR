@@ -35,7 +35,7 @@ Driver settings, Windows and your monitor can affect frame rate and presentation
 First launch and recovery
 If the game has not created a graphics file yet, use Normal Launch once before applying display overrides. If Windows rejects a borderless window change, the launcher reports a warning and keeps ordinary windowed play available. Alt+Tab and minimization remain available.",
         "Render resolution
-100% renders 1600 × 1200 per eye at full field of view. The 50–150% slider scales width and height. Lower values reduce pixel work and detail; 80% uses about 64% of the pixels.
+100% renders 1600 × 1200 per eye at full field of view. The 50–300% slider scales width and height. 150% is marked recommended; the default remains 100%. 300% renders 4800 × 3600 per eye, nine times the baseline pixels, and needs substantially more memory and GPU time. Lower values reduce pixel work and detail.
 
 Headset texture scale
 25–100% of SteamVR's recommended width and height. Increasing this alone cannot add detail missing from the scene render. Default: 50%. The HUD has an independent texture sized from the game image, capped at 2048 pixels on its longest edge; this does not change HUD distance or apparent size.

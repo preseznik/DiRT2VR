@@ -89,7 +89,7 @@ Public Class SettingRow
             Dim stacked = width < Px(Me, 590) AndAlso Not TypeOf editor Is CheckBox
             Dim labelWidth = Math.Min(Px(Me, 215), width \ 2)
             Dim editorWidth = If(stacked, width, width - labelWidth - gap)
-            Dim editorHeight = If(TypeOf editor Is ValueSlider, Px(Me, 38), editor.GetPreferredSize(New Size(editorWidth, 0)).Height)
+            Dim editorHeight = If(TypeOf editor Is ValueSlider, Px(Me, DirectCast(editor, ValueSlider).LogicalHeight), editor.GetPreferredSize(New Size(editorWidth, 0)).Height)
             editorHeight = Math.Max(Px(Me, 28), editorHeight)
             Dim labelHeight = TextRenderer.MeasureText(caption.Text, Font, New Size(If(stacked, width, labelWidth), 0), TextFormatFlags.WordBreak Or TextFormatFlags.NoPrefix).Height
             Dim rowHeight = If(stacked, labelHeight + editorHeight + gap, Math.Max(labelHeight, editorHeight))
