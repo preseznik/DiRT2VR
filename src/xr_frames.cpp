@@ -51,6 +51,7 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
         if(i==2) {
             // The HUD is a game-resolution image, not a third headset eye.
             const double hudScale=std::min({1.0,2048.0/std::max(hudWidth,hudHeight),
+                double(eye.width)/hudWidth,double(eye.height)/hudHeight,
                 double(view.maxImageRectWidth)/hudWidth,double(view.maxImageRectHeight)/hudHeight});
             eye.width=std::max(1u,static_cast<uint32_t>(hudWidth*hudScale));
             eye.height=std::max(1u,static_cast<uint32_t>(hudHeight*hudScale));

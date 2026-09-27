@@ -93,8 +93,9 @@ preferences without the new field receive 2x; higher saved choices are retained.
 
 The third OpenXR swapchain is the transparent HUD layer. It now uses the initial
 game backbuffer dimensions, never upscaled, capped proportionally at 2048 pixels
-on its longest edge and at runtime image limits. For a 1600x1200 game image it
-uses 1600x1200 regardless of headset scale. The two eye swapchains, projections,
+on its longest edge, the eye texture extent and runtime image limits. This also
+avoids increasing HUD memory at low headset scales. For a 1600x1200 game image and 1700x1734 eye textures it
+uses 1600x1200; smaller eye textures proportionally bound the HUD too. The two eye swapchains, projections,
 HUD pose, distance and angular size are unchanged. OpenXR still chooses image
 count. The cap reduces nominal image storage; it does not establish an equal
 reduction in CPU virtual address usage. A later backbuffer size change is still

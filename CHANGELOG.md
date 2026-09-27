@@ -2,18 +2,22 @@
 
 Notable changes to DiRT2VR are recorded here, newest first. Versioned releases remain experimental; older dated entries are development milestones. Headset checks refer to Quest 3 through SteamVR unless stated otherwise.
 
-Version headings below identify published GitHub packages. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
+Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
 ## Unreleased
-
-- Add a VR anti-aliasing slider (Off/2×/4×/8×), defaulting to 2× with high-memory warnings at 4× and 8×. Restore the original desktop MSAA after play.
-- Size the HUD's OpenXR texture independently of the eyes, using the source image capped at 2048 pixels on its longest edge. HUD distance and apparent size remain unchanged.
-- Add bounded, opt-in graphics failure reports with HRESULT/device-removal status and virtual-address-space snapshots around VR allocations. LAA remains unchanged; PC3/PC4 crash and headset-readability validation are still pending.
 
 - Replace the prototype's donor PVS masks with all-visible masks to isolate persistent angular disappearance. Normal frustum culling remains active; only the prototype visibility file changes. Add raw/RLE mask regression checks. Runtime confirmation and performance assessment remain pending.
 - Expand the prototype terrain's stale visibility bounds to contain its elevated road. Add a ground apron and suppress local Battersea structures/props while retaining distant scenery, sky and trees. Installation now verifies visibility and scenery files too. Runtime culling and cleanup acceptance remain pending.
 - Correct the experimental track PSSG writer's duplicate data/index object ID and missing terrain primitive declaration after a manual test showed invisible road collision. Add saved-file structure checks that reject the previous candidate. The repaired candidate still needs in-game rendering validation.
 - Add isolated custom-track authoring tools and an optional experimental prototype entry for desktop Direct practice. The new 356 m circuit has matching visual/collision geometry, route data and hash-checked installation. Original tracks remain available. Static validation and headless launcher tests pass; generated-track gameplay, visibility, resets and lap completion remain unverified. See [technical status](docs/custom-tracks.md).
+
+## 0.15.0 — 2026-09-27
+
+Local test build; not yet published to GitHub.
+
+- Add a VR anti-aliasing slider (Off/2×/4×/8×), defaulting to 2× with high-memory warnings at 4× and 8×. Restore the original desktop MSAA after play.
+- Size the HUD's OpenXR texture independently of the eyes, using the source image capped at 2048 pixels on its longest edge. HUD distance and apparent size remain unchanged.
+- Add bounded, opt-in graphics failure reports with HRESULT/device-removal status and virtual-address-space snapshots around VR allocations. LAA remains unchanged; PC3/PC4 crash and headset-readability validation are still pending.
 
 ## 0.14.4 — 2026-09-27
 
