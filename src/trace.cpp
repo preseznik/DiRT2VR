@@ -1,4 +1,5 @@
 #include "graphics_diagnostics.h"
+#include "resolution_report.h"
 #include "trace.h"
 #include "common.h"
 #include "eye_pair.h"
@@ -1071,6 +1072,22 @@ void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
 
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
+    if(HeadsetEnabled()) {
+        static ResolutionReport resolution([] {
+            static wchar_t name[128]{};
+            if(GetEnvironmentVariableW(L"DIRT2VR_RESOLUTION_CHANNEL",name,128)>=128) name[0]=0;
+            return name;
+        }());
+        if(resolution.Active()) {
+            ComPtr<ID3D11Texture2D> back;
+            if(SUCCEEDED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) {
+                D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
+                const auto eye=gameXr ? gameXr->EyeDimensions() : std::array<uint32_t,4>{};
+                resolution.Observe({desc.Width,desc.Height,eye[0],eye[1],eye[2],eye[3]},
+                    LoggingEnabled() ? +[](const char* message) { Log("%s",message); } : nullptr);
+            }
+        }
+    }
     if(HudProbe()) hudCapture.End(true);
     if(HudProbe() && Sample()) {
         Log("HUD probe frame=%llu captured draws=%u",frame.load(),hudCapture.Draws());

@@ -8,12 +8,15 @@ Public Module ResponsiveTests
     Private Function SendMessage(window As IntPtr, message As UInteger, wParam As IntPtr, lParam As IntPtr) As IntPtr
     End Function
     Public Sub Run(context As InstallContext, folder As String, check As Action(Of Boolean, String))
+        Files.SaveJson(IO.Path.Combine(context.UserRoot, "resolution.json"), New ResolutionStatus With {.RequestedWidth = 4800, .RequestedHeight = 3600, .Actual = {1280, 720, 1700, 1734, 1700, 1734}})
         Using form As New MainForm(context, Function(token) Threading.Tasks.Task.FromResult(Of ReleaseUpdate)(Nothing))
             form.ShowInTaskbar = False : form.Show() : Application.DoEvents()
             form.Location = New Point(-30000, -30000)
             Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
             Dim resolution = DirectCast(form.Controls.Find("RenderScale", True).Single(), ValueSlider)
             resolution.Value = 300
+            check(form.Controls.Find("RequestedResolution", True).Single().Text.Contains("4800 × 3600"), "requested dimensions update with unsaved slider changes")
+            check(form.Controls.Find("ActualResolution", True).Single().Text.Contains("1280 × 720") AndAlso form.Controls.Find("ActualResolution", True).Single().Text.Contains("differs"), "actual dimensions and mismatch are visible independently of requested slider")
             Dim renderTrack = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
             Dim recommendation = form.Controls.Find("RenderScaleRecommendation", True).Single()
             check(recommendation.Text = "150% recommended", "render resolution displays recommendation independently of selected value")
@@ -54,8 +57,8 @@ Public Module ResponsiveTests
                 check(resolution.Value = 300 AndAlso Not vsync.Checked AndAlso msaa.Value = 3, "resizing preserves unsaved values")
             Next
             tabs.SelectedIndex = 2
-            form.ClientSize = New Size(CInt(900 * factor), CInt(1040 * factor)) : Application.DoEvents()
-            check(Not tabs.SelectedTab.VerticalScroll.Visible, "widening restores compact Graphics rows without stale vertical spacing")
+            form.ClientSize = New Size(CInt(1440 * factor), CInt(880 * factor)) : Application.DoEvents()
+            check(Not tabs.SelectedTab.VerticalScroll.Visible, "widening restores two-column Graphics without stale vertical spacing")
             DirectCast(form.Controls.Find("SaveSettings", True).Single(), Button).PerformClick()
             check(VrSettings.Load(context).VrMsaa = 8, "Graphics slider saves chosen MSAA")
             check(VrSettings.Load(context).RenderScale = 300, "Graphics slider saves 300 percent render resolution")

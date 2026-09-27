@@ -19,6 +19,7 @@ Module DrivingControlTests
         check(xml.Elements("Action").Count() = 2 AndAlso xml.Descendants("Axis").Last().Attribute("deviceName").Value = "Pedals & <test>", "driving XML safely round-trips device names")
         check(xml.Descendants("Axis").Last().Attribute("deadZone").Value = "0.05", "calibration XML uses invariant decimals")
         check(restored.Bindings.Last().Calibration = "uniDirectionalNegative", "inversion and separate pedal assignment survive reload")
+        ZeroDeadzonePersistence(folder, check)
         Dim start As New ProcessStartInfo()
         restored.ConfigureProcess(context, start, True)
         check(File.Exists(start.Environment("DIRT2VR_DRIVING_CONTROLS")) AndAlso Not start.Environment.ContainsKey("DIRT2VR_DESKTOP_CONTROLS"), "VR gets binding file without desktop activation")
@@ -89,6 +90,8 @@ Module DrivingControlTests
                 bitmap.Save(IO.Path.Combine(folder, "driving-controls.png"))
             End Using
             check(form.Controls.Count > 0, "driving editor constructs with saved settings")
+            Dim rows = DirectCast(form.Controls.Find("DrivingBindings", True).Single(), ListView)
+            check(rows.Items.Cast(Of ListViewItem)().Single(Function(row) row.Text = "Brake").SubItems(3).Text.Contains("5"), "saved deadzone is visible beside the assigned control")
             form.Close()
         End Using
         Using wizard As New DrivingBindingWizard(context)
@@ -109,6 +112,35 @@ Module DrivingControlTests
             check(skip.Visible AndAlso Not buttons.Single(Function(b) b.Text = "Apply bindings").Visible, "wizard Back leaves review and allows rebinding")
             wizard.Close()
         End Using
+    End Sub
+    Private Sub ZeroDeadzonePersistence(folder As String, check As Action(Of Boolean, String))
+        Dim context As New InstallContext(folder, IO.Path.Combine(folder, "zero-deadzone"), IO.Path.Combine(folder, "zero-deadzone-graphics.xml"))
+        File.WriteAllText(context.GraphicsPath, "<hardware_settings_config><graphics_card><directx forcedx9='false'/></graphics_card></hardware_settings_config>")
+        Dim config As New DrivingControls With {.Enabled = True}
+        For Each action In {"Steer Left", "Steer Right"}
+            config.Bindings.Add(New DrivingBinding With {.Action = action, .Device = "Test wheel", .DeviceId = "wheel", .Input = "win_con_di_axisX", .Calibration = If(action = "Steer Left", "biDirectionalLower", "biDirectionalUpper"), .DeadZone = 0D})
+        Next
+        config.Bindings.Add(New DrivingBinding With {.Action = "Brake", .Device = "Separate pedals", .DeviceId = "pedals", .Input = "win_con_di_axisZ", .DeadZone = 0.05D, .Saturation = 0.9D})
+        For Each enabled In {True, False}
+            config.Enabled = enabled : config.Save(context)
+            Dim settingsBytes = File.ReadAllText(IO.Path.Combine(context.UserRoot, "driving-controls.json"))
+            For Each vr In {False, True}
+                For launch = 1 To 2
+                    Dim loaded = DrivingControls.Load(context), start As New ProcessStartInfo()
+                    start.Environment("DIRT2VR_DRIVING_CONTROLS") = "stale"
+                    loaded.ConfigureProcess(context, start, vr)
+                    check(loaded.Bindings.Take(2).All(Function(binding) binding.DeadZone = 0D), "both steering zeros survive repeated launch preparation")
+                    check(File.ReadAllText(IO.Path.Combine(context.UserRoot, "driving-controls.json")) = settingsBytes, "launch preparation preserves stored calibration and unrelated bindings")
+                    check(start.Environment.ContainsKey("DIRT2VR_DRIVING_CONTROLS") = enabled, "disabled overrides never reapply calibration")
+                    If enabled Then
+                        Dim xml = XElement.Load(start.Environment("DIRT2VR_DRIVING_CONTROLS"))
+                        check(xml.Elements("Action").Where(Function(a) a.Attribute("actionName").Value.StartsWith("Steer")).All(Function(a) a.Element("Axis").Attribute("deadZone").Value = "0"), "both zero deadzones reach native action XML")
+                        check(xml.Elements("Action").Last().Element("Axis").Attribute("deadZone").Value = "0.05", "unrelated pedal deadzone is retained")
+                    End If
+                Next
+            Next
+        Next
+        check(DrivingControls.XboxPreset().Take(2).All(Function(binding) binding.DeadZone = 0.2D), "wheel persistence does not change Xbox defaults")
     End Sub
     Private Sub CaptureTests(repo As String, check As Action(Of Boolean, String))
         Dim xbox As New DrivingInput.Device With {.Id = "xinput:0", .Name = "win_xinput"}

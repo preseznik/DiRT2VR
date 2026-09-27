@@ -47,6 +47,9 @@ Public Class MainForm
     Private ReadOnly hudMap As New CheckBox With {.Text = "Route map", .Name = "HudMap", .AutoSize = True}
     Private ReadOnly hudProgress As New CheckBox With {.Text = "Stage progress bar", .Name = "HudProgress", .AutoSize = True}
     Private ReadOnly refreshLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
+    Private ReadOnly requestedResolution As New Label With {.Name = "RequestedResolution", .AutoSize = True}
+    Private ReadOnly actualResolution As New Label With {.Name = "ActualResolution", .AutoSize = True}
+    Private nextResolutionRefresh As DateTime
     Private lastStatus As String = ""
     Private ReadOnly toggleButton As New Button With {.AutoSize = True}
     Private ReadOnly recenterButton As New Button With {.AutoSize = True}
@@ -363,7 +366,7 @@ Public Class MainForm
         Dim content = TabLayout("Graphics")
         Dim columns As New ResponsiveColumns() : content.Controls.Add(columns)
         Dim desktop = Section(columns.First, "Desktop")
-        borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen", borderless)
+        borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen (desktop only)", borderless)
         desktopVSync.Checked = settings.DesktopVSync : Field(desktop, "VSync", desktopVSync)
         Dim render = Section(columns.First, "VR rendering")
         renderScale.Value = settings.RenderScale : headsetScale.Value = settings.HeadsetScale : fieldOfView.Value = settings.FieldOfView
@@ -380,6 +383,7 @@ Public Class MainForm
         treeDetail.Value = settings.TreeDetail : objectDetail.Value = settings.ObjectDetail
         Field(render, "Tree detail", treeDetail) : Field(render, "Object detail", objectDetail)
         Field(render, "Headset refresh rate", refreshLabel)
+        Field(render, "Requested scene", requestedResolution)
         Dim hud = Section(columns.Second, "VR HUD")
         hudDistance.Value = CInt(settings.HudDistance * 2D) : Field(hud, "Distance", hudDistance)
         hudFollow.Text = "On" : hudFollow.Checked = settings.HudFollowView : Field(hud, "Follow view", hudFollow)
@@ -404,15 +408,31 @@ Public Class MainForm
                                    End Sub
         columns.Second.Controls.Add(defaults)
         columns.Second.Controls.Add(HelpLink(Sub() ShowAbout("VR rendering")))
+        columns.Second.Controls.Add(actualResolution)
         AddHandler renderScale.ValueChanged, Sub() RefreshGraphicsSummary()
         AddHandler headsetScale.ValueChanged, Sub() RefreshGraphicsSummary()
         AddHandler fieldOfView.ValueChanged, Sub() RefreshGraphicsSummary()
         RefreshGraphicsSummary()
+        RefreshResolutionReport()
     End Sub
     Private Sub RefreshGraphicsSummary()
         Dim preview As New VrSettings With {.RenderScale = CInt(renderScale.Value), .FieldOfView = CInt(fieldOfView.Value)}
         Dim pixels = preview.RenderWidth * CDbl(preview.RenderHeight) / (1600 * 1200)
-        renderScale.AccessibleDescription = $"Scene per eye: {preview.RenderWidth} × {preview.RenderHeight} ({pixels:P0} of default pixels). Headset texture: {headsetScale.Value}% of recommended width and height."
+        requestedResolution.Text = $"{preview.RenderWidth} × {preview.RenderHeight} per eye ({pixels:P0} of default pixels)"
+        renderScale.AccessibleDescription = "Requested scene: " & requestedResolution.Text & $". Headset texture: {headsetScale.Value}% of recommended width and height."
+    End Sub
+    Private Sub RefreshResolutionReport()
+        actualResolution.Text = "Actual resolution: not reported yet. Start a VR session to measure it."
+        Try
+            Dim path = IO.Path.Combine(context.UserRoot, "resolution.json")
+            If File.Exists(path) Then actualResolution.Text = If(Files.ReadJson(Of ResolutionStatus)(path)?.Description(), "Resolution report unavailable.")
+        Catch ex As IOException
+            actualResolution.Text = "Resolution report unavailable."
+        Catch ex As UnauthorizedAccessException
+            actualResolution.Text = "Resolution report unavailable."
+        Catch ex As System.Text.Json.JsonException
+            actualResolution.Text = "Resolution report unavailable."
+        End Try
     End Sub
     Private Sub RefreshMsaaWarning()
         msaaWarning.Text = If(msaa.Value >= 2, If(msaa.Value = 3, "8×: very high memory cost; may cause VR crashes.", "4×: higher memory cost; reduce if VR is unstable."), "")
@@ -611,6 +631,9 @@ Public Class MainForm
     End Sub
     Private Sub RefreshStatus()
         Try
+            If DateTime.UtcNow >= nextResolutionRefresh Then
+                RefreshResolutionReport() : nextResolutionRefresh = DateTime.UtcNow.AddSeconds(1)
+            End If
             Dim statusPath = IO.Path.Combine(context.UserRoot, "session.json")
             Dim status = If(File.Exists(statusPath), Files.ReadJson(Of SessionStatus)(statusPath), Nothing)
             busy = False

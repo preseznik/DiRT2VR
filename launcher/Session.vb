@@ -222,7 +222,7 @@ Public Class Session
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         Dim focus As New StartupFocus(context)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
-        Using returnChannel As New DirectReturnChannel(start, settings.DirectMode)
+        Using returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings)
             Using child = Process.Start(start)
                 Status("Running")
                 Dim seenGame As Boolean
@@ -232,6 +232,7 @@ Public Class Session
                 Do
                     Application.DoEvents() : poll?.Invoke()
                     If DateTime.UtcNow >= nextProcessCheck Then
+                        resolution.Poll()
                         borderless?.Poll()
                         If borderless IsNot Nothing AndAlso borderless.Warning <> "" AndAlso displayWarning <> borderless.Warning Then
                             displayWarning = borderless.Warning : Status("Running")

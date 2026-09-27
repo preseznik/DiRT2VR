@@ -12,6 +12,16 @@ The local original backend currently exits before rendering/control initializati
 
 ## Optional launcher bindings
 
+### Issue #3: calibration persistence
+
+The editor now displays dead zone and saturation next to each controller binding, refreshes those values after Calibration, and explicitly states that enabled assignments reapply on every launch. The native parser substitution and profile-loading behavior are unchanged. A saved launcher value can supersede a later in-game adjustment; this is a candidate explanation, not a reproduction of the reported reset to 5%. The capture default remains 3% for wheel axes and the Xbox preset retains 20% steering.
+
+For an affected wheel, record its model, Normal/Practice/Race launch mode, Desktop/VR and override-enabled state. With overrides enabled, save 0% on both steering halves in the launcher, then check two game launches. With overrides disabled, use the game's Save Profile action and compare two Normal launches followed by Direct practice/Race. Perform any reproduction on an isolated profile; compare unrelated controls and save contents, and change profile loading only if the trace identifies a fault. Hardware persistence acceptance remains pending.
+
+Regression coverage saves/reloads both steering zeros and prepares two launches for each Desktop/VR and enabled/disabled combination. It checks emitted native XML, clearing inherited override paths, unchanged stored settings, retained pedal calibration and unchanged Xbox defaults. This is launcher-preparation evidence, not two actual game launches.
+
+2026-09-27 validation: the full launcher suite passed 772 checks, including these persistence cases (`artifacts/issue-full-launcher-test.log`). Both light and dark editor screenshots were inspected; the dedicated dark controls suite passed 111 checks in `artifacts/launcher-tests-20260927-221637`. The affected wheel model, override state and in-game two-launch reproduction remain to be supplied/verified.
+
 `DrivingControls.vb` stores opt-in, versioned settings in the installation's LocalAppData folder, and generates a bounded ActionMap XML file. Unassigned actions are not overridden. Each assigned action can have one keyboard and one controller binding; together these replace that action's loaded axes. This is deliberately not a separate career. The game may subsequently save the applied controls through its normal profile save.
 
 `src/driving_controls.cpp` hooks the fingerprinted executable's Action parser at RVA `0xb095b0`. Only named configured actions receive an alternate reader. The game's own XML parser and normal input handling remain responsible for device lookup, calibration and driving. The temporary XML document remains alive for the game-held strings. Normal launches with no enabled overrides install no input hook. Desktop overrides activate a controls-only DX11 path, without render hooks, VR hotkeys or OpenXR. The exact GFWL compatibility guard also covers these hooks when the genuine supported DLL is present.

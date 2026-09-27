@@ -142,6 +142,7 @@ int main() {
             Require(frames.Initialize(static_cast<XrInstance>(1),1,static_cast<XrSession>(2),allocationDevice.Get(),scale,1.f,dimensions.first,dimensions.second),"real RTV allocation failed");
             Require(chainInfos.size()==3,"must retain separate eyes and HUD");
             for(unsigned eye=0;eye<2;++eye) Require(chainInfos[eye].width==unsigned(3400*scale) && chainInfos[eye].height==unsigned(3468*scale),"HUD sizing changed eye resolution");
+            Require(frames.EyeDimensions()==std::array<uint32_t,4>{unsigned(3400*scale),unsigned(3468*scale),unsigned(3400*scale),unsigned(3468*scale)},"reported eye dimensions must match allocated swapchains");
             auto factor=std::min({1.0,2048.0/std::max(dimensions.first,dimensions.second),double(unsigned(3400*scale))/dimensions.first,double(unsigned(3468*scale))/dimensions.second});
             Require(chainInfos[2].width==unsigned(dimensions.first*factor) && chainInfos[2].height==unsigned(dimensions.second*factor),"HUD must preserve aspect, cap at 2048 and never upscale");
         }
