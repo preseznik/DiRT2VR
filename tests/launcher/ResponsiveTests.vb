@@ -18,6 +18,7 @@ Public Module ResponsiveTests
             check(form.Controls.Find("RequestedResolution", True).Single().Text.Contains("4800 × 3600"), "requested dimensions update with unsaved slider changes")
             check(form.Controls.Find("ActualResolution", True).Single().Text.Contains("1280 × 720") AndAlso form.Controls.Find("ActualResolution", True).Single().Text.Contains("differs"), "actual dimensions and mismatch are visible independently of requested slider")
             CheckResolutionRefresh(form, context, check)
+            CheckSliderRedraws(form, check)
             Dim renderTrack = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
             Dim recommendation = form.Controls.Find("RenderScaleRecommendation", True).Single()
             check(recommendation.Text = "150% recommended", "render resolution displays recommendation independently of selected value")
@@ -41,7 +42,10 @@ Public Module ResponsiveTests
                 form.ClientSize = New Size(CInt(size.Width * factor), CInt(size.Height * factor))
                 For Each page As TabPage In tabs.TabPages
                     tabs.SelectedTab = page : Application.DoEvents() : form.PerformLayout() : Application.DoEvents()
-                    If page.Text = "Graphics" Then check(SendMessage(renderTrack.Handle, &H403UI, IntPtr.Zero, IntPtr.Zero).ToInt32() = 150, $"recommended notch survives layout at {size}")
+                    If page.Text = "Graphics" Then
+                        check(SendMessage(renderTrack.Handle, &H403UI, IntPtr.Zero, IntPtr.Zero).ToInt32() = 150, $"recommended notch survives layout at {size}")
+                        CheckSliderRedraws(form, check)
+                    End If
                     check(Not page.HorizontalScroll.Visible, $"{page.Text} has no horizontal page scrolling at {size}")
                     For Each name In {"SaveSettings", "OpenLogs"}.Concat(If(page.Text = "Multiplayer", Array.Empty(Of String)(), {"LaunchDesktop", "LaunchVR"}))
                         Dim button = form.Controls.Find(name, True).Single()
@@ -103,6 +107,40 @@ Public Module ResponsiveTests
             End Using
             form.Close()
         End Using
+    End Sub
+    Private Sub CheckSliderRedraws(form As MainForm, check As Action(Of Boolean, String))
+        Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
+        Dim page = tabs.SelectedTab
+        For Each slider In Descendants(page).OfType(Of ValueSlider)().ToArray()
+            Dim original = slider.Value
+            Dim track = Descendants(slider).OfType(Of TrackBar)().Single()
+            Dim peers = Descendants(page).Where(Function(control) (TypeOf control Is TrackBar OrElse TypeOf control Is ComboBox) AndAlso control IsNot track).ToArray()
+            Dim invalidations As Integer, moves As Integer
+            Dim invalidated As InvalidateEventHandler = Sub(sender, e) invalidations += 1
+            Dim moved As EventHandler = Sub(sender, e) moves += 1
+            For Each peer In peers
+                peer.Update()
+                AddHandler peer.Invalidated, invalidated
+                AddHandler peer.SizeChanged, moved
+            Next
+            Try
+                For Each value In {track.Minimum, track.Maximum, (track.Minimum + track.Maximum) \ 2, original}
+                    slider.Value = value
+                    Application.DoEvents()
+                    For Each name In {"RequestedResolution", "MsaaWarning"}
+                        Dim readout = form.Controls.Find(name, True).Single()
+                        check(readout.GetPreferredSize(New Size(readout.Width, 0)).Height <= readout.Height, name & " remains readable while sliding")
+                    Next
+                Next
+                check(moves = 0 AndAlso invalidations = 0, $"{slider.Name} leaves unrelated sliders and dropdown alone (resizes={moves}, invalidations={invalidations})")
+            Finally
+                For Each peer In peers
+                    RemoveHandler peer.Invalidated, invalidated
+                    RemoveHandler peer.SizeChanged, moved
+                Next
+                slider.Value = original
+            End Try
+        Next
     End Sub
     Private Sub CheckResolutionRefresh(form As MainForm, context As InstallContext, check As Action(Of Boolean, String))
         Dim label = form.Controls.Find("ActualResolution", True).Single()

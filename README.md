@@ -109,6 +109,8 @@ The following settings apply to VR:
 
 Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore defaults** restores the VR baseline, turns desktop VSync on and borderless off; save afterward.
 
+**Resolution limitation:** the game can reject a requested size and fall back to 1280 × 720. Check the measured game resolution in Graphics after a VR launch; a higher slider value does not guarantee higher resolution. Increasing headset texture scale cannot recover detail missing from that lower-resolution scene. This fallback is still under investigation.
+
 For vegetation and object pop-in, try **Tree detail → Ultra** and **Object detail → Ultra**, save, then relaunch VR. **Game** keeps your existing game settings. These overrides are restored after play. Some tracks also impose their own draw distances, so Ultra may reduce transitions without eliminating all pop-in. Compare performance on the same section of track before keeping higher settings.
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.

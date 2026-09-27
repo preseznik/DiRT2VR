@@ -8,6 +8,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 No pending changes.
 
+## 0.15.4 — 2026-09-27
+
+Local test build; not yet published to GitHub.
+
+- Keep Graphics slider changes local to their value/readout controls instead of resizing neighbouring sliders and dropdowns. Confirm that unsupported render sizes can fall back to 1280 × 720; check measured resolution before increasing headset texture scale. The game-side resolution fallback is not fixed yet.
+
 ## 0.15.3 — 2026-09-27
 
 Local test build; not yet published to GitHub.
