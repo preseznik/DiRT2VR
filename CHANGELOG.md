@@ -6,7 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-No pending changes.
+- Make `main` the default branch for tested code and releases; keep unfinished custom-track development separate and retire obsolete branches.
+
 
 ## 0.15.7 — 2026-09-28
 

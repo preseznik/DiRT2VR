@@ -86,7 +86,7 @@ The final 1600 × 1200 run completed the benchmark and retained the high-resolut
 
 The final receipt's `restoration-check.json` confirms byte-identical restoration of shared graphics settings and the isolated camera/effects assets. The installed executable and `xlive.dll` are unchanged, no proxy was installed in the Steam directory, and the isolated proxy matches the tested build. Both isolated game processes exited. No Large Address Aware patch was applied.
 
-The source repository is `https://github.com/preseznik/DiRT2VR`, with work on `preseznik/native-vr-prototype`. Game files, extracted shaders, local captures, dependencies and binaries remain untracked.
+The source repository is `https://github.com/preseznik/DiRT2VR`, with tested releases on `main` and unfinished track work on `preseznik/custom-track-development`. See [branch workflow](branches.md). Game files, extracted shaders, local captures, dependencies and binaries remain untracked.
 
 ## Reduced-effects experiment, September 21
 
