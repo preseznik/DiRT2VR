@@ -10,7 +10,7 @@ No pending changes.
 
 ## 0.15.1 — 2026-09-27
 
-Local test build; not yet published to GitHub.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.15.1)
 
 - Extend VR render resolution to 300%, with a native notch and “150% recommended” label. Preserve saved values and the 100% default. High-resolution headset and memory acceptance remain pending.
 
