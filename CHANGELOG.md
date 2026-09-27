@@ -11,12 +11,20 @@ Version headings identify distribution builds; published packages include a GitH
 - Correct the experimental track PSSG writer's duplicate data/index object ID and missing terrain primitive declaration after a manual test showed invisible road collision. Add saved-file structure checks that reject the previous candidate. The repaired candidate still needs in-game rendering validation.
 - Add isolated custom-track authoring tools and an optional experimental prototype entry for desktop Direct practice. The new 356 m circuit has matching visual/collision geometry, route data and hash-checked installation. Original tracks remain available. Static validation and headless launcher tests pass; generated-track gameplay, visibility, resets and lap completion remain unverified. See [technical status](docs/custom-tracks.md).
 
+## 0.15.7 — 2026-09-28
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.15.7)
+
+- Higher VR render resolution now increases scene detail instead of falling back to 720p. At full field of view, 150% renders at 2400 × 1800 and 200% at 3200 × 2400.
+- Stop sliders and dropdowns flashing when changing settings in the Launcher and Graphics tabs.
+- Keep the Graphics resolution readout stable while still updating it when measurements change.
+
 ## 0.15.6 — 2026-09-27
 
-Local test build; not yet published to GitHub.
+Local test build; included in 0.15.7.
 
-- Fix Launcher tab slider/dropdown flashing caused by transient oversized layout measurements; keep opponent descriptions from resizing sibling controls.
-- Fix VR render scales above the desktop dimensions falling back to 720p. Set the supported engine scene and swapchain dimensions together before allocation; desktop launches remain unchanged. Local game diagnostics verified 150% and 200% scene sizes; headset comparison remains pending.
+- Fix VR resolution falling back to 720p at higher render scales.
+- Stop Launcher controls flashing when changing sliders or opponent choices.
 
 ## 0.15.5 — 2026-09-27
 
