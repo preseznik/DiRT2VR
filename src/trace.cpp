@@ -1,3 +1,4 @@
+#include "graphics_diagnostics.h"
 #include "trace.h"
 #include "common.h"
 #include "eye_pair.h"
@@ -437,7 +438,10 @@ bool EnsureGameXr() {
         const auto scale=GraphicsScale(L"DIRT2VR_HEADSET_SCALE",.5f,.25f,1.f);
         const auto fov=GraphicsScale(L"DIRT2VR_FOV_SCALE",1.f,.7f,1.f);
         Log("VR graphics headset_scale=%.2f fov_scale=%.2f",scale,fov);
-        if(!gameXr->Initialize(device.Get(),scale,fov)) Log("OpenXR game initialization failed; desktop fallback");
+        ComPtr<ID3D11Texture2D> back;
+        D3D11_TEXTURE2D_DESC source{};
+        if(SUCCEEDED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) back->GetDesc(&source);
+        if(!gameXr->Initialize(device.Get(),scale,fov,source.Width ? source.Width : 1600,source.Height ? source.Height : 1200)) Log("OpenXR game initialization failed; desktop fallback");
     }
     return gameXr && gameXr->Active();
 }
@@ -1115,7 +1119,12 @@ HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT f
         }
     }
     if(DetailedTrace() && (f==300 || f==1200 || f==3000)) { Stack("Present"); Screenshot(swapchain,f); }
-    return realPresent(swapchain,interval,flags);
+    const auto result=realPresent(swapchain,interval,flags);
+    if(FAILED(result) && graphics::logger.load()) {
+        ComPtr<ID3D11Device> device; swapchain->GetDevice(IID_PPV_ARGS(&device));
+        graphics::Failed(result,device.Get(),"Present");
+    }
+    return result;
 }
 void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT base) {
     if(Sample() && draws.load()<3) Stack("DrawIndexed"); if(!RecordDraw(c,"indexed",n,1,start,base)) return;
@@ -1190,6 +1199,7 @@ template<class F> void Hook(void* object,unsigned index,void* replacement,F& ori
 }
 void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChain* swapchain) {
     std::lock_guard lock(attachMutex);
+    if(LoggingEnabled()) graphics::logger.store(+[](const char* message) { Log("%s",message); });
     if(!EnableStartupHooks(HeadsetEnabled(),AutoCockpitEnabled())) ExitProcess(ERROR_BAD_EXE_FORMAT);
     wchar_t desktop[8]{};
     const bool desktopControls=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_CONTROLS",desktop,8)==1 && desktop[0]==L'1';

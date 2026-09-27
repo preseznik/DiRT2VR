@@ -6,7 +6,7 @@
 #include <cmath>
 
 // Exercise the real frame loop against a deterministic runtime, without a HMD.
-// Initialize's graphics allocation is covered by the live cube test separately.
+// Initialization also uses a deterministic runtime and real WARP resources.
 struct XrFramesTestAccess {
     static void Seed(XrFrames& frames,float fovScale=1.f) {
         frames.fovScale_=fovScale;
@@ -22,6 +22,9 @@ struct XrFramesTestAccess {
 };
 namespace {
 std::vector<std::string> calls;
+Microsoft::WRL::ComPtr<ID3D11Device> allocationDevice;
+std::vector<XrSwapchainCreateInfo> chainInfos;
+std::vector<Microsoft::WRL::ComPtr<ID3D11Texture2D>> chainTextures;
 XrSessionState event=XR_SESSION_STATE_READY;
 bool render=true, tracking=true, timeoutOnce=false;
 bool expectScreen=false;
@@ -102,16 +105,47 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEndFrame(XrSession,const XrFrameEndInfo* info) 
 }
 XRAPI_ATTR XrResult XRAPI_CALL xrDestroySwapchain(XrSwapchain) { return XR_SUCCESS; }
 XRAPI_ATTR XrResult XRAPI_CALL xrDestroySpace(XrSpace) { return XR_SUCCESS; }
-// Unused initialization entry points are deliberately not a graphics simulation.
-XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateViewConfigurationViews(XrInstance,XrSystemId,XrViewConfigurationType,uint32_t,uint32_t*,XrViewConfigurationView*) { return XR_ERROR_RUNTIME_FAILURE; }
-XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateSwapchainFormats(XrSession,uint32_t,uint32_t*,int64_t*) { return XR_ERROR_RUNTIME_FAILURE; }
-XRAPI_ATTR XrResult XRAPI_CALL xrCreateReferenceSpace(XrSession,const XrReferenceSpaceCreateInfo*,XrSpace*) { return XR_ERROR_RUNTIME_FAILURE; }
-XRAPI_ATTR XrResult XRAPI_CALL xrCreateSwapchain(XrSession,const XrSwapchainCreateInfo*,XrSwapchain*) { return XR_ERROR_RUNTIME_FAILURE; }
-XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateSwapchainImages(XrSwapchain,uint32_t,uint32_t*,XrSwapchainImageBaseHeader*) { return XR_ERROR_RUNTIME_FAILURE; }
+XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateViewConfigurationViews(XrInstance,XrSystemId,XrViewConfigurationType,uint32_t capacity,uint32_t* count,XrViewConfigurationView* views) {
+    *count=2;
+    for(unsigned i=0;i<capacity;++i) {
+        views[i].recommendedImageRectWidth=3400; views[i].recommendedImageRectHeight=3468;
+        views[i].maxImageRectWidth=views[i].maxImageRectHeight=4096;
+    }
+    return XR_SUCCESS;
+}
+XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateSwapchainFormats(XrSession,uint32_t capacity,uint32_t* count,int64_t* formats) {
+    *count=1; if(capacity) formats[0]=DXGI_FORMAT_R8G8B8A8_UNORM; return XR_SUCCESS;
+}
+XRAPI_ATTR XrResult XRAPI_CALL xrCreateReferenceSpace(XrSession,const XrReferenceSpaceCreateInfo*,XrSpace* space) { *space=static_cast<XrSpace>(3); return XR_SUCCESS; }
+XRAPI_ATTR XrResult XRAPI_CALL xrCreateSwapchain(XrSession,const XrSwapchainCreateInfo* info,XrSwapchain* chain) {
+    D3D11_TEXTURE2D_DESC desc{};
+    desc.Width=info->width; desc.Height=info->height; desc.Format=static_cast<DXGI_FORMAT>(info->format);
+    desc.MipLevels=desc.ArraySize=desc.SampleDesc.Count=1; desc.BindFlags=D3D11_BIND_RENDER_TARGET;
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> texture;
+    if(FAILED(allocationDevice->CreateTexture2D(&desc,nullptr,&texture))) return XR_ERROR_RUNTIME_FAILURE;
+    *chain=static_cast<XrSwapchain>(10+chainInfos.size()); chainInfos.push_back(*info); chainTextures.push_back(texture);
+    return XR_SUCCESS;
+}
+XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateSwapchainImages(XrSwapchain chain,uint32_t capacity,uint32_t* count,XrSwapchainImageBaseHeader* images) {
+    *count=3; // Runtime decides image count. Sharing test textures avoids unnecessary test memory.
+    for(unsigned i=0;i<capacity;++i) reinterpret_cast<XrSwapchainImageD3D11KHR*>(images)[i].texture=chainTextures.at(Eye(chain)).Get();
+    return XR_SUCCESS;
+}
 }
 
 int main() {
     try {
+        Require(SUCCEEDED(D3D11CreateDevice(nullptr,D3D_DRIVER_TYPE_WARP,nullptr,0,nullptr,0,D3D11_SDK_VERSION,&allocationDevice,nullptr,nullptr)),"WARP device unavailable");
+        for(auto dimensions:std::vector<std::pair<unsigned,unsigned>>{{1600,1200},{2400,1800},{800,600},{600,2400}}) {
+            chainInfos.clear(); chainTextures.clear();
+            XrFrames frames;
+            Require(frames.Initialize(static_cast<XrInstance>(1),1,static_cast<XrSession>(2),allocationDevice.Get(),.5f,1.f,dimensions.first,dimensions.second),"real RTV allocation failed");
+            Require(chainInfos.size()==3,"must retain separate eyes and HUD");
+            for(unsigned eye=0;eye<2;++eye) Require(chainInfos[eye].width==1700 && chainInfos[eye].height==1734,"HUD sizing changed eye resolution");
+            auto factor=std::min(1.0,2048.0/std::max(dimensions.first,dimensions.second));
+            Require(chainInfos[2].width==unsigned(dimensions.first*factor) && chainInfos[2].height==unsigned(dimensions.second*factor),"HUD must preserve aspect, cap at 2048 and never upscale");
+        }
+        chainTextures.clear(); allocationDevice.Reset();
         const auto draw=[](unsigned eye,const XrView& view,ID3D11RenderTargetView*,uint32_t,uint32_t) {
             calls.emplace_back("draw"+std::to_string(eye)); renderedFov[eye]=view.fov;
             const float scale=expectScreen ? 1.f : expectedFovScale;

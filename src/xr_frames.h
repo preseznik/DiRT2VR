@@ -29,7 +29,7 @@ public:
     };
     struct Overlay : Screen { Draw draw; };
     ~XrFrames();
-    bool Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale,float fovScale=1.f);
+    bool Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale,float fovScale=1.f,uint32_t hudWidth=1600,uint32_t hudHeight=1200);
     bool Tick(const Draw& draw,const Prepare& prepare={},const Screen* screen=nullptr,const Overlay* overlay=nullptr);
     bool Exiting() const { return exiting_; }
     uint64_t Submitted() const { return submitted_; }

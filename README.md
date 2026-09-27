@@ -98,6 +98,7 @@ The following settings apply to VR:
 |---|---|---|
 | Render resolution | 100% | 1600 × 1200 per eye at full field of view. Adjust from 50–150%; lower values reduce scene detail and pixel work. |
 | Headset texture scale | 50% | 25–100% of SteamVR's recommended width and height. Raising this alone cannot add detail missing from the scene render. |
+| Anti-aliasing (MSAA) | 2× | VR-only: Off, 2×, 4× or 8×. High values cost memory and may cause crashes; the launcher warns at 4× and 8×. Desktop MSAA is restored after play. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
 | Car mirrors | Game setting | Optionally force mirrors on or off during VR sessions. |
 | Tree detail | Game | Choose the game's Ultra low–Ultra vegetation detail presets. Higher values keep detailed vegetation farther away. |

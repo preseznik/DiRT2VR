@@ -1,4 +1,5 @@
 #include "xr_frames.h"
+#include "graphics_diagnostics.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdio>
@@ -21,8 +22,8 @@ XrFrames::~XrFrames() {
     }
     if(space_) xrDestroySpace(space_);
 }
-bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale,float fovScale) {
-    if(instance_ || !device || !std::isfinite(scale) || scale<0.25f || scale>1.f || !std::isfinite(fovScale) || fovScale<.7f || fovScale>1.f) return false;
+bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale,float fovScale,uint32_t hudWidth,uint32_t hudHeight) {
+    if(instance_ || !device || !hudWidth || !hudHeight || !std::isfinite(scale) || scale<0.25f || scale>1.f || !std::isfinite(fovScale) || fovScale<.7f || fovScale>1.f) return false;
     fovScale_=fovScale;
     instance_=instance; session_=session;
     uint32_t count{};
@@ -47,6 +48,15 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
         const auto& view=views[i%2];
         eye.width=std::max(1u,static_cast<uint32_t>(view.recommendedImageRectWidth*scale));
         eye.height=std::max(1u,static_cast<uint32_t>(view.recommendedImageRectHeight*scale));
+        if(i==2) {
+            // The HUD is a game-resolution image, not a third headset eye.
+            const double hudScale=std::min({1.0,2048.0/std::max(hudWidth,hudHeight),
+                double(view.maxImageRectWidth)/hudWidth,double(view.maxImageRectHeight)/hudHeight});
+            eye.width=std::max(1u,static_cast<uint32_t>(hudWidth*hudScale));
+            eye.height=std::max(1u,static_cast<uint32_t>(hudHeight*hudScale));
+        }
+        vr::graphics::Allocation allocation(i==2 ? "HUD swapchain" : "eye swapchain");
+        Report("creating swapchain role=%s index=%u %ux%u format=%lld samples=1",i==2 ? "hud" : "eye",i,eye.width,eye.height,format);
         XrSwapchainCreateInfo info{XR_TYPE_SWAPCHAIN_CREATE_INFO};
         info.usageFlags=XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT|XR_SWAPCHAIN_USAGE_TRANSFER_DST_BIT;
         info.format=format; info.sampleCount=1; info.width=eye.width; info.height=eye.height;
@@ -60,7 +70,7 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
             D3D11_RENDER_TARGET_VIEW_DESC target{};
             target.Format=static_cast<DXGI_FORMAT>(format); target.ViewDimension=D3D11_RTV_DIMENSION_TEXTURE2D;
             auto hr=device->CreateRenderTargetView(eye.images[j].texture,&target,&eye.targets[j]);
-            if(FAILED(hr)) { Report("CreateRenderTargetView=0x%08lx",hr); return false; }
+            if(vr::graphics::Failed(hr,device,"OpenXR image RTV")) { Report("CreateRenderTargetView=0x%08lx",hr); return false; }
         }
         Report("swapchain eye=%u %ux%u images=%u",i,eye.width,eye.height,count);
     }

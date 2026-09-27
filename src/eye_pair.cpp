@@ -1,4 +1,5 @@
 #include "eye_pair.h"
+#include "graphics_diagnostics.h"
 using Microsoft::WRL::ComPtr;
 
 HRESULT EyePair::Capture(ID3D11Texture2D* source,unsigned eye,uint64_t sequence) {
@@ -14,12 +15,13 @@ HRESULT EyePair::Capture(ID3D11Texture2D* source,unsigned eye,uint64_t sequence)
         sourceDesc_.SampleDesc.Quality!=desc.SampleDesc.Quality;
     if(eye==1 && (changed || mask_!=1 || sequence_!=sequence)) { mask_=0; return E_INVALIDARG; }
     if(changed || !textures_[0]) {
+        vr::graphics::Allocation allocation("eye capture pair");
         auto target=desc; target.SampleDesc={1,0}; target.Usage=D3D11_USAGE_DEFAULT;
         target.BindFlags=D3D11_BIND_SHADER_RESOURCE; target.CPUAccessFlags=0; target.MiscFlags=0;
         std::array<ComPtr<ID3D11Texture2D>,2> replacement;
         for(auto& texture:replacement) {
             const auto hr=device->CreateTexture2D(&target,nullptr,&texture);
-            if(FAILED(hr)) return hr;
+            if(vr::graphics::Failed(hr,device.Get(),"eye capture texture",&target)) return hr;
         }
         textures_=std::move(replacement); device_=device; sourceDesc_=desc;
     }

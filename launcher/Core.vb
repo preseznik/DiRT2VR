@@ -122,6 +122,13 @@ Public Class VrSettings
     Public Property DesktopVSync As Boolean = True
     Public Property RenderScale As Integer = 100
     Public Property HeadsetScale As Integer = 50
+    Public Property VrMsaa As Integer = 2
+    <Serialization.JsonIgnore>
+    Public ReadOnly Property VrMsaaToken As String
+        Get
+            Return If(VrMsaa = 0, "off", $"{VrMsaa}xmsaa")
+        End Get
+    End Property
     Public Property FieldOfView As Integer = 100
     Public Property HudFollowView As Boolean = False
     Public Property HudDistance As Decimal = 1D
@@ -177,6 +184,7 @@ Public Class VrSettings
         End Get
     End Property
     Public Sub Validate()
+        If Not {0, 2, 4, 8}.Contains(VrMsaa) Then Throw New IOException("Choose Off, 2×, 4× or 8× VR anti-aliasing.")
         HudDistance = Math.Round(Math.Clamp(HudDistance, 1D, 20D) * 2D, MidpointRounding.AwayFromZero) / 2D
         If Version <> 3 Then Throw New IOException("Unsupported settings version.")
         If Not {"menus", "practice", "race", "lan"}.Contains(LaunchMode) Then Throw New IOException("Unknown launch mode.")

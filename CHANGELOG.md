@@ -6,7 +6,9 @@ Version headings below identify published GitHub packages. Earlier local-build e
 
 ## Unreleased
 
-No pending changes.
+- Add a VR anti-aliasing slider (Off/2×/4×/8×), defaulting to 2× with high-memory warnings at 4× and 8×. Restore the original desktop MSAA after play.
+- Size the HUD's OpenXR texture independently of the eyes, using the source image capped at 2048 pixels on its longest edge. HUD distance and apparent size remain unchanged.
+- Add bounded, opt-in graphics failure reports with HRESULT/device-removal status and virtual-address-space snapshots around VR allocations. LAA remains unchanged; PC3/PC4 crash and headset-readability validation are still pending.
 
 ## 0.14.4 — 2026-09-27
 

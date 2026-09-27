@@ -81,3 +81,46 @@ powershell -NoProfile -ExecutionPolicy Bypass -File .\Configure-CrashDump.ps1 -M
 ```
 
 The dump may contain private process memory; share it directly for diagnosis, not in a public issue. The disable step preserves dump files. The script changes neither game DLLs nor saves. An interrupted enable is recoverable with Disable; changed or foreign settings are preserved and reported. The capture must run on PC3. A local synthetic crash can test collection mechanics but cannot reproduce its GFWL failure.
+
+
+## VR memory candidate: independent MSAA and HUD allocation
+
+The supplied 0.14.1 graphics backups include 8x MSAA. Prior VR preparation changed
+resolution but inherited multisampling. VR now journals an explicit setting
+(`off`, `2xmsaa`, `4xmsaa`, or `8xmsaa`), default 2x, and restores the previous
+attribute (or its absence). Desktop preparation does not change MSAA. Existing
+preferences without the new field receive 2x; higher saved choices are retained.
+
+The third OpenXR swapchain is the transparent HUD layer. It now uses the initial
+game backbuffer dimensions, never upscaled, capped proportionally at 2048 pixels
+on its longest edge and at runtime image limits. For a 1600x1200 game image it
+uses 1600x1200 regardless of headset scale. The two eye swapchains, projections,
+HUD pose, distance and angular size are unchanged. OpenXR still chooses image
+count. The cap reduces nominal image storage; it does not establish an equal
+reduction in CPU virtual address usage. A later backbuffer size change is still
+blitted into the session's fixed HUD extent.
+
+With diagnostic logging enabled, `graphics_diagnostics.h` records before/after
+virtual-address-space snapshots for the first 16 VR allocation groups (session,
+eye/HUD swapchains, eye capture pairs and HUD capture). Mod-owned texture/view
+and state-creation failures and failed normal `Present` calls include HRESULT,
+`GetDeviceRemovedReason`, available texture dimensions/format/sample count and a
+memory snapshot. Failure reporting is capped at 16 entries plus a suppression
+notice. These diagnostics return the original result and install no additional
+hooks or global exception handler. They cannot identify every game allocation or
+an asynchronous fault elsewhere; WER remains the path to a conclusive crash stack.
+Logging off performs no additional memory walks or writes.
+
+Validation: 17 native tests pass, including deterministic OpenXR allocation with
+real WARP textures/RTVs at default, oversized, small and portrait HUD dimensions;
+the eye extents remain unchanged. Failure diagnostics exercise an actual rejected
+D3D11 allocation, success/disabled paths and bounded reporting. Launcher tests
+cover all MSAA choices, serialization, invalid values, exact restoration,
+interrupted-manager recovery, merging unrelated XML edits and desktop isolation.
+Offscreen dark-theme layout checks cover high-MSAA warnings and saved/default
+values across wide, portrait and compact windows.
+
+LAA and executable bytes are unchanged. PC3/PC4 long VR races, repeated stage
+loads and headset HUD readability remain pending; this is not a confirmed crash
+fix. Start those comparisons at 2x MSAA with the same resolution/settings, then
+try Off if instability remains and retain WER evidence.

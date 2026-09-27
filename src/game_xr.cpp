@@ -1,5 +1,6 @@
 #include "game_xr.h"
 #include "common.h"
+#include "graphics_diagnostics.h"
 #include <dxgi.h>
 #include <cstring>
 using Microsoft::WRL::ComPtr;
@@ -9,7 +10,7 @@ bool Check(XrResult result,const char* operation) {
     vr::Log("OpenXR %s=%d",operation,result); return XR_SUCCEEDED(result);
 }
 }
-bool GameXr::Initialize(ID3D11Device* device,float scale,float fovScale) {
+bool GameXr::Initialize(ID3D11Device* device,float scale,float fovScale,uint32_t hudWidth,uint32_t hudHeight) {
     if(instance_ || !device) return false;
     const char* extensions[]={XR_KHR_D3D11_ENABLE_EXTENSION_NAME};
     XrInstanceCreateInfo create{XR_TYPE_INSTANCE_CREATE_INFO};
@@ -32,9 +33,10 @@ bool GameXr::Initialize(ID3D11Device* device,float scale,float fovScale) {
     }
     XrGraphicsBindingD3D11KHR binding{XR_TYPE_GRAPHICS_BINDING_D3D11_KHR}; binding.device=device;
     XrSessionCreateInfo session{XR_TYPE_SESSION_CREATE_INFO}; session.next=&binding; session.systemId=system;
+    vr::graphics::Allocation allocation("OpenXR session and resources");
     if(!Check(xrCreateSession(instance_,&session,&session_),"create game session")) { Shutdown(); return false; }
     frames_=std::make_unique<XrFrames>([](const char* message) { vr::Log("OpenXR %s",message); });
-    if(!frames_->Initialize(instance_,system,session_,device,scale,fovScale) || !blit_.Initialize(device)) { Shutdown(); return false; }
+    if(!frames_->Initialize(instance_,system,session_,device,scale,fovScale,hudWidth,hudHeight) || !blit_.Initialize(device)) { Shutdown(); return false; }
     vr::Log("OpenXR game session initialized; experimental cameras, visibility unvalidated"); return true;
 }
 bool GameXr::Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare,const XrFrames::Screen* screen,const XrFrames::Overlay* overlay) { return frames_ && frames_->Tick(draw,prepare,screen,overlay); }

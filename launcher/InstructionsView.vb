@@ -38,7 +38,10 @@ If the game has not created a graphics file yet, use Normal Launch once before a
 100% renders 1600 × 1200 per eye at full field of view. The 50–150% slider scales width and height. Lower values reduce pixel work and detail; 80% uses about 64% of the pixels.
 
 Headset texture scale
-25–100% of SteamVR's recommended width and height. Increasing this alone cannot add detail missing from the scene render. Default: 50%.
+25–100% of SteamVR's recommended width and height. Increasing this alone cannot add detail missing from the scene render. Default: 50%. The HUD has an independent texture sized from the game image, capped at 2048 pixels on its longest edge; this does not change HUD distance or apparent size.
+
+Anti-aliasing (MSAA)
+VR uses its own Off / 2× / 4× / 8× setting. Default: 2×. Higher values smooth edges but cost memory and GPU time; 4× and especially 8× may make VR unstable in this 32-bit game. Reduce MSAA first if VR crashes. Your desktop MSAA is restored after play.
 
 Field of view
 100% retains the full view. Lower values crop peripheral vision and reduce render resolution proportionally, without stretching the image. Nondefault crops still need broader headset testing.
