@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix Launcher tab slider/dropdown flashing caused by transient oversized layout measurements; keep opponent descriptions from resizing sibling controls.
+- Fix VR render scales above the desktop dimensions falling back to 720p. Set the supported engine scene and swapchain dimensions together before allocation; desktop launches remain unchanged. Local game diagnostics verified 150% and 200% scene sizes; headset comparison remains pending.
+
 - Replace the prototype's donor PVS masks with all-visible masks to isolate persistent angular disappearance. Normal frustum culling remains active; only the prototype visibility file changes. Add raw/RLE mask regression checks. Runtime confirmation and performance assessment remain pending.
 - Expand the prototype terrain's stale visibility bounds to contain its elevated road. Add a ground apron and suppress local Battersea structures/props while retaining distant scenery, sky and trees. Installation now verifies visibility and scenery files too. Runtime culling and cleanup acceptance remain pending.
 - Correct the experimental track PSSG writer's duplicate data/index object ID and missing terrain primitive declaration after a manual test showed invisible road collision. Add saved-file structure checks that reject the previous candidate. The repaired candidate still needs in-game rendering validation.

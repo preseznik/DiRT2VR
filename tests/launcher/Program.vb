@@ -296,13 +296,16 @@ Module Program
         Check(Not transaction.Pending, "interrupted config creation/removal recovers")
         Dim inherited = Environment.GetEnvironmentVariable("DIRT2VR_HEADSET")
         Dim inheritedReflections = Environment.GetEnvironmentVariable("DIRT2VR_WATER_REFLECTIONS")
+        Dim inheritedScene = Environment.GetEnvironmentVariable("DIRT2VR_SCENE_SIZE")
         Try
             Environment.SetEnvironmentVariable("DIRT2VR_HEADSET", "1")
             Environment.SetEnvironmentVariable("DIRT2VR_WATER_REFLECTIONS", "1")
+            Environment.SetEnvironmentVariable("DIRT2VR_SCENE_SIZE", "3200x2400")
             Dim desktopMenu = Session.DesktopStartInfo(context, Nothing, Nothing)
             Check(desktopMenu.ArgumentList.Count = 0 AndAlso desktopMenu.Environment("DIRT2VR_ACTIVE") = "0" AndAlso Not desktopMenu.Environment.ContainsKey("DIRT2VR_HEADSET"), "regular menu launch disables inherited VR activation")
             Dim desktopRace = Session.DesktopStartInfo(context, "DiRT2VR/p.xml", folder)
             Check(Not desktopMenu.Environment.ContainsKey("DIRT2VR_WATER_REFLECTIONS") AndAlso Not desktopRace.Environment.ContainsKey("DIRT2VR_WATER_REFLECTIONS"), "desktop menus and races clear inherited reflection replay")
+            Check(Not desktopMenu.Environment.ContainsKey("DIRT2VR_SCENE_SIZE") AndAlso Not desktopRace.Environment.ContainsKey("DIRT2VR_SCENE_SIZE"), "desktop launches clear inherited VR scene dimensions")
             Check(desktopRace.Environment("DIRT2VR_LOGGING") = "1", "desktop direct start supports opt-in logs")
             Dim quietRace = Session.DesktopStartInfo(context, "DiRT2VR/p.xml", Nothing)
             Check(quietRace.Environment("DIRT2VR_LOGGING") = "0" AndAlso Not quietRace.Environment.ContainsKey("DIRT2VR_OUTPUT"), "desktop direct start honors disabled logs")
@@ -310,6 +313,7 @@ Module Program
         Finally
             Environment.SetEnvironmentVariable("DIRT2VR_HEADSET", inherited)
             Environment.SetEnvironmentVariable("DIRT2VR_WATER_REFLECTIONS", inheritedReflections)
+            Environment.SetEnvironmentVariable("DIRT2VR_SCENE_SIZE", inheritedScene)
         End Try
         document = XmlPatches.Read(File.ReadAllBytes(graphics))
         Dim mirror = document.CreateElement("mirrors") : mirror.SetAttribute("enabled", "true")
@@ -520,6 +524,7 @@ Module Program
             Check(saved.HudFollowView, "HUD follows view setting persists")
             Check(saved.HiddenHudElements = 31, "all five HUD visibility choices persist")
             Dim hudStart = Session.VrStartInfo(context, saved, "Local.TestHud", Nothing)
+            Check(hudStart.Environment("DIRT2VR_SCENE_SIZE") = "960x720", "native scene dimensions match scaled and cropped graphics settings")
             Check(saved.HudDistance = 6.5D AndAlso hudStart.Environment("DIRT2VR_HUD_DISTANCE") = "6.5", "HUD distance persists and reaches native runtime with invariant decimal separator")
             Check(Not hudStart.Environment.ContainsKey("DIRT2VR_SKIP_WATER"), "VR launch keeps water visible without legacy partial shader suppression")
             Check(hudStart.Environment("DIRT2VR_WATER_REFLECTIONS") = "1", "VR launch enables validated per-eye reflection path")

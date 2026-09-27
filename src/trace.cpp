@@ -982,6 +982,27 @@ uint64_t Shader(const void* bytes, SIZE_T length, const char* stage) {
 }
 
 bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT instances=1,UINT start=0,INT base=0,UINT firstInstance=0) {
+    if(Sample()) {
+        static unsigned long long sampledFrame{};
+        static unsigned samples{};
+        if(sampledFrame!=frame.load()) { sampledFrame=frame.load(); samples=0; }
+        if(samples<8) {
+            ComPtr<ID3D11RenderTargetView> colour;
+            ComPtr<ID3D11DepthStencilView> depth;
+            context->OMGetRenderTargets(1,&colour,&depth);
+            if(colour && depth) {
+                ComPtr<ID3D11Resource> resource;
+                ComPtr<ID3D11Texture2D> texture;
+                depth->GetResource(&resource);
+                if(SUCCEEDED(resource.As(&texture))) {
+                    D3D11_TEXTURE2D_DESC desc{}; texture->GetDesc(&desc);
+                    D3D11_VIEWPORT viewport{}; UINT n=1; context->RSGetViewports(&n,&viewport);
+                    Log("scene raster frame=%llu draw=%s depth=%ux%u msaa=%u viewport=%.0fx%.0f",sampledFrame,kind,desc.Width,desc.Height,desc.SampleDesc.Count,viewport.Width,viewport.Height);
+                    ++samples;
+                }
+            }
+        }
+    }
     static const bool skipWater=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_SKIP_WATER",value,16)>0 && wcscmp(value,L"1")==0; }();
     if(!scenePass && !skipWater) return true;
     ComPtr<ID3D11PixelShader> ps;

@@ -35,7 +35,7 @@ Public Class MainForm
     Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = False}
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
     Private ReadOnly opponentCars As ComboBox = Choice("OpponentCars")
-    Private ReadOnly opponentHint As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0)}
+    Private ReadOnly opponentHint As New Label With {.AutoSize = False, .MinimumSize = New Size(0, 44), .MaximumSize = New Size(710, 0)}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
     Private ReadOnly hudDistance As New ValueSlider("HudDistance", 2, 40, 2, " m", 2D)
