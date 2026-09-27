@@ -12,6 +12,8 @@ PC4's separate `File operation did not finish: prepare` screenshot identifies an
 
 Follow-up: test each affected PC through several races beyond ten minutes. If a crash persists, collect current events and a fresh WER dump on that PC. Retry the failing PC4 installation and collect its worker report before making targeted permission/attribute changes. The optional lower-resource comparison is Render resolution 100% and Headset texture scale 50%; keep it separate from validation of the hook-order correction.
 
+Validation for 0.14.4 (2026-09-27): 16 native tests, six LAN tests, 604 release-launcher checks, the real signed-GFWL checksum/MinHook test and eight crash-dump ownership checks passed. Player ZIP/manifest audit confirmed matching hashes and no developer docs or LAN source directories. Deployment to the isolated game copy completed recovery and proxy setup successfully. The separate Diagnostics ZIP contains only the optional collectors and their instructions. No PC3/PC4 gameplay or actual UAC-denial test was performed.
+
 ## Earlier 0.10.2 investigation
 
 Follow-up after release 0.10.2: the user reports that it seems to work, with no crashes so far. The test duration was not specified; do not convert this into a guarantee of long-session stability. Subsequent optional launcher driving hooks also register their code changes with the same GFWL compatibility layer.
