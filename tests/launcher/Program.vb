@@ -87,6 +87,7 @@ Module Program
         Reject(Sub() transaction.Prepare(), "pending transaction cannot replace originals")
         transaction.Recover()
         Check(Files.Hash(camera) = cameraHash AndAlso Files.Hash(effects) = effectHash, "asset bytes restored exactly")
+        WorkerFailureTests.Run(repo, context, AddressOf Check)
         Reject(Sub() transaction.Prepare(Sub(index)
                                              If index = 0 Then Throw New IOException("simulated interruption")
                                          End Sub), "partial preparation interrupted")

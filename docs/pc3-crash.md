@@ -1,5 +1,19 @@
 # PC3 VR crash investigation
 
+## 0.14.1 recurrence and startup-order correction
+
+Evidence supplied under `F:\Coding\Hermes\d2vrlogs` on 2026-09-25 contains two substantial PC3/5090 VR traces (approximately 412 and 294 seconds) and one PC4/3060 VR trace (172 seconds). All load verified Microsoft GFWL 3.5.95.0. Each logs the automatic cockpit hook before compatibility initialization. Without launcher driving overrides, that hook was installed while code-patch recording was still disabled. Later checksum normalization did not include it. This is a concrete regression introduced with automatic cockpit startup, and a strong candidate for the recurring crashes; the new evidence contains no exception dump to prove the current faulting module.
+
+The correction initializes guarded compatibility before startup hooks, regardless of driving overrides. Native startup tests cover both binding modes, unchanged desktop startup and failures that must stop subsequent hooks. The real GFWL checksum/MinHook test also passes. PC3/PC4 gameplay testing is deferred at the user's request; publishing does not claim the crashes are resolved.
+
+Address-space samples retain at least 596/647/628 MiB free, with minimum largest free regions of 176/214/168 MiB respectively. This does not demonstrate exhaustion. All three use 3400x3468 swapchains at 100% headset texture scale; the third chain belongs to the HUD. The second PC3 trace ends in flat-screen VR, so cockpit stereo replay is not required at the final recorded instant.
+
+PC4's separate `File operation did not finish: prepare` screenshot identifies an elevated worker retry, following exit code 5 (access denied) from the first worker. It is not the installer. The game wrapper has not executed at that stage. Structured worker errors now retain the operation, target, attributes, exception/HRESULT, process exit code and elevation stage in one per-installation `worker-error.json`. Read-only asset tests exercise partial preparation, subprocess reporting and exact-byte recovery; they do not establish which PC4 asset actually failed. Actual protected-folder/UAC acceptance remains pending. `Collect-Crash.ps1` additionally collects the last worker failure, pending-recovery presence and relevant file attributes/ACLs, without copying game assets or career data.
+
+Follow-up: test each affected PC through several races beyond ten minutes. If a crash persists, collect current events and a fresh WER dump on that PC. Retry the failing PC4 installation and collect its worker report before making targeted permission/attribute changes. The optional lower-resource comparison is Render resolution 100% and Headset texture scale 50%; keep it separate from validation of the hook-order correction.
+
+## Earlier 0.10.2 investigation
+
 Follow-up after release 0.10.2: the user reports that it seems to work, with no crashes so far. The test duration was not specified; do not convert this into a guarantee of long-session stability. Subsequent optional launcher driving hooks also register their code changes with the same GFWL compatibility layer.
 
 The supplied `C:\Temp\delete` logs from 2026-09-23 end abruptly at frame 4440. They identify the supported game hash, SteamVR/OpenXR 2.17.10, PSVR2 at 90 Hz, and 1700×1734 submitted eye textures. The last recorded stereo pair is complete; eye draw and projection counts match. There is no exception code, crash stack, GPU removal result or orderly XR shutdown in these files.

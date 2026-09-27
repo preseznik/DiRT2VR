@@ -6,19 +6,32 @@ Imports Microsoft.Win32
 Public Module Files
     Public ReadOnly JsonOptions As New JsonSerializerOptions With {.WriteIndented = True}
     Public Function Hash(filename As String) As String
-        Using stream = File.OpenRead(filename)
-            Return Convert.ToHexString(SHA256.HashData(stream))
-        End Using
+        Try
+            Using stream = File.OpenRead(filename)
+                Return Convert.ToHexString(SHA256.HashData(stream))
+            End Using
+        Catch ex As Exception
+            ex.Data("DiRT2VR.Target") = filename : Throw
+        End Try
+    End Function
+    Public Function ReadBytes(filename As String) As Byte()
+        Try
+            Return File.ReadAllBytes(filename)
+        Catch ex As Exception
+            ex.Data("DiRT2VR.Target") = filename : Throw
+        End Try
     End Function
     Public Sub AtomicWrite(filename As String, bytes As Byte())
-        Directory.CreateDirectory(IO.Path.GetDirectoryName(filename))
         Dim temporary = filename & "." & Guid.NewGuid().ToString("N") & ".tmp"
         Try
+            Directory.CreateDirectory(IO.Path.GetDirectoryName(filename))
             Using stream As New FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)
                 stream.Write(bytes)
                 stream.Flush(True)
             End Using
             File.Move(temporary, filename, True)
+        Catch ex As Exception
+            ex.Data("DiRT2VR.Target") = filename : Throw
         Finally
             If File.Exists(temporary) Then File.Delete(temporary)
         End Try
@@ -27,7 +40,11 @@ Public Module Files
         AtomicWrite(filename, JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions))
     End Sub
     Public Function ReadJson(Of T)(filename As String) As T
-        Return JsonSerializer.Deserialize(Of T)(File.ReadAllText(filename), JsonOptions)
+        Try
+            Return JsonSerializer.Deserialize(Of T)(File.ReadAllText(filename), JsonOptions)
+        Catch ex As Exception
+            ex.Data("DiRT2VR.Target") = filename : Throw
+        End Try
     End Function
     Public Sub NoLinks(filename As String)
         Dim item = IO.Path.GetFullPath(filename)

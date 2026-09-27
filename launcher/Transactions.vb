@@ -101,8 +101,13 @@ Public Class AssetTransaction
         For i = 0 To If(configOnly, 0, Names.Length) - 1
             Dim target = IO.Path.Combine(context.GameRoot, targets(i))
             Files.NoLinks(target)
-            Dim original = File.ReadAllBytes(target)
-            Dim replacement = XmlPatches.Asset(original, i = 0)
+            Dim original = Files.ReadBytes(target)
+            Dim replacement As Byte()
+            Try
+                replacement = XmlPatches.Asset(original, i = 0)
+            Catch ex As Exception
+                ex.Data("DiRT2VR.Target") = target : Throw
+            End Try
             replacements.Add(replacement)
             Dim backup = BackupPath(journal, i)
             If File.Exists(backup) Then Throw New IOException("Backup already exists.")
@@ -149,7 +154,7 @@ Public Class AssetTransaction
             If current = entry.OriginalHash Then
                 entry.Restored = True
             ElseIf current = entry.AppliedHash Then
-                Files.AtomicWrite(target, File.ReadAllBytes(backup))
+                Files.AtomicWrite(target, Files.ReadBytes(backup))
                 entry.Restored = True
             Else
                 Throw New IOException("Recovery conflict: " & target & Environment.NewLine & "Its contents changed outside DiRT2VR. The current file and original backup were preserved.")

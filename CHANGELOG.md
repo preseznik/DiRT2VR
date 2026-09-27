@@ -6,7 +6,8 @@ Version headings below identify published GitHub packages. Earlier local-build e
 
 ## Unreleased
 
-No pending changes.
+- Correct VR startup ordering so the automatic cockpit hook is recorded by the GFWL compatibility layer even without launcher driving overrides. This addresses a concrete regression candidate for PC3/PC4 VR crashes; affected-PC gameplay confirmation remains pending.
+- Report file-worker failures with the affected path, exception/HRESULT, exit code and administrator-retry stage. Keep one `worker-error.json` with both attempts, preserve recovery backups, and expand the optional crash collector with preparation diagnostics.
 
 ## 0.14.3 — 2026-09-25
 
