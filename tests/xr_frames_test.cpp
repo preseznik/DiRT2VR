@@ -136,13 +136,13 @@ XRAPI_ATTR XrResult XRAPI_CALL xrEnumerateSwapchainImages(XrSwapchain chain,uint
 int main() {
     try {
         Require(SUCCEEDED(D3D11CreateDevice(nullptr,D3D_DRIVER_TYPE_WARP,nullptr,0,nullptr,0,D3D11_SDK_VERSION,&allocationDevice,nullptr,nullptr)),"WARP device unavailable");
-        for(auto dimensions:std::vector<std::pair<unsigned,unsigned>>{{1600,1200},{2400,1800},{800,600},{600,2400}}) {
+        for(float scale:{.5f,1.f}) for(auto dimensions:std::vector<std::pair<unsigned,unsigned>>{{1600,1200},{2400,1800},{800,600},{600,2400}}) {
             chainInfos.clear(); chainTextures.clear();
             XrFrames frames;
-            Require(frames.Initialize(static_cast<XrInstance>(1),1,static_cast<XrSession>(2),allocationDevice.Get(),.5f,1.f,dimensions.first,dimensions.second),"real RTV allocation failed");
+            Require(frames.Initialize(static_cast<XrInstance>(1),1,static_cast<XrSession>(2),allocationDevice.Get(),scale,1.f,dimensions.first,dimensions.second),"real RTV allocation failed");
             Require(chainInfos.size()==3,"must retain separate eyes and HUD");
-            for(unsigned eye=0;eye<2;++eye) Require(chainInfos[eye].width==1700 && chainInfos[eye].height==1734,"HUD sizing changed eye resolution");
-            auto factor=std::min(1.0,2048.0/std::max(dimensions.first,dimensions.second));
+            for(unsigned eye=0;eye<2;++eye) Require(chainInfos[eye].width==unsigned(3400*scale) && chainInfos[eye].height==unsigned(3468*scale),"HUD sizing changed eye resolution");
+            auto factor=std::min({1.0,2048.0/std::max(dimensions.first,dimensions.second),double(unsigned(3400*scale))/dimensions.first,double(unsigned(3468*scale))/dimensions.second});
             Require(chainInfos[2].width==unsigned(dimensions.first*factor) && chainInfos[2].height==unsigned(dimensions.second*factor),"HUD must preserve aspect, cap at 2048 and never upscale");
         }
         chainTextures.clear(); allocationDevice.Reset();
