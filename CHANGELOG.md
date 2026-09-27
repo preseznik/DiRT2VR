@@ -11,12 +11,18 @@ Version headings identify distribution builds; published packages include a GitH
 - Correct the experimental track PSSG writer's duplicate data/index object ID and missing terrain primitive declaration after a manual test showed invisible road collision. Add saved-file structure checks that reject the previous candidate. The repaired candidate still needs in-game rendering validation.
 - Add isolated custom-track authoring tools and an optional experimental prototype entry for desktop Direct practice. The new 356 m circuit has matching visual/collision geometry, route data and hash-checked installation. Original tracks remain available. Static validation and headless launcher tests pass; generated-track gameplay, visibility, resets and lap completion remain unverified. See [technical status](docs/custom-tracks.md).
 
+## 0.15.3 — 2026-09-27
+
+Local test build; not yet published to GitHub.
+
+- Stop the Graphics resolution readout from resetting every second when its measurements have not changed. Keep live updates and stable missing/unavailable states. Restore the compact borderless caption within the Desktop group.
+
 ## 0.15.2 — 2026-09-27
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.15.2)
 
-- Add requested-versus-measured VR resolution to Graphics, including the game backbuffer and both OpenXR eye sizes. Keep one latest summary with logging off and cap opt-in startup/resize history at 32 changes. Clarify that borderless fullscreen is desktop-only. Native reporting, cross-process and launcher checks cover the diagnostic path; issue #2's unchanged clarity at 300% still needs affected-headset reproduction.
-- Show saved dead zone and saturation beside driving assignments, refresh them after calibration, and explain that enabled launcher bindings reapply on launch. Add repeated-launch-preparation coverage for 0% steering, disabled overrides and retained pedal/Xbox settings. Issue #3's reported in-game reset to 5% remains unverified; no controller defaults or profile-loading behavior change.
+- Show requested and measured VR resolution in Graphics to help diagnose blurry output. Clarify that borderless fullscreen applies only to desktop play. The reported resolution issue still needs affected-headset testing.
+- Show saved dead zone and saturation beside driving bindings, and refresh them after calibration. Clarify that enabled launcher assignments reapply on launch. The reported wheel dead-zone reset remains unverified; controller defaults are unchanged.
 
 ## 0.15.1 — 2026-09-27
 

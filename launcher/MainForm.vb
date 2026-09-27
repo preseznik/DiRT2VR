@@ -366,7 +366,7 @@ Public Class MainForm
         Dim content = TabLayout("Graphics")
         Dim columns As New ResponsiveColumns() : content.Controls.Add(columns)
         Dim desktop = Section(columns.First, "Desktop")
-        borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen (desktop only)", borderless)
+        borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen", borderless)
         desktopVSync.Checked = settings.DesktopVSync : Field(desktop, "VSync", desktopVSync)
         Dim render = Section(columns.First, "VR rendering")
         renderScale.Value = settings.RenderScale : headsetScale.Value = settings.HeadsetScale : fieldOfView.Value = settings.FieldOfView
@@ -422,17 +422,19 @@ Public Class MainForm
         renderScale.AccessibleDescription = "Requested scene: " & requestedResolution.Text & $". Headset texture: {headsetScale.Value}% of recommended width and height."
     End Sub
     Private Sub RefreshResolutionReport()
-        actualResolution.Text = "Actual resolution: not reported yet. Start a VR session to measure it."
+        Dim description = "Actual resolution: not reported yet. Start a VR session to measure it."
         Try
             Dim path = IO.Path.Combine(context.UserRoot, "resolution.json")
-            If File.Exists(path) Then actualResolution.Text = If(Files.ReadJson(Of ResolutionStatus)(path)?.Description(), "Resolution report unavailable.")
+            If File.Exists(path) Then description = If(Files.ReadJson(Of ResolutionStatus)(path)?.Description(), "Resolution report unavailable.")
         Catch ex As IOException
-            actualResolution.Text = "Resolution report unavailable."
+            description = "Resolution report unavailable."
         Catch ex As UnauthorizedAccessException
-            actualResolution.Text = "Resolution report unavailable."
+            description = "Resolution report unavailable."
         Catch ex As System.Text.Json.JsonException
-            actualResolution.Text = "Resolution report unavailable."
+            description = "Resolution report unavailable."
         End Try
+        ' Avoid laying out both the placeholder and the report on every timer tick.
+        If actualResolution.Text <> description Then actualResolution.Text = description
     End Sub
     Private Sub RefreshMsaaWarning()
         msaaWarning.Text = If(msaa.Value >= 2, If(msaa.Value = 3, "8×: very high memory cost; may cause VR crashes.", "4×: higher memory cost; reduce if VR is unstable."), "")

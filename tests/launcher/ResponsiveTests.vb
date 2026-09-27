@@ -17,6 +17,7 @@ Public Module ResponsiveTests
             resolution.Value = 300
             check(form.Controls.Find("RequestedResolution", True).Single().Text.Contains("4800 × 3600"), "requested dimensions update with unsaved slider changes")
             check(form.Controls.Find("ActualResolution", True).Single().Text.Contains("1280 × 720") AndAlso form.Controls.Find("ActualResolution", True).Single().Text.Contains("differs"), "actual dimensions and mismatch are visible independently of requested slider")
+            CheckResolutionRefresh(form, context, check)
             Dim renderTrack = DirectCast(form.Controls.Find("RenderScaleSlider", True).Single(), TrackBar)
             Dim recommendation = form.Controls.Find("RenderScaleRecommendation", True).Single()
             check(recommendation.Text = "150% recommended", "render resolution displays recommendation independently of selected value")
@@ -102,6 +103,47 @@ Public Module ResponsiveTests
             End Using
             form.Close()
         End Using
+    End Sub
+    Private Sub CheckResolutionRefresh(form As MainForm, context As InstallContext, check As Action(Of Boolean, String))
+        Dim label = form.Controls.Find("ActualResolution", True).Single()
+        Dim refresh = GetType(MainForm).GetMethod("RefreshResolutionReport", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance)
+        Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
+        tabs.SelectedTab = tabs.TabPages.Cast(Of TabPage)().Single(Function(page) page.Text = "Graphics")
+        Application.DoEvents()
+        Dim changes As Integer
+        Dim changed As EventHandler = Sub(sender, args) changes += 1
+        AddHandler label.TextChanged, changed
+        Try
+            For i = 1 To 10
+                refresh.Invoke(form, Nothing)
+            Next
+            check(changes = 0, "unchanged resolution polling does not reset or redraw the readout")
+            Dim bounds = label.Bounds, watch = Stopwatch.StartNew()
+            While watch.ElapsedMilliseconds < 2200
+                Application.DoEvents()
+                Threading.Thread.Sleep(20)
+            End While
+            check(changes = 0 AndAlso label.Bounds = bounds, "real timer ticks leave visible Graphics text and bounds stable")
+            Dim path = IO.Path.Combine(context.UserRoot, "resolution.json")
+            Files.SaveJson(path, New ResolutionStatus With {.RequestedWidth = 4800, .RequestedHeight = 3600, .Actual = {4800, 3600, 2400, 2400, 2400, 2400}})
+            refresh.Invoke(form, Nothing)
+            check(changes = 1 AndAlso label.Text.Contains("Game: 4800 × 3600"), "new resolution is displayed in one text change")
+            IO.File.WriteAllText(path, "{")
+            refresh.Invoke(form, Nothing)
+            check(changes = 2 AndAlso label.Text = "Resolution report unavailable.", "invalid report has one stable fallback")
+            refresh.Invoke(form, Nothing)
+            check(changes = 2, "unchanged invalid report does not redraw")
+            IO.File.Delete(path)
+            refresh.Invoke(form, Nothing)
+            check(changes = 3 AndAlso label.Text.Contains("not reported yet"), "missing report clears stale measurements once")
+            refresh.Invoke(form, Nothing)
+            check(changes = 3, "unchanged missing report does not redraw")
+            Files.SaveJson(path, New ResolutionStatus With {.RequestedWidth = 4800, .RequestedHeight = 3600, .Actual = {1280, 720, 1700, 1734, 1700, 1734}})
+            refresh.Invoke(form, Nothing)
+            check(changes = 4 AndAlso label.Text.Contains("differs"), "resolution reporting resumes after a missing or invalid report")
+        Finally
+            RemoveHandler label.TextChanged, changed
+        End Try
     End Sub
     Private Iterator Function Descendants(parent As Control) As IEnumerable(Of Control)
         For Each child As Control In parent.Controls
