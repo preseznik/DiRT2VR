@@ -45,3 +45,7 @@ The package script reserved 0.15.4. Package hashes, source provenance, ZIP setup
 ## Local delivery (0.15.6)
 
 The new native scene-resolution regression and all 19 native tests pass. The launcher preparation/recovery suite passes 775 checks; light/dark responsive suites pass 577 each, including the clean distribution build. Package manifests, ZIP contents, source correspondence, repeat setup and installer checks pass. Deployment to `artifacts/game` exited 0; the installation audit found 15,599 protected files unchanged. Evidence: `artifacts/scene-resolution-0.15.6`. Version 0.15.5 was an internal packaging candidate superseded before deployment. Version 0.15.6 is open for user comparison; headset quality and visible flashing acceptance remain pending. Neither build has been published as a GitHub release.
+
+## User acceptance, 2026-09-28
+
+The user confirmed the headset image looks correct at both 150% and 200% and approved publication. The 200% live launcher session `20260927-235703-422` reported 3200 × 2400 source and 3072 × 3264 per-eye OpenXR textures, with `source_match=1`. The public 0.15.7 package retains the tested native code from 0.15.6 and updates player-facing release documentation.
