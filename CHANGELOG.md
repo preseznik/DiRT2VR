@@ -6,8 +6,18 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+No pending changes.
+
+## 0.15.6 — 2026-09-27
+
+Local test build; not yet published to GitHub.
+
 - Fix Launcher tab slider/dropdown flashing caused by transient oversized layout measurements; keep opponent descriptions from resizing sibling controls.
 - Fix VR render scales above the desktop dimensions falling back to 720p. Set the supported engine scene and swapchain dimensions together before allocation; desktop launches remain unchanged. Local game diagnostics verified 150% and 200% scene sizes; headset comparison remains pending.
+
+## 0.15.5 — 2026-09-27
+
+Internal packaging candidate, superseded by 0.15.6 before deployment.
 
 ## 0.15.4 — 2026-09-27
 
