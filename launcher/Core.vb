@@ -103,7 +103,7 @@ Public Class ControllerBinding
     Public Property Label As String = ""
     Public Property Buttons As New List(Of Integer)
     Public Overrides Function ToString() As String
-        Return If(Action = 0, "Toggle VR", "Recenter") & " — " & Label & " — " & String.Join(" + ", Buttons.Select(Function(b) ControllerNames.ButtonName(Source, b)))
+        Return SeatActions.Names(Action) & " — " & Label & " — " & String.Join(" + ", Buttons.Select(Function(b) ControllerNames.ButtonName(Source, b)))
     End Function
 End Class
 
@@ -118,6 +118,7 @@ Public Class VrSettings
     Public Property ToggleModifiers As Integer
     Public Property RecenterKey As Integer = 121
     Public Property RecenterModifiers As Integer
+    Public Property SeatKeys As List(Of SeatKey) = SeatActions.DefaultKeys()
     Public Property Bindings As New List(Of ControllerBinding)
     Public Property BorderlessDesktop As Boolean = False
     Public Property DesktopVSync As Boolean = True
@@ -197,14 +198,16 @@ Public Class VrSettings
         If TreeDetail < 0 OrElse TreeDetail > 5 OrElse ObjectDetail < 0 OrElse ObjectDetail > 5 Then Throw New IOException("Invalid scenery detail settings.")
         If Not ValidKey(ToggleKey) OrElse Not ValidKey(RecenterKey) OrElse ToggleModifiers < 0 OrElse ToggleModifiers > 7 OrElse RecenterModifiers < 0 OrElse RecenterModifiers > 7 Then Throw New IOException("Choose valid keyboard shortcuts.")
         If ToggleKey = RecenterKey AndAlso ToggleModifiers = RecenterModifiers Then Throw New IOException("Toggle VR and recenter must have different shortcuts.")
-        If Bindings Is Nothing OrElse Bindings.Count > 32 Then Throw New IOException("Invalid controller bindings.")
+        SeatActions.Validate(Me)
+        If Bindings Is Nothing OrElse Bindings.Count > 64 Then Throw New IOException("Invalid controller bindings.")
         For i = 0 To Bindings.Count - 1
             Dim a = Bindings(i)
-            If a Is Nothing OrElse a.Action < 0 OrElse a.Action > 1 OrElse Not {"xinput", "hid", "dinput"}.Contains(a.Source) OrElse String.IsNullOrEmpty(a.Device) OrElse a.Buttons Is Nothing OrElse a.Buttons.Count < 1 OrElse a.Buttons.Count > 2 OrElse a.Buttons.Distinct().Count() <> a.Buttons.Count Then Throw New IOException("Invalid controller binding.")
+            If a Is Nothing OrElse a.Action < 0 OrElse a.Action >= SeatActions.Names.Length OrElse Not {"xinput", "hid", "dinput"}.Contains(a.Source) OrElse String.IsNullOrEmpty(a.Device) OrElse a.Buttons Is Nothing OrElse a.Buttons.Count < 1 OrElse a.Buttons.Count > 2 OrElse a.Buttons.Distinct().Count() <> a.Buttons.Count Then Throw New IOException("Invalid controller binding.")
             If a.Source = "xinput" AndAlso (Not {"0", "1", "2", "3"}.Contains(a.Device) OrElse a.Buttons.Any(Function(b) Not ControllerNames.XButtons.Contains(b))) Then Throw New IOException("Invalid Xbox binding.")
+            If a.Action >= 2 AndAlso a.Source = "hid" Then Throw New IOException("Seat controls need Xbox or DirectInput wheel input. Wait for the wheel to appear by name, then bind again.")
             If a.Source = "hid" AndAlso a.Buttons.Any(Function(b) b < 1 OrElse b > 65535) Then Throw New IOException("Invalid HID button.")
             Dim deviceGuid As Guid
-            If a.Source = "dinput" AndAlso (Not Guid.TryParse(a.Device, deviceGuid) OrElse a.Buttons.Any(Function(b) b < 1 OrElse b > 128)) Then Throw New IOException("Invalid wheel button binding.")
+            If a.Source = "dinput" AndAlso (Not Guid.TryParse(a.Device, deviceGuid) OrElse a.Buttons.Any(Function(b) (b < 1 OrElse b > 128) AndAlso Not {1001, 1002, 1003, 1004}.Contains(b))) Then Throw New IOException("Invalid wheel button binding.")
             For j = 0 To i - 1
                 Dim b = Bindings(j)
                 If a.Source = b.Source AndAlso a.Device = b.Device AndAlso (a.Buttons.All(Function(k) b.Buttons.Contains(k)) OrElse b.Buttons.All(Function(k) a.Buttons.Contains(k))) Then Throw New IOException("Controller assignments overlap. Choose distinct buttons or pairs.")
@@ -217,6 +220,12 @@ Public Class VrSettings
     Public Shared Function Load(context As InstallContext) As VrSettings
         Dim settings = If(File.Exists(context.PreferencesPath), Files.ReadJson(Of VrSettings)(context.PreferencesPath), New VrSettings())
         If settings Is Nothing Then Throw New IOException("Settings are empty.")
+        If File.Exists(context.PreferencesPath) Then
+            Using old = JsonDocument.Parse(File.ReadAllText(context.PreferencesPath))
+                If Not old.RootElement.EnumerateObject().Any(Function(p) p.Name.Equals("SeatKeys", StringComparison.OrdinalIgnoreCase)) AndAlso
+                    ((settings.ToggleKey = 9 AndAlso settings.ToggleModifiers = 0) OrElse (settings.RecenterKey = 9 AndAlso settings.RecenterModifiers = 0)) Then settings.SeatKeys(0).Key = 0
+            End Using
+        End If
         If settings.Version = 1 OrElse settings.Version = 2 Then settings.Version = 3 ' New fields retain defaults; existing controls/graphics are preserved.
         settings.Validate()
         Return settings

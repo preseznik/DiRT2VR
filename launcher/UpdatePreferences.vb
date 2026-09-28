@@ -24,7 +24,7 @@ Public Class UpdatePreferences
         Dim backup = IO.Path.Combine(context.UserRoot, "updates", "rollback-preferences", DateTime.UtcNow.ToString("yyyyMMdd-HHmmss") & "-" & Guid.NewGuid().ToString("N"))
         Files.NoLinks(backup)
         Directory.CreateDirectory(backup)
-        For Each name In {"settings.json", "driving-controls.json", "driving-controls.xml", "update-preferences.json"}
+        For Each name In {"settings.json", "driving-controls.json", "driving-controls.xml", "update-preferences.json", "seat-positions.json"}
             token.ThrowIfCancellationRequested()
             Dim source = IO.Path.Combine(context.UserRoot, name)
             Files.NoLinks(source)

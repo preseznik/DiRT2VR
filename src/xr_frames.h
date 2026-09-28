@@ -27,15 +27,18 @@ public:
         XrPosef pose{{0,0,0,1},{0,0,-2}};
         XrExtent2Df size{2.4f,1.8f};
     };
-    struct Overlay : Screen { Draw draw; };
+    struct Overlay : Screen { Draw draw; bool enabled=true; std::function<void()> unavailable; };
     ~XrFrames();
     bool Initialize(XrInstance instance,XrSystemId system,XrSession session,ID3D11Device* device,float scale,float fovScale=1.f,uint32_t hudWidth=1600,uint32_t hudHeight=1200);
-    bool Tick(const Draw& draw,const Prepare& prepare={},const Screen* screen=nullptr,const Overlay* overlay=nullptr);
+    bool Tick(const Draw& draw,const Prepare& prepare={},const Screen* screen=nullptr,const Overlay* overlay=nullptr,const Overlay* panel=nullptr);
     bool Exiting() const { return exiting_; }
     uint64_t Submitted() const { return submitted_; }
     bool Visible() const { return visible_; }
     std::array<uint32_t,4> EyeDimensions() const { return {eyes_[0].width,eyes_[0].height,eyes_[1].width,eyes_[1].height}; }
 private:
+    bool CreatePanel();
+    Microsoft::WRL::ComPtr<ID3D11Device> device_;
+    int64_t format_{};
     void Report(const char* format,...);
     bool Check(XrResult result,const char* operation);
     Logger logger_{};
@@ -43,7 +46,7 @@ private:
     XrInstance instance_{};
     XrSession session_{};
     XrSpace space_{};
-    std::array<Eye,3> eyes_; // stereo pair plus transparent HUD
+    std::array<Eye,4> eyes_; // stereo pair plus transparent HUD
     bool running_{},exiting_{},visible_{};
     bool hudPlacementReported_{};
     uint64_t submitted_{};

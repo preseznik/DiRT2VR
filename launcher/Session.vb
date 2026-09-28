@@ -79,9 +79,10 @@ Public Class Session
                     Dim logFolder = CreateLogFolder(context, settings.LoggingEnabled OrElse Environment.GetCommandLineArgs().Contains("--diagnostic-capture"))
                     ProbeRuntime(logFolder)
                     Dim channel = "Local\DiRT2VR.Input." & Guid.NewGuid().ToString("N")
-                    Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor()
+                    Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor(), seat As New SeatChannel(context, settings)
                         view.Write(0, &H32565244) : view.Write(4, 1) : view.Write(8, 0UI) : view.Write(12, 0UI)
                         Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
+                        start.Environment("DIRT2VR_SEAT_CHANNEL") = seat.Name
                         If settings.DirectMode Then
                             Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
                             start.ArgumentList.Add("-demo")
@@ -100,12 +101,15 @@ Public Class Session
                             Dim counts As UInteger() = {0UI, 0UI}
                             AddHandler input.StateChanged, Sub(sample)
                                 For Each action In machine.Update(sample)
-                                    If Not ControllerInput.GameFocused() Then Continue For
+                                    If action > 1 OrElse Not ControllerInput.GameFocused() OrElse seat.ConsumesShortcut(sample, action) Then Continue For
                                     counts(action) = CUInt((CLng(counts(action)) + 1) And &HFFFFFFFFL)
                                     view.Write(8 + action * 4, counts(action))
                                 Next
                             End Sub
-                            returnToMenus = WaitForGame(start, AddressOf input.Poll)
+                            returnToMenus = WaitForGame(start, Sub()
+                                input.Poll()
+                                seat.Poll(input.Snapshot(), ControllerInput.GameFocused())
+                            End Sub)
                             If settings.LaunchMode = "lan" AndAlso Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN startup was confirmed.")
                         End Using
                         Status("Restoring")

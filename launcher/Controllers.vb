@@ -4,6 +4,7 @@ Public Module ControllerNames
     Public ReadOnly XButtons As Integer() = {1, 2, 4, 8, 16, 32, 64, 128, 256, 512, 4096, 8192, 16384, 32768}
     Private ReadOnly Labels As String() = {"D-pad up", "D-pad down", "D-pad left", "D-pad right", "Start", "Back", "Left stick", "Right stick", "LB", "RB", "A", "B", "X", "Y"}
     Public Function ButtonName(source As String, button As Integer) As String
+        If source = "dinput" AndAlso button >= 1001 AndAlso button <= 1004 Then Return {"POV up", "POV down", "POV left", "POV right"}(button - 1001)
         Dim index = Array.IndexOf(XButtons, button)
         Return If(source = "xinput" AndAlso index >= 0, If(index >= 0, Labels(Math.Max(0, index)), ""), "Button " & button.ToString())
     End Function
@@ -183,6 +184,13 @@ Public Class ControllerInput
                 Dim state = driving.Read(device)
                 Dim sample As New ControllerSample With {.Source = "dinput", .Device = device.Id, .Label = device.ToString(), .Connected = state.Connected <> 0}
                 If sample.Connected Then
+                    If state.Pov IsNot Nothing AndAlso state.Pov.Length > 0 AndAlso (state.Pov(0) And &HFFFFUI) <> &HFFFFUI Then
+                        Dim angle = state.Pov(0) Mod 36000UI
+                        If angle >= 31500UI OrElse angle <= 4500UI Then sample.Buttons.Add(1001)
+                        If angle >= 13500UI AndAlso angle <= 22500UI Then sample.Buttons.Add(1002)
+                        If angle >= 22500UI AndAlso angle <= 31500UI Then sample.Buttons.Add(1003)
+                        If angle >= 4500UI AndAlso angle <= 13500UI Then sample.Buttons.Add(1004)
+                    End If
                     For i = 0 To state.Buttons.Length - 1
                         If state.Buttons(i) <> 0 Then sample.Buttons.Add(i + 1)
                     Next

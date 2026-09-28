@@ -248,3 +248,11 @@ Third-party license notices are included in `DiRT2VR/licenses` in packaged build
 Matching LAN library source is preserved in the [repository](https://github.com/preseznik/DiRT2VR/tree/main/source-archives/lan). It is not needed to play. Installed license notices include its download link and checksum.
 
 Microsoft GFWL 3.5.95.0: this build corrects a startup-order defect in the VR compatibility fix. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3/PC4 gameplay confirmation is still pending.
+
+### VR seat position (Experimental)
+
+In cockpit VR, stop the car and press **Tab**. Use **Up/Down** to raise/lower your seat and **Left/Right** to move back/forward. Hold **Shift** for sideways movement. **Enter** saves, **Escape** cancels, and **Tab** saves and closes. The race continues while the panel is open.
+
+Xbox controllers use the D-pad, **X** as the sideways modifier, **A** to save and **B** to cancel. Assign a panel-opening button in **Controls**. Wheels can use their POV hat; assign the panel modifier/save/cancel buttons in Controls.
+
+**Graphics → VR cockpit** also has position sliders and a per-car reset. Positions are saved separately for each car and survive recentering. Six optional movement shortcuts are available in Controls. Extreme offsets can reveal missing interior geometry. Headset and physical-wheel acceptance are pending.

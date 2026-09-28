@@ -181,9 +181,9 @@ End Class
 Public Class BindingRow
     Inherits Panel
     Private ReadOnly title As Label, keyboardTitle As Label, controllerTitle As Label
-    Private ReadOnly key As Button, controller As Control
+    Private ReadOnly key As Control, controller As Control
     Private arranging As Boolean
-    Public Sub New(action As String, keyboard As Button, device As Control)
+    Public Sub New(action As String, keyboard As Control, device As Control)
         Dock = DockStyle.Top : Margin = New Padding(0, 0, 0, 16) : AutoSize = True : AutoSizeMode = AutoSizeMode.GrowAndShrink
         title = New Label With {.Text = action, .AutoSize = True, .Font = New Font("Segoe UI", 10, FontStyle.Bold)}
         keyboardTitle = New Label With {.Text = "Keyboard", .AutoSize = True}
@@ -196,8 +196,9 @@ Public Class BindingRow
         If arranging OrElse key Is Nothing Then Return
         arranging = True
         Try
-            Dim gap = Px(Me, 8), labelHeight = Math.Max(title.PreferredHeight, controllerTitle.PreferredHeight)
             Dim narrow = Width < Px(Me, 650)
+            title.MaximumSize = New Size(If(narrow, Math.Max(1, Width), Px(Me, 110)), 0)
+            Dim gap = Px(Me, 8), labelHeight = Math.Max(title.PreferredHeight, controllerTitle.PreferredHeight)
             title.Location = Point.Empty
             keyboardTitle.Location = New Point(If(narrow, 0, Px(Me, 120)), If(narrow, labelHeight + gap, 0))
             key.SetBounds(keyboardTitle.Left, keyboardTitle.Bottom + gap, Px(Me, 155), key.PreferredSize.Height)

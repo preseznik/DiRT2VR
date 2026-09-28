@@ -10,6 +10,7 @@ std::atomic<unsigned> pending{};
 struct Binding { unsigned key,modifiers; bool held{}; };
 Binding bindings[2]={{VK_F9,0},{VK_F10,0}};
 bool configured{};
+bool (*panelFilter)(UINT,WPARAM){};
 unsigned Modifiers() {
     return (GetKeyState(VK_CONTROL)<0 ? 1u:0u) | (GetKeyState(VK_MENU)<0 ? 2u:0u) | (GetKeyState(VK_SHIFT)<0 ? 4u:0u);
 }
@@ -35,6 +36,7 @@ unsigned ControllerActions() {
     return foreground==GetCurrentProcessId() ? result:0;
 }
 LRESULT CALLBACK WindowProc(HWND window,UINT message,WPARAM key,LPARAM flags) {
+    if(panelFilter && panelFilter(message,key)) return 0;
     const bool down=message==WM_KEYDOWN || message==WM_SYSKEYDOWN;
     const bool up=message==WM_KEYUP || message==WM_SYSKEYUP;
     for(unsigned i=0;i<2;++i) {
@@ -55,6 +57,7 @@ LRESULT CALLBACK WindowProc(HWND window,UINT message,WPARAM key,LPARAM flags) {
     return result;
 }
 }
+void SetPanelKeyFilter(bool (*filter)(UINT,WPARAM)) { panelFilter=filter; }
 bool ConfigureHotkeys(unsigned toggleKey,unsigned toggleModifiers,unsigned recenterKey,unsigned recenterModifiers) {
     if(gameWindow || !toggleKey || toggleKey>255 || !recenterKey || recenterKey>255 ||
        toggleModifiers>7 || recenterModifiers>7 || (toggleKey==recenterKey && toggleModifiers==recenterModifiers)) return false;

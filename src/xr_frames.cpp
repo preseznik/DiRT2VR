@@ -40,10 +40,11 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
                         DXGI_FORMAT_R8G8B8A8_UNORM,DXGI_FORMAT_B8G8R8A8_UNORM})
         if(std::find(formats.begin(),formats.end(),candidate)!=formats.end()) { format=candidate; break; }
     if(!format) { Report("No supported RGBA/BGRA swapchain format"); return false; }
+    device_=device; format_=format;
     XrReferenceSpaceCreateInfo reference{XR_TYPE_REFERENCE_SPACE_CREATE_INFO};
     reference.referenceSpaceType=XR_REFERENCE_SPACE_TYPE_LOCAL; reference.poseInReferenceSpace.orientation.w=1;
     if(!Check(xrCreateReferenceSpace(session,&reference,&space_),"create LOCAL space")) return false;
-    for(unsigned i=0;i<eyes_.size();++i) {
+    for(unsigned i=0;i<3;++i) {
         auto& eye=eyes_[i];
         const auto& view=views[i%2];
         eye.width=std::max(1u,static_cast<uint32_t>(view.recommendedImageRectWidth*scale));
@@ -77,7 +78,24 @@ bool XrFrames::Initialize(XrInstance instance,XrSystemId system,XrSession sessio
     }
     return true;
 }
-bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen,const Overlay* overlay) {
+bool XrFrames::CreatePanel() {
+    auto& eye=eyes_[3];
+    if(eye.chain && !eye.targets.empty() && std::all_of(eye.targets.begin(),eye.targets.end(),[](const auto& t) { return t.Get()!=nullptr; })) return true;
+    if(eye.chain) { eye.targets.clear(); eye.images.clear(); xrDestroySwapchain(eye.chain); eye.chain={}; }
+    eye.width=768; eye.height=1024;
+    XrSwapchainCreateInfo info{XR_TYPE_SWAPCHAIN_CREATE_INFO};
+    info.usageFlags=XR_SWAPCHAIN_USAGE_COLOR_ATTACHMENT_BIT; info.format=format_;
+    info.sampleCount=1; info.width=eye.width; info.height=eye.height; info.faceCount=1; info.arraySize=1; info.mipCount=1;
+    if(!Check(xrCreateSwapchain(session_,&info,&eye.chain),"create seat panel")) return false;
+    uint32_t count{};
+    if(!Check(xrEnumerateSwapchainImages(eye.chain,0,&count,nullptr),"panel image count")) return false;
+    eye.images.resize(count,{XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR});
+    if(!Check(xrEnumerateSwapchainImages(eye.chain,count,&count,reinterpret_cast<XrSwapchainImageBaseHeader*>(eye.images.data())),"panel images")) return false;
+    eye.targets.resize(count);
+    for(unsigned i=0;i<count;++i) if(FAILED(device_->CreateRenderTargetView(eye.images[i].texture,nullptr,&eye.targets[i]))) return false;
+    return true;
+}
+bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen,const Overlay* overlay,const Overlay* panel) {
     if(screen || (overlay && !overlay->draw)) overlay=nullptr;
     XrEventDataBuffer event{XR_TYPE_EVENT_DATA_BUFFER};
     XrResult eventResult{};
@@ -128,8 +146,11 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         catch(const std::exception& error) { valid=false; exiting_=true; Report("frame preparation failed: %s",error.what()); }
         catch(...) { valid=false; exiting_=true; Report("frame preparation failed: unknown exception"); }
     }
+    if(screen || !panel || !panel->enabled || !panel->draw) panel=nullptr;
+    if(panel && !CreatePanel()) { Report("seat panel allocation failed"); if(panel->unavailable) panel->unavailable(); panel=nullptr; }
     std::array<XrCompositionLayerProjectionView,2> projectionViews{{{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW},{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}}};
-    for(unsigned i=0;valid && i<(screen ? 1u : overlay ? 3u : 2u);++i) {
+    for(unsigned i=0;valid && i<(screen ? 1u : panel ? 4u : overlay ? 3u : 2u);++i) {
+        if(i==2 && !overlay) continue;
         auto& eye=eyes_[i]; uint32_t index{};
         XrSwapchainImageAcquireInfo acquire{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
         if(!Check(xrAcquireSwapchainImage(eye.chain,&acquire,&index),"acquire image")) { valid=false; break; }
@@ -139,10 +160,18 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         if(!Check(waited,"wait image")) { valid=false; exiting_=true; break; }
         try {
             if(index>=eye.targets.size()) throw std::out_of_range("OpenXR image index");
-            (i==2 ? overlay->draw : draw)(i,views[i%2],eye.targets[index].Get(),eye.width,eye.height);
+            (i==3 ? panel->draw : i==2 ? overlay->draw : draw)(i,views[i%2],eye.targets[index].Get(),eye.width,eye.height);
         }
-        catch(const std::exception& error) { valid=false; exiting_=true; Report("eye %u failed: %s",i,error.what()); }
-        catch(...) { valid=false; exiting_=true; Report("eye %u failed: unknown exception",i); }
+        catch(const std::exception& error) {
+            Report("eye/layer %u failed: %s",i,error.what());
+            if(i==3) { if(panel->unavailable) panel->unavailable(); panel=nullptr; }
+            else { valid=false; exiting_=true; }
+        }
+        catch(...) {
+            Report("eye/layer %u failed: unknown exception",i);
+            if(i==3) { if(panel->unavailable) panel->unavailable(); panel=nullptr; }
+            else { valid=false; exiting_=true; }
+        }
         XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
         if(!Check(xrReleaseSwapchainImage(eye.chain,&release),"release image")) { valid=false; exiting_=true; }
         if(i<2) {
@@ -167,9 +196,19 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         hud.subImage.swapchain=eyes_[2].chain;
         hud.subImage.imageRect.extent={static_cast<int32_t>(eyes_[2].width),static_cast<int32_t>(eyes_[2].height)};
     }
-    const XrCompositionLayerBaseHeader* layers[]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&projection),reinterpret_cast<const XrCompositionLayerBaseHeader*>(&hud)};
+    XrCompositionLayerQuad seat{XR_TYPE_COMPOSITION_LAYER_QUAD};
+    if(panel) {
+        seat.space=space_; seat.eyeVisibility=XR_EYE_VISIBILITY_BOTH;
+        seat.layerFlags=XR_COMPOSITION_LAYER_BLEND_TEXTURE_SOURCE_ALPHA_BIT|XR_COMPOSITION_LAYER_UNPREMULTIPLIED_ALPHA_BIT;
+        seat.pose=panel->pose; seat.size=panel->size; seat.subImage.swapchain=eyes_[3].chain;
+        seat.subImage.imageRect.extent={768,1024};
+    }
+    const XrCompositionLayerBaseHeader* layers[3]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&projection)};
+    unsigned layerCount=1;
+    if(overlay) layers[layerCount++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&hud);
+    if(panel) layers[layerCount++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&seat);
     if(screen) layers[0]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quad);
-    if(valid) { end.layerCount=overlay ? 2 : 1; end.layers=layers; }
+    if(valid) { end.layerCount=layerCount; end.layers=layers; }
     if(!Check(xrEndFrame(session_,&end),"xrEndFrame")) { exiting_=true; return false; }
     if(valid && overlay && !hudPlacementReported_) {
         const XrVector3f centre{(views[0].pose.position.x+views[1].pose.position.x)*.5f,

@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add experimental per-car VR seat adjustment: change height, forward/back and sideways position in Graphics or through a Tab-operated cockpit panel. Add keyboard and controller/wheel bindings, save/cancel controls and a per-car reset. Recenter keeps the chosen seat position. Headset and wheel acceptance are pending.
+
 - Add an Advanced tab with **Frame-rate-independent rewind (Experimental)**, off by default. Preserve more rewind history at high FPS without capping gameplay, for single-player desktop and VR launches. Initial Subaru/Velebit desktop testing passed; broader event and VR testing remain pending.
 
 ## 0.16.0 — 2026-09-28

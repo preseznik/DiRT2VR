@@ -7,7 +7,7 @@ Public Class InstructionsView
     Private ReadOnly picker As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Name = "InstructionTopicPicker", .AccessibleName = "Instruction topic"}
     Private ReadOnly article As New RichTextBox With {.ReadOnly = True, .BorderStyle = BorderStyle.None, .WordWrap = True, .ScrollBars = RichTextBoxScrollBars.Vertical, .DetectUrls = False, .Name = "InstructionArticle", .AccessibleName = "Instructions"}
     Private updating As Boolean
-    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced"}
+    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position"}
     Private Shared ReadOnly Pages As String() = {
         "Launch
 Launch plays on your monitor. Launch VR uses SteamVR: start SteamVR and connect your headset first. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
@@ -119,7 +119,24 @@ Current testing
 Two desktop rewind/resume tests in the Subaru Group N on Croatia — Velebit Adventure retained 10 seconds instead of about 5 seconds at roughly 120 FPS. Duration can vary with the event. Other cars/events and VR still need testing.
 
 If something looks wrong
-Turn the option off, save and relaunch. Report the event, car and whether the problem happened during rewind or after resuming. The game executable on disk is unchanged."}
+Turn the option off, save and relaunch. Report the event, car and whether the problem happened during rewind or after resuming. The game executable on disk is unchanged.",
+        "Adjusting your seat (Experimental)
+In cockpit VR, press Tab to open Seat position. Stop the car before adjusting: the race continues while the panel is open. The panel stays where you opened it and works even with the racing HUD hidden.
+
+Keyboard and Xbox
+Up/Down raises or lowers the seat. Left/Right moves back or forward. Hold Shift (Xbox X) to move sideways instead. Enter (A) saves; Escape (B) cancels. Tab saves and closes. Recenter keeps your seat position.
+
+Wheels
+Bind Open seat adjustment in Controls. Your wheel POV hat navigates the panel; assign Panel sideways modifier, Panel save and Panel cancel to wheel buttons. Keyboard controls remain available. Assigned seat shortcut buttons are reserved in cockpit VR, including both parts of a pair. Panel navigation buttons are reserved while the panel is open; unrelated driving controls keep working.
+
+Per-car positions
+Graphics → VR cockpit provides Height, Forward/back and Left/right sliders, plus Reset seat position for the selected car. Save settings before launching. Positions are saved per car, including cars selected through the normal game menus. Positive values mean up, forward and right. Adjustment is limited to 50 cm each way; extreme positions can expose missing cockpit geometry.
+
+Separate shortcuts
+Controls also provides six optional seat movement bindings. These are unassigned by default and save automatically when movement stops. In the panel, Save keeps the preview; Cancel, leaving cockpit VR or changing cars discards it. If the car cannot be identified, adjustment is disabled rather than saved against another car.
+
+Current testing
+Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests."}
     Public Sub New()
         Dock = DockStyle.Fill
         Controls.AddRange({topics, picker, article})

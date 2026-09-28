@@ -1,5 +1,6 @@
 #include "cockpit_start.h"
 #include "common.h"
+#include "seat_adjustment.h"
 #include "gfwl_compat.h"
 #include <MinHook.h>
 #include <intrin.h>
@@ -17,6 +18,7 @@ int __fastcall FindView(void* manager,void*,const char* name) {
     const auto caller=reinterpret_cast<unsigned char*>(_ReturnAddress());
     for(const auto call:startupCalls) {
         if(caller!=gameBase+call+5) continue;
+        SeatSelectCamera(manager);
         const int cockpit=findView(manager,"head-cam");
         Log("VR starting camera: requested=%s cockpit=%d caller=%x",name?name:"(none)",cockpit,call);
         if(cockpit>=0) return cockpit;

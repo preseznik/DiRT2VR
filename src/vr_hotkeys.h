@@ -8,4 +8,5 @@ bool AttachHotkeys(HWND window);
 // Modifier mask: Ctrl=1, Alt=2, Shift=4. Call before attaching the window.
 bool ConfigureHotkeys(unsigned toggleKey,unsigned toggleModifiers,unsigned recenterKey,unsigned recenterModifiers);
 unsigned ConsumeHotkeys();
+void SetPanelKeyFilter(bool (*filter)(UINT,WPARAM));
 }

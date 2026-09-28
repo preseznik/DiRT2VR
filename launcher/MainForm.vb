@@ -21,7 +21,7 @@ Public Class MainForm
     Private nextScan As DateTime
     Private ReadOnly stateLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly inputLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
-    Private ReadOnly bindingLists As ListBox() = {New ListBox(), New ListBox()}
+    Private ReadOnly bindingLists As ListBox() = Enumerable.Range(0, SeatActions.Names.Length).Select(Function(i) New ListBox()).ToArray()
     Private ReadOnly tabs As New TabControl With {.Dock = DockStyle.Fill, .Name = "LauncherTabs"}
     Private ReadOnly launchMode As ComboBox = Choice("LaunchMode")
     Private ReadOnly eventChoice As ComboBox = Choice("PracticeEvent")
@@ -492,6 +492,7 @@ Public Class MainForm
                                            element.Checked = True
                                        Next
                                    End Sub
+        BuildSeatSettings(columns.Second)
         columns.Second.Controls.Add(defaults)
         columns.Second.Controls.Add(HelpLink(Sub() ShowAbout("VR rendering")))
         columns.Second.Controls.Add(actualResolution)
@@ -553,22 +554,38 @@ Public Class MainForm
         inputLabel.Margin = New Padding(0, 0, 0, 12)
         content.Controls.Add(inputLabel)
 
-        For action = 0 To 1
+        For action = 0 To SeatActions.Names.Length - 1
             Dim selectedAction = action
 
-            Dim keyButton = If(action = 0, toggleButton, recenterButton)
-            keyButton.AccessibleName = If(action = 0, "Toggle VR keyboard binding", "Recenter keyboard binding")
-            AddHandler keyButton.Click, Sub() BeginKeyCapture(selectedAction)
+            Dim keyCell As Control
+            If action < 9 Then
+                Dim button = ShortcutButton(action)
+                button.AccessibleName = SeatActions.Names(action) & " keyboard binding"
+                AddHandler button.Click, Sub() BeginKeyCapture(selectedAction)
+                Dim keys As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0)}
+                keys.Controls.Add(button)
+                If action >= 2 Then
+                    Dim clear As New Button With {.Text = "Clear", .AutoSize = False, .Width = Px(Me, 50), .Height = button.PreferredSize.Height}
+                    AddHandler clear.Click, Sub()
+                                                If busy Then Return
+                                                AssignShortcut(selectedAction, 0, 0) : RefreshBindings()
+                                            End Sub
+                    keys.Controls.Add(clear)
+                End If
+                keyCell = keys
+            Else
+                keyCell = New Label With {.Text = {"Shift (hold)", "Enter", "Escape"}(action - 9), .AutoSize = True}
+            End If
 
             Dim cell As New TableLayoutPanel With {.Dock = DockStyle.Fill, .AutoSize = True, .ColumnCount = 1, .Margin = New Padding(3, 3, 0, 14)}
             Dim list = bindingLists(action)
-            list.Dock = DockStyle.Fill : list.Height = Px(Me, 78) : list.IntegralHeight = False : list.HorizontalScrollbar = True
-            list.AccessibleName = If(action = 0, "Toggle VR controller bindings", "Recenter controller bindings")
+            list.Dock = DockStyle.Fill : list.Height = Px(Me, If(action < 2, 78, 32)) : list.IntegralHeight = False : list.HorizontalScrollbar = True
+            list.AccessibleName = SeatActions.Names(action) & " controller bindings"
             cell.Controls.Add(list)
             Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top}
             Dim bind As New Button With {.Text = "Bind…", .AutoSize = True}
             Dim remove As New Button With {.Text = "Remove selected", .AutoSize = True}
-            Tip(bind, "Bind one button or a two-button combination on a controller" & vbCrLf & "or wheel. These buttons still reach the game too.")
+            Tip(bind, If(action < 2, "Bind a button or pair. These buttons still reach the game too.", "Bind a button, pair or wheel POV direction. Seat shortcuts are reserved in cockpit VR; panel navigation buttons are reserved while open."))
             Tip(remove, "Remove the selected VR shortcut. Driving controls are unchanged.")
             AddHandler bind.Click, Sub() BeginControllerCapture(selectedAction)
             AddHandler remove.Click, Sub()
@@ -577,7 +594,7 @@ Public Class MainForm
                                          settings.Bindings.Remove(assignments(list.SelectedIndex)) : RefreshBindings()
                                      End Sub
             buttons.Controls.AddRange({bind, remove}) : cell.Controls.Add(buttons)
-            content.Controls.Add(New BindingRow(If(action = 0, "Toggle VR", "Recenter"), keyButton, cell))
+            content.Controls.Add(New BindingRow(SeatActions.Names(action), keyCell, cell))
         Next
 
         content.Controls.Add(New Label With {.Text = "Driving controls", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
@@ -628,6 +645,7 @@ Public Class MainForm
             settings.TrackId = track.Id : settings.CarCode = car.Code
         End If
         settings.Validate()
+        SaveSeats()
         Files.SaveJson(context.PreferencesPath, settings)
         stateLabel.Text = "Settings saved. Changes apply to the next session."
     End Sub
@@ -645,10 +663,12 @@ Public Class MainForm
         End Using
     End Sub
     Private Sub RefreshBindings()
-        toggleButton.Text = If(keyboardCapture = 0, "Press a key…", KeyLabel(settings.ToggleKey, settings.ToggleModifiers))
-        recenterButton.Text = If(keyboardCapture = 1, "Press a key…", KeyLabel(settings.RecenterKey, settings.RecenterModifiers))
+        For action = 0 To 8
+            Dim key = Shortcut(action)
+            ShortcutButton(action).Text = If(keyboardCapture = action, "Press a key…", If(key.Key = 0, "Unassigned", KeyLabel(key.Key, key.Modifiers)))
+        Next
         Dim devices = input.Snapshot()
-        For action = 0 To 1
+        For action = 0 To SeatActions.Names.Length - 1
             Dim selectedAction = action
             Dim list = bindingLists(action)
             Dim rows = settings.Bindings.Where(Function(b) b.Action = selectedAction).Select(Function(binding)
@@ -680,14 +700,14 @@ Public Class MainForm
             If Not VrSettings.ValidKey(CInt(e.KeyCode)) Then Return
             Dim modifiers = If(e.Control, 1, 0) Or If(e.Alt, 2, 0) Or If(e.Shift, 4, 0)
             If e.Alt AndAlso (e.KeyCode = Keys.F4 OrElse e.KeyCode = Keys.Tab) Then Return
-            If (keyboardCapture = 0 AndAlso CInt(e.KeyCode) = settings.RecenterKey AndAlso modifiers = settings.RecenterModifiers) OrElse (keyboardCapture = 1 AndAlso CInt(e.KeyCode) = settings.ToggleKey AndAlso modifiers = settings.ToggleModifiers) Then
-                inputLabel.Text = "That shortcut is assigned to the other action." : Return
-            End If
-            If keyboardCapture = 0 Then
-                settings.ToggleKey = CInt(e.KeyCode) : settings.ToggleModifiers = modifiers
-            Else
-                settings.RecenterKey = CInt(e.KeyCode) : settings.RecenterModifiers = modifiers
-            End If
+            Dim previous = Shortcut(keyboardCapture)
+            AssignShortcut(keyboardCapture, CInt(e.KeyCode), modifiers)
+            Try
+                SeatActions.Validate(settings)
+            Catch ex As IOException
+                AssignShortcut(keyboardCapture, previous.Key, previous.Modifiers)
+                inputLabel.Text = ex.Message : Return
+            End Try
             keyboardCapture = -1 : inputLabel.Text = "Keyboard binding captured. Save settings to keep it."
             RefreshBindings() : Return
         End If
@@ -736,6 +756,7 @@ Public Class MainForm
                 Catch
                 End Try
             End If
+            RefreshSeatAvailability()
             desktopButton.Enabled = Not busy : launchButton.Enabled = Not busy : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
             hostButton.Enabled = Not busy : refreshServers.Enabled = Not busy AndAlso Not scanning
             joinButton.Enabled = Not busy AndAlso If(SelectedHost()?.Joinable, False)
