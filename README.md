@@ -226,7 +226,7 @@ Older test-kit profiles and imported copies are no longer used. They are left on
 - Game-menu launches prepare the Subaru STI camera. Direct practice prepares the selected car, but other interiors and broader stage coverage are not yet visually verified.
 - Scenery visibility and car-aligned headlights passed the reported tests; other lighting, mirrors and interiors need testing.
 - Road rubble is retained in both eyes in the tested Novigrad scene. Other stages and ground-cover variants still need testing.
-- Crowds, particles, shadows and motion blur are reduced or disabled. Water stays visible and uses per-eye reflections in VR; the Ensenada Sprint puddle fix has been checked in Quest 3. Other tracks, reflected objects when looking behind, and scenery pop-in still need testing. The HUD layer awaits full headset validation. Seat adjustment, replay transitions and calibrated world scale remain unfinished.
+- Crowds, particles, shadows and motion blur are reduced or disabled. Water stays visible and uses per-eye reflections in VR; the Ensenada Sprint puddle fix has been checked in Quest 3. Other tracks, reflected objects when looking behind, and scenery pop-in still need testing. The HUD layer awaits full headset validation. Seat adjustment is experimental; replay transitions and calibrated world scale still need work.
 - Occasional hitching remains; a steady headset frame rate is not guaranteed.
 - Headset reconnection during play is unsupported. Quit and relaunch after reconnecting.
 - Installation acceptance in protected folders and interruption scenarios is still in progress. Packages are experimental.
@@ -255,4 +255,4 @@ In cockpit VR, stop the car and press **Tab**. Use **Up/Down** to raise/lower yo
 
 Xbox controllers use the D-pad, **X** as the sideways modifier, **A** to save and **B** to cancel. Assign a panel-opening button in **Controls**. Wheels can use their POV hat; assign the panel modifier/save/cancel buttons in Controls.
 
-**Graphics → VR cockpit** also has position sliders and a per-car reset. Positions are saved separately for each car and survive recentering. Six optional movement shortcuts are available in Controls. Extreme offsets can reveal missing interior geometry. Headset and physical-wheel acceptance are pending.
+**Graphics → VR cockpit** also has position sliders and a per-car reset. Positions are saved separately for each car and survive recentering. Six optional movement shortcuts are available in Controls. Extreme offsets can reveal missing interior geometry. Panel movement, save/cancel, recenter retention and relaunch persistence passed the reported headset check. Physical wheel navigation and broader rendering checks with adjusted seats remain unverified.
