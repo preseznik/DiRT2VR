@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add an optional Patreon support link to the README; the mod will remain free forever.
+
 - Make `main` the default branch for tested code and releases; keep unfinished custom-track development separate and retire obsolete branches.
 
 

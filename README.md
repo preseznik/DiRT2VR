@@ -8,6 +8,8 @@ An experimental cockpit VR mod for **DiRT 2**, with stereoscopic rendering, head
 
 Tested with **Quest 3 through SteamVR**, primarily in the Subaru Impreza STI. Xbox-compatible controller binding, launching, Toggle VR and Recenter have been tested in game. Other headsets and wheel button bindings need testing; **PSVR2, Logitech and Fanatec hardware are not yet verified**. This remains an experimental build.
 
+This mod will remain free forever. If you'd like to support the work, you can [support me on Patreon](https://www.patreon.com/cw/bohloney).
+
 ## Requirements
 
 - Windows x64 and a PC capable of running DiRT 2 and SteamVR.
