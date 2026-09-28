@@ -1,7 +1,8 @@
 # Matching LAN library source
 
 These versioned archives contain the modified XLiveLessNess source, integration
-code, build scripts, tests and dependency notices used by DiRT2VR. They are
+code, build scripts and dependency notices used by DiRT2VR. Older archives
+also contain development tests; new archives contain only library build inputs. They are
 preserved here for source availability under LGPL 2.1. They are not needed to
 play, included in the installer, or attached to normal GitHub releases.
 

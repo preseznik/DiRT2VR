@@ -14,5 +14,6 @@ cmake -S . -B build\ninja -G Ninja -DCMAKE_BUILD_TYPE=RelWithDebInfo %pythonOpti
 if errorlevel 1 exit /b 1
 cmake --build build\ninja -j 8
 if errorlevel 1 exit /b 1
+if not exist tests\NativeTests.cmake exit /b 0
 ctest --test-dir build\ninja --output-on-failure
 exit /b %errorlevel%

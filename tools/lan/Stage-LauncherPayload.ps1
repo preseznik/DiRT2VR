@@ -14,17 +14,16 @@ Copy-Item -LiteralPath "$repo/build/lan/_deps/rapidjson-src/license.txt" -Destin
 $source=[IO.Path]::GetFullPath($SourceStage)
 $payloadRoot=[IO.Path]::GetFullPath($Stage).TrimEnd('\','/')
 if ($source -eq $payloadRoot -or $source.StartsWith($payloadRoot+[IO.Path]::DirectorySeparatorChar,[StringComparison]::OrdinalIgnoreCase)) { throw 'LAN source staging must be outside the installed payload.' }
-New-Item -ItemType Directory -Path "$source/.deps/xlivelessness","$source/tools","$source/src","$source/tests" -Force | Out-Null
+New-Item -ItemType Directory -Path "$source/.deps/xlivelessness","$source/tools","$source/src" -Force | Out-Null
 foreach ($name in @('xlivelessness','cmake','CMakeLists.txt','README.md','LICENSE.md')) {
     Copy-Item -LiteralPath (Join-Path $upstream $name) -Destination "$source/.deps/xlivelessness" -Recurse
 }
-Copy-Item -LiteralPath $PSScriptRoot -Destination "$source/tools/lan" -Recurse
+New-Item -ItemType Directory -Path "$source/tools/lan" -Force | Out-Null
+# Only files required to rebuild the library, independent of local test kits.
+foreach ($name in @('CMakeLists.txt','build.cmd','profile.cpp','profile.h','integration.cpp','intro.cpp','intro.h','browser.cpp','diagnostics.cpp','diagnostics.h','xlln-integration.patch')) {
+    Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination "$source/tools/lan"
+}
 Copy-Item -LiteralPath "$repo/src/common.cpp","$repo/src/common.h" -Destination "$source/src"
-Copy-Item -LiteralPath "$repo/tests/lan_profile_test.cpp","$repo/tests/lan_intro_test.cpp","$repo/tests/lan_files.ps1","$repo/tests/lan_settings.ps1" -Destination "$source/tests"
-Copy-Item -LiteralPath "$repo/tests/lan_browser_test.cpp" -Destination "$source/tests"
-Copy-Item -LiteralPath "$repo/tests/lan_keepalive_test.cpp" -Destination "$source/tests"
-Copy-Item -LiteralPath "$repo/tests/lan_diagnostics_test.cpp" -Destination "$source/tests"
-Copy-Item -LiteralPath "$repo/tests/lan_identity_test.cpp" -Destination "$source/tests"
 Copy-Item -LiteralPath "$PSScriptRoot/SOURCE-README.md" -Destination "$source/README.md"
 [ordered]@{
     Version=$Version

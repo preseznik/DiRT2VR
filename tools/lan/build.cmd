@@ -8,5 +8,6 @@ cmake -S tools/lan -B build/lan -G Ninja -DCMAKE_BUILD_TYPE=Release "-DDXSDK_DIR
 if errorlevel 1 exit /b 1
 cmake --build build/lan -j 8
 if errorlevel 1 exit /b 1
+if not exist tests\LanTests.cmake exit /b 0
 ctest --test-dir build/lan --output-on-failure
 exit /b %errorlevel%

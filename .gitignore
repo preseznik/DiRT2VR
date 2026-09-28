@@ -11,3 +11,10 @@ tools/ego-xml/bin/
 tools/ego-xml/obj/
 tests/launcher/bin/
 tests/launcher/obj/
+
+# Local development notes and checks are not published.
+/docs/
+/tests/
+/AGENTS.md
+/launcher/assets/README.md
+/tools/driving-input/axes_test.cpp

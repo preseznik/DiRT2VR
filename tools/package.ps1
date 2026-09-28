@@ -53,11 +53,9 @@ Release page: https://github.com/preseznik/DiRT2VR/releases/tag/v$version
 Source is preserved in the repository; it is not a release asset or needed to play.
 License: XLLN-LGPL-2.1.txt in this directory.
 "@ | Set-Content -LiteralPath "$stage/DiRT2VR/licenses/LAN-source.txt" -Encoding utf8
-# Ship user-facing guidance only. Technical documentation stays in the repository;
-# versioned web links keep the packaged Markdown useful without a local docs folder.
+# Ship user-facing guidance only; development notes remain local.
 foreach ($name in @('README.md','CHANGELOG.md')) {
     $text=Get-Content -LiteralPath $name -Raw
-    $text=$text.Replace('](docs/', "](https://github.com/preseznik/DiRT2VR/blob/v$version/docs/")
     [IO.File]::WriteAllText((Join-Path "$stage\DiRT2VR" $name),$text)
 }
 @'

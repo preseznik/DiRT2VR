@@ -117,7 +117,7 @@ For vegetation and object pop-in, try **Tree detail → Ultra** and **Object det
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
 
-The cockpit HUD is a transparent panel showing the game's race information. **VR HUD → Distance** changes its depth without shrinking the text. **Recenter** places the fixed HUD ahead of your seated position at that distance. Save and relaunch VR to apply. **Follow view** is off by default; Restore defaults also resets distance to 1 m. Pause menus still use their separate virtual screen. Desktop HUD capture and automated rendering checks pass, but headset placement and distance changes still need testing. Technical details are in [HUD implementation notes](docs/vr-hud.md).
+The cockpit HUD is a transparent panel showing the game's race information. **VR HUD → Distance** changes its depth without shrinking the text. **Recenter** places the fixed HUD ahead of your seated position at that distance. Save and relaunch VR to apply. **Follow view** is off by default; Restore defaults also resets distance to 1 m. Pause menus still use their separate virtual screen. Desktop HUD capture and automated rendering checks pass, but headset placement and distance changes still need testing.
 
 Under **Follow view**, uncheck the HUD areas you want hidden. These controls mask areas of the standard race HUD, so another overlay in the same area is hidden too. They do not change menus, the virtual screen, desktop play or the centre of the HUD. Save and relaunch to apply. Restore defaults hides the speedometer/gear/revs area and shows the other areas. Existing saved choices are preserved on upgrade. Alternative HUD layouts and headset use still need validation.
 
@@ -151,7 +151,7 @@ To change just one action, select it and choose **Bind keyboard…** or **Bind d
 
 The editor includes steering, accelerator, brake, clutch, handbrake, sequential shifts and H-pattern gears. Select the appropriate transmission/assist settings in the game as well. It applies to Normal Launch, Practice, Race and HOST/JOIN, in desktop and VR modes, using the DX11 renderer. Unassigned actions retain game settings; assigning an action replaces that action's saved inputs, so assign both keyboard and controller inputs if wanted. **Use game binding** removes that action's launcher override. Disabling overrides does not undo bindings subsequently saved by the game.
 
-Driving capture uses XInput for Xbox controllers and non-exclusive DirectInput for wheels/pedals. Wheel models and the combined LAN/VR binding path still need hardware acceptance. The game identifies DirectInput devices by product name; two identical models cannot be distinguished reliably. POV/hat capture and force-feedback tuning are not included. Technical validation is recorded in [Driving controls](docs/driving-controls.md).
+Driving capture uses XInput for Xbox controllers and non-exclusive DirectInput for wheels/pedals. Wheel models and the combined LAN/VR binding path still need hardware acceptance. The game identifies DirectInput devices by product name; two identical models cannot be distinguished reliably. POV/hat capture and force-feedback tuning are not included.
 
 ## Recovery, upgrades and removal
 
@@ -167,7 +167,7 @@ When a newer release has a verified installer, **Download and install** download
 
 The updater shows separate downloading, verification, recovery and setup-opening messages. Closing Help / About before the installer handoff cancels setup. If an older launcher freezes after downloading, close it and run the latest **Setup.exe** directly from [Releases](https://github.com/preseznik/DiRT2VR/releases). Choose the same game folder and keep existing backups; there is no need to uninstall first.
 
-Updates require a published [GitHub Release](https://github.com/preseznik/DiRT2VR/releases) containing the packaged installer. Source commits and GitHub's source-code ZIPs are not installable updates. If checking or downloading fails, your current installation remains available; retry later or use the Releases link. Maintainers can find the publishing steps in [the update documentation](docs/updates.md).
+Updates require a published [GitHub Release](https://github.com/preseznik/DiRT2VR/releases) containing the packaged installer. Source commits and GitHub's source-code ZIPs are not installable updates. If checking or downloading fails, your current installation remains available; retry later or use the Releases link.
 
 ### Restore or remove
 
@@ -203,7 +203,7 @@ If LAN reports altered `system\states.bin`, close the game and use **Restore ori
 
 The browser lists PCs launched using **HOST** while their game is running. **HOST game running** does not confirm that a lobby is open; its player count is unavailable and shown as a dash. Create the lobby inside the game before the other player joins. Both PCs need version 0.6.3 or later with the same discovery protocol. Older kits and unmodified games are not listed. Entries disappear when the host game exits; stale entries cannot be joined. Discovery uses UDP 39820 on private IPv4 LANs; guest Wi-Fi/client isolation or firewall rules may block it. No public internet scanning or port forwarding is used.
 
-**Multiplayer VR is available but untested.** Launcher-side event setup and direct creation of a game lobby remain unfinished; HOST opens the game menus. Launcher discovery and JOIN have reached a lobby on two PCs. The Battersea race-loading disconnect was traced to modified startup movie definitions; with logo skipping disabled, both players drove, finished the race and reached results. Current LAN launches automatically keep those definitions intact. Install the same current package on both PCs. Broader event coverage and repeat races still need testing. A manually saved profile change persisted from LAN into Normal Launch; see [test status](docs/lan-lab.md).
+**Multiplayer VR is available but untested.** Launcher-side event setup and direct creation of a game lobby remain unfinished; HOST opens the game menus. Launcher discovery and JOIN have reached a lobby on two PCs. The Battersea race-loading disconnect was traced to modified startup movie definitions; with logo skipping disabled, both players drove, finished the race and reached results. Current LAN launches automatically keep those definitions intact. Install the same current package on both PCs. Broader event coverage and repeat races still need testing. A manually saved profile change persisted from LAN into Normal Launch.
 
 For a LAN disconnect report, enable **Settings → Enable diagnostic logging** on both PCs, save, and repeat the event. Quit both games, then use **Open logs** to collect `lan-network.log` and, if present, `lan-network.previous.log` from each PC's newest session folder. These contain network addresses and transport metadata, not packet payloads or save data. LAN traces are limited to 8 MiB per session; turn logging off after the test. Older session folders are kept until you remove them.
 
@@ -231,10 +231,10 @@ Older test-kit profiles and imported copies are no longer used. They are left on
 
 **Report a problem:** enable diagnostic logging in **Settings**, save, and reproduce the issue. Then use **Open logs** and include the relevant `trace.log`, car/event, headset, steps to reproduce, and whether the problem affects cockpit VR or the virtual screen in a [GitHub issue](https://github.com/preseznik/DiRT2VR/issues). Turn logging off afterward. Logs live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\logs`. Do not upload game files or save profiles.
 
-See the [changelog](CHANGELOG.md). Build instructions and diagnostic details are in the [development guide](docs/development.md) and [launcher implementation notes](docs/launcher.md).
+See the [changelog](CHANGELOG.md).
 
 Third-party license notices are included in `DiRT2VR/licenses` in packaged builds. This product includes software developed by Jon Skeet and Marc Gravell. Contact skeet@pobox.com, or see https://jonskeet.uk).
 
 Matching LAN library source is preserved in the [repository](https://github.com/preseznik/DiRT2VR/tree/main/source-archives/lan). It is not needed to play. Installed license notices include its download link and checksum.
 
-Microsoft GFWL 3.5.95.0: this build corrects a startup-order defect in the VR compatibility fix. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3/PC4 gameplay confirmation is still pending; see [investigation status](docs/pc3-crash.md).
+Microsoft GFWL 3.5.95.0: this build corrects a startup-order defect in the VR compatibility fix. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3/PC4 gameplay confirmation is still pending.
