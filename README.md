@@ -86,6 +86,12 @@ Use **Laps (circuits)** to choose 1–20 laps in either **Race** or **Direct pra
 
 Race uses the same finish and pause choices as practice. It stops at the finish menu rather than automatically repeating. Return to menus restarts the game in Normal Launch; this return path has been confirmed on desktop, while headset validation is pending. **Alt+F4 quits.** Custom races do not award career progress or use the normal results flow; use Normal Launch for full career events. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Mixed opponent models also passed a desktop race check. Same-class gameplay and crowded-grid VR performance still need testing.
 
+### Advanced
+
+**Frame-rate-independent rewind → On (Experimental)** is off by default. It preserves more rewind history at high FPS without limiting gameplay frame rate. Save and relaunch to apply it to single-player Normal Launch, Practice or Race, on desktop or in VR; LAN ignores it. Desktop play requires DX11. Diagnostic logging is not required.
+
+The initial Subaru Group N / Croatia — Velebit Adventure desktop test retained 10 seconds of history instead of about 5 seconds at roughly 120 FPS. Other events and VR still need testing. If rewind or resuming behaves incorrectly, turn it off and relaunch. See **? → Instructions → Advanced**.
+
 ### Graphics
 
 Graphics groups settings into **Desktop**, **VR rendering** and **VR HUD**. Hover over a setting, its label or its slider for a short explanation. Open **? → Instructions** for more detail and troubleshooting. Tabs adapt to wide and portrait windows; smaller windows scroll vertically while the action buttons remain available.

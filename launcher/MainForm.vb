@@ -8,6 +8,7 @@ Public Class MainForm
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
+    Private ReadOnly flashback As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalFlashback", .AccessibleName = "Frame-rate-independent rewind (Experimental)", .AutoSize = True}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
     Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (single-player launches)", .Name = "SkipStartupMovies", .AutoSize = True}
@@ -111,6 +112,7 @@ Public Class MainForm
         BuildGraphicsTab()
         BuildControlsTab()
         BuildSettingsTab()
+        BuildAdvancedTab()
         AddHandler tabs.SelectedIndexChanged, Sub()
                                                   keyboardCapture = -1 : controllerCapture = -1 : capturedDevice = Nothing
                                                   inputLabel.Text = "Select a binding to change it."
@@ -157,6 +159,7 @@ Public Class MainForm
         AddHandler Shown, Async Sub() Await CheckStartupUpdate()
     End Sub
     Private Sub ConfigureTooltips()
+        Tip(flashback, "Keeps more rewind history when playing at high FPS, without slowing the game." & vbCrLf & "Single-player desktop and VR only. Experimental; off by default.")
         Tip(renderScale, "How much detail the game draws for each eye. Higher can be sharper," & vbCrLf &
             "but needs more GPU power and memory. A low Headset texture scale" & vbCrLf & "can still make the final picture look soft.")
         Tip(headsetScale, "Size of the finished picture sent to your headset." & vbCrLf &
@@ -438,6 +441,13 @@ Public Class MainForm
         logging.Text = "On" : logging.Checked = settings.LoggingEnabled : Field(options, "Diagnostic logging", logging)
         content.Controls.Add(HelpLink(Sub() ShowAbout("Getting started")))
     End Sub
+    Private Sub BuildAdvancedTab()
+        Dim content = TabLayout("Advanced")
+        Dim gameplay = Section(content, "Gameplay")
+        flashback.Checked = settings.ExperimentalFlashback
+        Field(gameplay, "Frame-rate-independent rewind", flashback)
+        content.Controls.Add(HelpLink(Sub() ShowAbout("Advanced")))
+    End Sub
     Private Sub BuildGraphicsTab()
         Dim content = TabLayout("Graphics")
         Dim columns As New ResponsiveColumns() : content.Controls.Add(columns)
@@ -593,6 +603,7 @@ Public Class MainForm
     Private Sub SaveSettings()
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
+        settings.ExperimentalFlashback = flashback.Checked
         settings.SkipIntroduction = skipIntroduction.Checked
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.BorderlessDesktop = borderless.Checked

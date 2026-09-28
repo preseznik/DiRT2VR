@@ -4,6 +4,10 @@ Notable changes to DiRT2VR are recorded here, newest first. Release channels ide
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
+## Unreleased
+
+- Add an Advanced tab with **Frame-rate-independent rewind (Experimental)**, off by default. Preserve more rewind history at high FPS without capping gameplay, for single-player desktop and VR launches. Initial Subaru/Velebit desktop testing passed; broader event and VR testing remain pending.
+
 ## 0.16.0 — 2026-09-28
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.16.0)

@@ -165,7 +165,8 @@ Public Class Session
         Return start
     End Function
     Private Function RunDesktop() As Boolean
-        If driving.Enabled AndAlso driving.Bindings.Count > 0 Then Worker.Invoke(context, "setup")
+        FlashbackLaunch.RequireDesktopRenderer(context, settings)
+        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) Then Worker.Invoke(context, "setup")
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
@@ -190,7 +191,9 @@ Public Class Session
             config = New AssetTransaction(context).PracticeConfig()
             logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         End If
+        If FlashbackLaunch.Enabled(settings) AndAlso logFolder Is Nothing Then logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         Dim start = DesktopStartInfo(context, config, logFolder)
+        If FlashbackLaunch.Enabled(settings) Then ConfigureLogging(start, logFolder)
         PrepareMenus()
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
         Return WaitForGame(start)
@@ -220,6 +223,7 @@ Public Class Session
     End Function
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
+        FlashbackLaunch.Configure(start, settings)
         Dim focus As New StartupFocus(context)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings)

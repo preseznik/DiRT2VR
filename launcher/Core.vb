@@ -110,6 +110,7 @@ End Class
 Public Class VrSettings
     Public Property Version As Integer = 3
     Public Property LoggingEnabled As Boolean = False
+    Public Property ExperimentalFlashback As Boolean = False
     Public Property SkipIntroduction As Boolean = False
     Public Property SkipStartupMovies As Boolean = False
     Public Property Runtime As String = Discovery.RuntimePath()

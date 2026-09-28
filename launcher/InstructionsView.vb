@@ -7,7 +7,7 @@ Public Class InstructionsView
     Private ReadOnly picker As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Name = "InstructionTopicPicker", .AccessibleName = "Instruction topic"}
     Private ReadOnly article As New RichTextBox With {.ReadOnly = True, .BorderStyle = BorderStyle.None, .WordWrap = True, .ScrollBars = RichTextBoxScrollBars.Vertical, .DetectUrls = False, .Name = "InstructionArticle", .AccessibleName = "Instructions"}
     Private updating As Boolean
-    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates"}
+    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced"}
     Private Shared ReadOnly Pages As String() = {
         "Launch
 Launch plays on your monitor. Launch VR uses SteamVR: start SteamVR and connect your headset first. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
@@ -108,7 +108,18 @@ Updates
 About shows the installed version, Stable/Experimental channel, build and GitHub update controls. Include experimental releases is off by default and saved immediately; it controls both startup notices and manual checks. Enabling it includes newer experimental and normal releases. Disabling it does not replace the installed build. Experimental builds offer Return to stable…: this asks before installing the latest normal release, even if older, and disables experimental updates. Launcher settings and bindings are backed up under updates/rollback-preferences in the installation user-data folder; your career is not reset. Close the game before updating. Downloads are verified before setup opens; settings are retained. Windows may ask for administrator approval. ZIP installs become installer-managed when updated through setup.
 
 Documentation
-The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages."}
+The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages.",
+        "Experimental rewind
+Advanced → Frame-rate-independent rewind → On (Experimental) is off by default. Save settings and launch a new session to apply it. It works in single-player Normal Launch, Direct practice and Race, for desktop and VR. LAN ignores this setting. Desktop play requires DirectX 11.
+
+What it does
+At high frame rates, the original game fills its rewind buffer faster. This option records up to 60 snapshots per second while the game continues at its normal frame rate. It does not cap gameplay FPS or change headset refresh rate, and it does not need diagnostic logging.
+
+Current testing
+Two desktop rewind/resume tests in the Subaru Group N on Croatia — Velebit Adventure retained 10 seconds instead of about 5 seconds at roughly 120 FPS. Duration can vary with the event. Other cars/events and VR still need testing.
+
+If something looks wrong
+Turn the option off, save and relaunch. Report the event, car and whether the problem happened during rewind or after resuming. The game executable on disk is unchanged."}
     Public Sub New()
         Dock = DockStyle.Fill
         Controls.AddRange({topics, picker, article})
