@@ -30,8 +30,8 @@ ULONGLONG lastTick{},lastChange{};
 XrPosef panelPose{{0,0,0,1},{0,0,-1}};
 XrFrames::Overlay overlay;
 struct Input { unsigned held{},source{},slot{}; GUID guid{}; unsigned buttons[4]{},pov{}; } input;
-using LoadCamerasFn=void (__thiscall*)(void*,void*);
-LoadCamerasFn loadCameras{};
+using SetCamerasFn=void (__thiscall*)(void*,void*);
+SetCamerasFn setCameras{};
 template<class T> T Read(unsigned offset) { T value{}; memcpy(&value,channel+offset,sizeof(value)); return value; }
 template<class T> void Write(unsigned offset,T value) { memcpy(channel+offset,&value,sizeof(value)); }
 std::string CarString(int index,unsigned offset,unsigned length) {
@@ -82,16 +82,17 @@ void ReadInput() {
     MemoryBarrier(); if(Read<unsigned>(16)!=seq) return;
     input=next;
 }
-void __fastcall LoadCameras(void* car,void*,void* allocator) {
-    loadCameras(car,allocator);
+void __fastcall SetCameras(void* car,void*,void* camera) {
+    setCameras(car,camera);
     char code[16]{}; void* manager{}; SIZE_T read{};
-    // Verified camera loader formats cars/%s/cameras.xml from this field and
-    // stores its camera manager at +0x8384. Read only after the loader returns.
+    // The assignment method covers every camera creation path. The car code
+    // is the field used by the cameras.xml path formatter; never a launcher guess.
     if(!ReadProcessMemory(GetCurrentProcess(),static_cast<char*>(car)+0x55c1,code,sizeof(code),&read) ||
        !ReadProcessMemory(GetCurrentProcess(),static_cast<char*>(car)+0x8384,&manager,sizeof(manager),&read) || !manager) return;
     code[15]=0;
     std::lock_guard lock(mutex);
     identities[manager]=code;
+    Log("seat adjustment: camera assigned manager=%p car=%s",manager,code);
 }
 class PanelImage {
     Microsoft::WRL::ComPtr<ID3D11Texture2D> texture_;
@@ -168,10 +169,10 @@ bool EnableSeatAdjustment() {
     if(Read<unsigned>(0)!=0x54414553 || Read<unsigned>(4)!=1 || Read<unsigned>(8)!=bytes || Read<unsigned>(184)>maxCars || Read<unsigned>(11300)>64) { UnmapViewOfFile(channel); channel=nullptr; return false; }
     if(!SupportedHost()) { UnmapViewOfFile(channel); channel=nullptr; return false; }
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
-    const unsigned char guard[]={0x81,0xec,0,1,0,0,0x53,0x56,0x57,0x8b,0xf1,0x8d,0x9e,0xc1,0x55,0,0};
-    if(memcmp(base+0x9af000,guard,sizeof(guard))) { UnmapViewOfFile(channel); channel=nullptr; return false; }
-    auto result=MH_CreateHook(base+0x9af000,reinterpret_cast<void*>(LoadCameras),reinterpret_cast<void**>(&loadCameras));
-    if(result==MH_OK) result=EnableRecordedHook(base+0x9af000);
+    const unsigned char guard[]={0x56,0x8b,0xf1,0x8b,0x4c,0x24,0x08,0x85,0xc9,0x74,0x3e,0x8d,0x86,0xd0,0x81,0,0};
+    if(memcmp(base+0x99f4c0,guard,sizeof(guard))) { UnmapViewOfFile(channel); channel=nullptr; return false; }
+    auto result=MH_CreateHook(base+0x99f4c0,reinterpret_cast<void*>(SetCameras),reinterpret_cast<void**>(&setCameras));
+    if(result==MH_OK) result=EnableRecordedHook(base+0x99f4c0);
     for(unsigned i=0;i<256;++i) keysArmed[i]=!Key(i);
     inputReady=result==MH_OK && EnableSeatInput();
     SetPanelKeyFilter(SeatWindowKey);
@@ -189,7 +190,7 @@ void SeatSelectCamera(void* manager) {
         for(unsigned i=0;i<Read<unsigned>(184);++i) if(CarString(int(i),0,16)==found->second) { index=int(i); break; }
     }
     selected=index;
-    Log("seat adjustment: active car=%s",index>=0 ? CarString(index,0,16).c_str() : "unknown");
+    Log("seat adjustment: active car=%s manager=%p known=%u",index>=0 ? CarString(index,0,16).c_str() : "unknown",manager,unsigned(identities.size()));
 }
 void SeatInactive() {
     if(!channel) return;

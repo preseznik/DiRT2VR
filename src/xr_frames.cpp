@@ -92,7 +92,15 @@ bool XrFrames::CreatePanel() {
     eye.images.resize(count,{XR_TYPE_SWAPCHAIN_IMAGE_D3D11_KHR});
     if(!Check(xrEnumerateSwapchainImages(eye.chain,count,&count,reinterpret_cast<XrSwapchainImageBaseHeader*>(eye.images.data())),"panel images")) return false;
     eye.targets.resize(count);
-    for(unsigned i=0;i<count;++i) if(FAILED(device_->CreateRenderTargetView(eye.images[i].texture,nullptr,&eye.targets[i]))) return false;
+    for(unsigned i=0;i<count;++i) {
+        // OpenXR may expose typeless textures; match the negotiated view format.
+        D3D11_RENDER_TARGET_VIEW_DESC target{};
+        target.Format=static_cast<DXGI_FORMAT>(format_); target.ViewDimension=D3D11_RTV_DIMENSION_TEXTURE2D;
+        const auto hr=device_->CreateRenderTargetView(eye.images[i].texture,&target,&eye.targets[i]);
+        if(vr::graphics::Failed(hr,device_.Get(),"seat panel RTV")) {
+            Report("seat panel RTV image=%u HRESULT=0x%08lx",i,hr); return false;
+        }
+    }
     return true;
 }
 bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen,const Overlay* overlay,const Overlay* panel) {
