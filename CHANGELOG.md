@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.16.0 — 2026-09-28
 
-Local test build; not yet published to GitHub.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.16.0)
 
 - Introduce optional experimental builds for smaller changes and early testing. This lets regular releases focus on more substantial improvements, with fewer update prompts. To try experimental builds, enable **Include experimental releases** in **? → About**; it is off by default.
 
@@ -18,7 +18,7 @@ Local test build; not yet published to GitHub.
 
 ## 0.15.8 — 2026-09-28
 
-Local test build; not yet published to GitHub.
+Local test build; included in 0.16.0.
 
 - Add short hover explanations to launcher settings, including what Headset texture scale does and how it differs from Render resolution.
 
