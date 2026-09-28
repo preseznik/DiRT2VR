@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Recommend the seat-adjustment panel in Controls and tuck the six optional movement bindings into a section that starts collapsed.
+
 ## 0.17.3 — 2026-09-28 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.3)

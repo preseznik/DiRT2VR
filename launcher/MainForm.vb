@@ -554,6 +554,15 @@ Public Class MainForm
         inputLabel.Margin = New Padding(0, 0, 0, 12)
         content.Controls.Add(inputLabel)
 
+        Dim individualSeats As New CollapsibleSection("Individual seat bindings (optional)") With {.Name = "IndividualSeatBindings"}
+        AddHandler individualSeats.Collapsed, Sub()
+                                                 If keyboardCapture >= 3 AndAlso keyboardCapture <= 8 Then keyboardCapture = -1
+                                                 If controllerCapture >= 3 AndAlso controllerCapture <= 8 Then
+                                                     controllerCapture = -1 : capturedDevice = Nothing
+                                                 End If
+                                                 inputLabel.Text = "Select a binding to change it."
+                                                 RefreshBindings()
+                                             End Sub
         For action = 0 To SeatActions.Names.Length - 1
             Dim selectedAction = action
 
@@ -594,7 +603,16 @@ Public Class MainForm
                                          settings.Bindings.Remove(assignments(list.SelectedIndex)) : RefreshBindings()
                                      End Sub
             buttons.Controls.AddRange({bind, remove}) : cell.Controls.Add(buttons)
-            content.Controls.Add(New BindingRow(SeatActions.Names(action), keyCell, cell))
+            Dim row As New BindingRow(SeatActions.Names(action), keyCell, cell)
+            If action >= 3 AndAlso action <= 8 Then
+                If action = 3 Then content.Controls.Add(individualSeats)
+                individualSeats.Content.Controls.Add(row)
+            Else
+                content.Controls.Add(row)
+            End If
+            If action = 2 Then
+                content.Controls.Add(New Label With {.Text = "Recommended: open the seat panel and use arrows / D-pad. No separate movement bindings needed.", .AutoSize = True, .Margin = New Padding(0, 0, 0, 12), .Name = "SeatPanelRecommendation"})
+            End If
         Next
 
         content.Controls.Add(New Label With {.Text = "Driving controls", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})

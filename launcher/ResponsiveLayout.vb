@@ -231,3 +231,43 @@ Public Class LanServerList
         End If
     End Sub
 End Class
+
+' Keep optional controls alive (including their saved assignments) while collapsed.
+Public Class CollapsibleSection
+    Inherits Panel
+    Public ReadOnly Content As VerticalStack = Stack()
+    Private ReadOnly header As Button
+    Private ReadOnly title As String
+    Private expanded As Boolean
+    Private arranging As Boolean
+    Public Event Collapsed As EventHandler
+    Public Sub New(caption As String)
+        title = caption
+        Margin = New Padding(0, 0, 0, 12) : TabStop = False
+        header = New Button With {.Text = "▶ " & title, .AutoSize = False, .TextAlign = ContentAlignment.MiddleLeft, .AccessibleName = title, .AccessibleDescription = "Collapsed. Activate to show individual seat movement bindings."}
+        Content.Dock = DockStyle.None : Content.Visible = False
+        Controls.Add(header) : Controls.Add(Content)
+        AddHandler Content.SizeChanged, Sub() PerformLayout()
+        AddHandler header.Click, Sub()
+                                     expanded = Not expanded
+                                     header.Text = If(expanded, "▼ ", "▶ ") & title
+                                     header.AccessibleDescription = If(expanded, "Expanded. Activate to hide individual seat movement bindings.", "Collapsed. Activate to show individual seat movement bindings.")
+                                     Content.Visible = expanded
+                                     PerformLayout()
+                                     If Not expanded Then RaiseEvent Collapsed(Me, EventArgs.Empty)
+                                 End Sub
+    End Sub
+    Protected Overrides Sub OnLayout(e As LayoutEventArgs)
+        MyBase.OnLayout(e)
+        If arranging OrElse header Is Nothing Then Return
+        arranging = True
+        Try
+            Dim width = Math.Max(1, ClientSize.Width)
+            header.SetBounds(0, 0, width, header.GetPreferredSize(New Size(width, 0)).Height)
+            Content.SetBounds(0, header.Bottom + Px(Me, 6), width, Content.Height)
+            Height = If(expanded, Content.Bottom, header.Bottom)
+        Finally
+            arranging = False
+        End Try
+    End Sub
+End Class
