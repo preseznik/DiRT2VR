@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Trim internal diagnostics, analysis utilities and legacy test kits from the public repository; retain pinned dependency setup and all build/package inputs.
+
 - Keep development notes and tests out of the public source tree; builds no longer require them. Preserve matching LAN source and license notices.
 
 ## 0.15.8 — 2026-09-28

@@ -14,6 +14,3 @@ The 0.14.3 and 0.14.4 archives were moved here byte-for-byte from release assets
 Their existing installed source notices still show the former download URL;
 use the same filename here instead. Earlier packages bundled matching source.
 Future packages link to the archive in their immutable release tag.
-
-Diagnostic scripts live under `tools/`; they are supplied when troubleshooting
-requires them, not as additional release downloads.
