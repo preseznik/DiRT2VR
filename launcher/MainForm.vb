@@ -4,6 +4,7 @@ Imports System.Threading.Tasks
 
 Public Class MainForm
     Inherits Form
+    Private ReadOnly settingsTips As New ToolTip With {.InitialDelay = 450, .ReshowDelay = 150, .AutoPopDelay = 15000, .ShowAlways = True}
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
@@ -135,6 +136,8 @@ Public Class MainForm
                                                End Sub)
         layout.Controls.Add(commands)
         Controls.Add(layout)
+        ConfigureTooltips()
+        AddHandler Disposed, Sub() settingsTips.Dispose()
         AddHandler SizeChanged, Sub() stateLabel.MaximumSize = New Size(Math.Max(1, ClientSize.Width - layout.Padding.Horizontal), 0)
         RefreshBindings() : RefreshDisplayRate()
         AddHandler input.StateChanged, AddressOf OnController
@@ -151,6 +154,62 @@ Public Class MainForm
         inputTimer.Start() : timer.Start() : RefreshStatus()
         AddHandler Shown, Sub() FitInitialWindow()
         AddHandler Shown, Async Sub() Await CheckStartupUpdate()
+    End Sub
+    Private Sub ConfigureTooltips()
+        Tip(renderScale, "How much detail the game draws for each eye. Higher can be sharper," & vbCrLf &
+            "but needs more GPU power and memory. A low Headset texture scale" & vbCrLf & "can still make the final picture look soft.")
+        Tip(headsetScale, "Size of the finished picture sent to your headset." & vbCrLf &
+            "Lower uses less memory but can blur the view. 100% keeps the" & vbCrLf &
+            "size SteamVR recommends. This is not car or road texture quality.")
+        Tip(msaa, "Smooths jagged edges in VR. Higher settings use more memory" & vbCrLf & "and GPU power; 4× and 8× can cause crashes. 2× is the default.")
+        Tip(fieldOfView, "Lower values trim the edges of your VR view to reduce rendering" & vbCrLf & "work. 100% keeps the full view; objects keep their normal scale.")
+        Tip(mirrors, "Turn the car's rear-view mirrors on or off in VR." & vbCrLf & "Off can improve performance. Game setting keeps your usual choice.")
+        Tip(treeDetail, "Higher keeps detailed vegetation visible farther away, but" & vbCrLf & "costs performance. Game keeps your usual setting.")
+        Tip(objectDetail, "Higher keeps detailed buildings and trackside objects farther" & vbCrLf & "away, but costs performance. Game keeps your usual setting.")
+        Tip(borderless, "Fill the main monitor without window borders during desktop" & vbCrLf & "play. Alt+Tab still works. This does not affect VR or its mirror.")
+        Tip(desktopVSync, "Stops horizontal tearing by matching desktop frames to your" & vbCrLf & "monitor. Off allows uncapped FPS. This does not affect VR timing.")
+        Tip(hudFollow, "On: the HUD follows where you look. Off: it stays in front" & vbCrLf & "of the car while you turn your head.")
+        Tip(hudDistance, "How far away the floating HUD appears in VR." & vbCrLf & "The text stays the same apparent size so it remains readable.")
+        Tip(hudGauges, "Show speed, gear and revs on the floating VR HUD.")
+        Tip(hudLapTime, "Show lap and timing information on the VR HUD.")
+        Tip(hudPosition, "Show your race position on the VR HUD.")
+        Tip(hudMap, "Show the route map on the VR HUD.")
+        Tip(hudProgress, "Show how far through the stage you are on the VR HUD.")
+        Tip(requestedResolution, "The scene size your current settings will request next launch." & vbCrLf & "The last-launch report shows what was actually used.")
+        Tip(actualResolution, "Measured sizes from your last VR launch, not a live preview" & vbCrLf & "of unsaved changes. Game is the scene; headset is the sent image.")
+        Tip(refreshLabel, "How often the headset updates its picture. Change this in" & vbCrLf & "SteamVR or your headset software. This is the last reported rate.")
+        Tip(launchMode, "Normal Launch opens the game menus. Direct practice starts" & vbCrLf & "a solo event. Race adds computer-controlled opponents.")
+        Tip(eventChoice, "Choose a driving discipline to filter the track list." & vbCrLf & "Direct launches do not start a career event.")
+        Tip(trackChoice, "The course used by Direct practice or Race.")
+        Tip(carChoice, "Your car for Direct practice or Race.")
+        Tip(opponentCars, "Same as driver: matching cars. Mixed: any installed class." & vbCrLf & "Same class: cars from your chosen car's class. Race mode only.")
+        Tip(opponents, "How many computer-controlled cars race against you." & vbCrLf & "Used in Race mode; Direct practice is solo.")
+        Tip(laps, "Number of laps for circuit tracks in Direct practice or Race." & vbCrLf & "Point-to-point stages always run once.")
+        Tip(runtimeBox.Parent, "SteamVR's connection to the headset. Normally detected for you;" & vbCrLf & "browse only if your SteamVR installation is elsewhere.")
+        Tip(skipStartupMovies, "Skip startup logos in single-player launches." & vbCrLf & "LAN keeps them to avoid multiplayer disconnects.")
+        Tip(skipIntroduction, "Skip the opening movie and forced first race when launching" & vbCrLf & "LAN. Profile creation still works; normal play is unchanged.")
+        Tip(logging, "Save diagnostic files to help troubleshoot a problem." & vbCrLf & "Leave off for normal play to avoid extra disk usage.")
+        Tip(toggleButton, "Choose a keyboard shortcut to switch between cockpit VR" & vbCrLf & "and the flat virtual screen.")
+        Tip(recenterButton, "Choose a keyboard shortcut to reset your seated VR position." & vbCrLf & "Sit comfortably and face forward before using it in the game.")
+        Tip(saveButton, "Keep these choices for your next launch, including quick launch." & vbCrLf & "This does not change a race that is already running.")
+        Tip(recoverButton, "Restore original game files after an interrupted session." & vbCrLf & "Close DiRT 2 first. Your career is not reset.")
+        Tip(Controls.Find("GraphicsDefaults", True).Single(), "Reset the Graphics tab to its defaults, then save." & vbCrLf & "Your driving bindings and career are unchanged.")
+        Tip(Controls.Find("DrivingControls", True).Single(), "Set steering, pedals, gears and other driving controls," & vbCrLf & "or use the guided binding wizard.")
+        Tip(hostButton, "Start LAN play, then create a lobby in the game's LAN menu." & vbCrLf & "You can choose desktop or VR before launching.")
+        Tip(joinButton, "Start LAN play aimed at the selected host, then join through" & vbCrLf & "the game's LAN menu. You can choose desktop or VR.")
+        Tip(refreshServers, "Look again for hosts on your local network.")
+    End Sub
+    Private Sub Tip(control As Control, description As String)
+        ' Native sliders are child controls. Cover the caption, track and value,
+        ' so users do not have to hunt for a small hover target.
+        Dim target = If(TypeOf control.Parent Is SettingRow, control.Parent, control)
+        AttachTip(target, description)
+    End Sub
+    Private Sub AttachTip(control As Control, description As String)
+        settingsTips.SetToolTip(control, description)
+        For Each child As Control In control.Controls
+            AttachTip(child, description)
+        Next
     End Sub
     Private Shared Async Function CheckReleaseAsync(token As CancellationToken) As Task(Of ReleaseUpdate)
         Using client = UpdateService.CreateClient()
@@ -483,6 +542,8 @@ Public Class MainForm
             Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top}
             Dim bind As New Button With {.Text = "Bind…", .AutoSize = True}
             Dim remove As New Button With {.Text = "Remove selected", .AutoSize = True}
+            Tip(bind, "Bind one button or a two-button combination on a controller" & vbCrLf & "or wheel. These buttons still reach the game too.")
+            Tip(remove, "Remove the selected VR shortcut. Driving controls are unchanged.")
             AddHandler bind.Click, Sub() BeginControllerCapture(selectedAction)
             AddHandler remove.Click, Sub()
                                          If busy OrElse list.SelectedIndex < 0 Then Return

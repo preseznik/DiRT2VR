@@ -17,6 +17,7 @@ Public Module ResponsiveTests
             resolution.Value = 300
             check(form.Controls.Find("RequestedResolution", True).Single().Text.Contains("4800 × 3600"), "requested dimensions update with unsaved slider changes")
             check(form.Controls.Find("ActualResolution", True).Single().Text.Contains("1280 × 720") AndAlso form.Controls.Find("ActualResolution", True).Single().Text.Contains("differs"), "actual dimensions and mismatch are visible independently of requested slider")
+            CheckSettingTooltips(form, check)
             CheckResolutionRefresh(form, context, check)
             CheckSliderRedraws(form, check)
             CheckLauncherRedraws(form, check)
@@ -62,6 +63,7 @@ Public Module ResponsiveTests
                 Next
                 check(resolution.Value = 300 AndAlso Not vsync.Checked AndAlso msaa.Value = 3, "resizing preserves unsaved values")
             Next
+            CheckSettingTooltips(form, check)
             tabs.SelectedIndex = 2
             form.ClientSize = New Size(CInt(1440 * factor), CInt(880 * factor)) : Application.DoEvents()
             check(Not tabs.SelectedTab.VerticalScroll.Visible, "widening restores two-column Graphics without stale vertical spacing")
@@ -108,6 +110,23 @@ Public Module ResponsiveTests
             End Using
             form.Close()
         End Using
+    End Sub
+    Private Sub CheckSettingTooltips(form As MainForm, check As Action(Of Boolean, String))
+        Dim tips = DirectCast(GetType(MainForm).GetField("settingsTips", Reflection.BindingFlags.NonPublic Or Reflection.BindingFlags.Instance).GetValue(form), ToolTip)
+        For Each slider In Descendants(form).OfType(Of ValueSlider)()
+            Dim description = tips.GetToolTip(slider)
+            check(Not String.IsNullOrWhiteSpace(description), $"{slider.Name} has a short explanation")
+            For Each suffix In {"Slider", "Value", "Label"}
+                Dim target = form.Controls.Find(slider.Name & suffix, True).Single()
+                check(tips.GetToolTip(target) = description, $"{target.Name} offers the same explanation as its setting")
+            Next
+        Next
+        For Each editor As Control In Descendants(form).Where(Function(c) TypeOf c Is CheckBox OrElse TypeOf c Is ComboBox)
+            check(Not String.IsNullOrWhiteSpace(tips.GetToolTip(editor)), $"{editor.Name} has hover help")
+        Next
+        Dim renderHelp = tips.GetToolTip(form.Controls.Find("RenderScale", True).Single())
+        Dim headsetHelp = tips.GetToolTip(form.Controls.Find("HeadsetScale", True).Single())
+        check(renderHelp <> headsetHelp AndAlso headsetHelp.Contains("finished picture") AndAlso headsetHelp.Contains("not car or road texture quality"), "headset output size is distinguished from scene detail and material textures")
     End Sub
     Private Sub CheckLauncherRedraws(form As MainForm, check As Action(Of Boolean, String))
         Dim tabs = DirectCast(form.Controls.Find("LauncherTabs", True).Single(), TabControl)
