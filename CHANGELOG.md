@@ -6,11 +6,15 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Fix the experimental seat panel failing to open on SteamVR and improve active-car identification.
+## 0.17.3 — 2026-09-28 — Experimental
 
-- Add experimental per-car VR seat adjustment: change height, forward/back and sideways position in Graphics or through a Tab-operated cockpit panel. Add keyboard and controller/wheel bindings, save/cancel controls and a per-car reset. Recenter keeps the chosen seat position. Headset and wheel acceptance are pending.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.3)
 
-- Add an Advanced tab with **Frame-rate-independent rewind (Experimental)**, off by default. Preserve more rewind history at high FPS without capping gameplay, for single-player desktop and VR launches. Initial Subaru/Velebit desktop testing passed; broader event and VR testing remain pending.
+- Adjust your VR seat height, depth and sideways position separately for each car. Use **Graphics → VR cockpit**, or press **Tab** while stopped in cockpit VR to open the adjustment panel.
+- Use the arrow keys or controller D-pad to move, hold **Shift / Xbox X** for sideways movement, **Enter / A** to save or **Escape / B** to cancel. Add optional movement and panel bindings in Controls. Saved positions survive recentering and relaunching.
+- Add **Advanced → Frame-rate-independent rewind (Experimental)**, off by default. Keep more rewind history at high FPS without limiting gameplay. Initial Subaru/Velebit desktop checks passed; broader event and VR rewind testing remain pending.
+- Seat-panel movement, save/cancel and persistence passed the reported headset check. Physical wheel navigation and broader rendering checks with adjusted seats remain unverified. Extreme positions can reveal missing interior geometry.
+- Available through the launcher only with **? → About → Include experimental releases** enabled. Use **Return to stable…** in About to go back if needed.
 
 ## 0.16.0 — 2026-09-28
 
