@@ -8,6 +8,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 Local test build; not yet published to GitHub.
 
+- Introduce optional experimental builds for smaller changes and early testing. This lets regular releases focus on more substantial improvements, with fewer update prompts. To try experimental builds, enable **Include experimental releases** in **? → About**; it is off by default.
+
 - Save the experimental-update preference for automatic and manual checks; label experimental builds and offer a confirmed return to the latest stable release with a settings backup.
 
 - Trim internal diagnostics, analysis utilities and legacy test kits from the public repository; retain pinned dependency setup and all build/package inputs.
