@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.15.8 — 2026-09-28
+
+Local test build; not yet published to GitHub.
+
 - Add short hover explanations to launcher settings, including what Headset texture scale does and how it differs from Render resolution.
 
 - Add an optional Patreon support link to the README; the mod will remain free forever.
