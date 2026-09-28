@@ -1,5 +1,5 @@
 [CmdletBinding()]
-param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild,[ValidateSet('Patch','Minor','Major')][string]$VersionBump='Patch')
+param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild,[ValidateSet('Patch','Minor','Major')][string]$VersionBump='Patch',[ValidateSet('Stable','Experimental')][string]$Channel='Stable')
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $root
@@ -7,7 +7,16 @@ $projectPath=Join-Path $root 'launcher\DiRT2VR.vbproj'
 $projectText=Get-Content -LiteralPath $projectPath -Raw
 [xml]$project=$projectText
 $current=[string]$project.Project.PropertyGroup.Version
-$version=& (Join-Path $PSScriptRoot 'next-version.ps1') -Current $current -Bump $VersionBump
+# Both channels share one numeric sequence. Include already reserved source archives.
+$known=@([version]$current)
+foreach ($tag in (git tag --list 'v*')) {
+    if ($tag -match '^v([0-9]+\.[0-9]+\.[0-9]+)$') { $known += [version]$Matches[1] }
+}
+foreach ($archive in (Get-ChildItem -LiteralPath (Join-Path $root 'source-archives/lan') -Filter '*-LAN-source.zip')) {
+    if ($archive.Name -match '^DiRT2VR-([0-9]+\.[0-9]+\.[0-9]+)-LAN-source.zip$') { $known += [version]$Matches[1] }
+}
+$base=($known | Sort-Object -Descending | Select-Object -First 1).ToString()
+$version=& (Join-Path $PSScriptRoot 'next-version.ps1') -Current $base -Bump $VersionBump
 # Reserve the version before building. Failed attempts keep their number; retries advance it.
 [IO.File]::WriteAllText($projectPath,$projectText.Replace('<Version>'+$current+'</Version>','<Version>'+$version+'</Version>'))
 Write-Host "Build version: $current -> $version"
@@ -24,7 +33,7 @@ $stage=Join-Path $output 'stage'
 $publish=Join-Path $output 'publish'
 New-Item -ItemType Directory -Path "$stage\DiRT2VR\payload","$stage\DiRT2VR\licenses" -Force | Out-Null
 $buildUtc=[DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
-& dotnet publish launcher/DiRT2VR.vbproj -c Release -o $publish --nologo "-p:BuildUtc=$buildUtc"
+& dotnet publish launcher/DiRT2VR.vbproj -c Release -o $publish --nologo "-p:BuildUtc=$buildUtc" "-p:ReleaseChannel=$Channel"
 if ($LASTEXITCODE) { throw 'Launcher publish failed' }
 Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
 Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
@@ -90,7 +99,7 @@ Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEac
     $relative=[IO.Path]::GetRelativePath($stage,$_.FullName).Replace('\','/')
     $hashes[$relative]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
 }
-[ordered]@{Version=$version;Files=$hashes} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$stage\DiRT2VR\package.json" -Encoding utf8
+[ordered]@{Version=$version;Channel=$Channel;Files=$hashes} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$stage\DiRT2VR\package.json" -Encoding utf8
 $zip=Join-Path $output "DiRT2VR-$version.zip"
 Compress-Archive -LiteralPath "$stage\DiRT2VR.exe","$stage\Start-DiRT2VR.cmd","$stage\DiRT2VR" -DestinationPath $zip
 if (!(Test-Path -LiteralPath $InnoCompiler)) { throw "Inno compiler not found: $InnoCompiler. ZIP is at $zip" }
@@ -103,3 +112,7 @@ Get-Item -LiteralPath (Join-Path $output "DiRT2VR-$version-Setup.exe"),$zip | Fo
 } | Set-Content -LiteralPath (Join-Path $output 'SHA256SUMS.txt') -Encoding ascii
 Write-Host "Package output: $output"
 Write-Host "Commit matching LAN source before tagging the release: $sourceZip"
+
+# Publication instructions travel with the package, not the installed game.
+[ordered]@{tag_name="v$version";name=("DiRT2VR $version"+$(if($Channel -eq 'Experimental'){' — Experimental'}else{''}));prerelease=($Channel -eq 'Experimental');make_latest=$(if($Channel -eq 'Experimental'){'false'}else{'true'})} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'release.json') -Encoding utf8
+& (Join-Path $PSScriptRoot 'verify-release.ps1') -PackageDirectory $output

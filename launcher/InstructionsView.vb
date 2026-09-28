@@ -105,7 +105,7 @@ Diagnostic logging
 Off by default. Enable it in Settings only for troubleshooting and turn it off afterward. Open logs shows the log folder. Existing logs are not deleted automatically; recovery records remain available even when logging is off.
 
 Updates
-About shows the installed version, build and GitHub update controls. Close the game before updating. Downloads are verified before setup opens; settings are retained. Windows may ask for administrator approval. ZIP installs become installer-managed when updated through setup.
+About shows the installed version, Stable/Experimental channel, build and GitHub update controls. Include experimental releases is off by default and saved immediately; it controls both startup notices and manual checks. Enabling it includes newer experimental and normal releases. Disabling it does not replace the installed build. Experimental builds offer Return to stable…: this asks before installing the latest normal release, even if older, and disables experimental updates. Launcher settings and bindings are backed up under updates/rollback-preferences in the installation user-data folder; your career is not reset. Close the game before updating. Downloads are verified before setup opens; settings are retained. Windows may ask for administrator approval. ZIP installs become installer-managed when updated through setup.
 
 Documentation
 The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages."}

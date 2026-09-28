@@ -71,12 +71,13 @@ Public Class MainForm
     Private ReadOnly updateCancellation As New CancellationTokenSource()
     Private ReadOnly checkForUpdate As Func(Of CancellationToken, Task(Of ReleaseUpdate))
     Private availableUpdate As ReleaseUpdate
+    Private updateGeneration As Integer
     Public Sub New(value As InstallContext, Optional releaseCheck As Func(Of CancellationToken, Task(Of ReleaseUpdate)) = Nothing)
         context = value
         input = New ControllerInput(context)
         checkForUpdate = If(releaseCheck, AddressOf CheckReleaseAsync)
         settings = VrSettings.Load(context)
-        Text = "DiRT2VR — Experimental launcher"
+        Text = "DiRT2VR" & If(BuildInfo.Channel = "Experimental", " — Experimental", "")
         Using stream = GetType(MainForm).Assembly.GetManifestResourceStream("DiRT2VR.ico"), appIcon As New Icon(stream)
             Icon = DirectCast(appIcon.Clone(), Icon)
         End Using
@@ -211,17 +212,21 @@ Public Class MainForm
             AttachTip(child, description)
         Next
     End Sub
-    Private Shared Async Function CheckReleaseAsync(token As CancellationToken) As Task(Of ReleaseUpdate)
+    Private Async Function CheckReleaseAsync(token As CancellationToken) As Task(Of ReleaseUpdate)
         Using client = UpdateService.CreateClient()
-            Return Await New UpdateService(client).CheckAsync(BuildInfo.Version, BuildInfo.Version.Contains("-"), token)
+            Return Await New UpdateService(client).CheckAsync(BuildInfo.Version, UpdatePreferences.Load(context).IncludeExperimentalReleases, token)
         End Using
     End Function
     Private Async Function CheckStartupUpdate() As Task
         Dim token = updateCancellation.Token
+        updateGeneration += 1
+        Dim generation = updateGeneration
         Try
             Dim result = Await checkForUpdate(token)
-            If IsDisposed OrElse token.IsCancellationRequested Then Return
+            If IsDisposed OrElse token.IsCancellationRequested OrElse generation <> updateGeneration Then Return
+            If result IsNot Nothing AndAlso result.IsExperimental AndAlso Not UpdatePreferences.Load(context).IncludeExperimentalReleases Then Return
             availableUpdate = result
+            updateNotice.Text = If(result?.IsExperimental, "Experimental update available", "New version available")
             updateNotice.Visible = result IsNot Nothing
             If result IsNot Nothing Then updateNotice.AccessibleDescription = "Version " & result.Version.Text & " is available. Open Help / About to review and install."
         Catch ex As Exception
@@ -377,11 +382,22 @@ Public Class MainForm
         Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
     End Sub
-    Private Sub ShowAbout(Optional topic As String = Nothing)
+    Private Async Sub ShowAbout(Optional topic As String = Nothing)
+        Dim changed As Boolean
         Using dialog As New AboutForm(context, availableUpdate)
+            AddHandler dialog.UpdatePreferenceChanged, Sub()
+                                                          changed = True
+                                                          InvalidateUpdateOffer()
+                                                      End Sub
             If topic IsNot Nothing Then dialog.ShowInstructions(topic)
             dialog.ShowDialog(Me)
         End Using
+        If changed AndAlso Not IsDisposed Then Await CheckStartupUpdate()
+    End Sub
+    Private Sub InvalidateUpdateOffer()
+        updateGeneration += 1
+        availableUpdate = Nothing
+        updateNotice.Visible = False
     End Sub
     Private Sub RefreshLaps()
         Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)

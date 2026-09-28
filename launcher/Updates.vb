@@ -8,6 +8,7 @@ Public Module BuildInfo
     Public ReadOnly FullVersion As String = GetType(BuildInfo).Assembly.GetCustomAttribute(Of AssemblyInformationalVersionAttribute)().InformationalVersion
     Public ReadOnly Version As String = FullVersion.Split("+"c)(0)
     Public ReadOnly BuildDate As String = If(GetType(BuildInfo).Assembly.GetCustomAttributes(Of AssemblyMetadataAttribute)().FirstOrDefault(Function(a) a.Key = "BuildUtc")?.Value, "Development build")
+    Public ReadOnly Channel As String = If(GetType(BuildInfo).Assembly.GetCustomAttributes(Of AssemblyMetadataAttribute)().FirstOrDefault(Function(a) a.Key = "ReleaseChannel")?.Value, If(Version.Contains("-"), "Experimental", "Stable"))
     Public ReadOnly Description As String = "Native cockpit VR and a desktop launcher for DiRT 2, with direct practice, AI races and configurable controls."
 End Module
 
@@ -57,6 +58,7 @@ Public Class ReleaseVersion
 End Class
 
 Public Class ReleaseUpdate
+    Public Property IsExperimental As Boolean
     Public Property Version As ReleaseVersion
     Public Property Page As String
     Public Property Download As String
@@ -82,17 +84,24 @@ Public Class UpdateService
         Return http
     End Function
     Public Shared Function SelectUpdate(json As String, current As String, includePreview As Boolean) As ReleaseUpdate
-        Dim installed = ReleaseVersion.Parse(current)
+        Return SelectRelease(json, current, includePreview)
+    End Function
+    Public Shared Function SelectStable(json As String) As ReleaseUpdate
+        Return SelectRelease(json, Nothing, False)
+    End Function
+    Private Shared Function SelectRelease(json As String, current As String, includePreview As Boolean) As ReleaseUpdate
+        Dim installed = If(current Is Nothing, Nothing, ReleaseVersion.Parse(current))
         Dim newest As ReleaseUpdate = Nothing
         Using document = JsonDocument.Parse(json)
             For Each release In document.RootElement.EnumerateArray()
                 Try
                     If release.GetProperty("draft").GetBoolean() Then Continue For
                     Dim version = ReleaseVersion.Parse(release.GetProperty("tag_name").GetString())
-                    If Not includePreview AndAlso (release.GetProperty("prerelease").GetBoolean() OrElse version.Text.Contains("-")) Then Continue For
-                    If version.CompareTo(installed) <= 0 OrElse (newest IsNot Nothing AndAlso version.CompareTo(newest.Version) <= 0) Then Continue For
+                    Dim experimental = release.GetProperty("prerelease").GetBoolean() OrElse version.Text.Contains("-")
+                    If Not includePreview AndAlso experimental Then Continue For
+                    If (installed IsNot Nothing AndAlso version.CompareTo(installed) <= 0) OrElse (newest IsNot Nothing AndAlso version.CompareTo(newest.Version) <= 0) Then Continue For
                     Dim assetName = "DiRT2VR-" & version.Text & "-Setup.exe"
-                    Dim candidate As New ReleaseUpdate With {.Version = version, .Page = Releases}
+                    Dim candidate As New ReleaseUpdate With {.Version = version, .IsExperimental = experimental, .Page = Releases & "/tag/" & Uri.EscapeDataString(release.GetProperty("tag_name").GetString())}
                     For Each releaseAsset In release.GetProperty("assets").EnumerateArray()
                         If releaseAsset.GetProperty("name").GetString() <> assetName OrElse releaseAsset.GetProperty("state").GetString() <> "uploaded" Then Continue For
                         Dim url = releaseAsset.GetProperty("browser_download_url").GetString()
@@ -112,16 +121,41 @@ Public Class UpdateService
         End Using
         Return newest
     End Function
-    Public Async Function CheckAsync(current As String, preview As Boolean, token As CancellationToken) As Task(Of ReleaseUpdate)
+    Public Function CheckAsync(current As String, preview As Boolean, token As CancellationToken) As Task(Of ReleaseUpdate)
+        Return ReadReleasesAsync(Function(json) SelectUpdate(json, current, preview), token)
+    End Function
+    Public Function CheckStableAsync(token As CancellationToken) As Task(Of ReleaseUpdate)
+        Return ReadReleasesAsync(AddressOf SelectStable, token)
+    End Function
+    Private Async Function ReadReleasesAsync(selectRelease As Func(Of String, ReleaseUpdate), token As CancellationToken) As Task(Of ReleaseUpdate)
+        Dim newest As ReleaseUpdate = Nothing, page As String = Api
+        Dim visited As New HashSet(Of String)(StringComparer.Ordinal)
         Using timeout = CancellationTokenSource.CreateLinkedTokenSource(token)
             timeout.CancelAfter(TimeSpan.FromSeconds(20))
-            Using response = Await client.GetAsync(Api, timeout.Token)
-                If response.StatusCode = Net.HttpStatusCode.NotFound Then Throw New IOException("Public GitHub releases are unavailable. Use the Releases link to check the repository.")
-                If CInt(response.StatusCode) = 403 OrElse CInt(response.StatusCode) = 429 Then Throw New IOException("GitHub's update-check limit was reached. Try again later or use the Releases link.")
-                response.EnsureSuccessStatusCode()
-                Return SelectUpdate(Await response.Content.ReadAsStringAsync(timeout.Token), current, preview)
-            End Using
+            While page IsNot Nothing
+                If Not visited.Add(page) OrElse visited.Count > 100 Then Throw New IOException("Invalid release pagination.")
+                Using response = Await client.GetAsync(page, timeout.Token)
+                    If response.StatusCode = Net.HttpStatusCode.NotFound Then Throw New IOException("Public GitHub releases are unavailable. Use the Releases link to check the repository.")
+                    If CInt(response.StatusCode) = 403 OrElse CInt(response.StatusCode) = 429 Then Throw New IOException("GitHub's update-check limit was reached. Try again later or use the Releases link.")
+                    response.EnsureSuccessStatusCode()
+                    Dim candidate = selectRelease(Await response.Content.ReadAsStringAsync(timeout.Token))
+                    If candidate IsNot Nothing AndAlso (newest Is Nothing OrElse candidate.Version.CompareTo(newest.Version) > 0) Then newest = candidate
+                    page = Nothing
+                    Dim links As IEnumerable(Of String) = Nothing
+                    If response.Headers.TryGetValues("Link", links) Then
+                        For Each link In links
+                            For Each match As Match In Regex.Matches(link, "<([^>]+)>;\s*rel=""next""")
+                                Dim nextPage = match.Groups(1).Value
+                                Dim uri As Uri = Nothing
+                                If Not Uri.TryCreate(nextPage, UriKind.Absolute, uri) OrElse uri.Scheme <> "https" OrElse uri.Host <> "api.github.com" OrElse Not uri.IsDefaultPort OrElse uri.UserInfo <> "" OrElse uri.Fragment <> "" OrElse uri.AbsolutePath <> "/repos/preseznik/DiRT2VR/releases" OrElse Not Regex.IsMatch(uri.Query, "^\?(per_page=100&page=[1-9][0-9]*|page=[1-9][0-9]*&per_page=100)$") Then Throw New IOException("Invalid release pagination URL.")
+                                page = nextPage
+                            Next
+                        Next
+                    End If
+                End Using
+            End While
         End Using
+        Return newest
     End Function
     Public Function DownloadAsync(update As ReleaseUpdate, folder As String, progress As IProgress(Of Integer), token As CancellationToken) As Task(Of String)
         ' Disk flush, hashing and antivirus inspection must not block the window thread.
@@ -164,7 +198,7 @@ Public Class UpdateService
             If File.Exists(temporary) Then File.Delete(temporary)
         End Try
     End Function
-    Public Shared Function PrepareInstallerAsync(context As InstallContext, recoverFiles As Action, token As CancellationToken) As Task
+    Public Shared Function PrepareInstallerAsync(context As InstallContext, recoverFiles As Action, token As CancellationToken, Optional beforeInstaller As Action = Nothing) As Task
         Return Task.Run(Sub()
                             token.ThrowIfCancellationRequested()
                             ' Mutex ownership is thread-affine: acquire and release inside this one worker.
@@ -181,6 +215,8 @@ Public Class UpdateService
                                     Call (New GraphicsTransaction(context)).Recover()
                                     token.ThrowIfCancellationRequested()
                                     recoverFiles()
+                                    token.ThrowIfCancellationRequested()
+                                    beforeInstaller?.Invoke()
                                     token.ThrowIfCancellationRequested()
                                 Finally
                                     guard.ReleaseMutex()

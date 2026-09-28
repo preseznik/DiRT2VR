@@ -1,10 +1,14 @@
 # Changelog
 
-Notable changes to DiRT2VR are recorded here, newest first. Versioned releases remain experimental; older dated entries are development milestones. Headset checks refer to Quest 3 through SteamVR unless stated otherwise.
+Notable changes to DiRT2VR are recorded here, newest first. Release channels identify normal and opt-in experimental builds; individual features may still have documented limitations. Older dated entries are development milestones. Headset checks refer to Quest 3 through SteamVR unless stated otherwise.
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
-## Unreleased
+## 0.16.0 — 2026-09-28
+
+Local test build; not yet published to GitHub.
+
+- Save the experimental-update preference for automatic and manual checks; label experimental builds and offer a confirmed return to the latest stable release with a settings backup.
 
 - Trim internal diagnostics, analysis utilities and legacy test kits from the public repository; retain pinned dependency setup and all build/package inputs.
 

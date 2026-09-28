@@ -167,6 +167,10 @@ When a newer release has a verified installer, **Download and install** download
 
 The updater shows separate downloading, verification, recovery and setup-opening messages. Closing Help / About before the installer handoff cancels setup. If an older launcher freezes after downloading, close it and run the latest **Setup.exe** directly from [Releases](https://github.com/preseznik/DiRT2VR/releases). Choose the same game folder and keep existing backups; there is no need to uninstall first.
 
+**Include experimental releases** in **? → About** is off by default and saved immediately for this installation. It controls both automatic notices and manual checks. Turn it on to include newer experimental builds; normal releases remain eligible. Experimental offers are labelled clearly. Switching it off does not change the installed version.
+
+Experimental builds show **Return to stable…**. This finds the latest normal release, which may be older, and asks before installing it. The game must be closed. Returning to stable disables experimental updates, keeps settings and bindings, and saves a preference backup under the installation's user-data folder in `updates/rollback-preferences`. Your career is not reset. A newer normal release is also offered through ordinary update checks.
+
 Updates require a published [GitHub Release](https://github.com/preseznik/DiRT2VR/releases) containing the packaged installer. Source commits and GitHub's source-code ZIPs are not installable updates. If checking or downloading fails, your current installation remains available; retry later or use the Releases link.
 
 ### Restore or remove
