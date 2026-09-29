@@ -15,10 +15,11 @@ public sealed record ConversionProfile(string Id, string Name, string Version, s
 public static class AspenPack
 {
     public const string Id = "aspen-rallycross";
-    public const string Version = "1.0.0";
+    public const string Version = "1.0.1";
     public const string MinimumLauncher = "0.17.4";
     public const string Support = "DiRT2VR/custom-tracks/aspen-rallycross";
     public const string Receipt = Support + "/receipt.json";
+    public static readonly string[] Modes = ["desktop-solo", "vr-solo", "desktop-race", "vr-race"];
     public static readonly Layout[] Layouts = [
         new("aspen-lakeside", "Lakeside", "d2vr_aspen", "Night"),
         new("aspen-lake-view", "Lake View", "d2vr_aspen_lv", "Morning sun"),
@@ -33,11 +34,13 @@ public static class AspenPack
     public static Layout GetLayout(string id) => Layouts.SingleOrDefault(l => l.Id == id)
         ?? throw new IOException("This custom layout is unavailable. Select an installed Aspen layout.");
     public static bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
+    public static bool SupportsRace(PackReceipt receipt) => System.Version.Parse(receipt.Version) >= new System.Version(1, 0, 1);
     public static void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps)
     {
         GetLayout(id);
-        if (vr || mode != "practice" || car != "sti" || opponents != 0 || laps != 1)
-            throw new IOException("Aspen currently supports desktop Direct practice, Subaru STI, solo, one lap. VR, AI racing and LAN are unavailable.");
+        if (mode is not ("practice" or "race") || string.IsNullOrWhiteSpace(car) || laps is < 1 or > 20 ||
+            (mode == "practice" ? opponents != 0 : opponents is < 1 or > 7))
+            throw new IOException("Choose Aspen Direct practice or Race, an installed car, and one to twenty laps. Race supports one to seven opponents. LAN is unavailable.");
     }
     public static void Validate(ConversionProfile offer, string launcherVersion)
     {
@@ -46,7 +49,7 @@ public static class AspenPack
             throw new IOException("Update DiRT2VR before installing this custom-track package.");
         if (offer.StagingBytes is < 1024 * 1024 or > 16L * 1024 * 1024 * 1024 ||
             offer.InstalledBytes is <= 0 or > 4L * 1024 * 1024 * 1024 ||
-            offer.Modes is null || !offer.Modes.SequenceEqual(new[] { "desktop-solo" }) ||
+            offer.Modes is null || !offer.Modes.SequenceEqual(Modes) ||
             offer.Layouts is null || !offer.Layouts.SequenceEqual(Layouts))
             throw new IOException("The bundled Aspen tools are unsupported. Reinstall DiRT2VR.");
         ValidateSources(offer.Sources);

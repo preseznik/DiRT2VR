@@ -23,7 +23,7 @@ Public Class PracticeCar
     Public Property ClassId As String = ""
     Public Property ClassName As String = ""
     Public Overrides Function ToString() As String
-        Return Label & If(Code = "sti", " (tested cockpit)", " (experimental cockpit)")
+        Return Label
     End Function
 End Class
 Public Class RaceCatalog
@@ -62,7 +62,7 @@ Public Class RaceCatalog
         If opponents < 0 OrElse opponents > 7 Then Throw New IOException("Choose between zero and seven opponents.")
         If Not {"same", "mixed", "class"}.Contains(opponentCars) Then Throw New IOException("Unknown opponent car selection.")
         Dim route = Track(trackId)
-        If CustomTracks.AspenPack.IsLayout(trackId) Then CustomTracks.AspenPack.RequireMode(trackId, False, "practice", carCode, opponents, 1)
+        If CustomTracks.AspenPack.IsLayout(trackId) Then CustomTracks.AspenPack.RequireMode(trackId, False, If(opponents = 0, "practice", "race"), carCode, opponents, 1)
         If trackId = PrototypeTrack.Id AndAlso opponents <> 0 Then Throw New IOException("The prototype track supports solo driving only.")
         Dim vehicle = Car(carCode)
         Dim entries As New List(Of XElement)

@@ -51,6 +51,14 @@ internal static class PortBuild
             else if (path == ornamentPath) File.WriteAllBytes(target, ornaments);
             else if (Path.GetFileName(path) is "trees.bin" or "ornaments.bin")
                 File.WriteAllBytes(target, Placements.Convert(File.ReadAllBytes(path), Path.GetFileName(path) == "trees.bin", placements));
+            else if (Path.GetFileName(path) == "ai_track.xml")
+            {
+                var data = PortFiles.ReadXml(path);
+                AiTrack.Convert(data);
+                PortFiles.WriteXml(data, target, EgoEngineLibrary.Xml.XmlType.BinXml);
+                if (!XNode.DeepEquals(data, PortFiles.ReadXml(target)))
+                    throw new InvalidDataException("AI track data changed during serialization.");
+            }
             else if (Path.GetFileName(path) == "replay_camera_config.xml")
                 PortFiles.WriteXml(ReplayCameras.Convert(PortFiles.ReadXml(path)), target, EgoEngineLibrary.Xml.XmlType.BinXml);
             else if (Path.GetFileName(path) == "route_overrides.xml" && layout == AspenLayout.SnowmassSprint)

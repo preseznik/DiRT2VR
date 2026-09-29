@@ -3,10 +3,13 @@ Imports System.Drawing
 Imports System.Threading.Tasks
 
 Public Class MainForm
-    Inherits Form
+    Inherits LauncherForm
     Private ReadOnly settingsTips As New ToolTip With {.InitialDelay = 450, .ReshowDelay = 150, .AutoPopDelay = 15000, .ShowAlways = True}
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
+    Private ReadOnly modernInterface As New AppearanceSwitch()
+    Private ReadOnly bindingCells(SeatActions.Names.Length - 1) As ControllerBindingCell
+    Private replacementBinding As ControllerBinding
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
     Private ReadOnly flashback As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalFlashback", .AccessibleName = "Frame-rate-independent rewind (Experimental)", .AutoSize = True}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
@@ -20,9 +23,9 @@ Public Class MainForm
     Private scanning As Boolean
     Private nextScan As DateTime
     Private ReadOnly stateLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
-    Private ReadOnly inputLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
+    Private ReadOnly inputLabel As New Label With {.AutoSize = False, .AutoEllipsis = True, .Name = "InputStatus"}
     Private ReadOnly bindingLists As ListBox() = Enumerable.Range(0, SeatActions.Names.Length).Select(Function(i) New ListBox()).ToArray()
-    Private ReadOnly tabs As New TabControl With {.Dock = DockStyle.Fill, .Name = "LauncherTabs"}
+    Private ReadOnly tabs As New ModernTabs With {.Dock = DockStyle.Fill, .Name = "LauncherTabs"}
     Private ReadOnly launchMode As ComboBox = Choice("LaunchMode")
     Private ReadOnly eventChoice As ComboBox = Choice("PracticeEvent")
     Private ReadOnly trackChoice As ComboBox = Choice("PracticeTrack")
@@ -79,6 +82,7 @@ Public Class MainForm
         input = New ControllerInput(context)
         checkForUpdate = If(releaseCheck, AddressOf CheckReleaseAsync)
         settings = VrSettings.Load(context)
+        LauncherAppearance.Modern = settings.ModernInterface
         Text = "DiRT2VR" & If(BuildInfo.Channel = "Experimental", " — Experimental", "")
         Using stream = GetType(MainForm).Assembly.GetManifestResourceStream("DiRT2VR.ico"), appIcon As New Icon(stream)
             Icon = DirectCast(appIcon.Clone(), Icon)
@@ -344,7 +348,7 @@ Public Class MainForm
                                                           ElseIf Not content.Controls.Contains(columns) Then
                                                               content.Controls.Add(columns) : content.Controls.SetChildIndex(columns, 1)
                                                           End If
-                                                          RefreshLaunchAvailability()
+                                                          RefreshOpponentHint()
                                                       End Sub
         If customTracks.CustomEnabled Then content.Controls.Remove(columns)
         Dim selection = Section(columns.First, "Event selection")
@@ -352,14 +356,7 @@ Public Class MainForm
         Dim labels = {"Launch mode", "Event", "Track", "Car", "Opponent cars"}
         Dim choices = {launchMode, eventChoice, trackChoice, carChoice, opponentCars}
         For i = 0 To choices.Length - 1
-            choices(i).FlatStyle = FlatStyle.Flat
-            choices(i).BackColor = BackColor : choices(i).ForeColor = ForeColor
-            choices(i).DrawMode = DrawMode.OwnerDrawFixed
-            AddHandler choices(i).DrawItem, AddressOf DrawChoice
-            AddHandler choices(i).DropDown, Sub(sender, e)
-                                               Dim box = DirectCast(sender, ComboBox)
-                                               box.DropDownWidth = Math.Min(Px(Me, 600), Screen.FromControl(box).WorkingArea.Width)
-                                           End Sub
+            StyleChoice(choices(i), Me)
             Field(If(i = 4, race, selection), labels(i), choices(i))
         Next
         opponents.Value = settings.Opponents : Field(race, "AI opponents", opponents)
@@ -400,13 +397,17 @@ Public Class MainForm
     End Sub
     Private Sub RefreshOpponentHint()
         RefreshLaunchAvailability()
+        If customTracks IsNot Nothing AndAlso customTracks.CustomEnabled Then
+            opponentHint.Text = ""
+            Return
+        End If
         Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
     End Sub
     Private Sub RefreshLaunchAvailability()
         Dim working = busy OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
         desktopButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
-        launchButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
+        launchButton.Enabled = desktopButton.Enabled
         saveButton.Enabled = Not working : recoverButton.Enabled = Not working
         hostButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
         joinButton.Enabled = hostButton.Enabled AndAlso If(SelectedHost()?.Joinable, False)
@@ -432,22 +433,19 @@ Public Class MainForm
         Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
         laps.Enabled = (launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2) AndAlso track IsNot Nothing AndAlso track.Circuit
     End Sub
-    Private Sub DrawChoice(sender As Object, e As DrawItemEventArgs)
-        Dim box = DirectCast(sender, ComboBox)
-        Dim highlighted = (e.State And DrawItemState.Selected) <> 0 AndAlso (e.State And DrawItemState.ComboBoxEdit) = 0
-        Dim background = If(highlighted, SystemColors.Highlight, BackColor)
-        Dim foreground = If(Not box.Enabled, SystemColors.GrayText, If(highlighted, SystemColors.HighlightText, ForeColor))
-        Using brush As New SolidBrush(background)
-            e.Graphics.FillRectangle(brush, e.Bounds)
-        End Using
-        If e.Index >= 0 Then
-            TextRenderer.DrawText(e.Graphics, box.GetItemText(box.Items(e.Index)), box.Font, e.Bounds, foreground, TextFormatFlags.Left Or TextFormatFlags.VerticalCenter Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
-        End If
-        e.DrawFocusRectangle()
-    End Sub
     Private Sub BuildSettingsTab()
         Dim content = TabLayout("Settings")
         Dim columns As New ResponsiveColumns() : content.Controls.Add(columns)
+        Dim appearance = Section(columns.First, "Appearance")
+        modernInterface.Checked = settings.ModernInterface
+        Field(appearance, "Modern interface", modernInterface)
+        Tip(modernInterface, "Choose the compact modern look or the original classic layout. Save settings to keep your choice.")
+        AddHandler modernInterface.CheckedChanged, Sub()
+                                                        CancelBindingCapture()
+                                                        LauncherAppearance.Modern = modernInterface.Checked
+                                                        LauncherAppearance.Apply(Me)
+                                                        RefreshBindings()
+                                                    End Sub
         Dim paths = Section(columns.First, "Locations")
         Field(paths, "Game folder", New TextBox With {.Text = context.GameRoot, .ReadOnly = True, .Name = "GameFolder"})
         Dim runtimeRow As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True}
@@ -484,7 +482,7 @@ Public Class MainForm
         renderScale.Value = settings.RenderScale : headsetScale.Value = settings.HeadsetScale : fieldOfView.Value = settings.FieldOfView
         mirrors.Items.AddRange({"Game setting", "On", "Off"})
         mirrors.SelectedIndex = Array.IndexOf({"game", "on", "off"}, settings.Mirrors)
-        mirrors.DrawMode = DrawMode.OwnerDrawFixed : AddHandler mirrors.DrawItem, AddressOf DrawChoice
+        StyleChoice(mirrors, Me)
         Field(render, "Render resolution", renderScale) : Field(render, "Headset texture scale", headsetScale)
         msaa.Value = Array.IndexOf({0, 2, 4, 8}, settings.VrMsaa)
         Field(render, "Anti-aliasing (MSAA)", msaa)
@@ -577,13 +575,16 @@ Public Class MainForm
     End Sub
     Private Sub BuildControlsTab()
         Dim content = TabLayout("Controls")
-        inputLabel.Margin = New Padding(0, 0, 0, 12)
+        inputLabel.Height = Px(Me, 36)
+        inputLabel.Margin = New Padding(0, 0, 0, 6)
+        content.Controls.Add(New Label With {.Text = "VR shortcuts", .Font = New Font(Font, FontStyle.Bold), .AutoSize = True})
         content.Controls.Add(inputLabel)
+        content.Controls.Add(New BindingColumns())
 
         Dim individualSeats As New CollapsibleSection("Individual seat bindings (optional)") With {.Name = "IndividualSeatBindings"}
         AddHandler individualSeats.Collapsed, Sub()
-                                                 If keyboardCapture >= 3 AndAlso keyboardCapture <= 8 Then keyboardCapture = -1
-                                                 If controllerCapture >= 3 AndAlso controllerCapture <= 8 Then
+                                                 If keyboardCapture >= 3 OrElse controllerCapture >= 3 Then CancelBindingCapture()
+                                                 If controllerCapture >= 3 AndAlso controllerCapture <= 11 Then
                                                      controllerCapture = -1 : capturedDevice = Nothing
                                                  End If
                                                  inputLabel.Text = "Select a binding to change it."
@@ -597,19 +598,20 @@ Public Class MainForm
                 Dim button = ShortcutButton(action)
                 button.AccessibleName = SeatActions.Names(action) & " keyboard binding"
                 AddHandler button.Click, Sub() BeginKeyCapture(selectedAction)
-                Dim keys As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0)}
+                Dim keys As New BindingKeyCell()
                 keys.Controls.Add(button)
                 If action >= 2 Then
-                    Dim clear As New Button With {.Text = "Clear", .AutoSize = False, .Width = Px(Me, 50), .Height = button.PreferredSize.Height}
+                    Dim clear As New Button With {.Text = "×", .AutoSize = True, .AccessibleName = "Clear " & SeatActions.Names(action) & " keyboard binding"}
                     AddHandler clear.Click, Sub()
                                                 If busy Then Return
+                                                CancelBindingCapture()
                                                 AssignShortcut(selectedAction, 0, 0) : RefreshBindings()
                                             End Sub
                     keys.Controls.Add(clear)
                 End If
                 keyCell = keys
             Else
-                keyCell = New Label With {.Text = {"Shift (hold)", "Enter", "Escape"}(action - 9), .AutoSize = True}
+                keyCell = New Label With {.Text = {"Shift (hold) · fixed", "Enter · fixed", "Escape · fixed"}(action - 9), .AccessibleName = SeatActions.Names(action) & " fixed keyboard shortcut; read only", .AutoSize = True}
             End If
 
             Dim cell As New TableLayoutPanel With {.Dock = DockStyle.Fill, .AutoSize = True, .ColumnCount = 1, .Margin = New Padding(3, 3, 0, 14)}
@@ -626,18 +628,31 @@ Public Class MainForm
             AddHandler remove.Click, Sub()
                                          If busy OrElse list.SelectedIndex < 0 Then Return
                                          Dim assignments = settings.Bindings.Where(Function(b) b.Action = selectedAction).ToArray()
+                                         CancelBindingCapture()
                                          settings.Bindings.Remove(assignments(list.SelectedIndex)) : RefreshBindings()
                                      End Sub
             buttons.Controls.AddRange({bind, remove}) : cell.Controls.Add(buttons)
-            Dim row As New BindingRow(SeatActions.Names(action), keyCell, cell)
-            If action >= 3 AndAlso action <= 8 Then
+            Dim compactCell As New ControllerBindingCell(SeatActions.Names(action), cell)
+            bindingCells(action) = compactCell
+            AddHandler compactCell.AddBinding, Sub() BeginControllerCapture(selectedAction)
+            AddHandler compactCell.EditBinding, Sub(binding)
+                                                    BeginControllerCapture(selectedAction)
+                                                    If Not busy Then replacementBinding = binding
+                                                End Sub
+            AddHandler compactCell.RemoveBinding, Sub(binding)
+                                                      If busy Then Return
+                                                      CancelBindingCapture()
+                                                      settings.Bindings.Remove(binding) : RefreshBindings()
+                                                  End Sub
+            Dim row As New BindingRow(SeatActions.Names(action), keyCell, compactCell, action = 2) With {.Name = "BindingRow" & action}
+            If action >= 3 AndAlso action <= 11 Then
                 If action = 3 Then content.Controls.Add(individualSeats)
                 individualSeats.Content.Controls.Add(row)
             Else
                 content.Controls.Add(row)
             End If
             If action = 2 Then
-                content.Controls.Add(New Label With {.Text = "Recommended: open the seat panel and use arrows / D-pad. No separate movement bindings needed.", .AutoSize = True, .Margin = New Padding(0, 0, 0, 12), .Name = "SeatPanelRecommendation"})
+                content.Controls.Add(New Label With {.Text = "Use the seat panel with arrows / D-pad. Separate movement bindings are optional.", .AutoSize = True, .Margin = New Padding(0, 0, 0, 12), .Name = "SeatPanelRecommendation"})
             End If
         Next
 
@@ -662,6 +677,7 @@ Public Class MainForm
         End Try
     End Sub
     Private Sub SaveSettings()
+        settings.ModernInterface = modernInterface.Checked
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
         settings.ExperimentalFlashback = flashback.Checked
@@ -681,7 +697,7 @@ Public Class MainForm
         settings.Opponents = CInt(opponents.Value)
         settings.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         settings.Laps = CInt(laps.Value)
-        If settings.DirectMode Then
+        If settings.DirectMode AndAlso Not customTracks.CustomEnabled Then
             Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)
             If track Is Nothing OrElse car Is Nothing Then Throw New IOException("Select an installed track and car, or use Normal Launch.")
@@ -716,10 +732,12 @@ Public Class MainForm
         For action = 0 To SeatActions.Names.Length - 1
             Dim selectedAction = action
             Dim list = bindingLists(action)
-            Dim rows = settings.Bindings.Where(Function(b) b.Action = selectedAction).Select(Function(binding)
+            Dim assignments = settings.Bindings.Where(Function(b) b.Action = selectedAction).ToArray()
+            Dim rows = assignments.Select(Function(binding)
                 Dim connected = devices.Any(Function(s) s.Source = binding.Source AndAlso s.Device = binding.Device AndAlso s.Connected)
                 Return binding.Label & " — " & String.Join(" + ", binding.Buttons.Select(Function(b) ControllerNames.ButtonName(binding.Source, b))) & If(connected, "", " [disconnected / not detected]")
             End Function).ToArray()
+            bindingCells(action)?.UpdateBindings(assignments, rows)
             If list.Items.Cast(Of String)().SequenceEqual(rows) Then Continue For
             Dim selected = list.SelectedIndex
             list.BeginUpdate() : list.Items.Clear() : list.Items.AddRange(rows) : list.EndUpdate()
@@ -729,15 +747,21 @@ Public Class MainForm
     Private Shared Function KeyLabel(key As Integer, modifiers As Integer) As String
         Return If((modifiers And 1) <> 0, "Ctrl+", "") & If((modifiers And 2) <> 0, "Alt+", "") & If((modifiers And 4) <> 0, "Shift+", "") & CType(key, Keys).ToString()
     End Function
+    Private Sub CancelBindingCapture()
+        keyboardCapture = -1 : controllerCapture = -1 : capturedDevice = Nothing
+        buttonCapture = Nothing : replacementBinding = Nothing
+        inputLabel.Text = "Click a binding to change it."
+    End Sub
     Private Sub BeginKeyCapture(action As Integer)
         If busy Then Return
+        CancelBindingCapture()
         keyboardCapture = action : controllerCapture = -1
         inputLabel.Text = "Press a key with optional Ctrl/Alt/Shift. Escape cancels."
         RefreshBindings()
     End Sub
     Protected Overrides Sub OnKeyDown(e As KeyEventArgs)
         If e.KeyCode = Keys.Escape Then
-            keyboardCapture = -1 : controllerCapture = -1 : capturedDevice = Nothing
+            CancelBindingCapture()
             inputLabel.Text = "Binding cancelled." : RefreshBindings() : e.SuppressKeyPress = True : Return
         End If
         If keyboardCapture >= 0 Then
@@ -761,6 +785,7 @@ Public Class MainForm
     Private Sub BeginControllerCapture(action As Integer)
         If busy Then Return
         input.Poll()
+        CancelBindingCapture()
         keyboardCapture = -1 : controllerCapture = action : capturedDevice = Nothing
         buttonCapture = New ControllerCapture(input.Snapshot())
         inputLabel.Text = "Press one or two buttons together, then release them. Escape cancels."
@@ -776,12 +801,17 @@ Public Class MainForm
         Dim binding = buttonCapture.Update(sample, controllerCapture)
         If binding Is Nothing Then Return
         controllerCapture = -1 : capturedDevice = Nothing
+        Dim previous = replacementBinding
+        replacementBinding = Nothing
+        If previous IsNot Nothing Then settings.Bindings.Remove(previous)
         settings.Bindings.Add(binding)
         Try
             settings.Validate()
             inputLabel.Text = "Controller binding captured. Save settings to keep it."
         Catch ex As Exception
-            settings.Bindings.Remove(binding) : inputLabel.Text = ex.Message
+            settings.Bindings.Remove(binding)
+            If previous IsNot Nothing Then settings.Bindings.Add(previous)
+            inputLabel.Text = ex.Message
         End Try
         RefreshBindings()
     End Sub

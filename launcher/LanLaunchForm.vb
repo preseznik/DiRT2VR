@@ -2,7 +2,7 @@ Imports System.Drawing
 Imports System.Windows.Forms
 
 Public Class LanLaunchForm
-    Inherits Form
+    Inherits LauncherForm
 
     Public Sub New(joining As Boolean)
         Text = If(joining, "JOIN", "HOST") & " — Launch mode"

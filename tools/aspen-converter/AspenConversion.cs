@@ -12,7 +12,7 @@ public static class AspenConversion
         var sources = JsonSerializer.Deserialize<Fingerprint[]>(source)!;
         AspenPack.ValidateSources(sources);
         return new(AspenPack.Id, "Aspen Rallycross", AspenPack.Version, AspenPack.MinimumLauncher,
-            4L * 1024 * 1024 * 1024, 800L * 1024 * 1024, ["desktop-solo"], AspenPack.Layouts.ToArray(), sources);
+            4L * 1024 * 1024 * 1024, 800L * 1024 * 1024, AspenPack.Modes.ToArray(), AspenPack.Layouts.ToArray(), sources);
     }
     public static int Run(string[] args)
     {

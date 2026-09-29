@@ -29,7 +29,7 @@ Public Class Session
             If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM tracks off before starting LAN multiplayer.")
             CustomTracks.AspenPack.GetLayout(custom.LayoutId)
             customTrack = True
-            settings.TrackId = custom.LayoutId : settings.LaunchMode = "practice" : settings.CarCode = "sti" : settings.Laps = 1
+            custom.ApplyTo(settings)
         End If
         driving = DrivingControls.Load(context)
         If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
@@ -126,6 +126,7 @@ Public Class Session
                         Status("Restoring")
                         graphics.Recover() : Worker.Invoke(context, "recover")
                         If returnToMenus Then
+                            customTrack = False
                             settings.LaunchMode = "menus"
                             Continue Do
                         End If

@@ -2,7 +2,7 @@ Imports System.Drawing
 Imports System.Windows.Forms
 
 Public Class DrivingControlsForm
-    Inherits Form
+    Inherits LauncherForm
     Private ReadOnly context As InstallContext
     Private ReadOnly settings As DrivingControls
     Private ReadOnly enabledBox As New CheckBox With {.Text = "Use launcher driving bindings (all launcher modes, DX11)", .AutoSize = True}
@@ -19,7 +19,7 @@ Public Class DrivingControlsForm
             layout.RowStyles.Add(New RowStyle(sizing, If(sizing = SizeType.Percent, 100, 0)))
         Next
         enabledBox.Checked = settings.Enabled : layout.Controls.Add(enabledBox)
-        layout.Controls.Add(New Label With {.Text = "Launcher assignments and calibration reapply on every launch, replacing in-game changes for those actions. Unassigned actions use the game's saved controls. Assign both keyboard and controller inputs if you want both. Save below when finished.", .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
+        layout.Controls.Add(New Label With {.Text = "Launcher assignments reapply on every launch. Unassigned actions use the game's saved controls. Bind Pause and Menu Start Button to Start; Menu Select confirms and Menu Back cancels. Assign both keyboard and controller inputs if you want both. Save below when finished.", .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
         list.Columns.Add("Action", 125) : list.Columns.Add("Keyboard", 100) : list.Columns.Add("Controller / wheel / pedals", 190)
         list.Columns.Add("Dead zone", 110) : list.Columns.Add("Saturation", 110)
         AddHandler list.Resize, Sub() list.Columns(2).Width = Math.Max(190, list.ClientSize.Width - 125 - 100 - 110 - 110 - 24)
@@ -30,7 +30,7 @@ Public Class DrivingControlsForm
                                                settings.Bindings.RemoveAll(Function(b) Not b.Keyboard)
                                                settings.Bindings.AddRange(DrivingControls.XboxPreset())
                                                enabledBox.Checked = True : RefreshRows()
-                                               status.Text = "Standard Xbox driving controls applied (left stick, RT/LT, A handbrake, B/X gears). Keyboard bindings retained. Save to use them."
+                                               status.Text = "Xbox driving and menu controls applied: Start pauses/starts, A confirms, B goes back, D-pad navigates. Keyboard bindings retained. Save to use them."
                                            End Sub)
         AddButton(buttons, "Bind keyboard…", Sub() BindSelected(True))
         AddButton(buttons, "Bind device…", Sub() BindSelected(False))

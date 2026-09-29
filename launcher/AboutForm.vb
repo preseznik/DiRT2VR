@@ -4,7 +4,7 @@ Imports System.Windows.Forms
 Imports System.Threading.Tasks
 
 Public Class AboutForm
-    Inherits Form
+    Inherits LauncherForm
     Private ReadOnly context As InstallContext
     Private ReadOnly client As HttpClient
     Private ReadOnly confirmRollback As Func(Of ReleaseUpdate, Boolean)
@@ -23,7 +23,7 @@ Public Class AboutForm
     Private ReadOnly notesButton As New Button With {.Text = "Release notes", .AutoSize = True, .Name = "UpdateReleaseNotes", .Enabled = False}
     Private availableUpdate As ReleaseUpdate
     Private working As Boolean
-    Private ReadOnly helpTabs As New TabControl With {.Dock = DockStyle.Fill, .Name = "HelpTabs"}
+    Private ReadOnly helpTabs As New ModernTabs With {.Dock = DockStyle.Fill, .Name = "HelpTabs"}
     Private ReadOnly instructions As New InstructionsView()
     Public Sub New(value As InstallContext, Optional knownUpdate As ReleaseUpdate = Nothing, Optional updateClient As HttpClient = Nothing, Optional rollbackConfirmation As Func(Of ReleaseUpdate, Boolean) = Nothing)
         context = value

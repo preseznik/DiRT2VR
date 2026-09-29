@@ -109,6 +109,7 @@ End Class
 
 Public Class VrSettings
     Public Property Version As Integer = 3
+    Public Property ModernInterface As Boolean = True
     Public Property LoggingEnabled As Boolean = False
     Public Property ExperimentalFlashback As Boolean = False
     Public Property SkipIntroduction As Boolean = False
@@ -222,6 +223,7 @@ Public Class VrSettings
         If settings Is Nothing Then Throw New IOException("Settings are empty.")
         If File.Exists(context.PreferencesPath) Then
             Using old = JsonDocument.Parse(File.ReadAllText(context.PreferencesPath))
+                If Not old.RootElement.EnumerateObject().Any(Function(p) p.Name.Equals("ModernInterface", StringComparison.OrdinalIgnoreCase)) Then settings.ModernInterface = False
                 If Not old.RootElement.EnumerateObject().Any(Function(p) p.Name.Equals("SeatKeys", StringComparison.OrdinalIgnoreCase)) AndAlso
                     ((settings.ToggleKey = 9 AndAlso settings.ToggleModifiers = 0) OrElse (settings.RecenterKey = 9 AndAlso settings.RecenterModifiers = 0)) Then settings.SeatKeys(0).Key = 0
             End Using
