@@ -52,17 +52,11 @@ $output=Join-Path $root ('artifacts\packages\'+$version+'-'+(Get-Date -Format 'y
 $stage=Join-Path $output 'stage'
 $publish=Join-Path $output 'publish'
 New-Item -ItemType Directory -Path "$stage\DiRT2VR\payload","$stage\DiRT2VR\licenses" -Force | Out-Null
-$aspenOutput=Join-Path $output 'aspen-tools'
-& (Join-Path $PSScriptRoot 'package-aspen.ps1') -OutputDirectory $aspenOutput
-if (!$?) { throw 'Bundled Aspen tools packaging failed' }
-$aspenManifest=Get-Content -LiteralPath (Join-Path $aspenOutput 'aspen-package.json') -Raw | ConvertFrom-Json
-$aspenTarget=Join-Path $stage 'DiRT2VR/payload/aspen'
-New-Item -ItemType Directory -Path $aspenTarget -Force | Out-Null
-Copy-Item -LiteralPath (Join-Path $aspenOutput 'aspen-package.json'),(Join-Path $aspenOutput $aspenManifest.Tracks[0].ArchiveName) -Destination $aspenTarget
 $buildUtc=[DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
 & dotnet publish launcher/DiRT2VR.vbproj -c Release -o $publish --nologo "-p:BuildUtc=$buildUtc" "-p:ReleaseChannel=$Channel"
 if ($LASTEXITCODE) { throw 'Launcher publish failed' }
 Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
+& (Join-Path $PSScriptRoot 'stage-aspen-licenses.ps1') -LicenseDirectory (Join-Path $stage 'DiRT2VR/licenses')
 Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
 Copy-Item -LiteralPath 'build\driving-input\driving_input.dll' -Destination "$stage\DiRT2VR\payload"
 $sourceStage=Join-Path $output 'lan-source'

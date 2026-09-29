@@ -1,5 +1,6 @@
 namespace DiRT2VR.CustomTracks;
 
+public sealed record TrackProgress(int Percent, string Message);
 public sealed record Layout(string Id, string Name, string Folder, string Condition);
 public sealed record Fingerprint(string Game, string Path, string Sha256);
 public sealed record PackFile(string Path, long Bytes, string Sha256);
@@ -7,9 +8,8 @@ public sealed record SessionFile(string Path, string OriginalSha256, string Inst
 public sealed record LayoutSession(string LayoutId, SessionFile[] Files);
 public sealed record PackReceipt(int Schema, string Id, string Version, string MinimumLauncher,
     PackFile[] Files, LayoutSession[] Sessions, Fingerprint[] Sources);
-public sealed record Catalog(int Schema, PackageOffer[] Tracks);
-public sealed record PackageOffer(string Id, string Name, string Version, string MinimumLauncher,
-    string ArchiveName, long ArchiveBytes, string Sha256, long StagingBytes, long InstalledBytes,
+public sealed record ConversionProfile(string Id, string Name, string Version, string MinimumLauncher,
+    long StagingBytes, long InstalledBytes,
     string[] Modes, Layout[] Layouts, Fingerprint[] Sources);
 
 public static class AspenPack
@@ -39,14 +39,12 @@ public static class AspenPack
         if (vr || mode != "practice" || car != "sti" || opponents != 0 || laps != 1)
             throw new IOException("Aspen currently supports desktop Direct practice, Subaru STI, solo, one lap. VR, AI racing and LAN are unavailable.");
     }
-    public static void Validate(PackageOffer offer, string launcherVersion)
+    public static void Validate(ConversionProfile offer, string launcherVersion)
     {
         if (offer is null || offer.Id != Id || !SafeFiles.Version(offer.Version) || !SafeFiles.Version(offer.MinimumLauncher) ||
             System.Version.Parse(launcherVersion) < System.Version.Parse(offer.MinimumLauncher))
             throw new IOException("Update DiRT2VR before installing this custom-track package.");
-        if (offer.ArchiveName != $"AspenConverter-{offer.Version}.zip" ||
-            !SafeFiles.Digest(offer.Sha256) || offer.ArchiveBytes is <= 0 or > 512L * 1024 * 1024 ||
-            offer.StagingBytes is < 1024 * 1024 or > 16L * 1024 * 1024 * 1024 ||
+        if (offer.StagingBytes is < 1024 * 1024 or > 16L * 1024 * 1024 * 1024 ||
             offer.InstalledBytes is <= 0 or > 4L * 1024 * 1024 * 1024 ||
             offer.Modes is null || !offer.Modes.SequenceEqual(new[] { "desktop-solo" }) ||
             offer.Layouts is null || !offer.Layouts.SequenceEqual(Layouts))
@@ -115,6 +113,18 @@ public static class AspenPack
             var path = SafeFiles.Inside(root, file.Path);
             if (!File.Exists(path) || new FileInfo(path).Length != file.Bytes || SafeFiles.Hash(path) != file.Sha256)
                 throw new IOException("Custom-track file is missing or changed: " + file.Path + ". Use Rebuild Aspen.");
+        }
+    }
+    public static void VerifySources(ConversionProfile offer, string dirt2, string dirt3, IProgress<TrackProgress>? progress, CancellationToken cancel)
+    {
+        AspenPack.ValidateSources(offer.Sources);
+        for (int i = 0; i < offer.Sources.Length; i++)
+        {
+            cancel.ThrowIfCancellationRequested(); var source = offer.Sources[i];
+            string path = SafeFiles.Inside(source.Game == "dirt2" ? dirt2 : dirt3, source.Path);
+            if (!File.Exists(path) || SafeFiles.Hash(path) != source.Sha256)
+                throw new IOException($"Missing or unsupported {source.Game} source file: {source.Path}. Choose the correct game folder or verify the original files in Steam.");
+            progress?.Report(new((i + 1) * 100 / offer.Sources.Length, "Checking original game files"));
         }
     }
 }

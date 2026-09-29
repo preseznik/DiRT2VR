@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Reduce the installer, ZIP and installed application size by sharing the launcher's .NET runtime with Aspen conversion. Building still runs in a separate background process, supports offline use and cancellation, and preserves existing installed tracks.
+
 - Bundle Aspen conversion tools with the normal Setup and ZIP packages. Building tracks needs no additional download; keep the standard three release assets and concise player-facing release notes.
 
 ## 0.17.4 — 2026-09-29 — Experimental

@@ -16,7 +16,7 @@ Public Class CustomTrackPanel
     Private ReadOnly cancelButton As New Button With {.Text = "Cancel", .Name = "CancelAspen", .AutoSize = True, .Enabled = False}
     Private ReadOnly progressBar As New ProgressBar With {.Minimum = 0, .Maximum = 100, .Height = 18}
     Private ReadOnly menu As New ContextMenuStrip
-    Private offer As PackageOffer
+    Private offer As ConversionProfile
     Private cancellation As CancellationTokenSource
     Private installationValid As Boolean
     Private working As Boolean
@@ -122,8 +122,8 @@ Public Class CustomTrackPanel
     Private Async Function InstallPack() As Task
         Await Operation(Async Function(token, progress)
                             context.RequireClosed()
-                            status.Text = "Checking bundled conversion tools…"
-                            offer = Await Task.Run(Function() BundledPackage.Read(CustomTrackService.ToolsFolder(context), BuildInfo.Version, token), token)
+                            status.Text = "Preparing Aspen build…"
+                            offer = Aspen.AspenConversion.GetProfile()
                             Using picker As New AspenSourceForm(preferences.SourceFolder, CustomTrackService.SourceFolders(), offer)
                                 If picker.ShowDialog(Me) <> DialogResult.OK Then Return
                                 preferences.SourceFolder = picker.SourceFolder : preferences.Save(context)
@@ -168,7 +168,7 @@ Public Class AspenSourceForm
             Return source.Text.Trim().Trim(""""c)
         End Get
     End Property
-    Public Sub New(previous As String, detected As String(), offer As PackageOffer)
+    Public Sub New(previous As String, detected As String(), offer As ConversionProfile)
         Text = "Install Aspen — locate DiRT 3" : Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi : StartPosition = FormStartPosition.CenterParent
         ClientSize = New Size(640, 340) : MinimumSize = New Size(480, 350)
