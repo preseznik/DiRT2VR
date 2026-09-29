@@ -53,6 +53,14 @@ internal static class PortBuild
                 File.WriteAllBytes(target, Placements.Convert(File.ReadAllBytes(path), Path.GetFileName(path) == "trees.bin", placements));
             else if (Path.GetFileName(path) == "replay_camera_config.xml")
                 PortFiles.WriteXml(ReplayCameras.Convert(PortFiles.ReadXml(path)), target, EgoEngineLibrary.Xml.XmlType.BinXml);
+            else if (Path.GetFileName(path) == "route_overrides.xml" && layout == AspenLayout.SnowmassSprint)
+            {
+                var settings = PortFiles.ReadXml(path);
+                TerrainRange.Convert(settings);
+                PortFiles.WriteXml(settings, target, EgoEngineLibrary.Xml.XmlType.BinXml);
+                if (!XNode.DeepEquals(settings, PortFiles.ReadXml(target)))
+                    throw new InvalidDataException("Terrain range settings changed during serialization.");
+            }
             else if (Path.GetFileName(path) is "cloth.xml" or "lod_overrides.xml" or "ornament_attributes.xml" or "tree_attributes.xml")
                 PortFiles.WriteXml(PortFiles.ReadXml(path), target, EgoEngineLibrary.Xml.XmlType.BinXml);
             else File.Copy(path, target, false);
@@ -82,6 +90,9 @@ internal static class PortBuild
         PortFiles.Json(Path.Combine(output,"static-snow.json"),StaticSnow.Bake(snowPath,Path.Combine(track,"tracksplit.pssg"),templates,shaders));
         PortFiles.Json(Path.Combine(output, "scene-props.json"), StaticProps.Bake(track));
         PortFiles.Json(Path.Combine(output, "terrain-containers.json"), TerrainContainers.Convert(track));
+        PortFiles.Json(Path.Combine(output, "persistent-lights.json"), PersistentLights.Convert(track));
+        if (layout == AspenLayout.SnowmassSprint)
+            PortFiles.Json(Path.Combine(output, "hillside-beams.json"), TowerBeamFallback.Convert(track));
         PortFiles.Json(Path.Combine(output, "terrain-depth.json"), TerrainDepth.Convert(track));
         PortFiles.Json(Path.Combine(output, "terrain-visibility.json"), TerrainVisibility.Convert(track,source,TerrainVisibility.Mappings(System.Text.Json.JsonSerializer.SerializeToElement(placements)),layout.SourceRoute));
         PortFiles.Json(Path.Combine(output, "day-textures.json"), DayTextures.Resolve(track,condition));

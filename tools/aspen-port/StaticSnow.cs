@@ -4,13 +4,39 @@ using System.Numerics;
 using System.Xml.Linq;
 
 // DiRT 3's interactive snow includes the actual road surface, not just an effect.
-// Preserve its base triangles as ordinary high-detail terrain; deformation stays unsupported.
+// Preserve its base triangles in both terrain detail levels; deformation stays unsupported.
 internal static class StaticSnow
 {
     static float[] Values(string text) => text.Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries).Select(v=>float.Parse(v,CultureInfo.InvariantCulture)).ToArray();
     static string Text(IEnumerable<float> values) => string.Join(' ',values.Select(v=>v.ToString("R",CultureInfo.InvariantCulture)));
     static byte[] Bytes(XElement block) => Convert.FromHexString(string.Concat(block.Element("DATABLOCKDATA")!.Value.Where(c=>!char.IsWhiteSpace(c))));
     static Vector3 Position(byte[] bytes,int vertex) => new(BinaryPrimitives.ReadSingleBigEndian(bytes.AsSpan(vertex*52)),BinaryPrimitives.ReadSingleBigEndian(bytes.AsSpan(vertex*52+4)),BinaryPrimitives.ReadSingleBigEndian(bytes.AsSpan(vertex*52+8)));
+
+    internal static int AddLowDetail(XDocument scene)
+    {
+        int count=0;
+        foreach(var high in scene.Descendants("RENDERNODE").Where(n=>((string?)n.Attribute("id"))?.StartsWith("HIGH_",StringComparison.Ordinal)==true))
+        {
+            var draws=high.Elements("RENDERSTREAMINSTANCE").Where(d=>((string?)d.Attribute("id"))?.StartsWith("aspen_snow_",StringComparison.Ordinal)==true).ToArray();
+            if(draws.Length==0) continue;
+            string lowId="LOW_"+((string)high.Attribute("id")!)[5..];
+            var low=high.Parent!.Elements("RENDERNODE").Single(n=>(string?)n.Attribute("id")==lowId);
+            if(!Values(high.Element("TRANSFORM")!.Value).SequenceEqual(Values(low.Element("TRANSFORM")!.Value)))
+                throw new InvalidDataException("Snow detail layers have different transforms.");
+            foreach(var draw in draws)
+            {
+                if(low.Elements("RENDERSTREAMINSTANCE").Any(d=>(string?)d.Attribute("indices")== (string?)draw.Attribute("indices")))
+                    throw new InvalidDataException("Low-detail snow already present.");
+                // Reference the same mesh: the snow is road geometry, not detail
+                // that can disappear at the HIGH/LOW switch. Depth is built later.
+                var copy=new XElement(draw); copy.SetAttributeValue("id",(string)draw.Attribute("id")!+"_low");
+                low.Add(copy); count++;
+            }
+            var a=Values(low.Element("BOUNDINGBOX")!.Value); var b=Values(high.Element("BOUNDINGBOX")!.Value);
+            low.Element("BOUNDINGBOX")!.Value=Text(Enumerable.Range(0,6).Select(i=>i<3?Math.Min(a[i],b[i]):Math.Max(a[i],b[i])));
+        }
+        return count;
+    }
 
     internal static void ConvertVertices(XElement block)
     {
@@ -124,7 +150,8 @@ internal static class StaticSnow
             }
             triangles+=indices.Length/3; coverage.Add(new { Source=(string)source.Attribute("id")!,Triangles=indices.Length/3,Tiles=groups.Keys.Select(t=>(string)t.Attribute("id")!).ToArray() });
         }
+        int lowDraws=AddLowDetail(scene);
         PortFiles.WritePssg(scene,scenePath+".tmp"); ObjectVertexLayout.Verify(scene,PortFiles.ReadPssg(scenePath+".tmp"));File.Move(scenePath+".tmp",scenePath,true);
-        return new { SourceMeshes=coverage.Count,Triangles=triangles,Draws=draws,PositionsAndWindingPreserved=true,DeformationSupported=false,Coverage=coverage,RuntimeValidated=false };
+        return new { SourceMeshes=coverage.Count,Triangles=triangles,Draws=draws,LowDraws=lowDraws,PositionsAndWindingPreserved=true,DeformationSupported=false,Coverage=coverage,RuntimeValidated=false };
     }
 }

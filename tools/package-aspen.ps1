@@ -60,6 +60,8 @@ Supported play: desktop Direct practice, solo Subaru STI, one lap.
 Lakeside: night; Lake View: morning; Snowmass Sprint: evening;
 Snowmass Loop: overcast. VR, AI racing, LAN, ski-lift animation, full snowfall
 and deformable snow are not supported. Handling is adapted for DiRT 2.
+Snowmass Sprint omits 12 decorative beams on its ski hillside to avoid
+flickering. Towers, lamp faces, ground lighting and other beams remain.
 
 This package contains conversion code and metadata, not game assets.
 The source installations are never modified. Generated assets stay local.

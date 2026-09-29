@@ -6,8 +6,14 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.4 — 2026-09-29 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.4)
+
 - Added an experimental CUSTOM tracks launcher flow for locally building Aspen's four Rallycross layouts from the player's own DiRT 3 Complete Edition and DiRT 2 installations. Installation is explicit; installed layouts can be verified and launched offline.
-- Added source fingerprints, verified converter downloads, staged installation and recovery of shared track files. Aspen remains restricted to desktop solo Subaru STI practice with its layout-specific lighting; release acceptance is still in progress.
+- Added source fingerprints, verified converter downloads, staged installation and recovery of shared track files. Aspen remains restricted to desktop solo Subaru STI practice with its layout-specific lighting. Ice has less grip than packed snow in the user's comparison; exact DiRT 3 handling is not claimed.
+- Keep Aspen tower glows and lit lamp faces in a persistent terrain layer. As a limited fallback for the remaining flicker, omit only the 12 decorative ski-hillside beams on Snowmass Sprint; preserve its other beams, towers, lamp faces and lighting, and leave the other layouts unchanged. The rebuilt candidate passed the user's hillside, timed-lap, reset and restart check.
+- Preserve reconstructed Aspen snow surfaces and opaque depth in the distant terrain layer. The converter now includes Snowmass Sprint's accepted terrain-distance settings, resolving the reported ground colour transition and hillside tower disappearance in the tested view. Other layouts retain their existing distance settings.
 
 - Recommend the seat-adjustment panel in Controls and tuck the six optional movement bindings into a section that starts collapsed.
 
