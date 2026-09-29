@@ -1,0 +1,10 @@
+﻿This opt-in experimental update brings a cleaner launcher, a shared seat position for all cars, and reduced VR scenery pop-in.
+
+- Modern launcher: enable Settings > Appearance > Modern interface for compact controls and clearer graphics settings. Classic remains available.
+- Universal seating: adjust your seat once for every car. Turn the option off to return to your saved per-car positions.
+- Easier bindings: use compact binding cells and the recommended seat-adjustment panel. All nine optional seat shortcuts are tucked away together.
+- Better VR visibility: see grass, trees and trackside scenery farther ahead, with improved detail on nearby cars.
+- More Aspen options: choose your car and launch Practice or Race on desktop or in VR. Use Rebuild Aspen once to enable AI opponents on existing installations. These options remain experimental; custom-track LAN is unavailable.
+- Driving controls: bind Pause and menu actions, with matching buttons included in the Xbox preset.
+
+To receive this build in the launcher, enable ? > About > Include experimental releases. Stable users will not be prompted for it.

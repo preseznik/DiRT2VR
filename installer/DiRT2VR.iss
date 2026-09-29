@@ -23,6 +23,7 @@ OutputBaseFilename=DiRT2VR-{#PackageVersion}-Setup
 Compression=lzma2
 SolidCompression=yes
 WizardStyle=modern
+InfoBeforeFile=ReleaseNotes.txt
 CloseApplications=no
 AppMutex=Global\DiRT2VR.Session
 SetupLogging=yes
@@ -33,6 +34,10 @@ UninstallDisplayIcon={app}\DiRT2VR.exe
 Source: "{#Stage}\DiRT2VR.exe"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Stage}\Start-DiRT2VR.cmd"; DestDir: "{app}"; Flags: ignoreversion
 Source: "{#Stage}\DiRT2VR\*"; DestDir: "{app}\DiRT2VR"; Flags: ignoreversion recursesubdirs createallsubdirs
+
+[Messages]
+WizardInfoBefore=What's new in DiRT2VR {#PackageVersion}
+InfoBeforeLabel=Changes in this experimental update:
 
 [Tasks]
 Name: desktopicon; Description: "Create a desktop shortcut"; Flags: unchecked

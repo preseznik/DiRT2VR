@@ -6,18 +6,18 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Fix the missing Help question mark and unreadable disabled slider values in the dark theme. Compact slider rows and replace the render-resolution recommendation caption with a green notch at 150%.
+## 0.17.8 — 2026-09-30 — Experimental
 
-- Add **Settings → Appearance → Modern interface**: a compact modern look with an immediate preview. Existing installations keep Classic; new installations start in Modern. Save settings keeps your choice. Both follow Windows light/dark settings.
-- Modern Controls uses compact clickable binding cells with add/remove buttons. All nine optional seat and panel actions now stay inside the collapsed section; **Open seat adjustment** remains the recommended shortcut. Switching appearance retains unsaved edits and cancels binding capture.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.8)
 
-- Add **Use universal seat position** under Graphics → VR cockpit. Adjust one shared position in the launcher or in VR; turn it off to return to saved per-car positions. The car picker is disabled while universal mode is on.
-- Add experimental VR launch, Direct practice/Race selection and installed-car selection for Aspen custom tracks. Custom race grids and lap counts are saved separately from stock-track settings. Headset validation remains pending. Prototype Circuit retains its desktop-solo restriction; custom-track LAN remains unavailable.
-- Fix Aspen opponents remaining stationary. Existing installations need **Rebuild Aspen** before Race becomes available; solo practice remains usable.
-- Use sliders for CUSTOM opponents and laps, match dropdowns and the source-folder field to the launcher theme, and remove cockpit-status suffixes from car names.
-- Add Pause, Start and menu actions to driving bindings. The Xbox preset includes Start, confirm/back and D-pad navigation; keyboard capture now accepts Escape.
-- Extend terrain and trackside-object visibility in VR to reduce close-range pop-in. Keep nearby opponents at their best available detail even alongside or behind the player; retain normal distant-car LOD. The user accepted the scenery and nearby-car appearance; broader performance testing remains pending.
-- Extend grass visibility and delay tree/bush detail changes in VR. Fix grass disappearing with the increased drawing range. The user accepted the corrected grass visibility and pop-in on Ladang Long in VR; broader performance testing remains pending.
+- Add **Settings → Appearance → Modern interface** for a compact launcher with clearer binding cells. Classic remains available; existing installations keep their familiar look.
+- Add **Use universal seat position** under Graphics → VR cockpit. Adjust one shared position for every car, or turn it off to return to saved per-car positions.
+- Keep all nine optional seat and panel bindings inside one collapsed section. **Open seat adjustment** remains the recommended way to move your seat.
+- Improve dark-theme readability, tighten Graphics rows and mark the recommended 150% render resolution with a green notch.
+- Reduce VR pop-in for terrain, trackside objects, grass and trees, and improve detail on nearby cars.
+- Add car selection, Practice/Race and desktop/VR launch options for Aspen. Choose **Rebuild Aspen** once to enable AI opponents on existing installations. These options remain experimental; custom-track LAN is unavailable.
+- Add Pause and menu actions to driving bindings and the Xbox preset. Keyboard capture also accepts Escape.
+- Show these release highlights in a scrollable **What's new** page during installation and updating.
 
 ## 0.17.6 — 2026-09-29 — Experimental
 
