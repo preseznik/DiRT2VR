@@ -1,0 +1,32 @@
+[
+  {
+    "Revision": "7173400b43f18e646ba6dc924a070296638b2d9e",
+    "Path": "LICENSE-MIT",
+    "Repo": "Nominom/BCnEncoder.NET",
+    "Name": "BCnEncoder-MIT.txt"
+  },
+  {
+    "Revision": "5153478a209ca2e276d8092f7166ff9d7ae4974f",
+    "Path": "LICENSE",
+    "Repo": "vpenades/SharpGLTF",
+    "Name": "SharpGLTF-MIT.txt"
+  },
+  {
+    "Revision": "2c3967b22543545c902fb1fecf57d44025bda84d",
+    "Path": "LICENSE",
+    "Repo": "SixLabors/ImageSharp",
+    "Name": "ImageSharp-Apache-2.0.txt"
+  },
+  {
+    "Revision": "d2fc6a4ea24b2c11d400db01a45e6921b5eed466",
+    "Path": "LICENSE",
+    "Repo": "oleg-st/ZstdSharp",
+    "Name": "ZstdSharp-MIT.txt"
+  },
+  {
+    "Revision": "f5a25b7d72e2e41550fe20662597169ff11c3b60",
+    "Path": "LICENSE",
+    "Repo": "MiloszKrajewski/K4os.Compression.LZ4",
+    "Name": "K4os-LZ4-MIT.txt"
+  }
+]

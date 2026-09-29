@@ -54,6 +54,28 @@ For quick launch with saved settings, use **Start-DiRT2VR.cmd**. It runs the sam
 
 For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The existing `Start-DiRT2VR.cmd` continues to launch VR.
 
+## Aspen custom tracks (experimental)
+
+Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edition** installation. The download contains conversion tools, not game assets. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
+
+1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
+2. Choose **Install Aspen**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the game folder containing `tracks\locations\usa\aspen`, wherever Steam installed it.
+3. Choose **Download and build**. Leave the launcher open while it downloads the tools, checks your source files and builds all four layouts. **Cancel** stops conversion safely; an existing installation stays usable.
+4. Select a layout and choose **Launch**. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
+
+| Layout | Default lighting |
+| --- | --- |
+| Lakeside | Night |
+| Lake View | Morning sun |
+| Snowmass Sprint | Evening sun |
+| Snowmass Loop | Overcast |
+
+Aspen currently uses **desktop Direct practice, solo Subaru STI, one lap**. VR, AI races and LAN are unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
+
+Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers track-update checks, file verification, rebuilding and removal; updates are optional.
+
+If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Rebuild Aspen from source**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
+
 To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
 
 ## Launcher settings

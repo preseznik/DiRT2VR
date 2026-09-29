@@ -1,5 +1,6 @@
 [CmdletBinding()]
-param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild,[ValidateSet('Patch','Minor','Major')][string]$VersionBump='Patch',[ValidateSet('Stable','Experimental')][string]$Channel='Stable')
+param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild,[ValidateSet('Patch','Minor','Major')][string]$VersionBump='Patch',[ValidateSet('Stable','Experimental')][string]$Channel='Stable',
+    [string]$FinalizeReservedVersion,[string]$ReservedPackageDirectory)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $root
@@ -16,7 +17,26 @@ foreach ($archive in (Get-ChildItem -LiteralPath (Join-Path $root 'source-archiv
     if ($archive.Name -match '^DiRT2VR-([0-9]+\.[0-9]+\.[0-9]+)-LAN-source.zip$') { $known += [version]$Matches[1] }
 }
 $base=($known | Sort-Object -Descending | Select-Object -First 1).ToString()
-$version=& (Join-Path $PSScriptRoot 'next-version.ps1') -Current $base -Bump $VersionBump
+if ($FinalizeReservedVersion) {
+    # Explicitly authorized finalization of an unpublished reservation; ordinary
+    # packages still reserve a fresh number. Never alter an existing release/tag.
+    if ($Channel -ne 'Experimental' -or $FinalizeReservedVersion -ne $current -or $base -ne $current -or !$ReservedPackageDirectory) { throw 'Finalization requires the current highest reserved experimental version and its original package directory.' }
+    $reserved=Get-Content -LiteralPath (Join-Path $ReservedPackageDirectory 'stage/DiRT2VR/package.json') -Raw | ConvertFrom-Json
+    if ($reserved.Version -ne $current -or $reserved.Channel -ne 'Experimental') { throw 'Original package does not match the reservation.' }
+    & (Join-Path $PSScriptRoot 'verify-release.ps1') -PackageDirectory $ReservedPackageDirectory
+    if ($LASTEXITCODE) { throw 'Original reserved package validation failed.' }
+    $localTag=@(git tag --list "v$current")
+    if ($LASTEXITCODE -or $localTag.Count) { throw 'Cannot finalize a locally tagged version.' }
+    $remoteTag=@(git ls-remote --tags origin "refs/tags/v$current")
+    if ($LASTEXITCODE -or $remoteTag.Count) { throw 'Cannot finalize a remotely tagged version, or remote lookup failed.' }
+    $remoteText=gh api repos/preseznik/DiRT2VR/releases --paginate --slurp
+    if ($LASTEXITCODE) { throw 'Cannot verify GitHub release absence; reservation was preserved.' }
+    $releasePages=$remoteText | ConvertFrom-Json
+    foreach ($page in $releasePages) { foreach ($release in $page) { if ($release.tag_name -eq "v$current") { throw 'This version already has a GitHub release or draft. It cannot be finalized again.' } } }
+    $version=$FinalizeReservedVersion
+} else {
+    $version=& (Join-Path $PSScriptRoot 'next-version.ps1') -Current $base -Bump $VersionBump
+}
 # Reserve the version before building. Failed attempts keep their number; retries advance it.
 [IO.File]::WriteAllText($projectPath,$projectText.Replace('<Version>'+$current+'</Version>','<Version>'+$version+'</Version>'))
 Write-Host "Build version: $current -> $version"
@@ -44,9 +64,46 @@ $sourceName="DiRT2VR-$version-LAN-source.zip"
 $sourceArchive=Join-Path $root 'source-archives/lan'
 New-Item -ItemType Directory -Path $sourceArchive -Force | Out-Null
 $sourceZip=Join-Path $sourceArchive $sourceName
-if (Test-Path -LiteralPath $sourceZip) { throw "Refusing to replace an existing source archive: $sourceZip" }
-# ZipFile includes dot-directories such as .deps; do not use a wildcard archive input.
-[IO.Compression.ZipFile]::CreateFromDirectory($sourceStage,$sourceZip)
+if (Test-Path -LiteralPath $sourceZip) {
+    if (!$FinalizeReservedVersion) { throw "Refusing to replace an existing source archive: $sourceZip" }
+    # Reuse the reserved LAN binary and its matching source archive. Check every
+    # source file; only checkout line-ending differences are permitted. Preserve
+    # the original archive, build attribution and Controls-only package.
+    $existing=[IO.Compression.ZipFile]::OpenRead($sourceZip)
+    try {
+        $entries=@($existing.Entries | Where-Object {$_.Name -ne ''})
+        $sourceFiles=@(Get-ChildItem -LiteralPath $sourceStage -Recurse -File -Force)
+        if ($entries.Count -ne $sourceFiles.Count) { throw 'Reserved LAN source inventory changed; archive preserved.' }
+        foreach ($file in $sourceFiles) {
+            $relative=[IO.Path]::GetRelativePath($sourceStage,$file.FullName).Replace('\','/')
+            $entry=@($entries | Where-Object FullName -CEQ $relative)
+            if ($entry.Count -ne 1) { throw "Reserved LAN source path differs: $relative" }
+            $stream=$entry[0].Open()
+            $memory=[IO.MemoryStream]::new()
+            try {$stream.CopyTo($memory);$bytes=$memory.ToArray()} finally {$stream.Dispose();$memory.Dispose()}
+            if ($relative -eq 'source-info.json') { $reservedInfoBytes=$bytes; continue }
+            $digest=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes))
+            if ($digest -ne (Get-FileHash -LiteralPath $file.FullName).Hash) {
+                $utf8=[Text.UTF8Encoding]::new($false,$true)
+                if ([IO.Path]::GetExtension($relative) -notin @('.c','.cpp','.h','.patch') -or
+                    $utf8.GetString($bytes).Replace("`r`n","`n") -cne [IO.File]::ReadAllText($file.FullName,$utf8).Replace("`r`n","`n")) { throw "Reserved LAN source differs: $relative" }
+                [IO.File]::WriteAllBytes($file.FullName,$bytes)
+            }
+        }
+        $oldInfo=[Text.Encoding]::UTF8.GetString($reservedInfoBytes).TrimStart([char]0xFEFF) | ConvertFrom-Json
+        $newInfo=Get-Content -LiteralPath (Join-Path $sourceStage 'source-info.json') -Raw | ConvertFrom-Json
+        $reservedLan=Join-Path $ReservedPackageDirectory 'stage/DiRT2VR/payload/xlive-lan.dll'
+        $reservedLanHash=(Get-FileHash -LiteralPath $reservedLan).Hash
+        if ($oldInfo.Version -ne $version -or $oldInfo.UpstreamCommit -ne $newInfo.UpstreamCommit -or
+            $oldInfo.BinarySha256 -ne $reservedLanHash -or $reserved.Files.'DiRT2VR/payload/xlive-lan.dll' -ne $reservedLanHash -or
+            $oldInfo.IntegrationPatchSha256 -ne (Get-FileHash -LiteralPath (Join-Path $sourceStage 'tools/lan/xlln-integration.patch')).Hash) { throw 'Reserved LAN binary/source attribution does not match; original package preserved.' }
+        Copy-Item -LiteralPath $reservedLan -Destination "$stage/DiRT2VR/payload/xlive-lan.dll" -Force
+        [IO.File]::WriteAllBytes((Join-Path $sourceStage 'source-info.json'),$reservedInfoBytes)
+    } finally {$existing.Dispose()}
+} else {
+    # ZipFile includes dot-directories such as .deps; do not use a wildcard archive input.
+    [IO.Compression.ZipFile]::CreateFromDirectory($sourceStage,$sourceZip)
+}
 $sourceHash=(Get-FileHash -LiteralPath $sourceZip).Hash.ToLowerInvariant()
 @"
 DiRT2VR $version LAN library source (XLiveLessNess, LGPL 2.1)

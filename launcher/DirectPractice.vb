@@ -41,6 +41,11 @@ Public Class RaceCatalog
         Return result
     End Function
     Public Function Track(id As String) As PracticeTrack
+        If CustomTracks.AspenPack.IsLayout(id) Then
+            Dim layout = CustomTracks.AspenPack.GetLayout(id)
+            Return New PracticeTrack With {.Id = id, .Event = "Rallycross", .Label = "Aspen — " & layout.Name,
+                .Country = "usa", .Track = layout.Folder, .Route = "route_0", .Circuit = True}
+        End If
         Dim result = Tracks.SingleOrDefault(Function(t) t.Id = id)
         If result Is Nothing Then Throw New IOException("Unknown practice track.")
         Return result
@@ -51,11 +56,13 @@ Public Class RaceCatalog
         Files.NoLinks(route) : Files.NoLinks(camera)
         If Not Directory.Exists(route) OrElse Not File.Exists(camera) Then Throw New IOException("The selected track or car is missing from this game installation.")
         If trackId = PrototypeTrack.Id Then PrototypeTrack.Validate(route)
+        If CustomTracks.AspenPack.IsLayout(trackId) Then CustomTracks.AspenPack.Read(context.GameRoot)
     End Sub
     Public Function Config(trackId As String, carCode As String, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional context As InstallContext = Nothing) As Byte()
         If opponents < 0 OrElse opponents > 7 Then Throw New IOException("Choose between zero and seven opponents.")
         If Not {"same", "mixed", "class"}.Contains(opponentCars) Then Throw New IOException("Unknown opponent car selection.")
         Dim route = Track(trackId)
+        If CustomTracks.AspenPack.IsLayout(trackId) Then CustomTracks.AspenPack.RequireMode(trackId, False, "practice", carCode, opponents, 1)
         If trackId = PrototypeTrack.Id AndAlso opponents <> 0 Then Throw New IOException("The prototype track supports solo driving only.")
         Dim vehicle = Car(carCode)
         Dim entries As New List(Of XElement)

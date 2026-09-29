@@ -21,8 +21,16 @@ Public Class Session
     Private focusStatus As String = ""
     Private displayWarning As String = ""
     Private desktopBounds As Drawing.Rectangle?
+    Private customTrack As Boolean
     Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing)
         context = value : settings = VrSettings.Load(context)
+        Dim custom = CustomTrackPreferences.Load(context)
+        If custom.Enabled Then
+            If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM tracks off before starting LAN multiplayer.")
+            CustomTracks.AspenPack.GetLayout(custom.LayoutId)
+            customTrack = True
+            settings.TrackId = custom.LayoutId : settings.LaunchMode = "practice" : settings.CarCode = "sti" : settings.Laps = 1
+        End If
         driving = DrivingControls.Load(context)
         If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
         If multiplayer OrElse joinTarget IsNot Nothing Then settings.LaunchMode = "lan"
@@ -31,6 +39,7 @@ Public Class Session
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message & If(displayWarning = "", "", " " & displayWarning), .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus, .DisplayWarning = displayWarning})
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
+        If customTrack Then CustomTracks.AspenPack.RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
             Dim held As Boolean
             Try
@@ -44,6 +53,7 @@ Public Class Session
                 Do
                     Status("Checking")
                     context.ValidateGame() : context.RequireClosed()
+                    If settings.DirectMode Then PrototypeTrack.ValidateMode(settings.TrackId, settings.LaunchMode, vr)
                     ' Preserve desktop behavior for older LAN quick-launch commands; VR is an explicit choice.
                     If settings.LaunchMode = "lan" Then vr = vr AndAlso lanVr
                     desktopBounds = Nothing
@@ -64,6 +74,7 @@ Public Class Session
                         Dim returnToMenus = RunDesktop()
                         Status("Restoring") : graphics.Recover() : Worker.Invoke(context, "recover")
                         If returnToMenus Then
+                            customTrack = False
                             settings.LaunchMode = "menus"
                             Continue Do
                         End If

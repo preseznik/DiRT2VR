@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Added an experimental CUSTOM tracks launcher flow for locally building Aspen's four Rallycross layouts from the player's own DiRT 3 Complete Edition and DiRT 2 installations. Installation is explicit; installed layouts can be verified and launched offline.
+- Added source fingerprints, verified converter downloads, staged installation and recovery of shared track files. Aspen remains restricted to desktop solo Subaru STI practice with its layout-specific lighting; release acceptance is still in progress.
+
 - Recommend the seat-adjustment panel in Controls and tuck the six optional movement bindings into a section that starts collapsed.
 
 ## 0.17.3 — 2026-09-28 — Experimental

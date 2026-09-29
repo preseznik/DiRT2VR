@@ -68,6 +68,7 @@ Public Class MainForm
     Private capturedDevice As ControllerSample
     Private buttonCapture As ControllerCapture
     Private busy As Boolean
+    Private customTracks As CustomTrackPanel
     Private ReadOnly updateNotice As New Button With {.Text = "New version available", .Name = "UpdateAvailable", .AutoSize = True, .Visible = False, .Anchor = AnchorStyles.Right}
     Private ReadOnly updateCancellation As New CancellationTokenSource()
     Private ReadOnly checkForUpdate As Func(Of CancellationToken, Task(Of ReleaseUpdate))
@@ -154,6 +155,12 @@ Public Class MainForm
                                   timer.Stop() : timer.Dispose() : inputTimer.Stop() : inputTimer.Dispose() : input.Dispose()
                                   Icon.Dispose()
                               End Sub
+        AddHandler FormClosing, Sub(sender, e)
+                                    If customTracks.IsWorking Then
+                                        customTracks.CancelOperation()
+                                        e.Cancel = True
+                                    End If
+                                End Sub
         inputTimer.Start() : timer.Start() : RefreshStatus()
         AddHandler Shown, Sub() FitInitialWindow()
         AddHandler Shown, Async Sub() Await CheckStartupUpdate()
@@ -327,8 +334,19 @@ Public Class MainForm
     End Sub
     Private Sub BuildLaunchTab()
         Dim content = TabLayout("Launcher")
+        customTracks = New CustomTrackPanel(context)
+        content.Controls.Add(customTracks)
         Dim columns As New ResponsiveColumns()
         content.Controls.Add(columns)
+        AddHandler customTracks.AvailabilityChanged, Sub()
+                                                          If customTracks.CustomEnabled Then
+                                                              content.Controls.Remove(columns)
+                                                          ElseIf Not content.Controls.Contains(columns) Then
+                                                              content.Controls.Add(columns) : content.Controls.SetChildIndex(columns, 1)
+                                                          End If
+                                                          RefreshLaunchAvailability()
+                                                      End Sub
+        If customTracks.CustomEnabled Then content.Controls.Remove(columns)
         Dim selection = Section(columns.First, "Event selection")
         Dim race = Section(columns.Second, "Race options")
         Dim labels = {"Launch mode", "Event", "Track", "Car", "Opponent cars"}
@@ -352,12 +370,12 @@ Public Class MainForm
         opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, settings.OpponentCars)
         AddHandler opponentCars.SelectedIndexChanged, Sub() RefreshOpponentHint()
         AddHandler carChoice.SelectedIndexChanged, Sub() RefreshOpponentHint()
-        eventChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) Directory.Exists(t.Folder(context))).Select(Function(t) t.Event).Distinct().Order().Cast(Of Object).ToArray())
+        eventChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) PrototypeTrack.Installed(t, context)).Select(Function(t) t.Event).Distinct().Order().Cast(Of Object).ToArray())
         carChoice.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
         AddHandler eventChoice.SelectedIndexChanged, Sub()
                                                         Dim previous = TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id
                                                         trackChoice.Items.Clear()
-                                                        trackChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) t.Event = CStr(eventChoice.SelectedItem) AndAlso Directory.Exists(t.Folder(context))).OrderBy(Function(t) t.Label).Cast(Of Object).ToArray())
+                                                        trackChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) t.Event = CStr(eventChoice.SelectedItem) AndAlso PrototypeTrack.Installed(t, context)).OrderBy(Function(t) t.Label).Cast(Of Object).ToArray())
                                                         trackChoice.SelectedItem = trackChoice.Items.Cast(Of PracticeTrack).FirstOrDefault(Function(t) t.Id = previous)
                                                         If trackChoice.SelectedIndex < 0 AndAlso trackChoice.Items.Count > 0 Then trackChoice.SelectedIndex = 0
                                                     End Sub
@@ -378,12 +396,20 @@ Public Class MainForm
                                                     End Sub
         launchMode.SelectedIndex = Math.Max(0, Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode))
         content.Controls.Add(opponentHint)
-        content.Controls.Add(HelpLink(Sub() ShowAbout("Getting started")))
+        content.Controls.Add(HelpLink(Sub() ShowAbout(If(customTracks.CustomEnabled, "Custom tracks", "Getting started"))))
     End Sub
     Private Sub RefreshOpponentHint()
-        launchButton.Enabled = Not busy
+        RefreshLaunchAvailability()
         Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
+    End Sub
+    Private Sub RefreshLaunchAvailability()
+        Dim working = busy OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
+        desktopButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
+        launchButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
+        saveButton.Enabled = Not working : recoverButton.Enabled = Not working
+        hostButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
+        joinButton.Enabled = hostButton.Enabled AndAlso If(SelectedHost()?.Joinable, False)
     End Sub
     Private Async Sub ShowAbout(Optional topic As String = Nothing)
         Dim changed As Boolean
@@ -665,6 +691,7 @@ Public Class MainForm
         settings.Validate()
         SaveSeats()
         Files.SaveJson(context.PreferencesPath, settings)
+        customTracks.Save()
         stateLabel.Text = "Settings saved. Changes apply to the next session."
     End Sub
     Private Sub Spawn(ParamArray arguments As String())
@@ -775,9 +802,8 @@ Public Class MainForm
                 End Try
             End If
             RefreshSeatAvailability()
-            desktopButton.Enabled = Not busy : launchButton.Enabled = Not busy : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
-            hostButton.Enabled = Not busy : refreshServers.Enabled = Not busy AndAlso Not scanning
-            joinButton.Enabled = Not busy AndAlso If(SelectedHost()?.Joinable, False)
+            RefreshLaunchAvailability()
+            refreshServers.Enabled = Not busy AndAlso Not scanning
             tabs.Enabled = Not busy
             Dim currentStatus = If(status Is Nothing, "", status.State & status.UpdatedUtc.ToString("O"))
             If currentStatus <> lastStatus Then
@@ -785,7 +811,7 @@ Public Class MainForm
             End If
             If busy Then
                 stateLabel.Text = status.State & If(status.Message <> "", ": " & status.Message, "")
-            ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending OrElse New StartupMovies(context).Pending OrElse New DirectMenus(context).Pending Then
+            ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending OrElse New StartupMovies(context).Pending OrElse New DirectMenus(context).Pending OrElse CustomTrackService.RecoveryPending(context) Then
                 stateLabel.Text = "Recovery pending. Close the game and choose Restore original files."
             ElseIf status IsNot Nothing AndAlso status.State = "Failed" Then
                 stateLabel.Text = "Failed: " & status.Message

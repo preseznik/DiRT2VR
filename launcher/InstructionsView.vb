@@ -7,7 +7,7 @@ Public Class InstructionsView
     Private ReadOnly picker As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Name = "InstructionTopicPicker", .AccessibleName = "Instruction topic"}
     Private ReadOnly article As New RichTextBox With {.ReadOnly = True, .BorderStyle = BorderStyle.None, .WordWrap = True, .ScrollBars = RichTextBoxScrollBars.Vertical, .DetectUrls = False, .Name = "InstructionArticle", .AccessibleName = "Instructions"}
     Private updating As Boolean
-    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position"}
+    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom tracks"}
     Private Shared ReadOnly Pages As String() = {
         "Launch
 Launch plays on your monitor. Launch VR uses SteamVR: start SteamVR and connect your headset first. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
@@ -136,7 +136,21 @@ Separate shortcuts
 Controls also provides six optional seat movement bindings. These are unassigned by default and save automatically when movement stops. In the panel, Save keeps the preview; Cancel, leaving cockpit VR or changing cars discards it. If the car cannot be identified, adjustment is disabled rather than saved against another car.
 
 Current testing
-Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests."}
+Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
+        "Install Aspen (Experimental)
+Close DiRT 2. On Launcher, check CUSTOM tracks and choose Install Aspen. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Download and build to check the source files and build all four layouts. No SDK or separate .NET installation is needed. The download contains conversion tools, not game assets.
+
+Play
+After installation, choose a layout and then Launch. Aspen uses desktop Direct practice, solo Subaru STI, one lap. Launch VR, AI races and LAN are unavailable. Conversion happens before installation, never during game loading.
+
+Layouts
+Lakeside: night. Lake View: morning sun. Snowmass Sprint: evening sun. Snowmass Loop: overcast. These are Rallycross layouts. Ski-lift animation, full snowfall and deformable snow remain unsupported.
+
+Offline and original tracks
+Installed tracks work offline without DiRT 3. Keep the source installation for rebuilds and updates. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
+
+Manage and recover
+Manage offers optional track updates, file verification, rebuilding and uninstalling. Unsupported source files are named: choose the correct folder or verify original files in Steam. Cancellation keeps existing tracks usable. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files."}
     Public Sub New()
         Dock = DockStyle.Fill
         Controls.AddRange({topics, picker, article})

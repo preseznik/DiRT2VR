@@ -29,5 +29,6 @@
     <Import Include="System.Threading" />
     <Import Include="System.Runtime.InteropServices" />
     <ProjectReference Include="../tools/ego-xml/EgoXml.csproj" />
+    <ProjectReference Include="../tools/custom-tracks/CustomTracks.csproj" />
   </ItemGroup>
 </Project>

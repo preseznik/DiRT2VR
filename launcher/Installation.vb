@@ -61,11 +61,16 @@ Public Class Installation
 End Class
 
 Public Module Worker
-    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same")
+    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing)
         context.ValidateGame() : context.RequireClosed()
         Select Case operation
             Case "setup" : Call (New Installation(context)).Setup()
             Case "prepare", "prepare-desktop"
+                If CustomTracks.AspenPack.IsLayout(trackId) Then
+                    CustomTracks.AspenPack.RequireMode(trackId, operation <> "prepare-desktop", "practice", carCode, opponents, 1)
+                    CustomTrackService.RequireLauncher(CustomTracks.AspenPack.Read(context.GameRoot, False))
+                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId)
+                End If
                 Dim transaction As New AssetTransaction(context)
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars)
             Case "prepare-lan"
@@ -75,19 +80,32 @@ Public Module Worker
             Case "prepare-direct-menus", "prepare-direct-menus-movies"
                 Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies")
             Case "recover"
+                CustomTracks.SessionFiles.Recover(context.GameRoot)
+                CustomTracks.PackInstallation.Recover(context.GameRoot)
                 Call (New DirectMenus(context)).Recover()
                 Call (New StartupMovies(context)).Recover()
                 Call (New LanTransaction(context)).Recover()
                 Call (New AssetTransaction(context)).Recover()
-            Case "remove" : Call (New Installation(context)).RemoveProxy()
+            Case "install-custom"
+                CustomTracks.SessionFiles.Recover(context.GameRoot)
+                CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
+            Case "remove-custom"
+                CustomTracks.PackInstallation.Uninstall(context.GameRoot)
+            Case "remove"
+                CustomTracks.SessionFiles.Recover(context.GameRoot)
+                Call (New Installation(context)).RemoveProxy()
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False)
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing)
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
         Next
+        If workId IsNot Nothing Then
+            CustomTrackService.Staging(context, workId)
+            start.ArgumentList.Add("--track-work") : start.ArgumentList.Add(workId)
+        End If
         If operation = "prepare" OrElse operation = "prepare-desktop" Then
             start.ArgumentList.Add("--opponent-cars") : start.ArgumentList.Add(opponentCars)
             start.ArgumentList.Add("--opponents") : start.ArgumentList.Add(opponents.ToString(Globalization.CultureInfo.InvariantCulture))
