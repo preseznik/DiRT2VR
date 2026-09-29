@@ -37,7 +37,7 @@ Source: "{#Stage}\DiRT2VR\*"; DestDir: "{app}\DiRT2VR"; Flags: ignoreversion rec
 
 [Messages]
 WizardInfoBefore=What's new in DiRT2VR {#PackageVersion}
-InfoBeforeLabel=Changes in this experimental update:
+InfoBeforeLabel=Changes included in this version:
 
 [Tasks]
 Name: desktopicon; Description: "Create a desktop shortcut"; Flags: unchecked
