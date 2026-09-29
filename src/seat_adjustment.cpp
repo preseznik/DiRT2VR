@@ -20,7 +20,7 @@ unsigned char* channel{};
 std::mutex mutex;
 std::map<void*,std::string> identities;
 std::atomic<int> selected{-1};
-int active=-1;
+int active=-2;
 seat::Position current{},opening{},saved{};
 seat::Movement movement;
 bool panel{},dirty{},sideways{},inputReady{},eligible{};
@@ -39,20 +39,23 @@ std::string CarString(int index,unsigned offset,unsigned length) {
     const char* value=reinterpret_cast<const char*>(channel+table+stride*index+offset);
     return std::string(value,strnlen_s(value,length));
 }
+bool Universal() { return Read<unsigned>(188)==1; }
+bool CanAdjust() { return Universal() || active>=0; }
+seat::Position SavedPosition() { return Universal() ? Read<seat::Position>(192) : active>=0 ? Read<seat::Position>(table+active*stride+64) : seat::Position{}; }
 void Publish(bool commit=false) {
     if(!channel) return;
     InterlockedIncrement(reinterpret_cast<LONG*>(channel+92));
     overlay.enabled=panel;
-    Write(80,unsigned(panel)); Write(84,unsigned(!inputReady ? 2 : active<0 ? 1 : 0));
+    Write(80,unsigned(panel)); Write(84,unsigned(!inputReady ? 2 : !CanAdjust() ? 1 : 0));
     Write(88,active); Write(96,current);
-    if(commit && active>=0) {
-        Write(108,current); Write(120,active);
+    if(commit && CanAdjust()) {
+        Write(108,current); Write(120,Universal() ? -2 : active);
         Write(124,Read<unsigned>(124)+1);
-        Write(table+stride*active+64,current);
+        if(Universal()) Write(192,current); else Write(table+stride*active+64,current);
     }
     MemoryBarrier(); InterlockedIncrement(reinterpret_cast<LONG*>(channel+92));
 }
-void Commit() { if(active>=0 && current!=saved) { saved=current; Publish(true); } dirty=false; }
+void Commit() { if(CanAdjust() && current!=saved) { saved=current; Publish(true); } dirty=false; }
 void Cancel() { if(panel) current=opening; panel=false; movement.Reset(); }
 bool Key(unsigned vk) { return vk && (GetAsyncKeyState(int(vk))&0x8000)!=0; }
 unsigned Modifiers() { return (Key(VK_CONTROL)?1:0)|(Key(VK_MENU)?2:0)|(Key(VK_SHIFT)?4:0); }
@@ -111,7 +114,7 @@ public:
             if(FAILED(device->CreateTexture2D(&d,nullptr,&texture_))) throw std::runtime_error("seat panel texture");
         }
         std::wstring name;
-        const auto text=CarString(active,16,48);
+        const auto text=Universal() ? std::string("All cars (universal)") : CarString(active,16,48);
         int n=MultiByteToWideChar(CP_UTF8,0,text.data(),int(text.size()),nullptr,0);
         name.resize(n); MultiByteToWideChar(CP_UTF8,0,text.data(),int(text.size()),name.data(),n);
         wchar_t values[256]{};
@@ -132,7 +135,7 @@ public:
             Gdiplus::Font title(L"Segoe UI",43,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),normal(L"Segoe UI",29,Gdiplus::FontStyleRegular,Gdiplus::UnitPixel),bold(L"Segoe UI",32,Gdiplus::FontStyleBold,Gdiplus::UnitPixel);
             auto label=[&](const wchar_t* s,float x,float y,float width,float height,Gdiplus::Font& f,Gdiplus::Brush& brush) { g.DrawString(s,-1,&f,Gdiplus::RectF(x,y,width,height),nullptr,&brush); };
             label(L"SEAT POSITION",40,30,690,65,title,white);
-            label(active<0?L"Car not identified":name.c_str(),40,98,690,80,normal,white);
+            label(!CanAdjust()?L"Car not identified":name.c_str(),40,98,690,80,normal,white);
             label(close.c_str(),40,174,690,45,normal,green);
             // Seat pictogram, deliberately vector drawn rather than a font glyph.
             Gdiplus::Pen seatPen(Gdiplus::Color(255,245,245,245),24);
@@ -147,7 +150,7 @@ public:
             label(L"UP",356,286,90,45,bold,white); label(L"DOWN",335,597,130,45,bold,white);
             label(sideways?L"LEFT":L"BACK",55,451,180,45,bold,white); label(sideways?L"RIGHT":L"FORWARD",550,451,205,45,bold,white);
             label(values,175,670,550,145,bold,white);
-            label(!inputReady?L"Input filtering unavailable":active<0?L"Adjustment unavailable for this car":L"Arrows / D-pad: move",40,838,690,45,normal,white);
+            label(!inputReady?L"Input filtering unavailable":!CanAdjust()?L"Adjustment unavailable for this car":L"Arrows / D-pad: move",40,838,690,45,normal,white);
             label(hint.c_str(),40,886,690,120,normal,white);
             Gdiplus::BitmapData data{}; Gdiplus::Rect rect(0,0,768,1024);
             if(bitmap.LockBits(&rect,Gdiplus::ImageLockModeRead,PixelFormat32bppPARGB,&data)!=Gdiplus::Ok) throw std::runtime_error("seat panel bitmap");
@@ -166,7 +169,7 @@ bool EnableSeatAdjustment() {
     HANDLE mapping=OpenFileMappingW(FILE_MAP_ALL_ACCESS,FALSE,name); if(!mapping) return false;
     channel=static_cast<unsigned char*>(MapViewOfFile(mapping,FILE_MAP_ALL_ACCESS,0,0,bytes)); CloseHandle(mapping);
     if(!channel) return false;
-    if(Read<unsigned>(0)!=0x54414553 || Read<unsigned>(4)!=1 || Read<unsigned>(8)!=bytes || Read<unsigned>(184)>maxCars || Read<unsigned>(11300)>64) { UnmapViewOfFile(channel); channel=nullptr; return false; }
+    if(Read<unsigned>(0)!=0x54414553 || Read<unsigned>(4)!=2 || Read<unsigned>(8)!=bytes || Read<unsigned>(184)>maxCars || Read<unsigned>(11300)>64 || Read<unsigned>(188)>1 || !seat::Valid(Read<seat::Position>(192))) { UnmapViewOfFile(channel); channel=nullptr; return false; }
     if(!SupportedHost()) { UnmapViewOfFile(channel); channel=nullptr; return false; }
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
     const unsigned char guard[]={0x56,0x8b,0xf1,0x8b,0x4c,0x24,0x08,0x85,0xc9,0x74,0x3e,0x8d,0x86,0xd0,0x81,0,0};
@@ -204,7 +207,7 @@ void SeatPrepare(const std::array<XrView,2>& views) {
     eligible=inputReady;
     const auto now=GetTickCount64(); const double dt=lastTick ? double(now-lastTick)/1000 : 0; lastTick=now;
     if(selected!=active) {
-        Cancel(); if(dirty) Commit(); active=selected; current=saved=active>=0 ? Read<seat::Position>(table+active*stride+64) : seat::Position{};
+        Cancel(); if(dirty) Commit(); active=selected; current=saved=SavedPosition();
         if(!seat::Valid(current)) current=saved={}; previousHeld=~0u;
     }
     ReadInput();
@@ -226,7 +229,7 @@ void SeatPrepare(const std::array<XrView,2>& views) {
         if(held&(1u<<9)) directions|=sideways?1:16;
         if(held&(1u<<10)) directions|=sideways?2:32;
     }
-    if(inputReady && active>=0 && movement.Update(current,directions,dt)) { dirty=!panel; lastChange=now; }
+    if(inputReady && CanAdjust() && movement.Update(current,directions,dt)) { dirty=!panel; lastChange=now; }
     if(dirty && !directions && now-lastChange>=300) Commit();
     overlay.pose=panelPose; Publish();
 }

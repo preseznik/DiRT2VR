@@ -7,6 +7,18 @@ Public Class CustomTrackPreferences
     Public Property Enabled As Boolean
     Public Property LayoutId As String = "aspen-lakeside"
     Public Property SourceFolder As String = ""
+    Public Property LaunchMode As String = "practice"
+    Public Property CarCode As String = "sti"
+    Public Property Opponents As Integer = 3
+    Public Property OpponentCars As String = "same"
+    Public Property Laps As Integer = 1
+    Public Sub ApplyTo(settings As VrSettings)
+        AspenPack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", Opponents, 0), Laps)
+        RaceCatalog.Current.Car(CarCode)
+        If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
+        settings.TrackId = LayoutId : settings.LaunchMode = LaunchMode : settings.CarCode = CarCode
+        settings.Opponents = Opponents : settings.OpponentCars = OpponentCars : settings.Laps = Laps
+    End Sub
     Public Shared Function Load(context As InstallContext) As CustomTrackPreferences
         Dim path = IO.Path.Combine(context.UserRoot, "custom-tracks.json")
         Return If(File.Exists(path), Files.ReadJson(Of CustomTrackPreferences)(path), New CustomTrackPreferences())

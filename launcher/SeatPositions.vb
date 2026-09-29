@@ -46,10 +46,15 @@ End Class
 Public Class SeatPositions
     Public Property Version As Integer = 1
     Public Property Cars As New Dictionary(Of String, SeatPosition)(StringComparer.Ordinal)
+    Public Property UseUniversal As Boolean = False
+    Public Property Universal As New SeatPosition
+
     Public Shared Function Load(context As InstallContext) As SeatPositions
         Dim path = IO.Path.Combine(context.UserRoot, "seat-positions.json")
         Dim result = If(File.Exists(path), Files.ReadJson(Of SeatPositions)(path), New SeatPositions)
         If result Is Nothing OrElse result.Version <> 1 OrElse result.Cars Is Nothing OrElse result.Cars.Count > 128 Then Throw New IOException("Unsupported seat positions file.")
+        If result.Universal Is Nothing Then Throw New IOException("Invalid universal seat position.")
+        result.Universal.Validate()
         For Each item In result.Cars
             If Not Text.RegularExpressions.Regex.IsMatch(item.Key, "^[a-z0-9_]{1,15}$") OrElse item.Value Is Nothing Then Throw New IOException("Invalid saved seat position.")
             item.Value.Validate()
@@ -87,9 +92,11 @@ Public Class SeatChannel
         context = installation : settings = preferences : positions = SeatPositions.Load(context)
         cars = RaceCatalog.Current.Cars.Take(128).ToArray()
         mapping = MemoryMappedFile.CreateNew(Name, Size) : view = mapping.CreateViewAccessor()
-        view.Write(0, &H54414553) : view.Write(4, 1) : view.Write(8, Size)
+        view.Write(0, &H54414553) : view.Write(4, 2) : view.Write(8, Size)
         view.Write(12, CUInt(Environment.TickCount64 And &HFFFFFFFFL)) : view.Write(88, -1) : view.Write(120, -1)
         view.Write(184, cars.Length)
+        view.Write(188, If(positions.UseUniversal, 1, 0))
+        view.Write(192, positions.Universal.X) : view.Write(196, positions.Universal.Y) : view.Write(200, positions.Universal.Z)
         For i = 0 To 6
             view.Write(128 + i * 8, settings.SeatKeys(i).Key) : view.Write(132 + i * 8, settings.SeatKeys(i).Modifiers)
         Next
@@ -233,8 +240,14 @@ Public Class SeatChannel
         Dim p As New SeatPosition With {.X = view.ReadSingle(108), .Y = view.ReadSingle(112), .Z = view.ReadSingle(116)}
         Thread.MemoryBarrier()
         If before <> view.ReadInt32(92) OrElse nextGeneration = generation Then Return
-        If index < 0 OrElse index >= cars.Length Then Return
-        p.Validate() : positions.Cars(cars(index).Code) = p : positions.Save(context)
+        If positions.UseUniversal Then
+            If index <> -2 Then Return
+            p.Validate() : positions.Universal = p
+        Else
+            If index < 0 OrElse index >= cars.Length Then Return
+            p.Validate() : positions.Cars(cars(index).Code) = p
+        End If
+        positions.Save(context)
         generation = nextGeneration
     End Sub
     Public Sub Dispose() Implements IDisposable.Dispose

@@ -2,7 +2,7 @@ Imports System.Drawing
 Imports System.Windows.Forms
 
 Public Class DrivingBindingWizard
-    Inherits Form
+    Inherits LauncherForm
     Private ReadOnly context As InstallContext
     Private ReadOnly actions As String()
     Private ReadOnly answers As DrivingBinding()
@@ -115,7 +115,7 @@ Public Class DrivingBindingWizard
         stepLabel.Text = $"Step {index + 1} of {actions.Length}"
         heading.Text = actions(index).ToUpperInvariant()
         actionIcon.Visible = True : actionIcon.SetAction(actions(index))
-        instruction.Text = If(source.SelectedIndex = 1, "Press and release a key.", "Center steering. Release pedals and handbrake. Shifter in neutral.")
+        instruction.Text = If(source.SelectedIndex = 1, "Press and release a key (including Escape). Use Cancel to leave.", "Center steering. Release pedals and handbrake. Shifter in neutral.")
         status.Text = If(source.SelectedIndex = 1, "Ready", "Keep still for a moment…")
     End Sub
     Private Shared Function Gesture(action As String) As String
@@ -135,7 +135,7 @@ Public Class DrivingBindingWizard
     Protected Overrides Function ProcessCmdKey(ByRef message As Message, keyData As Keys) As Boolean
         If index >= actions.Length OrElse source.SelectedIndex <> 1 Then Return MyBase.ProcessCmdKey(message, keyData)
         Dim pressed = keyData And Keys.KeyCode
-        If pressed = Keys.Escape OrElse pressed = Keys.Tab Then Return MyBase.ProcessCmdKey(message, keyData)
+        If pressed = Keys.Tab Then Return MyBase.ProcessCmdKey(message, keyData)
         If key <> Keys.None Then Return True
         Dim mapped = If(pressed = Keys.ShiftKey, Keys.LShiftKey, If(pressed = Keys.ControlKey, Keys.LControlKey, pressed))
         Dim native = DrivingControls.KeyInput(mapped)

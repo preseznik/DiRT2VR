@@ -61,7 +61,7 @@ Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edi
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
 2. Choose **Install Aspen**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the game folder containing `tracks\locations\usa\aspen`, wherever Steam installed it.
 3. Choose **Build and install**. Leave the launcher open while it checks your source files and builds all four layouts using the included tools. **Cancel** stops conversion safely; an existing installation stays usable.
-4. Select a layout and choose **Launch**. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
+4. Select a layout, **Direct practice** or **Race**, and a **Car**. Choose **Launch** for desktop play or **Launch VR** with SteamVR and your headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
 
 | Layout | Default lighting |
 | --- | --- |
@@ -70,11 +70,11 @@ Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edi
 | Snowmass Sprint | Evening sun |
 | Snowmass Loop | Overcast |
 
-Aspen currently uses **desktop Direct practice, solo Subaru STI, one lap**. VR, AI races and LAN are unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
+Aspen offers experimental **desktop and VR** play with installed cars. **Direct practice** is solo; **Race** adds 1–7 AI opponents, using the same car, mixed cars or cars in your class. Use the sliders to choose opponents and 1–20 laps. If Aspen was already installed, choose **Rebuild Aspen** once to update its AI paths before racing; solo practice remains available. Aspen headset rendering and broader AI race coverage still need gameplay validation; LAN is unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
 
 Snowmass Sprint omits the decorative beams on the ski hillside where they flickered with viewing angle or distance. The towers, bright lamp faces and ground lighting remain, along with the other beams around the course. The other three layouts are unchanged by this workaround.
 
-Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Conversion-tool updates arrive with DiRT2VR updates.
+Custom layout, car, race and lap selections are saved separately. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Conversion-tool updates arrive with DiRT2VR updates.
 
 If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Rebuild Aspen from source**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
 
@@ -86,11 +86,13 @@ The launcher matches the Windows app light/dark setting when opened. Reopen it a
 
 **Launcher** selects how to start. **Settings** contains the game location, SteamVR runtime and setup instructions. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts and graphics preferences are preserved when upgrading.
 
+**Settings → Appearance → Modern interface** previews the compact modern look immediately; turn it off for Classic. Select **Save settings** to keep your choice. Existing installations start in Classic; fresh installations start in Modern. Both follow Windows light/dark appearance. In Modern Controls, click a binding cell to change it, **+** to add another controller assignment and **×** to remove one. Hover shortened cells for full device details.
+
 **Settings → Enable diagnostic logging** is off by default, including when upgrading older settings. Enable it and save before a troubleshooting run to collect preflight details and game-side logs in **Open logs**. Turn it off afterward to stop generating session logs, frame CSVs and diagnostic captures. Existing logs are kept; you can remove them yourself when no longer needed. Settings, the latest session/refresh-rate/resolution summaries and recovery journals remain available with logging off so the launcher can restore your game files safely.
 
 ### Direct practice (experimental)
 
-On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**, and a **Car**, then **Launch VR**. Event filters the track list by discipline; this is solo practice, not a career event. The launcher lists installed routes and cars from the supported game's catalog. The Subaru STI is the tested cockpit; other car interiors are experimental.
+On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**, and a **Car**, then **Launch VR**. Event filters the track list by discipline; this is solo practice, not a career event. The launcher lists installed routes and cars from the supported game's catalog.
 
 Direct practice bypasses the trailer menus and loads a player-driven car. Launch VR selects the cockpit and enables VR automatically; regular Launch retains your desktop camera. At the finish, choose **Restart** or **Return to menus**. The pause menu also provides Continue, Restart and Return to menus. **Return to menus closes the game and automatically reopens Normal Launch**, keeping Desktop or VR mode; expect another loading sequence. Your saved launcher selections stay unchanged. Alt+F4 quits without reopening. Saved practice selections also work with `Start-DiRT2VR.cmd`.
 
@@ -171,7 +173,9 @@ Assignments stay attached to the selected device. A disconnected device is not r
 
 **Driving controls:** Direct practice and Race now load the existing saved profile before the event, including its control settings. Save your profile after configuring controls in the game. No additional career save is created. If no profile can be loaded, the event uses the game's defaults. Fanatec pedal validation is pending.
 
-For optional launcher assignments, open **Controls → Configure driving controls…**. For Xbox controllers, **Xbox preset** applies the game's standard layout: left-stick steering, RT accelerator, LT brake, A handbrake and B/X shifting. It retains keyboard assignments. Choose **Save driving controls**, then launch again.
+For optional launcher assignments, open **Controls → Configure driving controls…**. For Xbox controllers, **Xbox preset** applies left-stick steering, RT accelerator, LT brake, A handbrake and B/X shifting, plus Start to pause/start, A to confirm, B to go back and D-pad menu navigation. It retains keyboard assignments. Choose **Save driving controls**, then launch again.
+
+For a custom controller or wheel, bind **Pause** and **Menu Start Button** to your Start button. **Menu Select** confirms, **Menu Back** cancels, and **Menu Up/Down/Left/Right** navigate. You can also bind keyboard Escape; during keyboard capture, use the **Cancel** button to leave without assigning it.
 
 **Binding wizard…** walks through the actions in order, automatically listening to all connected controllers. Center the wheel/stick, release pedals and handbrake, and wait for **Ready**. Move the requested control, hold an axis briefly, then return to rest; the wizard advances automatically. A nonzero resting handbrake axis or held switch does not count as a new input. Choose a specific device or **Axis only / Button only** if necessary. Steering, pedals and shifters may use separate devices. For keyboard assignments, select **Keyboard** in the wizard. **Skip** keeps the current assignment; **Back** revisits a step; **Cancel** discards the wizard's changes. Review, **Apply bindings**, then **Save driving controls**. Applying bindings enables launcher overrides.
 
@@ -279,4 +283,4 @@ In cockpit VR, stop the car and press **Tab**. Use **Up/Down** to raise/lower yo
 
 Xbox controllers use the D-pad, **X** as the sideways modifier, **A** to save and **B** to cancel. Assign a panel-opening button in **Controls**. Wheels can use their POV hat; assign the panel modifier/save/cancel buttons in Controls.
 
-**Graphics → VR cockpit** also has position sliders and a per-car reset. Positions are saved separately for each car and survive recentering. The seat panel is the recommended way to adjust your view. Six optional movement shortcuts are under **Controls → Individual seat bindings (optional)**; expand that section to assign them. Extreme offsets can reveal missing interior geometry. Panel movement, save/cancel, recenter retention and relaunch persistence passed the reported headset check. Physical wheel navigation and broader rendering checks with adjusted seats remain unverified.
+**Graphics → VR cockpit** also has position sliders and a per-car reset. Positions are saved separately for each car and survive recentering. Enable **Use universal seat position** for one shared position across all cars. The car picker is disabled in this mode; sliders, reset and in-game adjustments edit the shared position. Turn it off to restore your saved per-car positions. Save settings and relaunch to change modes. The seat panel is the recommended way to adjust your view. All nine optional shortcuts—six movements, Panel sideways modifier, Panel save and Panel cancel—are under **Controls → Individual seat bindings (optional)**, collapsed by default in both styles. Expand it to assign them. Fixed panel keyboard shortcuts are read-only. Extreme offsets can reveal missing interior geometry. Panel movement, save/cancel, recenter retention and relaunch persistence passed the reported headset check. Physical wheel navigation and broader rendering checks with adjusted seats remain unverified.

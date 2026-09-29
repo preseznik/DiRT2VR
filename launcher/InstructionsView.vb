@@ -7,7 +7,7 @@ Public Class InstructionsView
     Private ReadOnly picker As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Name = "InstructionTopicPicker", .AccessibleName = "Instruction topic"}
     Private ReadOnly article As New RichTextBox With {.ReadOnly = True, .BorderStyle = BorderStyle.None, .WordWrap = True, .ScrollBars = RichTextBoxScrollBars.Vertical, .DetectUrls = False, .Name = "InstructionArticle", .AccessibleName = "Instructions"}
     Private updating As Boolean
-    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom tracks"}
+    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom tracks", "Appearance"}
     Private Shared ReadOnly Pages As String() = {
         "Launch
 Launch plays on your monitor. Launch VR uses SteamVR: start SteamVR and connect your headset first. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
@@ -68,13 +68,13 @@ Choose gauges (speedometer, gear and revs), lap/time, race position, route map a
 Scope
 These options affect the cockpit HUD, not the centre of the view, desktop HUD, menus or virtual screen. Save and relaunch VR to apply. Alternative HUD layouts and nondefault distances still need broader headset testing.",
         "VR shortcuts
-Click a keyboard binding, then press a key with optional Ctrl, Alt or Shift. Bind assigns one controller button or a two-button combination on the same device. Release the buttons to finish. Escape cancels. Multiple devices may be assigned.
+Click a keyboard binding, then press a key with optional Ctrl, Alt or Shift. In Modern, click a controller cell to replace it, + to add another, or × to remove it. In Classic, use Bind and Remove selected. Assign one button or a two-button combination on the same device. Release the buttons to finish. Escape cancels. Multiple devices may be assigned.
 
 Button conflicts
 Controller buttons still reach DiRT 2. Avoid combinations that also trigger driving or menu actions. Disconnected assignments are kept; Xbox slot changes may require selecting the controller again.
 
 Driving controls
-Direct practice and Race load the existing profile's controls. Configure driving controls opens the optional editor and binding wizard for steering, pedals, clutch, handbrake and gears. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings.
+Direct practice and Race load the existing profile's controls. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
 
 Deadzone resets
 Enabled launcher assignments and calibration reapply on every launch. The editor shows dead zone and saturation beside each controller assignment. To retain zero steering deadzone with launcher bindings, set Calibration to 0% for both Steer Left and Steer Right, then Save driving controls. Alternatively, disable launcher bindings and use the game's saved controls. If a reset persists with overrides disabled, report the wheel model, launch mode and whether the game's Save Profile action retains the setting across two launches.
@@ -129,11 +129,11 @@ Up/Down raises or lowers the seat. Left/Right moves back or forward. Hold Shift 
 Wheels
 Bind Open seat adjustment in Controls. Your wheel POV hat navigates the panel; assign Panel sideways modifier, Panel save and Panel cancel to wheel buttons. Keyboard controls remain available. Assigned seat shortcut buttons are reserved in cockpit VR, including both parts of a pair. Panel navigation buttons are reserved while the panel is open; unrelated driving controls keep working.
 
-Per-car positions
-Graphics → VR cockpit provides Height, Forward/back and Left/right sliders, plus Reset seat position for the selected car. Save settings before launching. Positions are saved per car, including cars selected through the normal game menus. Positive values mean up, forward and right. Adjustment is limited to 50 cm each way; extreme positions can expose missing cockpit geometry.
+Universal or per-car positions
+Graphics → VR cockpit provides Height, Forward/back and Left/right sliders, plus Reset seat position for the selected car. Save settings before launching. Positions are saved per car, including cars selected through the normal game menus. Enable Use universal seat position for one shared position in every car. The car picker is disabled; launcher sliders/reset and in-game adjustments then change the shared position. Your individual car positions stay saved and resume when you turn the toggle off. Mode changes apply on the next launch. Positive values mean up, forward and right. Adjustment is limited to 50 cm each way; extreme positions can expose missing cockpit geometry.
 
 Separate shortcuts
-Controls also provides six optional seat movement bindings. These are unassigned by default and save automatically when movement stops. In the panel, Save keeps the preview; Cancel, leaving cockpit VR or changing cars discards it. If the car cannot be identified, adjustment is disabled rather than saved against another car.
+Controls also provides six optional seat movement bindings. These are unassigned by default and save automatically when movement stops. In the panel, Save keeps the preview; Cancel, leaving cockpit VR or changing cars discards it. In per-car mode, adjustment is disabled if the car cannot be identified. Universal mode does not need a car identity.
 
 Current testing
 Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
@@ -141,16 +141,25 @@ Seat adjustment is experimental. Headset and physical-wheel checks are separate 
 Close DiRT 2. On Launcher, check CUSTOM tracks and choose Install Aspen. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Build and install to check the source files and build all four layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
 
 Play
-After installation, choose a layout and then Launch. Aspen uses desktop Direct practice, solo Subaru STI, one lap. Launch VR, AI races and LAN are unavailable. Conversion happens before installation, never during game loading.
+After installation, choose a layout, Direct practice or Race, and a Car. Choose Launch for desktop play or Launch VR with SteamVR and your headset ready. Practice is solo; Race adds 1–7 AI opponents with same-car, mixed or same-class grids. Use the sliders to choose opponents and 1–20 laps. These options are experimental: Aspen headset rendering and broader AI race coverage still need gameplay validation. LAN is unavailable. Rebuild an existing Aspen installation once to update AI paths before racing; solo practice remains available. Conversion happens before installation, never during game loading.
 
 Layouts
 Lakeside: night. Lake View: morning sun. Snowmass Sprint: evening sun. Snowmass Loop: overcast. These are Rallycross layouts. Ski-lift animation, full snowfall and deformable snow remain unsupported.
 
 Offline and original tracks
-Installed tracks work offline without DiRT 3. Keep the source installation for rebuilds and updates. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
+Installed tracks work offline without DiRT 3. Keep the source installation for rebuilds and updates. Custom layout, car, race and lap settings are saved separately. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
 
 Manage and recover
-Manage offers optional track updates, file verification, rebuilding and uninstalling. Unsupported source files are named: choose the correct folder or verify original files in Steam. Cancellation keeps existing tracks usable. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files."}
+Manage offers optional track updates, file verification, rebuilding and uninstalling. Unsupported source files are named: choose the correct folder or verify original files in Steam. Cancellation keeps existing tracks usable. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files.",
+        "Modern interface
+Settings → Appearance → Modern interface previews the modern compact layout immediately. Off restores Classic. Save settings keeps your choice. Existing settings start in Classic; fresh installations start in Modern. Both follow Windows light/dark appearance and high-contrast colours.
+
+Controls
+Click a keyboard cell to change it. In Modern, click a controller cell to replace that assignment, + to add another, or × to remove one. Hover a shortened cell to read the full device and button names, including disconnected devices. Classic keeps its Bind and Remove selected buttons. Assignments work the same in either layout.
+
+Seat adjustment
+Open seat adjustment is recommended instead of six separate movement bindings. Expand Individual seat bindings (optional) for all six directions and Panel sideways modifier, Panel save and Panel cancel. Fixed panel keyboard shortcuts are read-only. Collapsing that section or changing appearance cancels active binding capture."
+}
     Public Sub New()
         Dock = DockStyle.Fill
         Controls.AddRange({topics, picker, article})

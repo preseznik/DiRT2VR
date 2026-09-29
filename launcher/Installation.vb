@@ -67,8 +67,11 @@ Public Module Worker
             Case "setup" : Call (New Installation(context)).Setup()
             Case "prepare", "prepare-desktop"
                 If CustomTracks.AspenPack.IsLayout(trackId) Then
-                    CustomTracks.AspenPack.RequireMode(trackId, operation <> "prepare-desktop", "practice", carCode, opponents, 1)
-                    CustomTrackService.RequireLauncher(CustomTracks.AspenPack.Read(context.GameRoot, False))
+                    CustomTracks.AspenPack.RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
+                    RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
+                    Dim receipt = CustomTracks.AspenPack.Read(context.GameRoot, False)
+                    CustomTrackService.RequireLauncher(receipt)
+                    If opponents > 0 AndAlso Not CustomTracks.AspenPack.SupportsRace(receipt) Then Throw New IOException("Rebuild Aspen to update its AI driving paths before starting a Race. Direct practice is still available.")
                     CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId)
                 End If
                 Dim transaction As New AssetTransaction(context)

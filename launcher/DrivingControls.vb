@@ -23,7 +23,7 @@ Public Class DrivingControls
     Public Property Version As Integer = 1
     Public Property Enabled As Boolean
     Public Property Bindings As New List(Of DrivingBinding)
-    Public Shared ReadOnly Actions As String() = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Clutch", "Hand Brake", "Gear Up", "Gear Down", "Gear 1", "Gear 2", "Gear 3", "Gear 4", "Gear 5", "Gear 6", "Gear Reverse", "Change View", "Look Back", "Horn"}
+    Public Shared ReadOnly Actions As String() = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Clutch", "Hand Brake", "Gear Up", "Gear Down", "Gear 1", "Gear 2", "Gear 3", "Gear 4", "Gear 5", "Gear 6", "Gear Reverse", "Change View", "Look Back", "Horn", "Pause", "Menu Start Button", "Menu Select", "Menu Back", "Menu Up", "Menu Down", "Menu Left", "Menu Right"}
     Public Shared ReadOnly Calibrations As String() = {"uniDirectionalPositive", "uniDirectionalNegative", "biDirectionalLower", "biDirectionalUpper"}
     Public Sub Validate()
         If Version <> 1 OrElse Bindings Is Nothing OrElse Bindings.Count > Actions.Length * 2 Then Throw New IOException("Invalid driving-controls configuration.")
@@ -69,8 +69,8 @@ Public Class DrivingControls
     Public Shared Function XboxPreset() As List(Of DrivingBinding)
         ' Match the game's shipped Windows XInput action map (one device input per action).
         Dim result As New List(Of DrivingBinding)
-        Dim actions = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Hand Brake", "Gear Up", "Gear Down", "Change View", "Look Back", "Horn"}
-        Dim inputs = {"analogLeftStickX", "analogLeftStickX", "buttonRightTrigger", "buttonLeftTrigger", "buttonA", "buttonB", "buttonX", "buttonLeftShoulder", "buttonY", "buttonRightStick"}
+        Dim actions = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Hand Brake", "Gear Up", "Gear Down", "Change View", "Look Back", "Horn", "Pause", "Menu Start Button", "Menu Select", "Menu Back", "Menu Up", "Menu Down", "Menu Left", "Menu Right"}
+        Dim inputs = {"analogLeftStickX", "analogLeftStickX", "buttonRightTrigger", "buttonLeftTrigger", "buttonA", "buttonB", "buttonX", "buttonLeftShoulder", "buttonY", "buttonRightStick", "buttonStart", "buttonStart", "buttonA", "buttonB", "buttonDPadUp", "buttonDPadDown", "buttonDPadLeft", "buttonDPadRight"}
         For i = 0 To actions.Length - 1
             result.Add(New DrivingBinding With {.Action = actions(i), .DeviceId = "xinput:0", .Device = "win_xinput", .Input = "win_con_xi_" & inputs(i),
                 .Calibration = If(i = 0, "biDirectionalLower", If(i = 1, "biDirectionalUpper", "uniDirectionalPositive")), .DeadZone = If(i < 2, 0.2D, 0D)})
@@ -112,7 +112,7 @@ Public Class DrivingControls
         If key >= Keys.D0 AndAlso key <= Keys.D9 Then Return "win_key_" & (CInt(key) - CInt(Keys.D0)).ToString()
         If key >= Keys.F1 AndAlso key <= Keys.F12 Then Return "win_key_" & key.ToString().ToLowerInvariant()
         If key >= Keys.NumPad0 AndAlso key <= Keys.NumPad9 Then Return "win_key_numpad" & (CInt(key) - CInt(Keys.NumPad0)).ToString()
-        Dim names As New Dictionary(Of Keys, String) From {{Keys.Space, "space"}, {Keys.Up, "up"}, {Keys.Down, "down"}, {Keys.Left, "left"}, {Keys.Right, "right"}, {Keys.Return, "return"}, {Keys.Tab, "tab"}, {Keys.Home, "home"}, {Keys.End, "end"}, {Keys.Delete, "delete"}, {Keys.Insert, "insert"}, {Keys.PageUp, "prior"}, {Keys.PageDown, "next"}, {Keys.Back, "back"}, {Keys.LShiftKey, "lShift"}, {Keys.RShiftKey, "rShift"}, {Keys.LControlKey, "lControl"}, {Keys.RControlKey, "rControl"}}
+        Dim names As New Dictionary(Of Keys, String) From {{Keys.Escape, "escape"}, {Keys.Space, "space"}, {Keys.Up, "up"}, {Keys.Down, "down"}, {Keys.Left, "left"}, {Keys.Right, "right"}, {Keys.Return, "return"}, {Keys.Tab, "tab"}, {Keys.Home, "home"}, {Keys.End, "end"}, {Keys.Delete, "delete"}, {Keys.Insert, "insert"}, {Keys.PageUp, "prior"}, {Keys.PageDown, "next"}, {Keys.Back, "back"}, {Keys.LShiftKey, "lShift"}, {Keys.RShiftKey, "rShift"}, {Keys.LControlKey, "lControl"}, {Keys.RControlKey, "rControl"}}
         Return If(names.ContainsKey(key), "win_key_" & names.GetValueOrDefault(key), Nothing)
     End Function
 End Class

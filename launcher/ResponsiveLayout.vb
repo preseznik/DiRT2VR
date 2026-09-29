@@ -18,6 +18,31 @@ Public Module LauncherLayout
     Public Sub Field(parent As Control, title As String, value As Control)
         parent.Controls.Add(New SettingRow(title, value))
     End Sub
+    Public Sub StyleChoice(box As ComboBox, owner As Control)
+        box.FlatStyle = FlatStyle.Flat
+        box.DrawMode = DrawMode.OwnerDrawFixed
+        Dim updateColors As Action = Sub()
+                                         box.BackColor = owner.BackColor : box.ForeColor = owner.ForeColor
+                                     End Sub
+        AddHandler owner.BackColorChanged, Sub() updateColors()
+        AddHandler owner.ForeColorChanged, Sub() updateColors()
+        updateColors()
+        AddHandler box.DrawItem, AddressOf DrawChoice
+        AddHandler box.DropDown, Sub() box.DropDownWidth = Math.Min(Px(box, 600), Screen.FromControl(box).WorkingArea.Width)
+    End Sub
+    Private Sub DrawChoice(sender As Object, e As DrawItemEventArgs)
+        Dim box = DirectCast(sender, ComboBox)
+        Dim highlighted = (e.State And DrawItemState.Selected) <> 0 AndAlso (e.State And DrawItemState.ComboBoxEdit) = 0
+        Dim background = If(highlighted, SystemColors.Highlight, box.BackColor)
+        Dim foreground = If(Not box.Enabled, SystemColors.GrayText, If(highlighted, SystemColors.HighlightText, box.ForeColor))
+        Using brush As New SolidBrush(background)
+            e.Graphics.FillRectangle(brush, e.Bounds)
+        End Using
+        If e.Index >= 0 Then
+            TextRenderer.DrawText(e.Graphics, box.GetItemText(box.Items(e.Index)), box.Font, e.Bounds, foreground, TextFormatFlags.Left Or TextFormatFlags.VerticalCenter Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        End If
+        e.DrawFocusRectangle()
+    End Sub
     Public Function HelpLink(action As Action) As LinkLabel
         Dim link As New LinkLabel With {.Text = "Instructions", .AutoSize = True, .Margin = New Padding(0, 10, 0, 10), .Name = "InstructionsLink"}
         Dim updateColor As Action = Sub()
@@ -52,7 +77,7 @@ Public Class VerticalStack
                 Dim width = Math.Max(1, ClientSize.Width - Padding.Horizontal - child.Margin.Horizontal)
                 Dim fixedWidth = TypeOf child Is Button OrElse TypeOf child Is LinkLabel
                 child.SetBounds(Padding.Left + child.Margin.Left, y + child.Margin.Top, If(fixedWidth, Math.Min(width, child.PreferredSize.Width), width), child.Height)
-                If TypeOf child Is Label OrElse TypeOf child Is Button OrElse TypeOf child Is FlowLayoutPanel Then
+                If (TypeOf child Is Label AndAlso child.AutoSize) OrElse TypeOf child Is Button OrElse TypeOf child Is FlowLayoutPanel Then
                     child.Height = child.GetPreferredSize(New Size(width, 0)).Height
                 End If
                 y = child.Bottom + child.Margin.Bottom
@@ -182,21 +207,62 @@ Public Class BindingRow
     Inherits Panel
     Private ReadOnly title As Label, keyboardTitle As Label, controllerTitle As Label
     Private ReadOnly key As Control, controller As Control
+    Private ReadOnly recommended As Label
+    Private modern As Boolean
+    <System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)>
+    Public Property UseModernStyle As Boolean
+        Get
+            Return modern
+        End Get
+        Set(value As Boolean)
+            If modern = value Then Return
+            modern = value
+            Margin = New Padding(0, 0, 0, If(value, 2, 16))
+            PerformLayout() : Invalidate()
+        End Set
+    End Property
     Private arranging As Boolean
-    Public Sub New(action As String, keyboard As Control, device As Control)
+    Public Sub New(action As String, keyboard As Control, device As Control, Optional isRecommended As Boolean = False)
         Dock = DockStyle.Top : Margin = New Padding(0, 0, 0, 16) : AutoSize = True : AutoSizeMode = AutoSizeMode.GrowAndShrink
         title = New Label With {.Text = action, .AutoSize = True, .Font = New Font("Segoe UI", 10, FontStyle.Bold)}
         keyboardTitle = New Label With {.Text = "Keyboard", .AutoSize = True}
         controllerTitle = New Label With {.Text = "Controller / wheel", .AutoSize = True}
         key = keyboard : controller = device : controller.Dock = DockStyle.None
         Controls.AddRange({title, keyboardTitle, key, controllerTitle, controller})
+        If isRecommended Then
+            recommended = New Label With {.Text = "RECOMMENDED", .AutoSize = True, .Font = New Font("Segoe UI", 8, FontStyle.Bold)}
+            Controls.Add(recommended)
+        End If
+        SetStyle(ControlStyles.OptimizedDoubleBuffer Or ControlStyles.AllPaintingInWmPaint, True)
+        AddHandler controller.SizeChanged, Sub() PerformLayout()
     End Sub
     Protected Overrides Sub OnLayout(e As LayoutEventArgs)
         MyBase.OnLayout(e)
         If arranging OrElse key Is Nothing Then Return
         arranging = True
         Try
-            Dim narrow = Width < Px(Me, 650)
+            Dim narrow = Width < Px(Me, If(modern, 540, 650))
+            keyboardTitle.Visible = Not modern OrElse narrow
+            controllerTitle.Visible = Not modern OrElse narrow
+            If modern Then
+                Dim first = If(narrow, 0, CInt(Width * 0.30)), second = If(narrow, CInt(Width * 0.40), CInt(Width * 0.50)), modernGap = Px(Me, 6)
+                title.MaximumSize = New Size(If(narrow, Width, first - modernGap), 0)
+                title.Location = New Point(0, modernGap)
+                Dim titleBottom = title.Bottom
+                If recommended IsNot Nothing Then
+                    recommended.Location = New Point(0, titleBottom + Px(Me, 2))
+                    recommended.ForeColor = If(SystemInformation.HighContrast, ForeColor, LauncherAppearance.Accent)
+                    titleBottom = recommended.Bottom
+                End If
+                keyboardTitle.Location = New Point(0, titleBottom + modernGap)
+                key.SetBounds(first, If(narrow, keyboardTitle.Bottom + modernGap, modernGap), second - first - modernGap, key.PreferredSize.Height)
+                controllerTitle.Location = New Point(second, keyboardTitle.Top)
+                controller.SetBounds(second, If(narrow, controllerTitle.Bottom + modernGap, modernGap), Math.Max(1, Width - second), controller.Height)
+                controller.PerformLayout()
+                Height = Math.Max(titleBottom, Math.Max(key.Bottom, controller.Bottom)) + modernGap * 2
+                Return
+            End If
+            If recommended IsNot Nothing Then recommended.Location = New Point(0, title.Bottom + Px(Me, 3))
             title.MaximumSize = New Size(If(narrow, Math.Max(1, Width), Px(Me, 110)), 0)
             Dim gap = Px(Me, 8), labelHeight = Math.Max(title.PreferredHeight, controllerTitle.PreferredHeight)
             title.Location = Point.Empty
@@ -209,6 +275,14 @@ Public Class BindingRow
         Finally
             arranging = False
         End Try
+    End Sub
+    Protected Overrides Sub OnPaint(e As PaintEventArgs)
+        MyBase.OnPaint(e)
+        If modern Then
+            Using pen As New Pen(If(SystemInformation.HighContrast, SystemColors.ControlText, LauncherAppearance.Line))
+                e.Graphics.DrawLine(pen, 0, Height - 1, Width, Height - 1)
+            End Using
+        End If
     End Sub
     Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
         Return New Size(Width, Height)
@@ -244,14 +318,14 @@ Public Class CollapsibleSection
     Public Sub New(caption As String)
         title = caption
         Margin = New Padding(0, 0, 0, 12) : TabStop = False
-        header = New Button With {.Text = "▶ " & title, .AutoSize = False, .TextAlign = ContentAlignment.MiddleLeft, .AccessibleName = title, .AccessibleDescription = "Collapsed. Activate to show individual seat movement bindings."}
+        header = New Button With {.Text = "▶ " & title, .AutoSize = False, .TextAlign = ContentAlignment.MiddleLeft, .AccessibleName = title, .AccessibleDescription = "Collapsed. Activate to show optional seat and panel bindings."}
         Content.Dock = DockStyle.None : Content.Visible = False
         Controls.Add(header) : Controls.Add(Content)
         AddHandler Content.SizeChanged, Sub() PerformLayout()
         AddHandler header.Click, Sub()
                                      expanded = Not expanded
                                      header.Text = If(expanded, "▼ ", "▶ ") & title
-                                     header.AccessibleDescription = If(expanded, "Expanded. Activate to hide individual seat movement bindings.", "Collapsed. Activate to show individual seat movement bindings.")
+                                     header.AccessibleDescription = If(expanded, "Expanded. Activate to hide optional seat and panel bindings.", "Collapsed. Activate to show optional seat and panel bindings.")
                                      Content.Visible = expanded
                                      PerformLayout()
                                      If Not expanded Then RaiseEvent Collapsed(Me, EventArgs.Empty)
