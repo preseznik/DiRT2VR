@@ -47,10 +47,49 @@ public static class SafeFiles
     public static void WriteJson<T>(string path, T value) => Atomic(path, JsonSerializer.SerializeToUtf8Bytes(value, Json));
     public static void Atomic(string path, byte[] bytes)
     {
-        NoLinks(path); Directory.CreateDirectory(Path.GetDirectoryName(path)!);
         string temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
-        using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)) { stream.Write(bytes); stream.Flush(true); }
-        File.Move(temporary, path, true);
+        try
+        {
+            NoLinks(path); Directory.CreateDirectory(Path.GetDirectoryName(path)!);
+            using (var stream = new FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)) { stream.Write(bytes); stream.Flush(true); }
+            var attributes = File.Exists(path) ? File.GetAttributes(path) : (FileAttributes?)null;
+            // Move-overwrite rejects read-only destinations, even for administrators.
+            // Give the replacement the original flags before the atomic rename.
+            if (attributes.HasValue) File.SetAttributes(temporary, attributes.Value);
+            bool readOnly = attributes.HasValue && (attributes.Value & FileAttributes.ReadOnly) != 0;
+            try
+            {
+                if (readOnly) SetReadOnly(path, false);
+                File.Move(temporary, path, true);
+            }
+            finally
+            {
+                if (readOnly && File.Exists(path)) SetReadOnly(path, true);
+            }
+        }
+        catch (Exception ex)
+        {
+            ex.Data["DiRT2VR.Target"] = path;
+            throw;
+        }
+        finally
+        {
+            // Only remove this call's uncommitted file; retain the original error.
+            try { if (File.Exists(temporary)) { SetReadOnly(temporary, false); File.Delete(temporary); } }
+            catch (IOException) { }
+            catch (UnauthorizedAccessException) { }
+        }
+    }
+    public static void SetReadOnly(string path, bool readOnly)
+    {
+        try
+        {
+            NoLinks(path);
+            var attributes = File.GetAttributes(path);
+            var updated = readOnly ? attributes | FileAttributes.ReadOnly : attributes & ~FileAttributes.ReadOnly;
+            if (updated != attributes) File.SetAttributes(path, updated);
+        }
+        catch (Exception ex) { ex.Data["DiRT2VR.Target"] = path; throw; }
     }
     public static IEnumerable<string> Tree(string root)
     {

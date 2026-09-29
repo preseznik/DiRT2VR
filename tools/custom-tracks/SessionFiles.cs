@@ -60,6 +60,10 @@ public static class SessionFiles
                 SafeFiles.Atomic(target, File.ReadAllBytes(SafeFiles.Inside(folder, pending.Id + "/" + i + ".original")));
             else if (current != entry.OriginalSha256) { conflicts.Add(entry.Path); continue; }
             if (SafeFiles.Hash(target) != entry.OriginalSha256) throw new IOException("Custom session restoration failed.");
+            // File.Copy retained the original read-only flag in the backup. This
+            // also repairs an interruption between clearing that flag and rename.
+            var backup = SafeFiles.Inside(folder, pending.Id + "/" + i + ".original");
+            SafeFiles.SetReadOnly(target, (File.GetAttributes(backup) & FileAttributes.ReadOnly) != 0);
         }
         if (conflicts.Count != 0) throw new IOException("External edits preserved; recovery remains pending: " + string.Join(", ", conflicts));
         File.Move(journal, SafeFiles.Inside(folder, pending.Id + "/recovered.json"));
@@ -67,7 +71,7 @@ public static class SessionFiles
         for (int i = 0; i < pending.Files.Length; i++)
         {
             var backup = SafeFiles.Inside(folder, pending.Id + "/" + i + ".original");
-            try { if (SafeFiles.Hash(backup) == pending.Files[i].OriginalSha256) File.Delete(backup); }
+            try { if (SafeFiles.Hash(backup) == pending.Files[i].OriginalSha256) { SafeFiles.SetReadOnly(backup, false); File.Delete(backup); } }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
         }
