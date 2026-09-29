@@ -20,7 +20,8 @@ public static class AspenPack
     public const string Support = "DiRT2VR/custom-tracks/aspen-rallycross";
     public const string Receipt = Support + "/receipt.json";
     public const string Repository = "https://github.com/preseznik/DiRT2VR";
-    public const string CatalogUrl = Repository + "/releases/download/custom-tracks/catalog-v1.json";
+    public const string ReleaseTag = "v0.17.4";
+    public const string CatalogUrl = Repository + "/releases/download/" + ReleaseTag + "/catalog-v1.json";
     public static readonly Layout[] Layouts = [
         new("aspen-lakeside", "Lakeside", "d2vr_aspen", "Night"),
         new("aspen-lake-view", "Lake View", "d2vr_aspen_lv", "Morning sun"),
@@ -46,7 +47,7 @@ public static class AspenPack
         if (offer is null || offer.Id != Id || !SafeFiles.Version(offer.Version) || !SafeFiles.Version(offer.MinimumLauncher) ||
             System.Version.Parse(launcherVersion) < System.Version.Parse(offer.MinimumLauncher))
             throw new IOException("Update DiRT2VR before installing this custom-track package.");
-        if (offer.DownloadUrl != $"{Repository}/releases/download/track-{Id}-v{offer.Version}/AspenConverter-{offer.Version}.zip" ||
+        if (offer.DownloadUrl != $"{Repository}/releases/download/{ReleaseTag}/AspenConverter-{offer.Version}.zip" ||
             !SafeFiles.Digest(offer.Sha256) || offer.DownloadBytes is <= 0 or > 512L * 1024 * 1024 ||
             offer.StagingBytes is < 1024 * 1024 or > 16L * 1024 * 1024 * 1024 ||
             offer.InstalledBytes is <= 0 or > 4L * 1024 * 1024 * 1024 ||

@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Correct 0.17.4 Experimental distribution: host the Aspen converter and catalog as assets of the same application release, and direct launcher downloads there. Remove the separate track/catalog releases.
+
 ## 0.17.4 — 2026-09-29 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.4)
