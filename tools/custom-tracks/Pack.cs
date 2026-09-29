@@ -9,7 +9,7 @@ public sealed record PackReceipt(int Schema, string Id, string Version, string M
     PackFile[] Files, LayoutSession[] Sessions, Fingerprint[] Sources);
 public sealed record Catalog(int Schema, PackageOffer[] Tracks);
 public sealed record PackageOffer(string Id, string Name, string Version, string MinimumLauncher,
-    string DownloadUrl, long DownloadBytes, string Sha256, long StagingBytes, long InstalledBytes,
+    string ArchiveName, long ArchiveBytes, string Sha256, long StagingBytes, long InstalledBytes,
     string[] Modes, Layout[] Layouts, Fingerprint[] Sources);
 
 public static class AspenPack
@@ -19,9 +19,6 @@ public static class AspenPack
     public const string MinimumLauncher = "0.17.4";
     public const string Support = "DiRT2VR/custom-tracks/aspen-rallycross";
     public const string Receipt = Support + "/receipt.json";
-    public const string Repository = "https://github.com/preseznik/DiRT2VR";
-    public const string ReleaseTag = "v0.17.4";
-    public const string CatalogUrl = Repository + "/releases/download/" + ReleaseTag + "/catalog-v1.json";
     public static readonly Layout[] Layouts = [
         new("aspen-lakeside", "Lakeside", "d2vr_aspen", "Night"),
         new("aspen-lake-view", "Lake View", "d2vr_aspen_lv", "Morning sun"),
@@ -47,13 +44,13 @@ public static class AspenPack
         if (offer is null || offer.Id != Id || !SafeFiles.Version(offer.Version) || !SafeFiles.Version(offer.MinimumLauncher) ||
             System.Version.Parse(launcherVersion) < System.Version.Parse(offer.MinimumLauncher))
             throw new IOException("Update DiRT2VR before installing this custom-track package.");
-        if (offer.DownloadUrl != $"{Repository}/releases/download/{ReleaseTag}/AspenConverter-{offer.Version}.zip" ||
-            !SafeFiles.Digest(offer.Sha256) || offer.DownloadBytes is <= 0 or > 512L * 1024 * 1024 ||
+        if (offer.ArchiveName != $"AspenConverter-{offer.Version}.zip" ||
+            !SafeFiles.Digest(offer.Sha256) || offer.ArchiveBytes is <= 0 or > 512L * 1024 * 1024 ||
             offer.StagingBytes is < 1024 * 1024 or > 16L * 1024 * 1024 * 1024 ||
             offer.InstalledBytes is <= 0 or > 4L * 1024 * 1024 * 1024 ||
             offer.Modes is null || !offer.Modes.SequenceEqual(new[] { "desktop-solo" }) ||
             offer.Layouts is null || !offer.Layouts.SequenceEqual(Layouts))
-            throw new IOException("The custom-track catalog contains an unsupported package.");
+            throw new IOException("The bundled Aspen tools are unsupported. Reinstall DiRT2VR.");
         ValidateSources(offer.Sources);
     }
     public static void ValidateSources(Fingerprint[] sources)

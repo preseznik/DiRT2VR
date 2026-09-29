@@ -17,6 +17,9 @@ Public Class CustomTrackPreferences
 End Class
 
 Public Module CustomTrackService
+    Public Function ToolsFolder(context As InstallContext) As String
+        Return IO.Path.Combine(context.ModRoot, "payload/aspen")
+    End Function
     Public Function RecoveryPending(context As InstallContext) As Boolean
         Return File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
             File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-install/pending.json"))
@@ -82,11 +85,11 @@ Public Module CustomTrackService
         Try
         If New DriveInfo(IO.Path.GetPathRoot(stage)).AvailableFreeSpace < offer.StagingBytes Then Throw New IOException("Not enough free space for conversion. Free at least " & Math.Ceiling(offer.StagingBytes / 1073741824.0).ToString() & " GB on " & IO.Path.GetPathRoot(stage))
         If New DriveInfo(IO.Path.GetPathRoot(context.GameRoot)).AvailableFreeSpace < offer.InstalledBytes * 2 Then Throw New IOException("Not enough free space beside DiRT 2 for the track and its rollback copy.")
-        PackageDownload.VerifySources(offer, context.GameRoot, source, progress, cancel)
+        BundledPackage.VerifySources(offer, context.GameRoot, source, progress, cancel)
         Dim archive = IO.Path.Combine(stage, "converter.zip"), converter = IO.Path.Combine(stage, "converter")
-        PackageDownload.DownloadAsync(offer, archive, BuildInfo.Version, progress, cancel).GetAwaiter().GetResult()
+        BundledPackage.CopyArchive(ToolsFolder(context), offer, archive, BuildInfo.Version, cancel)
         progress.Report(New TrackProgress(0, "Checking and unpacking conversion tools"))
-        PackageDownload.Extract(archive, converter, cancel)
+        BundledPackage.Extract(archive, converter, cancel)
         cancel.ThrowIfCancellationRequested()
         context.RequireClosed()
         Dim start As New ProcessStartInfo(IO.Path.Combine(converter, "AspenConverter.exe")) With {

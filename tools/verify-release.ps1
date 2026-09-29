@@ -13,6 +13,7 @@ if ($GitHubReleaseJson) {
     # Supply the draft release JSON from: gh api repos/preseznik/DiRT2VR/releases/<id>
     $remote=Get-Content -LiteralPath $GitHubReleaseJson -Raw | ConvertFrom-Json
     if ($remote.tag_name -cne $release.tag_name -or $remote.prerelease -isnot [bool] -or $remote.prerelease -ne $experimental) { throw 'GitHub release channel/tag differs from the package; do not publish' }
+    if (@($remote.assets).Count -ne 3) { throw 'Only Setup, ZIP and SHA256SUMS.txt belong in the release.' }
     foreach ($name in @("DiRT2VR-$($manifest.Version)-Setup.exe","DiRT2VR-$($manifest.Version).zip",'SHA256SUMS.txt')) {
         $asset=@($remote.assets | Where-Object name -CEQ $name)
         if ($asset.Count -ne 1 -or $asset[0].state -ne 'uploaded' -or $asset[0].digest -cne ('sha256:'+(Get-FileHash -LiteralPath (Join-Path $PackageDirectory $name)).Hash.ToLowerInvariant())) { throw "Uploaded release asset differs: $name" }

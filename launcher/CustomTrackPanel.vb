@@ -80,7 +80,6 @@ Public Class CustomTrackPanel
         AddHandler installButton.Click, Async Sub() Await InstallPack()
         AddHandler cancelButton.Click, Sub() CancelOperation()
         AddHandler manage.Click, Sub() menu.Show(manage, New Point(0, manage.Height))
-        AddHandler menu.Items.Add("Check for track updates").Click, Async Sub() Await CheckCatalog()
         AddHandler menu.Items.Add("Verify installed files").Click, Async Sub() Await RefreshInstallation()
         AddHandler menu.Items.Add("Rebuild Aspen from source").Click, Async Sub() Await InstallPack()
         AddHandler menu.Items.Add("Uninstall Aspen").Click, Async Sub()
@@ -109,7 +108,7 @@ Public Class CustomTrackPanel
         Await Operation(Async Function(token, progress)
                             installationValid = False
                             If Not File.Exists(SafeFiles.Inside(context.GameRoot, AspenPack.Receipt)) Then
-                                status.Text = "Not installed. Install Aspen to download the conversion tools and build all four layouts."
+                                status.Text = "Not installed. Install Aspen to build all four layouts from your DiRT 3 files."
                                 Return
                             End If
                             status.Text = "Checking installed Aspen files…"
@@ -120,21 +119,11 @@ Public Class CustomTrackPanel
                             If layouts.SelectedItem Is Nothing Then status.Text &= ". Your saved layout is unavailable; select a layout."
                         End Function)
     End Function
-    Private Async Function CheckCatalog() As Task
-        Await Operation(Async Function(token, progress)
-                            status.Text = "Checking available conversion packages…"
-                            offer = Await PackageDownload.CatalogAsync(BuildInfo.Version, token)
-                            Dim installed = If(File.Exists(SafeFiles.Inside(context.GameRoot, AspenPack.Receipt)), AspenPack.Read(context.GameRoot, False), Nothing)
-                            status.Text = If(installed IsNot Nothing AndAlso installed.Version = offer.Version,
-                                "Aspen " & offer.Version & " is up to date. Installed layouts remain playable offline.",
-                                "Aspen " & offer.Version & " available · " & Math.Ceiling(offer.DownloadBytes / 1048576.0).ToString() & " MB download. Choose Install Aspen to continue.")
-                        End Function)
-    End Function
     Private Async Function InstallPack() As Task
         Await Operation(Async Function(token, progress)
                             context.RequireClosed()
-                            status.Text = "Checking available conversion packages…"
-                            offer = Await PackageDownload.CatalogAsync(BuildInfo.Version, token)
+                            status.Text = "Checking bundled conversion tools…"
+                            offer = Await Task.Run(Function() BundledPackage.Read(CustomTrackService.ToolsFolder(context), BuildInfo.Version, token), token)
                             Using picker As New AspenSourceForm(preferences.SourceFolder, CustomTrackService.SourceFolders(), offer)
                                 If picker.ShowDialog(Me) <> DialogResult.OK Then Return
                                 preferences.SourceFolder = picker.SourceFolder : preferences.Save(context)
@@ -196,9 +185,9 @@ Public Class AspenSourceForm
                                      End Using
                                  End Sub
         content.Controls.Add(browse)
-        content.Controls.Add(New Label With {.Text = $"Downloads {Math.Ceiling(offer.DownloadBytes / 1048576.0)} MB of conversion tools. Allow {Math.Ceiling(offer.StagingBytes / 1073741824.0)} GB for building. DiRT 3 is only needed to build or rebuild the tracks.", .AutoSize = False})
+        content.Controls.Add(New Label With {.Text = $"Conversion tools are included with DiRT2VR. No download is needed. Allow {Math.Ceiling(offer.StagingBytes / 1073741824.0)} GB for building. DiRT 3 is only needed to build or rebuild the tracks.", .AutoSize = False})
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True}
-        Dim install As New Button With {.Text = "Download and build", .AutoSize = True}
+        Dim install As New Button With {.Text = "Build and install", .AutoSize = True}
         Dim cancel As New Button With {.Text = "Cancel", .AutoSize = True, .DialogResult = DialogResult.Cancel}
         AddHandler install.Click, Sub()
                                       If Not Directory.Exists(IO.Path.Combine(SourceFolder, "tracks/locations/usa/aspen")) Then

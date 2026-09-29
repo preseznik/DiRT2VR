@@ -5,9 +5,6 @@ $root=Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $root
 [xml]$project=Get-Content tools/aspen-converter/AspenConverter.csproj
 $version=[string]$project.Project.PropertyGroup.Version
-$releaseMatch=[regex]::Match((Get-Content tools/custom-tracks/Pack.cs -Raw), 'public const string ReleaseTag = "(v\d+\.\d+\.\d+)";')
-if(!$releaseMatch.Success) { throw 'Custom-track release tag is missing' }
-$releaseTag=$releaseMatch.Groups[1].Value
 if($version -notmatch '^\d+\.\d+\.\d+$') { throw 'Invalid converter version' }
 if(!$OutputDirectory) { $OutputDirectory=Join-Path $root ('artifacts/aspen-packages/'+$version+'-'+(Get-Date -Format yyyyMMdd-HHmmss)) }
 $output=[IO.Path]::GetFullPath($OutputDirectory)
@@ -84,11 +81,8 @@ try {
 } finally {$archive.Dispose()}
 $hash=(Get-FileHash -LiteralPath $zip).Hash
 $offer=[ordered]@{Id='aspen-rallycross';Name='Aspen Rallycross';Version=$version;MinimumLauncher='0.17.4';
-    DownloadUrl="https://github.com/preseznik/DiRT2VR/releases/download/$releaseTag/AspenConverter-$version.zip";
-    DownloadBytes=(Get-Item -LiteralPath $zip).Length;Sha256=$hash;StagingBytes=4L*1024*1024*1024;InstalledBytes=800L*1024*1024;
+    ArchiveName="AspenConverter-$version.zip";
+    ArchiveBytes=(Get-Item -LiteralPath $zip).Length;Sha256=$hash;StagingBytes=4L*1024*1024*1024;InstalledBytes=800L*1024*1024;
     Modes=@('desktop-solo');Layouts=$layouts;Sources=$sources}
-[ordered]@{Schema=1;Tracks=@($offer)} | ConvertTo-Json -Depth 9 | Set-Content -LiteralPath (Join-Path $output 'catalog-v1.json') -Encoding utf8
-($hash.ToLowerInvariant()+'  '+[IO.Path]::GetFileName($zip)) | Set-Content -LiteralPath (Join-Path $output "AspenConverter-$version-SHA256SUMS.txt") -Encoding ascii
-[ordered]@{tag_name=$releaseTag;assets=@("AspenConverter-$version.zip","AspenConverter-$version-SHA256SUMS.txt",'catalog-v1.json')} | ConvertTo-Json | Set-Content -LiteralPath (Join-Path $output 'release-assets.json') -Encoding utf8
-Write-Output "Aspen conversion package: $output"
-Write-Output "Upload these assets to the app release $releaseTag after runtime acceptance. Do not create separate track or catalog releases."
+[ordered]@{Schema=1;Tracks=@($offer)} | ConvertTo-Json -Depth 9 | Set-Content -LiteralPath (Join-Path $output 'aspen-package.json') -Encoding utf8
+Write-Output "Bundled Aspen tools: $output. Include the ZIP and aspen-package.json inside the app payload; do not upload them as release assets."

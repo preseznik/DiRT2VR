@@ -138,7 +138,7 @@ Controls also provides six optional seat movement bindings. These are unassigned
 Current testing
 Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
         "Install Aspen (Experimental)
-Close DiRT 2. On Launcher, check CUSTOM tracks and choose Install Aspen. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Download and build to check the source files and build all four layouts. No SDK or separate .NET installation is needed. The download contains conversion tools, not game assets.
+Close DiRT 2. On Launcher, check CUSTOM tracks and choose Install Aspen. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Build and install to check the source files and build all four layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
 
 Play
 After installation, choose a layout and then Launch. Aspen uses desktop Direct practice, solo Subaru STI, one lap. Launch VR, AI races and LAN are unavailable. Conversion happens before installation, never during game loading.
