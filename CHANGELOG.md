@@ -6,11 +6,13 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Fix Aspen building from read-only game files. Conversion now creates writable staging copies without changing the originals; cancellation can also clean up read-only temporary files.
+## 0.17.6 — 2026-09-29 — Experimental
 
-- Reduce the installer, ZIP and installed application size by sharing the launcher's .NET runtime with Aspen conversion. Building still runs in a separate background process, supports offline use and cancellation, and preserves existing installed tracks.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.6)
 
-- Bundle Aspen conversion tools with the normal Setup and ZIP packages. Building tracks needs no additional download; keep the standard three release assets and concise player-facing release notes.
+- Fix Aspen track building failing with "Access to the path is denied" when original game files are read-only. Original files stay unchanged, and cancelled builds can clean up their temporary files.
+- Reduce download sizes compared with 0.17.4: Setup is about 47% smaller and the ZIP about 39% smaller. A fresh installation also takes about 19% less space.
+- Keep existing Aspen tracks usable without rebuilding. Building new tracks still works offline and supports cancellation.
 
 ## 0.17.4 — 2026-09-29 — Experimental
 
