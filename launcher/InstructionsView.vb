@@ -49,7 +49,7 @@ Field of view
 100% retains the full view. Lower values crop peripheral vision and reduce render resolution proportionally, without stretching the image. Nondefault crops still need broader headset testing.
 
 Mirrors and scenery
-Car mirrors may be forced on or off. Tree detail and Object detail use the game's presets; Game preserves your settings. Higher levels keep detailed models farther away, at a performance cost. Track-specific draw-distance limits remain.
+Car mirrors may be forced on or off. Tree detail and Object detail use the game's presets; Game preserves your settings. Higher levels keep detailed models farther away, at a performance cost. VR also extends short scenery ranges and keeps nearby cars detailed when you look sideways or behind. Distant cars retain normal detail reduction. VR also draws grass farther away and delays tree/bush detail changes. Some authored visibility limits remain; compare performance on the same section of track when increasing detail.
 
 Headset refresh rate
 Set refresh rate in SteamVR or your headset connection software before launching. The launcher can show the last reported rate, not a live measurement. Desktop VSync does not select headset Hz.

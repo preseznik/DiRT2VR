@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Extend terrain and trackside-object visibility in VR to reduce close-range pop-in. Keep nearby opponents at their best available detail even alongside or behind the player; retain normal distant-car LOD. The user accepted the scenery and nearby-car appearance; broader performance testing remains pending.
+- Extend grass visibility and delay tree/bush detail changes in VR. Fix grass disappearing with the increased drawing range. The user accepted the corrected grass visibility and pop-in on Ladang Long in VR; broader performance testing remains pending.
+
 ## 0.17.6 — 2026-09-29 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.6)
