@@ -13,6 +13,15 @@ internal static class PortFiles
                 throw new IOException("Linked path is not supported: " + cursor);
     }
     internal static FileStream OpenRead(string path) { NoLinks(path); return File.OpenRead(path); }
+    internal static void CopyNew(string source, string target)
+    {
+        // Copy bytes into our new staging file, not the source's read-only flag.
+        // Later conversion passes must be able to edit or replace this copy.
+        NoLinks(target);
+        using var input = OpenRead(source);
+        using var output = new FileStream(target, FileMode.CreateNew, FileAccess.Write, FileShare.None);
+        input.CopyTo(output);
+    }
     internal static void NewOutput(string output, params string[] sources)
     {
         output = Path.TrimEndingDirectorySeparator(Path.GetFullPath(output));

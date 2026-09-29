@@ -63,7 +63,7 @@ internal static class PortBuild
             }
             else if (Path.GetFileName(path) is "cloth.xml" or "lod_overrides.xml" or "ornament_attributes.xml" or "tree_attributes.xml")
                 PortFiles.WriteXml(PortFiles.ReadXml(path), target, EgoEngineLibrary.Xml.XmlType.BinXml);
-            else File.Copy(path, target, false);
+            else PortFiles.CopyNew(path, target);
             copies.Add(new { Source = path, Target = Path.GetRelativePath(output, target) });
         }
         foreach (var root in new[] { source, sourceRoute })

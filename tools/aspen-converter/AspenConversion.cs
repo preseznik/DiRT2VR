@@ -107,7 +107,7 @@ public static class AspenConversion
         {
             var target = SafeFiles.Inside(install, relative);
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(source, target, false);
+            PortFiles.CopyNew(source, target);
             files.Add(new(relative, new FileInfo(target).Length, SafeFiles.Hash(target)));
         }
     }

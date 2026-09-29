@@ -74,9 +74,9 @@ internal static class ConditionLighting
                 lighting.Root!.Add(new XElement(PortFiles.ReadXml(donorPath).Descendants("param").Single(p => p.Attribute("headLightBrightness") is not null)));
             PortFiles.WriteXml(lighting,Path.Combine(track,"lighting.xml.tmp"),EgoEngineLibrary.Xml.XmlType.BinXml);
             File.Move(Path.Combine(track,"lighting.xml.tmp"),Path.Combine(track,"lighting.xml"),true);
-            File.Copy(Path.Combine(track,"lighting.xml"),Path.Combine(track,"night_lighting.xml"));
+            PortFiles.CopyNew(Path.Combine(track,"lighting.xml"),Path.Combine(track,"night_lighting.xml"));
             var post = Path.Combine(d2,"tracks/london/battersea/night_effects.xml"); inputs[post] = PortFiles.Hash(post);
-            File.Copy(post,Path.Combine(track,"night_effects.xml"));
+            PortFiles.CopyNew(post,Path.Combine(track,"night_effects.xml"));
         }
         PortFiles.Json(Path.Combine(Path.GetDirectoryName(track)!,"condition.json"),new {
             Profile=condition.Name,SourceSuffix=condition.Suffix,Headlights=condition.Night,TrackLights=condition.Night,

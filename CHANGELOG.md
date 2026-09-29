@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix Aspen building from read-only game files. Conversion now creates writable staging copies without changing the originals; cancellation can also clean up read-only temporary files.
+
 - Reduce the installer, ZIP and installed application size by sharing the launcher's .NET runtime with Aspen conversion. Building still runs in a separate background process, supports offline use and cancellation, and preserves existing installed tracks.
 
 - Bundle Aspen conversion tools with the normal Setup and ZIP packages. Building tracks needs no additional download; keep the standard three release assets and concise player-facing release notes.

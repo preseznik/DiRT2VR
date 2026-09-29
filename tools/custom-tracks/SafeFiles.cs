@@ -81,7 +81,15 @@ public static class SafeFiles
         var files = Tree(root).ToArray();
         var directories = Directory.EnumerateDirectories(root, "*", SearchOption.AllDirectories).OrderByDescending(p => p.Length).ToArray();
         foreach (var directory in directories) NoLinks(directory);
-        foreach (var file in files) File.Delete(file);
+        foreach (var file in files)
+        {
+            // Older converters copied read-only source flags into their private
+            // work directories. Only clear that flag inside the validated tree.
+            var attributes = File.GetAttributes(file);
+            if ((attributes & FileAttributes.ReadOnly) != 0)
+                File.SetAttributes(file, attributes & ~FileAttributes.ReadOnly);
+            File.Delete(file);
+        }
         foreach (var directory in directories) Directory.Delete(directory);
         Directory.Delete(root);
     }
