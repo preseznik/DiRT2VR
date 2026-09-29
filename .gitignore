@@ -11,5 +11,32 @@ tools/ego-xml/bin/
 tools/ego-xml/obj/
 tests/launcher/bin/
 tests/launcher/obj/
-tools/track-prototype/bin/
-tools/track-prototype/obj/
+
+# Local development notes and checks are not published.
+/docs/
+/tests/
+/AGENTS.md
+/launcher/assets/README.md
+/tools/driving-input/axes_test.cpp
+
+# Internal diagnostics and legacy test launchers stay local.
+/Start-DiRT2VR.cmd
+/tools/Collect-Crash.ps1
+/tools/Collect-LanStartup.ps1
+/tools/Configure-CrashDump.ps1
+/tools/build-xml-converter.ps1
+/tools/compare_passes.py
+/tools/inspect_game.py
+/tools/make-launcher-icon.ps1
+/tools/run-trace.ps1
+/tools/run-xr-probe.ps1
+/tools/summarize_continuous.py
+/tools/summarize_headset.py
+/tools/lan/Lan-Settings.cmd
+/tools/lan/LanFiles.ps1
+/tools/lan/LanSettings.ps1
+/tools/lan/Package-LanTest.ps1
+/tools/lan/README.txt
+/tools/lan/Start-LanTest.cmd
+/tools/lan/Start-LanTest.ps1
+/tools/xml-convert/

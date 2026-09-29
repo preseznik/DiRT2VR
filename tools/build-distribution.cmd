@@ -10,5 +10,6 @@ cmake -S . -B build\distribution -G Ninja -DCMAKE_BUILD_TYPE=Release -DDIRT2VR_S
 if errorlevel 1 exit /b 1
 cmake --build build\distribution -j 8
 if errorlevel 1 exit /b 1
+if not exist tests\NativeTests.cmake exit /b 0
 ctest --test-dir build\distribution --output-on-failure
 exit /b %errorlevel%

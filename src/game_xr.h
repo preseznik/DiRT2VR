@@ -7,7 +7,7 @@ class GameXr {
 public:
     ~GameXr() { Shutdown(); }
     bool Initialize(ID3D11Device* device,float scale,float fovScale=1.f,uint32_t hudWidth=1600,uint32_t hudHeight=1200);
-    bool Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare={},const XrFrames::Screen* screen=nullptr,const XrFrames::Overlay* overlay=nullptr);
+    bool Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare={},const XrFrames::Screen* screen=nullptr,const XrFrames::Overlay* overlay=nullptr,const XrFrames::Overlay* panel=nullptr);
     bool CopyEye(unsigned eye,ID3D11Texture2D* image,ID3D11RenderTargetView* target,unsigned w,unsigned h,bool alpha=false);
     void Shutdown();
     bool Active() const { return frames_!=nullptr; }

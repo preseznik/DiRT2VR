@@ -181,9 +181,9 @@ End Class
 Public Class BindingRow
     Inherits Panel
     Private ReadOnly title As Label, keyboardTitle As Label, controllerTitle As Label
-    Private ReadOnly key As Button, controller As Control
+    Private ReadOnly key As Control, controller As Control
     Private arranging As Boolean
-    Public Sub New(action As String, keyboard As Button, device As Control)
+    Public Sub New(action As String, keyboard As Control, device As Control)
         Dock = DockStyle.Top : Margin = New Padding(0, 0, 0, 16) : AutoSize = True : AutoSizeMode = AutoSizeMode.GrowAndShrink
         title = New Label With {.Text = action, .AutoSize = True, .Font = New Font("Segoe UI", 10, FontStyle.Bold)}
         keyboardTitle = New Label With {.Text = "Keyboard", .AutoSize = True}
@@ -196,8 +196,9 @@ Public Class BindingRow
         If arranging OrElse key Is Nothing Then Return
         arranging = True
         Try
-            Dim gap = Px(Me, 8), labelHeight = Math.Max(title.PreferredHeight, controllerTitle.PreferredHeight)
             Dim narrow = Width < Px(Me, 650)
+            title.MaximumSize = New Size(If(narrow, Math.Max(1, Width), Px(Me, 110)), 0)
+            Dim gap = Px(Me, 8), labelHeight = Math.Max(title.PreferredHeight, controllerTitle.PreferredHeight)
             title.Location = Point.Empty
             keyboardTitle.Location = New Point(If(narrow, 0, Px(Me, 120)), If(narrow, labelHeight + gap, 0))
             key.SetBounds(keyboardTitle.Left, keyboardTitle.Bottom + gap, Px(Me, 155), key.PreferredSize.Height)
@@ -228,5 +229,45 @@ Public Class LanServerList
             Columns(0).Width = CInt(available * 0.28) : Columns(1).Width = CInt(available * 0.29)
             Columns(2).Width = CInt(available * 0.13) : Columns(3).Width = available - Columns(0).Width - Columns(1).Width - Columns(2).Width
         End If
+    End Sub
+End Class
+
+' Keep optional controls alive (including their saved assignments) while collapsed.
+Public Class CollapsibleSection
+    Inherits Panel
+    Public ReadOnly Content As VerticalStack = Stack()
+    Private ReadOnly header As Button
+    Private ReadOnly title As String
+    Private expanded As Boolean
+    Private arranging As Boolean
+    Public Event Collapsed As EventHandler
+    Public Sub New(caption As String)
+        title = caption
+        Margin = New Padding(0, 0, 0, 12) : TabStop = False
+        header = New Button With {.Text = "▶ " & title, .AutoSize = False, .TextAlign = ContentAlignment.MiddleLeft, .AccessibleName = title, .AccessibleDescription = "Collapsed. Activate to show individual seat movement bindings."}
+        Content.Dock = DockStyle.None : Content.Visible = False
+        Controls.Add(header) : Controls.Add(Content)
+        AddHandler Content.SizeChanged, Sub() PerformLayout()
+        AddHandler header.Click, Sub()
+                                     expanded = Not expanded
+                                     header.Text = If(expanded, "▼ ", "▶ ") & title
+                                     header.AccessibleDescription = If(expanded, "Expanded. Activate to hide individual seat movement bindings.", "Collapsed. Activate to show individual seat movement bindings.")
+                                     Content.Visible = expanded
+                                     PerformLayout()
+                                     If Not expanded Then RaiseEvent Collapsed(Me, EventArgs.Empty)
+                                 End Sub
+    End Sub
+    Protected Overrides Sub OnLayout(e As LayoutEventArgs)
+        MyBase.OnLayout(e)
+        If arranging OrElse header Is Nothing Then Return
+        arranging = True
+        Try
+            Dim width = Math.Max(1, ClientSize.Width)
+            header.SetBounds(0, 0, width, header.GetPreferredSize(New Size(width, 0)).Height)
+            Content.SetBounds(0, header.Bottom + Px(Me, 6), width, Content.Height)
+            Height = If(expanded, Content.Bottom, header.Bottom)
+        Finally
+            arranging = False
+        End Try
     End Sub
 End Class

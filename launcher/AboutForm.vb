@@ -6,19 +6,30 @@ Imports System.Threading.Tasks
 Public Class AboutForm
     Inherits Form
     Private ReadOnly context As InstallContext
-    Private ReadOnly client As HttpClient = UpdateService.CreateClient()
+    Private ReadOnly client As HttpClient
+    Private ReadOnly confirmRollback As Func(Of ReleaseUpdate, Boolean)
+    Private checkCancellation As CancellationTokenSource
+    Private checkGeneration As Integer
+    Private installing As Boolean
+    Private changingPreference As Boolean
+    Public Event UpdatePreferenceChanged()
     Private ReadOnly cancellation As New CancellationTokenSource()
     Private ReadOnly checkButton As New Button With {.Text = "Check for updates", .AutoSize = True, .Name = "CheckUpdates"}
     Private ReadOnly installButton As New Button With {.Text = "Download and install", .AutoSize = True, .Enabled = False, .Name = "InstallUpdate"}
-    Private ReadOnly preview As New CheckBox With {.Text = "Include experimental releases", .AutoSize = True, .Checked = BuildInfo.Version.Contains("-"), .Name = "PreviewUpdates"}
+    Private ReadOnly preview As New CheckBox With {.Text = "Include experimental releases", .AutoSize = True, .Name = "PreviewUpdates"}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(570, 0), .Text = "Check GitHub Releases for a newer version. No GitHub account is needed.", .Name = "UpdateStatus"}
     Private ReadOnly progress As New ProgressBar With {.Dock = DockStyle.Top, .Visible = False}
+    Private ReadOnly rollbackButton As New Button With {.Text = "Return to stable…", .AutoSize = True, .Name = "ReturnToStable", .Visible = BuildInfo.Channel = "Experimental"}
+    Private ReadOnly notesButton As New Button With {.Text = "Release notes", .AutoSize = True, .Name = "UpdateReleaseNotes", .Enabled = False}
     Private availableUpdate As ReleaseUpdate
     Private working As Boolean
     Private ReadOnly helpTabs As New TabControl With {.Dock = DockStyle.Fill, .Name = "HelpTabs"}
     Private ReadOnly instructions As New InstructionsView()
-    Public Sub New(value As InstallContext, Optional knownUpdate As ReleaseUpdate = Nothing)
+    Public Sub New(value As InstallContext, Optional knownUpdate As ReleaseUpdate = Nothing, Optional updateClient As HttpClient = Nothing, Optional rollbackConfirmation As Func(Of ReleaseUpdate, Boolean) = Nothing)
         context = value
+        client = If(updateClient, UpdateService.CreateClient())
+        confirmRollback = If(rollbackConfirmation, New Func(Of ReleaseUpdate, Boolean)(Function(target) MessageBox.Show(Me, "Installed: " & BuildInfo.Version & " (Experimental)" & Environment.NewLine & "Stable: " & target.Version.Text & Environment.NewLine & Environment.NewLine & "Install this stable version? It may be older. Experimental updates will be turned off. Your settings and bindings will be kept and backed up.", "Return to stable", MessageBoxButtons.YesNo, MessageBoxIcon.Question) = DialogResult.Yes))
+        preview.Checked = UpdatePreferences.Load(context).IncludeExperimentalReleases
         Text = "DiRT2VR — Help / About"
         Using stream = GetType(MainForm).Assembly.GetManifestResourceStream("DiRT2VR.ico"), appIcon As New Icon(stream)
             Icon = DirectCast(appIcon.Clone(), Icon)
@@ -39,7 +50,7 @@ Public Class AboutForm
         layout.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
         AddText(layout, "DiRT2VR", 20, True)
         Dim revision = BuildInfo.FullVersion.Split("+"c).Skip(1).FirstOrDefault()
-        Dim build = AddText(layout, "Version " & BuildInfo.Version & Environment.NewLine & "Build: " & If(revision Is Nothing, "local", revision.Substring(0, Math.Min(12, revision.Length))) & " — " & BuildInfo.BuildDate)
+        Dim build = AddText(layout, "Version " & BuildInfo.Version & " — " & BuildInfo.Channel & Environment.NewLine & "Build: " & If(revision Is Nothing, "local", revision.Substring(0, Math.Min(12, revision.Length))) & " — " & BuildInfo.BuildDate)
         build.Name = "BuildVersion"
         AddText(layout, "Developed by Bohloney", 11, True)
         AddText(layout, BuildInfo.Description)
@@ -51,7 +62,7 @@ Public Class AboutForm
         layout.Controls.Add(links)
         layout.Controls.Add(preview)
         Dim actions As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top}
-        actions.Controls.AddRange({checkButton, installButton}) : layout.Controls.Add(actions)
+        actions.Controls.AddRange({checkButton, installButton, notesButton, rollbackButton}) : layout.Controls.Add(actions)
         layout.Controls.Add(status) : layout.Controls.Add(progress)
         AddText(layout, "Close the game before updating. Your settings are kept.")
         Dim closeButton As New Button With {.Text = "Close", .AutoSize = True, .DialogResult = DialogResult.Cancel, .Name = "CloseAbout"}
@@ -71,13 +82,18 @@ Public Class AboutForm
                           End Sub
         AddHandler checkButton.Click, Async Sub() Await CheckUpdate()
         AddHandler installButton.Click, Async Sub() Await InstallUpdate()
-        AddHandler preview.CheckedChanged, Sub()
-                                              availableUpdate = Nothing : installButton.Enabled = False
-                                              status.Text = "Update channel changed. Check again to refresh available releases."
-                                          End Sub
+        AddHandler rollbackButton.Click, Async Sub() Await CheckUpdate(True)
+        AddHandler notesButton.Click, Sub()
+                                          Try
+                                              If availableUpdate IsNot Nothing Then OpenUrl(availableUpdate.Page)
+                                          Catch ex As Exception
+                                              MessageBox.Show(Me, ex.Message, "DiRT2VR", MessageBoxButtons.OK, MessageBoxIcon.Error)
+                                          End Try
+                                      End Sub
+        AddHandler preview.CheckedChanged, AddressOf PreferenceChanged
         AddHandler FormClosing, Sub() cancellation.Cancel()
         AddHandler FormClosed, Sub() client.Dispose()
-        If knownUpdate IsNot Nothing Then
+        If knownUpdate IsNot Nothing AndAlso (preview.Checked OrElse Not knownUpdate.IsExperimental) Then
             availableUpdate = knownUpdate : DescribeUpdate() : SetWorking(False)
         End If
     End Sub
@@ -112,30 +128,85 @@ Public Class AboutForm
             OpenUrl(UpdateService.Repository & "#readme")
         End If
     End Sub
-    Private Sub SetWorking(value As Boolean)
-        working = value : checkButton.Enabled = Not value : preview.Enabled = Not value
+    Private Sub SetWorking(value As Boolean, Optional checkOnly As Boolean = False)
+        working = value : installing = value AndAlso Not checkOnly
+        checkButton.Enabled = Not value : preview.Enabled = Not installing
+        rollbackButton.Enabled = Not value
+        notesButton.Enabled = Not value AndAlso availableUpdate IsNot Nothing
         installButton.Enabled = Not value AndAlso availableUpdate?.Download IsNot Nothing
     End Sub
-    Private Async Function CheckUpdate() As Task
-        If working Then Return
-        SetWorking(True) : availableUpdate = Nothing : status.Text = "Checking GitHub Releases…"
+    Private Sub SetPreference(value As Boolean)
+        UpdatePreferences.Save(context, value)
+        changingPreference = True
         Try
-            availableUpdate = Await New UpdateService(client).CheckAsync(BuildInfo.Version, preview.Checked, cancellation.Token)
-            If IsDisposed Then Return
-            DescribeUpdate()
-        Catch ex As OperationCanceledException
-            If Not IsDisposed Then status.Text = "Update check canceled or timed out. Try again when connected."
-        Catch ex As Exception
-            If Not IsDisposed Then status.Text = "Could not check for updates: " & ex.Message
+            preview.Checked = value
         Finally
-            If Not IsDisposed Then SetWorking(False)
+            changingPreference = False
         End Try
+        availableUpdate = Nothing
+        RaiseEvent UpdatePreferenceChanged()
+    End Sub
+    Private Async Sub PreferenceChanged(sender As Object, e As EventArgs)
+        If changingPreference Then Return
+        Try
+            SetPreference(preview.Checked)
+            Await CheckUpdate()
+        Catch ex As Exception
+            changingPreference = True
+            preview.Checked = UpdatePreferences.Load(context).IncludeExperimentalReleases
+            changingPreference = False
+            status.Text = "Could not save update preference: " & ex.Message
+        End Try
+    End Sub
+    Private Async Function CheckUpdate(Optional returnToStable As Boolean = False) As Task
+        If installing Then Return
+        checkCancellation?.Cancel()
+        checkGeneration += 1
+        Dim generation = checkGeneration
+        Using pending = CancellationTokenSource.CreateLinkedTokenSource(cancellation.Token)
+            checkCancellation = pending
+            SetWorking(True, checkOnly:=True) : availableUpdate = Nothing
+            status.Text = If(returnToStable, "Finding the latest stable release…", "Checking GitHub Releases…")
+            Try
+                Dim service As New UpdateService(client)
+                Dim result = If(returnToStable, Await service.CheckStableAsync(pending.Token), Await service.CheckAsync(BuildInfo.Version, preview.Checked, pending.Token))
+                If IsDisposed OrElse generation <> checkGeneration OrElse pending.IsCancellationRequested Then Return
+                If returnToStable Then
+                    If result?.Download Is Nothing Then
+                        status.Text = "A verified stable installer is unavailable. Your installation has not changed."
+                    ElseIf confirmRollback(result) Then
+                        SetPreference(False)
+                        SetWorking(False)
+                        Await InstallUpdate(result, True)
+                    Else
+                        status.Text = "Return to stable canceled. Your installation has not changed."
+                    End If
+                Else
+                    availableUpdate = result : DescribeUpdate()
+                End If
+            Catch ex As OperationCanceledException
+                If Not IsDisposed AndAlso generation = checkGeneration Then status.Text = "Update check canceled or timed out. Try again when connected."
+            Catch ex As Exception
+                If Not IsDisposed AndAlso generation = checkGeneration Then status.Text = "Could not check for updates: " & ex.Message
+            Finally
+                If ReferenceEquals(checkCancellation, pending) Then checkCancellation = Nothing
+                If Not IsDisposed AndAlso generation = checkGeneration Then SetWorking(False)
+            End Try
+        End Using
     End Function
     Private Sub DescribeUpdate()
-        status.Text = If(availableUpdate Is Nothing, "No newer published release is available on this channel.", If(availableUpdate.Download Is Nothing, "Version " & availableUpdate.Version.Text & " is available, but has no verified installer. Open Releases for details.", "Version " & availableUpdate.Version.Text & " is available (" & Math.Ceiling(availableUpdate.Size / 1048576.0).ToString() & " MB)."))
+        If availableUpdate Is Nothing Then
+            status.Text = "No newer published release is available on this channel."
+            Return
+        End If
+        Dim label = If(availableUpdate.IsExperimental, "Experimental", "Stable") & " version " & availableUpdate.Version.Text
+        status.Text = If(availableUpdate.Download Is Nothing, label & " is available, but has no verified installer. Open Release notes for details.", label & " is available (" & Math.Ceiling(availableUpdate.Size / 1048576.0).ToString() & " MB).")
     End Sub
-    Private Async Function InstallUpdate() As Task
-        If working OrElse availableUpdate?.Download Is Nothing Then Return
+    Private Async Function InstallUpdate(Optional target As ReleaseUpdate = Nothing, Optional rollback As Boolean = False) As Task
+        target = If(target, availableUpdate)
+        If working OrElse target?.Download Is Nothing Then Return
+        If Not rollback AndAlso target.Version.CompareTo(ReleaseVersion.Parse(BuildInfo.Version)) <= 0 Then Return
+        If target.IsExperimental AndAlso Not UpdatePreferences.Load(context).IncludeExperimentalReleases Then Return
         SetWorking(True) : progress.Value = 0 : progress.Visible = True
         Dim downloading = True
         Try
@@ -147,12 +218,13 @@ Public Class AboutForm
                                                             If value = 100 Then status.Text = "Verifying download… Close this window to cancel."
                                                         End If
                                                     End Sub)
-            Dim installer = Await New UpdateService(client).DownloadAsync(availableUpdate, IO.Path.Combine(context.UserRoot, "updates"), reporter, cancellation.Token)
+            Dim installer = Await New UpdateService(client).DownloadAsync(target, IO.Path.Combine(context.UserRoot, "updates"), reporter, cancellation.Token)
             downloading = False
             cancellation.Token.ThrowIfCancellationRequested()
             status.Text = "Restoring original files before setup… Close this window to cancel setup."
             ' Restore under the playing user's account before the installer can elevate.
-            Await UpdateService.PrepareInstallerAsync(context, Sub() Worker.Invoke(context, "recover", quiet:=True), cancellation.Token)
+            Await UpdateService.PrepareInstallerAsync(context, Sub() Worker.Invoke(context, "recover", quiet:=True), cancellation.Token,
+                If(rollback, New Action(Sub() UpdatePreferences.PrepareRollback(context, cancellation.Token)), Nothing))
             cancellation.Token.ThrowIfCancellationRequested()
             status.Text = "Opening setup… Windows may request administrator approval."
             Dim launcher = Owner

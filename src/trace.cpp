@@ -10,6 +10,7 @@
 #include "water_trace.h"
 #include "gpu_timer.h"
 #include "vr_hotkeys.h"
+#include "seat_adjustment.h"
 #include "light_replay.h"
 #include "ground_cover.h"
 #include "direct_menus.h"
@@ -464,6 +465,7 @@ void PrepareHeadsetViews(const std::array<XrView,2>& views) {
     }
 }
 void HeadsetScreen() {
+    SeatInactive();
     const auto f=frame.load();
     ComPtr<ID3D11Texture2D> back;
     if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return;
@@ -634,7 +636,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         eyeProjectionUploads=0;
         if(eye==0) gpu.Begin(f);
         {
-            ScopedEyePose pose(cameraA,cameraB,RelativePose(headsetReference,view.pose),scale);
+            ScopedEyePose pose(cameraA,cameraB,SeatEyePose(RelativePose(headsetReference,view.pose)),scale);
             eyeRenderer=self; eyeFov=&view.fov; lightingEye=eye+1; lightsRefreshed=false;
             RenderEyeReflection(cameraA);
             hudEye=captureHud ? eye+1 : 0;
@@ -656,9 +658,12 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             ApplyFov(projection.data(),view.fov);
         }
         PrepareHeadsetViews(views);
+        SeatPrepare(views);
         static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;
         hud.pose=ScreenPose(follow ? CenterPose(views) : headsetReference,hudDistance);
-    },nullptr,captureHud ? &hud : nullptr);
+        if(!follow) hud.pose=SeatHudPose(hud.pose,headsetReference);
+    },nullptr,captureHud ? &hud : nullptr,SeatOverlay());
+    if(!submitted) SeatInactive();
     hudEye=0;
     if(!submitted) hudCapture.End(false);
     if(submitted) hudSceneFrame=f;

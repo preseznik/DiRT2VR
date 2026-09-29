@@ -4,9 +4,11 @@ Imports System.Threading.Tasks
 
 Public Class MainForm
     Inherits Form
+    Private ReadOnly settingsTips As New ToolTip With {.InitialDelay = 450, .ReshowDelay = 150, .AutoPopDelay = 15000, .ShowAlways = True}
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
+    Private ReadOnly flashback As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalFlashback", .AccessibleName = "Frame-rate-independent rewind (Experimental)", .AutoSize = True}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
     Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (single-player launches)", .Name = "SkipStartupMovies", .AutoSize = True}
@@ -19,7 +21,7 @@ Public Class MainForm
     Private nextScan As DateTime
     Private ReadOnly stateLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
     Private ReadOnly inputLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(740, 0)}
-    Private ReadOnly bindingLists As ListBox() = {New ListBox(), New ListBox()}
+    Private ReadOnly bindingLists As ListBox() = Enumerable.Range(0, SeatActions.Names.Length).Select(Function(i) New ListBox()).ToArray()
     Private ReadOnly tabs As New TabControl With {.Dock = DockStyle.Fill, .Name = "LauncherTabs"}
     Private ReadOnly launchMode As ComboBox = Choice("LaunchMode")
     Private ReadOnly eventChoice As ComboBox = Choice("PracticeEvent")
@@ -70,12 +72,13 @@ Public Class MainForm
     Private ReadOnly updateCancellation As New CancellationTokenSource()
     Private ReadOnly checkForUpdate As Func(Of CancellationToken, Task(Of ReleaseUpdate))
     Private availableUpdate As ReleaseUpdate
+    Private updateGeneration As Integer
     Public Sub New(value As InstallContext, Optional releaseCheck As Func(Of CancellationToken, Task(Of ReleaseUpdate)) = Nothing)
         context = value
         input = New ControllerInput(context)
         checkForUpdate = If(releaseCheck, AddressOf CheckReleaseAsync)
         settings = VrSettings.Load(context)
-        Text = "DiRT2VR — Experimental launcher"
+        Text = "DiRT2VR" & If(BuildInfo.Channel = "Experimental", " — Experimental", "")
         Using stream = GetType(MainForm).Assembly.GetManifestResourceStream("DiRT2VR.ico"), appIcon As New Icon(stream)
             Icon = DirectCast(appIcon.Clone(), Icon)
         End Using
@@ -109,6 +112,7 @@ Public Class MainForm
         BuildGraphicsTab()
         BuildControlsTab()
         BuildSettingsTab()
+        BuildAdvancedTab()
         AddHandler tabs.SelectedIndexChanged, Sub()
                                                   keyboardCapture = -1 : controllerCapture = -1 : capturedDevice = Nothing
                                                   inputLabel.Text = "Select a binding to change it."
@@ -135,6 +139,8 @@ Public Class MainForm
                                                End Sub)
         layout.Controls.Add(commands)
         Controls.Add(layout)
+        ConfigureTooltips()
+        AddHandler Disposed, Sub() settingsTips.Dispose()
         AddHandler SizeChanged, Sub() stateLabel.MaximumSize = New Size(Math.Max(1, ClientSize.Width - layout.Padding.Horizontal), 0)
         RefreshBindings() : RefreshDisplayRate()
         AddHandler input.StateChanged, AddressOf OnController
@@ -152,17 +158,78 @@ Public Class MainForm
         AddHandler Shown, Sub() FitInitialWindow()
         AddHandler Shown, Async Sub() Await CheckStartupUpdate()
     End Sub
-    Private Shared Async Function CheckReleaseAsync(token As CancellationToken) As Task(Of ReleaseUpdate)
+    Private Sub ConfigureTooltips()
+        Tip(flashback, "Keeps more rewind history when playing at high FPS, without slowing the game." & vbCrLf & "Single-player desktop and VR only. Experimental; off by default.")
+        Tip(renderScale, "How much detail the game draws for each eye. Higher can be sharper," & vbCrLf &
+            "but needs more GPU power and memory. A low Headset texture scale" & vbCrLf & "can still make the final picture look soft.")
+        Tip(headsetScale, "Size of the finished picture sent to your headset." & vbCrLf &
+            "Lower uses less memory but can blur the view. 100% keeps the" & vbCrLf &
+            "size SteamVR recommends. This is not car or road texture quality.")
+        Tip(msaa, "Smooths jagged edges in VR. Higher settings use more memory" & vbCrLf & "and GPU power; 4× and 8× can cause crashes. 2× is the default.")
+        Tip(fieldOfView, "Lower values trim the edges of your VR view to reduce rendering" & vbCrLf & "work. 100% keeps the full view; objects keep their normal scale.")
+        Tip(mirrors, "Turn the car's rear-view mirrors on or off in VR." & vbCrLf & "Off can improve performance. Game setting keeps your usual choice.")
+        Tip(treeDetail, "Higher keeps detailed vegetation visible farther away, but" & vbCrLf & "costs performance. Game keeps your usual setting.")
+        Tip(objectDetail, "Higher keeps detailed buildings and trackside objects farther" & vbCrLf & "away, but costs performance. Game keeps your usual setting.")
+        Tip(borderless, "Fill the main monitor without window borders during desktop" & vbCrLf & "play. Alt+Tab still works. This does not affect VR or its mirror.")
+        Tip(desktopVSync, "Stops horizontal tearing by matching desktop frames to your" & vbCrLf & "monitor. Off allows uncapped FPS. This does not affect VR timing.")
+        Tip(hudFollow, "On: the HUD follows where you look. Off: it stays in front" & vbCrLf & "of the car while you turn your head.")
+        Tip(hudDistance, "How far away the floating HUD appears in VR." & vbCrLf & "The text stays the same apparent size so it remains readable.")
+        Tip(hudGauges, "Show speed, gear and revs on the floating VR HUD.")
+        Tip(hudLapTime, "Show lap and timing information on the VR HUD.")
+        Tip(hudPosition, "Show your race position on the VR HUD.")
+        Tip(hudMap, "Show the route map on the VR HUD.")
+        Tip(hudProgress, "Show how far through the stage you are on the VR HUD.")
+        Tip(requestedResolution, "The scene size your current settings will request next launch." & vbCrLf & "The last-launch report shows what was actually used.")
+        Tip(actualResolution, "Measured sizes from your last VR launch, not a live preview" & vbCrLf & "of unsaved changes. Game is the scene; headset is the sent image.")
+        Tip(refreshLabel, "How often the headset updates its picture. Change this in" & vbCrLf & "SteamVR or your headset software. This is the last reported rate.")
+        Tip(launchMode, "Normal Launch opens the game menus. Direct practice starts" & vbCrLf & "a solo event. Race adds computer-controlled opponents.")
+        Tip(eventChoice, "Choose a driving discipline to filter the track list." & vbCrLf & "Direct launches do not start a career event.")
+        Tip(trackChoice, "The course used by Direct practice or Race.")
+        Tip(carChoice, "Your car for Direct practice or Race.")
+        Tip(opponentCars, "Same as driver: matching cars. Mixed: any installed class." & vbCrLf & "Same class: cars from your chosen car's class. Race mode only.")
+        Tip(opponents, "How many computer-controlled cars race against you." & vbCrLf & "Used in Race mode; Direct practice is solo.")
+        Tip(laps, "Number of laps for circuit tracks in Direct practice or Race." & vbCrLf & "Point-to-point stages always run once.")
+        Tip(runtimeBox.Parent, "SteamVR's connection to the headset. Normally detected for you;" & vbCrLf & "browse only if your SteamVR installation is elsewhere.")
+        Tip(skipStartupMovies, "Skip startup logos in single-player launches." & vbCrLf & "LAN keeps them to avoid multiplayer disconnects.")
+        Tip(skipIntroduction, "Skip the opening movie and forced first race when launching" & vbCrLf & "LAN. Profile creation still works; normal play is unchanged.")
+        Tip(logging, "Save diagnostic files to help troubleshoot a problem." & vbCrLf & "Leave off for normal play to avoid extra disk usage.")
+        Tip(toggleButton, "Choose a keyboard shortcut to switch between cockpit VR" & vbCrLf & "and the flat virtual screen.")
+        Tip(recenterButton, "Choose a keyboard shortcut to reset your seated VR position." & vbCrLf & "Sit comfortably and face forward before using it in the game.")
+        Tip(saveButton, "Keep these choices for your next launch, including quick launch." & vbCrLf & "This does not change a race that is already running.")
+        Tip(recoverButton, "Restore original game files after an interrupted session." & vbCrLf & "Close DiRT 2 first. Your career is not reset.")
+        Tip(Controls.Find("GraphicsDefaults", True).Single(), "Reset the Graphics tab to its defaults, then save." & vbCrLf & "Your driving bindings and career are unchanged.")
+        Tip(Controls.Find("DrivingControls", True).Single(), "Set steering, pedals, gears and other driving controls," & vbCrLf & "or use the guided binding wizard.")
+        Tip(hostButton, "Start LAN play, then create a lobby in the game's LAN menu." & vbCrLf & "You can choose desktop or VR before launching.")
+        Tip(joinButton, "Start LAN play aimed at the selected host, then join through" & vbCrLf & "the game's LAN menu. You can choose desktop or VR.")
+        Tip(refreshServers, "Look again for hosts on your local network.")
+    End Sub
+    Private Sub Tip(control As Control, description As String)
+        ' Native sliders are child controls. Cover the caption, track and value,
+        ' so users do not have to hunt for a small hover target.
+        Dim target = If(TypeOf control.Parent Is SettingRow, control.Parent, control)
+        AttachTip(target, description)
+    End Sub
+    Private Sub AttachTip(control As Control, description As String)
+        settingsTips.SetToolTip(control, description)
+        For Each child As Control In control.Controls
+            AttachTip(child, description)
+        Next
+    End Sub
+    Private Async Function CheckReleaseAsync(token As CancellationToken) As Task(Of ReleaseUpdate)
         Using client = UpdateService.CreateClient()
-            Return Await New UpdateService(client).CheckAsync(BuildInfo.Version, BuildInfo.Version.Contains("-"), token)
+            Return Await New UpdateService(client).CheckAsync(BuildInfo.Version, UpdatePreferences.Load(context).IncludeExperimentalReleases, token)
         End Using
     End Function
     Private Async Function CheckStartupUpdate() As Task
         Dim token = updateCancellation.Token
+        updateGeneration += 1
+        Dim generation = updateGeneration
         Try
             Dim result = Await checkForUpdate(token)
-            If IsDisposed OrElse token.IsCancellationRequested Then Return
+            If IsDisposed OrElse token.IsCancellationRequested OrElse generation <> updateGeneration Then Return
+            If result IsNot Nothing AndAlso result.IsExperimental AndAlso Not UpdatePreferences.Load(context).IncludeExperimentalReleases Then Return
             availableUpdate = result
+            updateNotice.Text = If(result?.IsExperimental, "Experimental update available", "New version available")
             updateNotice.Visible = result IsNot Nothing
             If result IsNot Nothing Then updateNotice.AccessibleDescription = "Version " & result.Version.Text & " is available. Open Help / About to review and install."
         Catch ex As Exception
@@ -290,7 +357,7 @@ Public Class MainForm
         AddHandler eventChoice.SelectedIndexChanged, Sub()
                                                         Dim previous = TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id
                                                         trackChoice.Items.Clear()
-                                                        trackChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) t.Event = CStr(eventChoice.SelectedItem) AndAlso PrototypeTrack.Installed(t, context)).OrderBy(Function(t) t.Label).Cast(Of Object).ToArray())
+                                                        trackChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) t.Event = CStr(eventChoice.SelectedItem) AndAlso Directory.Exists(t.Folder(context))).OrderBy(Function(t) t.Label).Cast(Of Object).ToArray())
                                                         trackChoice.SelectedItem = trackChoice.Items.Cast(Of PracticeTrack).FirstOrDefault(Function(t) t.Id = previous)
                                                         If trackChoice.SelectedIndex < 0 AndAlso trackChoice.Items.Count > 0 Then trackChoice.SelectedIndex = 0
                                                     End Sub
@@ -318,11 +385,22 @@ Public Class MainForm
         Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
     End Sub
-    Private Sub ShowAbout(Optional topic As String = Nothing)
+    Private Async Sub ShowAbout(Optional topic As String = Nothing)
+        Dim changed As Boolean
         Using dialog As New AboutForm(context, availableUpdate)
+            AddHandler dialog.UpdatePreferenceChanged, Sub()
+                                                          changed = True
+                                                          InvalidateUpdateOffer()
+                                                      End Sub
             If topic IsNot Nothing Then dialog.ShowInstructions(topic)
             dialog.ShowDialog(Me)
         End Using
+        If changed AndAlso Not IsDisposed Then Await CheckStartupUpdate()
+    End Sub
+    Private Sub InvalidateUpdateOffer()
+        updateGeneration += 1
+        availableUpdate = Nothing
+        updateNotice.Visible = False
     End Sub
     Private Sub RefreshLaps()
         Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
@@ -362,6 +440,13 @@ Public Class MainForm
         skipIntroduction.Text = "On" : skipIntroduction.Checked = settings.SkipIntroduction : Field(options, "Skip introduction (LAN)", skipIntroduction)
         logging.Text = "On" : logging.Checked = settings.LoggingEnabled : Field(options, "Diagnostic logging", logging)
         content.Controls.Add(HelpLink(Sub() ShowAbout("Getting started")))
+    End Sub
+    Private Sub BuildAdvancedTab()
+        Dim content = TabLayout("Advanced")
+        Dim gameplay = Section(content, "Gameplay")
+        flashback.Checked = settings.ExperimentalFlashback
+        Field(gameplay, "Frame-rate-independent rewind", flashback)
+        content.Controls.Add(HelpLink(Sub() ShowAbout("Advanced")))
     End Sub
     Private Sub BuildGraphicsTab()
         Dim content = TabLayout("Graphics")
@@ -407,6 +492,7 @@ Public Class MainForm
                                            element.Checked = True
                                        Next
                                    End Sub
+        BuildSeatSettings(columns.Second)
         columns.Second.Controls.Add(defaults)
         columns.Second.Controls.Add(HelpLink(Sub() ShowAbout("VR rendering")))
         columns.Second.Controls.Add(actualResolution)
@@ -468,21 +554,48 @@ Public Class MainForm
         inputLabel.Margin = New Padding(0, 0, 0, 12)
         content.Controls.Add(inputLabel)
 
-        For action = 0 To 1
+        Dim individualSeats As New CollapsibleSection("Individual seat bindings (optional)") With {.Name = "IndividualSeatBindings"}
+        AddHandler individualSeats.Collapsed, Sub()
+                                                 If keyboardCapture >= 3 AndAlso keyboardCapture <= 8 Then keyboardCapture = -1
+                                                 If controllerCapture >= 3 AndAlso controllerCapture <= 8 Then
+                                                     controllerCapture = -1 : capturedDevice = Nothing
+                                                 End If
+                                                 inputLabel.Text = "Select a binding to change it."
+                                                 RefreshBindings()
+                                             End Sub
+        For action = 0 To SeatActions.Names.Length - 1
             Dim selectedAction = action
 
-            Dim keyButton = If(action = 0, toggleButton, recenterButton)
-            keyButton.AccessibleName = If(action = 0, "Toggle VR keyboard binding", "Recenter keyboard binding")
-            AddHandler keyButton.Click, Sub() BeginKeyCapture(selectedAction)
+            Dim keyCell As Control
+            If action < 9 Then
+                Dim button = ShortcutButton(action)
+                button.AccessibleName = SeatActions.Names(action) & " keyboard binding"
+                AddHandler button.Click, Sub() BeginKeyCapture(selectedAction)
+                Dim keys As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0)}
+                keys.Controls.Add(button)
+                If action >= 2 Then
+                    Dim clear As New Button With {.Text = "Clear", .AutoSize = False, .Width = Px(Me, 50), .Height = button.PreferredSize.Height}
+                    AddHandler clear.Click, Sub()
+                                                If busy Then Return
+                                                AssignShortcut(selectedAction, 0, 0) : RefreshBindings()
+                                            End Sub
+                    keys.Controls.Add(clear)
+                End If
+                keyCell = keys
+            Else
+                keyCell = New Label With {.Text = {"Shift (hold)", "Enter", "Escape"}(action - 9), .AutoSize = True}
+            End If
 
             Dim cell As New TableLayoutPanel With {.Dock = DockStyle.Fill, .AutoSize = True, .ColumnCount = 1, .Margin = New Padding(3, 3, 0, 14)}
             Dim list = bindingLists(action)
-            list.Dock = DockStyle.Fill : list.Height = Px(Me, 78) : list.IntegralHeight = False : list.HorizontalScrollbar = True
-            list.AccessibleName = If(action = 0, "Toggle VR controller bindings", "Recenter controller bindings")
+            list.Dock = DockStyle.Fill : list.Height = Px(Me, If(action < 2, 78, 32)) : list.IntegralHeight = False : list.HorizontalScrollbar = True
+            list.AccessibleName = SeatActions.Names(action) & " controller bindings"
             cell.Controls.Add(list)
             Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Top}
             Dim bind As New Button With {.Text = "Bind…", .AutoSize = True}
             Dim remove As New Button With {.Text = "Remove selected", .AutoSize = True}
+            Tip(bind, If(action < 2, "Bind a button or pair. These buttons still reach the game too.", "Bind a button, pair or wheel POV direction. Seat shortcuts are reserved in cockpit VR; panel navigation buttons are reserved while open."))
+            Tip(remove, "Remove the selected VR shortcut. Driving controls are unchanged.")
             AddHandler bind.Click, Sub() BeginControllerCapture(selectedAction)
             AddHandler remove.Click, Sub()
                                          If busy OrElse list.SelectedIndex < 0 Then Return
@@ -490,7 +603,16 @@ Public Class MainForm
                                          settings.Bindings.Remove(assignments(list.SelectedIndex)) : RefreshBindings()
                                      End Sub
             buttons.Controls.AddRange({bind, remove}) : cell.Controls.Add(buttons)
-            content.Controls.Add(New BindingRow(If(action = 0, "Toggle VR", "Recenter"), keyButton, cell))
+            Dim row As New BindingRow(SeatActions.Names(action), keyCell, cell)
+            If action >= 3 AndAlso action <= 8 Then
+                If action = 3 Then content.Controls.Add(individualSeats)
+                individualSeats.Content.Controls.Add(row)
+            Else
+                content.Controls.Add(row)
+            End If
+            If action = 2 Then
+                content.Controls.Add(New Label With {.Text = "Recommended: open the seat panel and use arrows / D-pad. No separate movement bindings needed.", .AutoSize = True, .Margin = New Padding(0, 0, 0, 12), .Name = "SeatPanelRecommendation"})
+            End If
         Next
 
         content.Controls.Add(New Label With {.Text = "Driving controls", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
@@ -516,6 +638,7 @@ Public Class MainForm
     Private Sub SaveSettings()
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
+        settings.ExperimentalFlashback = flashback.Checked
         settings.SkipIntroduction = skipIntroduction.Checked
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.BorderlessDesktop = borderless.Checked
@@ -540,6 +663,7 @@ Public Class MainForm
             settings.TrackId = track.Id : settings.CarCode = car.Code
         End If
         settings.Validate()
+        SaveSeats()
         Files.SaveJson(context.PreferencesPath, settings)
         stateLabel.Text = "Settings saved. Changes apply to the next session."
     End Sub
@@ -557,10 +681,12 @@ Public Class MainForm
         End Using
     End Sub
     Private Sub RefreshBindings()
-        toggleButton.Text = If(keyboardCapture = 0, "Press a key…", KeyLabel(settings.ToggleKey, settings.ToggleModifiers))
-        recenterButton.Text = If(keyboardCapture = 1, "Press a key…", KeyLabel(settings.RecenterKey, settings.RecenterModifiers))
+        For action = 0 To 8
+            Dim key = Shortcut(action)
+            ShortcutButton(action).Text = If(keyboardCapture = action, "Press a key…", If(key.Key = 0, "Unassigned", KeyLabel(key.Key, key.Modifiers)))
+        Next
         Dim devices = input.Snapshot()
-        For action = 0 To 1
+        For action = 0 To SeatActions.Names.Length - 1
             Dim selectedAction = action
             Dim list = bindingLists(action)
             Dim rows = settings.Bindings.Where(Function(b) b.Action = selectedAction).Select(Function(binding)
@@ -592,14 +718,14 @@ Public Class MainForm
             If Not VrSettings.ValidKey(CInt(e.KeyCode)) Then Return
             Dim modifiers = If(e.Control, 1, 0) Or If(e.Alt, 2, 0) Or If(e.Shift, 4, 0)
             If e.Alt AndAlso (e.KeyCode = Keys.F4 OrElse e.KeyCode = Keys.Tab) Then Return
-            If (keyboardCapture = 0 AndAlso CInt(e.KeyCode) = settings.RecenterKey AndAlso modifiers = settings.RecenterModifiers) OrElse (keyboardCapture = 1 AndAlso CInt(e.KeyCode) = settings.ToggleKey AndAlso modifiers = settings.ToggleModifiers) Then
-                inputLabel.Text = "That shortcut is assigned to the other action." : Return
-            End If
-            If keyboardCapture = 0 Then
-                settings.ToggleKey = CInt(e.KeyCode) : settings.ToggleModifiers = modifiers
-            Else
-                settings.RecenterKey = CInt(e.KeyCode) : settings.RecenterModifiers = modifiers
-            End If
+            Dim previous = Shortcut(keyboardCapture)
+            AssignShortcut(keyboardCapture, CInt(e.KeyCode), modifiers)
+            Try
+                SeatActions.Validate(settings)
+            Catch ex As IOException
+                AssignShortcut(keyboardCapture, previous.Key, previous.Modifiers)
+                inputLabel.Text = ex.Message : Return
+            End Try
             keyboardCapture = -1 : inputLabel.Text = "Keyboard binding captured. Save settings to keep it."
             RefreshBindings() : Return
         End If
@@ -648,6 +774,7 @@ Public Class MainForm
                 Catch
                 End Try
             End If
+            RefreshSeatAvailability()
             desktopButton.Enabled = Not busy : launchButton.Enabled = Not busy : recoverButton.Enabled = Not busy : saveButton.Enabled = Not busy
             hostButton.Enabled = Not busy : refreshServers.Enabled = Not busy AndAlso Not scanning
             joinButton.Enabled = Not busy AndAlso If(SelectedHost()?.Joinable, False)

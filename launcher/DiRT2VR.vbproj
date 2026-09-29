@@ -8,7 +8,8 @@
     <OptionStrict>On</OptionStrict>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AssemblyName>DiRT2VR</AssemblyName>
-    <Version>0.15.7</Version>
+    <Version>0.17.4</Version>
+    <ReleaseChannel Condition="'$(ReleaseChannel)' == ''">Stable</ReleaseChannel>
     <BuildUtc Condition="'$(BuildUtc)' == ''">Development build</BuildUtc>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <ApplicationIcon>assets\DiRT2VR.ico</ApplicationIcon>
@@ -19,6 +20,7 @@
     <PublishTrimmed>false</PublishTrimmed>
   </PropertyGroup>
   <ItemGroup>
+    <AssemblyMetadata Include="ReleaseChannel" Value="$(ReleaseChannel)" />
     <AssemblyMetadata Include="BuildUtc" Value="$(BuildUtc)" />
     <EmbeddedResource Include="assets\DiRT2VR.ico" LogicalName="DiRT2VR.ico" />
     <EmbeddedResource Include="assets\race-catalog.json" LogicalName="DiRT2VR.race-catalog.json" />

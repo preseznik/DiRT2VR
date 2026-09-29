@@ -7,7 +7,7 @@ Public Class InstructionsView
     Private ReadOnly picker As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Name = "InstructionTopicPicker", .AccessibleName = "Instruction topic"}
     Private ReadOnly article As New RichTextBox With {.ReadOnly = True, .BorderStyle = BorderStyle.None, .WordWrap = True, .ScrollBars = RichTextBoxScrollBars.Vertical, .DetectUrls = False, .Name = "InstructionArticle", .AccessibleName = "Instructions"}
     Private updating As Boolean
-    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates"}
+    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position"}
     Private Shared ReadOnly Pages As String() = {
         "Launch
 Launch plays on your monitor. Launch VR uses SteamVR: start SteamVR and connect your headset first. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
@@ -38,7 +38,9 @@ If the game has not created a graphics file yet, use Normal Launch once before a
 100% requests 1600 × 1200 per eye at full field of view. The 50–300% slider scales width and height. 150% is marked recommended; the default remains 100%. 300% requests 4800 × 3600 per eye, nine times the baseline pixels, and needs substantially more memory and GPU time if applied. Graphics shows the requested scene size and the last VR launch's measured game and headset dimensions. A mismatch means the game did not retain the requested size; the apparent mirror window size alone is not proof. Enable diagnostic logging before a troubleshooting run to record startup size changes.
 
 Headset texture scale
-25–100% of SteamVR's recommended width and height. Increasing this alone cannot add detail missing from the scene render; a low value can also limit detail from a larger scene. Default: 50%. Change one setting at a time when comparing clarity. The HUD has an independent texture sized from the game image, capped at 2048 pixels on its longest edge; this does not change HUD distance or apparent size.
+This is the size of the finished picture sent to your headset, not the quality of car or road textures. Render resolution controls how much detail the game draws first; Headset texture scale controls how much of that detail survives in the final picture. A low value can make even a high-resolution scene look soft.
+
+100% uses the picture size SteamVR recommends. 50% halves both width and height, leaving one quarter as many pixels. For example, if SteamVR recommends 3000 × 3000, 50% sends 1500 × 1500. Lower values use less memory and may help performance; higher values can retain more detail but cannot create detail missing from the game render. Default: 50%. This changes neither headset refresh rate nor the quality of the game's original textures. Change one slider at a time when comparing clarity. The floating HUD uses a separate image and is not scaled by this slider.
 
 Anti-aliasing (MSAA)
 VR uses its own Off / 2× / 4× / 8× setting. Default: 2×. Higher values smooth edges but cost memory and GPU time; 4× and especially 8× may make VR unstable in this 32-bit game. Reduce MSAA first if VR crashes. Your desktop MSAA is restored after play.
@@ -103,10 +105,38 @@ Diagnostic logging
 Off by default. Enable it in Settings only for troubleshooting and turn it off afterward. Open logs shows the log folder. Existing logs are not deleted automatically; recovery records remain available even when logging is off.
 
 Updates
-About shows the installed version, build and GitHub update controls. Close the game before updating. Downloads are verified before setup opens; settings are retained. Windows may ask for administrator approval. ZIP installs become installer-managed when updated through setup.
+About shows the installed version, Stable/Experimental channel, build and GitHub update controls. Include experimental releases is off by default and saved immediately; it controls both startup notices and manual checks. Enabling it includes newer experimental and normal releases. Disabling it does not replace the installed build. Experimental builds offer Return to stable…: this asks before installing the latest normal release, even if older, and disables experimental updates. Launcher settings and bindings are backed up under updates/rollback-preferences in the installation user-data folder; your career is not reset. Close the game before updating. Downloads are verified before setup opens; settings are retained. Windows may ask for administrator approval. ZIP installs become installer-managed when updated through setup.
 
 Documentation
-The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages."}
+The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages.",
+        "Experimental rewind
+Advanced → Frame-rate-independent rewind → On (Experimental) is off by default. Save settings and launch a new session to apply it. It works in single-player Normal Launch, Direct practice and Race, for desktop and VR. LAN ignores this setting. Desktop play requires DirectX 11.
+
+What it does
+At high frame rates, the original game fills its rewind buffer faster. This option records up to 60 snapshots per second while the game continues at its normal frame rate. It does not cap gameplay FPS or change headset refresh rate, and it does not need diagnostic logging.
+
+Current testing
+Two desktop rewind/resume tests in the Subaru Group N on Croatia — Velebit Adventure retained 10 seconds instead of about 5 seconds at roughly 120 FPS. Duration can vary with the event. Other cars/events and VR still need testing.
+
+If something looks wrong
+Turn the option off, save and relaunch. Report the event, car and whether the problem happened during rewind or after resuming. The game executable on disk is unchanged.",
+        "Adjusting your seat (Experimental)
+In cockpit VR, press Tab to open Seat position. Stop the car before adjusting: the race continues while the panel is open. The panel stays where you opened it and works even with the racing HUD hidden.
+
+Keyboard and Xbox
+Up/Down raises or lowers the seat. Left/Right moves back or forward. Hold Shift (Xbox X) to move sideways instead. Enter (A) saves; Escape (B) cancels. Tab saves and closes. Recenter keeps your seat position.
+
+Wheels
+Bind Open seat adjustment in Controls. Your wheel POV hat navigates the panel; assign Panel sideways modifier, Panel save and Panel cancel to wheel buttons. Keyboard controls remain available. Assigned seat shortcut buttons are reserved in cockpit VR, including both parts of a pair. Panel navigation buttons are reserved while the panel is open; unrelated driving controls keep working.
+
+Per-car positions
+Graphics → VR cockpit provides Height, Forward/back and Left/right sliders, plus Reset seat position for the selected car. Save settings before launching. Positions are saved per car, including cars selected through the normal game menus. Positive values mean up, forward and right. Adjustment is limited to 50 cm each way; extreme positions can expose missing cockpit geometry.
+
+Separate shortcuts
+Controls also provides six optional seat movement bindings. These are unassigned by default and save automatically when movement stops. In the panel, Save keeps the preview; Cancel, leaving cockpit VR or changing cars discards it. If the car cannot be identified, adjustment is disabled rather than saved against another car.
+
+Current testing
+Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests."}
     Public Sub New()
         Dock = DockStyle.Fill
         Controls.AddRange({topics, picker, article})

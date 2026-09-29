@@ -1,5 +1,6 @@
 Public Class PackageManifest
     Public Property Version As String = ""
+    Public Property Channel As String = "Stable"
     Public Property Files As New Dictionary(Of String, String)
 End Class
 Public Class InstallationReceipt

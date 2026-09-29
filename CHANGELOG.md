@@ -1,17 +1,45 @@
 # Changelog
 
-Notable changes to DiRT2VR are recorded here, newest first. Versioned releases remain experimental; older dated entries are development milestones. Headset checks refer to Quest 3 through SteamVR unless stated otherwise.
+Notable changes to DiRT2VR are recorded here, newest first. Release channels identify normal and opt-in experimental builds; individual features may still have documented limitations. Older dated entries are development milestones. Headset checks refer to Quest 3 through SteamVR unless stated otherwise.
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
 ## Unreleased
 
+- Recommend the seat-adjustment panel in Controls and tuck the six optional movement bindings into a section that starts collapsed.
+
+## 0.17.3 — 2026-09-28 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.3)
+
+- Adjust your VR seat height, depth and sideways position separately for each car. Use **Graphics → VR cockpit**, or press **Tab** while stopped in cockpit VR to open the adjustment panel.
+- Use the arrow keys or controller D-pad to move, hold **Shift / Xbox X** for sideways movement, **Enter / A** to save or **Escape / B** to cancel. Add optional movement and panel bindings in Controls. Saved positions survive recentering and relaunching.
+- Add **Advanced → Frame-rate-independent rewind (Experimental)**, off by default. Keep more rewind history at high FPS without limiting gameplay. Initial Subaru/Velebit desktop checks passed; broader event and VR rewind testing remain pending.
+- Seat-panel movement, save/cancel and persistence passed the reported headset check. Physical wheel navigation and broader rendering checks with adjusted seats remain unverified. Extreme positions can reveal missing interior geometry.
+- Available through the launcher only with **? → About → Include experimental releases** enabled. Use **Return to stable…** in About to go back if needed.
+
+## 0.16.0 — 2026-09-28
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.16.0)
+
+- Introduce optional experimental builds for smaller changes and early testing. This lets regular releases focus on more substantial improvements, with fewer update prompts. To try experimental builds, enable **Include experimental releases** in **? → About**; it is off by default.
+
+- Save the experimental-update preference for automatic and manual checks; label experimental builds and offer a confirmed return to the latest stable release with a settings backup.
+
+- Trim internal diagnostics, analysis utilities and legacy test kits from the public repository; retain pinned dependency setup and all build/package inputs.
+
+- Keep development notes and tests out of the public source tree; builds no longer require them. Preserve matching LAN source and license notices.
+
+## 0.15.8 — 2026-09-28
+
+Local test build; included in 0.16.0.
+
+- Add short hover explanations to launcher settings, including what Headset texture scale does and how it differs from Render resolution.
+
+- Add an optional Patreon support link to the README; the mod will remain free forever.
+
 - Make `main` the default branch for tested code and releases; keep unfinished custom-track development separate and retire obsolete branches.
 
-- Replace the prototype's donor PVS masks with all-visible masks to isolate persistent angular disappearance. Normal frustum culling remains active; only the prototype visibility file changes. Add raw/RLE mask regression checks. Runtime confirmation and performance assessment remain pending.
-- Expand the prototype terrain's stale visibility bounds to contain its elevated road. Add a ground apron and suppress local Battersea structures/props while retaining distant scenery, sky and trees. Installation now verifies visibility and scenery files too. Runtime culling and cleanup acceptance remain pending.
-- Correct the experimental track PSSG writer's duplicate data/index object ID and missing terrain primitive declaration after a manual test showed invisible road collision. Add saved-file structure checks that reject the previous candidate. The repaired candidate still needs in-game rendering validation.
-- Add isolated custom-track authoring tools and an optional experimental prototype entry for desktop Direct practice. The new 356 m circuit has matching visual/collision geometry, route data and hash-checked installation. Original tracks remain available. Static validation and headless launcher tests pass; generated-track gameplay, visibility, resets and lap completion remain unverified. See [technical status](docs/custom-tracks.md).
 
 ## 0.15.7 — 2026-09-28
 
@@ -90,8 +118,6 @@ Local test build; not yet published to GitHub.
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.14.1)
 
-- Add prominent latest-release and all-releases links near the top of the README, and document the publishing check that keeps the latest link current.
-
 - Add a separate desktop VSync toggle, on by default, independent of borderless. Desktop launches temporarily apply the choice and restore original settings after play; VR retains its own timing setup.
 - Reorganize Graphics into compact Desktop, VR rendering and VR HUD groups. Move detailed guidance into the offline ? → Instructions tab.
 - Adapt Launcher, Multiplayer, Graphics, Controls, Settings and Help to wide, portrait and compact windows. Groups reflow, bindings stack and LAN rows become tiles at narrow widths; action buttons remain outside scrolling content. Resize checks preserve unsaved settings and keyboard capture.
@@ -139,15 +165,15 @@ Local test build; not yet published to GitHub.
 
 - Graphics: add Tree detail and Object detail sliders using the game's native quality presets. Default to the existing game settings, apply only during VR sessions, and restore original values after play. Higher detail can reduce scenery pop-in; track-specific distance limits and headset performance still need comparison.
 - Direct practice and Race: stop at a finish menu instead of automatically repeating. Add Restart and Return to menus to the pause menu too. Return to menus closes the direct session, restores temporary files and relaunches Normal Launch in the same Desktop/VR mode; Alt+F4 and ordinary quits do not relaunch. The desktop return path has been tested; headset validation is pending. Custom sessions remain separate from career rewards/results.
-- Fixed the tested Ensenada Sprint puddle reflection mismatch by rendering the reflected camera separately for each VR eye while retaining the original reflection draw lists. Water remains visible. Identical-camera/asymmetric desktop benchmarks pass, and the user confirms the reflections look good in Quest 3. Enabled for normal VR launches; desktop rendering is unchanged. Broader tracks, reflection visibility when looking behind, and performance still need coverage. See `docs/water-visibility.md`.
+- Fixed the tested Ensenada Sprint puddle reflection mismatch by rendering the reflected camera separately for each VR eye while retaining the original reflection draw lists. Water remains visible. Identical-camera/asymmetric desktop benchmarks pass, and the user confirms the reflections look good in Quest 3. Enabled for normal VR launches; desktop rendering is unchanged. Broader tracks, reflection visibility when looking behind, and performance still need coverage.
 - Changed fresh/default HUD settings to **1 metre** with **Speedometer / gear / revs** off. Restore graphics defaults uses the same settings; other HUD areas remain enabled. Explicitly saved preferences are preserved on upgrade. Apparent text size is unchanged.
 
 ### Earlier development and validation notes
 
 - Added a **HUD distance** slider on Graphics: 1–20 metres in 0.5 m steps, default 4 m. It preserves apparent HUD size, as requested, and supports fixed and follow-view placement. Save and relaunch VR to apply; graphics defaults restore 4 m. Launcher, camera-math and OpenXR submission tests cover the setting. The user's 20 m check did not show an obvious distance change; added a one-time placement receipt when diagnostic logging is enabled. Perceptual headset acceptance remains unresolved.
-- The user confirms water no longer appears to pop in with the partial filter removed, but reflections still differ between eyes. Requested input captures reproduce a shared original-camera reflection sampled using different eye projections. A separate per-eye reflection prototype lost vehicle batches in the second view even with identical cameras, so it was removed; no reflection fix is claimed. Normal play produces no capture files. Evidence and next steps are in `docs/water-visibility.md`.
+- The user confirms water no longer appears to pop in with the partial filter removed, but reflections still differ between eyes. Requested input captures reproduce a shared original-camera reflection sampled using different eye projections. A separate per-eye reflection prototype lost vehicle batches in the second view even with identical cameras, so it was removed; no reflection fix is claimed. Normal play produces no capture files.
 - Added five visibility toggles below **HUD follows view** for the cockpit HUD's gauges, lap/time, race position, route map and stage progress areas. All start enabled and reset with graphics defaults. These mask the standard HUD layout, including any other overlay sharing a hidden area; menus, virtual-screen and desktop HUDs are unchanged. Desktop captures and all 32 GPU-tested combinations pass; headset and alternative-layout checks remain pending.
-- Stopped enabling the legacy two-shader water filter on normal VR launches. It hid some water variants while leaving others visible, a candidate cause of distance-dependent appearance. An unfiltered same-camera inner-scene replay now has matching draw lists. Water remains visible as requested; this is not a verified fix for stereo puddle reflections or straight-line scenery pop-in. See `docs/water-visibility.md` for evidence and remaining work.
+- Stopped enabling the legacy two-shader water filter on normal VR launches. It hid some water variants while leaving others visible, a candidate cause of distance-dependent appearance. An unfiltered same-camera inner-scene replay now has matching draw lists. Water remains visible as requested; this is not a verified fix for stereo puddle reflections or straight-line scenery pop-in.
 - Added a transparent cockpit HUD layer about four metres ahead, fixed relative to the car by default. Graphics → **HUD follows view** optionally follows head movement; Recenter repositions the fixed layer. HUD drawing is captured once per frame and composed for both eyes, separately from the scene. Desktop captures verify separation of the Baja lap/time, position, route map and speedometer from scenery; GPU, OpenXR lifecycle and launcher tests cover the implementation. Headset readability, placement, follow mode and broader event coverage remain unverified; the user deferred headset testing.
 
 ## 0.7.2 — 2026-09-23
@@ -208,7 +234,7 @@ Local test build; not yet published to GitHub.
 
 - Integrated desktop LAN multiplayer into the normal launcher, installer and ZIP. Select **LAN multiplayer (desktop)** and use **Launch**; the intro-skip checkbox is now under **Settings**. Native host/join/event selection still use the game's LAN menus; launcher lobbies/browser and LAN VR remain unfinished. Persistent LAN profiles live in AppData, and the launcher session manager/file worker perform journaled shim restoration, including recovery of older kit journals. New launcher transaction, settings and offscreen UI tests pass; integrated gameplay acceptance is pending.
 - LAN test update: the tester confirmed hosting on PC1, joining on PC2 and both driving/seeing each other in the same race. Race completion and results remain untested. Post-exit checks confirmed exact `xlive.dll` restoration and unchanged existing career files.
-- Added a separate `0.2.0` desktop LAN test kit using pinned XLiveLessNess, a fresh process-isolated profile, opt-in launch and journaled restoration of `xlive.dll`. Native profile isolation and eight recovery checks pass; local startup created only isolated save/settings files and left existing career files unchanged. Two-PC race acceptance is pending. Launcher multiplayer lobbies, LAN browser and automatic race startup are not yet implemented. See `docs/lan-lab.md`.
+- Added a separate `0.2.0` desktop LAN test kit using pinned XLiveLessNess, a fresh process-isolated profile, opt-in launch and journaled restoration of `xlive.dll`. Native profile isolation and eight recovery checks pass; local startup created only isolated save/settings files and left existing career files unchanged. Two-PC race acceptance is pending. Launcher multiplayer lobbies, LAN browser and automatic race startup are not yet implemented.
 - Added a LAN multiplayer feasibility plan covering XLiveLessNess reuse, launcher host/join and discovery, native race-start integration, profile/DLL recovery and staged acceptance. The separate native test kit described above implements the first stage; launcher multiplayer integration remains planned.
 
 ## 0.1.0-alpha.5 — 2026-09-22
