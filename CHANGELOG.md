@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix the missing Help question mark and unreadable disabled slider values in the dark theme. Compact slider rows and replace the render-resolution recommendation caption with a green notch at 150%.
+
 - Add **Settings → Appearance → Modern interface**: a compact modern look with an immediate preview. Existing installations keep Classic; new installations start in Modern. Save settings keeps your choice. Both follow Windows light/dark settings.
 - Modern Controls uses compact clickable binding cells with add/remove buttons. All nine optional seat and panel actions now stay inside the collapsed section; **Open seat adjustment** remains the recommended shortcut. Switching appearance retains unsaved edits and cancels binding capture.
 

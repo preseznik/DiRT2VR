@@ -112,9 +112,10 @@ Public Class SettingRow
         If arranging OrElse editor Is Nothing OrElse ClientSize.Width <= 0 Then Return
         arranging = True
         Try
-            Dim gap = Px(Me, 10), padding = Px(Me, 5), width = ClientSize.Width
-            Dim stacked = width < Px(Me, 590) AndAlso Not TypeOf editor Is CheckBox
-            Dim labelWidth = Math.Min(Px(Me, 215), width \ 2)
+            Dim compact = TypeOf editor Is ValueSlider OrElse TypeOf editor Is ComboBox
+            Dim gap = Px(Me, If(compact, 8, 10)), padding = Px(Me, If(compact, 3, 5)), width = ClientSize.Width
+            Dim stacked = width < Px(Me, If(compact, 380, 590)) AndAlso Not TypeOf editor Is CheckBox
+            Dim labelWidth = If(compact, Math.Min(Px(Me, 170), CInt(width * 0.4)), Math.Min(Px(Me, 215), width \ 2))
             Dim editorWidth = If(stacked, width, width - labelWidth - gap)
             Dim editorHeight = If(TypeOf editor Is ValueSlider, Px(Me, DirectCast(editor, ValueSlider).LogicalHeight), editor.GetPreferredSize(New Size(editorWidth, 0)).Height)
             editorHeight = Math.Max(Px(Me, 28), editorHeight)

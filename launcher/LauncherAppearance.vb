@@ -64,7 +64,7 @@ Public Module LauncherAppearance
             If TypeOf root Is Button Then
                 Dim button = DirectCast(root, Button)
                 button.FlatStyle = If(styled, FlatStyle.Flat, original.Flat)
-                button.Padding = If(styled, New Padding(Px(root, 9), Px(root, 3), Px(root, 9), Px(root, 3)), original.Padding)
+                button.Padding = If(styled AndAlso button.Name <> "HelpAbout", New Padding(Px(root, 9), Px(root, 3), Px(root, 9), Px(root, 3)), original.Padding)
                 button.UseVisualStyleBackColor = Not styled AndAlso original.Visual
                 If styled Then
                     button.BackColor = Cell : button.FlatAppearance.BorderColor = Line

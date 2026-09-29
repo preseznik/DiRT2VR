@@ -171,7 +171,7 @@ Public Class MainForm
     End Sub
     Private Sub ConfigureTooltips()
         Tip(flashback, "Keeps more rewind history when playing at high FPS, without slowing the game." & vbCrLf & "Single-player desktop and VR only. Experimental; off by default.")
-        Tip(renderScale, "How much detail the game draws for each eye. Higher can be sharper," & vbCrLf &
+        Tip(renderScale, "How much detail the game draws for each eye. The green notch marks 150% recommended. Higher can be sharper," & vbCrLf &
             "but needs more GPU power and memory. A low Headset texture scale" & vbCrLf & "can still make the final picture look soft.")
         Tip(headsetScale, "Size of the finished picture sent to your headset." & vbCrLf &
             "Lower uses less memory but can blur the view. 100% keeps the" & vbCrLf &
@@ -486,7 +486,6 @@ Public Class MainForm
         Field(render, "Render resolution", renderScale) : Field(render, "Headset texture scale", headsetScale)
         msaa.Value = Array.IndexOf({0, 2, 4, 8}, settings.VrMsaa)
         Field(render, "Anti-aliasing (MSAA)", msaa)
-        Field(render, "", msaaWarning)
         AddHandler msaa.ValueChanged, Sub() RefreshMsaaWarning()
         RefreshMsaaWarning()
         Field(render, "Field of view", fieldOfView) : Field(render, "Car mirrors", mirrors)
@@ -494,6 +493,10 @@ Public Class MainForm
         Field(render, "Tree detail", treeDetail) : Field(render, "Object detail", objectDetail)
         Field(render, "Headset refresh rate", refreshLabel)
         Field(render, "Requested scene", requestedResolution)
+        ' Keep the warning outside the adjustable rows so changing MSAA does not
+        ' shift neighbouring sliders. No empty warning row between settings.
+        msaaWarning.Height = Px(Me, 32) : msaaWarning.Margin = New Padding(0)
+        render.Controls.Add(msaaWarning)
         Dim hud = Section(columns.Second, "VR HUD")
         hudDistance.Value = CInt(settings.HudDistance * 2D) : Field(hud, "Distance", hudDistance)
         hudFollow.Text = "On" : hudFollow.Checked = settings.HudFollowView : Field(hud, "Follow view", hudFollow)
