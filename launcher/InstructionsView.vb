@@ -129,11 +129,11 @@ Up/Down raises or lowers the seat. Left/Right moves back or forward. Hold Shift 
 Wheels
 Bind Open seat adjustment in Controls. Your wheel POV hat navigates the panel; assign Panel sideways modifier, Panel save and Panel cancel to wheel buttons. Keyboard controls remain available. Assigned seat shortcut buttons are reserved in cockpit VR, including both parts of a pair. Panel navigation buttons are reserved while the panel is open; unrelated driving controls keep working.
 
-Per-car positions
-Graphics → VR cockpit provides Height, Forward/back and Left/right sliders, plus Reset seat position for the selected car. Save settings before launching. Positions are saved per car, including cars selected through the normal game menus. Positive values mean up, forward and right. Adjustment is limited to 50 cm each way; extreme positions can expose missing cockpit geometry.
+Universal or per-car positions
+Graphics → VR cockpit provides Height, Forward/back and Left/right sliders, plus Reset seat position for the selected car. Save settings before launching. Positions are saved per car, including cars selected through the normal game menus. Enable Use universal seat position for one shared position in every car. The car picker is disabled; launcher sliders/reset and in-game adjustments then change the shared position. Your individual car positions stay saved and resume when you turn the toggle off. Mode changes apply on the next launch. Positive values mean up, forward and right. Adjustment is limited to 50 cm each way; extreme positions can expose missing cockpit geometry.
 
 Separate shortcuts
-Controls also provides six optional seat movement bindings. These are unassigned by default and save automatically when movement stops. In the panel, Save keeps the preview; Cancel, leaving cockpit VR or changing cars discards it. If the car cannot be identified, adjustment is disabled rather than saved against another car.
+Controls also provides six optional seat movement bindings. These are unassigned by default and save automatically when movement stops. In the panel, Save keeps the preview; Cancel, leaving cockpit VR or changing cars discards it. In per-car mode, adjustment is disabled if the car cannot be identified. Universal mode does not need a car identity.
 
 Current testing
 Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",

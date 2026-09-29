@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add **Use universal seat position** under Graphics → VR cockpit. Adjust one shared position in the launcher or in VR; turn it off to return to saved per-car positions. The car picker is disabled while universal mode is on.
+
 ## 0.17.6 — 2026-09-29 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.6)
