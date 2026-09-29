@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.9 — 2026-09-30 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.9)
+
 - Fix Aspen launch preparation failing when original game files are read-only. Restore their original contents and read-only flags after play; file errors now identify the affected path.
 
 ## 0.17.8 — 2026-09-30 — Experimental
