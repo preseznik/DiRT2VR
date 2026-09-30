@@ -71,8 +71,11 @@ Car mirrors may be forced on or off. Tree detail and Object detail use the game'
 Headset refresh rate
 Set refresh rate in SteamVR or your headset connection software before launching. The launcher can show the last reported rate, not a live measurement. Desktop VSync does not select headset Hz.
 
+Shadows (experimental)
+Off retains the current shadow-free VR rendering and performance. On enables shadows using the game's saved shadow quality. The first sunlight-shadow correction is included; headset appearance and performance still need testing. Turn it off if shadows disagree between eyes or performance drops. Save and relaunch to apply. Desktop play is unchanged.
+
 Rendering baseline
-VR keeps the current reduced-effects configuration for crowds, particles, shadows and motion blur. Temporary graphics changes are restored after play.",
+VR keeps the current reduced-effects configuration for crowds, particles and motion blur. Temporary graphics changes, including shadows, are restored after play.",
         "Distance
 Choose 1–20 metres in 0.5 m steps. This changes stereo depth while keeping text at the same apparent size. Default: 1 m.
 

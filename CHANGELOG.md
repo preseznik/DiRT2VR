@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Shadows (experimental) under Graphics → VR rendering. It starts off, keeping the existing VR appearance and performance. Enable it to try shadows at your saved game quality; desktop play is unchanged.
+- Correct sunlight shadow placement for off-centre VR eye views. Headset appearance and performance still need testing; turn shadows off if they disagree between eyes or reduce performance.
+
 ## 0.17.13 — 2026-09-30 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.13)

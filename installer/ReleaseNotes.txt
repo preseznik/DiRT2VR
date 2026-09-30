@@ -1,8 +1,8 @@
-Recenter without tilting the world.
+Try shadows in VR.
 
-- Recenter resets your seated position and horizontal direction without saving a sideways head tilt.
-- Your head still moves naturally, and your saved seat adjustments stay unchanged.
-- Looking almost straight up or down keeps the previous horizontal direction.
-- New settings and Reset graphics defaults now use 100% Headset texture scale. Existing saved choices are preserved.
+- New Shadows (experimental) switch in Graphics > VR rendering.
+- Shadows start off, keeping your current appearance and performance.
+- Enable them to try your saved game shadow quality with corrected sunlight shadow placement for VR eyes.
+- Desktop play and your original game settings are preserved.
 
-The recenter change has passed a headset check.
+Headset appearance and performance still need testing. If shadows look wrong or reduce performance, turn the option off and relaunch.

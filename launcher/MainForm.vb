@@ -37,6 +37,7 @@ Public Class MainForm
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 100, "%")
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
+    Private ReadOnly vrShadows As New CheckBox With {.Text = "On", .Name = "VrShadows", .AutoSize = True}
     Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = False}
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
     Private ReadOnly opponentCars As ComboBox = Choice("OpponentCars")
@@ -183,6 +184,7 @@ Public Class MainForm
         Tip(msaa, "Smooths jagged edges in VR. Higher settings use more memory" & vbCrLf & "and GPU power; 4× and 8× can cause crashes. 2× is the default.")
         Tip(fieldOfView, "Lower values trim the edges of your VR view to reduce rendering" & vbCrLf & "work. 100% keeps the full view; objects keep their normal scale.")
         Tip(mirrors, "Turn the car's rear-view mirrors on or off in VR." & vbCrLf & "Off can improve performance. Game setting keeps your usual choice.")
+        Tip(vrShadows, "Experimental: enable shadows in VR using the game's shadow quality." & vbCrLf & "Off keeps the current faster rendering. Shadows may still disagree between eyes." & vbCrLf & "Applies on next VR launch; desktop play is unchanged.")
         Tip(treeDetail, "Higher keeps detailed vegetation visible farther away, but" & vbCrLf & "costs performance. Game keeps your usual setting.")
         Tip(objectDetail, "Higher keeps detailed buildings and trackside objects farther" & vbCrLf & "away, but costs performance. Game keeps your usual setting.")
         Tip(borderless, "Fill the main monitor without window borders during desktop" & vbCrLf & "play. Alt+Tab still works. This does not affect VR or its mirror.")
@@ -493,6 +495,7 @@ Public Class MainForm
         AddHandler msaa.ValueChanged, Sub() RefreshMsaaWarning()
         RefreshMsaaWarning()
         Field(render, "Field of view", fieldOfView) : Field(render, "Car mirrors", mirrors)
+        vrShadows.Checked = settings.VrShadows : Field(render, "Shadows (experimental)", vrShadows)
         treeDetail.Value = settings.TreeDetail : objectDetail.Value = settings.ObjectDetail
         Field(render, "Tree detail", treeDetail) : Field(render, "Object detail", objectDetail)
         Field(render, "Headset refresh rate", refreshLabel)
@@ -515,7 +518,7 @@ Public Class MainForm
         Dim defaults As New Button With {.Text = "Restore defaults", .Name = "GraphicsDefaults", .AutoSize = True}
         AddHandler defaults.Click, Sub()
                                        borderless.Checked = False : desktopVSync.Checked = True
-                                       msaa.Value = 1
+                                       msaa.Value = 1 : vrShadows.Checked = False
                                        renderScale.Value = 100 : headsetScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False : hudDistance.Value = 2
                                        treeDetail.Value = 0 : objectDetail.Value = 0 : hudGauges.Checked = False
@@ -693,7 +696,7 @@ Public Class MainForm
         settings.BorderlessDesktop = borderless.Checked
         settings.DesktopVSync = desktopVSync.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
-        settings.VrMsaa = {0, 2, 4, 8}(msaa.Value)
+        settings.VrMsaa = {0, 2, 4, 8}(msaa.Value) : settings.VrShadows = vrShadows.Checked
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.HudFollowView = hudFollow.Checked
         settings.HudDistance = hudDistance.Value / 2D

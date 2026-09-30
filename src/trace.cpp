@@ -13,6 +13,8 @@
 #include "seat_adjustment.h"
 #include "light_replay.h"
 #include "ground_cover.h"
+#include "shadow_trace.h"
+#include "shadow_mask.h"
 #include "direct_menus.h"
 #include "gfwl_compat.h"
 #include "driving_controls.h"
@@ -155,6 +157,11 @@ using CameraUploadFn = void (__thiscall*)(void*,void*);
 CameraUploadFn realCameraUpload{};
 thread_local void* eyeRenderer{};
 thread_local bool eyeCameraSetup{};
+thread_local ShadowRays shadowRays;
+bool ShadowsEnabled() {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_SHADOWS",value,8)==1 && value[0]==L'1'; }();
+    return enabled;
+}
 thread_local void* waterEyeRenderer{};
 void* waterRenderer{};
 uint64_t waterRendererFrame=~uint64_t{};
@@ -348,6 +355,8 @@ void __fastcall CameraUpload(void* self,void*,void* context) {
             MultiplyMatrices(view,projection,combined);
         }
     }
+    if(eyeCameraSetup && !waterEyeRenderer && ShadowsEnabled())
+        shadowRays=ShadowViewRays(reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x120));
     realCameraUpload(self,context);
 }
 thread_local bool sampleInner{};
@@ -637,6 +646,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         if(eye==0) gpu.Begin(f);
         {
             ScopedEyePose pose(cameraA,cameraB,SeatEyePose(RelativePose(headsetReference,view.pose)),scale);
+            shadowRays={};
             eyeRenderer=self; eyeFov=&view.fov; lightingEye=eye+1; lightsRefreshed=false;
             RenderEyeReflection(cameraA);
             hudEye=captureHud ? eye+1 : 0;
@@ -711,7 +721,10 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
     static EyePair eyes;
     static uint64_t pairs=0;
     const auto f=frame.load();
-    if(!continuousMain || disabled || f<300 || !gameSwapchain) return false;
+    static const bool shadowProbe=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_SHADOW_PROBE",value,8)==1 && value[0]==L'1'; }();
+    // Keep the first paired shadow comparison on the existing detailed-capture
+    // frame. This desktop diagnostic never changes the headset render path.
+    if(!continuousMain || disabled || f<(shadowProbe ? 3000u : 300u) || !gameSwapchain) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) {
         Log("CONTINUOUS disabled: unexpected inline camera addresses"); disabled=true; return false;
@@ -744,6 +757,7 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         const auto before=draws.load();
         {
             ScopedCameraTranslation translation(cameraA,cameraB,(eye==0?-0.5f:0.5f)*separation);
+            shadowRays={};
             eyeRenderer=self; projectionShift=(eye==0?-1.f:1.f)*shift;
             if(WaterReflectionsEnabled()) lightingEye=eye+1;
             RenderEyeReflection(cameraA);
@@ -1035,6 +1049,7 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
         waterProbeDraws[scenePass-1].emplace_back(line);
     }
     if(WaterReflectionsEnabled() && Sample() && frame.load()==3000) TraceWaterInputs(context,ph,frame.load(),scenePass);
+    if(Sample()) TraceShadowInputs(context,ph,frame.load(),scenePass);
     if(requestedCaptureFrame==frame.load()) {
         TraceWaterInputs(context,ph,frame.load(),scenePass);
         ComPtr<ID3D11Buffer> vertex,index; UINT stride{},offset{},indexOffset{}; DXGI_FORMAT format{};
@@ -1173,7 +1188,19 @@ void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT 
     if(Sample() && draws.load()<3) Stack("DrawIndexed"); if(!RecordDraw(c,"indexed",n,1,start,base)) return;
     if(CaptureHudDraw(c,[&] { realDrawIndexed(c,n,start,base); })) return; ++draws; realDrawIndexed(c,n,start,base);
 }
-void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) { if(!RecordDraw(c,"draw",n,1,start) || CaptureHudDraw(c,[&] { realDraw(c,n,start); })) return; ++draws; realDraw(c,n,start); }
+void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) {
+    if(!RecordDraw(c,"draw",n,1,start) || CaptureHudDraw(c,[&] { realDraw(c,n,start); })) return;
+    ++draws;
+    if(n==4 && lightingEye && !waterEyeRenderer && ShadowsEnabled()) {
+        ComPtr<ID3D11VertexShader> vs;ComPtr<ID3D11PixelShader> ps;
+        c->VSGetShader(&vs,nullptr,nullptr);c->PSGetShader(&ps,nullptr,nullptr);
+        uint64_t vertex{},pixel{};
+        {std::lock_guard lock(shaderMutex);vertex=shaderNames[vs.Get()];pixel=shaderNames[ps.Get()];}
+        static ShadowMaskPass shadowMask;
+        if(shadowMask.Draw(c,vertex,pixel,shadowRays,[&] {realDraw(c,n,start);})) return;
+    }
+    realDraw(c,n,start);
+}
 void STDMETHODCALLTYPE DrawInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,UINT e) { if(!RecordDraw(c,"instanced",a,b,d,0,e) || CaptureHudDraw(c,[&] { realDrawInstanced(c,a,b,d,e); })) return; ++draws; realDrawInstanced(c,a,b,d,e); }
 void STDMETHODCALLTYPE DrawIndexedInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,INT e,UINT f) {
     if(lightingEye) {

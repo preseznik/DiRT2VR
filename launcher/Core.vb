@@ -125,6 +125,7 @@ Public Class VrSettings
     Public Property DesktopVSync As Boolean = True
     Public Property RenderScale As Integer = 100
     Public Property HeadsetScale As Integer = 100
+    Public Property VrShadows As Boolean = False
     Public Property VrMsaa As Integer = 2
     <Serialization.JsonIgnore>
     Public ReadOnly Property VrMsaaToken As String
