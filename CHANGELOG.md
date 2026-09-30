@@ -6,6 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.12 — 2026-09-30 — Experimental
+
+- Automatically use a newly created profile for your next launch.
+- Highlight the active profile in green and label it Active, separately from the row you are browsing.
+
 ## 0.17.11 — 2026-09-30 — Experimental
 
 - Limit new profile names to letters (A–Z) and numbers (0–9) to avoid broken names in the game's menus. Existing profiles remain usable.

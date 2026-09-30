@@ -7,6 +7,6 @@ Create a new career without changing your existing save.
 - New names accept letters A-Z and numbers 0-9 only, avoiding display problems in-game.
 - Delete launcher-created profiles with confirmation. Your current game career is protected.
 
-After creating a career, choose Use this profile to play it. Close the game before switching profiles.
+Newly created careers become active automatically. The active row is green and marked Active. Use this profile switches to an existing career. Close the game before switching profiles.
 
 Some save details, including garage counts and intermediate completion percentages, currently show Unavailable. Existing careers cannot be unlocked by this feature.

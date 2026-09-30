@@ -139,7 +139,7 @@ public sealed class ProfileStore(string root)
         { NoLinks(directory); Directory.Delete(directory); }
         NoLinks(metadata); File.Delete(metadata); Directory.Delete(path);
     }
-    public ProfileInfo Create(string name, bool completed, Action requireClosed, Action<string>? checkpoint = null)
+    public ProfileInfo Create(string name, bool completed, Action requireClosed, Action<string>? checkpoint = null, string? selectionPath = null)
     {
         using var guard = new EditGuard(requireClosed);
         if (!IsValidNewName(name)) throw new ArgumentException("Use 1 to 24 letters (A-Z) or numbers (0-9), without spaces or symbols.");
@@ -164,6 +164,12 @@ public sealed class ProfileStore(string root)
             created.Add(metadata); NewFile(metadata, JsonSerializer.SerializeToUtf8Bytes(info));
             checkpoint?.Invoke("before-register");
             Directory.Move(staging, destination);
+            // Selection is committed under the same session guard. If writing it
+            // fails, remove only this newly created career; keep prior selection.
+            created = created.Select(file => Path.Combine(destination, Path.GetRelativePath(staging, file))).ToList();
+            staging = destination;
+            save = Path.Combine(destination, "savegame", "Autosave0");
+            if (selectionPath != null) AtomicJson(selectionPath, new ProfileSelection(1, id));
             return info;
         }
         catch

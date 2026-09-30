@@ -6,7 +6,7 @@ Public Class ProfilePanel
     Inherits VerticalStack
     Private ReadOnly context As InstallContext
     Private ReadOnly service As ProfileService
-    Private ReadOnly careers As New ListBox With {.Name = "CareerList", .AccessibleName = "Careers", .IntegralHeight = False, .Height = 160}
+    Private ReadOnly careers As New ListBox With {.Name = "CareerList", .AccessibleName = "Careers", .IntegralHeight = False, .Height = 160, .DrawMode = DrawMode.OwnerDrawFixed}
     Private ReadOnly selectedLabel As New Label With {.Name = "SelectedCareer", .AutoSize = True, .UseMnemonic = False}
     Private ReadOnly detailLabels As New Dictionary(Of String, Label)
     Private ReadOnly message As New Label With {.Name = "ProfileMessage", .AutoSize = True, .UseMnemonic = False}
@@ -57,6 +57,10 @@ Public Class ProfilePanel
         Name = "Profiles" : Margin = New Padding(0)
         Controls.Add(selectedLabel)
         Controls.Add(careers)
+        careers.ItemHeight = TextRenderer.MeasureText("Ag", careers.Font).Height + Px(careers, 8)
+        AddHandler careers.FontChanged, Sub() careers.ItemHeight = TextRenderer.MeasureText("Ag", careers.Font).Height + Px(careers, 8)
+        AddHandler careers.DpiChangedAfterParent, Sub() careers.ItemHeight = TextRenderer.MeasureText("Ag", careers.Font).Height + Px(careers, 8)
+        AddHandler careers.DrawItem, AddressOf DrawCareer
         Dim commands As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True, .Margin = New Padding(0, 8, 0, 8)}
         Dim refresh As New Button With {.Text = "Refresh", .Name = "RefreshProfiles", .AutoSize = True}
         Dim create As New Button With {.Text = "Create new profile…", .Name = "CreateProfile", .AutoSize = True}
@@ -72,6 +76,31 @@ Public Class ProfilePanel
         AddHandler create.Click, Sub() CreateCareer()
         AddHandler deleteButton.Click, Sub() DeleteCareer()
         Reload()
+    End Sub
+
+    Private Sub DrawCareer(sender As Object, e As DrawItemEventArgs)
+        If e.Index < 0 OrElse e.Index >= careers.Items.Count Then Return
+        Dim item = DirectCast(careers.Items(e.Index), CareerItem)
+        Dim active = item.Id = selectedId
+        Dim selected = (e.State And DrawItemState.Selected) <> 0
+        Dim background = If(selected, SystemColors.Highlight, careers.BackColor)
+        Dim foreground = If(selected, SystemColors.HighlightText, careers.ForeColor)
+        If selected AndAlso Not SystemInformation.HighContrast AndAlso careers.BackColor.GetBrightness() < 0.5F Then
+            background = Color.FromArgb(48, 89, 142) : foreground = Color.White
+        End If
+        If active AndAlso Not SystemInformation.HighContrast Then
+            Dim dark = careers.BackColor.GetBrightness() < 0.5F
+            background = If(dark, Color.FromArgb(43, 72, 37), Color.FromArgb(222, 241, 205))
+            foreground = If(dark, Color.FromArgb(224, 251, 197), Color.FromArgb(35, 75, 20))
+        End If
+        Using brush As New SolidBrush(background)
+            e.Graphics.FillRectangle(brush, e.Bounds)
+        End Using
+        Dim bounds = e.Bounds
+        bounds.Inflate(-Px(careers, 6), 0)
+        TextRenderer.DrawText(e.Graphics, item.Caption & If(active, " — Active", ""), e.Font, bounds, foreground,
+            TextFormatFlags.Left Or TextFormatFlags.VerticalCenter Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        If (e.State And DrawItemState.Focus) <> 0 Then ControlPaint.DrawFocusRectangle(e.Graphics, Rectangle.Inflate(e.Bounds, -2, -2), foreground, background)
     End Sub
 
     Protected Overrides Sub OnSizeChanged(e As EventArgs)
@@ -127,7 +156,7 @@ Public Class ProfilePanel
             message.Text = "Could not refresh profiles. " & ex.Message
             useButton.Enabled = False
         Finally
-            reloading = False : careers.EndUpdate()
+            reloading = False : careers.EndUpdate() : careers.Invalidate()
         End Try
     End Sub
 
@@ -185,7 +214,7 @@ Public Class ProfilePanel
         Using dialog As New CreateProfileForm(service)
             If dialog.ShowDialog(FindForm()) = DialogResult.OK Then
                 Reload(dialog.CreatedId)
-                message.Text = "Profile created. Choose Use this profile to play it."
+                message.Text = "Profile created and active for your next launch."
             End If
         End Using
     End Sub

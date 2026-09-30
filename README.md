@@ -20,7 +20,7 @@ This mod will remain free forever. If you'd like to support the work, you can [s
 
 ## Profiles (Experimental)
 
-Open **Profile** to choose **Current game career** or create a separate career with **Create new profile…**. Choose **Fresh career** or **100% completed career**, enter a name, then select **Use this profile**. Names must contain 1–24 letters (A–Z) or numbers (0–9), without spaces or symbols. Existing profile names are left unchanged. No game setup session is needed. Close DiRT 2 before creating or switching profiles; selection saves immediately.
+Open **Profile** to choose **Current game career** or create a separate career with **Create new profile…**. Choose **Fresh career** or **100% completed career**, enter a name, and the new profile becomes active automatically. The active row is green and marked **Active**. To switch to an existing career, select it and choose **Use this profile**. Names must contain 1–24 letters (A–Z) or numbers (0–9), without spaces or symbols. Existing profile names are left unchanged. No game setup session is needed. Close DiRT 2 before creating or switching profiles; selection saves immediately.
 
 The selected career is used for Normal Launch, Practice, Race and LAN, in desktop or VR, and remains selected when returning to menus. Completed careers include stock career wins, cars, liveries, rewards, All-Star upgrades and teammate relationships. They do not include platform achievements, invented personal-best times or external content. Existing careers cannot be unlocked by this feature.
 

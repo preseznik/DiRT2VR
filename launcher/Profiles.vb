@@ -20,7 +20,7 @@ Public Class ProfileService
         Store.Delete(SelectionPath, id, AddressOf context.RequireClosed)
     End Sub
     Public Function Create(name As String, completed As Boolean) As ProfileInfo
-        Return Store.Create(name, completed, AddressOf context.RequireClosed)
+        Return Store.Create(name, completed, AddressOf context.RequireClosed, selectionPath:=SelectionPath)
     End Function
 End Class
 
