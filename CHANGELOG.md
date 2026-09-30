@@ -4,7 +4,11 @@ Notable changes to DiRT2VR are recorded here, newest first. Release channels ide
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
+## Unreleased
+
 ## 0.17.13 — 2026-09-30 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.13)
 
 - Fix recentering while tilting your head: the cockpit, menu screen and fixed HUD retain a level reference. Live head movement and saved seat adjustments are preserved. The recenter fix passed the user headset check.
 - Default Headset texture scale to 100% for new settings and Reset graphics defaults, preserving existing saved choices.
