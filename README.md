@@ -58,7 +58,7 @@ Regular Launch needs no SteamVR or headset and keeps your normal camera, effects
 2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Normal Launch** on **Launcher**, and select **Launch VR**.
 3. Navigate the original game on the virtual screen using your usual controls.
 4. Enter a **Subaru Impreza STI** event for the tested setup. VR launches select cockpit view automatically.
-5. Cockpit VR starts enabled. Sit facing forward and press **F10** (or Recenter). **F9** (Toggle VR) switches between cockpit VR and the flat screen; keep the game window focused.
+5. Cockpit VR starts enabled. Sit facing forward and press **F10** (or Recenter). Recenter resets your seated position and horizontal direction without baking head tilt into the view; saved seat adjustments stay unchanged. **F9** (Toggle VR) switches between cockpit VR and the flat screen; keep the game window focused.
 6. Pause/options menus automatically use the virtual screen; resuming restores your selected cockpit VR mode. Use Toggle VR if another menu, replay or flashback looks incorrect.
 7. Quit normally. The background session manager restores temporary files when the game exits. You may close the settings window while playing.
 

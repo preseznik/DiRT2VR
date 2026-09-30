@@ -4,6 +4,8 @@
 
 namespace vr {
 XrPosef CenterPose(const std::array<XrView,2>& views);
+// Recenter position and yaw only; previous must be a yaw-only reference (identity initially).
+XrPosef RecenterPose(const XrPosef& center,const XrPosef& previous);
 XrPosef RelativePose(const XrPosef& reference,const XrPosef& eye);
 XrPosef ScreenPose(const XrPosef& reference,float distance);
 // Conservative prototype filter, not a complete game-state/camera-type API.

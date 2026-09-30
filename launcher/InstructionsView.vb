@@ -77,7 +77,7 @@ VR keeps the current reduced-effects configuration for crowds, particles, shadow
 Choose 1–20 metres in 0.5 m steps. This changes stereo depth while keeping text at the same apparent size. Default: 1 m.
 
 Follow view
-Off keeps the HUD fixed relative to the car. On keeps it in front of your head. Recenter resets the seated reference used by the fixed HUD.
+Off keeps the HUD fixed relative to the car. On keeps it in front of your head. Recenter resets your seated position and horizontal direction, without baking head tilt into the view. It keeps your saved seat adjustment and places the fixed HUD ahead. When looking almost straight up or down, it keeps the previous horizontal direction.
 
 Show
 Choose gauges (speedometer, gear and revs), lap/time, race position, route map and stage progress. Gauges default off; the other areas default on. These are masks over the standard race HUD, so overlapping elements in the same area are also hidden.

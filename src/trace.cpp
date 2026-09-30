@@ -419,7 +419,7 @@ bool CaptureHudDraw(ID3D11DeviceContext* context,const std::function<void()>& dr
     return hudEye && captured; // route HUD to the quad instead of either world image
 }
 uint64_t xrTickFrame=~uint64_t{};
-XrPosef headsetReference{};
+XrPosef headsetReference{{0,0,0,1},{0,0,0}};
 bool recenterRequested=true;
 bool AutoCockpitEnabled() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_AUTO_COCKPIT",value,8)==1 && value[0]==L'1'; }();
@@ -460,8 +460,8 @@ void PollHeadsetKeys() {
 }
 void PrepareHeadsetViews(const std::array<XrView,2>& views) {
     if(recenterRequested) {
-        headsetReference=CenterPose(views); recenterRequested=false;
-        Log("OpenXR recentered frame=%llu",frame.load());
+        headsetReference=RecenterPose(CenterPose(views),headsetReference); recenterRequested=false;
+        Log("OpenXR recentered position+yaw frame=%llu",frame.load());
     }
 }
 void HeadsetScreen() {

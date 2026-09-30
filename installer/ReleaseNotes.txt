@@ -1,12 +1,8 @@
-Create a new career without changing your existing save.
+Recenter without tilting the world.
 
-- New Profile tab: choose your current career or create a separate Fresh or 100% completed career.
-- Completed careers include stock events, cars, liveries, rewards, All-Star upgrades and teammate relationships.
-- Your selection applies to desktop, VR and LAN launches, including Return to menus.
-- Graphics settings and launcher controls stay shared between careers.
-- New names accept letters A-Z and numbers 0-9 only, avoiding display problems in-game.
-- Delete launcher-created profiles with confirmation. Your current game career is protected.
+- Recenter resets your seated position and horizontal direction without saving a sideways head tilt.
+- Your head still moves naturally, and your saved seat adjustments stay unchanged.
+- Looking almost straight up or down keeps the previous horizontal direction.
+- New settings and Reset graphics defaults now use 100% Headset texture scale. Existing saved choices are preserved.
 
-Newly created careers become active automatically. The active row is green and marked Active. Use this profile switches to an existing career. Close the game before switching profiles.
-
-Some save details, including garage counts and intermediate completion percentages, currently show Unavailable. Existing careers cannot be unlocked by this feature.
+This experimental build needs a headset check of the recenter change.

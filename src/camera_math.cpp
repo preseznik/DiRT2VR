@@ -26,6 +26,19 @@ XrPosef CenterPose(const std::array<XrView,2>& views) {
     return {Normalize({q.x+sign*r.x,q.y+sign*r.y,q.z+sign*r.z,q.w+sign*r.w}),
         {(a.position.x+b.position.x)*.5f,(a.position.y+b.position.y)*.5f,(a.position.z+b.position.z)*.5f}};
 }
+XrPosef RecenterPose(const XrPosef& center,const XrPosef& previous) {
+    if(!std::isfinite(center.position.x) || !std::isfinite(center.position.y) || !std::isfinite(center.position.z))
+        throw std::runtime_error("invalid recenter position");
+    const auto forward=Rotate(Normalize(center.orientation),{0,0,-1});
+    // Looking almost vertically has no reliable horizontal heading. Keep the
+    // last recentered heading while still accepting the new seated position.
+    auto heading=previous.orientation;
+    if(forward.x*forward.x+forward.z*forward.z>=.0001f) {
+        const float yaw=std::atan2(-forward.x,-forward.z);
+        heading={0,std::sin(yaw*.5f),0,std::cos(yaw*.5f)};
+    }
+    return {heading,center.position};
+}
 XrPosef RelativePose(const XrPosef& reference,const XrPosef& eye) {
     const auto q=Normalize(reference.orientation);
     const XrQuaternionf inverse{-q.x,-q.y,-q.z,q.w};
