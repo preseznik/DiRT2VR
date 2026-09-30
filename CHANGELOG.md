@@ -8,15 +8,26 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.12 — 2026-09-30 — Experimental
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.12)
+
+- Add a Profile tab to create separate fresh or 100% completed careers and choose which one to play. Your existing career stays unchanged; completed careers include stock cars, liveries, rewards, All-Star upgrades and teammate relationships.
+- Use the selected career for desktop and VR launches, including LAN and Return to menus. Graphics settings and launcher bindings remain shared.
+- Limit new profile names to letters and numbers, and add confirmed deletion for launcher-created careers. The current game career is protected.
+- Show saved career details; unreadable values, garage counts and intermediate completion percentages show Unavailable. Existing careers cannot be unlocked by this feature.
+
 - Automatically use a newly created profile for your next launch.
 - Highlight the active profile in green and label it Active, separately from the row you are browsing.
 
 ## 0.17.11 — 2026-09-30 — Experimental
 
+Local test build; included in 0.17.12.
+
 - Limit new profile names to letters (A–Z) and numbers (0–9) to avoid broken names in the game's menus. Existing profiles remain usable.
 - Add Delete profile for launcher-created careers, with confirmation. Your current game career is protected.
 
 ## 0.17.10 — 2026-09-30 — Experimental
+
+Local test build; included in 0.17.12.
 
 - Add a Profile tab to create separate fresh or 100% completed careers and choose which one to play. Your existing career stays unchanged.
 - Use your selected career in desktop and VR launches, including LAN and Return to menus. Completed careers include All-Star upgrades and teammate relationships.
