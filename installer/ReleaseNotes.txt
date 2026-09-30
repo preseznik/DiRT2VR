@@ -4,6 +4,8 @@ Create a new career without changing your existing save.
 - Completed careers include stock events, cars, liveries, rewards, All-Star upgrades and teammate relationships.
 - Your selection applies to desktop, VR and LAN launches, including Return to menus.
 - Graphics settings and launcher controls stay shared between careers.
+- New names accept letters A-Z and numbers 0-9 only, avoiding display problems in-game.
+- Delete launcher-created profiles with confirmation. Your current game career is protected.
 
 After creating a career, choose Use this profile to play it. Close the game before switching profiles.
 

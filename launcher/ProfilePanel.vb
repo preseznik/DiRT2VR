@@ -11,6 +11,7 @@ Public Class ProfilePanel
     Private ReadOnly detailLabels As New Dictionary(Of String, Label)
     Private ReadOnly message As New Label With {.Name = "ProfileMessage", .AutoSize = True, .UseMnemonic = False}
     Private ReadOnly useButton As New Button With {.Text = "Use this profile", .Name = "UseProfile", .AutoSize = True}
+    Private ReadOnly deleteButton As New Button With {.Text = "Delete profile…", .Name = "DeleteProfile", .AutoSize = True}
     Private selectedId As String
     Private reloading As Boolean
 
@@ -59,7 +60,7 @@ Public Class ProfilePanel
         Dim commands As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True, .Margin = New Padding(0, 8, 0, 8)}
         Dim refresh As New Button With {.Text = "Refresh", .Name = "RefreshProfiles", .AutoSize = True}
         Dim create As New Button With {.Text = "Create new profile…", .Name = "CreateProfile", .AutoSize = True}
-        commands.Controls.AddRange({useButton, refresh, create}) : Controls.Add(commands)
+        commands.Controls.AddRange({useButton, refresh, create, deleteButton}) : Controls.Add(commands)
         For Each title In {"Name", "Completion", "Level", "Money", "Cars owned", "Last saved"}
             Dim label As New Label With {.Name = "Profile" & title.Replace(" ", ""), .Text = "Unavailable", .AutoSize = True, .UseMnemonic = False}
             detailLabels.Add(title, label) : Controls.Add(New DetailRow(title, label))
@@ -69,6 +70,7 @@ Public Class ProfilePanel
         AddHandler refresh.Click, Sub() Reload()
         AddHandler useButton.Click, Sub() ChooseCareer()
         AddHandler create.Click, Sub() CreateCareer()
+        AddHandler deleteButton.Click, Sub() DeleteCareer()
         Reload()
     End Sub
 
@@ -135,6 +137,7 @@ Public Class ProfilePanel
             label.Text = "Unavailable"
         Next
         useButton.Enabled = item IsNot Nothing AndAlso item.Id <> selectedId AndAlso (item.Id = ProfileStore.CurrentCareer OrElse item.Problem Is Nothing)
+        deleteButton.Enabled = item IsNot Nothing AndAlso item.Id <> ProfileStore.CurrentCareer
         If item Is Nothing Then Return
         Dim details = item.Details
         If details IsNot Nothing Then
@@ -156,6 +159,25 @@ Public Class ProfilePanel
             Reload(item.Id)
         Catch ex As Exception
             message.Text = "Could not select this profile. " & ex.Message
+        End Try
+    End Sub
+
+    Private Sub DeleteCareer()
+        Dim item = TryCast(careers.SelectedItem, CareerItem)
+        If item Is Nothing OrElse item.Id = ProfileStore.CurrentCareer Then Return
+        If item.Id = selectedId Then
+            message.Text = "Choose another career and click Use this profile before deleting this one."
+            Return
+        End If
+        If MessageBox.Show(FindForm(), "Permanently delete " & ChrW(34) & item.Caption & ChrW(34) & " and all its saves?" & vbCrLf & vbCrLf &
+            "This removes it from all DiRT2VR installations on this Windows account. This cannot be undone.",
+            "Delete profile", MessageBoxButtons.YesNo, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) <> DialogResult.Yes Then Return
+        Try
+            service.DeleteProfile(item.Id)
+            Reload(selectedId)
+            message.Text = "Profile deleted."
+        Catch ex As Exception
+            message.Text = "Could not delete this profile. " & ex.Message
         End Try
     End Sub
 
@@ -183,7 +205,9 @@ Public Class CreateProfileForm
         ClientSize = New Size(460, 340)
         Dim content = Stack() : content.Padding = New Padding(20)
         content.Controls.Add(New Label With {.Text = "Profile name", .AutoSize = True})
-        content.Controls.Add(profileName) : content.Controls.Add(fresh) : content.Controls.Add(completed)
+        content.Controls.Add(profileName)
+        content.Controls.Add(New Label With {.Text = "1–24 letters (A–Z) or numbers (0–9). No spaces or symbols.", .AutoSize = True, .MaximumSize = New Size(420, 0), .Name = "ProfileNameHint"})
+        content.Controls.Add(fresh) : content.Controls.Add(completed)
         content.Controls.Add(New Label With {.Text = "Creates a separate career. Your existing saves are not changed.", .AutoSize = True, .MaximumSize = New Size(420, 0), .Margin = New Padding(0, 12, 0, 12)})
         Dim commands As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
         Dim create As New Button With {.Text = "Create", .Name = "ConfirmCreateProfile", .AutoSize = True}
@@ -191,6 +215,17 @@ Public Class CreateProfileForm
         commands.Controls.AddRange({create, cancel}) : content.Controls.Add(commands)
         problem.MaximumSize = New Size(420, 0) : content.Controls.Add(problem) : Controls.Add(content)
         AcceptButton = create : CancelButton = cancel
+        create.Enabled = False
+        AddHandler profileName.KeyPress, Sub(sender, e)
+                                            If Not Char.IsControl(e.KeyChar) AndAlso Not ProfileStore.IsValidNewName(e.KeyChar.ToString()) Then
+                                                e.Handled = True
+                                                problem.Text = "Use letters (A-Z) and numbers (0-9) only."
+                                            End If
+                                        End Sub
+        AddHandler profileName.TextChanged, Sub()
+                                               create.Enabled = ProfileStore.IsValidNewName(profileName.Text)
+                                               problem.Text = If(create.Enabled OrElse profileName.Text.Length = 0, "", "Use letters (A-Z) and numbers (0-9) only.")
+                                           End Sub
         AddHandler create.Click, Sub()
                                      Try
                                          UseWaitCursor = True

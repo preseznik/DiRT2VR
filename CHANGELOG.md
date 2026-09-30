@@ -6,6 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.11 — 2026-09-30 — Experimental
+
+- Limit new profile names to letters (A–Z) and numbers (0–9) to avoid broken names in the game's menus. Existing profiles remain usable.
+- Add Delete profile for launcher-created careers, with confirmation. Your current game career is protected.
+
 ## 0.17.10 — 2026-09-30 — Experimental
 
 - Add a Profile tab to create separate fresh or 100% completed careers and choose which one to play. Your existing career stays unchanged.

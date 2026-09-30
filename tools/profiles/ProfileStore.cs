@@ -1,4 +1,4 @@
-﻿using System.Text.Json;
+using System.Text.Json;
 namespace DiRT2VR.Profiles;
 
 public sealed record ProfileInfo(int Version, string Id, string Name, string Kind, DateTime CreatedUtc);
@@ -8,7 +8,7 @@ public sealed record ProfileEntry(string Id, ProfileInfo? Info, string? Error);
 // The launcher supplies one shared per-user root and a separate installation selection.
 public sealed class ProfileStore(string root)
 {
-    readonly string root = Path.GetFullPath(root);
+    readonly string root = Path.TrimEndingDirectorySeparator(Path.GetFullPath(root));
     public const string CurrentCareer = "current";
     static void NoLinks(string path)
     {
@@ -21,6 +21,9 @@ public sealed class ProfileStore(string root)
         if (!Guid.TryParseExact(id, "N", out var parsed) || parsed.ToString("N") != id)
             throw new InvalidDataException("Invalid profile identifier.");
     }
+    // Legacy names remain readable; the tighter rule applies only to creation.
+    public static bool IsValidNewName(string? name) => name is { Length: >= 1 and <= 24 } &&
+        name.All(c => c is >= 'A' and <= 'Z' or >= 'a' and <= 'z' or >= '0' and <= '9');
     internal static string ValidName(string name)
     {
         if (name == null) throw new ArgumentException("A profile name is required.");
@@ -54,12 +57,18 @@ public sealed class ProfileStore(string root)
         ValidId(id);
         var path = Path.Combine(root, id); NoLinks(path); return path;
     }
-    public ProfileInfo Read(string id)
+    ProfileInfo ReadInfo(string id)
     {
         var path = ProfileRoot(id);
         var info = ReadJson<ProfileInfo>(Path.Combine(path, "profile.json"));
         if (info.Version != 1 || info.Id != id || info.Kind is not ("fresh" or "completed") || ValidName(info.Name) != info.Name)
             throw new InvalidDataException("This profile is incompatible.");
+        return info;
+    }
+    public ProfileInfo Read(string id)
+    {
+        var info = ReadInfo(id);
+        var path = ProfileRoot(id);
         foreach (var name in ProfileFactory.Files)
         {
             var record = Path.Combine(path, "savegame", "Autosave0", name); NoLinks(record);
@@ -98,10 +107,42 @@ public sealed class ProfileStore(string root)
         if (id != CurrentCareer) Read(id);
         AtomicJson(preferences, new ProfileSelection(1, id));
     }
+    public void Delete(string preferences, string id, Action requireClosed)
+    {
+        using var guard = new EditGuard(requireClosed);
+        if (id == CurrentCareer) throw new IOException("The current game career cannot be deleted here.");
+        var path = ProfileRoot(id);
+        // Only a registered GUID directory directly under our store may be removed.
+        if (Path.GetDirectoryName(path) != root) throw new IOException("Invalid profile directory.");
+        ReadInfo(id); // Allow damaged records to be removed, but require owned metadata.
+        if (File.Exists(preferences) && ReadJson<ProfileSelection>(preferences).Id == id)
+            throw new IOException("Use another profile before deleting this one.");
+        var files = new List<string>();
+        var directories = new List<string>();
+        var pending = new Stack<string>(); pending.Push(path);
+        while (pending.TryPop(out var directory))
+        {
+            NoLinks(directory); directories.Add(directory);
+            foreach (var child in Directory.EnumerateFileSystemEntries(directory))
+            {
+                NoLinks(child);
+                var attributes = File.GetAttributes(child);
+                if ((attributes & FileAttributes.ReparsePoint) != 0) throw new IOException("Profile storage cannot use a linked folder.");
+                if ((attributes & FileAttributes.ReadOnly) != 0) throw new IOException("A profile file is read-only. Nothing was deleted.");
+                if ((attributes & FileAttributes.Directory) != 0) pending.Push(child); else files.Add(child);
+            }
+        }
+        // Keep registration until the end so a failed deletion can be retried.
+        var metadata = Path.Combine(path, "profile.json");
+        foreach (var file in files.Where(file => file != metadata)) { NoLinks(file); File.Delete(file); }
+        foreach (var directory in directories.AsEnumerable().Reverse().Where(directory => directory != path))
+        { NoLinks(directory); Directory.Delete(directory); }
+        NoLinks(metadata); File.Delete(metadata); Directory.Delete(path);
+    }
     public ProfileInfo Create(string name, bool completed, Action requireClosed, Action<string>? checkpoint = null)
     {
         using var guard = new EditGuard(requireClosed);
-        name = ValidName(name);
+        if (!IsValidNewName(name)) throw new ArgumentException("Use 1 to 24 letters (A-Z) or numbers (0-9), without spaces or symbols.");
         NoLinks(root); Directory.CreateDirectory(root);
         var id = Guid.NewGuid().ToString("N");
         var staging = Path.Combine(root, ".creating-" + id);

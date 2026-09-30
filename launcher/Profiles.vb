@@ -16,6 +16,9 @@ Public Class ProfileService
     Public Sub SelectProfile(id As String)
         Store.Select(SelectionPath, id, AddressOf context.RequireClosed)
     End Sub
+    Public Sub DeleteProfile(id As String)
+        Store.Delete(SelectionPath, id, AddressOf context.RequireClosed)
+    End Sub
     Public Function Create(name As String, completed As Boolean) As ProfileInfo
         Return Store.Create(name, completed, AddressOf context.RequireClosed)
     End Function

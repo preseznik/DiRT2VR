@@ -12,7 +12,10 @@ Public Class InstructionsView
 Profile lists Current game career and careers created in DiRT2VR. Select a row, then Use this profile. Selection is saved immediately, separately from Save settings, and applies to Normal Launch, Practice, Race and LAN in Desktop or VR. Return to menus keeps the same career. Close the game before switching or creating profiles.
 
 Create a new career
-Choose Create new profile, enter a name, then Fresh career or 100% completed career. Creation finishes in the launcher. Select Use this profile afterward to play it. There is no unlock option for an existing career.
+Choose Create new profile, enter a name, then Fresh career or 100% completed career. Use 1–24 letters (A–Z) or numbers (0–9), without spaces or symbols. Creation finishes in the launcher. Select Use this profile afterward to play it. Existing names stay unchanged. There is no unlock option for an existing career.
+
+Delete a career
+Select a launcher-created career and Delete profile. Confirm its name before permanently deleting its saves from this Windows account. Choose another career for launching first. Current game career cannot be deleted here.
 
 Completed careers
 Includes stock career wins, cars, liveries, rewards, All-Star upgrades and teammate relationships. Achievements, personal-best times and external content are not included.
