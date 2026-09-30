@@ -5,4 +5,4 @@ Recenter without tilting the world.
 - Looking almost straight up or down keeps the previous horizontal direction.
 - New settings and Reset graphics defaults now use 100% Headset texture scale. Existing saved choices are preserved.
 
-This experimental build needs a headset check of the recenter change.
+The recenter change has passed a headset check.

@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.13 — 2026-09-30 — Experimental
 
-- Fix recentering while tilting your head: the cockpit, menu screen and fixed HUD retain a level reference. Live head movement and saved seat adjustments are preserved. Headset validation is pending.
+- Fix recentering while tilting your head: the cockpit, menu screen and fixed HUD retain a level reference. Live head movement and saved seat adjustments are preserved. The recenter fix passed the user headset check.
 - Default Headset texture scale to 100% for new settings and Reset graphics defaults, preserving existing saved choices.
 
 ## 0.17.12 — 2026-09-30 — Experimental
