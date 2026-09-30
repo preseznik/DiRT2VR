@@ -124,7 +124,7 @@ Public Class DirectMenus
     End Sub
     Public Sub Prepare(Optional skipMovies As Boolean = False, Optional afterWrite As Action(Of Integer) = Nothing)
         CheckPaths()
-        If Pending OrElse New StartupMovies(context).Pending OrElse New LanTransaction(context).Pending Then Throw New IOException("Restore pending files before preparing direct-session menus.")
+        If Pending OrElse New StartupMovies(context).Pending OrElse New LanTransaction(context).BlocksMenuChanges Then Throw New IOException("Restore pending files before preparing direct-session menus.")
         Dim original = Names.Select(Function(n) File.ReadAllBytes(IO.Path.Combine(context.GameRoot, "system", n))).ToArray()
         Dim modified = {Patch(original(0), False, skipMovies), Patch(original(1), True)}
         Dim journal As New DirectMenuJournal

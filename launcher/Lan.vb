@@ -4,6 +4,7 @@ Public Class LanJournal
     Public Property Version As Integer = 1
     Public Property OriginalHash As String = ""
     Public Property AppliedHash As String = ""
+    Public Property OfflineProfile As Boolean
 End Class
 
 ' Compatible with the lab journal; no paths from the journal are trusted.
@@ -32,7 +33,15 @@ Public Class LanTransaction
     Private Shared Function HashOrEmpty(path As String) As String
         Return If(File.Exists(path), Files.Hash(path), "")
     End Function
-    Public Sub Prepare(Optional afterJournal As Action = Nothing)
+    Public ReadOnly Property BlocksMenuChanges As Boolean
+        Get
+            If Not Pending Then Return False
+            Dim journal = Files.ReadJson(Of LanJournal)(journalPath)
+            If journal Is Nothing OrElse journal.Version <> 1 Then Throw New IOException("Invalid offline-provider recovery journal.")
+            Return Not journal.OfflineProfile
+        End Get
+    End Property
+    Public Sub Prepare(Optional afterJournal As Action = Nothing, Optional offlineProfile As Boolean = False)
         CheckPaths()
         If Pending Then Throw New IOException("LAN recovery is pending.")
         If New StartupMovies(context).Pending Then Throw New IOException("Restore startup movie files before preparing LAN play.")
@@ -51,7 +60,7 @@ Public Class LanTransaction
         ElseIf original <> "" Then
             Files.AtomicWrite(backup, File.ReadAllBytes(target))
         End If
-        Files.SaveJson(journalPath, New LanJournal With {.OriginalHash = original, .AppliedHash = expected})
+        Files.SaveJson(journalPath, New LanJournal With {.OriginalHash = original, .AppliedHash = expected, .OfflineProfile = offlineProfile})
         afterJournal?.Invoke()
         If HashOrEmpty(target) <> original Then Throw New IOException("xlive.dll changed during LAN preparation.")
         Files.AtomicWrite(target, File.ReadAllBytes(payload))
@@ -92,6 +101,28 @@ Public Module LanSession
     Public Function ReceiptPath(context As InstallContext) As String
         Return IO.Path.Combine(ProfileRoot(context), "profile-ready.txt")
     End Function
+    Public Sub ConfigureProvider(context As InstallContext, start As ProcessStartInfo, network As Boolean)
+        Dim root = ProfileRoot(context), config = IO.Path.Combine(root, If(network, "xlln.ini", "offline.ini"))
+        Files.NoLinks(config) : Files.NoLinks(ReceiptPath(context))
+        Directory.CreateDirectory(root)
+        If Not File.Exists(config) Then
+            Dim name = "LAN-" & Guid.NewGuid().ToString("N").Substring(0, 8)
+            Dim lines = {"[XLLN-Config-Version:1.6.2.1]", "xlive_username_p1 = " & name, "xlive_user_live_enabled_p1 = 0", "xlive_user_online_enabled_p1 = 0", "xlive_user_auto_login_p1 = 1", "xlive_fps_limit = 0", "xlive_net_disable = 0", "xlive_xhv_engine_enabled = 0", "xlln_debug_log_level = 0x00000000", ""}
+            Files.AtomicWrite(config, Text.Encoding.ASCII.GetBytes(String.Join(vbCrLf, lines)))
+        End If
+        If Not network Then
+            ' An offline account still needs the provider's XLive APIs enabled.
+            ' Disabling them strands DiRT 2 at sign-in. Repair earlier configs too.
+            Dim original = File.ReadAllText(config)
+            Dim corrected = Regex.Replace(original, "(?m)^xlive_net_disable[ \t]*=[^\r\n]*", "xlive_net_disable = 0")
+            If Not Regex.IsMatch(corrected, "(?m)^xlive_net_disable[ \t]*=") Then corrected &= vbCrLf & "xlive_net_disable = 0" & vbCrLf
+            If corrected <> original Then Files.AtomicWrite(config, Text.Encoding.UTF8.GetBytes(corrected))
+        End If
+        If File.Exists(ReceiptPath(context)) Then File.Delete(ReceiptPath(context))
+        start.Environment("DIRT2VR_LAN_CONFIG") = config
+        start.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1"
+        start.Environment("DIRT2VR_LAN_RECEIPT") = ReceiptPath(context)
+    End Sub
     Public Function StartInfo(context As InstallContext, skipIntroduction As Boolean, Optional joinTarget As String = Nothing) As ProcessStartInfo
         context.RequireClosed()
         If joinTarget IsNot Nothing Then joinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
@@ -108,19 +139,8 @@ Public Module LanSession
                 If Not File.Exists(path) OrElse Files.Hash(path) <> pair.Value Then Throw New IOException("Skip introduction requires the original supported flow/states files. Turn it off in Settings to use normal onboarding.")
             Next
         End If
-        Dim root = ProfileRoot(context), config = IO.Path.Combine(root, "xlln.ini")
-        Files.NoLinks(config) : Files.NoLinks(ReceiptPath(context))
-        Directory.CreateDirectory(root)
-        If Not File.Exists(config) Then
-            Dim name = "LAN-" & Guid.NewGuid().ToString("N").Substring(0, 8)
-            Dim lines = {"[XLLN-Config-Version:1.6.2.1]", "xlive_username_p1 = " & name, "xlive_user_live_enabled_p1 = 0", "xlive_user_online_enabled_p1 = 0", "xlive_user_auto_login_p1 = 1", "xlive_fps_limit = 0", "xlive_net_disable = 0", "xlive_xhv_engine_enabled = 0", "xlln_debug_log_level = 0x00000000", ""}
-            Files.AtomicWrite(config, Text.Encoding.ASCII.GetBytes(String.Join(vbCrLf, lines)))
-        End If
-        If File.Exists(ReceiptPath(context)) Then File.Delete(ReceiptPath(context))
         Dim start = Session.DesktopStartInfo(context, Nothing, Nothing)
-        start.Environment("DIRT2VR_LAN_CONFIG") = config
-        start.Environment("DIRT2VR_LAN_SHARED_CAREER") = "1"
-        start.Environment("DIRT2VR_LAN_RECEIPT") = ReceiptPath(context)
+        ConfigureProvider(context, start, True)
         start.Environment("DIRT2VR_LAN_SKIP_INTRO") = If(skipIntroduction, "1", "0")
         start.Environment("DIRT2VR_LAN_DISCOVERY") = "1"
         start.Environment("DIRT2VR_LAN_HOST") = If(joinTarget Is Nothing, "1", "0")

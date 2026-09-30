@@ -78,6 +78,8 @@ Public Module Worker
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars)
             Case "prepare-lan"
                 Call (New LanTransaction(context)).Prepare()
+            Case "prepare-profile"
+                Call (New LanTransaction(context)).Prepare(offlineProfile:=True)
             Case "prepare-movies"
                 Call (New StartupMovies(context)).Prepare()
             Case "prepare-direct-menus", "prepare-direct-menus-movies"

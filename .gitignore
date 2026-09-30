@@ -61,4 +61,6 @@ tests/launcher/obj/
 /tools/aspen-converter/obj/
 /tools/custom-tracks/bin/
 /tools/custom-tracks/obj/
+/tools/profiles/bin/
+/tools/profiles/obj/
 /tools/aspen-port/TerrainBatching.cs

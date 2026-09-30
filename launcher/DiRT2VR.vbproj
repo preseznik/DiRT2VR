@@ -30,5 +30,6 @@
     <Import Include="System.Runtime.InteropServices" />
     <ProjectReference Include="../tools/aspen-converter/AspenConverter.csproj" />
     <ProjectReference Include="../tools/custom-tracks/CustomTracks.csproj" />
+    <ProjectReference Include="../tools/profiles/Profiles.csproj" />
   </ItemGroup>
 </Project>

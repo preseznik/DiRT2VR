@@ -30,6 +30,7 @@ void DiRT2VRLanInitialize() {
     }
     std::ofstream receipt(receiptPath,std::ios::trunc);
     receipt << (sharedCareer ? "Normal career: system Documents lookup unchanged\n" : "Documents import redirected before game entry\n");
+    if (GetEnvironmentVariableW(L"DIRT2VR_PROFILE_ROOT",nullptr,0)) receipt << "Managed career mount active\n";
     receipt << "Introduction bypass: " << (skipIntro ? "enabled" : "disabled") << '\n';
     receipt.flush();
     if (!receipt) ExitProcess(ERROR_WRITE_FAULT);

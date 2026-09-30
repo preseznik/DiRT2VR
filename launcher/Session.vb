@@ -22,6 +22,7 @@ Public Class Session
     Private displayWarning As String = ""
     Private desktopBounds As Drawing.Rectangle?
     Private customTrack As Boolean
+    Private profile As ProfileSession
     Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing)
         context = value : settings = VrSettings.Load(context)
         Dim custom = CustomTrackPreferences.Load(context)
@@ -50,6 +51,7 @@ Public Class Session
             If Not held Then Throw New IOException("A DiRT2VR session or recovery is already running.")
             Dim graphics As New GraphicsTransaction(context)
             Try
+                profile = New ProfileSession(context)
                 Do
                     Status("Checking")
                     context.ValidateGame() : context.RequireClosed()
@@ -104,7 +106,8 @@ Public Class Session
                             Worker.Invoke(context, "prepare")
                         End If
                         graphics.Prepare(settings)
-                        If settings.LaunchMode = "lan" Then Worker.Invoke(context, "prepare-lan")
+                        profile.Configure(start, settings.LaunchMode = "lan")
+                        profile.Prepare(settings.LaunchMode = "lan")
                         ' LAN validates states.bin against the game's original checksum.
                         PrepareMenus()
                         Dim returnToMenus As Boolean
@@ -121,7 +124,7 @@ Public Class Session
                                 input.Poll()
                                 seat.Poll(input.Snapshot(), ControllerInput.GameFocused())
                             End Sub)
-                            If settings.LaunchMode = "lan" AndAlso Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN startup was confirmed.")
+                            profile.ConfirmStartup(settings.LaunchMode = "lan")
                         End Using
                         Status("Restoring")
                         graphics.Recover() : Worker.Invoke(context, "recover")
@@ -187,9 +190,10 @@ Public Class Session
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
             ConfigureLogging(lanStart, CreateLogFolder(context, settings.LoggingEnabled))
-            Worker.Invoke(context, "prepare-lan")
+            profile.Configure(lanStart, True)
+            profile.Prepare(True)
             WaitForGame(lanStart)
-            If Not File.Exists(LanSession.ReceiptPath(context)) Then Throw New IOException("The game exited before LAN startup was confirmed.")
+            profile.ConfirmStartup(True)
             Return False
         End If
         Dim config As String = Nothing
@@ -210,9 +214,13 @@ Public Class Session
         If FlashbackLaunch.Enabled(settings) AndAlso logFolder Is Nothing Then logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         Dim start = DesktopStartInfo(context, config, logFolder)
         If FlashbackLaunch.Enabled(settings) Then ConfigureLogging(start, logFolder)
+        profile.Configure(start, False)
+        profile.Prepare(False)
         PrepareMenus()
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
-        Return WaitForGame(start)
+        Dim returnToMenus = WaitForGame(start)
+        profile.ConfirmStartup(False)
+        Return returnToMenus
     End Function
     Private Sub PrepareMenus()
         If settings.DirectMode Then

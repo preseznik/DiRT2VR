@@ -18,6 +18,16 @@ This mod will remain free forever. If you'd like to support the work, you can [s
 - Your usual keyboard, gamepad or steering wheel and pedals. Motion controllers are not used.
 - A packaged DiRT2VR installer or ZIP. Packages include the .NET runtime; no development tools or separate .NET installation are needed. The source repository alone is not a playable package.
 
+## Profiles (Experimental)
+
+Open **Profile** to choose **Current game career** or create a separate career with **Create new profile…**. Choose **Fresh career** or **100% completed career**, enter a name, then select **Use this profile**. No game setup session is needed. Close DiRT 2 before creating or switching profiles; selection saves immediately.
+
+The selected career is used for Normal Launch, Practice, Race and LAN, in desktop or VR, and remains selected when returning to menus. Completed careers include stock career wins, cars, liveries, rewards, All-Star upgrades and teammate relationships. They do not include platform achievements, invented personal-best times or external content. Existing careers cannot be unlocked by this feature.
+
+Your original saves stay in their current location. New profiles have separate save folders under `%LOCALAPPDATA%\DiRT2VR\profiles`, shared by your DiRT2VR installations on this Windows account. Graphics settings and launcher bindings remain shared. Launching the game outside DiRT2VR uses your original career.
+
+Use **Refresh** after saving in-game. Unreadable details show **Unavailable**; intermediate completion percentages and garage counts are not yet supported. If the original game has multiple careers, choose between them in its Load Profile menu. A missing or incompatible selected profile blocks launch until you explicitly choose a valid one.
+
 ## Install alongside your game
 
 **A second copy of the game is not required.** Run DiRT 2 normally once before installing, then close it.
@@ -26,7 +36,7 @@ This mod will remain free forever. If you'd like to support the work, you can [s
 
 **ZIP:** extract the complete ZIP into that same game folder. Open `DiRT2VR.exe`. The first VR launch checks compatibility and installs the proxy from `DiRT2VR/payload`.
 
-The game folder will contain `DiRT2VR.exe`, `Start-DiRT2VR.cmd`, a `DiRT2VR` subfolder, and an installed `d3d11.dll`. Most mod files stay in the subfolder. Game executables and the existing career profile are preserved. LAN mode temporarily swaps `xlive.dll` and restores its original bytes after play; other modes leave it unchanged.
+The game folder will contain `DiRT2VR.exe`, `Start-DiRT2VR.cmd`, a `DiRT2VR` subfolder, and an installed `d3d11.dll`. Most mod files stay in the subfolder. Game executables and the existing career profile are preserved. LAN and launcher-created profiles temporarily use the bundled offline provider through `xlive.dll`; the original bytes are restored after play. Other launches keep the original provider.
 
 If another `d3d11.dll` is present, setup refuses to overwrite it. Remove the conflicting graphics mod using its own instructions first; automatic proxy chaining is not supported.
 
@@ -225,7 +235,7 @@ If recovery reports a conflict, it preserves unexpected asset edits and backups 
 
 LAN support is included in the launcher package; no separate test kit or PowerShell window is needed. Both PCs need the supported game and the current launcher package on the same LAN.
 
-1. LAN uses your normal DiRT 2 career automatically, in `Documents\My Games\DiRT2`. There is one save for normal play and LAN; no import or profile selection is needed. If you have no career yet, create it in the game as usual.
+1. LAN uses the career selected on **Profile**. **Current game career** uses your usual save in `Documents\My Games\DiRT2`, without importing or copying it. You can also choose a separate launcher-created career.
 2. Optionally enable **Skip introduction for LAN multiplayer**. It defaults off and skips the opening first-race movie and forced career tutorial while retaining profile creation.
 3. Open the launcher's **Multiplayer** tab. On the host PC, click **HOST**, then choose **Desktop** or **VR** (or **Cancel**). Create a session through the game's **Multiplayer / LAN** menus. Select the event, track and cars inside the game.
 4. On the other PC, select the host in the LAN server list and click **JOIN**, then choose **Desktop** or **VR**. Discovery refreshes automatically while this tab is open; **Refresh** starts another scan. JOIN opens LAN play and adds the selected PC to the game's network peers. Complete any startup/profile prompts, then finish joining through the game's **Multiplayer / LAN** menu. It does not enter the lobby automatically.
@@ -247,7 +257,7 @@ For a LAN disconnect report, enable **Settings → Enable diagnostic logging** o
 
 After a crash or power failure, close any remaining game processes and choose **Restore original files** before ordinary play. The launcher also recovers interrupted sessions from the older LAN kits. Keep `DiRT2VR/lan-backups`; conflicting edits are preserved and reported. If Windows asks about network access, allow DiRT 2 on your Private/home network rather than disabling the firewall.
 
-Older test-kit profiles and imported copies are no longer used. They are left on disk unchanged; the launcher always uses the normal career.
+Older test-kit profiles and imported copies are not listed in the Profile tab. They are left on disk unchanged. Current game career remains the default until you choose another profile.
 
 ## Limitations and troubleshooting
 

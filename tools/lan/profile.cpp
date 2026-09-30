@@ -1,6 +1,29 @@
 #include "profile.h"
 #include <shlobj.h>
 #include <cstring>
+#include <cstdint>
+#include "SaveRoutePath.h"
+
+namespace {
+char careerRoot[MAX_PATH]{};
+bool InstallSaveMount(HMODULE host, const wchar_t* path) {
+    if(!profile_route::ResolvePath(path,careerRoot)) return false;
+    auto base=reinterpret_cast<std::uint8_t*>(host);
+    // mov ecx,[esp+53c] supplies the physical root to the /saves/ mount only.
+    const std::uint8_t expected[]{0x8b,0x8c,0x24,0x3c,0x05,0x00,0x00};
+    if(memcmp(base+0x2ae327,expected,sizeof(expected)) ||
+       strcmp(reinterpret_cast<char*>(base+0xf22cb0),"/saves/")) return false;
+    std::uint8_t patch[]{0xb9,0,0,0,0,0x90,0x90};
+    const auto pointer=reinterpret_cast<std::uint32_t>(careerRoot);
+    memcpy(patch+1,&pointer,4);
+    DWORD old{},ignored{};
+    if(!VirtualProtect(base+0x2ae327,sizeof(patch),PAGE_EXECUTE_READWRITE,&old)) return false;
+    memcpy(base+0x2ae327,patch,sizeof(patch));
+    return VirtualProtect(base+0x2ae327,sizeof(patch),old,&ignored) &&
+           FlushInstructionCache(GetCurrentProcess(),base+0x2ae327,sizeof(patch));
+}
+}
+
 
 namespace {
 using FolderPath = HRESULT(WINAPI*)(HWND,int,HANDLE,DWORD,LPSTR);
@@ -15,7 +38,11 @@ HRESULT WINAPI GetFolder(HWND window, int folder, HANDLE token, DWORD flags, LPS
 }
 
 bool ConfigureLanDocuments(HMODULE host, bool sharedCareer, const std::wstring& documents) {
-    return sharedCareer || InstallLanDocumentsRedirect(host,documents);
+    if (!sharedCareer && !InstallLanDocumentsRedirect(host,documents)) return false;
+    wchar_t path[32768]{};
+    const auto length=GetEnvironmentVariableW(L"DIRT2VR_PROFILE_ROOT",path,32768);
+    if (!length) return true;
+    return length<32768 && InstallSaveMount(host,path);
 }
 
 bool InstallLanDocumentsRedirect(HMODULE host, const std::wstring& documents) {

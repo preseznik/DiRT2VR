@@ -1,7 +1,10 @@
-﻿This experimental update fixes an Aspen launch error on installations with read-only game files.
+Create a new career without changing your existing save.
 
-- Aspen tracks can now launch when original game files are marked read-only.
-- Original file contents and read-only flags are restored after play or interrupted preparation.
-- File-operation errors now name the affected file, making troubleshooting easier.
+- New Profile tab: choose your current career or create a separate Fresh or 100% completed career.
+- Completed careers include stock events, cars, liveries, rewards, All-Star upgrades and teammate relationships.
+- Your selection applies to desktop, VR and LAN launches, including Return to menus.
+- Graphics settings and launcher controls stay shared between careers.
 
-Your existing Aspen tracks do not need rebuilding for this fix.
+After creating a career, choose Use this profile to play it. Close the game before switching profiles.
+
+Some save details, including garage counts and intermediate completion percentages, currently show Unavailable. Existing careers cannot be unlocked by this feature.

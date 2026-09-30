@@ -7,7 +7,21 @@ Public Class InstructionsView
     Private ReadOnly picker As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Name = "InstructionTopicPicker", .AccessibleName = "Instruction topic"}
     Private ReadOnly article As New RichTextBox With {.ReadOnly = True, .BorderStyle = BorderStyle.None, .WordWrap = True, .ScrollBars = RichTextBoxScrollBars.Vertical, .DetectUrls = False, .Name = "InstructionArticle", .AccessibleName = "Instructions"}
     Private updating As Boolean
-    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom tracks", "Appearance"}
+    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom tracks", "Appearance", "Profiles",
+        "Choose a career
+Profile lists Current game career and careers created in DiRT2VR. Select a row, then Use this profile. Selection is saved immediately, separately from Save settings, and applies to Normal Launch, Practice, Race and LAN in Desktop or VR. Return to menus keeps the same career. Close the game before switching or creating profiles.
+
+Create a new career
+Choose Create new profile, enter a name, then Fresh career or 100% completed career. Creation finishes in the launcher. Select Use this profile afterward to play it. There is no unlock option for an existing career.
+
+Completed careers
+Includes stock career wins, cars, liveries, rewards, All-Star upgrades and teammate relationships. Achievements, personal-best times and external content are not included.
+
+Save locations
+Your current game career stays where it is. New careers are stored under %LOCALAPPDATA%\DiRT2VR\profiles and are shared between DiRT2VR installations on this Windows account. Each installation remembers its own selection. Normal launches outside DiRT2VR still use your original game career. Graphics settings and launcher bindings are shared between careers.
+
+Details and recovery
+Refresh reads the latest saved data. Unreadable details show Unavailable; intermediate completion percentages and the garage count are not yet supported. When the original game has several saved careers, choose between them inside its Load Profile menu. An unavailable selected career blocks launching until you explicitly select a valid one. Keep backups of your saves."}
     Private Shared ReadOnly Pages As String() = {
         "Launch
 Launch plays on your monitor. Launch VR uses SteamVR: start SteamVR and connect your headset first. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
@@ -91,7 +105,7 @@ JOIN
 Select an available host and choose Desktop or VR. Finish joining in the game's Multiplayer / LAN menu. Automatic lobby entry is not available yet.
 
 Network and career
-Both PCs need the same local network. Allow DiRT 2 on the Windows Private network if prompted. LAN uses your normal career and graphics settings; no separate save or import is needed.
+Both PCs need the same local network. Allow DiRT 2 on the Windows Private network if prompted. LAN uses the career selected on Profile. Current game career uses your normal save; no import is needed. Graphics settings stay shared.
 
 Startup movies
 LAN ignores Skip startup logo movies to preserve the original multiplayer content checks. The separate Skip introduction option can bypass the opening tutorial while preserving profile setup.
