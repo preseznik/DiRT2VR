@@ -143,7 +143,7 @@ The following settings apply to VR:
 | Setting | Default | Effect |
 |---|---|---|
 | Render resolution | 100% | Requests 1600 × 1200 per eye at full field of view. Adjust from 50–300%, with a green notch marking the recommended 150%. The default remains 100%; 300% requests 4800 × 3600 per eye (nine times the baseline pixels). Graphics also shows the measured size from the last VR launch. |
-| Headset texture scale | 50% | Size of the finished image sent to your headset, not car/road texture quality. Lower values save memory but can blur the view. 100% uses SteamVR's recommended size; 50% halves width and height (one quarter as many pixels). It cannot add detail the game did not render. |
+| Headset texture scale | 100% | Size of the finished image sent to your headset, not car/road texture quality. Lower values save memory but can blur the view. 100% uses SteamVR's recommended size; 50% halves width and height (one quarter as many pixels). It cannot add detail the game did not render. |
 | Anti-aliasing (MSAA) | 2× | VR-only: Off, 2×, 4× or 8×. High values cost memory and may cause crashes; the launcher warns at 4× and 8×. Desktop MSAA is restored after play. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
 | Car mirrors | Game setting | Optionally force mirrors on or off during VR sessions. |

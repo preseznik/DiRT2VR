@@ -35,7 +35,7 @@ Public Class MainForm
     Private ReadOnly borderless As New CheckBox With {.Text = "Borderless fullscreen (desktop only)", .Name = "BorderlessDesktop", .AutoSize = True}
     Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
-    Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 50, "%")
+    Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 100, "%")
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
     Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = False}
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
@@ -516,7 +516,7 @@ Public Class MainForm
         AddHandler defaults.Click, Sub()
                                        borderless.Checked = False : desktopVSync.Checked = True
                                        msaa.Value = 1
-                                       renderScale.Value = 100 : headsetScale.Value = 50 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
+                                       renderScale.Value = 100 : headsetScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False : hudDistance.Value = 2
                                        treeDetail.Value = 0 : objectDetail.Value = 0 : hudGauges.Checked = False
                                        For Each element In {hudLapTime, hudPosition, hudMap, hudProgress}

@@ -437,7 +437,7 @@ bool EnsureGameXr() {
     if(!attempted && gameSwapchain) {
         attempted=true; gameXr=new GameXr;
         ComPtr<ID3D11Device> device; gameSwapchain->GetDevice(IID_PPV_ARGS(&device));
-        const auto scale=GraphicsScale(L"DIRT2VR_HEADSET_SCALE",.5f,.25f,1.f);
+        const auto scale=GraphicsScale(L"DIRT2VR_HEADSET_SCALE",1.f,.25f,1.f);
         const auto fov=GraphicsScale(L"DIRT2VR_FOV_SCALE",1.f,.7f,1.f);
         Log("VR graphics headset_scale=%.2f fov_scale=%.2f",scale,fov);
         ComPtr<ID3D11Texture2D> back;

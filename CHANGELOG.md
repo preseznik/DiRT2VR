@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Default Headset texture scale to 100% for new settings and Reset graphics defaults, preserving existing saved choices.
+
 ## 0.17.12 — 2026-09-30 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.12)
