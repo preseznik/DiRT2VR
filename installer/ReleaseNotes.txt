@@ -6,4 +6,4 @@ Try more camera views in VR.
 
 The new camera option starts off. Menus, dialogs, replays and movies still use the virtual screen. Seat adjustments remain cockpit-only. Chase views retain the game's camera movement and may be less comfortable.
 
-Headset validation of the new camera views is still pending. Toggle VR returns to the virtual screen; turn the option off and relaunch to restore cockpit-only VR.
+The new camera views passed the user headset check. Some camera switches briefly show the virtual screen while the game blends between views. Toggle VR returns to the virtual screen; turn the option off and relaunch to restore cockpit-only VR.

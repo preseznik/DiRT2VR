@@ -8,7 +8,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.15 — 2026-10-01 — Experimental (local build)
 
-- Add Advanced → Graphics → 3D beyond the cockpit (Experimental), off by default. Try bonnet, bumper and chase views with stereo depth and head tracking; menus, dialogs and replays stay on the virtual screen. Seat adjustments remain cockpit-only. Headset validation is pending.
+- Add Advanced → Graphics → 3D beyond the cockpit (Experimental), off by default. Try bonnet, bumper and chase views with stereo depth and head tracking; menus, dialogs and replays stay on the virtual screen. Seat adjustments remain cockpit-only. The external views passed the user headset check; some camera switches briefly show the virtual screen during the transition.
 - Reduce unintended brightness changes when experimental VR shadows are enabled. Shadows remain optional and experimental.
 - Add lower, fixed in-headset instructions and capture status for guided troubleshooting. Normal play is unchanged.
 
