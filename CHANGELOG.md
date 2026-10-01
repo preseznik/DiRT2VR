@@ -6,13 +6,18 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-## 0.17.15 — 2026-10-01 — Experimental (local build)
+## 0.17.15 — 2026-10-01 — Experimental
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.15)
+
+- Add optional experimental VR shadows under Graphics → VR rendering, off by default. Save and relaunch to apply. Shadows may still produce incorrect brightness or excessive bloom; turn them off if the picture looks wrong.
 - Add Advanced → Graphics → 3D beyond the cockpit (Experimental), off by default. Try bonnet, bumper and chase views with stereo depth and head tracking; menus, dialogs and replays stay on the virtual screen. Seat adjustments remain cockpit-only. The external views passed the user headset check; some camera switches briefly show the virtual screen during the transition.
 - Reduce unintended brightness changes when experimental VR shadows are enabled. Shadows remain optional and experimental.
 - Add lower, fixed in-headset instructions and capture status for guided troubleshooting. Normal play is unchanged.
 
 ## 0.17.14 — 2026-09-30 — Experimental (local build)
+
+Local test build; its shadow changes are included in 0.17.15.
 
 - Add Shadows (experimental) under Graphics → VR rendering, off by default. Try shadows at your saved game quality; desktop play is unchanged.
 - Correct sunlight-shadow placement for off-centre VR eye views.
