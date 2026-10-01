@@ -1,8 +1,9 @@
-Try shadows in VR.
+Try more camera views in VR.
 
-- New Shadows (experimental) switch in Graphics > VR rendering.
-- Shadows start off, keeping your current appearance and performance.
-- Enable them to try your saved game shadow quality with corrected sunlight shadow placement for VR eyes.
-- Desktop play and your original game settings are preserved.
+- New Advanced > Graphics > 3D beyond the cockpit (Experimental) option. Save and relaunch VR, then use the game's Change camera control for bonnet, bumper and chase views.
+- Improved brightness with experimental VR shadows enabled.
+- Guided troubleshooting can show instructions and capture status below your forward view.
 
-Headset appearance and performance still need testing. If shadows look wrong or reduce performance, turn the option off and relaunch.
+The new camera option starts off. Menus, dialogs, replays and movies still use the virtual screen. Seat adjustments remain cockpit-only. Chase views retain the game's camera movement and may be less comfortable.
+
+Headset validation of the new camera views is still pending. Toggle VR returns to the virtual screen; turn the option off and relaunch to restore cockpit-only VR.

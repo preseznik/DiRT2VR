@@ -37,6 +37,7 @@ Public Class MainForm
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 100, "%")
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
+    Private ReadOnly extendedViews As New CheckBox With {.Text = "On (Experimental)", .Name = "VrExtendedViews", .AccessibleName = "3D beyond the cockpit (Experimental)", .AutoSize = True}
     Private ReadOnly vrShadows As New CheckBox With {.Text = "On", .Name = "VrShadows", .AutoSize = True}
     Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = False}
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
@@ -184,6 +185,7 @@ Public Class MainForm
         Tip(msaa, "Smooths jagged edges in VR. Higher settings use more memory" & vbCrLf & "and GPU power; 4× and 8× can cause crashes. 2× is the default.")
         Tip(fieldOfView, "Lower values trim the edges of your VR view to reduce rendering" & vbCrLf & "work. 100% keeps the full view; objects keep their normal scale.")
         Tip(mirrors, "Turn the car's rear-view mirrors on or off in VR." & vbCrLf & "Off can improve performance. Game setting keeps your usual choice.")
+        Tip(extendedViews, "Use headset 3D and head tracking in supported cameras outside the cockpit." & vbCrLf & "First stage: bonnet, bumper and chase views. Menus and replays stay on the virtual screen." & vbCrLf & "Off by default. Save and relaunch VR to apply. Toggle VR always returns to the flat screen.")
         Tip(vrShadows, "Experimental: enable shadows in VR using the game's shadow quality." & vbCrLf & "Off keeps the current faster rendering. Shadows may still disagree between eyes." & vbCrLf & "Applies on next VR launch; desktop play is unchanged.")
         Tip(treeDetail, "Higher keeps detailed vegetation visible farther away, but" & vbCrLf & "costs performance. Game keeps your usual setting.")
         Tip(objectDetail, "Higher keeps detailed buildings and trackside objects farther" & vbCrLf & "away, but costs performance. Game keeps your usual setting.")
@@ -476,6 +478,9 @@ Public Class MainForm
         Dim gameplay = Section(content, "Gameplay")
         flashback.Checked = settings.ExperimentalFlashback
         Field(gameplay, "Frame-rate-independent rewind", flashback)
+        Dim graphics = Section(content, "Graphics")
+        extendedViews.Checked = settings.VrExtendedViews
+        Field(graphics, "3D beyond the cockpit", extendedViews)
         content.Controls.Add(HelpLink(Sub() ShowAbout("Advanced")))
     End Sub
     Private Sub BuildGraphicsTab()
@@ -691,6 +696,7 @@ Public Class MainForm
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
         settings.ExperimentalFlashback = flashback.Checked
+        settings.VrExtendedViews = extendedViews.Checked
         settings.SkipIntroduction = skipIntroduction.Checked
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.BorderlessDesktop = borderless.Checked

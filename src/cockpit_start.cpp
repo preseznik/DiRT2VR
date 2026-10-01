@@ -19,7 +19,11 @@ int __fastcall FindView(void* manager,void*,const char* name) {
     for(const auto call:startupCalls) {
         if(caller!=gameBase+call+5) continue;
         SeatSelectCamera(manager);
-        const int cockpit=findView(manager,"head-cam");
+        const char* startup="head-cam";
+        char diagnostic[48]{};
+        if(LoggingEnabled() && GetEnvironmentVariableA("DIRT2VR_CAMERA_PROBE",diagnostic,sizeof(diagnostic)))
+            for(auto candidate:{"bonnet","bumper","chase_close","chase_far"})if(!strcmp(candidate,diagnostic))startup=candidate;
+        const int cockpit=findView(manager,startup);
         Log("VR starting camera: requested=%s cockpit=%d caller=%x",name?name:"(none)",cockpit,call);
         if(cockpit>=0) return cockpit;
         break; // Unsupported car: preserve the game's fallback rather than an invalid index.

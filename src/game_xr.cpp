@@ -1,5 +1,6 @@
 #include "game_xr.h"
 #include "common.h"
+#include "test_message.h"
 #include "graphics_diagnostics.h"
 #include <dxgi.h>
 #include <cstring>
@@ -40,7 +41,20 @@ bool GameXr::Initialize(ID3D11Device* device,float scale,float fovScale,uint32_t
     eyeDimensions_=frames_->EyeDimensions();
     vr::Log("OpenXR game session initialized; experimental cameras, visibility unvalidated"); return true;
 }
-bool GameXr::Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare,const XrFrames::Screen* screen,const XrFrames::Overlay* overlay,const XrFrames::Overlay* panel) { return frames_ && frames_->Tick(draw,prepare,screen,overlay,panel); }
+bool GameXr::Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare,const XrFrames::Screen* screen,const XrFrames::Overlay* overlay,const XrFrames::Overlay* panel) {
+    if(!frames_)return false;
+    if(!vr::TestMessagesEnabled())return frames_->Tick(draw,prepare,screen,overlay,panel);
+    vr::PollTestMessage();
+    XrFrames::Overlay combined;combined.enabled=false;
+    const bool submitted=frames_->Tick(draw,[&](const std::array<XrView,2>& views) {
+        if(prepare)prepare(views);
+        const bool seatActive=panel && panel->enabled && panel->draw;
+        vr::PrepareTestMessage(seatActive);
+        combined=seatActive?*panel:*vr::TestMessageOverlay();
+    },screen,overlay,&combined);
+    vr::TestMessageSubmitted(submitted && frames_->Visible());
+    return submitted;
+}
 bool GameXr::CopyEye(unsigned eye,ID3D11Texture2D* image,ID3D11RenderTargetView* target,unsigned w,unsigned h,bool alpha) {
     return blit_.Draw(eye,image,target,w,h,alpha);
 }

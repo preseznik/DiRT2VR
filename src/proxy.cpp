@@ -9,10 +9,14 @@ static bool SessionActive() {
 }
 
 static void SetVrSceneResolution(const DXGI_SWAP_CHAIN_DESC* desc, void* caller) {
-    wchar_t headset[8]{}, dimensions[64]{};
+    wchar_t headset[8]{}, pipeline[8]{}, dimensions[64]{};
+    const bool headsetSession=GetEnvironmentVariableW(L"DIRT2VR_HEADSET",headset,8)==1 && headset[0]==L'1';
+    // Exercise the production resolution guard in explicitly logged, headset-free diagnostics.
+    const bool pipelineSession=vr::LoggingEnabled() &&
+        GetEnvironmentVariableW(L"DIRT2VR_PIPELINE_PROBE",pipeline,8)==1 && pipeline[0]==L'1';
     unsigned width{},height{};
     if(!desc || !SessionActive() ||
-       GetEnvironmentVariableW(L"DIRT2VR_HEADSET",headset,8)!=1 || headset[0]!=L'1' ||
+       (!headsetSession && !pipelineSession) ||
        !GetEnvironmentVariableW(L"DIRT2VR_SCENE_SIZE",dimensions,64) ||
        swscanf_s(dimensions,L"%ux%u",&width,&height)!=2 || !vr::SupportedHost()) return;
     const auto base=reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));

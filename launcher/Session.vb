@@ -170,6 +170,7 @@ Public Class Session
         start.Environment("DIRT2VR_CAPTURE_REQUESTS") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
         start.Environment("DIRT2VR_WATER_REFLECTIONS") = "1"
         start.Environment("DIRT2VR_SHADOWS") = If(settings.VrShadows, "1", "0")
+        start.Environment("DIRT2VR_EXTENDED_VIEWS") = If(settings.VrExtendedViews, "1", "0")
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
         start.Environment("DIRT2VR_WORLD_SCALE") = "1"
         start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)

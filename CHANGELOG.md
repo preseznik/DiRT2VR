@@ -6,8 +6,16 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Add Shadows (experimental) under Graphics → VR rendering. It starts off, keeping the existing VR appearance and performance. Enable it to try shadows at your saved game quality; desktop play is unchanged.
-- Correct sunlight shadow placement for off-centre VR eye views. Headset appearance and performance still need testing; turn shadows off if they disagree between eyes or reduce performance.
+## 0.17.15 — 2026-10-01 — Experimental (local build)
+
+- Add Advanced → Graphics → 3D beyond the cockpit (Experimental), off by default. Try bonnet, bumper and chase views with stereo depth and head tracking; menus, dialogs and replays stay on the virtual screen. Seat adjustments remain cockpit-only. Headset validation is pending.
+- Reduce unintended brightness changes when experimental VR shadows are enabled. Shadows remain optional and experimental.
+- Add lower, fixed in-headset instructions and capture status for guided troubleshooting. Normal play is unchanged.
+
+## 0.17.14 — 2026-09-30 — Experimental (local build)
+
+- Add Shadows (experimental) under Graphics → VR rendering, off by default. Try shadows at your saved game quality; desktop play is unchanged.
+- Correct sunlight-shadow placement for off-centre VR eye views.
 
 ## 0.17.13 — 2026-09-30 — Experimental
 

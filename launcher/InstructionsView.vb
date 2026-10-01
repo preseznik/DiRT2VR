@@ -72,7 +72,7 @@ Headset refresh rate
 Set refresh rate in SteamVR or your headset connection software before launching. The launcher can show the last reported rate, not a live measurement. Desktop VSync does not select headset Hz.
 
 Shadows (experimental)
-Off retains the current shadow-free VR rendering and performance. On enables shadows using the game's saved shadow quality. The first sunlight-shadow correction is included; headset appearance and performance still need testing. Turn it off if shadows disagree between eyes or performance drops. Save and relaunch to apply. Desktop play is unchanged.
+Off retains the current shadow-free VR rendering and performance. On enables shadows using the game's saved shadow quality. Includes corrected VR exposure metering. Shadows can brighten sunlit areas through the game's normal exposure adjustment. This remains experimental; turn it off if the appearance or performance is unsuitable. Shadows may also reduce performance. Save and relaunch to apply. Desktop play is unchanged.
 
 Rendering baseline
 VR keeps the current reduced-effects configuration for crowds, particles and motion blur. Temporary graphics changes, including shadows, are restored after play.",
@@ -129,7 +129,12 @@ About shows the installed version, Stable/Experimental channel, build and GitHub
 
 Documentation
 The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages.",
-        "Experimental rewind
+        "3D beyond the cockpit (Experimental)
+Advanced → Graphics → 3D beyond the cockpit adds headset 3D and head tracking to supported bonnet, bumper and chase cameras. Off by default; save and relaunch VR to apply. Use the game's Change camera control to switch views. Toggle VR still returns to the virtual screen. Desktop play is unchanged.
+
+This is the first stage of expanded VR views. Menus, dialogs, replay cameras and movies still use the virtual screen. Seat adjustments apply only inside the cockpit and are retained when you change cameras. Chase cameras retain the game's movement and may be less comfortable than the cockpit.
+
+Experimental rewind
 Advanced → Frame-rate-independent rewind → On (Experimental) is off by default. Save settings and launch a new session to apply it. It works in single-player Normal Launch, Direct practice and Race, for desktop and VR. LAN ignores this setting. Desktop play requires DirectX 11.
 
 What it does

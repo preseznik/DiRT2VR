@@ -4,6 +4,7 @@
 #include "common.h"
 #include "eye_pair.h"
 #include "camera_math.h"
+#include "scene_camera.h"
 #include "game_xr.h"
 #include "hud_capture.h"
 #include "hud_elements.h"
@@ -14,7 +15,10 @@
 #include "light_replay.h"
 #include "ground_cover.h"
 #include "shadow_trace.h"
+#include "pipeline_trace.h"
+#include "test_message.h"
 #include "shadow_mask.h"
+#include "exposure_window.h"
 #include "direct_menus.h"
 #include "gfwl_compat.h"
 #include "driving_controls.h"
@@ -216,6 +220,19 @@ bool LightingTrace() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_TRACE_LIGHTS",value,8)>0 && wcscmp(value,L"1")==0; }();
     return LoggingEnabled() && enabled;
 }
+bool PipelineOption(const wchar_t* name) {
+    wchar_t value[8]{};
+    return PipelineTraceEnabled() && GetEnvironmentVariableW(name,value,8)==1 && value[0]==L'1';
+}
+thread_local MeterWindow meterWindow;
+bool ExposureWindowEnabled() {
+    static const bool enabled=[] { wchar_t value[8]{};return GetEnvironmentVariableW(L"DIRT2VR_EXPOSURE_WINDOW_PROBE",value,8)==1 && value[0]==L'1'; }();
+    return ShadowsEnabled() || (LoggingEnabled() && enabled);
+}
+bool PipelineLights() {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_PIPELINE_LIGHTS",value,8)==1 && value[0]==L'1'; }();
+    return PipelineTraceEnabled() && enabled;
+}
 void Stack(const char* event);
 using LightSetupFn = void (__thiscall*)(void*,void*,void*,void*);
 using PointSetupFn = void (__thiscall*)(void*,void*,void*);
@@ -293,6 +310,17 @@ int __fastcall PauseWorld(void* self,void*,const void* message) {
         Log("OpenXR pause world=%d frame=%llu auxiliary=%u",paused,frame.load(),bytes[5]);
     return result;
 }
+// The game updates its inline render camera during scene preparation. Classify
+// the original, validated main view once; never retain that identity next frame.
+thread_local void* classifiedRenderer{};
+thread_local SceneCamera classifiedCamera=SceneCamera::Unknown;
+thread_local void* preparedCameraRenderer{};
+thread_local uint64_t preparedCameraFrame=~uint64_t{};
+thread_local SceneCamera preparedCameraKind=SceneCamera::Unknown;
+SceneCamera RenderSceneCamera(void* renderer,const float* a,const float* b,uint64_t f) {
+    if(ExtendedViewsEnabled() && renderer==classifiedRenderer)return classifiedCamera;
+    return IdentifySceneCamera(a,b,f);
+}
 using FrustumCopyFn = void* (__thiscall*)(void*,const void*);
 FrustumCopyFn realFrustumCopy{},buildFrustum{};
 bool WideVisibility() {
@@ -311,7 +339,13 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
         alignas(16) std::array<float,16> matrix;
         // The engine writes XYZ corners but leaves their fourth lane untouched.
         alignas(16) std::array<float,56> volume{};
-        if(CockpitCameraCandidate(a,b) && VisibilityBox(a,b,matrix.data())) {
+        // This is the last unmodified camera before the engine prepares the scene.
+        // Carry its verified identity only to this renderer's scene in this frame.
+        const auto kind=IdentifySceneCamera(a,b,frame.load());
+        if(ExtendedViewsEnabled()) {
+            preparedCameraRenderer=renderer;preparedCameraFrame=frame.load();preparedCameraKind=kind;
+        }
+        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),pauseWorld.load(),true) && VisibilityBox(a,b,matrix.data())) {
             buildFrustum(volume.data(),matrix.data());
             bool finite=true; for(float v:volume) finite &= std::isfinite(v);
             if(finite) {
@@ -337,6 +371,8 @@ void __fastcall CameraSetup(void* self,void*,void* context,void* camera,float ne
     auto bytes=static_cast<unsigned char*>(self);
     eyeCameraSetup=(self==eyeRenderer && (camera==bytes+0x5e0 || camera==bytes+0x650)) ||
         (self==waterEyeRenderer && camera==*reinterpret_cast<void**>(bytes+0x940));
+    if(PipelineTraceEnabled() && frame.load()==3000 && eyeCameraSetup && !waterEyeRenderer)
+        Log("PIPELINE CameraSetup eye=%u near=%f upload=%d camera=%p",scenePass,nearPlane,upload,camera);
     realCameraSetup(self,context,camera,nearPlane,upload);
     if(eyeCameraSetup && !waterEyeRenderer && lightingEye && upload) RefreshLights(context);
     eyeCameraSetup=previous;
@@ -350,7 +386,11 @@ void __fastcall CameraUpload(void* self,void*,void* context) {
         // This engine uses a row-vector projection with its own depth mapping.
         // Preserve depth; update the off-centre X term and its derived matrix.
         if(projection[11]==-1.f && projection[15]==0.f) {
-            if(eyeFov) { ApplyFov(projection,*eyeFov); ++eyeProjectionUploads; }
+            if(eyeFov) {
+                const float nativeX=projection[0],nativeY=projection[5];
+                ApplyFov(projection,*eyeFov); ++eyeProjectionUploads;
+                if(!waterEyeRenderer && ExposureWindowEnabled()) meterWindow=NativeMeterWindow(nativeX,nativeY,projection);
+            }
             else projection[8]=projectionShift;
             MultiplyMatrices(view,projection,combined);
         }
@@ -363,7 +403,7 @@ thread_local bool sampleInner{};
 thread_local bool continuousMain{};
 IDXGISwapChain* gameSwapchain{}; // Diagnostic run owns one swapchain until process exit.
 void Screenshot(IDXGISwapChain*,unsigned long long);
-void ScreenshotTexture(ID3D11Texture2D*,unsigned long long,bool alpha=false);
+bool ScreenshotTexture(ID3D11Texture2D*,unsigned long long,bool alpha=false);
 bool ContinuousReplayEnabled() {
     static const bool enabled=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_CONTINUOUS_REPLAY",value,16)>0 && wcscmp(value,L"1")==0; }();
     return enabled;
@@ -394,12 +434,26 @@ bool RequestedCapturesEnabled() {
 }
 uint64_t requestedCaptureFrame=~uint64_t{};
 unsigned requestedCaptureCount{};
-bool TakeCaptureRequest(uint64_t f) {
+bool TakeCaptureRequest(uint64_t f,bool cockpit) {
     if(!RequestedCapturesEnabled() || requestedCaptureCount>=4 || f%60) return false;
     std::error_code error;
-    if(!std::filesystem::remove(Output()/"capture.request",error)) return false;
+    const auto request=Output()/"capture.request";
+    if(!std::filesystem::exists(request,error))return false;
+    // A mode-specific request survives replying in another window and the
+    // game's automatic pause. Empty requests retain the original behavior.
+    std::ifstream input(request);std::string mode;input>>mode;input.close();
+    if((mode=="cockpit" && (!cockpit || pauseWorld.load())) ||
+       (mode=="screen" && (cockpit || pauseWorld.load())))return false;
+    static uint64_t warning{};
+    if(TestMessagesEnabled()) {
+        if(!TestMessageCurrent(warning))
+            warning=TestMessage(L"Capture starting",L"Hold still and face forward. A short stutter is normal. Wait for the Capture saved message.",30);
+        if(!TestMessageVisibleFor(warning,2000))return false;
+    }
+    if(!std::filesystem::remove(request,error)) return false;
+    warning=0;
     requestedCaptureFrame=f; ++requestedCaptureCount;
-    Log("requested stereo capture=%u frame=%llu; capture stalls excluded from performance acceptance",requestedCaptureCount,f);
+    Log("requested render capture=%u frame=%llu; capture stalls excluded from performance acceptance",requestedCaptureCount,f);
     return true;
 }
 // Process-owned diagnostic session. Never invoke the runtime under DLL detach's
@@ -470,6 +524,7 @@ void PollHeadsetKeys() {
 void PrepareHeadsetViews(const std::array<XrView,2>& views) {
     if(recenterRequested) {
         headsetReference=RecenterPose(CenterPose(views),headsetReference); recenterRequested=false;
+        SetTestMessageReference(headsetReference);
         Log("OpenXR recentered position+yaw frame=%llu",frame.load());
     }
 }
@@ -493,6 +548,12 @@ void HeadsetScreen() {
     if(!header) { csv << "frame,submitted,visible\n"; header=true; }
     csv << f << ',' << submitted << ',' << gameXr->Visible() << '\n';
     if(f%120==0) { csv.flush(); Log("OpenXR screen frame=%llu submitted=%d visible=%d",f,submitted,gameXr->Visible()); }
+    if(requestedCaptureFrame==f) {
+        const bool saved=ScreenshotTexture(back.Get(),930000+requestedCaptureCount);
+        TestMessage(saved?L"Capture saved":L"Capture failed",saved?L"Flat-screen capture finished. Stay here for the next instruction.":L"The image was not saved. Wait here while I check the log.",30);
+        Log("requested flat capture complete frame=%llu image=%u",f,930000+requestedCaptureCount);
+        requestedCaptureFrame=~uint64_t{};
+    }
     static uint64_t visible=0;
     if(DetailedTrace() && submitted && gameXr->Visible() && ++visible==120) ScreenshotTexture(image.Texture(0),910001);
 }
@@ -576,23 +637,25 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     if(ScreenMode() || !continuousMain || f<300 || !gameSwapchain || !cameraHooksReady || xrTickFrame==f) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) return false;
-    const bool cockpit=CockpitCameraCandidate(static_cast<const float*>(cameraA),static_cast<const float*>(cameraB));
+    const auto camera=RenderSceneCamera(self,static_cast<const float*>(cameraA),static_cast<const float*>(cameraB),f);
+    const bool cockpit=camera==SceneCamera::Cockpit;
     static int previousCandidate=-1;
-    if(previousCandidate!=static_cast<int>(cockpit)) {
-        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f",cockpit?"cockpit":"screen",f,
+    if(previousCandidate!=static_cast<int>(camera)) {
+        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f",cockpit?"cockpit":camera==SceneCamera::External?"external":"screen",f,
             static_cast<const float*>(cameraA)[21],static_cast<const float*>(cameraB)[21]);
-        previousCandidate=cockpit;
+        previousCandidate=static_cast<int>(camera);
     }
     // A paused cockpit retains its near plane. Render the original complete
     // frame (including modal dialogs) on the screen instead of replaying it.
     // Preserve the requested mode so resuming returns to cockpit VR.
-    if(!cockpit || !lightingHooksReady || !pauseHookReady || pauseWorld.load()) return false;
+    if(!StereoCameraAllowed(camera,ExtendedViewsEnabled(),pauseWorld.load(),lightingHooksReady && pauseHookReady)) return false;
+    if(!cockpit) SeatInactive();
     if(!preparedLights.Snapshot(f,context,eyeLights)) {
         Log("lighting replay capacity exceeded; using virtual screen frame=%llu",f);
         return false;
     }
     if(!EnsureGameXr()) return false;
-    const bool requestedCapture=TakeCaptureRequest(f);
+    const bool requestedCapture=requestedCaptureFrame==f;
     xrTickFrame=f;
     static EyePair eyes;
     static const float scale=[] {
@@ -645,8 +708,10 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         eyeProjectionUploads=0;
         if(eye==0) gpu.Begin(f);
         {
-            ScopedEyePose pose(cameraA,cameraB,SeatEyePose(RelativePose(headsetReference,view.pose)),scale);
-            shadowRays={};
+            auto relative=RelativePose(headsetReference,view.pose);
+            if(cockpit) relative=SeatEyePose(relative);
+            ScopedEyePose pose(cameraA,cameraB,relative,scale);
+            shadowRays={}; meterWindow={};
             eyeRenderer=self; eyeFov=&view.fov; lightingEye=eye+1; lightsRefreshed=false;
             RenderEyeReflection(cameraA);
             hudEye=captureHud ? eye+1 : 0;
@@ -668,11 +733,11 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             ApplyFov(projection.data(),view.fov);
         }
         PrepareHeadsetViews(views);
-        SeatPrepare(views);
+        if(cockpit) SeatPrepare(views);
         static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;
         hud.pose=ScreenPose(follow ? CenterPose(views) : headsetReference,hudDistance);
-        if(!follow) hud.pose=SeatHudPose(hud.pose,headsetReference);
-    },nullptr,captureHud ? &hud : nullptr,SeatOverlay());
+        if(!follow && cockpit) hud.pose=SeatHudPose(hud.pose,headsetReference);
+    },nullptr,captureHud ? &hud : nullptr,cockpit ? SeatOverlay() : nullptr);
     if(!submitted) SeatInactive();
     hudEye=0;
     if(!submitted) hudCapture.End(false);
@@ -687,8 +752,12 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     scenePass=0;
     if(requestedCapture && submitted && eyes.Ready(f)) {
         const unsigned id=920000+requestedCaptureCount*2;
-        ScreenshotTexture(eyes.Texture(0),id); ScreenshotTexture(eyes.Texture(1),id+1);
+        const bool leftSaved=ScreenshotTexture(eyes.Texture(0),id);
+        const bool rightSaved=ScreenshotTexture(eyes.Texture(1),id+1);
+        TestMessage(leftSaved && rightSaved?L"Capture saved":L"Capture failed",leftSaved && rightSaved?L"Both eye images are saved. Stay here for the next instruction.":L"An eye image was not saved. Wait here while I check the log.",30);
         Log("requested stereo capture complete frame=%llu images=%u/%u",f,id,id+1);
+    } else if(requestedCapture) {
+        TestMessage(L"Capture interrupted",L"The headset frame was not ready. Wait here while I check it.",30);
     }
     requestedCaptureFrame=~uint64_t{};
     QueryPerformanceCounter(&end);
@@ -724,7 +793,9 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
     static const bool shadowProbe=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_SHADOW_PROBE",value,8)==1 && value[0]==L'1'; }();
     // Keep the first paired shadow comparison on the existing detailed-capture
     // frame. This desktop diagnostic never changes the headset render path.
-    if(!continuousMain || disabled || f<(shadowProbe ? 3000u : 300u) || !gameSwapchain) return false;
+    if(ExtendedViewsEnabled() && (f<1200 || !StereoCameraAllowed(
+        RenderSceneCamera(self,static_cast<float*>(cameraA),static_cast<float*>(cameraB),f),true,pauseWorld.load(),true)))return false;
+    if(!continuousMain || disabled || f<(shadowProbe && !PipelineOption(L"DIRT2VR_PIPELINE_SETTLE") ? 3000u : 300u) || !gameSwapchain) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) {
         Log("CONTINUOUS disabled: unexpected inline camera addresses"); disabled=true; return false;
@@ -745,7 +816,16 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
     if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) {
         Log("CONTINUOUS disabled: no backbuffer"); disabled=true; return false;
     }
+    alignas(16) std::array<unsigned char,0x1a0> originalLightContext{};
+    if(PipelineLights()) {
+        if(!lightingHooksReady || !preparedLights.Snapshot(f,context,eyeLights)) {
+            Log("PIPELINE light snapshot rejected frame=%llu",f); disabled=true; return false;
+        }
+        memcpy(originalLightContext.data(),context,originalLightContext.size());
+        if(f==3000) Log("PIPELINE light snapshot frame=%llu calls=%zu",f,eyeLights.size());
+    }
     const bool sampled=f==3000;
+    const bool pipelineHud=PipelineOption(L"DIRT2VR_PIPELINE_HUD") && hudCapture.Begin(back.Get(),f,0);
     std::array<uint64_t,2> eyeDraws{};
     LARGE_INTEGER start{},end{},frequency{}; QueryPerformanceFrequency(&frequency); QueryPerformanceCounter(&start);
     bool restored=true;
@@ -757,17 +837,39 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         const auto before=draws.load();
         {
             ScopedCameraTranslation translation(cameraA,cameraB,(eye==0?-0.5f:0.5f)*separation);
-            shadowRays={};
+            XrPosef pipelinePose{{0,0,0,1},{0,0,0}};
+            if(PipelineOption(L"DIRT2VR_PIPELINE_POSE")) {
+                // Fixed 30 degree yaw, -10 degree pitch and a seated lean.
+                pipelinePose={{-.08418598f,.25783416f,.02255757f,.96225019f},{.10f,.05f,-.10f}};
+            }
+            if(PipelineOption(L"DIRT2VR_PIPELINE_STEREO"))pipelinePose.position.x+=(eye==0?-.032f:.032f);
+            ScopedEyePose pipelineEye(cameraA,cameraB,pipelinePose,1.f);
+            shadowRays={}; meterWindow={};
             eyeRenderer=self; projectionShift=(eye==0?-1.f:1.f)*shift;
-            if(WaterReflectionsEnabled()) lightingEye=eye+1;
+            XrFovf pipelineFov{-.947f,.698f,.768f,-.960f};
+            if(eye==1 && PipelineOption(L"DIRT2VR_PIPELINE_STEREO"))pipelineFov={-.698f,.947f,.768f,-.960f};
+            if(PipelineTraceEnabled() && !PipelineOption(L"DIRT2VR_PIPELINE_FLAT"))eyeFov=&pipelineFov;
+            if(WaterReflectionsEnabled() || PipelineLights()) lightingEye=eye+1;
+            if(PipelineLights()) lightsRefreshed=false;
             RenderEyeReflection(cameraA);
+            hudEye=pipelineHud ? eye+1 : 0;
             realInner(self,lists,cameraA,cameraB,context,scene,flags);
-            eyeRenderer=nullptr; projectionShift=0; lightingEye=0;
+            hudEye=0;
+            eyeRenderer=nullptr; eyeFov=nullptr; projectionShift=0; lightingEye=0;
         }
         eyeDraws[eye]=draws.load()-before;
         restored &= memcmp(originalA.data(),cameraA,112)==0 && memcmp(originalB.data(),cameraB,112)==0;
         capture=eyes.Capture(back.Get(),eye,f);
         if(FAILED(capture) || !restored) break;
+    }
+    if(pipelineHud) {
+        hudCapture.End(true);
+        if(sampled) Log("PIPELINE HUD extracted draws=%u",hudCapture.Draws());
+    }
+    if(PipelineLights()) {
+        lightsRefreshed=false;
+        RefreshLights(originalLightContext.data());
+        eyeLights.clear();
     }
     if(WaterReflectionsEnabled()) groundCoverPair.End();
     waterProbeRecording=false;
@@ -796,7 +898,7 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         }
         Log("CONTINUOUS disabled after failed pair; inspect stereo-frames.csv"); disabled=true;
     }
-    if(WaterReflectionsEnabled() && (disabled || f>=6000)) { DXGI_SWAP_CHAIN_DESC desc{}; if(SUCCEEDED(gameSwapchain->GetDesc(&desc))) PostMessageW(desc.OutputWindow,WM_CLOSE,0,0); }
+    if(WaterReflectionsEnabled() && (disabled || f>=(PipelineTraceEnabled()?3120u:6000u))) { DXGI_SWAP_CHAIN_DESC desc{}; if(SUCCEEDED(gameSwapchain->GetDesc(&desc))) PostMessageW(desc.OutputWindow,WM_CLOSE,0,0); }
     return true;
 }
 
@@ -807,6 +909,16 @@ void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,v
         waterCameraA=cameraA; waterCameraB=cameraB; waterContext=context; waterScene=scene; waterFlags=flags;
     }
     if(HeadsetEnabled()) {
+        if(RequestedCapturesEnabled() && continuousMain && requestedCaptureFrame!=frame.load()) {
+            PollHeadsetKeys();
+            const auto renderer=static_cast<unsigned char*>(self);
+            if(cameraA==renderer+0x5e0 && cameraB==renderer+0x650) {
+                const bool cockpit=!ScreenMode() && StereoCameraAllowed(
+                    RenderSceneCamera(self,static_cast<const float*>(cameraA),static_cast<const float*>(cameraB),frame.load()),
+                    ExtendedViewsEnabled(),pauseWorld.load(),lightingHooksReady && pauseHookReady);
+                TakeCaptureRequest(frame.load(),cockpit);
+            }
+        }
         if(!HeadsetScene(self,lists,cameraA,cameraB,context,scene,flags)) realInner(self,lists,cameraA,cameraB,context,scene,flags);
         return;
     }
@@ -879,7 +991,18 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     if(DetailedTrace() && mainView && f==3000) scenePass=1;
     sampleInner=mainView && f==3000 && InnerReplayEnabled() && !ContinuousReplayEnabled();
     continuousMain=mainView && (ContinuousReplayEnabled() || HudProbe());
+    const auto previousRenderer=classifiedRenderer;
+    const auto previousCamera=classifiedCamera;
+    classifiedRenderer=mainView ? self : nullptr;
+    classifiedCamera=SceneCamera::Unknown;
+    if(mainView && ExtendedViewsEnabled()) {
+        classifiedCamera=(preparedCameraRenderer==self && preparedCameraFrame==f) ? preparedCameraKind :
+            IdentifySceneCamera(static_cast<float*>(a),static_cast<float*>(b),f);
+        if(f%120==0)Log("extended main frame=%llu kind=%u prepared=%d",f,unsigned(classifiedCamera),preparedCameraRenderer==self && preparedCameraFrame==f);
+    }
     realScene(self,a,b,c,d,e);
+    classifiedRenderer=previousRenderer;
+    classifiedCamera=previousCamera;
     sampleInner=false;
     continuousMain=false;
     scenePass=0;
@@ -940,6 +1063,29 @@ void Stack(const char* event) {
 
 HRESULT STDMETHODCALLTYPE Map(ID3D11DeviceContext* c,ID3D11Resource* resource,UINT sub,D3D11_MAP mode,UINT flags,D3D11_MAPPED_SUBRESOURCE* mapped) {
     HRESULT hr=realMap(c,resource,sub,mode,flags,mapped);
+    static const bool exposureProbe=[] {wchar_t v[8]{};return GetEnvironmentVariableW(L"DIRT2VR_EXPOSURE_PROBE",v,8)==1 && v[0]==L'1';}();
+    if(exposureProbe && LoggingEnabled() && mode==D3D11_MAP_READ && sub==0) {
+        const auto base=reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+        const auto caller=reinterpret_cast<uintptr_t>(_ReturnAddress());
+        // Exclude our own staging reads; only observe the game reading back
+        // its 1x1 luminance/adaptation result. Never change data or readiness.
+        if(caller>=base+0x1000 && caller<base+0xe8b000) {
+            ComPtr<ID3D11Texture2D> texture;
+            if(SUCCEEDED(resource->QueryInterface(IID_PPV_ARGS(&texture)))) {
+                D3D11_TEXTURE2D_DESC d{};texture->GetDesc(&d);
+                if(d.Width==1 && d.Height==1 && d.Format==DXGI_FORMAT_R16G16B16A16_FLOAT) {
+                    static std::unordered_set<uintptr_t> sites;
+                    if(sites.insert(caller).second)Stack("ExposureReadback");
+                    if(frame.load()%120==0 || requestedCaptureFrame==frame.load()) {
+                        const auto data=SUCCEEDED(hr)?static_cast<const unsigned short*>(mapped->pData):nullptr;
+                        Log("exposure readback frame=%llu eye=%u caller=0x%llx resource=%p hr=0x%x flags=%u half=%04x/%04x/%04x/%04x",
+                            frame.load(),lightingEye,uint64_t(caller-base),resource,unsigned(hr),flags,
+                            data?data[0]:0,data?data[1]:0,data?data[2]:0,data?data[3]:0);
+                    }
+                }
+            }
+        }
+    }
     if(SUCCEEDED(hr) && Sample() && mode!=D3D11_MAP_READ && mode!=D3D11_MAP_READ_WRITE) {
         ComPtr<ID3D11Buffer> buffer;
         if(SUCCEEDED(resource->QueryInterface(IID_PPV_ARGS(&buffer)))) {
@@ -1023,12 +1169,13 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
         }
     }
     static const bool skipWater=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_SKIP_WATER",value,16)>0 && wcscmp(value,L"1")==0; }();
-    if(!scenePass && !skipWater) return true;
+    if(!scenePass && !skipWater && requestedCaptureFrame!=frame.load() && !(PipelineTraceEnabled() && frame.load()==3000)) return true;
     ComPtr<ID3D11PixelShader> ps;
     ComPtr<ID3D11VertexShader> vs;
     context->PSGetShader(&ps,nullptr,nullptr); context->VSGetShader(&vs,nullptr,nullptr);
     uint64_t ph{},vh{};
     { std::lock_guard lock(shaderMutex); ph=shaderNames[ps.Get()]; vh=shaderNames[vs.Get()]; }
+    TracePipelineDraw(context,frame.load(),lightingEye,waterEyeRenderer!=nullptr,kind,count,instances,vh,ph);
     if(scenePass==1) {
         static bool depthTraced=false, colourTraced=false;
         if(ph==0x4822905e184bebd9ull && !depthTraced) { depthTraced=true; Stack("CockpitDepth"); }
@@ -1042,6 +1189,10 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
             skipped << scenePass << ',' << kind << ',' << count << ',' << instances << ',' << std::hex << vh << ',' << ph << '\n';
         }
         return false;
+    }
+    if((requestedCaptureFrame==frame.load() || (PipelineTraceEnabled() && frame.load()==3000)) && !waterEyeRenderer) {
+        TraceShadowInputs(context,ph,frame.load(),lightingEye,true);
+        TraceLightingStage(context,ph,frame.load(),lightingEye);
     }
     if(!scenePass) return true;
     if(waterProbeRecording && scenePass<=2 && waterProbeDraws[scenePass-1].size()<10000) {
@@ -1072,26 +1223,26 @@ void Screenshot(IDXGISwapChain* swapchain, unsigned long long number) {
     if(FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return;
     ScreenshotTexture(back.Get(),number);
 }
-void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alpha) {
-    if(!LoggingEnabled()) return;
+bool ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alpha) {
+    if(!LoggingEnabled()) return false;
     ComPtr<ID3D11Texture2D> source,staging;
     ComPtr<ID3D11Device> device; back->GetDevice(&device);
     ComPtr<ID3D11DeviceContext> context; device->GetImmediateContext(&context);
     D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
     if(desc.Format!=DXGI_FORMAT_R8G8B8A8_UNORM && desc.Format!=DXGI_FORMAT_R8G8B8A8_UNORM_SRGB &&
-       desc.Format!=DXGI_FORMAT_B8G8R8A8_UNORM) return;
+       desc.Format!=DXGI_FORMAT_B8G8R8A8_UNORM) return false;
     source=back;
     if(desc.SampleDesc.Count>1) {
         desc.SampleDesc={1,0}; desc.BindFlags=0; desc.MiscFlags=0;
-        if(FAILED(device->CreateTexture2D(&desc,nullptr,&source))) return;
+        if(FAILED(device->CreateTexture2D(&desc,nullptr,&source))) return false;
         context->ResolveSubresource(source.Get(),0,back,0,desc.Format);
     }
     desc.Usage=D3D11_USAGE_STAGING; desc.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
     desc.BindFlags=0; desc.MiscFlags=0;
-    if(FAILED(device->CreateTexture2D(&desc,nullptr,&staging))) return;
+    if(FAILED(device->CreateTexture2D(&desc,nullptr,&staging))) return false;
     context->CopyResource(staging.Get(),source.Get());
     D3D11_MAPPED_SUBRESOURCE mapped{};
-    if(FAILED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped))) return;
+    if(FAILED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped))) return false;
     // PPM is intentionally simple and keeps screenshot support out of the render hook's dependencies.
     auto out=TraceFile(Output()/("frame-"+std::to_string(number)+".ppm"),std::ios::binary);
     out << "P6\n" << desc.Width << " " << desc.Height << "\n255\n";
@@ -1108,7 +1259,10 @@ void ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
         out.write(row.data(),row.size());
     }
     context->Unmap(staging.Get(),0);
+    out.flush();
+    const bool saved=bool(out);
     Log("screenshot frame=%llu %ux%u; capture stalls excluded from performance acceptance",number,desc.Width,desc.Height);
+    return saved;
 }
 
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
@@ -1186,20 +1340,50 @@ HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT f
 }
 void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT base) {
     if(Sample() && draws.load()<3) Stack("DrawIndexed"); if(!RecordDraw(c,"indexed",n,1,start,base)) return;
-    if(CaptureHudDraw(c,[&] { realDrawIndexed(c,n,start,base); })) return; ++draws; realDrawIndexed(c,n,start,base);
+    if(CaptureHudDraw(c,[&] { realDrawIndexed(c,n,start,base); })) return;
+    uint64_t captureShader{};
+    if((requestedCaptureFrame==frame.load() || (PipelineTraceEnabled() && frame.load()==3000)) && !waterEyeRenderer) {
+        ComPtr<ID3D11PixelShader> ps;c->PSGetShader(&ps,nullptr,nullptr);
+        std::lock_guard lock(shaderMutex);const auto found=shaderNames.find(ps.Get());
+        if(found!=shaderNames.end())captureShader=found->second;
+    }
+    ++draws;realDrawIndexed(c,n,start,base);
+    if(captureShader)TraceLightingStage(c,captureShader,frame.load(),lightingEye,true);
 }
 void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) {
     if(!RecordDraw(c,"draw",n,1,start) || CaptureHudDraw(c,[&] { realDraw(c,n,start); })) return;
     ++draws;
-    if(n==4 && lightingEye && !waterEyeRenderer && ShadowsEnabled()) {
+    uint64_t captureShader{};
+    if((requestedCaptureFrame==frame.load() || (PipelineTraceEnabled() && frame.load()==3000)) && !waterEyeRenderer) {
+        ComPtr<ID3D11PixelShader> ps;c->PSGetShader(&ps,nullptr,nullptr);
+        std::lock_guard lock(shaderMutex);
+        const auto found=shaderNames.find(ps.Get());
+        if(found!=shaderNames.end())captureShader=found->second;
+    }
+    if(n==4 && lightingEye && !waterEyeRenderer && (ShadowsEnabled() || ExposureWindowEnabled())) {
         ComPtr<ID3D11VertexShader> vs;ComPtr<ID3D11PixelShader> ps;
         c->VSGetShader(&vs,nullptr,nullptr);c->PSGetShader(&ps,nullptr,nullptr);
         uint64_t vertex{},pixel{};
         {std::lock_guard lock(shaderMutex);vertex=shaderNames[vs.Get()];pixel=shaderNames[ps.Get()];}
+        static ExposureWindow exposureWindow;
+        if(ExposureWindowEnabled() && exposureWindow.Draw(c,vertex,pixel,meterWindow,[&] {realDraw(c,n,start);})) {
+            if(frame.load()%120==0)Log("Exposure window applied frame=%llu eye=%u region=%.4f,%.4f,%.4f,%.4f",frame.load(),lightingEye,meterWindow.bounds[0],meterWindow.bounds[1],meterWindow.bounds[2],meterWindow.bounds[3]);
+            return;
+        }
         static ShadowMaskPass shadowMask;
-        if(shadowMask.Draw(c,vertex,pixel,shadowRays,[&] {realDraw(c,n,start);})) return;
+        if(ShadowsEnabled() && shadowMask.Draw(c,vertex,pixel,shadowRays,[&] {
+            if(PipelineTraceEnabled() && frame.load()==3000) {
+                ComPtr<ID3D11VertexShader> applied;c->VSGetShader(&applied,nullptr,nullptr);uint64_t actual{};
+                {std::lock_guard lock(shaderMutex);actual=shaderNames[applied.Get()];}
+                TracePipelineDraw(c,frame.load(),lightingEye,false,"draw",n,1,actual,pixel,true);
+            }
+            realDraw(c,n,start);
+            if(captureShader)TraceLightingStage(c,captureShader,frame.load(),lightingEye,true);
+        })) return;
     }
     realDraw(c,n,start);
+    if(captureShader)
+        TraceLightingStage(c,captureShader,frame.load(),lightingEye,true);
 }
 void STDMETHODCALLTYPE DrawInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,UINT e) { if(!RecordDraw(c,"instanced",a,b,d,0,e) || CaptureHudDraw(c,[&] { realDrawInstanced(c,a,b,d,e); })) return; ++draws; realDrawInstanced(c,a,b,d,e); }
 void STDMETHODCALLTYPE DrawIndexedInstanced(ID3D11DeviceContext* c,UINT a,UINT b,UINT d,INT e,UINT f) {
@@ -1330,7 +1514,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                     Log("pause world hook RVA=0x16ec90 status=%s",MH_StatusToString(status));
                 } else Log("pause world hook rejected instruction guard; using virtual screen");
             }
-            if(HeadsetEnabled() && WideVisibility() && !realFrustumCopy) {
+            if((HeadsetEnabled() || PipelineOption(L"DIRT2VR_PIPELINE_WIDE")) && (WideVisibility() || ExtendedViewsEnabled()) && !realFrustumCopy) {
                 const unsigned char copy[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0xc1,0x8b,0x4d,0x08};
                 const unsigned char build[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x04,0x01,0,0};
                 if(memcmp(base+0x2b7db0,copy,sizeof(copy))==0 && memcmp(base+0xd26c40,build,sizeof(build))==0) {
@@ -1340,7 +1524,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                     Log("visibility frustum hook status=%s",MH_StatusToString(status));
                 } else Log("visibility frustum hook rejected instruction guard");
             }
-            if(HeadsetEnabled()) {
+            if(HeadsetEnabled() || PipelineLights()) {
                 const unsigned char point[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x10};
                 const unsigned char spot[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0x45,0x10,0x83,0xec,0x14};
                 const unsigned char projected[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0x45,0x10,0x81,0xec,0x14,0x01,0,0};

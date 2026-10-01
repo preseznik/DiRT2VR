@@ -154,11 +154,11 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         catch(const std::exception& error) { valid=false; exiting_=true; Report("frame preparation failed: %s",error.what()); }
         catch(...) { valid=false; exiting_=true; Report("frame preparation failed: unknown exception"); }
     }
-    if(screen || !panel || !panel->enabled || !panel->draw) panel=nullptr;
+    if(!panel || !panel->enabled || !panel->draw) panel=nullptr;
     if(panel && !CreatePanel()) { Report("seat panel allocation failed"); if(panel->unavailable) panel->unavailable(); panel=nullptr; }
     std::array<XrCompositionLayerProjectionView,2> projectionViews{{{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW},{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}}};
-    for(unsigned i=0;valid && i<(screen ? 1u : panel ? 4u : overlay ? 3u : 2u);++i) {
-        if(i==2 && !overlay) continue;
+    for(unsigned i=0;valid && i<(panel ? 4u : screen ? 1u : overlay ? 3u : 2u);++i) {
+        if((screen && (i==1 || i==2)) || (i==2 && !overlay)) continue;
         auto& eye=eyes_[i]; uint32_t index{};
         XrSwapchainImageAcquireInfo acquire{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
         if(!Check(xrAcquireSwapchainImage(eye.chain,&acquire,&index),"acquire image")) { valid=false; break; }
