@@ -8,8 +8,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.22 — 2026-10-02 — Experimental (local test build)
 
-- Keep experimental steering correction active between VR frames, targeting the remaining cockpit wheel judder after the desktop improvement. Headset confirmation is pending. Enable Remove artificial steering corrections and leave Observe only unchecked, then save and relaunch.
-- This candidate does not contain a confirmed fix for the reported PC1060 VR crashes.
+- Keep experimental steering correction active between VR frames, targeting the remaining cockpit wheel judder after the desktop improvement. The PC3080 headset check confirmed that the remaining judder is gone. Enable Remove artificial steering corrections and leave Observe only unchecked, then save and relaunch.
+- On PC1060, VR launches succeed with steering correction off but can crash with it enabled. Keep this experimental option off on affected setups while the cause is investigated.
 
 ## 0.17.21 — 2026-10-02 — Experimental
 
