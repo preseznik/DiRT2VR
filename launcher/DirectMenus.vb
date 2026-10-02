@@ -60,6 +60,8 @@ Public Class DirectMenus
             Else
                 Dim shutdown = document.CreateElement("StateShutDownGame")
                 shutdown.SetAttribute("id", "d2vr_return") : document.DocumentElement.AppendChild(shutdown)
+                Dim profileFailure = DirectCast(shutdown.CloneNode(True), XmlElement)
+                profileFailure.SetAttribute("id", "d2vr_profile_failed") : document.DocumentElement.AppendChild(profileFailure)
                 Dim pause = One(document, "//ScreenPauseDecorator[@id='benchmark_pause_menu']")
                 Dim finish = DirectCast(pause.CloneNode(True), XmlElement)
                 finish.SetAttribute("id", "d2vr_finish_menu") : pause.ParentNode.AppendChild(finish)
@@ -75,7 +77,18 @@ Public Class DirectMenus
         ' before constructing the selected event; never create or save a career here.
         Dim entry = One(document, "//node[@id='c']/link[@id='skip_no_garage']")
         If entry.GetAttribute("target") <> "2FG" Then Throw New IOException("Unsupported direct profile entry.")
-        entry.SetAttribute("target", "d2vr_control_context")
+        entry.SetAttribute("target", "d2vr_control_signin_check")
+        ' Reuse the native account check: already-signed-in players go straight
+        ' to loading. Only an absent account opens the provider's sign-in UI.
+        Dim signedIn = Node(root, "d2vr_control_signin_check", "press_start_handle_signin")
+        Link(signedIn, "autoload", "d2vr_control_context")
+        Link(signedIn, "signin", "d2vr_control_signin")
+        Link(signedIn, "createprofile", "d2vr_control_failed")
+        Dim signIn = Node(root, "d2vr_control_signin", "signingamerprofile")
+        Link(signIn, "autoload", "d2vr_control_context")
+        Link(signIn, "createprofile", "d2vr_control_failed")
+        Link(signIn, "press_start", "d2vr_control_failed")
+        Node(root, "d2vr_control_failed", "d2vr_profile_failed")
         Link(Node(root, "d2vr_control_context", "create_protected_data_context"), "next", "d2vr_control_dataset")
         Link(Node(root, "d2vr_control_dataset", "load_profile_dataset_to_ep"), "next", "d2vr_control_enum")
         Dim enumerate = Node(root, "d2vr_control_enum", "enumerateprofiles")
@@ -85,7 +98,7 @@ Public Class DirectMenus
         ' Stay in enumeration until it completes; its overlay is unnecessary here.
         Dim load = Node(root, "d2vr_control_load", "auto_load_profile")
         For Each outcome In {"success", "cancelled", "skipped", "x360fail", "pcfail", "no_existing_save"}
-            Link(load, outcome, "2FG")
+            Link(load, outcome, If(outcome = "pcfail" OrElse outcome = "x360fail", "d2vr_control_failed", "2FG"))
         Next
     End Sub
     Private Shared Sub BuildMenu(screen As XmlElement, paused As Boolean)

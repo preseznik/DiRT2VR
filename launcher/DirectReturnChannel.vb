@@ -3,12 +3,19 @@
 Public NotInheritable Class DirectReturnChannel
     Implements IDisposable
     Private ReadOnly signal As EventWaitHandle
+    Private ReadOnly profileFailure As EventWaitHandle
     Public Sub New(start As ProcessStartInfo, enabled As Boolean)
         start.Environment.Remove("DIRT2VR_RETURN_CHANNEL")
         start.Environment.Remove("DIRT2VR_RETURN_PID")
         If Not enabled Then Return
         Dim name = "Local\DiRT2VR.Return." & Guid.NewGuid().ToString("N")
         signal = New EventWaitHandle(False, EventResetMode.ManualReset, name)
+        Try
+            profileFailure = New EventWaitHandle(False, EventResetMode.ManualReset, name & ".ProfileFailure")
+        Catch
+            signal.Dispose()
+            Throw
+        End Try
         start.Environment("DIRT2VR_RETURN_CHANNEL") = name
         start.Environment("DIRT2VR_RETURN_PID") = Environment.ProcessId.ToString(Globalization.CultureInfo.InvariantCulture)
     End Sub
@@ -17,7 +24,13 @@ Public NotInheritable Class DirectReturnChannel
             Return signal IsNot Nothing AndAlso signal.WaitOne(0)
         End Get
     End Property
+    Public ReadOnly Property ProfileLoadFailed As Boolean
+        Get
+            Return profileFailure IsNot Nothing AndAlso profileFailure.WaitOne(0)
+        End Get
+    End Property
     Public Sub Dispose() Implements IDisposable.Dispose
         signal?.Dispose()
+        profileFailure?.Dispose()
     End Sub
 End Class

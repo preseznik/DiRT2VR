@@ -10,10 +10,16 @@ namespace {
 using ShutdownFn=void (__thiscall*)(void*,void*);
 ShutdownFn originalShutdown{};
 HANDLE returnEvent{};
+HANDLE profileFailureEvent{};
 DWORD returnOwner{};
 void __fastcall Shutdown(void* state,void*,void* argument) {
     // State IDs occupy the inline 32-byte field immediately after the vtable.
     // Alt+F4 and the game's ordinary exit_game state must not cause a relaunch.
+    if(profileFailureEvent && std::memcmp(static_cast<const char*>(state)+4,"d2vr_profile_failed",sizeof("d2vr_profile_failed"))==0) {
+        const bool sent=SetEvent(profileFailureEvent)!=FALSE;
+        Log("direct session: profile loading/sign-in failed; normal shutdown requested=%d",sent);
+        CloseHandle(profileFailureEvent); profileFailureEvent=nullptr;
+    }
     if(returnEvent && std::memcmp(static_cast<const char*>(state)+4,"d2vr_return",12)==0) {
         if(returnOwner) AllowSetForegroundWindow(returnOwner);
         const bool sent=SetEvent(returnEvent)!=FALSE;
@@ -38,6 +44,9 @@ bool EnableDirectReturn() {
        *reinterpret_cast<void**>(base+0xf18f94)!=base+0x22ca10) return false;
     returnEvent=OpenEventW(EVENT_MODIFY_STATE,FALSE,name);
     if(!returnEvent) return false;
+    wchar_t failureName[160]{};
+    swprintf_s(failureName,L"%s.ProfileFailure",name);
+    profileFailureEvent=OpenEventW(EVENT_MODIFY_STATE,FALSE,failureName);
     wchar_t owner[16]{}; wchar_t* end{};
     if(GetEnvironmentVariableW(L"DIRT2VR_RETURN_PID",owner,16)<16) {
         auto value=wcstoul(owner,&end,10);
@@ -48,7 +57,10 @@ bool EnableDirectReturn() {
         status=MH_CreateHook(base+0x22ca10,reinterpret_cast<void*>(Shutdown),reinterpret_cast<void**>(&originalShutdown));
         if(status==MH_OK) status=EnableRecordedHook(base+0x22ca10);
     }
-    if(status!=MH_OK) { CloseHandle(returnEvent); returnEvent=nullptr; }
+    if(status!=MH_OK) {
+        CloseHandle(returnEvent); returnEvent=nullptr;
+        if(profileFailureEvent) { CloseHandle(profileFailureEvent); profileFailureEvent=nullptr; }
+    }
     Log("direct session: return-to-menus hook=%s",MH_StatusToString(status));
     return status==MH_OK;
 }

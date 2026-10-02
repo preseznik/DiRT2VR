@@ -94,7 +94,7 @@ Button conflicts
 Controller buttons still reach DiRT 2. Avoid combinations that also trigger driving or menu actions. Disconnected assignments are kept; Xbox slot changes may require selecting the controller again.
 
 Driving controls
-Direct practice and Race load the existing profile's controls. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
+Direct practice and Race load the existing profile's controls. Already-signed-in accounts continue straight to the event; otherwise, sign in when GFWL asks. Canceling sign-in or a career-load error ends the launch without creating a replacement save. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
 
 Cockpit animation (experimental)
 Remove artificial steering corrections targets the extra wheel/hand twitch in cockpit VR. Off by default. It keeps the original animation range and steering filter, without changing handling or force feedback. It does not match a physical wheel through 540 or 900 degrees. Driving and headset validation are pending. Save and relaunch to apply.

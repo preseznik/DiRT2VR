@@ -290,6 +290,7 @@ Public Class Session
                 Loop
                 If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")
             End Using
+            If returnChannel.ProfileLoadFailed Then Throw New IOException("The career could not be loaded for this direct event, or sign-in was canceled. Use Normal Launch to sign in to your usual GFWL profile and confirm it loads. No replacement career was created.")
             Return returnChannel.Requested
         End Using
     End Function

@@ -6,6 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.20 — 2026-10-02 — Experimental (local test build)
+
+- Check account sign-in before loading a career for Direct practice and Race. Already-signed-in accounts skip the prompt; players who need it can sign in through GFWL before the event. The PC3080 freeze fix remains pending validation.
+- End a direct launch cleanly if sign-in is canceled or the game reports a career-load error, restoring temporary files and showing an explanation instead of continuing into the event. Existing saves are unchanged.
+
 ## 0.17.19 — 2026-10-02 — Experimental (local diagnostic build)
 
 - Extend optional direct-launch logging to show profile enumeration outcomes and automatic career-load status. This investigates the remaining freeze with Current game career; it is not a confirmed freeze fix. Fresh-profile Practice and Return to menus passed the PC3080 check in 0.17.18.
