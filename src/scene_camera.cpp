@@ -20,7 +20,7 @@ bool Read(const void* at,void* out,size_t bytes) {
 void* __fastcall ActiveCamera(void* manager,void*,bool force) {
     void* result=activeCamera(manager,force);Sample next;
     if(!Read(result,&next.object,sizeof(next.object)) || !next.object ||
-       !Read(static_cast<char*>(next.object)+0x80,next.name,sizeof(next.name)) || !memchr(next.name,0,sizeof(next.name)))return result;
+       !Read(static_cast<char*>(next.object)+0x80,next.name,sizeof(next.name)) || !memchr(next.name,0,sizeof(next.name)))next={};
     next.manager=manager;next.tick=GetTickCount64();
     std::lock_guard lock(mutex);
     auto slot=std::find_if(samples.begin(),samples.end(),[&](const Sample& s){return s.manager==manager;});
@@ -33,8 +33,15 @@ bool ExtendedViewsEnabled() {
     static const bool enabled=[] {wchar_t value[8]{};return GetEnvironmentVariableW(L"DIRT2VR_EXTENDED_VIEWS",value,8)==1 && value[0]==L'1';}();
     return enabled;
 }
-bool EnableSceneCameraObserver() {
-    if(!ExtendedViewsEnabled())return true;
+SceneCamera ObservedSceneCamera(void* manager) {
+    std::lock_guard lock(mutex);
+    const auto now=GetTickCount64();
+    for(const auto& sample:samples)
+        if(sample.manager==manager && sample.tick && now-sample.tick<250) return NamedSceneCamera(sample.name);
+    return SceneCamera::Unknown;
+}
+bool EnableSceneCameraObserver(bool required) {
+    if(!required && !ExtendedViewsEnabled())return true;
     if(activeCamera)return true;
     if(!SupportedHost())return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));

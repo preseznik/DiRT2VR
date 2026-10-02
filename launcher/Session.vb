@@ -176,7 +176,7 @@ Public Class Session
         start.Environment("DIRT2VR_CAPTURE_REQUESTS") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
         start.Environment("DIRT2VR_WATER_REFLECTIONS") = "1"
         start.Environment("DIRT2VR_SHADOWS") = If(settings.VrShadows, "1", "0")
-        start.Environment("DIRT2VR_STEERING_ANIMATION") = If(settings.VrSteeringAnimation, "1", "0")
+        SteeringAnimationLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_EXTENDED_VIEWS") = If(settings.VrExtendedViews, "1", "0")
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
         start.Environment("DIRT2VR_WORLD_SCALE") = "1"
@@ -194,7 +194,8 @@ Public Class Session
     End Function
     Private Function RunDesktop() As Boolean
         FlashbackLaunch.RequireDesktopRenderer(context, settings)
-        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) Then Worker.Invoke(context, "setup")
+        SteeringAnimationLaunch.RequireDesktopRenderer(context, settings)
+        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation Then Worker.Invoke(context, "setup")
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
@@ -220,9 +221,9 @@ Public Class Session
             config = New AssetTransaction(context).PracticeConfig()
             logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         End If
-        If FlashbackLaunch.Enabled(settings) AndAlso logFolder Is Nothing Then logFolder = CreateLogFolder(context, settings.LoggingEnabled)
+        If (FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation) AndAlso logFolder Is Nothing Then logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         Dim start = DesktopStartInfo(context, config, logFolder)
-        If FlashbackLaunch.Enabled(settings) Then ConfigureLogging(start, logFolder)
+        If FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation Then ConfigureLogging(start, logFolder)
         profile.Configure(start, False)
         profile.Prepare(False)
         PrepareMenus()
@@ -257,6 +258,7 @@ Public Class Session
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         FlashbackLaunch.Configure(start, settings)
+        SteeringAnimationLaunch.Configure(start, settings)
         Dim focus As New StartupFocus(context)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings)

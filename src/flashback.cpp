@@ -1,6 +1,7 @@
 #include "common.h"
 #include "replay_sample_clock.h"
 #include "scene_camera.h"
+#include "steering_animation.h"
 #include <intrin.h>
 #include "gfwl_compat.h"
 #include <MinHook.h>
@@ -70,7 +71,7 @@ bool LiveDrivingCameraState() {
 bool EnableFlashback() {
     wchar_t enabled[8]{};
     sample60=GetEnvironmentVariableW(L"DIRT2VR_FLASHBACK60",enabled,8)==1 && enabled[0]==L'1';
-    if(!sample60 && !ExtendedViewsEnabled()) return true;
+    if(!sample60 && !ExtendedViewsEnabled() && !SteeringAnimationRequested()) return true;
     if(update && (!sample60 || serialize)) return true;
     if(!SupportedHost()) return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));

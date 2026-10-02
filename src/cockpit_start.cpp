@@ -11,6 +11,7 @@ namespace vr {
 namespace {
 using FindViewFn=int (__thiscall*)(void*,const char*);
 FindViewFn findView{};
+bool forceCockpitStart{};
 unsigned char* gameBase{};
 // Saved current_camera restoration, deferred/start-event override and demo start.
 // Camera cycling, look-back, replay and frontend lookups are deliberately excluded.
@@ -21,6 +22,7 @@ int __fastcall FindView(void* manager,void*,const char* name) {
         if(caller!=gameBase+call+5) continue;
         SeatSelectCamera(manager);
         SteeringSelectCamera(manager);
+        if(!forceCockpitStart) return findView(manager,name);
         const char* startup="head-cam";
         char diagnostic[48]{};
         if(LoggingEnabled() && GetEnvironmentVariableA("DIRT2VR_CAMERA_PROBE",diagnostic,sizeof(diagnostic)))
@@ -33,7 +35,8 @@ int __fastcall FindView(void* manager,void*,const char* name) {
     return findView(manager,name);
 }
 }
-bool EnableCockpitStart() {
+bool EnableCockpitStart(bool forceCockpit) {
+    forceCockpitStart=forceCockpit;
     if(findView) return true;
     if(!SupportedHost()) return false;
     gameBase=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
@@ -50,7 +53,7 @@ bool EnableCockpitStart() {
         status=MH_CreateHook(gameBase+target,reinterpret_cast<void*>(FindView),reinterpret_cast<void**>(&findView));
         if(status==MH_OK) status=EnableRecordedHook(gameBase+target);
     }
-    Log("VR starting camera: hook=%s",MH_StatusToString(status));
+    Log("player camera: hook=%s force_cockpit=%d",MH_StatusToString(status),forceCockpitStart);
     return status==MH_OK;
 }
 }

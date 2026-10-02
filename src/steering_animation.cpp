@@ -1,6 +1,8 @@
 #include "steering_animation.h"
 #include "common.h"
 #include "gfwl_compat.h"
+#include "scene_camera.h"
+#include <limits>
 #include <MinHook.h>
 #include <intrin.h>
 #include <atomic>
@@ -20,10 +22,11 @@ unsigned char* gameBase{};
 std::atomic<void*> selectedCamera{};
 std::atomic<ULONGLONG> cockpitTick{};
 std::atomic<bool> enabled{};
+bool headsetMode=true, correctAnimation=true;
 struct Actor { void* object{}; unsigned index{}; };
 thread_local Actor actor;
 thread_local bool normalFilter{};
-struct Override { bool active{}; float input{}; };
+struct Override { bool active{}; float input{}; bool reached{}; float originalVisual{}; };
 thread_local Override visualOverride;
 
 template<class T> bool Read(const void* object,unsigned offset,T& value) {
@@ -40,13 +43,17 @@ const char* Eligibility(void* self,float input,unsigned caller) {
     const auto tick=cockpitTick.load();
     const auto camera=selectedCamera.load();
     if(!camera)return "no-player-camera";
-    if(!tick || GetTickCount64()-tick>=250)return "outside-visible-cockpit";
     unsigned index{};void* actualCamera{};void* interior{};
     // The actor comes from the lookup immediately preceding this driver's update.
     // Match both its index and camera owner; never infer the player from car type.
     if(!Read(self,0x24,index) || index!=actor.index)return "driver-index-mismatch";
     if(!Read(self,0x20,interior) || !interior)return "no-interior";
     if(!Read(actor.object,0x8384,actualCamera) || actualCamera!=camera)return "camera-owner-mismatch";
+    if(headsetMode) {
+        if(!tick || GetTickCount64()-tick>=250)return "outside-visible-cockpit";
+    } else if(!LiveDrivingCameraState() || ObservedSceneCamera(camera)!=SceneCamera::Cockpit) {
+        return "outside-desktop-cockpit";
+    }
     return nullptr;
 }
 bool Eligible(void* self,float input,unsigned caller) { return Eligibility(self,input,caller)==nullptr; }
@@ -61,6 +68,30 @@ void DiagnoseSteering(void* self,float value,unsigned caller,const char* reason)
     Read(self,0x24,index);Read(actor.object,0x8384,owner);
     Log("steering animation: eligibility=%s caller=%x input=%f driver=%u actor=%u owner=%p selected=%p filtered=%d",
         reason?reason:"active",caller,value,index,actor.index,owner,selectedCamera.load(),normalFilter?1:0);
+}
+// Capture the values actually written by the game's animation setters. These
+// offsets are from the guarded steering routine: hand weights at controller+30,
+// wheel clip time/duration at +2c/+30. Never dereference an unreadable pointer.
+float Value(void* object,unsigned offset) {
+    float value=std::numeric_limits<float>::quiet_NaN(); Read(object,offset,value);return value;
+}
+void DiagnosePose(void* self) {
+    if(!LoggingEnabled())return;
+    static thread_local ULONGLONG previous{};
+    static thread_local unsigned samples{};
+    const auto now=GetTickCount64();
+    if(samples>=600 || (samples && now-previous<100))return;
+    ++samples;previous=now;
+    void* interior{};void* handsA{};void* handsB{};void* weightsA{};void* weightsB{};void* clip{};
+    unsigned char wheelEnabled{};
+    Read(self,0x20,interior);Read(self,0x12c,handsA);Read(self,0x130,handsB);
+    Read(handsA,0x30,weightsA);Read(handsB,0x30,weightsB);
+    Read(interior,0x31,wheelEnabled);Read(interior,0x210,clip);
+    Log("steering pose: sample=%u ms=%llu mode=%s input=%.6f tail=%d original=%.6f applied=%d wheel_enabled=%u wheel_time=%.6f duration=%.6f hands_a=%.6f,%.6f hands_b=%.6f,%.6f,%.6f,%.6f,%.6f",
+        samples,now,correctAnimation?"correct":"observe",visualOverride.input,visualOverride.reached,
+        visualOverride.originalVisual,visualOverride.active && visualOverride.reached,wheelEnabled,
+        Value(clip,0x2c),Value(clip,0x30),Value(weightsA,8),Value(weightsA,12),
+        Value(weightsB,0),Value(weightsB,4),Value(weightsB,8),Value(weightsB,12),Value(weightsB,16));
 }
 void* __fastcall Lookup(void* self,void*,unsigned index) {
     auto result=lookup(self,index);
@@ -78,20 +109,19 @@ void __fastcall Steering(void* self,void*,float value) {
     const auto caller=unsigned(reinterpret_cast<unsigned char*>(_ReturnAddress())-gameBase);
     const auto reason=Eligibility(self,value,caller);
     DiagnoseSteering(self,value,caller,reason);
-    visualOverride={reason==nullptr,value};
+    visualOverride={reason==nullptr && correctAnimation,value};
     // Run the original state update and feedback calculation unchanged. The
     // separate tail hook substitutes only the subsequent animation input.
     steering(self,value);
+    const bool flatCockpit=headsetMode && reason && !strcmp(reason,"outside-visible-cockpit") &&
+        LiveDrivingCameraState() && ObservedSceneCamera(selectedCamera.load())==SceneCamera::Cockpit;
+    if(reason==nullptr || flatCockpit)DiagnosePose(self);
     visualOverride=old;
 }
 void __cdecl RestoreAnimationInput(float* value) {
-    if(!visualOverride.active)return;
-    if(LoggingEnabled()) {
-        static thread_local unsigned samples=0;
-        if(++samples==1 || (samples<=21600 && samples%120==0))
-            Log("steering animation: sample=%u filtered=%f original_visual=%f",samples,visualOverride.input,*value);
-    }
-    *value=visualOverride.input;
+    visualOverride.reached=true;
+    visualOverride.originalVisual=*value;
+    if(visualOverride.active)*value=visualOverride.input;
 }
 // x86-specific boundary after the original feedback write at 0x77599a, before
 // any hand weights or wheel clip time are calculated. Preserve flags, general
@@ -124,9 +154,14 @@ void SteeringSelectCamera(void* manager) {
 void SteeringCockpitView(bool active) {
     if(enabled)cockpitTick=active ? GetTickCount64() : 0;
 }
-bool EnableSteeringAnimation() {
+bool SteeringAnimationRequested() {
     wchar_t flag[8]{};
-    if(GetEnvironmentVariableW(L"DIRT2VR_STEERING_ANIMATION",flag,8)!=1 || flag[0]!=L'1')return true;
+    return GetEnvironmentVariableW(L"DIRT2VR_STEERING_ANIMATION",flag,8)==1 && (flag[0]==L'1' || flag[0]==L'2');
+}
+bool EnableSteeringAnimation(bool headset) {
+    if(!SteeringAnimationRequested())return true;
+    wchar_t flag[8]{};GetEnvironmentVariableW(L"DIRT2VR_STEERING_ANIMATION",flag,8);
+    correctAnimation=flag[0]==L'1';headsetMode=headset;
     if(enabled)return true;
     if(!SupportedHost() || !EnableGfwlCompatibility())return false;
     gameBase=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
@@ -161,7 +196,7 @@ bool EnableSteeringAnimation() {
         Log("steering animation: installation failed (%s); original animation retained",MH_StatusToString(status));return false;
     }
     enabled=true;
-    Log("steering animation: original range; visual-only random correction removal enabled");
+    Log("steering animation: original range; mode=%s display=%s",correctAnimation?"correct":"observe",headsetMode?"VR":"desktop");
     return true;
 }
 }

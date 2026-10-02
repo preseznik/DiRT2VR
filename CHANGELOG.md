@@ -6,11 +6,16 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.21 — 2026-10-02 — Experimental (local test build)
+
+- Extend experimental cockpit steering correction to desktop DX11 play, including Normal Launch, Practice, Race and LAN. It stays off by default and does not force the desktop camera into cockpit view.
+- Add Observe only to compare the original animation with hooks active but no correction. Optional diagnostic logging now records wheel-animation positions and hand-blend weights alongside steering input. Missing hands, static wheel and remaining judder are not yet confirmed fixed.
+
 ## 0.17.20 — 2026-10-02 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.20)
 
-- Check account sign-in before loading a career for Direct practice and Race. Already-signed-in accounts skip the prompt; players who need it can sign in through GFWL before the event. The PC3080 freeze fix remains pending validation.
+- Check account sign-in before loading a career for Direct practice and Race. Already-signed-in accounts skip the prompt; players who need it can sign in through GFWL before the event. Normal Launch and Direct practice passed the PC3080 sign-in check.
 - End a direct launch cleanly if sign-in is canceled or the game reports a career-load error, restoring temporary files and showing an explanation instead of continuing into the event. Existing saves are unchanged.
 - Include early work on cockpit wheel judder under Controls → Cockpit animation → Remove artificial steering corrections (Experimental), off by default. It does not resolve the issue yet; keep it off for normal play.
 

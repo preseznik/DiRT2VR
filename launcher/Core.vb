@@ -127,6 +127,7 @@ Public Class VrSettings
     Public Property HeadsetScale As Integer = 100
     Public Property VrShadows As Boolean = False
     Public Property VrSteeringAnimation As Boolean = False
+    Public Property SteeringObserveOnly As Boolean = False
     Public Property VrExtendedViews As Boolean = False
     Public Property VrMsaa As Integer = 2
     <Serialization.JsonIgnore>

@@ -171,7 +171,9 @@ Field-of-view cropping keeps a narrower cockpit view rather than stretching the 
 
 ### Controls
 
-**Cockpit animation → Remove artificial steering corrections (Experimental)** is off by default. This candidate targets the game's added random steering correction from the visible wheel and hands in cockpit VR, retaining its steering filter and original animation range. It does not change steering calibration, handling or force feedback. It does not provide full 540°/900° wheel matching. Save settings and relaunch to apply. Wheel/hand jitter is still reported on the first candidate and remains under investigation. Enable diagnostic logging for a test run to help identify whether the correction activates.
+**Cockpit animation → Remove artificial steering corrections (Experimental)** is off by default and now supports the player's desktop and VR cockpit views. Desktop requires DX11; select cockpit view yourself. It retains the game's steering filter and original animation range, without changing handling or force feedback. It does not provide full 540°/900° wheel matching. Save settings and relaunch to apply. Missing hands, a static wheel and remaining jitter are still under investigation; desktop support is a test candidate, not a confirmed fix.
+
+For a comparison, use the same car and event for three short runs: main option **off** (original behavior); main option **on** with **Observe only — no correction** checked (hooks active, original animation values retained); then Observe only **unchecked** (correction applied). Enable **Settings → Enable diagnostic logging** for the last two runs. Drive in cockpit view, hold the wheel centred, turn slowly both ways, then drive over rough ground. The log records a bounded set of steering values, wheel-animation positions and hand-blend weights. Observe only does not enable logging by itself.
 
 | Default | Action |
 |---|---|

@@ -39,6 +39,7 @@ Public Class MainForm
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
     Private ReadOnly extendedViews As New CheckBox With {.Text = "On (Experimental)", .Name = "VrExtendedViews", .AccessibleName = "3D beyond the cockpit (Experimental)", .AutoSize = True}
     Private ReadOnly vrShadows As New CheckBox With {.Text = "On", .Name = "VrShadows", .AutoSize = True}
+    Private ReadOnly steeringObserve As New CheckBox With {.Text = "Observe only — no correction", .Name = "SteeringObserveOnly", .AutoSize = True}
     Private ReadOnly steeringAnimation As New CheckBox With {.Text = "On (Experimental)", .Name = "VrSteeringAnimation", .AccessibleName = "Remove artificial steering corrections (Experimental)", .AutoSize = True}
     Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = False}
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
@@ -685,8 +686,13 @@ Public Class MainForm
         content.Controls.Add(driving)
         content.Controls.Add(New Label With {.Text = "Cockpit animation", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
         steeringAnimation.Checked = settings.VrSteeringAnimation
-        Tip(steeringAnimation, "Try removing the extra wheel and hand twitch in cockpit VR. Keeps the original rotation range; does not change handling or force feedback. Save and relaunch to apply. Driving validation is pending.")
+        Tip(steeringAnimation, "Try removing extra wheel and hand twitch in desktop or VR cockpit view. Desktop requires DX11. Keeps the original rotation range; does not change handling or force feedback. Save and relaunch. Still experimental.")
         Field(content, "Remove artificial steering corrections", steeringAnimation)
+        steeringObserve.Checked = settings.SteeringObserveOnly
+        steeringObserve.Enabled = steeringAnimation.Checked
+        AddHandler steeringAnimation.CheckedChanged, Sub() steeringObserve.Enabled = steeringAnimation.Checked
+        Tip(steeringObserve, "For testing: run the animation hooks without applying the correction. Enable Settings → diagnostic logging to record a short comparison. Turn the main option off for the unmodified baseline. Save and relaunch between tests.")
+        Field(content, "Diagnostic mode", steeringObserve)
         content.Controls.Add(HelpLink(Sub() ShowAbout("Controls")))
     End Sub
     Private Sub SafeAction(action As Action)
@@ -703,6 +709,7 @@ Public Class MainForm
         settings.ExperimentalFlashback = flashback.Checked
         settings.VrExtendedViews = extendedViews.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked
+        settings.SteeringObserveOnly = steeringObserve.Checked
         settings.SkipIntroduction = skipIntroduction.Checked
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.BorderlessDesktop = borderless.Checked

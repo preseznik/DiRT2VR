@@ -1,14 +1,11 @@
-DiRT2VR 0.17.20 - Experimental test build
+DiRT2VR 0.17.21 - Experimental test build
 
-Direct launches and sign-in
-Practice and Race now check sign-in before loading your career. If already signed in, you continue straight to the event. Otherwise, GFWL asks you to sign in first. This candidate addresses the PC3080 startup freeze; it still needs confirmation on that machine.
+Desktop cockpit steering
+The optional steering correction now supports desktop DX11 play as well as VR. Find it under Controls > Cockpit animation. It remains off by default. Desktop keeps your chosen camera; switch to cockpit view for testing.
 
-Canceling sign-in or a reported career-load error ends the launch and restores temporary files. Your saved career is not replaced or reset.
+Easier comparisons
+Observe only runs the animation hooks without applying the correction. Compare three runs with the same car: option off, Observe only, then correction on. Save settings and relaunch between runs. Enable diagnostic logging in Settings to record the last two runs; centre the wheel, turn slowly both ways, then try rough ground.
 
-Testing
-Try desktop Practice with Current game career, signing into your usual local GFWL profile if prompted. Then check that a launcher-created Fresh career still starts without a manual sign-in. Diagnostic logging is optional; no memory dump is needed.
+The missing hands, static wheel and remaining judder are still under investigation. This build adds desktop testing and more useful evidence; it is not a confirmed animation fix. The original steering range is retained, not full 540/900-degree matching.
 
-Cockpit steering animation
-The reported missing hands and static wheel remain under investigation. Keep Remove artificial steering corrections off for normal play. This build does not claim a steering-animation fix.
-
-This installer is for local testing; it has not been published as a release.
+The 0.17.20 GFWL direct-launch fix is retained. This installer is for local testing and has not been published.

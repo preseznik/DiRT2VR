@@ -1,6 +1,7 @@
 #pragma once
 namespace vr {
-bool EnableSteeringAnimation();
+bool SteeringAnimationRequested();
+bool EnableSteeringAnimation(bool headset=true);
 void SteeringSelectCamera(void* manager);
 void SteeringCockpitView(bool active);
 }
