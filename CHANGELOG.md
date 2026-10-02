@@ -6,7 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-## 0.17.21 — 2026-10-02 — Experimental (local test build)
+## 0.17.21 — 2026-10-02 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.21)
 
 - Extend experimental cockpit steering correction to desktop DX11 play, including Normal Launch, Practice, Race and LAN. It stays off by default and does not force the desktop camera into cockpit view.
 - Add Observe only to compare the original animation with hooks active but no correction. Optional diagnostic logging now records wheel-animation positions and hand-blend weights alongside steering input. Desktop testing confirmed that correction removes the wheel judder. VR verification, including the earlier missing-hands/static-wheel report, remains pending.
