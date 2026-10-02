@@ -8,6 +8,12 @@ Public Class SessionStatus
     Public Property StartupFocus As String = ""
     Public Property DisplayWarning As String = ""
     Public Property UpdatedUtc As DateTime = DateTime.UtcNow
+    Public Property ErrorDetails As String = ""
+    Public Function FailureDescription(gameRunning As Boolean) As String
+        ' Older sessions embedded a process-state claim in their saved error message.
+        Dim detail = Message.Replace("DiRT 2 is still running. Close it, then use Restore original files.", "").Trim()
+        Return "Previous launch failed: " & detail & If(gameRunning, Environment.NewLine & "DiRT 2 is running. Close it before restoring original files.", "")
+    End Function
 End Class
 Public Class HeadsetStatus
     Public Property RefreshHz As String = ""
@@ -36,8 +42,8 @@ Public Class Session
         If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
         If multiplayer OrElse joinTarget IsNot Nothing Then settings.LaunchMode = "lan"
     End Sub
-    Private Sub Status(state As String, Optional message As String = "")
-        Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message & If(displayWarning = "", "", " " & displayWarning), .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus, .DisplayWarning = displayWarning})
+    Private Sub Status(state As String, Optional message As String = "", Optional failure As Exception = Nothing)
+        Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message & If(displayWarning = "", "", " " & displayWarning), .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus, .DisplayWarning = displayWarning, .ErrorDetails = If(settings.LoggingEnabled AndAlso failure IsNot Nothing, failure.ToString(), "")})
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         If customTrack Then CustomTracks.AspenPack.RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
@@ -153,7 +159,7 @@ Public Class Session
                 Else
                     message &= Environment.NewLine & "DiRT 2 is still running. Close it, then use Restore original files."
                 End If
-                Status("Failed", message)
+                Status("Failed", message, ex)
                 Throw New IOException(message, ex)
             Finally
                 guard.ReleaseMutex()
@@ -277,7 +283,9 @@ Public Class Session
                         seenGame = seenGame Or gameAlive
                         nextProcessCheck = DateTime.UtcNow.AddMilliseconds(250)
                     End If
-                    If child.HasExited AndAlso Not gameAlive AndAlso (seenGame OrElse DateTime.UtcNow > deadline) Then Exit Do
+                    ' GameRunning includes both the bootstrapper and actual game. Avoid
+                    ' querying a protected/obsolete child handle while monitoring them.
+                    If Not gameAlive AndAlso (seenGame OrElse DateTime.UtcNow > deadline) Then Exit Do
                     Thread.Sleep(8)
                 Loop
                 If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")

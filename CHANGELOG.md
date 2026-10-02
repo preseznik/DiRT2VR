@@ -6,6 +6,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.18 — 2026-10-02 — Experimental (local test build)
+
+- Add opt-in, bounded startup and steering diagnostics for the reported direct-launch freeze and cockpit wheel jitter. Both issues remain under investigation; existing careers and the default logging-off setting are preserved.
+- Correct GFWL compatibility initialization for desktop Practice/Race when optional rewind and driving overrides are off. PC3080 startup-freeze validation remains pending.
+- Keep monitoring the game when optional window inspection is denied; show saved launch errors as previous failures instead of claiming a closed game is still running. Diagnostic logging now retains the exception details in the existing session report.
+
 ## 0.17.17 — 2026-10-02 — Experimental (local test build)
 
 - Add Controls → Cockpit animation → Remove artificial steering corrections (Experimental), off by default. This candidate targets extra wheel/hand twitch in cockpit VR while keeping the original rotation range. Driving and headset validation are pending; it does not provide full 540°/900° wheel matching.

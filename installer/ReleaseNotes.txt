@@ -1,10 +1,15 @@
-DiRT2VR 0.17.17 - Experimental test build
+DiRT2VR 0.17.18 - Experimental test build
 
-Cockpit steering animation
-Try Controls > Cockpit animation > Remove artificial steering corrections (Experimental). It is off by default. Enable it, save settings, then Launch VR.
+Direct-launch compatibility
+Fix a missing GFWL compatibility step in desktop Practice/Race with optional features off. This is a candidate for the reported startup freeze, not yet a confirmed fix on PC3080. Your existing career remains unchanged.
 
-This candidate targets extra wheel and hand twitch in the player's cockpit. It keeps the game's original animation range and steering response. It does not provide full 540/900-degree wheel matching.
+Launcher recovery
+Avoid an unnecessary process-access check while waiting for the game. Previous launch errors no longer claim a closed game is still running.
 
-Please compare slow turns and rough-road driving with the option off and on. Check both hands and wheel, shifting and handbrake movements. Driving and headset validation are still pending. Turn the option off and relaunch if anything looks wrong.
+Cockpit steering
+The optional steering correction is still under investigation: wheel/hand jitter has been reported. It remains off by default and does not offer full 540/900-degree wheel matching.
+
+Testing
+Enable Settings > Enable diagnostic logging, save, then retry desktop Practice with Current game career. The existing logs now include profile-loading checkpoints and steering activation details. No memory dump is required. Turn logging off after testing.
 
 This is a local testing installer, not a published release.

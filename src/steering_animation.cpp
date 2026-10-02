@@ -33,17 +33,34 @@ template<class T> bool Read(const void* object,unsigned offset,T& value) {
 bool NormalSetter(unsigned caller,bool filtered) {
     return caller==0x7b2720 || (caller==0x79cbac && filtered);
 }
-bool Eligible(void* self,float input,unsigned caller) {
-    if(!enabled || !NormalSetter(caller,normalFilter) || !std::isfinite(input) || input < -1.f || input > 1.f)return false;
+const char* Eligibility(void* self,float input,unsigned caller) {
+    if(!enabled)return "disabled";
+    if(!NormalSetter(caller,normalFilter))return "different-call-path";
+    if(!std::isfinite(input) || input < -1.f || input > 1.f)return "input-out-of-range";
     const auto tick=cockpitTick.load();
     const auto camera=selectedCamera.load();
-    if(!tick || GetTickCount64()-tick>=250 || !camera)return false;
+    if(!camera)return "no-player-camera";
+    if(!tick || GetTickCount64()-tick>=250)return "outside-visible-cockpit";
     unsigned index{};void* actualCamera{};void* interior{};
     // The actor comes from the lookup immediately preceding this driver's update.
     // Match both its index and camera owner; never infer the player from car type.
-    return Read(self,0x24,index) && index==actor.index &&
-        Read(self,0x20,interior) && interior &&
-        Read(actor.object,0x8384,actualCamera) && actualCamera==camera;
+    if(!Read(self,0x24,index) || index!=actor.index)return "driver-index-mismatch";
+    if(!Read(self,0x20,interior) || !interior)return "no-interior";
+    if(!Read(actor.object,0x8384,actualCamera) || actualCamera!=camera)return "camera-owner-mismatch";
+    return nullptr;
+}
+bool Eligible(void* self,float input,unsigned caller) { return Eligibility(self,input,caller)==nullptr; }
+void DiagnoseSteering(void* self,float value,unsigned caller,const char* reason) {
+    if(!LoggingEnabled())return;
+    static thread_local ULONGLONG previous{};
+    static thread_local unsigned samples{};
+    const auto now=GetTickCount64();
+    if(samples>=180 || (samples && now-previous<2000))return;
+    ++samples; previous=now;
+    unsigned index{};void* owner{};
+    Read(self,0x24,index);Read(actor.object,0x8384,owner);
+    Log("steering animation: eligibility=%s caller=%x input=%f driver=%u actor=%u owner=%p selected=%p filtered=%d",
+        reason?reason:"active",caller,value,index,actor.index,owner,selectedCamera.load(),normalFilter?1:0);
 }
 void* __fastcall Lookup(void* self,void*,unsigned index) {
     auto result=lookup(self,index);
@@ -58,7 +75,10 @@ void __fastcall Filter(void* self,void*,float value,float dt) {
 }
 void __fastcall Steering(void* self,void*,float value) {
     const auto old=visualOverride;
-    visualOverride={Eligible(self,value,unsigned(reinterpret_cast<unsigned char*>(_ReturnAddress())-gameBase)),value};
+    const auto caller=unsigned(reinterpret_cast<unsigned char*>(_ReturnAddress())-gameBase);
+    const auto reason=Eligibility(self,value,caller);
+    DiagnoseSteering(self,value,caller,reason);
+    visualOverride={reason==nullptr,value};
     // Run the original state update and feedback calculation unchanged. The
     // separate tail hook substitutes only the subsequent animation input.
     steering(self,value);
@@ -68,7 +88,7 @@ void __cdecl RestoreAnimationInput(float* value) {
     if(!visualOverride.active)return;
     if(LoggingEnabled()) {
         static thread_local unsigned samples=0;
-        if(++samples==1 || samples%120==0)
+        if(++samples==1 || (samples<=21600 && samples%120==0))
             Log("steering animation: sample=%u filtered=%f original_visual=%f",samples,visualOverride.input,*value);
     }
     *value=visualOverride.input;

@@ -866,7 +866,7 @@ Public Class MainForm
             ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending OrElse New StartupMovies(context).Pending OrElse New DirectMenus(context).Pending OrElse CustomTrackService.RecoveryPending(context) Then
                 stateLabel.Text = "Recovery pending. Close the game and choose Restore original files."
             ElseIf status IsNot Nothing AndAlso status.State = "Failed" Then
-                stateLabel.Text = "Failed: " & status.Message
+                stateLabel.Text = status.FailureDescription(context.GameRunning())
             ElseIf status IsNot Nothing AndAlso status.DisplayWarning <> "" Then
                 stateLabel.Text = "Ready — " & status.DisplayWarning
             ElseIf Not File.Exists(IO.Path.Combine(context.GameRoot, "dirt2_game.exe")) Then

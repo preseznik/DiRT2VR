@@ -10,10 +10,10 @@ namespace vr { bool EnableSeatAdjustment(); }
 #include "common.h"
 
 namespace vr {
-bool EnableStartupHooks(bool headset, bool cockpit) {
-    // Recording must precede every VR code edit, even without driving overrides.
-    if((headset || cockpit) && !EnableGfwlCompatibility()) {
-        Log("GFWL compatibility: initialization failed; stopping VR launch"); return false;
+bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
+    // Direct desktop sessions also edit game code, even without driving overrides.
+    if((headset || cockpit || direct) && !EnableGfwlCompatibility()) {
+        Log("GFWL compatibility: initialization failed; stopping launch"); return false;
     }
     if(!EnableFlashback()) { Log("flashback: incompatible process"); return false; }
     if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); return false; }

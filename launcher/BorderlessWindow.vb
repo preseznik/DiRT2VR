@@ -62,7 +62,8 @@ Public Class BorderlessWindow
                 Catch ex As InvalidOperationException
                     ' The process can exit between enumeration and inspection.
                 Catch ex As Win32Exception
-                    If Not game.HasExited Then Warning = "Borderless fullscreen unavailable; using windowed mode. " & ex.Message
+                    ' Do not query the same inaccessible process again inside its error handler.
+                    Warning = "Borderless fullscreen unavailable; using windowed mode. " & ex.Message
                 End Try
             End Using
         Next
