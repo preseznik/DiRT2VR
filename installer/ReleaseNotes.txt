@@ -1,9 +1,10 @@
-Try more camera views in VR.
+DiRT2VR 0.17.17 - Experimental test build
 
-- New Advanced > Graphics > 3D beyond the cockpit (Experimental) option. Save and relaunch VR, then use the game's Change camera control for bonnet, bumper and chase views.
-- Improved brightness with experimental VR shadows enabled.
-- Guided troubleshooting can show instructions and capture status below your forward view.
+Cockpit steering animation
+Try Controls > Cockpit animation > Remove artificial steering corrections (Experimental). It is off by default. Enable it, save settings, then Launch VR.
 
-The new camera option starts off. Menus, dialogs, replays and movies still use the virtual screen. Seat adjustments remain cockpit-only. Chase views retain the game's camera movement and may be less comfortable.
+This candidate targets extra wheel and hand twitch in the player's cockpit. It keeps the game's original animation range and steering response. It does not provide full 540/900-degree wheel matching.
 
-The new camera views passed the user headset check. Some camera switches briefly show the virtual screen while the game blends between views. Toggle VR returns to the virtual screen; turn the option off and relaunch to restore cockpit-only VR.
+Please compare slow turns and rough-road driving with the option off and on. Check both hands and wheel, shifting and handbrake movements. Driving and headset validation are still pending. Turn the option off and relaunch if anything looks wrong.
+
+This is a local testing installer, not a published release.

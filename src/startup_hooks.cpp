@@ -5,6 +5,7 @@
 #include "cockpit_start.h"
 #include "scene_camera.h"
 #include "flashback.h"
+#include "steering_animation.h"
 namespace vr { bool EnableSeatAdjustment(); }
 #include "common.h"
 
@@ -18,6 +19,7 @@ bool EnableStartupHooks(bool headset, bool cockpit) {
     if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); return false; }
     if(cockpit && !EnableCockpitStart()) { Log("VR starting camera: incompatible process"); return false; }
     if(headset && !EnableDrawDistance()) { Log("VR draw distance: incompatible process"); return false; }
+    if(headset && !EnableSteeringAnimation()) Log("steering animation: unavailable; original visuals retained");
     if(headset && !EnableSeatAdjustment()) Log("seat adjustment: unavailable; existing VR remains active");
     if((headset || cockpit) && !EnableSceneCameraObserver()) Log("extended views: observer unavailable; using existing views");
     return true;

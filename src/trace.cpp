@@ -24,6 +24,7 @@
 #include "driving_controls.h"
 #include "cockpit_start.h"
 #include "startup_hooks.h"
+#include "steering_animation.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -634,6 +635,8 @@ void RenderEyeReflection(void* mainCamera) {
 bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
     const auto f=frame.load();
     PollHeadsetKeys();
+    // Only the main scene owns this state; reflection subpasses must not clear it.
+    if(continuousMain && xrTickFrame!=f) SteeringCockpitView(false);
     if(ScreenMode() || !continuousMain || f<300 || !gameSwapchain || !cameraHooksReady || xrTickFrame==f) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) return false;
@@ -734,10 +737,12 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         }
         PrepareHeadsetViews(views);
         if(cockpit) SeatPrepare(views);
+        SteeringCockpitView(cockpit && gameXr->Visible());
         static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;
         hud.pose=ScreenPose(follow ? CenterPose(views) : headsetReference,hudDistance);
         if(!follow && cockpit) hud.pose=SeatHudPose(hud.pose,headsetReference);
     },nullptr,captureHud ? &hud : nullptr,cockpit ? SeatOverlay() : nullptr);
+    SteeringCockpitView(cockpit && submitted && gameXr->Visible());
     if(!submitted) SeatInactive();
     hudEye=0;
     if(!submitted) hudCapture.End(false);

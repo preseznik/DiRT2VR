@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.17 — 2026-10-02 — Experimental (local test build)
+
+- Add Controls → Cockpit animation → Remove artificial steering corrections (Experimental), off by default. This candidate targets extra wheel/hand twitch in cockpit VR while keeping the original rotation range. Driving and headset validation are pending; it does not provide full 540°/900° wheel matching.
+
 ## 0.17.15 — 2026-10-01 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.15)

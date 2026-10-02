@@ -96,6 +96,9 @@ Controller buttons still reach DiRT 2. Avoid combinations that also trigger driv
 Driving controls
 Direct practice and Race load the existing profile's controls. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
 
+Cockpit animation (experimental)
+Remove artificial steering corrections targets the extra wheel/hand twitch in cockpit VR. Off by default. It keeps the original animation range and steering filter, without changing handling or force feedback. It does not match a physical wheel through 540 or 900 degrees. Driving and headset validation are pending. Save and relaunch to apply.
+
 Deadzone resets
 Enabled launcher assignments and calibration reapply on every launch. The editor shows dead zone and saturation beside each controller assignment. To retain zero steering deadzone with launcher bindings, set Calibration to 0% for both Steer Left and Steer Right, then Save driving controls. Alternatively, disable launcher bindings and use the game's saved controls. If a reset persists with overrides disabled, report the wheel model, launch mode and whether the game's Save Profile action retains the setting across two launches.
 
