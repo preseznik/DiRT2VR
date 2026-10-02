@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.19 — 2026-10-02 — Experimental (local diagnostic build)
+
+- Extend optional direct-launch logging to show profile enumeration outcomes and automatic career-load status. This investigates the remaining freeze with Current game career; it is not a confirmed freeze fix. Fresh-profile Practice and Return to menus passed the PC3080 check in 0.17.18.
+
 ## 0.17.18 — 2026-10-02 — Experimental (local test build)
 
 - Add opt-in, bounded startup and steering diagnostics for the reported direct-launch freeze and cockpit wheel jitter. Both issues remain under investigation; existing careers and the default logging-off setting are preserved.

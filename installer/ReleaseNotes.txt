@@ -1,15 +1,13 @@
-DiRT2VR 0.17.18 - Experimental test build
+DiRT2VR 0.17.19 - Experimental diagnostic build
 
-Direct-launch compatibility
-Fix a missing GFWL compatibility step in desktop Practice/Race with optional features off. This is a candidate for the reported startup freeze, not yet a confirmed fix on PC3080. Your existing career remains unchanged.
+Investigating direct-launch freezes
+This build adds more detail to the optional startup log: it shows whether the game finds a career and where automatic loading stops. It does not change or replace your saved career and is not a confirmed fix for the freeze.
 
-Launcher recovery
-Avoid an unnecessary process-access check while waiting for the game. Previous launch errors no longer claim a closed game is still running.
-
-Cockpit steering
-The optional steering correction is still under investigation: wheel/hand jitter has been reported. It remains off by default and does not offer full 540/900-degree wheel matching.
+The previous build passed Fresh-profile Practice and Return to menus on PC3080. The misleading game-still-running message is also resolved there. Current game career still needs investigation.
 
 Testing
-Enable Settings > Enable diagnostic logging, save, then retry desktop Practice with Current game career. The existing logs now include profile-loading checkpoints and steering activation details. No memory dump is required. Turn logging off after testing.
+Keep diagnostic logging enabled, select Current game career and launch desktop Practice. If it freezes, leave it for at least 15 seconds before closing, then share that run's trace.log. No memory dump is needed. Turn logging off after testing.
 
-This is a local testing installer, not a published release.
+Cockpit wheel jitter is still under investigation. This build does not claim a steering-animation fix.
+
+This installer is for local testing; it has not been published as a release.
