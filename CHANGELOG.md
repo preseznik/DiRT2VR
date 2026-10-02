@@ -6,22 +6,31 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-## 0.17.20 — 2026-10-02 — Experimental (local test build)
+## 0.17.20 — 2026-10-02 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.20)
 
 - Check account sign-in before loading a career for Direct practice and Race. Already-signed-in accounts skip the prompt; players who need it can sign in through GFWL before the event. The PC3080 freeze fix remains pending validation.
 - End a direct launch cleanly if sign-in is canceled or the game reports a career-load error, restoring temporary files and showing an explanation instead of continuing into the event. Existing saves are unchanged.
+- Include early work on cockpit wheel judder under Controls → Cockpit animation → Remove artificial steering corrections (Experimental), off by default. It does not resolve the issue yet; keep it off for normal play.
 
 ## 0.17.19 — 2026-10-02 — Experimental (local diagnostic build)
+
+Local test build; included in 0.17.20.
 
 - Extend optional direct-launch logging to show profile enumeration outcomes and automatic career-load status. This investigates the remaining freeze with Current game career; it is not a confirmed freeze fix. Fresh-profile Practice and Return to menus passed the PC3080 check in 0.17.18.
 
 ## 0.17.18 — 2026-10-02 — Experimental (local test build)
+
+Local test build; included in 0.17.20.
 
 - Add opt-in, bounded startup and steering diagnostics for the reported direct-launch freeze and cockpit wheel jitter. Both issues remain under investigation; existing careers and the default logging-off setting are preserved.
 - Correct GFWL compatibility initialization for desktop Practice/Race when optional rewind and driving overrides are off. PC3080 startup-freeze validation remains pending.
 - Keep monitoring the game when optional window inspection is denied; show saved launch errors as previous failures instead of claiming a closed game is still running. Diagnostic logging now retains the exception details in the existing session report.
 
 ## 0.17.17 — 2026-10-02 — Experimental (local test build)
+
+Local test build; included in 0.17.20.
 
 - Add Controls → Cockpit animation → Remove artificial steering corrections (Experimental), off by default. This candidate targets extra wheel/hand twitch in cockpit VR while keeping the original rotation range. Driving and headset validation are pending; it does not provide full 540°/900° wheel matching.
 
