@@ -1,11 +1,12 @@
-DiRT2VR 0.17.21 - Experimental test build
+DiRT2VR 0.17.22 - Experimental test build
 
-Desktop cockpit steering
-The optional steering correction now supports desktop DX11 play as well as VR. Find it under Controls > Cockpit animation. It remains off by default. Desktop keeps your chosen camera; switch to cockpit view for testing.
+Smoother cockpit steering in VR
+This candidate keeps steering correction active between VR frames, targeting the slight wheel judder that remained after the desktop improvement.
 
-Easier comparisons
-Observe only runs the animation hooks without applying the correction. Compare three runs with the same car: option off, Observe only, then correction on. Save settings and relaunch between runs. Enable diagnostic logging in Settings to record the last two runs; centre the wheel, turn slowly both ways, then try rough ground.
+To try it, enable Controls > Cockpit animation > Remove artificial steering corrections. Leave Observe only unchecked, save settings and relaunch. Compare slow turns and rough ground in the same car and event.
 
-The missing hands, static wheel and remaining judder are still under investigation. This build adds desktop testing and more useful evidence; it is not a confirmed animation fix. The original steering range is retained, not full 540/900-degree matching.
+The option stays off by default. It preserves handling, force feedback and the original animation range; it does not provide full 540/900-degree wheel matching. Headset confirmation of this change is still needed.
 
-The 0.17.20 GFWL direct-launch fix is retained. This installer is for local testing and has not been published.
+The reported PC1060 VR crashes remain under investigation. This build does not contain a confirmed crash fix.
+
+This installer is for local testing and has not been published.

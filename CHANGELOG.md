@@ -6,6 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.22 — 2026-10-02 — Experimental (local test build)
+
+- Keep experimental steering correction active between VR frames, targeting the remaining cockpit wheel judder after the desktop improvement. Headset confirmation is pending. Enable Remove artificial steering corrections and leave Observe only unchecked, then save and relaunch.
+- This candidate does not contain a confirmed fix for the reported PC1060 VR crashes.
+
 ## 0.17.21 — 2026-10-02 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.21)

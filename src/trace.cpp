@@ -637,9 +637,11 @@ void RenderEyeReflection(void* mainCamera) {
 bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
     const auto f=frame.load();
     PollHeadsetKeys();
-    // Only the main scene owns this state; reflection subpasses must not clear it.
-    if(continuousMain && xrTickFrame!=f) SteeringCockpitView(false);
-    if(ScreenMode() || !continuousMain || f<300 || !gameSwapchain || !cameraHooksReady || xrTickFrame==f) return false;
+    // Reflection/repeated subpasses do not own the published view. Animation
+    // workers must retain the previous cockpit state during frame preparation.
+    if(!continuousMain || xrTickFrame==f) return false;
+    SteeringCockpitFrame steeringFrame;
+    if(ScreenMode() || f<300 || !gameSwapchain || !cameraHooksReady) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) return false;
     const auto camera=RenderSceneCamera(self,static_cast<const float*>(cameraA),static_cast<const float*>(cameraB),f);
@@ -744,7 +746,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         hud.pose=ScreenPose(follow ? CenterPose(views) : headsetReference,hudDistance);
         if(!follow && cockpit) hud.pose=SeatHudPose(hud.pose,headsetReference);
     },nullptr,captureHud ? &hud : nullptr,cockpit ? SeatOverlay() : nullptr);
-    SteeringCockpitView(cockpit && submitted && gameXr->Visible());
+    steeringFrame.Complete(cockpit && submitted && gameXr->Visible());
     if(!submitted) SeatInactive();
     hudEye=0;
     if(!submitted) hudCapture.End(false);
