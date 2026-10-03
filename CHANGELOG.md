@@ -6,7 +6,13 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Reduce short-range VR detail changes for trackside props such as tire stacks, flags and scaffolding, and allow more of them to remain visible. This candidate targets Hammada Circuit pop-in; headset confirmation and performance testing are pending. Desktop rendering is unchanged.
+## 0.17.23 — 2026-10-04 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.23)
+
+- Mark the previously reported PC1060 VR launch crash resolved after the user could no longer reproduce it in 0.17.22 (4 October 2026). This supersedes the earlier PC1060 crash warning; no additional crash fix was introduced.
+
+- Reduce short-range VR detail changes for trackside props such as tire stacks, flags and scaffolding, and allow more of them to remain visible. The user tested 0.17.23 and approved the solution for the reported Hammada Circuit pop-in. Performance impact has not been measured. Desktop rendering is unchanged.
 
 ## 0.17.22 — 2026-10-02 — Experimental
 

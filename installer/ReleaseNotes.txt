@@ -1,10 +1,8 @@
-DiRT2VR 0.17.23 - Experimental test build
+DiRT2VR 0.17.23 - Experimental
 
 More consistent trackside detail in VR
-Tire stacks, flags and scaffolding now retain detail farther away, with room to draw more of these objects. This candidate targets the reported pop-in on Hammada Circuit.
+Tire stacks, flags and scaffolding now retain detail farther away, with room to draw more of these objects. User testing in 0.17.23 confirmed that the reported Hammada Circuit pop-in appears resolved.
 
-The change applies automatically to VR launches. Desktop rendering is unchanged. It may cost performance; please compare the same section of track. Headset confirmation is still pending, and some track-specific flickering may remain.
+The change applies automatically to VR launches. Desktop rendering is unchanged. It may cost performance; please compare the same section of track. Other tracks may still have separate visibility or flickering issues.
 
-The accepted VR cockpit-steering improvement is retained. On affected PC1060 setups, keep Remove artificial steering corrections off while its launch crash is investigated.
-
-This installer is for local testing and has not been published.
+The accepted VR cockpit-steering improvement is retained. The previously reported PC1060 VR launch crash could no longer be reproduced in 0.17.22 and is marked resolved.
