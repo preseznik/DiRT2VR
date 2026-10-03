@@ -23,7 +23,7 @@ using GrassCreateViewFn=void*(__thiscall*)(void*,void*);
 GrassCreateViewFn originalGrassCreateView{};
 using GrassIndicesFn=void(__thiscall*)(void*);
 GrassIndicesFn originalGrassIndices{};
-TreeReadFn originalTreeAttributes{},originalTreeSettings{};
+TreeReadFn originalTreeAttributes{},originalTreeSettings{},originalOrnamentAttributes{},originalOrnamentSettings{};
 unsigned char* host{};
 
 bool ExtendRoute(void* self) {
@@ -207,6 +207,46 @@ void __fastcall TreeSettings(void* self,void*,void* xml) {
     const int changed=ExtendTreeSettings(self);
     if(changed) Log("VR vegetation main-scene tree capacity floors=2000/3000 changed_styles=%d",changed);
 }
+int ExtendOrnamentAttributes(void* self) {
+    // 959170 allocates 0x58-byte records, then reads linear distances at +24.
+    // 958d60/983674 copy them into the native prop types before scene traversal.
+    auto records=Field<unsigned char*>(self,0x44);
+    const int count=Field<int>(self,0x48);
+    if(!records || count<=0 || count>4096) return 0;
+    int changed=0;
+    for(int i=0;i<count;++i) {
+        auto record=records+i*0x58;
+        // Reflection-only objects retain their own policy.
+        if(Field<unsigned char>(record,0x31)) continue;
+        auto ranges=&Field<float>(record,0x24);
+        const std::array<float,3> before{ranges[0],ranges[1],ranges[2]};
+        if(lod::OrnamentRanges(ranges) && !std::equal(before.begin(),before.end(),ranges)) ++changed;
+    }
+    return changed;
+}
+void __fastcall OrnamentAttributes(void* self,void*,void* xml) {
+    originalOrnamentAttributes(self,xml);
+    const int changed=ExtendOrnamentAttributes(self);
+    if(changed) Log("VR trackside prop LOD floors=80/300/1000m changed=%d",changed);
+}
+int ExtendOrnamentSettings(void* self) {
+    // 967ad0 reads 0x50-byte styles. 982df4 copies their 12 traversal budgets
+    // before allocating instance buffers. Only raise main_scene (index 0).
+    auto styles=Field<unsigned char*>(self,0x468);
+    const int count=Field<int>(self,0x46c);
+    if(!styles || count<=0 || count>64) return 0;
+    int changed=0;
+    for(int i=0;i<count;++i) {
+        auto& capacity=Field<int>(styles+i*0x50,0x20);
+        if(capacity>0 && capacity<2000) {capacity=2000;++changed;}
+    }
+    return changed;
+}
+void __fastcall OrnamentSettings(void* self,void*,void* xml) {
+    originalOrnamentSettings(self,xml);
+    const int changed=ExtendOrnamentSettings(self);
+    if(changed) Log("VR trackside prop main-scene capacity floor=2000 changed_styles=%d",changed);
+}
 struct NearCar {void* car{}; bool close{};};
 void KeepNearbyCars(void* self,std::array<NearCar,8>& state) {
     const int count=Field<int>(self,0x1248),profile=Field<int>(self,0x1dd4);
@@ -264,6 +304,9 @@ bool EnableDrawDistance() {
     const unsigned char grassView[]={0x56,0x8b,0xf1,0x83,0x7e,0x04,0x00,0x74,0x7a};
     const unsigned char attributes[]={0x83,0xec,0x2c,0x56,0x57,0x8b,0x7c,0x24,0x38,0x8b,0xf1};
     const unsigned char settings[]={0x83,0xec,0x58,0x56,0x8b,0x74,0x24,0x60,0x57,0x8b,0xf9};
+    const unsigned char ornamentAttributes[]={0x83,0xec,0x30,0x56,0x57,0x8b,0x7c,0x24,0x3c,0x8b,0xf1};
+    if(memcmp(host+0x959170,ornamentAttributes,sizeof(ornamentAttributes)) ||
+       memcmp(host+0x967ad0,settings,sizeof(settings))) return false;
     if(memcmp(host+0x9622a0,grassIndices,sizeof(grassIndices)) || memcmp(host+0x981e10,grassCreateView,sizeof(grassCreateView)) || memcmp(host+0x98e5e0,grassView,sizeof(grassView)) || memcmp(host+0x4cd1c0,grass,sizeof(grass)) || memcmp(host+0x95bd70,attributes,sizeof(attributes)) ||
        memcmp(host+0x96dd20,settings,sizeof(settings))) return false;
     auto hook=[&](size_t rva,void* replacement,void** original) {
@@ -279,7 +322,9 @@ bool EnableDrawDistance() {
         hook(0x981e10,reinterpret_cast<void*>(GrassCreateView),reinterpret_cast<void**>(&originalGrassCreateView)) &&
         hook(0x98e5e0,reinterpret_cast<void*>(GrassView),reinterpret_cast<void**>(&originalGrassView)) &&
         hook(0x95bd70,reinterpret_cast<void*>(TreeAttributes),reinterpret_cast<void**>(&originalTreeAttributes)) &&
-        hook(0x96dd20,reinterpret_cast<void*>(TreeSettings),reinterpret_cast<void**>(&originalTreeSettings));
+        hook(0x96dd20,reinterpret_cast<void*>(TreeSettings),reinterpret_cast<void**>(&originalTreeSettings)) &&
+        hook(0x959170,reinterpret_cast<void*>(OrnamentAttributes),reinterpret_cast<void**>(&originalOrnamentAttributes)) &&
+        hook(0x967ad0,reinterpret_cast<void*>(OrnamentSettings),reinterpret_cast<void**>(&originalOrnamentSettings));
     return ready;
 }
 }

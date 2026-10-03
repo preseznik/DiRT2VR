@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Reduce short-range VR detail changes for trackside props such as tire stacks, flags and scaffolding, and allow more of them to remain visible. This candidate targets Hammada Circuit pop-in; headset confirmation and performance testing are pending. Desktop rendering is unchanged.
+
 ## 0.17.22 — 2026-10-02 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.22)

@@ -1,12 +1,10 @@
-DiRT2VR 0.17.22 - Experimental test build
+DiRT2VR 0.17.23 - Experimental test build
 
-Smoother cockpit steering in VR
-This candidate keeps steering correction active between VR frames, targeting the slight wheel judder that remained after the desktop improvement.
+More consistent trackside detail in VR
+Tire stacks, flags and scaffolding now retain detail farther away, with room to draw more of these objects. This candidate targets the reported pop-in on Hammada Circuit.
 
-To try it, enable Controls > Cockpit animation > Remove artificial steering corrections. Leave Observe only unchecked, save settings and relaunch. Compare slow turns and rough ground in the same car and event.
+The change applies automatically to VR launches. Desktop rendering is unchanged. It may cost performance; please compare the same section of track. Headset confirmation is still pending, and some track-specific flickering may remain.
 
-The option stays off by default. It preserves handling, force feedback and the original animation range; it does not provide full 540/900-degree wheel matching. Headset confirmation of this change is still needed.
-
-The reported PC1060 VR crashes remain under investigation. This build does not contain a confirmed crash fix.
+The accepted VR cockpit-steering improvement is retained. On affected PC1060 setups, keep Remove artificial steering corrections off while its launch crash is investigated.
 
 This installer is for local testing and has not been published.

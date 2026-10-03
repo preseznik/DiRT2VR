@@ -30,6 +30,16 @@ inline bool TreeRanges(float* ranges) {
     ranges[2]=std::max(ranges[2],1000.f);
     return true;
 }
+// Trackside props use a separate three-distance table. Zero skips an authored
+// detail tier; keep that sentinel and all longer distances intact.
+inline bool OrnamentRanges(float* ranges) {
+    if(!std::isfinite(ranges[0]) || !std::isfinite(ranges[1]) || !std::isfinite(ranges[2]) ||
+       ranges[0]<0 || ranges[1]<ranges[0] || ranges[2]<ranges[1] || ranges[2]<=0) return false;
+    if(ranges[0]>0) ranges[0]=std::max(ranges[0],80.f);
+    if(ranges[1]>0) ranges[1]=std::max(ranges[1],300.f);
+    ranges[2]=std::max(ranges[2],1000.f);
+    return true;
+}
 inline bool Nearby(const float* eye,const float* car,bool previous) {
     float squared=0;
     for(unsigned i=0;i<3;++i) {
