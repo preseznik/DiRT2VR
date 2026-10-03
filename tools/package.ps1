@@ -8,7 +8,7 @@ $projectPath=Join-Path $root 'launcher\DiRT2VR.vbproj'
 $projectText=Get-Content -LiteralPath $projectPath -Raw
 [xml]$project=$projectText
 $current=[string]$project.Project.PropertyGroup.Version
-# Both channels share one numeric sequence. Include already reserved source archives.
+# Both channels share reservations within a version series. Include source archives.
 $known=@([version]$current)
 foreach ($tag in (git tag --list 'v*')) {
     if ($tag -match '^v([0-9]+\.[0-9]+\.[0-9]+)$') { $known += [version]$Matches[1] }
@@ -28,6 +28,12 @@ foreach ($line in (git worktree list --porcelain)) {
         $reservation=Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
         if ($reservation.Version -match '^[0-9]+\.[0-9]+\.[0-9]+$') { $known += [version]$reservation.Version }
     }
+}
+# A patch release stays in the checkout's major.minor series. A retained candidate
+# from another series must not silently move an Experimental patch to that series.
+if ($VersionBump -eq 'Patch') {
+    $series=[version]$current
+    $known=@($known | Where-Object { $_.Major -eq $series.Major -and $_.Minor -eq $series.Minor })
 }
 $base=($known | Sort-Object -Descending | Select-Object -First 1).ToString()
 if ($FinalizeReservedVersion) {
