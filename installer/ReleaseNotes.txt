@@ -1,10 +1,7 @@
-DiRT2VR 0.17.23 - Experimental test build
+Local Experimental test — Smelter County Loop
 
-More consistent trackside detail in VR
-Tire stacks, flags and scaffolding now retain detail farther away, with room to draw more of these objects. This candidate targets the reported pop-in on Hammada Circuit.
+Build County Loop from your own DiRT 3 Complete Edition installation in Launcher > CUSTOM tracks > Smelter > Build and install.
 
-The change applies automatically to VR launches. Desktop rendering is unchanged. It may cost performance; please compare the same section of track. Headset confirmation is still pending, and some track-specific flickering may remain.
+This test supports desktop Direct practice in the Subaru STI. County Loop still needs a full lap, reset and restart check. Smelter Race, VR and the remaining layouts are not available yet.
 
-The accepted VR cockpit-steering improvement is retained. On affected PC1060 setups, keep Remove artificial steering corrections off while its launch crash is investigated.
-
-This installer is for local testing and has not been published.
+CUSTOM tracks now groups layouts by pack and remembers separate settings. Aspen remains available.

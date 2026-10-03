@@ -64,8 +64,15 @@ Public Class VerticalStack
     Private arranging As Boolean
     Protected Overrides Sub OnControlAdded(e As ControlEventArgs)
         e.Control.Dock = DockStyle.None
-        AddHandler e.Control.SizeChanged, Sub() PerformLayout()
+        AddHandler e.Control.SizeChanged, AddressOf ChildSizeChanged
         MyBase.OnControlAdded(e)
+    End Sub
+    Protected Overrides Sub OnControlRemoved(e As ControlEventArgs)
+        RemoveHandler e.Control.SizeChanged, AddressOf ChildSizeChanged
+        MyBase.OnControlRemoved(e)
+    End Sub
+    Private Sub ChildSizeChanged(sender As Object, e As EventArgs)
+        PerformLayout()
     End Sub
     Protected Overrides Sub OnLayout(e As LayoutEventArgs)
         MyBase.OnLayout(e)
@@ -135,6 +142,8 @@ End Class
 
 Public Class ResponsiveColumns
     Inherits Panel
+    <System.ComponentModel.DefaultValue(1060)>
+    Public Property WideAt As Integer = 1060
     Public ReadOnly First As VerticalStack = Stack()
     Public ReadOnly Second As VerticalStack = Stack()
     Private arranging As Boolean
@@ -150,7 +159,7 @@ Public Class ResponsiveColumns
         If arranging OrElse First Is Nothing OrElse Width <= 0 Then Return
         arranging = True
         Try
-            Dim wide = Width >= Px(Me, 1060), gap = Px(Me, 30)
+            Dim wide = Width >= Px(Me, WideAt), gap = Px(Me, 30)
             Dim firstWidth = If(wide, CInt((Width - gap) * 0.54), Width)
             First.SetBounds(0, 0, firstWidth, First.GetPreferredSize(New Size(firstWidth, 0)).Height)
             Dim secondWidth = If(wide, Width - firstWidth - gap, Width)

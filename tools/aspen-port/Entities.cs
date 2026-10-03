@@ -7,7 +7,7 @@ internal static class Entities
     static readonly Dictionary<string, HashSet<string>> TextFields = new(StringComparer.Ordinal);
     // The converter's default schema treats unknown XML values as hex byte strings.
     // Aspen's CSSG XML instead contains ordinary names and numeric transforms.
-    internal static void RegisterSchema()
+    internal static void RegisterSchema(bool linkedEntities = false)
     {
         var schema = new XElement("PSSGFILE");
         void Add(string name, string strings, string integers = "", string floats = "")
@@ -23,6 +23,7 @@ internal static class Entities
         Add("TEMPLATEBASICENTITYINSTANCE", "id uri mode_layer", "instance_tag");
         Add("TEMPLATEENTITYINSTANCE", "id uri mode_layer", "instanceID instance_tag staticVis");
         Add("TEMPLATEENTITYREFERENCE", "id uri", "allocAlt");
+        if (linkedEntities) Add("TEMPLATEENTITYLINK", "primaryentity", "index");
         Add("TEMPLATECLOTHINSTANCE", "id uri", "startsActive collisionDetection");
         Add("TEMPLATECLOTHATTACHINSTANCE", "id instance name", "");
         Add("TEMPLATECLOTHTYPEPOOL", "id file shaderfront shaderback", "");
@@ -87,6 +88,9 @@ internal static class Entities
         var known = ids.ToHashSet(StringComparer.Ordinal);
         foreach (var reference in root.Descendants().Attributes().Where(a => a.Name == "uri" || a.Name == "instance"))
             if (reference.Value.StartsWith('#') && !known.Contains(reference.Value[1..])) throw new InvalidDataException("Unresolved entity reference: " + reference.Value);
+        foreach (var link in root.Descendants("TEMPLATEENTITYLINK"))
+            if ((string?)link.Attribute("primaryentity") is not { } reference || !reference.StartsWith('#') || !known.Contains(reference[1..]))
+                throw new InvalidDataException("Unresolved linked entity.");
     }
 
     internal static void Verify(XDocument before, XDocument after)

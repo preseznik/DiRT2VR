@@ -16,6 +16,19 @@ foreach ($tag in (git tag --list 'v*')) {
 foreach ($archive in (Get-ChildItem -LiteralPath (Join-Path $root 'source-archives/lan') -Filter '*-LAN-source.zip')) {
     if ($archive.Name -match '^DiRT2VR-([0-9]+\.[0-9]+\.[0-9]+)-LAN-source.zip$') { $known += [version]$Matches[1] }
 }
+# Retained local candidates also reserve numbers, even when never tagged or uploaded.
+# Other worktrees may own those packages; read their manifests without modifying them.
+foreach ($line in (git worktree list --porcelain)) {
+    if (!$line.StartsWith('worktree ')) { continue }
+    $packages=Join-Path $line.Substring(9) 'artifacts/packages'
+    if (!(Test-Path -LiteralPath $packages)) { continue }
+    foreach ($directory in (Get-ChildItem -LiteralPath $packages -Directory)) {
+        $manifestPath=Join-Path $directory.FullName 'stage/DiRT2VR/package.json'
+        if (!(Test-Path -LiteralPath $manifestPath)) { continue }
+        $reservation=Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+        if ($reservation.Version -match '^[0-9]+\.[0-9]+\.[0-9]+$') { $known += [version]$reservation.Version }
+    }
+}
 $base=($known | Sort-Object -Descending | Select-Object -First 1).ToString()
 if ($FinalizeReservedVersion) {
     # Explicitly authorized finalization of an unpublished reservation; ordinary

@@ -417,7 +417,7 @@ Public Class MainForm
     Private Sub RefreshLaunchAvailability()
         Dim working = busy OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
         desktopButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
-        launchButton.Enabled = desktopButton.Enabled
+        launchButton.Enabled = desktopButton.Enabled AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunchVr)
         saveButton.Enabled = Not working : recoverButton.Enabled = Not working
         hostButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
         joinButton.Enabled = hostButton.Enabled AndAlso If(SelectedHost()?.Joinable, False)

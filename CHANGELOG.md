@@ -6,7 +6,17 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Reduce short-range VR detail changes for trackside props such as tire stacks, flags and scaffolding, and allow more of them to remain visible. This candidate targets Hammada Circuit pop-in; headset confirmation and performance testing are pending. Desktop rendering is unchanged.
+- Add a local Smelter County Loop test, built from your own DiRT 3 files. This first layout supports desktop Direct practice in the Subaru STI; rendering and driving still need playtesting. Other Smelter layouts, Race and VR follow later.
+- Organize CUSTOM tracks by pack, with separate saved settings and a Manage menu for verification, rebuilding and removal. Existing Aspen installations and choices are preserved.
+- Fix recovery after an interrupted rebuild of an unchanged custom-track version.
+
+## 0.17.23 — 2026-10-04 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.23)
+
+- Mark the previously reported PC1060 VR launch crash resolved after the user could no longer reproduce it in 0.17.22 (4 October 2026). This supersedes the earlier PC1060 crash warning; no additional crash fix was introduced.
+
+- Reduce short-range VR detail changes for trackside props such as tire stacks, flags and scaffolding, and allow more of them to remain visible. The user tested 0.17.23 and approved the solution for the reported Hammada Circuit pop-in. Performance impact has not been measured. Desktop rendering is unchanged.
 
 ## 0.17.22 — 2026-10-02 — Experimental
 

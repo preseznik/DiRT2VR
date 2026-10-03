@@ -3,8 +3,7 @@ Imports System.Text.Json
 Imports System.Text.RegularExpressions
 Imports System.Threading.Tasks
 
-Public Class CustomTrackPreferences
-    Public Property Enabled As Boolean
+Public Class CustomTrackSettings
     Public Property LayoutId As String = "aspen-lakeside"
     Public Property SourceFolder As String = ""
     Public Property LaunchMode As String = "practice"
@@ -13,28 +12,61 @@ Public Class CustomTrackPreferences
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
     Public Sub ApplyTo(settings As VrSettings)
-        AspenPack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", Opponents, 0), Laps)
+        TrackPacks.ForLayout(LayoutId).RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", Opponents, 0), Laps)
         RaceCatalog.Current.Car(CarCode)
         If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
         settings.TrackId = LayoutId : settings.LaunchMode = LaunchMode : settings.CarCode = CarCode
         settings.Opponents = Opponents : settings.OpponentCars = OpponentCars : settings.Laps = Laps
     End Sub
+End Class
+
+Public Class CustomTrackPreferences
+    Public Property Schema As Integer = 2
+    Public Property Enabled As Boolean
+    Public Property SelectedPackId As String = AspenPack.Id
+    Public Property Packs As New Dictionary(Of String, CustomTrackSettings)(StringComparer.Ordinal)
+    Public Function ForPack(id As String) As CustomTrackSettings
+        If Not Packs.ContainsKey(id) Then
+            Dim pack = CustomTrackCatalog.Find(id)
+            Packs(id) = New CustomTrackSettings With {.LayoutId = If(pack?.Layouts.FirstOrDefault()?.Id, "")}
+        End If
+        Return Packs(id)
+    End Function
+    Public Sub ApplyTo(settings As VrSettings)
+        Dim pack = CustomTrackCatalog.RequireAvailable(SelectedPackId)
+        Dim selected = ForPack(pack.Id)
+        If Not pack.Layouts.Any(Function(l) l.Id = selected.LayoutId) Then Throw New IOException("Choose an available layout for " & pack.Name & ".")
+        selected.ApplyTo(settings)
+    End Sub
     Public Shared Function Load(context As InstallContext) As CustomTrackPreferences
         Dim path = IO.Path.Combine(context.UserRoot, "custom-tracks.json")
-        Return If(File.Exists(path), Files.ReadJson(Of CustomTrackPreferences)(path), New CustomTrackPreferences())
+        If Not File.Exists(path) Then Return New CustomTrackPreferences()
+        Using document = JsonDocument.Parse(File.ReadAllBytes(path))
+            Dim value As JsonElement
+            If Not document.RootElement.TryGetProperty("Schema", value) Then
+                ' The previous flat file contains Aspen settings only. Preserve
+                ' every choice, including an unavailable saved car/layout.
+                Dim migrated As New CustomTrackPreferences()
+                If document.RootElement.TryGetProperty("Enabled", value) Then migrated.Enabled = value.GetBoolean()
+                migrated.Packs(AspenPack.Id) = Files.ReadJson(Of CustomTrackSettings)(path)
+                Return migrated
+            End If
+        End Using
+        Dim result = Files.ReadJson(Of CustomTrackPreferences)(path)
+        If result Is Nothing OrElse result.Schema <> 2 OrElse String.IsNullOrWhiteSpace(result.SelectedPackId) OrElse result.Packs Is Nothing OrElse result.Packs.Any(Function(p) String.IsNullOrWhiteSpace(p.Key) OrElse p.Value Is Nothing) Then Throw New IOException("Unsupported custom-track preferences. Restore your custom-tracks.json backup or choose fresh settings.")
+        Return result
     End Function
     Public Sub Save(context As InstallContext)
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "custom-tracks.json"), Me)
     End Sub
 End Class
-
 Public Module CustomTrackService
     Public Function RecoveryPending(context As InstallContext) As Boolean
         Return File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
             File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-install/pending.json"))
     End Function
     Public Sub RequireLauncher(receipt As PackReceipt)
-        If System.Version.Parse(receipt.MinimumLauncher) > System.Version.Parse(BuildInfo.Version) Then Throw New IOException("This Aspen pack needs DiRT2VR " & receipt.MinimumLauncher & " or later. Update the launcher before playing.")
+        If System.Version.Parse(receipt.MinimumLauncher) > System.Version.Parse(BuildInfo.Version) Then Throw New IOException("This track pack needs DiRT2VR " & receipt.MinimumLauncher & " or later. Update the launcher before playing.")
     End Sub
     Public Function SourceFolders() As String()
         Dim result As New List(Of String)
@@ -88,18 +120,19 @@ Public Module CustomTrackService
     Private Sub Install(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken)
         context.ValidateGame() : context.RequireClosed()
         Worker.Invoke(context, "recover")
-        AspenPack.Validate(offer, BuildInfo.Version)
+        Dim pack = TrackPacks.Get(offer.Id)
+        pack.Validate(offer, BuildInfo.Version)
         Dim id = Guid.NewGuid().ToString("N"), stage = Staging(context, id)
         Directory.CreateDirectory(stage)
         Try
         If New DriveInfo(IO.Path.GetPathRoot(stage)).AvailableFreeSpace < offer.StagingBytes Then Throw New IOException("Not enough free space for conversion. Free at least " & Math.Ceiling(offer.StagingBytes / 1073741824.0).ToString() & " GB on " & IO.Path.GetPathRoot(stage))
         If New DriveInfo(IO.Path.GetPathRoot(context.GameRoot)).AvailableFreeSpace < offer.InstalledBytes * 2 Then Throw New IOException("Not enough free space beside DiRT 2 for the track and its rollback copy.")
-        AspenPack.VerifySources(offer, context.GameRoot, source, progress, cancel)
+        TrackPack.VerifySources(offer, context.GameRoot, source, progress, cancel)
         cancel.ThrowIfCancellationRequested()
         context.RequireClosed()
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {
             .UseShellExecute = False, .CreateNoWindow = True, .WorkingDirectory = stage, .RedirectStandardOutput = True, .RedirectStandardError = True}
-        For Each argument In {"--convert-aspen", IO.Path.GetFullPath(source), context.GameRoot, IO.Path.Combine(stage, "conversion")}
+        For Each argument In {If(pack.Id = AspenPack.Id, "--convert-aspen", "--convert-smelter"), IO.Path.GetFullPath(source), context.GameRoot, IO.Path.Combine(stage, "conversion")}
             start.ArgumentList.Add(argument)
         Next
         Using child = Process.Start(start)
@@ -122,16 +155,16 @@ Public Module CustomTrackService
                 child.WaitForExit()
             End Using
             cancel.ThrowIfCancellationRequested()
-            If child.ExitCode <> 0 Then Throw New IOException("Aspen conversion failed: " & errors.GetAwaiter().GetResult())
+            If child.ExitCode <> 0 Then Throw New IOException(pack.Name & " conversion failed: " & errors.GetAwaiter().GetResult())
         End Using
         Dim built = IO.Path.Combine(stage, "conversion/install")
-        Dim receipt = AspenPack.Read(built, True, cancel)
+        Dim receipt = pack.Read(built, True, cancel)
         RequireLauncher(receipt)
         If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(offer.Sources) Then Throw New IOException("Converted pack does not match the selected package.")
         cancel.ThrowIfCancellationRequested() : context.RequireClosed()
         progress.Report(New TrackProgress(100, "Installing verified layouts; please wait for the safe commit to finish"))
         Worker.Invoke(context, "install-custom", workId:=id)
-        progress.Report(New TrackProgress(100, "Aspen installed. Select a layout, then choose Launch."))
+        progress.Report(New TrackProgress(100, pack.Name & " installed. Select a layout, then choose Launch."))
         Finally
             Try
                 SafeFiles.DeleteWorkTree(context.UserRoot, "custom-track-builds/" & id)
@@ -141,7 +174,7 @@ Public Module CustomTrackService
             End Try
         End Try
     End Sub
-    Public Function UninstallAsync(context As InstallContext) As Task
-        Return Task.Run(Sub() WithSessionLock(Sub() Worker.Invoke(context, "remove-custom")))
+    Public Function UninstallAsync(context As InstallContext, Optional packId As String = AspenPack.Id) As Task
+        Return Task.Run(Sub() WithSessionLock(Sub() Worker.Invoke(context, "remove-custom", trackId:=packId)))
     End Function
 End Module

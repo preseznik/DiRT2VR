@@ -34,7 +34,6 @@ Public Class Session
         Dim custom = CustomTrackPreferences.Load(context)
         If custom.Enabled Then
             If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM tracks off before starting LAN multiplayer.")
-            CustomTracks.AspenPack.GetLayout(custom.LayoutId)
             customTrack = True
             custom.ApplyTo(settings)
         End If
@@ -46,7 +45,7 @@ Public Class Session
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message & If(displayWarning = "", "", " " & displayWarning), .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus, .DisplayWarning = displayWarning, .ErrorDetails = If(settings.LoggingEnabled AndAlso failure IsNot Nothing, failure.ToString(), "")})
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
-        If customTrack Then CustomTracks.AspenPack.RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
+        If customTrack Then CustomTracks.TrackPacks.ForLayout(settings.TrackId).RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
             Dim held As Boolean
             Try

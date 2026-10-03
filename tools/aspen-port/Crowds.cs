@@ -18,7 +18,7 @@ internal static class Crowds
         ["m_flare_01"]="m_cr", ["m_seated"]="m_gr", ["f_seated"]="f_gr"
     };
 
-    internal static byte[] Convert(byte[] source, XDocument definitions, List<object> report,IReadOnlySet<string>? restoredRoles=null)
+    internal static byte[] Convert(byte[] source, XDocument definitions, List<object> report,IReadOnlySet<string>? restoredRoles=null,bool includeDayOnly=false,IReadOnlyDictionary<string,string>? venueAliases=null)
     {
         void Range(int at,int count) {
             if(at<0 || count<0 || (long)at+count>source.Length) throw new InvalidDataException("Crowd range outside source.");
@@ -44,13 +44,13 @@ internal static class Crowds
         var blockCounts=new int[blocks];
         for(int n=0;n<references;n++) {
             int at=table+n*16,count=I(at+4),data=I(at+8);
-            string name=S(I(at)),target=restoredRoles?.Contains(name)==true ? (name=="pre-race_photographer_01"?"m_photo_01":name) : Aliases.GetValueOrDefault(name,name);
+            string name=S(I(at)),target=restoredRoles?.Contains(name)==true ? (name=="pre-race_photographer_01"?"m_photo_01":name) : venueAliases?.GetValueOrDefault(name) ?? Aliases.GetValueOrDefault(name,name);
             if(!known.Contains(target))throw new InvalidDataException("Unsupported spectator type: "+name);
             if(count<1 || count>total || I(at+12)!=count || data!=next)throw new InvalidDataException("Invalid crowd placement span.");
             Range(data,checked(count*44));next=checked(next+count*44);sum=checked(sum+count);
             for(int i=0;i<count;i++) {
                 int record=data+i*44,block=I(record+36);
-                if(block<0 || block>=blocks || I(record+40)!=0)throw new InvalidDataException("Unsupported crowd block or day-only flag.");
+                if(block<0 || block>=blocks || (I(record+40)!=0 && !(includeDayOnly && I(record+40)==1)))throw new InvalidDataException("Unsupported crowd block or day-only flag.");
                 for(int k=0;k<9;k++)if(!float.IsFinite(BitConverter.ToSingle(source,record+k*4)))throw new InvalidDataException("Nonfinite crowd placement.");
                 blockCounts[block]++;
             }
@@ -81,13 +81,13 @@ internal static class Crowds
         return output.ToArray();
     }
 
-    internal static object Restore(string track,string source,string game,Dictionary<string,string>? fingerprints=null,IReadOnlySet<string>? restoredRoles=null,string sourceRoute="route_0")
+    internal static object Restore(string track,string source,string game,Dictionary<string,string>? fingerprints=null,IReadOnlySet<string>? restoredRoles=null,string sourceRoute="route_0",bool includeDayOnly=false,IReadOnlyDictionary<string,string>? venueAliases=null)
     {
         var input=Path.Combine(source,sourceRoute,"crowd_standing2.bin");
         var definitions=Path.Combine(game,"anims/crowdDefs.xml");
         PortFiles.NoLinks(input);PortFiles.NoLinks(definitions);
         var report=new List<object>();
-        var bytes=Convert(File.ReadAllBytes(input),PortFiles.ReadXml(definitions),report,restoredRoles);
+        var bytes=Convert(File.ReadAllBytes(input),PortFiles.ReadXml(definitions),report,restoredRoles,includeDayOnly,venueAliases);
         var target=Path.Combine(track,"route_0/crowd_standing2.bin");
         var datasetPath=Path.Combine(track,"route_0/organism_track_dataset.xml");
         var dataset=PortFiles.ReadXml(datasetPath);

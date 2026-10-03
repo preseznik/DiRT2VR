@@ -66,13 +66,13 @@ For quick launch with saved settings, use **Start-DiRT2VR.cmd**. It runs the sam
 
 For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The existing `Start-DiRT2VR.cmd` continues to launch VR.
 
-## Aspen custom tracks (experimental)
+## Custom tracks (experimental)
 
 Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edition** installation. Conversion tools are included with DiRT2VR; no additional download is needed and no game assets are distributed. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
 
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
-2. Choose **Install Aspen**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the game folder containing `tracks\locations\usa\aspen`, wherever Steam installed it.
-3. Choose **Build and install**. Leave the launcher open while it checks your source files and builds all four layouts using the included tools. **Cancel** stops conversion safely; an existing installation stays usable.
+2. Choose a **Track pack**, then **Build and install…**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the DiRT 3 Complete Edition game folder, wherever it is installed.
+3. Choose **Build and install**. Leave the launcher open while it checks your source files and builds the selected pack using the included tools. **Cancel** stops conversion safely; an existing installation stays usable.
 4. Select a layout, **Direct practice** or **Race**, and a **Car**. Choose **Launch** for desktop play or **Launch VR** with SteamVR and your headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
 
 | Layout | Default lighting |
@@ -82,13 +82,19 @@ Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edi
 | Snowmass Sprint | Evening sun |
 | Snowmass Loop | Overcast |
 
-Aspen offers experimental **desktop and VR** play with installed cars. **Direct practice** is solo; **Race** adds 1–7 AI opponents, using the same car, mixed cars or cars in your class. Use the sliders to choose opponents and 1–20 laps. If Aspen was already installed, choose **Rebuild Aspen** once to update its AI paths before racing; solo practice remains available. Aspen headset rendering and broader AI race coverage still need gameplay validation; LAN is unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
+Aspen offers experimental **desktop and VR** play with installed cars. **Direct practice** is solo; **Race** adds 1–7 AI opponents, using the same car, mixed cars or cars in your class. Use the sliders to choose opponents and 1–20 laps. If Aspen was already installed, choose **Manage… → Rebuild from source…** once to update its AI paths before racing; solo practice remains available. Aspen headset rendering and broader AI race coverage still need gameplay validation; LAN is unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
 
 Snowmass Sprint omits the decorative beams on the ski hillside where they flickered with viewing angle or distance. The towers, bright lamp faces and ground lighting remain, along with the other beams around the course. The other three layouts are unchanged by this workaround.
 
-Custom layout, car, race and lap selections are saved separately. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Conversion-tool updates arrive with DiRT2VR updates.
+Each pack keeps its own layout, car, race and lap selections, separately from stock tracks. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Conversion-tool updates arrive with DiRT2VR updates.
 
-If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Rebuild Aspen from source**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
+If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source…**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
+
+### Smelter — County Loop test
+
+Select **Smelter** in CUSTOM tracks and choose **Build and install…** using your DiRT 3 Complete Edition folder. This local test includes **County Loop — Morning sun**. Once verification finishes, select **Direct practice** and **Subaru STI**, then **Launch** for desktop play. Smelter Race and Launch VR are unavailable in this candidate; Aspen keeps its existing modes.
+
+County Loop has not yet passed its first gameplay check. Please test a full timed lap, an off-road reset and a restart, and check water, barriers, foliage and distant terrain. The remaining nine Smelter layouts are planned and are not installed by this build.
 
 To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
 
@@ -157,7 +163,7 @@ Numeric settings use sliders with the current value beside them, including AI op
 
 VR render resolution now sets the game scene dimensions even when they exceed the desktop size. At full field of view, 100% is 1600 × 1200, 150% is 2400 × 1800 and 200% is 3200 × 2400 per eye. Check the measured game resolution in Graphics after a VR launch. Headset texture scale is a separate output limit: a low value can still reduce visible detail. Higher scene resolutions also increase GPU and memory use.
 
-For vegetation and object pop-in, try **Tree detail → Ultra** and **Object detail → Ultra**, save, then relaunch VR. **Game** keeps your existing game settings. These overrides are restored after play. VR extends short terrain and trackside-object draw distances and keeps nearby opponents detailed in every direction. Distant cars still use normal detail reduction. VR also extends grass range, allows more grass to be drawn in dense areas, and keeps trees and bushes detailed farther away. VR also keeps trackside props such as tire stacks, flags and scaffolding detailed farther away, with room to draw more of them. This experimental change targets Hammada Circuit pop-in; headset confirmation and its performance impact are still pending. Authored visibility and individual model transitions can still cause pop-in. Compare performance on the same section of track before keeping higher settings.
+For vegetation and object pop-in, try **Tree detail → Ultra** and **Object detail → Ultra**, save, then relaunch VR. **Game** keeps your existing game settings. These overrides are restored after play. VR extends short terrain and trackside-object draw distances and keeps nearby opponents detailed in every direction. Distant cars still use normal detail reduction. VR also extends grass range, allows more grass to be drawn in dense areas, and keeps trees and bushes detailed farther away. VR also keeps trackside props such as tire stacks, flags and scaffolding detailed farther away, with room to draw more of them. User testing in 0.17.23 confirmed that the reported Hammada Circuit pop-in appears resolved. Performance impact has not been measured. Authored visibility and individual model transitions can still cause pop-in. Compare performance on the same section of track before keeping higher settings.
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
 
@@ -171,7 +177,7 @@ Field-of-view cropping keeps a narrower cockpit view rather than stretching the 
 
 ### Controls
 
-**Cockpit animation → Remove artificial steering corrections (Experimental)** is off by default and now supports the player's desktop and VR cockpit views. Desktop requires DX11; select cockpit view yourself. It retains the game's steering filter and original animation range, without changing handling or force feedback. It does not provide full 540°/900° wheel matching. Save settings and relaunch to apply. The desktop check confirmed that correction removed the wheel judder, with diagnostic samples matching the accepted steering input. The PC3080 headset check confirmed that the remaining VR wheel judder is gone. This is not verified on every setup: PC1060 VR launches work with this option off but can crash with it enabled. Leave it off on affected systems. The earlier missing-hands and static-wheel report remains unresolved.
+**Cockpit animation → Remove artificial steering corrections (Experimental)** is off by default and now supports the player's desktop and VR cockpit views. Desktop requires DX11; select cockpit view yourself. It retains the game's steering filter and original animation range, without changing handling or force feedback. It does not provide full 540°/900° wheel matching. Save settings and relaunch to apply. The desktop check confirmed that correction removed the wheel judder, with diagnostic samples matching the accepted steering input. The PC3080 headset check confirmed that the remaining VR wheel judder is gone. The previously reported PC1060 VR launch crash is marked resolved after retesting 0.17.22 on 4 October 2026; it could no longer be reproduced. This does not establish compatibility with every setup. The earlier missing-hands and static-wheel report remains unresolved.
 
 For a comparison, use the same car and event for three short runs: main option **off** (original behavior); main option **on** with **Observe only — no correction** checked (hooks active, original animation values retained); then Observe only **unchecked** (correction applied). Enable **Settings → Enable diagnostic logging** for the last two runs. Drive in cockpit view, hold the wheel centred, turn slowly both ways, then drive over rough ground. The log records a bounded set of steering values, wheel-animation positions and hand-blend weights. Observe only does not enable logging by itself.
 

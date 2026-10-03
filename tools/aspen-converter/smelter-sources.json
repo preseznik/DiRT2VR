@@ -1,0 +1,3132 @@
+[
+  {
+    "Game": "dirt2",
+    "Path": "anims/cr_camera_flash.pssg",
+    "Sha256": "109394F9390D635162B3EC02994A6C9CBB590B5035965B80FA57DBA7C3801579"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "anims/cr_euro_billboard.pssg",
+    "Sha256": "5F0A7918F97BE7B4708B6A2FF9F309F39B9D27C3D0314077BB3B011106BDAED9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "anims/cr_female.pssg",
+    "Sha256": "67AF423BEE72184B37F0D4330C00EA89A66B124F9A53359060E726AD03F82BCC"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "anims/cr_male_2.pssg",
+    "Sha256": "8E75948972133D8FEA4B5582BF6766393FDED2A5115BD81707E189DFC57B5712"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "anims/crowd_anims.pssg",
+    "Sha256": "AB4FB6E3A09C246EDA89EDEBF46BDB198309BC9355A729900F51ABBCE8E123A3"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "anims/crowdDefs.xml",
+    "Sha256": "99DF82FEB138EBE471CADAA9E97286D75E6BCD0687A5BFFC78701431D3F8EDA9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "anims/marshall.pssg",
+    "Sha256": "65BFAEDA0A3C47C62C94A2264B65F26A0C0858B29D496B2F73FE8C1292547C55"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "database/database.bin",
+    "Sha256": "61617E83CC640D4B2D6A8A0CEA7974BD4E621AF85BF07FE1E83AB316368214B2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_eng.lng",
+    "Sha256": "ACB369E0EBCC370E38BE76A688027272BAC01B40F6CAE3168FF819A3BC246406"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_fre.lng",
+    "Sha256": "0F94B8D6219228E015BAED7D0F53B516B3E94588056899DF401FCC474EBF3290"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_ger.lng",
+    "Sha256": "CDC4DB0B52DAEE6074929C73ABC751B2968CE6168805923302D07B7D2EE123CE"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_ita.lng",
+    "Sha256": "C4E770FD2B606756B4AC97EB5F06EE9108E4AC3DE71CF3128E586516EF28D178"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_jpn.lng",
+    "Sha256": "059E7DB4FDA62C7C6C915D7529ECB86D6DB62F7887D83123BBEDE8F6267EC0ED"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_pol.lng",
+    "Sha256": "BE442A35FD7D4327A35419C3C76BFDC755B9AFD8AF4BA752CD5E15FCD2BC39D1"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_rus.lng",
+    "Sha256": "142E684672622B6D624F2176D645465B0D6F8930369AEB6EC5DA58665346AC8D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_spa.lng",
+    "Sha256": "6845A3544AC26E14847251DE1DB8962257A1F4F7E5DFD1CA64BEEB18AEEF3FE5"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_use.lng",
+    "Sha256": "38B6D99CC66B4099C75EAADF0931AEED62D4B13CD9128BBDCD856F0E29E9D190"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "surface_materials.xml",
+    "Sha256": "93BEFA45A04F6DD45EF9CE67EAEF1F267F9208475D02873246A02BA608346DC6"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/ground_cover.pssg",
+    "Sha256": "73910D00A21F3F781A8C5C2F736DC593BB4FFA82E1921B70DD167C9EB8F32535"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/objects.pssg",
+    "Sha256": "A7AF9EBF2C5CFF4971D0C8F159EEE9C0EBE8E9EE26BD89029D597263309699AC"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/route_0/iwater.pssg",
+    "Sha256": "4E4FB9409381CEF4A70AD2838C8E4B2002B6AF48E0E56072F14C6547A5F1CB2D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/route_0/niwater.pssg",
+    "Sha256": "1060FDC3A33BB1048CE415D64885CAD8BFCBB966DADC1110B649408CF85E5A57"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/route_0/routesplit.pssg",
+    "Sha256": "374DEF79921073024D3DE9169E7E0AEAC666BB56060951860DF1E0011096851B"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/route_0/sky.pssg",
+    "Sha256": "7426B307D14887CB692E32E6FE8D060F1B2A86C88FFDB58224A959A14670CD21"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/tracksplit.pssg",
+    "Sha256": "61886B8AF82E8EED63E2B84EE025A06EFB2A47509F41463DE4D2274829774263"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/trees.pssg",
+    "Sha256": "014E0E6A9C2C0FC5E63C9EF30C6DC422FA9DD2891B4F08379855B2DA4D2FC934"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_raid/objects.pssg",
+    "Sha256": "E1D3C4DD276D57CAD2EAC54405127CCFC99009017AE061855639525B5CC9E169"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_raid/tracksplit.pssg",
+    "Sha256": "576370E7D593AB2EDC2369A030C4ADCB4C2335EC19B56EE7FF049B68C848EB5B"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_raid/trees.pssg",
+    "Sha256": "754923F8B364641FF8E7A918A08F7A85200D40C4B61CC54FC13B2641C208624C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_rally/route_0/routesplit.pssg",
+    "Sha256": "51FB97C910C48A7A1DE7B7C55FB51007C9FBFF4D073C26C9AAB7F98A2D505676"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/china/china_rally/objects.pssg",
+    "Sha256": "487022919E54329A39A65144E1083976F431A5BFF8888A0FCFADCEE23638755A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/china/china_rally/tracksplit.pssg",
+    "Sha256": "1CC0BA86FE658CCFD3885CED64165481E9E3AF8B03D83C1C681AF86410A54D93"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/croatia/croatia_raid/tracksplit.pssg",
+    "Sha256": "8C6EE9B5B51990A60AEE3A2A88660BCB790243E8426CAFD6DF262DEEBE1575C0"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/objects.pssg",
+    "Sha256": "B78F39603B377C75A41640AB254DEE5F1421F60B12E5F66F74F7B10FAFD6057A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/dev_ai_track.xml",
+    "Sha256": "E2F64BBE533E1824AA5C45BC9C7AE172882D660976B820D1D518119D0C41CBB8"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/organism_track_dataset.xml",
+    "Sha256": "3127A5F5337C4F09E123ECBF1888B61BC3CBC814DA3C77A0B4AB50A999D2CC7C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/malaysia/malaysia_iron/tracksplit.pssg",
+    "Sha256": "FFFF1399207BB6021A070C83C3DE534A9BEEC8BA48C9AFBB9B48BE2D1D27582C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/morocco/morocco_iron/tracksplit.pssg",
+    "Sha256": "98358981A558FD463E5D41BC300F34CCB77B9A3F3B588BCE774868B06CFABF90"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/ui/exterior2/objects.pssg",
+    "Sha256": "70ADFB41202E2908B6B35B613C03806E9E9B650E26BA478580082CB9FE9CE85E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/usa/la_stadium/objects.pssg",
+    "Sha256": "225CF324EE8E97D1DEB71BFFC7D4A74E749E00C49638BFDB8153EF86A1C2023E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ambience_triggers.xml",
+    "Sha256": "5E518E3E21BA2C35115FE209F988A08A3C46DDE2CB27A7204AD79E67D12C0FA1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ambientmaps_day_alt.pssg",
+    "Sha256": "AD1435D0E98D7F30EB87487F8C0C551A1620F8ADAF4F7A5C0FD5774CE818244C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ambientmaps_day.pssg",
+    "Sha256": "6C5051BA9C31CA67B56EF72F905EE1FDC0D4E23A994D9E1001B94BE8E935484A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ambientmaps_wet.pssg",
+    "Sha256": "E12562F2816B5DAC2D68C0496F00DC605B1FE915029EF11A633FE89FDD1942E5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/basewind.xml",
+    "Sha256": "01F21E74E1B5168F5FA791E71E8D5E7FB4FA3F5006320F2CCD9FB7F64FFF172C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/basewind2.xml",
+    "Sha256": "DAF6F6703D9DE078C283BDC1BE2D8B8D8943C93AB033E3CD9A5D2BCCF578F84C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/bouncemap_day_alt.clm",
+    "Sha256": "8E271FAE1A80BF3556A09AFD3974F12BC06C6DCFAEFC5B48578D0B7306711246"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/bouncemap_day.clm",
+    "Sha256": "0D5E87E66862E1914BC05ECF7A82AFEE3DA13606B5339DB5A5A738A5CFFD74A1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/bouncemap_wet.clm",
+    "Sha256": "F0D4B9F2D0E559C8EC3145C5E82B633105416809FC2D461E4715BA9E329A18CA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/cloth.xml",
+    "Sha256": "BC863F591BEBCC1D83D98C46C6EFB80749EBEC0F4168B693715F48022A801207"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/cloth2.xml",
+    "Sha256": "A6FD0505BC4E6C1FB081208AEF0CD0FE24D599D4E4C88628B18EE74FAF040B69"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/grass.grs",
+    "Sha256": "CE59E8091BE3F18033A5ED0A2BFCD83B03845235982143598CA5390052D8F4D2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_clutter.pssg",
+    "Sha256": "94B066FBB616AA08B985D22B716A6EA89DAE49E0FEA6BBBD547A62D47459D1EC"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_clutter.xml",
+    "Sha256": "1879574B4E118AC0EFBB9AD9DBCEB6D4F34077C478A05C09E5385DDB93D66031"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_clutter2.bin",
+    "Sha256": "6F2F7898C7A52B860C205CF292280C6C0E28C7F2A5C3C63346C8B2349F3D7506"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_cover_palette_day_alt.xml",
+    "Sha256": "42586BA10063492648F92BAD2F2CCD5A6CB027B571D131BE81E03C2733D12C88"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_cover_palette_day.xml",
+    "Sha256": "1DEF57595593D3466B220128733642C74960CA9BA4A4AFB5D84841DBD1603746"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_cover_palette_night.xml",
+    "Sha256": "1826A050AF77D01080B42C6766B1DC1E81BAC7903AEDF75C93D2A1D55BD16690"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_cover_palette_wet.xml",
+    "Sha256": "5E7E28A112397B9778A6AD8F6A61801C28C9515F82FDB3304F04B0DC4FCAF3F4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_cover.pssg",
+    "Sha256": "3560FF713DF30CEB2C29155BDBDCAAB49E297E9949101A613A8944AEB622B527"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/ground_cover.xml",
+    "Sha256": "55A6B54B2A0380B71391CF208D6B99CC6A9B6331289C1C84B6A21C1C4723CF60"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/intro_sequence.xml",
+    "Sha256": "A672D3137EB52C3C2CE86094C552EC60E4C1A5DC49C02FE5780C77CD26106FA9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/land.pssg",
+    "Sha256": "FD7D91F4B45095B622221FC5103A98423FD49426FF1FB2F86FB2646CF3B7C31E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/lighting_day_alt.xml",
+    "Sha256": "625CFB909490B2BFA4E56BE3ECD527E13C98E23297F3BD366706F58ED822E7C7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/lighting_day.xml",
+    "Sha256": "830C73BF89313F83EB72C84DED854C47222A648136225ACFA93FB57B4BC37695"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/lighting_wet.xml",
+    "Sha256": "42C724AEF991D871EF38ACFAD7240594F005FDE32A5A51537E5B2E1549206812"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/lod_overrides.xml",
+    "Sha256": "93631D4FB9062A5BE5AE696CAA9AD2EE47D9FA95CCA7B01591FA1C3F06E4C829"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/mud.xml",
+    "Sha256": "FD9B64AC4870E4B17B8CB130706931F3345D6FE9525C83E7621E620C6C17EFEB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/objects_wet.pssg",
+    "Sha256": "F0F37A9DA05537C6B9862FD4A772E21C2018601AB00631BE305AC9ED334C5F45"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/objects.pssg",
+    "Sha256": "AD539650734D79ED76C833B54D364BB4E24E573173640B9F27F50FE2F2B59A24"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/objectstextures.pssg",
+    "Sha256": "F28350FD5FA313357B464B18275461BCF1F1CCDF5D9FF92B6388A6BA800CCBD4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/objecttypes.pssg",
+    "Sha256": "7DE266B2191AC1BB0F61537EAF6511E4D03CE2737F801FE56A577AE08892F1D8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/organism_anim_dataset.xml",
+    "Sha256": "F66347F3A2230F063D87B19FD33DEBFDB4F6599385F5054F5D9FA2A1C89FE083"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/patchup_ot.pssg",
+    "Sha256": "9E0467ED4BDAE6156D98072A0489949DCA54D9E9703DABA21E47C2E91CA0A329"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/pfx_track_dataset.xml",
+    "Sha256": "668761C250D460D14E6B8A17EA663F422195B6995CF02FDE0C1C3D3D30F84DC3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/physics_surfaces.txt",
+    "Sha256": "5237760463A8245D96FE295730156602B66724C21DCF8D0191D9CDEBF5FEB90E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/reflections.xml",
+    "Sha256": "6B83049D89C37CBDA84E4F961288EE56D620384F3DD5D2DAF5D15342B04EC5F3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/ai_track.xml",
+    "Sha256": "6CA4F5D7B1ADE28D4FFF3C303DADE27188B2AE0F626D475829774FB02D372939"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/ai_vehicle_track.xml",
+    "Sha256": "E28491A7AC24F74EFD133B96F59680562F347AECD8D9E6426B0C51503E8776F6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/boundarylines.cqtc",
+    "Sha256": "E3593FEBADC2D46FC7868301F84179BD8DAFA98416DF7E914010D3453DAA1D96"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/cameralines.cqtc",
+    "Sha256": "B3F0589AA89D6078BFF12BD140BFEA8584460047481AE0640FB693A0A1887CDB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/clothFile.bin",
+    "Sha256": "E148505844494553E932FC68867F70C0151AC3CE08EA2ED00DD0736B24311289"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/crowd_standing.cns",
+    "Sha256": "179517CCC807D8D85238030F32F73C7395656397200EA6B9A92E0741B731DD14"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/crowd_standing2.bin",
+    "Sha256": "2380D91F23F69167C654FAEA7BFCF4AFB36DA0655D1F44FD81D03E41D719F50A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/cutscene_establish.xml",
+    "Sha256": "6C43D84FABF4FD83FFD00E3AB4905E3F21C154AD14A2DA87068006C537A304F9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/cutscene_event_start.xml",
+    "Sha256": "5342A989EB4B9E6D5F12B8B07CF8D2D1CCFD4F2765B76169959DFF2C87ED4668"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/cutscene_montage.xml",
+    "Sha256": "FBE105BC97B7F111A730DCB99B636A56591ECC748F23EE1D860FBA39C231B13D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/cutscene_multi_post_race.xml",
+    "Sha256": "DFB688D4398BEF543355D0A1DDF37899132C7BD3CD2F4A0B188A73921A9DF497"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/cutscene_post_race.xml",
+    "Sha256": "FE63B32B027A6439708000B5454466D7853D26C9AA52C8CDBBE61F62E22FA1AD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/cutscene_title.xml",
+    "Sha256": "F4BC4DBA88CB266AFE0E93611C0702F3ABC68CFD8D181ADF4884FB36E2D0E151"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/game_modes/catnmouse/grids.pssg",
+    "Sha256": "99BDF5D1CB31E5A923B017A160E4592D5030DD1F6EB39812C719B7B1926F794C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/grids.pssg",
+    "Sha256": "9B28D6F0C2DAF30DA14B86992B5714AC02B9D128FE82FC7366BFED40EAAA231E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/iwater.htf",
+    "Sha256": "0D8B669CE967713164AD61662002BD587B66351B54E3144B5070DFAD353A7705"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/iwater.pssg",
+    "Sha256": "B254928432F3DB1CEA370C52ABF49DF7309B81AC86C151BCF6396D6C65982163"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/iwater.xml",
+    "Sha256": "5FDA527EC617864A203E18E0E439B3ED23091159498C5D877E98CE949E9C166E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/light_placement.xml",
+    "Sha256": "758B6AD6B4551FFC4E6E2514A6CC96C995068173CF647FF78D8FA79B85783532"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/niwater.pssg",
+    "Sha256": "2CD27CC75EA72B7339B505B53F391A5B39C712E8742678C6A21DD7E889A882AB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/niwater.xml",
+    "Sha256": "EE479C613E21B63CE1EC858F826C9E251A23705645C6CF162DD2A936EAA36087"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/objects.ens",
+    "Sha256": "6D2CDE3DD223EE380FCA2EB53FFCFFCB6DB277759248B8D91AD6D14F89B4ECF0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/ornament_attributes.xml",
+    "Sha256": "E09BB08F67778F9EB4A0B98FF28B88A3738968AF1AC60D805DECC471E1039DD0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/ornaments.bin",
+    "Sha256": "C8A1D89279EB7801508A4141BCCE355BAD21726E1A28A12F6A8493D5ABA038F3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/ornaments.xml",
+    "Sha256": "A133000870C5AF99D84EF04BBECB37258F56EFC7CEFC437388DF3A65E2EF1CE8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/pfx.xml",
+    "Sha256": "5D6CEFC8B1D0C0AA0E7F3C9AE60F6705D54C45349A32B1A2E5285915D5C02E9D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/progress_track.xml",
+    "Sha256": "C7D528AB68AF91615B5E23838CEBB3DF59D6B32F13768F6AC52FDC3057D498A0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/replay_camera_config.xml",
+    "Sha256": "E9D100AC7993C787FA7DAA5C52E5BBB0B59B0DB5BE112418F665AFAA07185C1D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/resetlines.cqtc",
+    "Sha256": "1B289636617DA3E46D6E0456313CC44189A65959982A049F35398BEDA8EA805A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/route_overrides.xml",
+    "Sha256": "E2317C07AF782BEB614698F948EE0785A8644624AC1A528E0116DFBF1B00807B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/route_trackao_day_alt.pssg",
+    "Sha256": "5EADBC6E5305B5B804B51B53208DD7FAED3B41F98577B83799B1C24066E3455F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/route_trackao_day.pssg",
+    "Sha256": "D40DE58D8EF43721F5151CC1AB7B2F00D35D739B11B4C50C8E61B3408E869EFB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/route_trackao_wet.pssg",
+    "Sha256": "9A2AC3DC4CF89094730F1D36093FB70D269BB28ED6512E90034A4E7B0A9D7B42"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/routesplit.pssg",
+    "Sha256": "3ABE1A0F06450FEC2C6A43C62909C3464982CE040DAEE84154748E1A082CFD82"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/shadow_map_day_alt.clm",
+    "Sha256": "0CC6600B147F91982A9F450D5BAEFB11E00F0C82A772EDB7AA18AB6577EEE4A5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/shadow_map_day.clm",
+    "Sha256": "F1A0D0FA4C1D30E9DA16B95D26830306AEE4E0D0007E88C41D6F6CDB45342697"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/shadow_map_wet.clm",
+    "Sha256": "11B50839F65BB2F959D505D10C0594C181142672688BAD1FB50922BC5F52261A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/steerAssistData.xml",
+    "Sha256": "D6178BD892D4571581CC9C76A0E55D644BC4EE7EFED0F6A3543255AC4EE9AD50"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/track.jpk",
+    "Sha256": "34F56EF41ED56DE67DCCD418DB032A1186C4ADA5DEEE8C3A8B2634FAEA2AC844"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/track.vis",
+    "Sha256": "0E05F8BE141872B0B26C25D2A7C1F6E4241A46D808E1372C5ED76560E7DC8EDA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/tree_attributes.xml",
+    "Sha256": "A14021E93A07BE64B11A6911D8D5AF58D2932BB72E90568DCA2D308B09A18C05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/trees.bin",
+    "Sha256": "BEAD33302DA5430DBEC459E4D26B710EE4EE6E3C15A97B0FCA7ECA40BAA9A908"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/trees.xml",
+    "Sha256": "B7485C2B1887D37CDFDA8EF6A385FE2BBE9D22C0DC23CFE885C0559EF55D9ED5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/triggers_crowd.xml",
+    "Sha256": "856FA828247158D03CA498BD50EC6CFFD50E85F4CE07E17B2E67C3AD6E10514F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_0/vehicle_track_progress_data.xml",
+    "Sha256": "7E332E5E4829E37C0BDF160A936AD92E2D9E077FE7AC147816CFC32E2C330CE1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/ai_track.xml",
+    "Sha256": "C5C250C2B80A78B8AD1C5447D91A08399BDF2565CA969B9064AF521F6AA8D2D0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/ai_vehicle_track.xml",
+    "Sha256": "0F2A99F0D9CFB3CFC714153F8AE540603034917EDD7E66B45759A55E3EE50037"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/boundarylines.cqtc",
+    "Sha256": "A5FF6C9FDC1CD0FA547DBF714A614F9E9D369A1DE40F74B02D44AE4732A8298C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/cameralines.cqtc",
+    "Sha256": "B3F0589AA89D6078BFF12BD140BFEA8584460047481AE0640FB693A0A1887CDB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/clothFile.bin",
+    "Sha256": "E148505844494553E932FC68867F70C0151AC3CE08EA2ED00DD0736B24311289"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/crowd_standing.cns",
+    "Sha256": "1CB2D3FBE3F8A45C7912C941825056661BD3FBE888536810C93C2CC50F50F8A8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/crowd_standing2.bin",
+    "Sha256": "DDA5932F8875EE924C58E030A2316B53A5DA4C4F6E6D611B7D39AC8F7F80B7F0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/cutscene_establish.xml",
+    "Sha256": "73B99E0B653377AA0EEDC8F76D96E7D5EC382C67490EE340DB08EB01FB6BF8AD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/cutscene_event_start.xml",
+    "Sha256": "2D3063A6C48C37B1ED3146CB879FD9074CC5FCA768912B1E7A871B6706863FE8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/cutscene_montage.xml",
+    "Sha256": "0D1F03D5F6E1F384EAD7500655302D550D48285890922A748F5CF7E5BEAA2CCB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/cutscene_multi_post_race.xml",
+    "Sha256": "98C5C4C29B519CE27EBD9EEB9A217F578933A3135849AA07264F060F04C18592"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/cutscene_post_race.xml",
+    "Sha256": "159187277CB9795428AEED7065D59A85972B975AEEB0C446B09EA530EBBA63B0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/cutscene_title.xml",
+    "Sha256": "1B405EDCAA913C723685FA68CD5397B64F0DCB157EE1A3ABB9FB5E97F418FDF8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/game_modes/catnmouse/grids.pssg",
+    "Sha256": "95DBC6B8D83F41A255411810AF66B843C7365BB53E0366F8B12486C85A823C1F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/grids.pssg",
+    "Sha256": "BB624E79B57950ACD8E89531BD4C706534F3393EDE8F3E4B1659B6F3A65EFC67"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/iwater.htf",
+    "Sha256": "0D8B669CE967713164AD61662002BD587B66351B54E3144B5070DFAD353A7705"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/iwater.pssg",
+    "Sha256": "B254928432F3DB1CEA370C52ABF49DF7309B81AC86C151BCF6396D6C65982163"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/iwater.xml",
+    "Sha256": "5FDA527EC617864A203E18E0E439B3ED23091159498C5D877E98CE949E9C166E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/light_placement.xml",
+    "Sha256": "1DEC37A0BCD223DCAC82941F048D4B28AB52767F37CDAAF15A9E8AB2003C5BE9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/niwater.pssg",
+    "Sha256": "2CD27CC75EA72B7339B505B53F391A5B39C712E8742678C6A21DD7E889A882AB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/niwater.xml",
+    "Sha256": "EE479C613E21B63CE1EC858F826C9E251A23705645C6CF162DD2A936EAA36087"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/objects.ens",
+    "Sha256": "7269F49B4618F2D4F025B82E18AE99D561B9C7D207AB46DCCC0CFED22C6E22A3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/ornament_attributes.xml",
+    "Sha256": "E09BB08F67778F9EB4A0B98FF28B88A3738968AF1AC60D805DECC471E1039DD0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/ornaments.bin",
+    "Sha256": "6B53A693459EA582899EC65B4CFF1032D48305E35B660AC0BCB1AA653EDF448A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/ornaments.xml",
+    "Sha256": "575E9CDEB843E71FFF1A9CBA6CC34C52B1CC57FD5474F4C33466327B47FC30E7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/pfx.xml",
+    "Sha256": "5D6CEFC8B1D0C0AA0E7F3C9AE60F6705D54C45349A32B1A2E5285915D5C02E9D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/progress_track.xml",
+    "Sha256": "1B5C70B9933D4E963C97F0B944C8EFEF3D464F85A463A5FCEC6ECF92CE4ECD81"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/replay_camera_config.xml",
+    "Sha256": "9CF3B8DC52F149EEB92029B130FC0A8B6F301464EB270060537802DF2B899469"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/resetlines.cqtc",
+    "Sha256": "42144228C04E958118A8B22BF1AF79743E2474AC5A09A982D825897EDD7A7C2B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/route_overrides.xml",
+    "Sha256": "03592FE23FEB79C74AB2F11B4BFEECF7C65129DCE95EDFEEE9F1A4F89EA0F3FA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/route_trackao_day_alt.pssg",
+    "Sha256": "5EADBC6E5305B5B804B51B53208DD7FAED3B41F98577B83799B1C24066E3455F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/route_trackao_day.pssg",
+    "Sha256": "D40DE58D8EF43721F5151CC1AB7B2F00D35D739B11B4C50C8E61B3408E869EFB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/route_trackao_wet.pssg",
+    "Sha256": "9A2AC3DC4CF89094730F1D36093FB70D269BB28ED6512E90034A4E7B0A9D7B42"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/routesplit.pssg",
+    "Sha256": "3ABE1A0F06450FEC2C6A43C62909C3464982CE040DAEE84154748E1A082CFD82"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/shadow_map_day_alt.clm",
+    "Sha256": "B1AC68ABCDC3D5347544FDA7EF2AAB879F332D5AAC57BB29EC8BE330B6E5A06D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/shadow_map_day.clm",
+    "Sha256": "92C8FC33943ACBBC3E150A62C83C4BC27726071C73B37E808F48F430803554C5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/shadow_map_wet.clm",
+    "Sha256": "DA1AC6DF1BCFFF27A4ABBEE8F3CCB40CD17516643DB4869676B516BD0F39BCA2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/steerAssistData.xml",
+    "Sha256": "125920E4379D8ABC581D6ABDD71B5DED35643DB990C887AAE77139AAEAB2147B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/track.jpk",
+    "Sha256": "34F56EF41ED56DE67DCCD418DB032A1186C4ADA5DEEE8C3A8B2634FAEA2AC844"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/track.vis",
+    "Sha256": "7B71C2B241039C36076D5008203F49D5494B631C62DA1DBFEF59829119015F27"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/tree_attributes.xml",
+    "Sha256": "A14021E93A07BE64B11A6911D8D5AF58D2932BB72E90568DCA2D308B09A18C05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/trees.bin",
+    "Sha256": "8FD251A88D13901124BA719D9E9DCAEC3711E2EA57DF5843AEEAA0AD668723B0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/trees.xml",
+    "Sha256": "B92D915BA1539C4B49011A344EFC74F7372609EDB45759DEB1DA7D5DF4912D07"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/triggers_crowd.xml",
+    "Sha256": "002034FC5B9FF3151D5E9F223323B8F91A50E9736E7DC9465AE8AD559C8AAF57"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_1/vehicle_track_progress_data.xml",
+    "Sha256": "6FD8875816FEA4C831ECE07C9397D88C7FBE0BFAE0AFB91B46FE5478E7A954A2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/ai_track.xml",
+    "Sha256": "9B9D896D9F51785FD7B2404F63F6A46BD88050D66360D0A2DDE31CE391ECA0E7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/ai_vehicle_track.xml",
+    "Sha256": "1A1D62997E4EE7C7BCBA3A12C749598110EC18F429F0F5F2065C54B55AF45794"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/boundarylines.cqtc",
+    "Sha256": "E05F1A19B9B245BE04C8B2A34F9ABC8EDED9E69200F4E04E5209F33E7561D945"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/cameralines.cqtc",
+    "Sha256": "50942AFE9D5738DA7EB67D3777198B4B32E7FE2B461203AB6C7228706B776702"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/clothFile.bin",
+    "Sha256": "BBB7CF5819F3BE64C95B6398C253B18CE17A0424ECE15703A8DC7CD4DCCCC3AB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/crowd_standing.cns",
+    "Sha256": "4B36423C5AACC4B543C788F3E1828404A7D111BA9177B712DA27ADCF7B4881C7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/crowd_standing2.bin",
+    "Sha256": "6EDD68A789540C03BCB64C7B67CC6228D7DFF9E791760A310863E86F82EF984C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/cutscene_establish.xml",
+    "Sha256": "D89A64095F2BF234B793BE9FAE2F97FFD1E5721F2E0876B39E958C33DD8BA88F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/cutscene_event_start.xml",
+    "Sha256": "5342A989EB4B9E6D5F12B8B07CF8D2D1CCFD4F2765B76169959DFF2C87ED4668"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/cutscene_montage.xml",
+    "Sha256": "E570D6C2BCE6B3B043E04FCE2DF0382ED86FA67A4D4140106364E9F094B99DE1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/cutscene_multi_post_race.xml",
+    "Sha256": "829D9A385B1E9537932829379CF43305BB723DEB4470921B7136C6AFE2D0DCEB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/cutscene_post_race.xml",
+    "Sha256": "8D2881113BDC4E4D3FCD5184F3FDD3E5B8A449DDC9E85B91EF0AEC62C44D8833"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/cutscene_title.xml",
+    "Sha256": "F4BC4DBA88CB266AFE0E93611C0702F3ABC68CFD8D181ADF4884FB36E2D0E151"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/game_modes/catnmouse/grids.pssg",
+    "Sha256": "19E47ED74C38FAEA015D18504F81670EC2532393D86F5BEF5F06AEB6A24B2864"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/grids.pssg",
+    "Sha256": "69A41C68E8E556CCECE88FEBB06F7104017E36505A0E6C7085D5C25D6F7E572A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/iwater.htf",
+    "Sha256": "79A1DB6B5FA93980C93921E1B944E08EFE023955AFA10CF08A168617E38F84E2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/iwater.pssg",
+    "Sha256": "B254928432F3DB1CEA370C52ABF49DF7309B81AC86C151BCF6396D6C65982163"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/iwater.xml",
+    "Sha256": "5FDA527EC617864A203E18E0E439B3ED23091159498C5D877E98CE949E9C166E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/light_placement.xml",
+    "Sha256": "BDC95FB0F4048BC77EF56FFE59620F219E0A9D42F3136C83F9EEB2A1A5A068F2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/niwater.pssg",
+    "Sha256": "2CD27CC75EA72B7339B505B53F391A5B39C712E8742678C6A21DD7E889A882AB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/niwater.xml",
+    "Sha256": "EE479C613E21B63CE1EC858F826C9E251A23705645C6CF162DD2A936EAA36087"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/objects.ens",
+    "Sha256": "287FC4D2FEB19B44149827AE9E72B72232E5E4ABAE4C3AD743E239FA08FC576A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/ornament_attributes.xml",
+    "Sha256": "ACA6A7CC27A3BCD7F7B0D2E1BB3C479A60EA0851CC1BD3EFB3615D1F2C110653"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/ornaments.bin",
+    "Sha256": "F1AEA27FE6EA02C13CB6CF0E2DF9242848548006953FC2B3AC470138FFD38721"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/ornaments.xml",
+    "Sha256": "2EB450886A2E729D5F7D9EEC652BEDB6C13B79BF18A3DDA301129C8154B80CFB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/pfx.xml",
+    "Sha256": "DE06C523F97ECBC9209628DDEDBEB49DA7025F6079F724801B8B6D34BD717C74"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/progress_track.xml",
+    "Sha256": "A3F074F67D124198ACA1C76E6B134CAB19B595E7E38A3D5DE02AB78BAB8CC57D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/replay_camera_config.xml",
+    "Sha256": "7346BFD5DC0452AC4BAFD4A82ABC2F859E44189D1460C026854E7566B4520815"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/resetlines.cqtc",
+    "Sha256": "AB8101FD1622ABF0BD6D0BAD67893951F289062A961329D900329A49B48B454D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/route_overrides.xml",
+    "Sha256": "3E1DCA14CB40BFC4F3E9D92BA14BFC1A6A107B243C6596CFA05A8F186D305850"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/route_trackao_day_alt.pssg",
+    "Sha256": "063C49C7246A5A5837EAC4CA4C82BD14B07797FE325181E1150B91C33719D5ED"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/route_trackao_day.pssg",
+    "Sha256": "876AB69005E9A03208013918080F5486CFA5E10941860FF6A1B8A4C5A05319B6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/route_trackao_wet.pssg",
+    "Sha256": "69E3141419411E84AC5CF28E62AA1FD5BCC31FD9C4FAB40DF087896BA9BAADA7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/routesplit.pssg",
+    "Sha256": "3ABE1A0F06450FEC2C6A43C62909C3464982CE040DAEE84154748E1A082CFD82"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/shadow_map_day_alt.clm",
+    "Sha256": "E0B95357B559685FDB5497C644FB0FC57993A46FA4A2F6D3B458E5EB80217E8A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/shadow_map_day.clm",
+    "Sha256": "71E5F5416EDA384CB1D71C98F612281EC420EE92CD509D8B390802A8D9115161"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/shadow_map_wet.clm",
+    "Sha256": "A3D0930C751F24979C98B43CD784F7D94B16E62F2BFA849CB92D7D17FBA3DFE2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/steerAssistData.xml",
+    "Sha256": "144E51B1DB82E10757C9137ED1BAFF86832AD88FC461287DDB065B069005882E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/track.jpk",
+    "Sha256": "E36A967DD445E03F78BCE05254B6BA0000E8FAE8E96F603EB51281793C9233E8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/track.vis",
+    "Sha256": "EF9C416B3304AAEF0E15258DA529C0EE61B4FD2BB3D9E5D8ADC2F2971AD9437E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/tree_attributes.xml",
+    "Sha256": "C834CBA3201BBA0565AD48FAB8584B83548EAC61B6841D752224AF9D5B177198"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/trees.bin",
+    "Sha256": "1FB4EBD7891DDBF77F86636CBD06D15009E4F2465176107A269ABEEEDB820560"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/trees.xml",
+    "Sha256": "FF218ECD9DA4504028B90F8C120BDD15E018B664770A02017CFA45321A1A65A4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/triggers_crowd.xml",
+    "Sha256": "EE99A97CD9E5141D9B1E199D98608C8A7207E28FDC5B89F239A0104363CFE447"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_2/vehicle_track_progress_data.xml",
+    "Sha256": "2F216AB19D68B9FB041E65755C3ECEC357FBF4FD66689819761FDC55A82CA5A4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/ai_track.xml",
+    "Sha256": "0D0549A99B95F05BEBC84A73BE7B4A9413030407DFE0EBCECC0657DD895D7340"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/ai_vehicle_track.xml",
+    "Sha256": "0E98C4F154DD7FEE71F3D58C34A831AA37CE8AF6DC5F2AD0BC1AA987ED582614"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/boundarylines.cqtc",
+    "Sha256": "C3A284898C49E1DBEC5D5F0FFE7BF46B441FFC14BEC98D0678C980BF9E00C3BD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/cameralines.cqtc",
+    "Sha256": "50942AFE9D5738DA7EB67D3777198B4B32E7FE2B461203AB6C7228706B776702"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/clothFile.bin",
+    "Sha256": "BBB7CF5819F3BE64C95B6398C253B18CE17A0424ECE15703A8DC7CD4DCCCC3AB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/crowd_standing.cns",
+    "Sha256": "1E0FC0ABFBC916341C23D079819B0AEA2AF16AF569F1A88B686547B55B3EEE45"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/crowd_standing2.bin",
+    "Sha256": "236046D10DDC865D03E55A4AD2A119E12EA12908313118BE1C01D958A50892AD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/cutscene_establish.xml",
+    "Sha256": "E1A1C227211B5E9ECA579A7B674C2C80E2EAA8DF118DC114618E7E735B224092"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/cutscene_event_start.xml",
+    "Sha256": "B7C6033D5CDEB638AB7940C6AA0B1A3683D0023E9566C9869544B5F409210AE6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/cutscene_montage.xml",
+    "Sha256": "97459FB60A3D07238812EB2C5677D7373C8DE4E837D08D846FFD6E097DCF75EA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/cutscene_multi_post_race.xml",
+    "Sha256": "26C3AEAE4228C48CF0F82B19A50ED6385558BC76A384BCC4A84D4C9052F8F69D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/cutscene_post_race.xml",
+    "Sha256": "96714F14CD4B451E05CD1CA016718D2A0DCA6BF5B5C3CB0E6969F42C7D6F1716"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/cutscene_title.xml",
+    "Sha256": "63EDDBF8876074FB926B4178C7DC0DD658F97D6711C79693B488FBFE35D33DA9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/game_modes/catnmouse/grids.pssg",
+    "Sha256": "5572A9C8AB73D80935C835557A6FB5162647C4F92A4E8994AE074AB39518DDC7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/grids.pssg",
+    "Sha256": "A97510906D28F2017E6C2487004F5F237D55933EB4CDE82ABE1B0EF58C3FD972"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/iwater.htf",
+    "Sha256": "79A1DB6B5FA93980C93921E1B944E08EFE023955AFA10CF08A168617E38F84E2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/iwater.pssg",
+    "Sha256": "B254928432F3DB1CEA370C52ABF49DF7309B81AC86C151BCF6396D6C65982163"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/iwater.xml",
+    "Sha256": "5FDA527EC617864A203E18E0E439B3ED23091159498C5D877E98CE949E9C166E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/light_placement.xml",
+    "Sha256": "0836C7B082C4E11504B9A206AECBF4110164F719F3E40498F4F0A551E6ECC016"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/niwater.pssg",
+    "Sha256": "2CD27CC75EA72B7339B505B53F391A5B39C712E8742678C6A21DD7E889A882AB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/niwater.xml",
+    "Sha256": "EE479C613E21B63CE1EC858F826C9E251A23705645C6CF162DD2A936EAA36087"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/objects.ens",
+    "Sha256": "DC25CBA6BBEAF442E4922BA0558C8FF647F196DDD09D1F3D0F6B5B1253ACE725"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/ornament_attributes.xml",
+    "Sha256": "ACA6A7CC27A3BCD7F7B0D2E1BB3C479A60EA0851CC1BD3EFB3615D1F2C110653"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/ornaments.bin",
+    "Sha256": "EC699506A7CBA7494B6F255FC2FC59E6D12484E3DA0E0D7254A388ABFA011CDD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/ornaments.xml",
+    "Sha256": "647C19335555B0F57375E390A6D0ADA181C99AAD9B3F91F18D76EDE14ACA6209"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/pfx.xml",
+    "Sha256": "72E5561B12CA4BAA2C8F5D975AB5FEE94AE5DCDF3A421963F9A1F89C9D3BD2F1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/progress_track.xml",
+    "Sha256": "F3E5325A8F73A60A3CE18FD51043BA3ED15356D86302D2A70131CD076DECDF8A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/replay_camera_config.xml",
+    "Sha256": "07D3F25FC85E31E825B937930FCC2B504BDEEC7FA8096E45D9021DE2EC17D66A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/resetlines.cqtc",
+    "Sha256": "AB8101FD1622ABF0BD6D0BAD67893951F289062A961329D900329A49B48B454D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/route_overrides.xml",
+    "Sha256": "5A8AE140AD4C90E789AACC51AAC0387B830622AFEA2A6A7B26A00A23666F4D7F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/route_trackao_day_alt.pssg",
+    "Sha256": "063C49C7246A5A5837EAC4CA4C82BD14B07797FE325181E1150B91C33719D5ED"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/route_trackao_day.pssg",
+    "Sha256": "876AB69005E9A03208013918080F5486CFA5E10941860FF6A1B8A4C5A05319B6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/route_trackao_wet.pssg",
+    "Sha256": "69E3141419411E84AC5CF28E62AA1FD5BCC31FD9C4FAB40DF087896BA9BAADA7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/routesplit.pssg",
+    "Sha256": "3ABE1A0F06450FEC2C6A43C62909C3464982CE040DAEE84154748E1A082CFD82"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/shadow_map_day_alt.clm",
+    "Sha256": "BB6E1B45225F6C79F42F22A58B60D58D5F20077D0E3B40BE992FC9D844F02E1F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/shadow_map_day.clm",
+    "Sha256": "06406293DAF01753D4FA0165FB73F26DDF0B757545941E42BFCE7FD3E220DF5E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/shadow_map_wet.clm",
+    "Sha256": "042EF6C0ADC4C3959259E15C86015C1415D3500BE4ED551315E1FFA5F89E28CE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/steerAssistData.xml",
+    "Sha256": "A251EA4FF8920BAB4FC7F357860EA60C969FF977FB3AD091DF22710B58179FA0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/track.jpk",
+    "Sha256": "E36A967DD445E03F78BCE05254B6BA0000E8FAE8E96F603EB51281793C9233E8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/track.vis",
+    "Sha256": "425639AEA3467FA1F3CDC84EA60EE62FEA2756BAF99050F92D9B3CC40F2F239A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/tree_attributes.xml",
+    "Sha256": "C834CBA3201BBA0565AD48FAB8584B83548EAC61B6841D752224AF9D5B177198"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/trees.bin",
+    "Sha256": "1FB4EBD7891DDBF77F86636CBD06D15009E4F2465176107A269ABEEEDB820560"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/trees.xml",
+    "Sha256": "FF218ECD9DA4504028B90F8C120BDD15E018B664770A02017CFA45321A1A65A4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/triggers_crowd.xml",
+    "Sha256": "6FB72E1B35258A12761A844F2FB49C2E72816CD9314356BC1C4ADCFFE0F538C9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_3/vehicle_track_progress_data.xml",
+    "Sha256": "A303A255B2520E3FDBB57D1758DB0A384E69AEF66C7E59F1B699B1C4E5C02381"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/ai_track.xml",
+    "Sha256": "7D16908A0C8ADC7284336F7527543EC3C8582D6887AA778B6F870FA25AFCF079"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/ai_vehicle_track.xml",
+    "Sha256": "0F9477B86AFC5E92705619FD00B2A29588326CF787248D049CD35F9ECBAD5B12"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/boundarylines.cqtc",
+    "Sha256": "D6B4C8201B8543CDFB81B291A8EE00AAF1C7A30002F1D65FAA1EAB2B91504402"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/cameralines.cqtc",
+    "Sha256": "284226D4909DB62AE4A10BE68DE68E9B1026C15822C50CD761D34E4494797FDB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/clothFile.bin",
+    "Sha256": "D3E597151FB396BD844965E3C27B9AC4D998F80232ED894D4531A9CB71064CCD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/crowd_standing.cns",
+    "Sha256": "EDCC2BF0B979C9BF346AEC585276D07A9160D2224030BCF75E7D10AC38A1E3B4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/crowd_standing2.bin",
+    "Sha256": "37EC78FBB4708A1502FF43031FDFAB86E241AD6D4C06300CDDED29F183BBDD0E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/cutscene_establish.xml",
+    "Sha256": "F30ECC7E8DEFE853E0FE9156B9B38F2724FDA12B247A5AA59ABAC2B1F7EF1F25"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/cutscene_event_start.xml",
+    "Sha256": "0E24C2D43842B012FAA703CFC9E6BB587E36C609FD8B29AE59B540D3C22B86FB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/cutscene_montage.xml",
+    "Sha256": "CA60D055437343DE486AD2EEF9A0D61AC6FB05940536769993D8286A71C62F99"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/cutscene_multi_post_race.xml",
+    "Sha256": "233CDB1C3CDA6BD58EC29322B0BD08A80D4A2D7DE7DA6332C63D3E6AB501CCA6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/cutscene_post_race.xml",
+    "Sha256": "DA2FAA306869DF82A9346CC54728EFCF61BA996BF61FE8EACE2217D6CBF126B5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/cutscene_title.xml",
+    "Sha256": "71D7A7A687050A495E1FF2668C43DE6E07904E1F959F0DAD9306A299CFEE8AC6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/grids.pssg",
+    "Sha256": "871F952FA00589BD85568BB61CD4E22CE2B2DFE92B0CB9779F569341A17939EE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/iwater.htf",
+    "Sha256": "79A1DB6B5FA93980C93921E1B944E08EFE023955AFA10CF08A168617E38F84E2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/iwater.pssg",
+    "Sha256": "B254928432F3DB1CEA370C52ABF49DF7309B81AC86C151BCF6396D6C65982163"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/iwater.xml",
+    "Sha256": "3AA17D2489EC93EE6C608A58A5DE06952094140B725C9BF1C7B359A813F7B5C9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/light_placement.xml",
+    "Sha256": "26A9B9DC78AEE9C921B3F01A13B24E7AF8DB63C86321140AFB2BC4989B2AE55A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/niwater.pssg",
+    "Sha256": "C8D325066ACF18413F444300E4266BD9ED8256A9E291B21D0756935C536C68B1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/niwater.xml",
+    "Sha256": "38797AD8D57D64BA186CC79733448B73F249726517BEA451F6EEE25DD42FA816"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/objects.ens",
+    "Sha256": "1EB06EAF9E88BD77D61CA0CCBEC83327EE52ECC58AF8A1725083E9F2A708BEF5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/ornament_attributes.xml",
+    "Sha256": "AEE00D1AE9EC54C5FD938BE3A1A485D702DA638F331A0CF7EF1BF2ED3C6E4135"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/ornaments.bin",
+    "Sha256": "D3ED69D3CA27DE9E188D156023F83B0FE97390203B29B563F9CC1FE6F66E5345"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/ornaments.xml",
+    "Sha256": "6541150D399F3809C62447F4DCA9FEBEE804F426A5A790963A56DE18AD3723AB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/pfx.xml",
+    "Sha256": "FC5059B8C47B4E4D85E2868402099A31C1BC38A128CE85C885C7247C6186B890"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/progress_track.xml",
+    "Sha256": "EDDE0CBE9665E63ADC80DED3283A78CD9E5F6C9FD76B004CEB1AA58CE1D5C77C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/replay_camera_config.xml",
+    "Sha256": "8991648AA943E026090BFE283A15F13B4E31EA852756C8DC36F29A37C6720257"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/resetlines.cqtc",
+    "Sha256": "D35E782A57342207B89460539E0736B5F58731914C16D2F1253D0F30A5B2DD5E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/route_overrides.xml",
+    "Sha256": "002B17A19E14439253611F07167B6C4B6F98F6AB40322438872D8EEFB6E63AA8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/route_trackao_day_alt.pssg",
+    "Sha256": "8620C677B77B419EC73ED489F2AF2C666E3681BBA56546118DB40AD9C2F7D578"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/route_trackao_day.pssg",
+    "Sha256": "762D5B0C2E05647A91BC265BC86E7E7CA5941368C53DB40345ECF79A344A3EE7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/route_trackao_wet.pssg",
+    "Sha256": "1056A381D5261F8CA1A362C4D1E908B077CFDB3BCEF5B9A862CA9431B085830F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/routesplit.pssg",
+    "Sha256": "3ABE1A0F06450FEC2C6A43C62909C3464982CE040DAEE84154748E1A082CFD82"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/shadow_map_day_alt.clm",
+    "Sha256": "0D75EEC4E825178635B62C5C3800B6F15241C37E3ADF79C342D3571C223AEB69"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/shadow_map_day.clm",
+    "Sha256": "35FD3F1B443B5ECBB6918F0D8B0DB4FFDD257B40FAED3B8B1BC9F95B24008D00"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/shadow_map_wet.clm",
+    "Sha256": "2130B4B87A1F073B2B8D971A25DB565C2D2CBBA66E9428FF26793833038C1AF3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/smelter_codriver_1_easy_4.xml",
+    "Sha256": "1A401A18FE490487A17ABAC783207D030BABC7FFF9970CBA49FF4DCDCE4844AB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/smelter_codriver_1_pro_4.xml",
+    "Sha256": "2BE9F33C656FF80E244BEC83CCD383AB82BCBAE7379BC6391D6FDC78F714CA40"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/smelter_codriver_2_easy_4.xml",
+    "Sha256": "68F9BCD89BC84A78E65EB1370ABCF9340A6837B41105C7DC549D7A9E2AEF0566"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/smelter_codriver_2_pro_4.xml",
+    "Sha256": "39DE153E2CBB5F0ECFAA762533AD75BADABDBE2F777D5656FB9D4200CC5B9384"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/steerAssistData.xml",
+    "Sha256": "30563DB1E445ADD7D36FCB4280592F74BD9EC04CBF40358ADB1104242395143F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/track.jpk",
+    "Sha256": "681E1EF37DDFF33E6960C6B02E9ECC2668CFA50223940E4E0D1B5ED4754FEE2D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/track.vis",
+    "Sha256": "784D90ED11B41C2494D9EE27AC6C886736BDD547AE33C09BBBD3972604085942"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/tree_attributes.xml",
+    "Sha256": "C834CBA3201BBA0565AD48FAB8584B83548EAC61B6841D752224AF9D5B177198"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/trees.bin",
+    "Sha256": "1FB4EBD7891DDBF77F86636CBD06D15009E4F2465176107A269ABEEEDB820560"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/trees.xml",
+    "Sha256": "FF218ECD9DA4504028B90F8C120BDD15E018B664770A02017CFA45321A1A65A4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/triggers_crowd.xml",
+    "Sha256": "7D1DB3E30E247B838574E7657D593F1FC05482D38F6BF81F2BF5818FE48F912B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_4/vehicle_track_progress_data.xml",
+    "Sha256": "8E1E9EE56E7223AC0FB8522CC8C955679B562DDA6E5BADE457B03F42DF24B9F2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/ai_track.xml",
+    "Sha256": "93218E799E194835127999E7A03A075D9CA54EBE3948B82A6679F69E322543C9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/ai_vehicle_track.xml",
+    "Sha256": "5F939DB1D873D949570874BBEC061BDAF54961E55E41791A205EC514A5D85877"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/boundarylines.cqtc",
+    "Sha256": "8D5B7460BA96EB463B5021999E0DF5A87943456D6ECAEBAECC1A0A00FEE3228F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/cameralines.cqtc",
+    "Sha256": "284226D4909DB62AE4A10BE68DE68E9B1026C15822C50CD761D34E4494797FDB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/clothFile.bin",
+    "Sha256": "2902705EFF66A7C361B0F95CD4B835B41695693AA26710BBE591E288FB8C4D78"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/crowd_standing.cns",
+    "Sha256": "DC663AAB17A3E50703B01FF2E6F70351C7A464514C322F2F7BE53047E7CB7AD7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/crowd_standing2.bin",
+    "Sha256": "18140D6B6B60A12C8818F61872DCD0747A29549AF6EC43C8D22D20CDEF14AE70"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/cutscene_establish.xml",
+    "Sha256": "1DD21DCD4A340656BA20A8D39602BAB0ECC6A570CDA557EB08DBBE7E57D43E8D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/cutscene_event_start.xml",
+    "Sha256": "0E24C2D43842B012FAA703CFC9E6BB587E36C609FD8B29AE59B540D3C22B86FB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/cutscene_montage.xml",
+    "Sha256": "D29476B1F18A208AAC46438366C987D3346A82481F7B545982FF7F175CA6893B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/cutscene_multi_post_race.xml",
+    "Sha256": "C312EF16FB0165BEEDD5A7DA7B432FBD3B6E86CEA22249A51A52544D5DF0857B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/cutscene_post_race.xml",
+    "Sha256": "B922CD32EFE82546E454E8735F00A8EA54D1C716F6511DC3BA9181620241DA1F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/cutscene_title.xml",
+    "Sha256": "71D7A7A687050A495E1FF2668C43DE6E07904E1F959F0DAD9306A299CFEE8AC6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/grids.pssg",
+    "Sha256": "A23D98A99352174E798EA73877160DC94AF473BD9E3CB1770011C42D26D97611"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/iwater.htf",
+    "Sha256": "79A1DB6B5FA93980C93921E1B944E08EFE023955AFA10CF08A168617E38F84E2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/iwater.pssg",
+    "Sha256": "B254928432F3DB1CEA370C52ABF49DF7309B81AC86C151BCF6396D6C65982163"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/iwater.xml",
+    "Sha256": "3AA17D2489EC93EE6C608A58A5DE06952094140B725C9BF1C7B359A813F7B5C9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/light_placement.xml",
+    "Sha256": "3514A96A1186CC451396AAC4A4AE332D74F9EB89DCFB975594AF65DBBFD599FD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/niwater.pssg",
+    "Sha256": "C8D325066ACF18413F444300E4266BD9ED8256A9E291B21D0756935C536C68B1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/niwater.xml",
+    "Sha256": "38797AD8D57D64BA186CC79733448B73F249726517BEA451F6EEE25DD42FA816"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/objects.ens",
+    "Sha256": "388DD8A4D57F57E0FE95260A4BE3759AC94CCA1043F5D838D1A40EC0586298E5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/ornament_attributes.xml",
+    "Sha256": "AEE00D1AE9EC54C5FD938BE3A1A485D702DA638F331A0CF7EF1BF2ED3C6E4135"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/ornaments.bin",
+    "Sha256": "75FF1BCEA462AE189388E5DBB4E45325CC7F69A3DB065AAF1C1C52FC9659BD4B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/ornaments.xml",
+    "Sha256": "3E07833ED8DD4345F4379DE974372A0E531A3CC5C7C9E4885F0543DEE50CED37"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/pfx.xml",
+    "Sha256": "020951EE3118ACBCF707EB07FB2C3DCAA4AB18A11AF3AFCAFBBA456917879FC3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/progress_track.xml",
+    "Sha256": "5EAC7980343C833509A0201567D9766DBB782412DB6F054E89126EEB4B53815C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/replay_camera_config.xml",
+    "Sha256": "C6D970C96C12443EB742EDE7319A651BDA33D5AE12BA630EACB204A462B97569"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/resetlines.cqtc",
+    "Sha256": "FB15CDF1A9C74EBCC27912A1578E320D771D6087933669A8EC29FBC19A792D00"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/route_overrides.xml",
+    "Sha256": "73E4F561E84ED8173B0DC0973F50D7BBADCDAD11022599481F2E860EA0AA9194"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/route_trackao_day_alt.pssg",
+    "Sha256": "8620C677B77B419EC73ED489F2AF2C666E3681BBA56546118DB40AD9C2F7D578"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/route_trackao_day.pssg",
+    "Sha256": "762D5B0C2E05647A91BC265BC86E7E7CA5941368C53DB40345ECF79A344A3EE7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/route_trackao_wet.pssg",
+    "Sha256": "1056A381D5261F8CA1A362C4D1E908B077CFDB3BCEF5B9A862CA9431B085830F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/routesplit.pssg",
+    "Sha256": "3ABE1A0F06450FEC2C6A43C62909C3464982CE040DAEE84154748E1A082CFD82"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/shadow_map_day_alt.clm",
+    "Sha256": "DB9C71A20FFB6C78EC2602F34D84D19E575A0D8E2283BCFEDF13ECB575354EE1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/shadow_map_day.clm",
+    "Sha256": "7EC053AEA5AAF979A8C786F376260B1950A3274977B05744781E7870CF045391"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/shadow_map_wet.clm",
+    "Sha256": "04B8AB3D837123EF1075C36F41B6096089E8206EA7E706C0A172765218876DE0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/smelter_codriver_1_easy_5.xml",
+    "Sha256": "FCA37BF670286AFCACBA1142237A4B40FA6F1E41AEA748098935999DBBC806BF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/smelter_codriver_1_pro_5.xml",
+    "Sha256": "9EB217D52E53612D860C02AF4C9FCEFDF84D7C4AAB799E2747077A7C893A4B89"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/smelter_codriver_2_easy_5.xml",
+    "Sha256": "0EEFFC65307E8A2073C9B7F77F37D2E1173119CDFA458EA5C7F30FDF225287FF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/smelter_codriver_2_pro_5.xml",
+    "Sha256": "7C8038D258DC1D867808205E2BAA8CD76E7AEE47C5708BA58320956DEE38C273"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/steerAssistData.xml",
+    "Sha256": "4DF2A976C9433A4B41CE29F6C9783F4756CC32002C1FEEFF0E28DB612F68ACF8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/track.jpk",
+    "Sha256": "681E1EF37DDFF33E6960C6B02E9ECC2668CFA50223940E4E0D1B5ED4754FEE2D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/track.vis",
+    "Sha256": "369D05D466D0082C94919806742A87896E1BF6150211A2E42A109501241467FF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/tree_attributes.xml",
+    "Sha256": "C834CBA3201BBA0565AD48FAB8584B83548EAC61B6841D752224AF9D5B177198"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/trees.bin",
+    "Sha256": "1FB4EBD7891DDBF77F86636CBD06D15009E4F2465176107A269ABEEEDB820560"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/trees.xml",
+    "Sha256": "FF218ECD9DA4504028B90F8C120BDD15E018B664770A02017CFA45321A1A65A4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/triggers_crowd.xml",
+    "Sha256": "AB516BAF280E063B2EFC4225C4D8993DACC884DDE0D21D36747ABBDC35B6EF8C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_5/vehicle_track_progress_data.xml",
+    "Sha256": "E49BAD65CD2A710915D650F5F69E1F673AA546CEC8E8B73B3C94BBBADDC04971"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/ai_track.xml",
+    "Sha256": "9791653B93B61EE15AF678F323E403616E2FE6DDE86B4EE00876C15431B036AA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/ai_vehicle_track.xml",
+    "Sha256": "DD3B805068F841CA4279760458A10C5D1DE40B652D1896C7E11CCDD048ABB150"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/boundarylines.cqtc",
+    "Sha256": "161A1CEB165F8E0D5C6E5AA32FE30EC2C97CEC097612F7916F984D3C3BD11B81"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/cameralines.cqtc",
+    "Sha256": "50942AFE9D5738DA7EB67D3777198B4B32E7FE2B461203AB6C7228706B776702"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/clothFile.bin",
+    "Sha256": "3FBD9DDDD7C555FF3F868EFA3F66BBFA39EA77A860418E90B2A5F7C9EE83CD52"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/crowd_standing.cns",
+    "Sha256": "33B18C558B97B6C5A2FAA0434540809F3BE0F1FAD61EBB6ACDAF1342B2C17455"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/crowd_standing2.bin",
+    "Sha256": "EED490D20D96DBA8A074FEA4A4B5FB2201F004E0EDB1888120934726D9C78A4F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/cutscene_establish.xml",
+    "Sha256": "EAC93F46FED14B8CBC42B6C550F8046C13607D85A72D7F0ADA61911B9A01FA51"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/cutscene_event_start.xml",
+    "Sha256": "686FC678CBCDACA21E501B688E6D390E707DD6CC879D3F008838C38A76B31CA7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/cutscene_montage.xml",
+    "Sha256": "6F738A84C2A7916D1A9D579F9B08D7CA5E0B74F39D9A8AB2CE0772D51C08298C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/cutscene_multi_post_race.xml",
+    "Sha256": "F98EF9B1E0119083E82F1BEB7F7E747806E69A000E135179726F75FFBB6A3631"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/cutscene_post_race.xml",
+    "Sha256": "D3AB30C0CD61979E6375DA91FD9BDE8888529E3628D691864A2A3674ABFECC84"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/cutscene_title.xml",
+    "Sha256": "E3163C923C2E9582306A52740B01CAF0C558B198E195C2A0E186C14EA15393E3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/grids.pssg",
+    "Sha256": "A2645B37D15969E9A26321C18022A4AF31D82C6482CFBF450DE1A9A85AC21AC5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/iwater.htf",
+    "Sha256": "8C4C3745E786047A604B96A9F80BECEE64C37852AFB8FD11A631D2A721567950"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/iwater.pssg",
+    "Sha256": "743A784D6D1461EB3E69A76D970C5459EC4AA914519BA2E84714C4A8CF4AB85D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/iwater.xml",
+    "Sha256": "14877C5BB158D38911AE21D3C375E38A2F13BF439DBB2DF7381882D3248FF74B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/light_placement.xml",
+    "Sha256": "06527DB88AD206C7557F6639E38F8D9F78692F3E10C2BB40EA4C8D6793923E0E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/niwater.pssg",
+    "Sha256": "C8D325066ACF18413F444300E4266BD9ED8256A9E291B21D0756935C536C68B1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/niwater.xml",
+    "Sha256": "38797AD8D57D64BA186CC79733448B73F249726517BEA451F6EEE25DD42FA816"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/objects.ens",
+    "Sha256": "A9C0BF03620874CCEECB7BA0125D7D3937FCD94CFB367CC0032F8F4408984FF1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/ornament_attributes.xml",
+    "Sha256": "FDD221AA7ADCECDC69BB8DF120E7F9089E8F33700DCFFC779D77BFEFA0ADD421"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/ornaments.bin",
+    "Sha256": "A7FFA3E74325EDEFCD041CE43A4FB7E4712438D4466806A60EB1841EAD810B26"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/ornaments.xml",
+    "Sha256": "96A2B0AD47422F32584B30EA82DFB84C5E6C9CDB33E69825FC9E78A63987E46B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/pfx.xml",
+    "Sha256": "392CF4B9D045857B7EE73659DE1D7A44947E6F241E564283BAB367BB2202FE5E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/progress_track.xml",
+    "Sha256": "91EB082B7D6A5147D1BD386D356F8F8195607D9681FAFE20535B9A819F2B72B5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/replay_camera_config.xml",
+    "Sha256": "DD4412B59323C49C4706225B1C3A6BC67F31FF99083528AA2C53CB7497740CBD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/resetlines.cqtc",
+    "Sha256": "206C0750D5DBE3363B836EC1BBE3E42A297449C8867F45AF8AD6B1BA109D5AA3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/route_overrides.xml",
+    "Sha256": "2353C0255CAFB7FC2F7312D9E0CFE8BB51C080F1CD9942D82BE0872BD8DCAA0C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/route_trackao_day_alt.pssg",
+    "Sha256": "316016DB1C214581C82C6DDF7FE8664C0B17EA6113336764FEB531627CD62621"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/route_trackao_day.pssg",
+    "Sha256": "58D18664C9EE6074C8E3318D7D77A8B81F507859BAAC0380026D34F1B281E4CC"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/route_trackao_wet.pssg",
+    "Sha256": "9FA18EF5ABB7459271D07354591DA26D52202C1C9B5FAA1F0B7D72F16E2A90A5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/routesplit.pssg",
+    "Sha256": "3ABE1A0F06450FEC2C6A43C62909C3464982CE040DAEE84154748E1A082CFD82"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/shadow_map_day_alt.clm",
+    "Sha256": "41CA8260397373EC467B2FED2C2C8733D6B8F5D4EC0AF3ED73598AC87C73DDE5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/shadow_map_day.clm",
+    "Sha256": "B6B2515AC92480EBF22A10B459DE6A42FBA524F8CF29FD5B4BDF4B19FDA8DC2F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/shadow_map_wet.clm",
+    "Sha256": "B068E6F8A47890D88B7EB970AC1393602C4602E4CA3AAFB6B84F7BFC7A5CD2DB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/steerAssistData.xml",
+    "Sha256": "43ED63C75FC85DE47CBB4BF76E03D818D64E6A3CA920AD83DB246CFAFBE2E34A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/track.jpk",
+    "Sha256": "B02D272F82D9BAD221E8ED8CECF124CF5412CEED4510278BCB74836EFB063E9B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/track.vis",
+    "Sha256": "C5B3FD195B421FD81A291CFDA2C019BCF04BCF938A01575D4B42FAFE43934DC9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/tree_attributes.xml",
+    "Sha256": "C834CBA3201BBA0565AD48FAB8584B83548EAC61B6841D752224AF9D5B177198"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/trees.bin",
+    "Sha256": "746C56AE0B3E9DEE18A80F83F3EF35A272015763C859E678D652E23502C5B9BF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/trees.xml",
+    "Sha256": "52E3AC89BF275C210AE00E76AFA08D2C58B66C175F55BCFAB54E9BFE8082601E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/triggers_crowd.xml",
+    "Sha256": "02D01D47B5873F605E0C6F44F9B9C5F2A8AF8FF7BC7C36CD776006BE4BFFD3F3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_6/vehicle_track_progress_data.xml",
+    "Sha256": "A99CA0AC7688855F41F9AD3A698077354D996732A90D30A6E2F4A4BC6AC80C89"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/ai_track.xml",
+    "Sha256": "4079D23B46FE97808F4C627F922B1A361957F00170ED6CF2AB658FEF4A75D538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/ai_vehicle_track.xml",
+    "Sha256": "7AA80E8C1E884B0DDB6C16EE43B9B6E83771D172A8A3C3801AA4875B347C746D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/boundarylines.cqtc",
+    "Sha256": "161A1CEB165F8E0D5C6E5AA32FE30EC2C97CEC097612F7916F984D3C3BD11B81"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/cameralines.cqtc",
+    "Sha256": "50942AFE9D5738DA7EB67D3777198B4B32E7FE2B461203AB6C7228706B776702"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/clothFile.bin",
+    "Sha256": "1AD19216B7224680410D4200A467B6FB5CF3E89CA8C6A84D3A3EA7D242320D2B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/crowd_standing.cns",
+    "Sha256": "1B3A6E2B9C417066AB77D9043CE5243E5514DBE22278B3D73665EEDFEF2C7113"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/crowd_standing2.bin",
+    "Sha256": "D7BA3FA2EED2C57856C3B0BC6830A73E856F9A84DC950398952CA32D48B9BEDD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/cutscene_establish.xml",
+    "Sha256": "EAC93F46FED14B8CBC42B6C550F8046C13607D85A72D7F0ADA61911B9A01FA51"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/cutscene_event_start.xml",
+    "Sha256": "CAA49E1E06D864AE1CBA7800EFBE0FA1012BC70DE3E0711FE929F666A63559DC"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/cutscene_montage.xml",
+    "Sha256": "6F738A84C2A7916D1A9D579F9B08D7CA5E0B74F39D9A8AB2CE0772D51C08298C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/cutscene_multi_post_race.xml",
+    "Sha256": "6196152409547D5A8153A59DD03970BF4D090A2777125331467256A284C0D038"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/cutscene_post_race.xml",
+    "Sha256": "C83ACBBF738A1874DCA6211052A9AA5121CB61D256D5C2ED9657AB8E0784B078"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/cutscene_title.xml",
+    "Sha256": "60B6504459F6888E9657F3960CBFBDE33B0807957203DBC9162A772533DF5C09"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/grids.pssg",
+    "Sha256": "0E63B002E54C2BD49B0E1F8E0A40D137345FDD3DF9728C1FD1FB0AA1F9DB913D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/iwater.htf",
+    "Sha256": "BAEE6D9D645E9B59D37012BAA73CFC0F6D8D3681996AD7CDE685F51260BDD4DD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/iwater.pssg",
+    "Sha256": "300273867441C3C02028AF28815707E119A4B0691DF48B31097B2C9966841AB4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/iwater.xml",
+    "Sha256": "9AD04BD7BC5F4A70AA5CBB561A73393ACD38B165B2BD547D858CE3159F8A5A76"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/light_placement.xml",
+    "Sha256": "06527DB88AD206C7557F6639E38F8D9F78692F3E10C2BB40EA4C8D6793923E0E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/niwater.pssg",
+    "Sha256": "C8D325066ACF18413F444300E4266BD9ED8256A9E291B21D0756935C536C68B1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/niwater.xml",
+    "Sha256": "38797AD8D57D64BA186CC79733448B73F249726517BEA451F6EEE25DD42FA816"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/objects.ens",
+    "Sha256": "D5E4A7412ABEBA588231A5D8DBFC3D742F11F98E2A48BFD62445EEDE98948DB0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/ornament_attributes.xml",
+    "Sha256": "FDD221AA7ADCECDC69BB8DF120E7F9089E8F33700DCFFC779D77BFEFA0ADD421"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/ornaments.bin",
+    "Sha256": "93D3747E43F8F21A4931F0B39348028B6A21F2EAF86CFC98CD3CFDD6CD3F4EF0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/ornaments.xml",
+    "Sha256": "5BA0002A80AC97CCEA35D78CFBD80EFBF335CA54D6E389D6EE83075569879265"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/pfx.xml",
+    "Sha256": "392CF4B9D045857B7EE73659DE1D7A44947E6F241E564283BAB367BB2202FE5E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/progress_track.xml",
+    "Sha256": "EECEDD54D5B6A452AF71B461437BC745E4E839322E114134F9DDCFBBD21C4572"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/replay_camera_config.xml",
+    "Sha256": "75F1F63A91A7093AEBFF45A3736AE2F66D2F1B30C3D87F095D73365E7800B40E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/resetlines.cqtc",
+    "Sha256": "206C0750D5DBE3363B836EC1BBE3E42A297449C8867F45AF8AD6B1BA109D5AA3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/route_overrides.xml",
+    "Sha256": "F4F5C4A854B731FBCADEC2EC1BEC316697A0B2460F2AD47125E466D6C21C35E5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/route_trackao_day_alt.pssg",
+    "Sha256": "316016DB1C214581C82C6DDF7FE8664C0B17EA6113336764FEB531627CD62621"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/route_trackao_day.pssg",
+    "Sha256": "58D18664C9EE6074C8E3318D7D77A8B81F507859BAAC0380026D34F1B281E4CC"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/route_trackao_wet.pssg",
+    "Sha256": "9FA18EF5ABB7459271D07354591DA26D52202C1C9B5FAA1F0B7D72F16E2A90A5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/routesplit.pssg",
+    "Sha256": "63D1F86942CEB63F29B247806D8A332BC77451799A2D0A0CD7930B77E36DBA19"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/shadow_map_day_alt.clm",
+    "Sha256": "81B59C897DAE677303CC3A92C9A4D559A92D325A48F0E0FFBFCFE01553CE0905"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/shadow_map_day.clm",
+    "Sha256": "1FC70F52384995257451BADA77C3A0B94239C4BA096EF9AFAC19E744D976DEFF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/shadow_map_wet.clm",
+    "Sha256": "DB35B9CD494AA8BB2D468E7424FC3812729DE5C45F13F420AF1A2A4969414BFE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/steerAssistData.xml",
+    "Sha256": "B5976EE912C96719CDCDD5227BC356D2CA276C6FF2D3783CAAF3E796F2BC79C9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/track.jpk",
+    "Sha256": "54BBF36954606C940E1703F0A7ACFB7227CE4B91AB9C41E84F144C856E5CD072"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/track.vis",
+    "Sha256": "D8F4CC5E3A20703327BC434E4AA65D938A4E27DAC33D33FFE0E6589A61591679"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/tree_attributes.xml",
+    "Sha256": "C834CBA3201BBA0565AD48FAB8584B83548EAC61B6841D752224AF9D5B177198"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/trees.bin",
+    "Sha256": "746C56AE0B3E9DEE18A80F83F3EF35A272015763C859E678D652E23502C5B9BF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/trees.xml",
+    "Sha256": "52E3AC89BF275C210AE00E76AFA08D2C58B66C175F55BCFAB54E9BFE8082601E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/triggers_crowd.xml",
+    "Sha256": "51F61107BEC05C7E2736A4DD8B8E7276D8AE345E9E943C05704259A36C59CAFE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_7/vehicle_track_progress_data.xml",
+    "Sha256": "7F274606FBFF3D77193BC3E5CFBDDAEEA5875CF1747D631C721288FB6998CAA4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/ai_track.xml",
+    "Sha256": "51285AFDFF12DC5F469DEA96AB16FF0E463630C93D25B10DB66C4DF49CE39FFA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/ai_vehicle_track.xml",
+    "Sha256": "79EF7BDC403DDE03B3FE9CD27184285E63D59415D0C7420AE21442ADD71C4E08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/boundarylines.cqtc",
+    "Sha256": "0439883BA0D69E75CC05814A092743BAB66331B5D2DFD3DC12F2A533B00C84D5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/cameralines.cqtc",
+    "Sha256": "50942AFE9D5738DA7EB67D3777198B4B32E7FE2B461203AB6C7228706B776702"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/clothFile.bin",
+    "Sha256": "3B58D69BEE84EF9900FDF8626D913533DC2C37C35C6D127B82899634CD641601"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/crowd_standing.cns",
+    "Sha256": "317FEDD52A5BE6FA9065082237BE91F3A6DB66E4326082D12473C0C61524D295"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/crowd_standing2.bin",
+    "Sha256": "478659AADBBA255EE931A1B11C7D72913F8B4F20A42A3F5C5E1C516E0A3AEAD8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/cutscene_establish.xml",
+    "Sha256": "3C9D5B0F29938C7DC45563065375B6707CA0F1E4FA6FA5E29C22B95637C50E5D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/cutscene_event_start.xml",
+    "Sha256": "D6C31728B0D025DA2B1EC9FD4234D4B41AE6202F0E1D824F8A21A2852EBAA726"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/cutscene_montage.xml",
+    "Sha256": "4929319907DB09B4C89F76E762F6D721C188D56F21AF0C0371BC52AB4B21A5CC"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/cutscene_multi_post_race.xml",
+    "Sha256": "DE001F15F12453ECBCF858C5DA1D913C472B7FFA87E6D9C76FFAB21124687D36"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/cutscene_post_race.xml",
+    "Sha256": "AC96F612DA44C7F4FBD29F4CCA3183FEA56DE51F918C277DE7477F5FA2922E5F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/cutscene_title.xml",
+    "Sha256": "ED011B30A5A6D45262C02E3CCD3D8B7413A4F1A2A4F2BAE81E37302A05B5EA31"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/grids.pssg",
+    "Sha256": "A3FABDC30042FA5AE60738ED280C8DB5C53D2FB0D75E3121D4E7A845A3D7A20B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/iwater.htf",
+    "Sha256": "0E349569590F7AAD2248E87A8214402E8FF0CCABD1C709426F5B48219DE2777F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/iwater.pssg",
+    "Sha256": "743A784D6D1461EB3E69A76D970C5459EC4AA914519BA2E84714C4A8CF4AB85D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/iwater.xml",
+    "Sha256": "E4592B764370CD52F49A378016F7E655941935CDA8EA81AF0073C0DB6E0A2FA2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/light_placement.xml",
+    "Sha256": "21B01786F135E7C8E6272A1132F84A55DD25AA4E99CA0248956E88ED3106F0C2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/niwater.pssg",
+    "Sha256": "E3A3642CD7E990BD7DAAA23071F2F52B62F09A8932DF968085FA0C28D892E7E1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/niwater.xml",
+    "Sha256": "93B9DA0C5B3EA8DA4CA2E24DB8F5B646342463D1F8900CAEEE502826D9B64026"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/objects.ens",
+    "Sha256": "F0640603E781FC23A4EEBA63F2E35368D9BFB1CF091BFB053BABA1069552359A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/ornament_attributes.xml",
+    "Sha256": "C2F7156C35725DB0F380D21C5A60B2073B2CFE4029C01B09349D37FA266ACFAD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/ornaments.bin",
+    "Sha256": "7F1D42B5986B349F0F0DEB6AE0AC7E3F76541C0DBA732EAFD001E84554C934DD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/ornaments.xml",
+    "Sha256": "3CE5B9EBB4AE53BEF55C440F4C6DD74B878528923F272EE6C9A7CCC8D5D1B2F5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/pfx.xml",
+    "Sha256": "28127307545A4D57733783AF75905C019490927E7164BC7FB9F86E588E8CFEED"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/progress_track.xml",
+    "Sha256": "C83EE009D95610A22365EA90E9BBC9907396A47CA179DDB5534E33B9DE8DD54F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/replay_camera_config.xml",
+    "Sha256": "A2AB4505CAD51DC978A4B750222884DBEBD85E7E46D3FBCAEC4538F95E3DE790"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/resetlines.cqtc",
+    "Sha256": "9821E7E1DADDB630618B59A2BD80B14EA8DFD67D3E86F3DCEF63411A50FC2469"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/route_overrides.xml",
+    "Sha256": "F2C76A1E973D88B7DCDCF39FDA9AC57D7F8DA61F73183665A4F85645E6CEEE06"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/route_trackao_day_alt.pssg",
+    "Sha256": "72BCA8E12F625D4CCE8710797716AD2C795695B4A8B4CB3CDCF78F5D21851888"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/route_trackao_day.pssg",
+    "Sha256": "2E1096907E028D9847573B2D34066F1EB537E549A9294092BE73446B77F4C3ED"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/route_trackao_wet.pssg",
+    "Sha256": "209721638AAA666A6B202562FB054A73640796BC8DB4FACDE605767F5BC53A8F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/routesplit.pssg",
+    "Sha256": "3ABE1A0F06450FEC2C6A43C62909C3464982CE040DAEE84154748E1A082CFD82"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/shadow_map_day_alt.clm",
+    "Sha256": "4FDFE62F461D15B960A3EC0A900F689972C65BAC7CF32B3C38DABA065F48A412"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/shadow_map_day.clm",
+    "Sha256": "506B19EBC50961971E5A9CFD0BD04C1721B37D1DEA038309D9FBC0362C6B235C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/shadow_map_wet.clm",
+    "Sha256": "A8F09B6D0CBF7F46126E0BB084D3E24F99F29C39880820A8A2AF0548AAD2C85C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/steerAssistData.xml",
+    "Sha256": "6C17B5D4B4409D8FD7A323798B939BC1D25483E729A54C2F7B7619C03DF216B1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/track.jpk",
+    "Sha256": "EA5F443C88BE8A32C262765AB9BCA45727413D78CB8023292836C075981F9BBF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/track.vis",
+    "Sha256": "67220F430FB44665774C55A7D7760A281ABBD50CCCA71DD04192678799AA54E4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/tree_attributes.xml",
+    "Sha256": "C834CBA3201BBA0565AD48FAB8584B83548EAC61B6841D752224AF9D5B177198"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/trees.bin",
+    "Sha256": "746C56AE0B3E9DEE18A80F83F3EF35A272015763C859E678D652E23502C5B9BF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/trees.xml",
+    "Sha256": "52E3AC89BF275C210AE00E76AFA08D2C58B66C175F55BCFAB54E9BFE8082601E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/triggers_crowd.xml",
+    "Sha256": "AE8A35F65892DB006683AB5FE5198FC24B90006DCA39F53F94A971DBE8A824AA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_8/vehicle_track_progress_data.xml",
+    "Sha256": "EB0E8723BB5BA8FE3DB91A2F05FFC03BCC344D21F3DF4144E8BC48D309475C89"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/ai_track.xml",
+    "Sha256": "EA127291F206BEAB8379942E549465E051666627DB9EE5A0927C08E258ABBE80"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/ai_vehicle_track.xml",
+    "Sha256": "E9C4EBAA575B8E1D43C73165D359A1B4B51D4EBCCD4A3734DAB4FC7D3AB3F7E3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/ao.clm",
+    "Sha256": "EBADD2A6F660523A9C91FA6363759F0D4D2E0EE95C9183C589F9EE714B478792"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/barrierlines.cqtc",
+    "Sha256": "B582EF43FE7DD383AEB8F2A19422B3FA854C3A5373DC77AF247B1003A72A6D90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/boundarylines.cqtc",
+    "Sha256": "0439883BA0D69E75CC05814A092743BAB66331B5D2DFD3DC12F2A533B00C84D5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/cameralines.cqtc",
+    "Sha256": "50942AFE9D5738DA7EB67D3777198B4B32E7FE2B461203AB6C7228706B776702"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/clothFile.bin",
+    "Sha256": "3B58D69BEE84EF9900FDF8626D913533DC2C37C35C6D127B82899634CD641601"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/crowd_standing.cns",
+    "Sha256": "686E745CDB2A693444752BFD20585063F716327B36DDFD4DA7FE145D08E7CEC7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/crowd_standing2.bin",
+    "Sha256": "7738E1AB4205307E6018BC06EC89A0304BD620145D8290DB86478524F755D14B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/cutscene_establish.xml",
+    "Sha256": "3C9D5B0F29938C7DC45563065375B6707CA0F1E4FA6FA5E29C22B95637C50E5D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/cutscene_event_start.xml",
+    "Sha256": "ED90A70382C5EFD3DBBB376103F18E5C02FB8C760B28AF4442BAFA79CD9A52B3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/cutscene_montage.xml",
+    "Sha256": "4929319907DB09B4C89F76E762F6D721C188D56F21AF0C0371BC52AB4B21A5CC"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/cutscene_multi_post_race.xml",
+    "Sha256": "A1248C92CE6BA548ED587B6BEF15122348A6A9D2BC521D8CDE50C0E871494F20"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/cutscene_post_race.xml",
+    "Sha256": "3BC434F17C8989BE542BE9A68F80580541497CCB800E036FF9EA086288E3F17E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/cutscene_title.xml",
+    "Sha256": "6FDEEDAA139FB8480C968BC793557F9DCCBE9FAA48162C718A651554B8E322E4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/grids.pssg",
+    "Sha256": "2D9CA4532A6C5D73D745EADB54A1E5F1AA274C51941FF24E89B0404E97DE8F1B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/iwater.htf",
+    "Sha256": "D1F56AB862740E5B0EC16B68ECD798424D69BB1CA03E4806508DFFD185D59BD0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/iwater.pssg",
+    "Sha256": "300273867441C3C02028AF28815707E119A4B0691DF48B31097B2C9966841AB4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/iwater.xml",
+    "Sha256": "539ACCD89C9B4C99453D12AF8CCD1529D4DB87AB513FB6052E8D31DAA7A91F10"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/light_placement.xml",
+    "Sha256": "21B01786F135E7C8E6272A1132F84A55DD25AA4E99CA0248956E88ED3106F0C2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/niwater.pssg",
+    "Sha256": "E3A3642CD7E990BD7DAAA23071F2F52B62F09A8932DF968085FA0C28D892E7E1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/niwater.xml",
+    "Sha256": "93B9DA0C5B3EA8DA4CA2E24DB8F5B646342463D1F8900CAEEE502826D9B64026"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/objects.ens",
+    "Sha256": "C6DC1C94FDA920F85F5ADCCC5BD5A55A9F11272DCDD85C6D0622DB434BBD8F2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/ornament_attributes.xml",
+    "Sha256": "ACA6A7CC27A3BCD7F7B0D2E1BB3C479A60EA0851CC1BD3EFB3615D1F2C110653"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/ornaments.bin",
+    "Sha256": "B33F6022D3757FC83060A4A82E60322181374DA12EE130408B71979E4B9D64AF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/ornaments.xml",
+    "Sha256": "AC357F45719D6DB97B175CA1D6DF4AA9658BF598A4D93FF160E6E5A74A9CDC84"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/pfx_atmospheric.xml",
+    "Sha256": "7A0A9C70A155F33A77501B0C2734CE7E6C0D41A65643D21B786EDFFC0A3D1D05"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/pfx.xml",
+    "Sha256": "28127307545A4D57733783AF75905C019490927E7164BC7FB9F86E588E8CFEED"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/progress_track.xml",
+    "Sha256": "91137CD509CDCCF15B5B4B2C8D12C1DEF1AEED39197F955197D535D0EFFB2C7E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/replay_camera_config.xml",
+    "Sha256": "EBAA1AE5FE61C8A12CD5F93D856F819AD6BA43674EEC0180CEF7F5E6BC7C82E3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/resetlines.cqtc",
+    "Sha256": "9821E7E1DADDB630618B59A2BD80B14EA8DFD67D3E86F3DCEF63411A50FC2469"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/route_overrides.xml",
+    "Sha256": "5135A48B36CCC5BA08B998440C93B5B6834A5857E88983D764219DDDDA0BE76E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/route_trackao_day_alt.pssg",
+    "Sha256": "72BCA8E12F625D4CCE8710797716AD2C795695B4A8B4CB3CDCF78F5D21851888"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/route_trackao_day.pssg",
+    "Sha256": "2E1096907E028D9847573B2D34066F1EB537E549A9294092BE73446B77F4C3ED"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/route_trackao_wet.pssg",
+    "Sha256": "209721638AAA666A6B202562FB054A73640796BC8DB4FACDE605767F5BC53A8F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/routesplit.pssg",
+    "Sha256": "63D1F86942CEB63F29B247806D8A332BC77451799A2D0A0CD7930B77E36DBA19"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/shadow_map_day_alt.clm",
+    "Sha256": "478168E6F735563AE1A90ABD7D84ADDDCF9D79A101B91DDB7EEBDDA178F896AD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/shadow_map_day.clm",
+    "Sha256": "489317422963CF0CA10EE8522E71655EF4E68A3237DE798EF2B8D9E2C5954F27"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/shadow_map_wet.clm",
+    "Sha256": "4EAE704C0F355420FB3207380FC05A5C65E9E8BC52C2C429DF7F0508DB94FFAE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/sky_day_alt.pssg",
+    "Sha256": "A40E83C7532D34394149F2A82154B70EE7DF0EA4206D54709C5BBB110490109D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/sky_day.pssg",
+    "Sha256": "49587CD6C4125DC973B743215FB44AC76A4D5CE4C48F4E461C0CB9359F8E7B2A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/sky_wet.pssg",
+    "Sha256": "573B5CE18E32D8234AD7AC4179489ADBE0FE804F2143DEA1F16F3498734066D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/steerAssistData.xml",
+    "Sha256": "69FDA407C961850B474CF156D8FBBB41B92AE6003DA840B8F68BDC21E411C510"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/track.jpk",
+    "Sha256": "9FD55EA80B0B0A78C46B94F3A3A17DEDDC4DFB0793B74B2AA3A098F5FEB8B84F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/track.vis",
+    "Sha256": "5D96711EA22B3E312190B0304233E0A396A4D7BD6BA601E19E05E31D81769261"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/tree_attributes.xml",
+    "Sha256": "C834CBA3201BBA0565AD48FAB8584B83548EAC61B6841D752224AF9D5B177198"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/trees.bin",
+    "Sha256": "746C56AE0B3E9DEE18A80F83F3EF35A272015763C859E678D652E23502C5B9BF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/trees.xml",
+    "Sha256": "52E3AC89BF275C210AE00E76AFA08D2C58B66C175F55BCFAB54E9BFE8082601E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/triggers_crowd.xml",
+    "Sha256": "991EC20E0C8ECA92AACD823A7E9F35E7B651EF23DDD70BAFB3EFB996DCED4673"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/route_9/vehicle_track_progress_data.xml",
+    "Sha256": "116544202EE660D5E16F933F8F01C52605F225F2A491B9B101719420911D4539"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/sky_day.pssg",
+    "Sha256": "F6FC1F405DEEA3584DBD94C10A1FD0E5FF43455CB752A04E78ECB4AEFC75CD7F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/skymap_day_alt.clm",
+    "Sha256": "437D740564C8592BE9F781E74EE08A9B4A565ACBA48673591918F68FCDCBC093"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/skymap_day.clm",
+    "Sha256": "A06D811B9794317A6737DC6C89505326E6FD9D7E3DBE9BFB816BE8C432FECD7B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/skymap_wet.clm",
+    "Sha256": "EAA1FBB51FFAD2B082DEA4B41B74594B2D524685A070838433AE3BCA8C769900"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/trackao_day_alt.pssg",
+    "Sha256": "AE770B3BB4727E6CC48B13DABD58DD090E4A45BB254378FA2D72CD4F0F5D60FB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/trackao_day.pssg",
+    "Sha256": "DE8ADDBF5919D9CDEF19E37AF37D865AF91D15AC2446F6BAE08C4E3C87027737"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/trackao_wet.pssg",
+    "Sha256": "3A8996DA42F9FD2A555E500A96AC5E77B69CF2429219DD603EC24EC788CB0C53"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/tracksplit.pssg",
+    "Sha256": "BD6A03F811C502511D6DE315E86334E486F8A5F0948FBA3A8F207D2730B48747"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/trees.pssg",
+    "Sha256": "42AE7EE397CF658C96E31FB8831D20C4265CBB60619FC6FCCA80735724213A7C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/treestextures.pssg",
+    "Sha256": "42C714C97B65063C097CA4DCA5C8FBAD0971CB24C5C9F2BCE16035E16C0FEFE4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/waterdefs_day_alt.xml",
+    "Sha256": "C0DB57C81DD907091E2ED0162C4F78667F62BFE4410040E7E3D4069D4B75E562"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/waterdefs_day.xml",
+    "Sha256": "DA8C333E34A8326959B73439E5A07B1860FCF20F7192E2A74CC33ACACBF1A043"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/smelter/waterdefs_wet.xml",
+    "Sha256": "E85DCAE326BDA620CFD0291FFF90CC158997E3186C6CE1784B5D5B63174AD7B7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/sponsors/sponsor_quaife.pssg",
+    "Sha256": "44A33D742C4954C4EBDA4ECDD6978E6CC30C214096A1963D191735BE197834A0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/sponsors/sponsor_slime.pssg",
+    "Sha256": "777504D3B2202CA82733C0E160ACD9DA6222508EE9704B39FB72AC032FE9FFCF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/sponsors/sponsor_sparco.pssg",
+    "Sha256": "5F0579C9B560394E6FC1EAA15A45534C77AFAF86E362311EEDCFBA4F22E4A0C3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/sponsors/sponsor_yokohama.pssg",
+    "Sha256": "862C9B27D851B187F15B4A6FC278D2DC217EFFDE3FFDD11BB6A8210B7B8DB45D"
+  }
+]

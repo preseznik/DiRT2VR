@@ -97,7 +97,7 @@ Driving controls
 Direct practice and Race load the existing profile's controls. Already-signed-in accounts continue straight to the event; otherwise, sign in when GFWL asks. Canceling sign-in or a career-load error ends the launch without creating a replacement save. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
 
 Cockpit animation (experimental)
-Remove artificial steering corrections targets extra wheel/hand twitch in desktop and VR cockpit views. Off by default. Desktop requires DX11; select cockpit view yourself. Keeps the original animation range and steering filter without changing handling or force feedback. It does not match 540 or 900 degrees. Desktop testing and the PC3080 VR check confirmed that wheel judder is removed. PC1060 can crash in VR with this option enabled; leave it off on affected setups. Missing hands or a static wheel on other setups remain under investigation. Save and relaunch to apply.
+Remove artificial steering corrections targets extra wheel/hand twitch in desktop and VR cockpit views. Off by default. Desktop requires DX11; select cockpit view yourself. Keeps the original animation range and steering filter without changing handling or force feedback. It does not match 540 or 900 degrees. Desktop testing and the PC3080 VR check confirmed that wheel judder is removed. The previously reported PC1060 VR launch crash is marked resolved after the user could no longer reproduce it in 0.17.22. Missing hands or a static wheel on other setups remain under investigation. Save and relaunch to apply.
 
 Steering comparison
 Use the same car/event for three runs: main option off; main option on with Observe only checked; then Observe only unchecked. Observe only keeps the original animation values while running the diagnostic hooks. Enable Settings → diagnostic logging to record the last two runs. Hold centre, turn slowly left/right, then drive over rough ground. Save and relaunch between runs. Diagnostics are bounded and do not enable logging by themselves.
@@ -168,20 +168,23 @@ Controls also provides six optional seat movement bindings. These are unassigned
 
 Current testing
 Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
-        "Install Aspen (Experimental)
-Close DiRT 2. On Launcher, check CUSTOM tracks and choose Install Aspen. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Build and install to check the source files and build all four layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
+        "Custom tracks (Experimental)
+Close DiRT 2. On Launcher, check CUSTOM tracks, choose a Track pack, then Build and install…. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Build and install to check the source files and build the selected pack. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
 
 Play
-After installation, choose a layout, Direct practice or Race, and a Car. Choose Launch for desktop play or Launch VR with SteamVR and your headset ready. Practice is solo; Race adds 1–7 AI opponents with same-car, mixed or same-class grids. Use the sliders to choose opponents and 1–20 laps. These options are experimental: Aspen headset rendering and broader AI race coverage still need gameplay validation. LAN is unavailable. Rebuild an existing Aspen installation once to update AI paths before racing; solo practice remains available. Conversion happens before installation, never during game loading.
+For Aspen, choose a layout, Direct practice or Race, and a Car. Choose Launch for desktop play or Launch VR with SteamVR and your headset ready. Practice is solo; Race adds 1–7 AI opponents with same-car, mixed or same-class grids. Use the sliders to choose opponents and 1–20 laps. These options are experimental: Aspen headset rendering and broader AI race coverage still need gameplay validation. LAN is unavailable. Rebuild an existing Aspen installation once to update AI paths before racing; solo practice remains available. Conversion happens before installation, never during game loading.
 
-Layouts
+Smelter test
+County Loop — Morning sun is available for desktop Direct practice in the Subaru STI. Build the Smelter pack, then use Launch. Race, VR and the other nine layouts are pending. This candidate needs a full lap, off-road reset and restart check, plus inspection of scenery and water.
+
+Aspen layouts
 Lakeside: night. Lake View: morning sun. Snowmass Sprint: evening sun. Snowmass Loop: overcast. These are Rallycross layouts. Ski-lift animation, full snowfall and deformable snow remain unsupported.
 
 Offline and original tracks
-Installed tracks work offline without DiRT 3. Keep the source installation for rebuilds and updates. Custom layout, car, race and lap settings are saved separately. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
+Installed tracks work offline without DiRT 3. Keep the source installation for rebuilds and updates. Each pack keeps its own layout, car, race and lap settings, separately from stock tracks. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
 
 Manage and recover
-Manage offers optional track updates, file verification, rebuilding and uninstalling. Unsupported source files are named: choose the correct folder or verify original files in Steam. Cancellation keeps existing tracks usable. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files.",
+Manage offers file verification, rebuilding from source and uninstalling the selected pack. Unsupported source files are named: choose the correct folder or verify original files in Steam. Cancellation keeps existing tracks usable. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files.",
         "Modern interface
 Settings → Appearance → Modern interface previews the modern compact layout immediately. Off restores Classic. Save settings keeps your choice. Existing settings start in Classic; fresh installations start in Modern. Both follow Windows light/dark appearance and high-contrast colours.
 
