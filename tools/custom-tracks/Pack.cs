@@ -53,7 +53,7 @@ public static class TrackPacks
 {
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
-    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.1", "0.17.30", ["desktop-solo"],
+    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.2", "0.17.30", ["desktop-solo"],
         [new("smelter-county-loop", "County Loop", "d2vr_smelter_0", "Morning sun"),
          new("smelter-portage-canal", "Portage Canal", "d2vr_smelter_1", "Morning sun"),
          new("smelter-houghton-sprint", "Houghton Sprint", "d2vr_smelter_2", "Wet lighting (no rain)"),

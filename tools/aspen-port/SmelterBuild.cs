@@ -91,14 +91,15 @@ internal static class SmelterBuild
         var barrierPath = Path.Combine(track,"objects.pssg");
         var barrierMeshes = PortFiles.ReadPssg(barrierPath);
         PortFiles.Json(Path.Combine(output,"barrier-meshes.json"),SmelterBarrierMeshes.Convert(barrierMeshes));
+        PortFiles.Json(Path.Combine(output,"log-meshes.json"),SmelterLogMeshes.Convert(barrierMeshes));
         PortFiles.WritePssg(barrierMeshes,barrierPath+".tmp");
         ObjectVertexLayout.Verify(barrierMeshes,PortFiles.ReadPssg(barrierPath+".tmp"));
         File.Move(barrierPath+".tmp",barrierPath,true);
-        // These concrete models each have static and movable instances. Keep
+        // Concrete barriers and log piles have static and movable instances. Keep
         // their native batches populated, as for Aspen's mixed plastic barriers;
         // baking/clearing the static part can hide nearby movable instances.
         PortFiles.Json(Path.Combine(output,"scene-props.json"),StaticProps.Bake(track,
-            SmelterBarrierMeshes.Models));
+            SmelterBarrierMeshes.Models.Concat(SmelterLogMeshes.Models).ToHashSet(StringComparer.Ordinal)));
         PortFiles.Json(Path.Combine(output,"ornament-visibility.json"),SmelterVisibility.Objects(track,d2,output,inputs));
         PortFiles.Json(Path.Combine(output,"terrain-containers.json"),TerrainContainers.Convert(track));
         var landPath=Path.Combine(track,"land.pssg");var land=PortFiles.ReadPssg(landPath);

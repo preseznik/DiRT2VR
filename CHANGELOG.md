@@ -8,7 +8,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Investigate fixed bright snow patches on Buttermilk Climb and Descent. A local colour diagnostic is available for testing; a visual correction is not yet confirmed.
 
-- Test a shared Smelter scenery correction for popping fences and trackside detail across all ten layouts. Rebuild Smelter from Manage after updating; in-game confirmation is still needed.
+- Test a focused correction for disappearing Smelter log piles, preserving their break-apart behavior. Rebuild Smelter from Manage after updating. The earlier scenery changes did not resolve all reported pop-in; this candidate still needs a driving check.
 
 - Add Aspen’s four Landrush and two Head-to-head courses for desktop practice testing, with source lighting defaults and a Landrush truck. Rebuild Aspen from Manage after updating. Buttermilk courses are solo practice only; the existing four Rallycross layouts keep their Race, VR and car options. New courses still need gameplay checks.
 
