@@ -39,6 +39,9 @@ Public Class CustomTrackPanel
     Private installationValid As Boolean
     Private installedLayouts As New HashSet(Of String)(StringComparer.Ordinal)
     Private hasReceipt As Boolean
+    Private testSession As Boolean
+    Private regularMode As Integer
+    Private regularCar As String
     Private raceReady As Boolean
     Private working As Boolean
     Private loading As Boolean
@@ -72,7 +75,7 @@ Public Class CustomTrackPanel
     End Property
     Public ReadOnly Property CanLaunchVr As Boolean
         Get
-            Return CanLaunch AndAlso TrackPacks.Get(currentPack.Id).Modes.Any(Function(m) m.StartsWith("vr-", StringComparison.Ordinal))
+            Return CanLaunch AndAlso Not TrackPacks.Get(currentPack.Id).DesktopPracticeOnly(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id) AndAlso TrackPacks.Get(currentPack.Id).Modes.Any(Function(m) m.StartsWith("vr-", StringComparison.Ordinal))
         End Get
     End Property
     Public Sub New(value As InstallContext)
@@ -118,7 +121,7 @@ Public Class CustomTrackPanel
         AddHandler layouts.SelectedIndexChanged, Sub()
                                                     Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
                                                     condition.Text = If(chosen Is Nothing, "Choose a layout", chosen.Discipline & " · " & chosen.Condition)
-                                                    If Not loading Then LoadSmelterCar()
+                                                    If Not loading Then LoadLayoutSession()
                                                     RefreshRaceOptions()
                                                     RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
                                                 End Sub
@@ -175,7 +178,7 @@ Public Class CustomTrackPanel
         Try
             browser.PackList.SelectedItem = currentPack : browser.Picker.SelectedItem = currentPack
             title.Text = currentPack.Name : description.Text = currentPack.Description
-            installationValid = False : raceReady = False : hasReceipt = False : errorText = "" : installedLayouts.Clear()
+            installationValid = False : raceReady = False : hasReceipt = False : errorText = "" : installedLayouts.Clear() : testSession = False
             Dim selected = preferences.ForPack(currentPack.Id)
             layouts.Items.Clear()
             For Each trackLayout In currentPack.Layouts
@@ -196,17 +199,27 @@ Public Class CustomTrackPanel
         Finally
             loading = False
         End Try
-        LoadSmelterCar() : RefreshRaceOptions() : RenderState()
+        LoadLayoutSession() : RefreshRaceOptions() : RenderState()
     End Sub
-    Private Sub LoadSmelterCar()
-        If currentPack?.Id <> "smelter" OrElse layouts.SelectedItem Is Nothing Then Return
-        Dim code = TrackPacks.Smelter.PracticeCar(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id)
+    Private Sub LoadLayoutSession()
+        If currentPack Is Nothing OrElse Not currentPack.Available OrElse layouts.SelectedItem Is Nothing Then Return
+        Dim pack = TrackPacks.Get(currentPack.Id), id = DirectCast(layouts.SelectedItem, LayoutItem).Value.Id
+        Dim restricted = pack.DesktopPracticeOnly(id)
+        If Not restricted AndAlso Not testSession Then Return
+        If Not testSession Then
+            regularMode = launchMode.SelectedIndex
+            regularCar = If(TryCast(cars.SelectedItem, PracticeCar)?.Code, preferences.ForPack(currentPack.Id).CarCode)
+        End If
         Dim wasLoading = loading
         loading = True
         Try
+            launchMode.Items.Clear() : launchMode.Items.Add("Direct practice")
+            If Not restricted Then launchMode.Items.Add("Race")
+            launchMode.SelectedIndex = If(restricted, 0, regularMode)
             cars.Items.Clear()
-            cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) c.Code = code AndAlso File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).Cast(Of Object).ToArray())
-            cars.SelectedIndex = If(cars.Items.Count = 1, 0, -1)
+            cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) (Not restricted OrElse c.Code = pack.PracticeCar(id)) AndAlso File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
+            cars.SelectedItem = cars.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = If(restricted, pack.PracticeCar(id), regularCar))
+            testSession = restricted
         Finally
             loading = wasLoading
         End Try
@@ -224,9 +237,10 @@ Public Class CustomTrackPanel
         CaptureSelection() : preferences.Save(context)
     End Sub
     Private Sub RefreshRaceOptions()
-        modeHint.Text = If(currentPack?.Id = "smelter", "Desktop practice test · Race and VR pending", "Desktop and VR · AI races are experimental · LAN unavailable")
         Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
-        If currentPack?.Id = "smelter" AndAlso chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Solo practice on a Head-to-head course; competitive Head-to-head is unavailable."
+        Dim restricted = currentPack IsNot Nothing AndAlso currentPack.Available AndAlso chosen IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).DesktopPracticeOnly(chosen.Id)
+        modeHint.Text = If(restricted, "Desktop practice test · Race and VR pending", "Desktop and VR · AI races are experimental · LAN unavailable")
+        If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Solo practice on a Head-to-head course; competitive Head-to-head is unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."
         Dim race = launchMode.SelectedIndex = 1
         opponents.Enabled = race : opponentCars.Enabled = race
@@ -293,7 +307,7 @@ Public Class CustomTrackPanel
                             Await CustomTrackService.InstallAsync(context, offer, selected.SourceFolder, progress, token)
                             installationValid = True : hasReceipt = True : raceReady = TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race")
                             installedLayouts = offer.Layouts.Select(Function(l) l.Id).ToHashSet(StringComparer.Ordinal) : RefreshRaceOptions()
-                            SetStatus("Installed · Ready offline", currentPack.Name & " " & offer.Version & " installed. Choose a layout, then " & If(currentPack.Id = "smelter", "Launch for desktop testing.", "Launch or Launch VR."))
+                            SetStatus("Installed · Ready offline", currentPack.Name & " " & offer.Version & " installed. Choose a layout, then Launch.")
                         End Function)
     End Function
     Private Async Function Operation(action As Func(Of CancellationToken, IProgress(Of TrackProgress), Task)) As Task
@@ -333,7 +347,7 @@ Public Class CustomTrackPanel
             TextRenderer.DrawText(e.Graphics, pack.Name, bold, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         End Using
         bounds.Y += Px(Me, 24)
-        TextRenderer.DrawText(e.Graphics, If(pack.Id = AspenPack.Id, "4 Rallycross layouts", If(pack.Id = "smelter", "10 layouts · Solo practice", "Saved selection")), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        TextRenderer.DrawText(e.Graphics, If(pack.Id = AspenPack.Id, "10 layouts · 4 with Race/VR", If(pack.Id = "smelter", "10 layouts · Solo practice", "Saved selection")), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         bounds.Y += Px(Me, 24)
         TextRenderer.DrawText(e.Graphics, packStatuses(pack.Id), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         e.DrawFocusRectangle()

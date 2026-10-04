@@ -15,8 +15,8 @@ public sealed record ConversionProfile(string Id, string Name, string Version, s
 public static class AspenPack
 {
     public const string Id = "aspen-rallycross";
-    public const string Version = "1.0.1";
-    public const string MinimumLauncher = "0.17.4";
+    public const string Version = "1.1.0";
+    public const string MinimumLauncher = "0.17.29";
     public const string Support = "DiRT2VR/custom-tracks/aspen-rallycross";
     public const string Receipt = Support + "/receipt.json";
     public static readonly string[] Modes = ["desktop-solo", "vr-solo", "desktop-race", "vr-race"];
@@ -24,7 +24,13 @@ public static class AspenPack
         new("aspen-lakeside", "Lakeside", "d2vr_aspen", "Night"),
         new("aspen-lake-view", "Lake View", "d2vr_aspen_lv", "Morning sun"),
         new("aspen-snowmass-sprint", "Snowmass Sprint", "d2vr_aspen_ss", "Evening sun"),
-        new("aspen-snowmass-loop", "Snowmass Loop", "d2vr_aspen_sl", "Overcast")];
+        new("aspen-snowmass-loop", "Snowmass Loop", "d2vr_aspen_sl", "Overcast"),
+        new("aspen-eagle-hill-rise", "Eagle Hill Rise", "d2vr_aspen_ehr", "Night", "Landrush"),
+        new("aspen-eagle-hill-loop", "Eagle Hill Loop", "d2vr_aspen_ehl", "Night", "Landrush"),
+        new("aspen-brush-creek-sprint", "Brush Creek Sprint", "d2vr_aspen_bcs", "Evening sun", "Landrush"),
+        new("aspen-brush-creek-dash", "Brush Creek Dash", "d2vr_aspen_bcd", "Evening sun", "Landrush"),
+        new("aspen-buttermilk-descent", "Buttermilk Descent", "d2vr_aspen_bd", "Overcast", "Head-to-head"),
+        new("aspen-buttermilk-climb", "Buttermilk Climb", "d2vr_aspen_bc", "Overcast", "Head-to-head")];
     public static readonly string[] SharedTargets = ["surface_materials.xml", "database/database.bin",
         "language/language_eng.lng", "language/language_fre.lng", "language/language_ger.lng",
         "language/language_ita.lng", "language/language_jpn.lng", "language/language_pol.lng",
@@ -92,9 +98,11 @@ public sealed class TrackPack
     public string[] InstallRoots => Layouts.Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
     public Layout GetLayout(string id) => Layouts.SingleOrDefault(l => l.Id == id)
         ?? throw new IOException("This custom layout is unavailable. Select an installed layout.");
-    public Layout[] ReceiptLayouts(PackReceipt receipt) => Id == "smelter" &&
+    public Layout[] ReceiptLayouts(PackReceipt receipt) =>
         System.Version.TryParse(receipt.Version, out var version) && version < new System.Version(1, 1, 0)
-        ? [Layouts[0]] : Layouts;
+        ? Layouts.Take(Id == AspenPack.Id ? 4 : 1).ToArray() : Layouts;
+    public string[] ReceiptRoots(PackReceipt receipt) => ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
+    public bool DesktopPracticeOnly(string id) => !Modes.Contains("desktop-race") || GetLayout(id).Discipline != "Rallycross";
     public string PracticeCar(string id) => GetLayout(id).Discipline == "Landrush" ? "kin" : "sti";
     public bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
     public bool SupportsRace(PackReceipt receipt) => Modes.Contains("desktop-race") && System.Version.Parse(receipt.Version) >= new System.Version(1, 0, 1);
@@ -102,8 +110,9 @@ public sealed class TrackPack
     {
         GetLayout(id);
         if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")) ||
-            (Id == "smelter" && car != PracticeCar(id)))
-            throw new IOException(Name + " currently supports desktop Direct practice only: Subaru STI for Rallycross/solo Head-to-head courses, Kincaid Ford F-150 for Landrush. Race and VR are not available in this test build.");
+            (DesktopPracticeOnly(id) && (vr || mode != "practice" || car != PracticeCar(id))))
+            throw new IOException(GetLayout(id).Name + " currently supports desktop Direct practice only, using " +
+                (PracticeCar(id) == "kin" ? "the Kincaid Ford F-150" : "the Subaru STI") + ". Race and VR are unavailable for this test layout.");
         if (mode is not ("practice" or "race") || string.IsNullOrWhiteSpace(car) || laps is < 1 or > 20 ||
             (mode == "practice" ? opponents != 0 : opponents is < 1 or > 7))
             throw new IOException("Choose Direct practice or Race, an installed car, and one to twenty laps. Race supports one to seven opponents. LAN is unavailable.");

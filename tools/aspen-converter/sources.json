@@ -1498,5 +1498,1465 @@
     "Game": "dirt3",
     "Path": "tracks/sponsors/sponsor_yokohama.pssg",
     "Sha256": "862C9B27D851B187F15B4A6FC278D2DC217EFFDE3FFDD11BB6A8210B7B8DB45D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/ai_track.xml",
+    "Sha256": "E40624990A954697E990168099C429EC824CF4CEFB8FF66BDCADFB63DF5A4787"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/ai_vehicle_track.xml",
+    "Sha256": "F4DDCF16EBFD8BC25735764BC561426310D2999EFE808B37D75C4704EB2AB779"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/ao.clm",
+    "Sha256": "F34B3ACC26D0FEBBF971A88883E7036E28694866A102931B9C4D05EFDF8F0FB1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/aspen_codriver_1_easy_4.xml",
+    "Sha256": "EF2F75E404E88DF98FD5FDD98BA8BF0C6CA2E8E6F55AB22AF6518C0E68F71C28"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/aspen_codriver_1_pro_4.xml",
+    "Sha256": "91F594222F084F3F2E81411474AEA5F8530F674200E1BCCE6538B951DE74449E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/aspen_codriver_2_easy_4.xml",
+    "Sha256": "44F37884A697F42E9D9F4930EE63D75B1F6A55CC1C1D1F3A5ADC611585CB3989"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/aspen_codriver_2_pro_4.xml",
+    "Sha256": "857D1259902D216E6219BD927F4D1665325A54DB71E2E36D25BCF30B18A0E0C8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/barrierlines.cqtc",
+    "Sha256": "04AB480FBA3D8BBFB928EB72F77AC6DC392CB61DE3ED54FC9B30EF415A530222"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/boundarylines.cqtc",
+    "Sha256": "F474CE4DAFC042C2466738B736FADA7B1E79D6F6418EAC489F56A985A0C97B94"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/cameralines.cqtc",
+    "Sha256": "1E2DA7DD31D7A60A48DA62A1573C54432BEDB45567338B1EB1573ADDC9FE9968"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/clothFile.bin",
+    "Sha256": "5FF89B84F1948072E0801F75DECDCADFF12BAEEF3C0605829DD6EA5A254C0360"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/crowd_standing.cns",
+    "Sha256": "855FE2E5D225C80D9D388F5C222EE2A021BD6F7BFA98EA7AA6D34248A9845000"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/crowd_standing2.bin",
+    "Sha256": "60EE9CA43FD0E101F940E67B7960536B70764CB04D30FD647016A12CED324369"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/cutscene_establish.xml",
+    "Sha256": "1AB4D894601A08A55DEE6C8D3BD2D3A8DE37E9E225F0F483506EA8B6F7C78FA0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/cutscene_event_start.xml",
+    "Sha256": "0E24C2D43842B012FAA703CFC9E6BB587E36C609FD8B29AE59B540D3C22B86FB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/cutscene_montage.xml",
+    "Sha256": "651400899CC56B28FE055A1EFC3958E4E6E3070C4FA2C0F6A3D03F372E4BC77E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/cutscene_multi_post_race.xml",
+    "Sha256": "233CDB1C3CDA6BD58EC29322B0BD08A80D4A2D7DE7DA6332C63D3E6AB501CCA6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/cutscene_post_race.xml",
+    "Sha256": "7D952055CD8005D20493CE704A0DB6C276D6F4709BFBF92BC1A130829711C6BA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/cutscene_title.xml",
+    "Sha256": "71D7A7A687050A495E1FF2668C43DE6E07904E1F959F0DAD9306A299CFEE8AC6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/grids.pssg",
+    "Sha256": "75948E278CFBC7D83DB7D9689DAA87358D9C04E4A069DD19BC2D1151C646B118"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/iwater.pssg",
+    "Sha256": "1E0DCB767C2CDC1FE1B864E71E1AF75EE9490ADBE18A9BFAE13CE6E11CD641AE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/iwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/light_placement.xml",
+    "Sha256": "658B0E52A4AFDFF9A9765CFCB242220ED5A427FACABE2B789D6AC3DB891393F2"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/niwater.pssg",
+    "Sha256": "2FAD781277C8D39938EC45A9EB42D81CB11E331A87B4485A1C7BF086705B7F7D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/niwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/objects.ens",
+    "Sha256": "9FD13569D9D0DF4844A7F25B706C2DDEDD13A0E4B09CB52ECB3870A2933C6D77"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/ornament_attributes.xml",
+    "Sha256": "D2BE2D337F92747A0F64E5C83ABC37CC7EB973DC5B04CEECC9C03101D0C3B837"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/ornament_path_anims.pssg",
+    "Sha256": "4DF154D367F76E36619496B0B18DDFF6CBBE44F37EE390B07C456289AB8E3B7C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/ornaments.bin",
+    "Sha256": "41B10FDA6B68F64CF168B64A2D5D025D6E1498EEA402647B32DC6A86A5B75513"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/ornaments.xml",
+    "Sha256": "75C1E85CCFE83FEC504AB90F8DB41D6674BC041BFB113BC1AA3FC7DC9C147D5F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/pfx.xml",
+    "Sha256": "93E96329B5405FBD776B727225E182603EE8C07863D085B9F877F95152A973EF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/pfx_atmospheric.xml",
+    "Sha256": "B5718FF4E0D31D98DD3F0B6D7A5042AFE45AF0BA5890C4460A5DE18E010D3F20"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/progress_track.xml",
+    "Sha256": "4362B4A5E22B070DBB2D5A49FB0F776A3F0D40E52D1FF406C8BA52C7F9279C67"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/replay_camera_config.xml",
+    "Sha256": "4C66531D5F9CD5A4D2FD7768EF9420ED94FE98CA8F4A222ECF126E4736F47B11"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/resetlines.cqtc",
+    "Sha256": "685EFABE3A9238761A68835C254D115DCB90E59F26DB8E956550331BCFF3C5B9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/route_overrides.xml",
+    "Sha256": "33BBDB4C5A5C55F1F6709ADCFC1DA7446445EC4505C080462D3A0858B271E0E1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/route_trackao_snowing.pssg",
+    "Sha256": "1C772F5622C94100BA9505D2B31AFBD556E9E864E2029B3F71EF90D4943D8709"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/routesplit.pssg",
+    "Sha256": "D0046CCAB37E086B897D718A0024320A3CAB5AB2BC483B759068D42DC1DEA61F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/shadow_map_snowing.clm",
+    "Sha256": "8FD8814730072B9C37F2AD0BBD2FD1F6664FF50BE2E5218AE5062ED22B74EF8F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/sky_snowing.pssg",
+    "Sha256": "04998092FF621356B9C1B219DB532A5E72F64E9F613A3791F5BAFD89DD0E5160"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/snow.pssg",
+    "Sha256": "F0FB49810DCD9DB9C962D05E920A1D0A0122E33B1207E8E81ED391B299C626E5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/steerAssistData.xml",
+    "Sha256": "1727D02A695123C06404CCCE8F282040B794DFA6D78FE100B2E560B4BAD27245"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/track.jpk",
+    "Sha256": "CF65B6F09B1117AF9BF96F95B2C1CA6AE416600EF0B9ABCB8FE39165D9F70F90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/track.vis",
+    "Sha256": "EAA0E5578244200A5EA1EE8BCFE819EF4E94B63C710573CFB9225857BB9FB28B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/tree_attributes.xml",
+    "Sha256": "E8D772448A39FA4F5C1FF38233081162E12C06332F5EB841F2E69AD42A48554E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/trees.bin",
+    "Sha256": "A8B23BAB0221358663986EF8860D69ABF65E6FAE8EC6BD8C5F28B7AE0A7F4F08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/trees.xml",
+    "Sha256": "562AEFE0F282CA5B2D7CD6D0130D0A74EEEFDAF24F871F651C8959B3D5A57F90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/triggers_animated_objects.xml",
+    "Sha256": "48B215D152A5A96699D4524D7427E403A14616F9E64B5257ABFBC301665F87D6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/triggers_anti_cheat.xml",
+    "Sha256": "CEFBD362585346E389AA762F2C8896540ABA035ACF55130C9CF76137EE2CB986"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_4/vehicle_track_progress_data.xml",
+    "Sha256": "6887D00D1C9C3B974AB2F27B69657A63FF5F99BFF0423EF3E54ED052928EAA29"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/ai_track.xml",
+    "Sha256": "80BD9E55C62853274FB9BB67F7FAAA97B023E22AF627C8EB4B004353EAE27166"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/ai_vehicle_track.xml",
+    "Sha256": "B6AE1B3A6A256B919E4715A447CF06DB26B8828DA70DFCEBCE1A9E1169178DEB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/ao.clm",
+    "Sha256": "F34B3ACC26D0FEBBF971A88883E7036E28694866A102931B9C4D05EFDF8F0FB1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/aspen_codriver_1_easy_5.xml",
+    "Sha256": "63219F43FB41EA8AF19DD1B387BD1D90E3FDD63DF20A439D564A6B2C2B334691"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/aspen_codriver_1_pro_5.xml",
+    "Sha256": "32CF437335EF83B2856ABB57D7F28B3A48A1722E7D4A20ACE017ABBDC02F0966"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/aspen_codriver_2_easy_5.xml",
+    "Sha256": "E4B97A3DAB464EE204F4E85DA88AA4D4332ACAA6D20841FFCCE9CCD4F8473024"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/aspen_codriver_2_pro_5.xml",
+    "Sha256": "1F29E3FD30829CEF68AEDEB8ECF719DB97EEA9E1113A491CD286E5A58F60A66D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/barrierlines.cqtc",
+    "Sha256": "33B05466A93D6B464CC5D47E71BB054CA2A7D48414B6DAC8CBF584580EA12D08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/boundarylines.cqtc",
+    "Sha256": "33467A9B150689D483A2AC5F613ECFBDE5D6ED3C641E8E8C586623D51B5D6410"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/cameralines.cqtc",
+    "Sha256": "1E2DA7DD31D7A60A48DA62A1573C54432BEDB45567338B1EB1573ADDC9FE9968"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/car_sequences_dataset.xml",
+    "Sha256": "706954091F8576F0432CC1BAE5DF639AE2C9A6017E0C71CD738EFFF3C7FF27BF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/clothFile.bin",
+    "Sha256": "172DF49882AEA50C2090BC7593008C2E5FCFB0D86D5BD1DEBE5D9C3E90BD7FEA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/crowd_standing.cns",
+    "Sha256": "BF4BFAD537A4677E3DF7200FB89C18EA75635F4D95FB0B360CB3A3262DBF4EC0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/crowd_standing2.bin",
+    "Sha256": "19E8B570F328D2C4CD23D2DD6AC3F28CCFBCF647AFC6F73419272454C3598F9E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/cutscene_establish.xml",
+    "Sha256": "1AB4D894601A08A55DEE6C8D3BD2D3A8DE37E9E225F0F483506EA8B6F7C78FA0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/cutscene_event_start.xml",
+    "Sha256": "0E24C2D43842B012FAA703CFC9E6BB587E36C609FD8B29AE59B540D3C22B86FB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/cutscene_montage.xml",
+    "Sha256": "651400899CC56B28FE055A1EFC3958E4E6E3070C4FA2C0F6A3D03F372E4BC77E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/cutscene_multi_post_race.xml",
+    "Sha256": "C312EF16FB0165BEEDD5A7DA7B432FBD3B6E86CEA22249A51A52544D5DF0857B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/cutscene_podium.xml",
+    "Sha256": "504E8CC953B52C5DED57EA0188C3CC2F4D112679821D6A585BF39E28043A07A4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/cutscene_post_race.xml",
+    "Sha256": "86FC34E7D0430CB5B85D32ECF47B963B815187E17DE446CE751274E85715A9FE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/cutscene_title.xml",
+    "Sha256": "71D7A7A687050A495E1FF2668C43DE6E07904E1F959F0DAD9306A299CFEE8AC6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/grids.pssg",
+    "Sha256": "E374D096B1A93D8C71E14B32E71004845CF5211CE505E93A9FDA950113F21EA8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/iwater.pssg",
+    "Sha256": "1E0DCB767C2CDC1FE1B864E71E1AF75EE9490ADBE18A9BFAE13CE6E11CD641AE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/iwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/light_placement.xml",
+    "Sha256": "D61E1F4D8AACAC564C3C0A5E164651924907E6E4EB08148CD12D3561E895E379"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/niwater.pssg",
+    "Sha256": "2FAD781277C8D39938EC45A9EB42D81CB11E331A87B4485A1C7BF086705B7F7D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/niwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/objects.ens",
+    "Sha256": "EC6F3A76D3D4B14C968104256D939D6053D20677B8D24B80344508FBA9718035"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/ornament_attributes.xml",
+    "Sha256": "BC3C45FCE11C9B904719A40E9CA5F8FD613CED69294BA6DBD4EDFCB2AB71C0F8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/ornament_path_anims.pssg",
+    "Sha256": "35875BAC0C9AA59F72A1B5E7F4C4C51BA41B99C0CA8DDA051633D298D7C0C1DC"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/ornaments.bin",
+    "Sha256": "AF91D8825562086BD9D3BA9840987CA6E8F3B84CC73B30E8E99A14DD01533605"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/ornaments.xml",
+    "Sha256": "328BDA7E46ABE08090D610713DB84D395DDE1ECF0ED7DEC3208908132D5A4E5B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/pfx.xml",
+    "Sha256": "93E96329B5405FBD776B727225E182603EE8C07863D085B9F877F95152A973EF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/pfx_atmospheric.xml",
+    "Sha256": "B5718FF4E0D31D98DD3F0B6D7A5042AFE45AF0BA5890C4460A5DE18E010D3F20"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/progress_track.xml",
+    "Sha256": "BADFA77F0AE31C322243A1B70BF44812D301B0939B8744C712E90FD3ACDED5C4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/replay_camera_config.xml",
+    "Sha256": "C43BB0E2AAD6636E5D3162E9CB74B8CC9D284A51BA638E032278F31BDC406264"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/resetlines.cqtc",
+    "Sha256": "B39CB7EBC4E694AE1862B4B64ADEB9FD2678F20ABC3C5320F4657A37ADEE27A0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/route_overrides.xml",
+    "Sha256": "766819D5AEA5BA97AEC3CD071343C6018590F747F2E643C04EBC988E500CBF92"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/route_trackao_snowing.pssg",
+    "Sha256": "8F459D24DFE5F8262C73F535FC2BC2F7B3A7403F627C855AB7062EB69E638E08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/routesplit.pssg",
+    "Sha256": "FB91654B616CE8FEECC8041C8C1C326FA98F9301DB987DC7A9075FE9634FCC28"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/shadow_map_snowing.clm",
+    "Sha256": "E3613ECBD052B6B8CC6CFA9FB0C0BD4E3BE7DB13F9639FEAEC1E0ABD126F64F0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/sky_snowing.pssg",
+    "Sha256": "04998092FF621356B9C1B219DB532A5E72F64E9F613A3791F5BAFD89DD0E5160"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/snow.pssg",
+    "Sha256": "F0FB49810DCD9DB9C962D05E920A1D0A0122E33B1207E8E81ED391B299C626E5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/steerAssistData.xml",
+    "Sha256": "CF1850CE2666F7D532322465B5A77CCD85353FE25D7DBAA9D076A0F1713FDC63"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/track.jpk",
+    "Sha256": "2BD32A248D7268542BC55DF32940BD558B44B26626EA50797288246BD2563A84"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/track.vis",
+    "Sha256": "E57452B860486B52CD54458FE6D7689A2EBA5B46DED59022596288F89FE52C44"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/tree_attributes.xml",
+    "Sha256": "E8D772448A39FA4F5C1FF38233081162E12C06332F5EB841F2E69AD42A48554E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/trees.bin",
+    "Sha256": "A8B23BAB0221358663986EF8860D69ABF65E6FAE8EC6BD8C5F28B7AE0A7F4F08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/trees.xml",
+    "Sha256": "562AEFE0F282CA5B2D7CD6D0130D0A74EEEFDAF24F871F651C8959B3D5A57F90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/triggers_animated_objects.xml",
+    "Sha256": "48B215D152A5A96699D4524D7427E403A14616F9E64B5257ABFBC301665F87D6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/triggers_anti_cheat.xml",
+    "Sha256": "87523D01AC6F7E19D9DAD906005231A7BA3E667D76F7F1D6CF70D6D70E69531E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_5/vehicle_track_progress_data.xml",
+    "Sha256": "34FBD95E14D963C726D51E45064C771564BBA16A5AA0A6969E1D9FC9BFCDCC91"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/ai_track.xml",
+    "Sha256": "2D81EC86EAAED0D80C8FDD8C9286E3097A2F4CF7A38544F2007B65D21B681A64"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/ai_vehicle_track.xml",
+    "Sha256": "ADCC58D301F43990A7CD9D1A1AB7557FCEA66E0F995219D16B8EA81E9A9D751F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/ao.clm",
+    "Sha256": "F34B3ACC26D0FEBBF971A88883E7036E28694866A102931B9C4D05EFDF8F0FB1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/barrierlines.cqtc",
+    "Sha256": "D31674EDC11341A0F2B14897B6D80A6CF263E9618420E39C472F4FC4091A67BF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/boundarylines.cqtc",
+    "Sha256": "7C25A9023651FDF39A456BA3539ED203A1CB42D8D212AA715FED26AB71D4DACD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/cameralines.cqtc",
+    "Sha256": "E04372D98AC580B959F17723B986C8A5FF78BD1DF9DC8E67636819126EAA2BD4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/clothFile.bin",
+    "Sha256": "6F04E264CF305D63DAB058EF7D5DEDA580E9848186ED44331DEA8C416AE34A88"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/crowd_standing.cns",
+    "Sha256": "A8E882CA779462E7D92D6B5311B822AF8BE52217367D65403592C3C63A9F336E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/crowd_standing2.bin",
+    "Sha256": "65CA4EF0BC4D1E15C3F994E8DDDF3EAE2F02648220FC02885E4676FB8AEA486E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/cutscene_establish.xml",
+    "Sha256": "AF13EF9C5C74E1C96701EC1AE2F2F09E38E40F4AA6BB2EC836D50A6F4C4C6C86"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/cutscene_event_start.xml",
+    "Sha256": "686FC678CBCDACA21E501B688E6D390E707DD6CC879D3F008838C38A76B31CA7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/cutscene_montage.xml",
+    "Sha256": "518C3944E2DEAF833FD913F75BFF35968895996EEADA1BF3CB41FA7B1C44872E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/cutscene_multi_post_race.xml",
+    "Sha256": "F98EF9B1E0119083E82F1BEB7F7E747806E69A000E135179726F75FFBB6A3631"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/cutscene_post_race.xml",
+    "Sha256": "D3AB30C0CD61979E6375DA91FD9BDE8888529E3628D691864A2A3674ABFECC84"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/cutscene_title.xml",
+    "Sha256": "E3163C923C2E9582306A52740B01CAF0C558B198E195C2A0E186C14EA15393E3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/grids.pssg",
+    "Sha256": "4BC8900A6E26361204E99C67B931CF65ED23B45D057F5ED4C6B3F904781EB969"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/iwater.pssg",
+    "Sha256": "1E0DCB767C2CDC1FE1B864E71E1AF75EE9490ADBE18A9BFAE13CE6E11CD641AE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/iwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/light_placement.xml",
+    "Sha256": "C974E6611A9709A098A63FD4BE91C867CF06492FAE5033329F1047A41C3D297A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/niwater.pssg",
+    "Sha256": "2FAD781277C8D39938EC45A9EB42D81CB11E331A87B4485A1C7BF086705B7F7D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/niwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/objects.ens",
+    "Sha256": "46E4EC24724345EEDDD1E7C62E50AC3D76E802DE876B57D05073B011E161F690"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/ornament_attributes.xml",
+    "Sha256": "E7014247D09490DC0F9735AD0BBC9C3DD8F616A3D54F80F0EDED292E9A15F80B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/ornament_path_anims.pssg",
+    "Sha256": "FEB3A876D23095E4226FBA107FB01058F1B05F93AAC8C8E8739AFB674B28564F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/ornaments.bin",
+    "Sha256": "21D1806C073F53AC9B00EB23BC098B46FEAAD1F32D0FE6AA567BE8E8BBB7E8CE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/ornaments.xml",
+    "Sha256": "02DCB2B146358A4DD5D00B3965323FBB9307210482605C87432A49199D409B2F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/pfx.xml",
+    "Sha256": "4E6DEC8178311E5F1F04B20D9E30B5C8CB69216E4A6F2D20FAD792E4FD1E16DF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/pfx_atmospheric.xml",
+    "Sha256": "B5718FF4E0D31D98DD3F0B6D7A5042AFE45AF0BA5890C4460A5DE18E010D3F20"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/progress_track.xml",
+    "Sha256": "0132C94D469439EE642C1F03FB9D146D28A815D3C56DC0C3FC50E88A68420F45"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/replay_camera_config.xml",
+    "Sha256": "96ADE3711ECC882CFC2C64ECE1EA81C1C68120C96B96AD75FB3BFEDDDF8FE0C8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/resetlines.cqtc",
+    "Sha256": "F89003160A204C6AE1C9F8B3D2237A22E72781DDE2CA401776EB9AE916A8468F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/route_overrides.xml",
+    "Sha256": "826777863BA2A70E105264429159B7B44FB10F462F58B17E3C0223A0F74B2E8C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/route_trackao_night.pssg",
+    "Sha256": "C08118C9C80240BA6378EDE5974F3672044C3D159F859D31530408A81189EC6D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/routesplit.pssg",
+    "Sha256": "85974CCE6005A934B3F1747A3566736320A9AD440B7F9332C4D4BBFB8CF46363"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/sky_night.pssg",
+    "Sha256": "00E86D87BB8B05BF89F706DC4D9F3244664016310AC13F0F0757B74739CF873D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/snow.pssg",
+    "Sha256": "FED3A460FEE56B77F4A4E9564188A8FF7DFCE15225F377135DFEE6DD1C80C96D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/steerAssistData.xml",
+    "Sha256": "F352142C6D78A25AFCEDBBE8A15D997341C7BCC1596CDA523E4E8DB6D9FBC9EE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/track.jpk",
+    "Sha256": "A34B231EA8FDF4EC8EE09CE09189614C5256F08476B789F34DAF4856244447B9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/track.vis",
+    "Sha256": "EDE43E12C230477D17F7FFD07770E17B0B0F983B4D26DDABA3AAF6B09CB46714"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/tree_attributes.xml",
+    "Sha256": "A5069079ACF19B34415CFF3C6B4E5127880EB8013D6173BB59D4A25B47102019"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/trees.bin",
+    "Sha256": "A8B23BAB0221358663986EF8860D69ABF65E6FAE8EC6BD8C5F28B7AE0A7F4F08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/trees.xml",
+    "Sha256": "562AEFE0F282CA5B2D7CD6D0130D0A74EEEFDAF24F871F651C8959B3D5A57F90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/triggers_animated_objects.xml",
+    "Sha256": "48B215D152A5A96699D4524D7427E403A14616F9E64B5257ABFBC301665F87D6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_6/vehicle_track_progress_data.xml",
+    "Sha256": "7EC33871B3299376F758CE6F176F8DDB95B75F06CAD09E74F45E8574EE4900FF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/ai_track.xml",
+    "Sha256": "47411BCC65D3004DC2B13F2FE55119CC8EC505B3977526A3663D7BAE913BC4D4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/ai_vehicle_track.xml",
+    "Sha256": "0B8E4DB38A54D711F9727BC791A9620E8B6C9CC7B629E084352FB0E236ABC207"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/ao.clm",
+    "Sha256": "F34B3ACC26D0FEBBF971A88883E7036E28694866A102931B9C4D05EFDF8F0FB1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/barrierlines.cqtc",
+    "Sha256": "D31674EDC11341A0F2B14897B6D80A6CF263E9618420E39C472F4FC4091A67BF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/boundarylines.cqtc",
+    "Sha256": "7C25A9023651FDF39A456BA3539ED203A1CB42D8D212AA715FED26AB71D4DACD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/cameralines.cqtc",
+    "Sha256": "E04372D98AC580B959F17723B986C8A5FF78BD1DF9DC8E67636819126EAA2BD4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/clothFile.bin",
+    "Sha256": "6F04E264CF305D63DAB058EF7D5DEDA580E9848186ED44331DEA8C416AE34A88"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/crowd_standing.cns",
+    "Sha256": "6AA1CBBC1096A915CA012F80787F0EA818C52CE3E408F7A50FDF1DD47E63B5D8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/crowd_standing2.bin",
+    "Sha256": "723F4BD2FF9259E479FECA9B93192ADAF3249C7283451C6D32625301437835AD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/cutscene_establish.xml",
+    "Sha256": "AF13EF9C5C74E1C96701EC1AE2F2F09E38E40F4AA6BB2EC836D50A6F4C4C6C86"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/cutscene_event_start.xml",
+    "Sha256": "CAA49E1E06D864AE1CBA7800EFBE0FA1012BC70DE3E0711FE929F666A63559DC"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/cutscene_montage.xml",
+    "Sha256": "518C3944E2DEAF833FD913F75BFF35968895996EEADA1BF3CB41FA7B1C44872E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/cutscene_multi_post_race.xml",
+    "Sha256": "6196152409547D5A8153A59DD03970BF4D090A2777125331467256A284C0D038"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/cutscene_post_race.xml",
+    "Sha256": "C83ACBBF738A1874DCA6211052A9AA5121CB61D256D5C2ED9657AB8E0784B078"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/cutscene_title.xml",
+    "Sha256": "60B6504459F6888E9657F3960CBFBDE33B0807957203DBC9162A772533DF5C09"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/grids.pssg",
+    "Sha256": "A029F93160B209C3F023E49A5202683F711C4B7BC3CF43FAE000CCF25D68861B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/iwater.pssg",
+    "Sha256": "1E0DCB767C2CDC1FE1B864E71E1AF75EE9490ADBE18A9BFAE13CE6E11CD641AE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/iwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/light_placement.xml",
+    "Sha256": "4458A0EB8232D2899D5FD136DA0FF6673C034CC92BC283D04D590CBF60A5A98B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/niwater.pssg",
+    "Sha256": "2FAD781277C8D39938EC45A9EB42D81CB11E331A87B4485A1C7BF086705B7F7D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/niwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/objects.ens",
+    "Sha256": "88C31DDD2065808270177983F1869F5EE056EB4C8D34BDE9CFFBF8079A4614A7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/ornament_attributes.xml",
+    "Sha256": "607445C4A427222106877880DCF829D2D2BDCC4C905F1E5ED1E864CC7270D473"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/ornament_path_anims.pssg",
+    "Sha256": "EB768FDBADB8B6792B257673AC3675E60A94204E51EB54A6FBDE7AA28BCC37F1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/ornaments.bin",
+    "Sha256": "BE0C9EE43323BA68FE5E20131B6ACA812E00E8FD73DFB5E22DCA421DCA34C878"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/ornaments.xml",
+    "Sha256": "6045531A8A9C5CBAA523D402A6F89269153DEBF6CD05856004F3F0D0D9BD5C91"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/pfx.xml",
+    "Sha256": "4E6DEC8178311E5F1F04B20D9E30B5C8CB69216E4A6F2D20FAD792E4FD1E16DF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/pfx_atmospheric.xml",
+    "Sha256": "B5718FF4E0D31D98DD3F0B6D7A5042AFE45AF0BA5890C4460A5DE18E010D3F20"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/progress_track.xml",
+    "Sha256": "74EAB3724E52C14C45BEA702CDA2AD933799BFD34DB2F1A700210D868912BF5E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/replay_camera_config.xml",
+    "Sha256": "10C20B33BFC2AC305C686FE09D8D14833D270DAD17759FC9A793FCCFE1832C57"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/resetlines.cqtc",
+    "Sha256": "F89003160A204C6AE1C9F8B3D2237A22E72781DDE2CA401776EB9AE916A8468F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/route_overrides.xml",
+    "Sha256": "2D6F4F70BCCE6197F889D8B4882CC7DF900C93342ED6ECA4DF13A08906FFE52D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/route_trackao_night.pssg",
+    "Sha256": "C08118C9C80240BA6378EDE5974F3672044C3D159F859D31530408A81189EC6D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/routesplit.pssg",
+    "Sha256": "301ED37337797C20E898DEAAC3F3EE186038BAD68D9D0A7A5B62EF2D8E643FAA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/sky_night.pssg",
+    "Sha256": "00E86D87BB8B05BF89F706DC4D9F3244664016310AC13F0F0757B74739CF873D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/snow.pssg",
+    "Sha256": "FED3A460FEE56B77F4A4E9564188A8FF7DFCE15225F377135DFEE6DD1C80C96D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/steerAssistData.xml",
+    "Sha256": "4E867055D4CB5726C59D7975A4A8C1C3966C1AAFA456BA68F623FAC57162221F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/track.jpk",
+    "Sha256": "A34B231EA8FDF4EC8EE09CE09189614C5256F08476B789F34DAF4856244447B9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/track.vis",
+    "Sha256": "203385E01945F82896D98AAACB537A05F16729505B8353A05764C3EF9C437437"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/tree_attributes.xml",
+    "Sha256": "A5069079ACF19B34415CFF3C6B4E5127880EB8013D6173BB59D4A25B47102019"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/trees.bin",
+    "Sha256": "A8B23BAB0221358663986EF8860D69ABF65E6FAE8EC6BD8C5F28B7AE0A7F4F08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/trees.xml",
+    "Sha256": "562AEFE0F282CA5B2D7CD6D0130D0A74EEEFDAF24F871F651C8959B3D5A57F90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/triggers_animated_objects.xml",
+    "Sha256": "48B215D152A5A96699D4524D7427E403A14616F9E64B5257ABFBC301665F87D6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_7/vehicle_track_progress_data.xml",
+    "Sha256": "1BED7871AB704BB1E9FBCEAC593EA1488A0605B9E07EF801844D2F7FA05BB10D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/ai_track.xml",
+    "Sha256": "A76D368022EEA2ABBD56E83F2142800E723F86184306379FD70FD4B41FFD3D5F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/ai_vehicle_track.xml",
+    "Sha256": "3253730487065D93685D9911618954385A4B5EE18663F750050F10CE042491E5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/ao.clm",
+    "Sha256": "F34B3ACC26D0FEBBF971A88883E7036E28694866A102931B9C4D05EFDF8F0FB1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/barrierlines.cqtc",
+    "Sha256": "4DBBD7C207932E9A1E8B09C819FE9D577C98308268C4B3BB832313DF1B76E97D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/boundarylines.cqtc",
+    "Sha256": "E91FA18833F66A42754CDBD7EC20B955F942527553E8667E936BBCA41884D586"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/cameralines.cqtc",
+    "Sha256": "E04372D98AC580B959F17723B986C8A5FF78BD1DF9DC8E67636819126EAA2BD4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/clothFile.bin",
+    "Sha256": "D4099138662CE75F534EC719BFD83C4778C8A7682FB1AEAF2A3610273879F698"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/crowd_standing.cns",
+    "Sha256": "8693D709962452CC259A60255B8B4413370FE12DC66FE3E41004DB58107552C7"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/crowd_standing2.bin",
+    "Sha256": "DD002EC7C049F40510186957153CADEDDAE53D38C4D4028CB882E2C43FB70CE5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/cutscene_establish.xml",
+    "Sha256": "AF13EF9C5C74E1C96701EC1AE2F2F09E38E40F4AA6BB2EC836D50A6F4C4C6C86"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/cutscene_event_start.xml",
+    "Sha256": "D6C31728B0D025DA2B1EC9FD4234D4B41AE6202F0E1D824F8A21A2852EBAA726"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/cutscene_montage.xml",
+    "Sha256": "518C3944E2DEAF833FD913F75BFF35968895996EEADA1BF3CB41FA7B1C44872E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/cutscene_multi_post_race.xml",
+    "Sha256": "DE001F15F12453ECBCF858C5DA1D913C472B7FFA87E6D9C76FFAB21124687D36"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/cutscene_post_race.xml",
+    "Sha256": "AC96F612DA44C7F4FBD29F4CCA3183FEA56DE51F918C277DE7477F5FA2922E5F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/cutscene_title.xml",
+    "Sha256": "ED011B30A5A6D45262C02E3CCD3D8B7413A4F1A2A4F2BAE81E37302A05B5EA31"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/grids.pssg",
+    "Sha256": "2BE6152F33C61030AA2E755BB0EF6EB848B2E13973969F24394B147A1177B922"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/iwater.pssg",
+    "Sha256": "1E0DCB767C2CDC1FE1B864E71E1AF75EE9490ADBE18A9BFAE13CE6E11CD641AE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/iwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/light_placement.xml",
+    "Sha256": "B785877405A9751FE3B3CEE3347759FFA5313B29205BD7E5A4C61BD405107873"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/niwater.pssg",
+    "Sha256": "2FAD781277C8D39938EC45A9EB42D81CB11E331A87B4485A1C7BF086705B7F7D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/niwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/objects.ens",
+    "Sha256": "45A6B4D03AF712E4F20C539CDCE6A1E1E9C5BF68CBF2DA39AD5765FA666339F6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/ornament_attributes.xml",
+    "Sha256": "92A5F6BEEEF2458EEAFE35760DD479BBBD02E4296671F99622F541C0CE31FD93"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/ornament_path_anims.pssg",
+    "Sha256": "AD9A3C817FE438845E8CA5DD7692381A0E6BCA2F3CAA542CB10F441E23E6B65A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/ornaments.bin",
+    "Sha256": "92E69D370C09A1C8230BB41A806EF9CAB35D1311B60EA9963C77D5D7A3F70C7E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/ornaments.xml",
+    "Sha256": "E0A85A07FC7F7C47194D24F6E4FDDE1F1FD7EB4B9A0CBA3BACD54808B82F9A30"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/pfx.xml",
+    "Sha256": "93E96329B5405FBD776B727225E182603EE8C07863D085B9F877F95152A973EF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/pfx_atmospheric.xml",
+    "Sha256": "B5718FF4E0D31D98DD3F0B6D7A5042AFE45AF0BA5890C4460A5DE18E010D3F20"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/progress_track.xml",
+    "Sha256": "EB757BF8200603684DC6221685ACE2E9156C2CBCC9150CB0BD86763CEF6A59D0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/replay_camera_config.xml",
+    "Sha256": "7D2A8AC54E0EB7A8BEA107EF43850D034EDEDA09B2CE5AE804C1ECCF3B3850CF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/resetlines.cqtc",
+    "Sha256": "F89003160A204C6AE1C9F8B3D2237A22E72781DDE2CA401776EB9AE916A8468F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/route_overrides.xml",
+    "Sha256": "F518D174A1A1B32F991D8435D2456657BAE0842FE5AE867C72DCF24DAAEB8558"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/route_trackao_day_alt.pssg",
+    "Sha256": "58FDCA8FBEC661A4D04385F35E42B57A29DC9DEC3B8E97FCB12CE9F2B5869517"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/routesplit.pssg",
+    "Sha256": "1ADF12D7D60CAAA33B1CD5EE9BBBAEA36D3D50C2992F9CA0EA1C9AB9B526714A"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/shadow_map_day_alt.clm",
+    "Sha256": "8135EB334B97D08080FF11AF1D495D7F4D6F3B81F5B3CBA90F9E0709334DA1D5"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/sky_day_alt.pssg",
+    "Sha256": "6098F56A3EDBF9C0A975C7C8F99977BC1DF2A54D4FB8B200DA131B5E87E8AD64"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/snow.pssg",
+    "Sha256": "FED3A460FEE56B77F4A4E9564188A8FF7DFCE15225F377135DFEE6DD1C80C96D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/steerAssistData.xml",
+    "Sha256": "3FBD53656C1780FB988413BBBA9AFFBBBBAF98AE65852178FEFFC1FD8E78A5F9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/track.jpk",
+    "Sha256": "A34B231EA8FDF4EC8EE09CE09189614C5256F08476B789F34DAF4856244447B9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/track.vis",
+    "Sha256": "D0BC26C8F3DD9BBFD123DFEC62E6C34C49E9E97B5C36E8FF94D4287FEA9D2A77"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/tree_attributes.xml",
+    "Sha256": "E8D772448A39FA4F5C1FF38233081162E12C06332F5EB841F2E69AD42A48554E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/trees.bin",
+    "Sha256": "A8B23BAB0221358663986EF8860D69ABF65E6FAE8EC6BD8C5F28B7AE0A7F4F08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/trees.xml",
+    "Sha256": "562AEFE0F282CA5B2D7CD6D0130D0A74EEEFDAF24F871F651C8959B3D5A57F90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/triggers_animated_objects.xml",
+    "Sha256": "48B215D152A5A96699D4524D7427E403A14616F9E64B5257ABFBC301665F87D6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_8/vehicle_track_progress_data.xml",
+    "Sha256": "A8FCE470542CDBF28D5151DF5B3DEF924DFBF76ECB7D1312CC2160B9115629C6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/ai_track.xml",
+    "Sha256": "33B809AC6817575A99E88C81BDF90530CC29FA2D7995F358A75FE82A48086448"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/ai_vehicle_track.xml",
+    "Sha256": "3690288DB2F03385EA9369BAC20BB80AEAEFA56DA3225D9E25C11AEE593A4336"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/ao.clm",
+    "Sha256": "F34B3ACC26D0FEBBF971A88883E7036E28694866A102931B9C4D05EFDF8F0FB1"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/barrierlines.cqtc",
+    "Sha256": "4DBBD7C207932E9A1E8B09C819FE9D577C98308268C4B3BB832313DF1B76E97D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/boundarylines.cqtc",
+    "Sha256": "E91FA18833F66A42754CDBD7EC20B955F942527553E8667E936BBCA41884D586"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/cameralines.cqtc",
+    "Sha256": "E04372D98AC580B959F17723B986C8A5FF78BD1DF9DC8E67636819126EAA2BD4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/clothFile.bin",
+    "Sha256": "D4099138662CE75F534EC719BFD83C4778C8A7682FB1AEAF2A3610273879F698"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/crowd_standing.cns",
+    "Sha256": "27611266A1029F0025D33F1201BDBB9A7A55167F2C92E9ECC8E0C74ACBE5C2AD"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/crowd_standing2.bin",
+    "Sha256": "E67E5619D85C05F81D85151B41FA571EC0B63205C06ECCE3F9B8917EF61EFC6D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/cutscene_establish.xml",
+    "Sha256": "AF13EF9C5C74E1C96701EC1AE2F2F09E38E40F4AA6BB2EC836D50A6F4C4C6C86"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/cutscene_event_start.xml",
+    "Sha256": "ED90A70382C5EFD3DBBB376103F18E5C02FB8C760B28AF4442BAFA79CD9A52B3"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/cutscene_montage.xml",
+    "Sha256": "518C3944E2DEAF833FD913F75BFF35968895996EEADA1BF3CB41FA7B1C44872E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/cutscene_multi_post_race.xml",
+    "Sha256": "A1248C92CE6BA548ED587B6BEF15122348A6A9D2BC521D8CDE50C0E871494F20"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/cutscene_post_race.xml",
+    "Sha256": "3BC434F17C8989BE542BE9A68F80580541497CCB800E036FF9EA086288E3F17E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/cutscene_title.xml",
+    "Sha256": "6FDEEDAA139FB8480C968BC793557F9DCCBE9FAA48162C718A651554B8E322E4"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/grids.pssg",
+    "Sha256": "F80A497038828730EA59C7BE83193FED5E906F8F489F8FA8AA7226487791BB68"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/iwater.pssg",
+    "Sha256": "1E0DCB767C2CDC1FE1B864E71E1AF75EE9490ADBE18A9BFAE13CE6E11CD641AE"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/iwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/light_placement.xml",
+    "Sha256": "969499AA2F50BEB120C352AB8A90AC0B2996EA1E8A883F1BDC9F0720C8AA1760"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/light_textures.pssg",
+    "Sha256": "A9F3D296372D79720010863AE6F3B4B7BE5113DD64523010FDE3F09B7F14AB22"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/niwater.pssg",
+    "Sha256": "2FAD781277C8D39938EC45A9EB42D81CB11E331A87B4485A1C7BF086705B7F7D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/niwater.xml",
+    "Sha256": "55893F5614532694E03AB11C5127A84B16CABFC893D7F1FD6082B9E274097538"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/objects.ens",
+    "Sha256": "DC1EBE837D730C4D856A51ACE25329420BEA77D8F25D8620BECB165405FB7BD0"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/ornament_attributes.xml",
+    "Sha256": "5E22650F564A0929E997E544430DC8935ACB22F048EEA401E6D3C62AEDB2C027"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/ornament_path_anims.pssg",
+    "Sha256": "4DF154D367F76E36619496B0B18DDFF6CBBE44F37EE390B07C456289AB8E3B7C"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/ornaments.bin",
+    "Sha256": "0FD4300A7E7D99FF3D4108EA1F85CA045BDFEC70CB6D6CD0CC2FE93294C44170"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/ornaments.xml",
+    "Sha256": "B1D138A29F45E2A2FEFB84A5912ACA6EA3E2CB141D18F7973B4F3A053588F947"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/pfx.xml",
+    "Sha256": "93E96329B5405FBD776B727225E182603EE8C07863D085B9F877F95152A973EF"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/pfx_atmospheric.xml",
+    "Sha256": "B5718FF4E0D31D98DD3F0B6D7A5042AFE45AF0BA5890C4460A5DE18E010D3F20"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/progress_track.xml",
+    "Sha256": "876A7282851F9750E2DA99D9BA996261652B06C3F4DA4A4CC23BE06FFC565A75"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/replay_camera_config.xml",
+    "Sha256": "C5A6E942DBEEE7960364AE0A52CF972ED2AAF3FA061DFC6EDA919BC760504E5B"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/resetlines.cqtc",
+    "Sha256": "F89003160A204C6AE1C9F8B3D2237A22E72781DDE2CA401776EB9AE916A8468F"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/route_overrides.xml",
+    "Sha256": "00011DAE56030C742CF34580844D83117455202847D3508575DC912AFBBC10C8"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/route_trackao_day_alt.pssg",
+    "Sha256": "58FDCA8FBEC661A4D04385F35E42B57A29DC9DEC3B8E97FCB12CE9F2B5869517"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/routesplit.pssg",
+    "Sha256": "301ED37337797C20E898DEAAC3F3EE186038BAD68D9D0A7A5B62EF2D8E643FAA"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/shadow_map_day_alt.clm",
+    "Sha256": "6B9C411073B3F6767022317A26CB2954032471CBFD4230D4662F33281DDC04B9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/sky_day_alt.pssg",
+    "Sha256": "6098F56A3EDBF9C0A975C7C8F99977BC1DF2A54D4FB8B200DA131B5E87E8AD64"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/snow.pssg",
+    "Sha256": "FED3A460FEE56B77F4A4E9564188A8FF7DFCE15225F377135DFEE6DD1C80C96D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/steerAssistData.xml",
+    "Sha256": "31D218AA911231D035B8F86FE9F2E60032EB4029482F4188904B4A80874FA0DB"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/track.jpk",
+    "Sha256": "A34B231EA8FDF4EC8EE09CE09189614C5256F08476B789F34DAF4856244447B9"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/track.vis",
+    "Sha256": "20E5C4A32228E3350866B626D2BFCD6BA1FBE6E493B902C2B2A2BF8E47D02A2D"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/tree_attributes.xml",
+    "Sha256": "E8D772448A39FA4F5C1FF38233081162E12C06332F5EB841F2E69AD42A48554E"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/trees.bin",
+    "Sha256": "A8B23BAB0221358663986EF8860D69ABF65E6FAE8EC6BD8C5F28B7AE0A7F4F08"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/trees.xml",
+    "Sha256": "562AEFE0F282CA5B2D7CD6D0130D0A74EEEFDAF24F871F651C8959B3D5A57F90"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/triggers_animated_objects.xml",
+    "Sha256": "48B215D152A5A96699D4524D7427E403A14616F9E64B5257ABFBC301665F87D6"
+  },
+  {
+    "Game": "dirt3",
+    "Path": "tracks/locations/usa/aspen/route_9/vehicle_track_progress_data.xml",
+    "Sha256": "216493B714AA4F1C7EB8BC88F17FCE29F169B141EE96D2E34B9C8B4EC8D7FD5F"
   }
 ]

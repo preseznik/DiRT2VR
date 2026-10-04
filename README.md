@@ -68,12 +68,12 @@ For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The exis
 
 ## Custom tracks (experimental)
 
-Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edition** installation. Conversion tools are included with DiRT2VR; no additional download is needed and no game assets are distributed. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
+Aspen adds ten layouts built from your own **DiRT 3 Complete Edition** installation. Conversion tools are included with DiRT2VR; no additional download is needed and no game assets are distributed. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
 
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
 2. Choose a **Track pack**, then **Build and install…**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the DiRT 3 Complete Edition game folder, wherever it is installed.
 3. Choose **Build and install**. Leave the launcher open while it checks your source files and builds the selected pack using the included tools. **Cancel** stops conversion safely; an existing installation stays usable.
-4. Select a layout, **Direct practice** or **Race**, and a **Car**. Choose **Launch** for desktop play or **Launch VR** with SteamVR and your headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
+4. Select a layout and its available mode and car. Choose **Launch** for desktop play, or **Launch VR** on a supported layout with SteamVR and your headset ready. New practice-test layouts use a fixed vehicle and desktop mode. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
 
 | Layout | Default lighting |
 | --- | --- |
@@ -82,13 +82,25 @@ Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edi
 | Snowmass Sprint | Evening sun |
 | Snowmass Loop | Overcast |
 
-Aspen offers experimental **desktop and VR** play with installed cars. **Direct practice** is solo; **Race** adds 1–7 AI opponents, using the same car, mixed cars or cars in your class. Use the sliders to choose opponents and 1–20 laps. If Aspen was already installed, choose **Manage… → Rebuild from source…** once to update its AI paths before racing; solo practice remains available. Aspen headset rendering and broader AI race coverage still need gameplay validation; LAN is unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
+Aspen’s four Rallycross layouts offer experimental **desktop and VR** play with installed cars. **Direct practice** is solo; **Race** adds 1–7 AI opponents, using the same car, mixed cars or cars in your class. Use the sliders to choose opponents and 1–20 laps. If Aspen was already installed, choose **Manage… → Rebuild from source…** once to update its AI paths before racing; solo practice remains available. Aspen headset rendering and broader AI race coverage still need gameplay validation; LAN is unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
 
 Snowmass Sprint omits the decorative beams on the ski hillside where they flickered with viewing angle or distance. The towers, bright lamp faces and ground lighting remain, along with the other beams around the course. The other three layouts are unchanged by this workaround.
 
 Each pack keeps its own layout, car, race and lap selections, separately from stock tracks. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Conversion-tool updates arrive with DiRT2VR updates.
 
 If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source…**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
+
+### Additional Aspen layouts — desktop practice tests
+
+After updating, choose **Aspen → Manage… → Rebuild from source…** to add the six new layouts. Existing Rallycross installations remain usable until rebuilding finishes. The launcher selects the practice vehicle and available modes for each layout.
+
+| Layouts | Conditions | Practice vehicle |
+| --- | --- | --- |
+| Eagle Hill Rise, Eagle Hill Loop | Night | Kincaid Ford F-150 |
+| Brush Creek Sprint, Brush Creek Dash | Evening sun | Kincaid Ford F-150 |
+| Buttermilk Descent, Buttermilk Climb | Overcast snow lighting | Subaru STI |
+
+These six layouts are **desktop Direct practice tests**. Race and VR are unavailable for them; the four Rallycross layouts keep their existing modes and car selection. Buttermilk Descent and Climb are solo courses without competitive Head-to-head rules. Lighting follows source defaults; full snowfall remains unsupported. New layouts need timed-lap, reset, restart and rendering checks on a gaming PC, including the truck's snow handling and night headlights.
 
 ### Smelter — ten-layout test
 

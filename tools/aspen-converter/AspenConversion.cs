@@ -11,8 +11,8 @@ public static class AspenConversion
         using var source = typeof(AspenConversion).Assembly.GetManifestResourceStream("sources.json")!;
         var sources = JsonSerializer.Deserialize<Fingerprint[]>(source)!;
         AspenPack.ValidateSources(sources);
-        return new(AspenPack.Id, "Aspen Rallycross", AspenPack.Version, AspenPack.MinimumLauncher,
-            4L * 1024 * 1024 * 1024, 800L * 1024 * 1024, AspenPack.Modes.ToArray(), AspenPack.Layouts.ToArray(), sources);
+        return new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher,
+            12L * 1024 * 1024 * 1024, 3L * 1024 * 1024 * 1024, AspenPack.Modes.ToArray(), AspenPack.Layouts.ToArray(), sources);
     }
     public static int Run(string[] args)
     {
@@ -59,7 +59,7 @@ public static class AspenConversion
         {
             SafeFiles.RequireClosed();
             var layout = AspenPack.Layouts[i];
-            int percent = 5 + i * 22;
+            int percent = 5 + i * 90 / AspenPack.Layouts.Length;
             Report(percent, "Building " + layout.Name + " — " + layout.Condition);
             PortBuild.Progress = message => Report(percent, layout.Name + ": " + message);
             var candidate = Path.Combine(output, "build", layout.Id);
@@ -95,13 +95,13 @@ public static class AspenConversion
                 session.Add(new(target, expected[Path.GetFullPath(Path.Combine(d2, target))], owned));
             }
         }
-        Report(95, "Verifying all four layouts and original source files");
+        Report(95, "Verifying all ten Aspen layouts and original source files");
         foreach (var source in expected)
             if (SafeFiles.Hash(source.Key) != source.Value) throw new IOException("Source changed during conversion: " + source.Key);
         var receipt = new PackReceipt(1, AspenPack.Id, AspenPack.Version, AspenPack.MinimumLauncher, files.ToArray(), sessions.ToArray(), sources);
         AspenPack.Verify(install, receipt);
         SafeFiles.WriteJson(SafeFiles.Inside(install, AspenPack.Receipt), receipt);
-        Report(100, "All four layouts are ready to install");
+        Report(100, "All ten Aspen layouts are ready to install");
     
         void Copy(string source, string relative)
         {

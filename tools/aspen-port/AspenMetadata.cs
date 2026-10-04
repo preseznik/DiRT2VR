@@ -4,6 +4,6 @@ internal static class AspenMetadata
     {
         layout ??= AspenLayout.Lakeside;
         TrackMetadata.Create(game, schema, output,
-            new(layout.DirectoryName, layout.StringId, layout.DisplayName, "aspen", "ASPEN", 144), length, condition?.Night, inputs);
+            new(layout.DirectoryName, layout.StringId, layout.DisplayName, "aspen", "ASPEN", layout.DonorModel), length, condition?.Night, inputs);
     }
 }
