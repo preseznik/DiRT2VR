@@ -86,11 +86,17 @@ internal static class SmelterBuild
         if(!originalLinks.SequenceEqual(PortFiles.ReadPssg(Path.Combine(route,"objects.ens")).Descendants("TEMPLATEENTITYLINK").Select(e=>e.ToString(SaveOptions.DisableFormatting))))
             throw new InvalidDataException("Linked barrier identities changed.");
         PortFiles.Json(Path.Combine(output,"water.json"),SmelterWater.Build(track,d2,output,inputs));
+        var barrierPath = Path.Combine(track,"objects.pssg");
+        var barrierMeshes = PortFiles.ReadPssg(barrierPath);
+        PortFiles.Json(Path.Combine(output,"barrier-meshes.json"),SmelterBarrierMeshes.Convert(barrierMeshes));
+        PortFiles.WritePssg(barrierMeshes,barrierPath+".tmp");
+        ObjectVertexLayout.Verify(barrierMeshes,PortFiles.ReadPssg(barrierPath+".tmp"));
+        File.Move(barrierPath+".tmp",barrierPath,true);
         // These concrete models each have static and movable instances. Keep
         // their native batches populated, as for Aspen's mixed plastic barriers;
         // baking/clearing the static part can hide nearby movable instances.
         PortFiles.Json(Path.Combine(output,"scene-props.json"),StaticProps.Bake(track,
-            new HashSet<string>(StringComparer.Ordinal) { "core_barr_blockconcrete_d~0", "core_barr_blockconcrete_d~1" }));
+            SmelterBarrierMeshes.Models));
         PortFiles.Json(Path.Combine(output,"terrain-containers.json"),TerrainContainers.Convert(track));
         PortFiles.Json(Path.Combine(output,"terrain-visibility.json"),TerrainVisibility.Convert(track,source,TerrainVisibility.Mappings(System.Text.Json.JsonSerializer.SerializeToElement(placements)),layout.Route));
         PortFiles.Json(Path.Combine(output,"day-textures.json"),DayTextures.Resolve(track));

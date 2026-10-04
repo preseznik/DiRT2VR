@@ -6,7 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Address missing County Loop water and nearby concrete barriers disappearing during camera turns. Retain the extended scenery visibility ranges. Rebuild Smelter from Manage after updating; visual confirmation is pending.
+- Fix missing County Loop lake and puddle water. Retain the extended scenery visibility ranges. Rebuild Smelter from Manage after updating.
+- Test a compatibility correction for missing County Loop concrete barriers. Rendering still needs confirmation on the gaming PC.
 
 - Keep Experimental patch updates in their existing version series.
 - Add a local Smelter County Loop test, built from your own DiRT 3 files. This first layout supports desktop Direct practice in the Subaru STI; rendering and driving still need playtesting. Other Smelter layouts, Race and VR follow later.

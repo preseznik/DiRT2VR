@@ -47,7 +47,7 @@ public static class TrackPacks
 {
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
-    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.0.2", "0.17.26", ["desktop-solo"],
+    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.0.3", "0.17.27", ["desktop-solo"],
         [new("smelter-county-loop", "County Loop", "d2vr_smelter_0", "Morning sun")], ["surface_materials.xml", "database/database.bin"]);
     public static readonly TrackPack[] All = [Aspen, Smelter];
     public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml"];
