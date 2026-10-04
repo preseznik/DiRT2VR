@@ -22,7 +22,9 @@ internal static class SmelterWater
         water.SetAttributeValue("type", Type);
         water.SetAttributeValue("i_water_draw_distance", "2000.0");
         definitions.Root.Add(water);
-        PortFiles.WriteXml(definitions, Path.Combine(output, "waterdefs.xml"));
+        // Water configuration uses text XML in DiRT 2, unlike surface_materials.
+        // Do not use PortFiles.WriteXml's material-specific BXML default here.
+        WriteSettings(definitions, Path.Combine(output, "waterdefs.xml"));
 
         var reports = new List<object>();
         foreach (var name in new[] { "iwater", "niwater" })
@@ -82,12 +84,20 @@ internal static class SmelterWater
                 if ((string?)patch.Attribute("type") is not ("water" or "water_shore")) throw new InvalidDataException("Unexpected source water type.");
                 patch.SetAttributeValue("type", Type);
             }
-            PortFiles.WriteXml(settings, settingsPath + ".tmp");
-            if (!XNode.DeepEquals(settings.Root, PortFiles.ReadXml(settingsPath + ".tmp").Root)) throw new InvalidDataException("Water patch settings changed on serialization.");
+            WriteSettings(settings, settingsPath + ".tmp");
             File.Move(settingsPath + ".tmp", settingsPath, true);
             reports.Add(new { File = name, Materials = materials, Vertices = vertices, Patches = patches.Length });
         }
         return new { WaterType = Type, SourceColoursPreserved = true, GeometryAndBordersPreserved = true, Files = reports, RuntimeValidated = false };
+    }
+
+    internal static void WriteSettings(XDocument settings, string path)
+    {
+        PortFiles.WriteXml(settings, path, EgoEngineLibrary.Xml.XmlType.Text);
+        // Use a text-only reader: the converter's reader accepts binary formats
+        // too, which allowed the previous water-format regression to pass.
+        if (!XNode.DeepEquals(settings.Root, XDocument.Load(path).Root))
+            throw new InvalidDataException("Water settings changed on serialization.");
     }
 
     internal static int ExpandDirections(XDocument doc, bool interactive)

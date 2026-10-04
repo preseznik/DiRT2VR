@@ -17,7 +17,7 @@ internal static class StaticProps
     static float[] Values(string text) => text.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries).Select(s => float.Parse(s, CultureInfo.InvariantCulture)).ToArray();
     static string Text(IEnumerable<float> values) => string.Join(' ', values.Select(v => v.ToString("R", CultureInfo.InvariantCulture)));
     static Matrix4x4 Matrix(float[] f) => new(f[0],f[1],f[2],f[3],f[4],f[5],f[6],f[7],f[8],f[9],f[10],f[11],f[12],f[13],f[14],f[15]);
-    internal static object Bake(string track)
+    internal static object Bake(string track, IReadOnlySet<string>? nativeBatchesForVenue = null)
     {
         var objects = PortFiles.ReadPssg(Path.Combine(track, "objects.pssg"));
         var path = Path.Combine(track, "tracksplit.pssg"); var scene = PortFiles.ReadPssg(path);
@@ -68,7 +68,7 @@ internal static class StaticProps
         {
             int at = table + reference * 56, start = I(at + 44), count = I(at + 48); string name = S(I(at));
             if (count == 0) continue;
-            if (KeepNativeBatch(name))
+            if (KeepNativeBatch(name) || nativeBatchesForVenue?.Contains(name) == true)
             {
                 nativeBatches.Add(new { Model=name, StaticPlacements=count, Capacity=I(at+36) });
                 continue; // Preserve all placements/flags/slots; do not also bake a copy.
