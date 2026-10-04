@@ -77,6 +77,93 @@ internal static class SmelterVisibility
             ReservedInstances=slots, OriginalMainSceneCapacity=oldCapacity, MainSceneCapacity=budget,
             SourceStyle=style, StockStylesPreserved=true, RuntimeValidated=false };
     }
+    // Smelter diagnostic: retain the source instance IDs and all damage states,
+    // but let every ornament's imported visibility record cover the whole venue.
+    // This deliberately trades object-level visibility culling for stability;
+    // the terrain, tree and light records keep their own bounds.
+    internal static object ConservativeObjects(string track)
+    {
+        string path=Path.Combine(track,"route_0/track.vis");
+        var bytes=File.ReadAllBytes(path);
+        _=VisibilityAudit.Check(bytes);
+        int I(int p)=>BinaryPrimitives.ReadInt32LittleEndian(bytes.AsSpan(p,4));
+        var nodes=new List<int>(); var records=new List<int>();
+        var min=new Vector3(float.MaxValue);var max=new Vector3(float.MinValue);
+        int cursor=I(28),end=I(44);
+        for(int i=0;i<I(12);i++) {
+            if(cursor<0 || (long)cursor+48>end || (I(cursor+28)&65535)!=i)
+                throw new InvalidDataException("Invalid Smelter visibility node.");
+            nodes.Add(cursor);
+            for(int k=0;k<3;k++) {
+                float lo=BinaryPrimitives.ReadSingleLittleEndian(bytes.AsSpan(cursor+k*4,4));
+                float hi=BinaryPrimitives.ReadSingleLittleEndian(bytes.AsSpan(cursor+16+k*4,4));
+                if(!float.IsFinite(lo) || !float.IsFinite(hi) || lo>hi) throw new InvalidDataException("Invalid visibility bounds.");
+                min[k]=Math.Min(min[k],lo);max[k]=Math.Max(max[k],hi);
+            }
+            int count=(int)((uint)I(cursor+28)>>16),next=checked(cursor+48+count*32);
+            if(next>end || I(cursor+32)!=(i==I(12)-1 ? 0 : next)) throw new InvalidDataException("Invalid visibility span.");
+            for(int j=0;j<count;j++) {int record=cursor+48+j*32;if(I(record+12)==2) records.Add(record);}
+            cursor=next;
+        }
+        if(cursor!=end || records.Count==0) throw new InvalidDataException("Missing Smelter ornament visibility records.");
+        // Expand parents too: no descendant should be rejected by an old cell box.
+        foreach(int at in nodes.Concat(records))
+            for(int k=0;k<3;k++) {
+                BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(at+k*4,4),min[k]);
+                BinaryPrimitives.WriteSingleLittleEndian(bytes.AsSpan(at+16+k*4,4),max[k]);
+            }
+        _=VisibilityAudit.Check(bytes);
+        var ornamentPath=Path.Combine(track,"route_0/ornaments.bin");
+        var ornaments=File.ReadAllBytes(ornamentPath);
+        int O(int p)=>BinaryPrimitives.ReadInt32LittleEndian(ornaments.AsSpan(p,4));
+        var entities=PortFiles.ReadPssg(Path.Combine(track,"route_0/objects.ens"))
+            .Descendants("TEMPLATEENTITYINSTANCE").ToLookup(e=>((string)e.Attribute("uri")!)[1..],StringComparer.Ordinal);
+        var corners=(from x in new[]{min.X,max.X} from y in new[]{min.Y,max.Y} from z in new[]{min.Z,max.Z} select new Vector3(x,y,z)).ToArray();
+        Matrix4x4 Matrix(float[] v)=>new(v[0],v[1],v[2],v[3],v[4],v[5],v[6],v[7],v[8],v[9],v[10],v[11],v[12],v[13],v[14],v[15]);
+        var modelReports=new List<object>();int entityCount=0,staticCount=0;
+        // Most movable Smelter props have no source VIS record. DiRT 2 inserts
+        // those into a runtime spatial tree using the model bounds in ornaments.
+        // Enclose the venue for every live instance, in that model's local space.
+        for(int i=0;i<O(40);i++) {
+            int at=O(36)+i*56,start=O(at),endName=Array.IndexOf(ornaments,(byte)0,start);
+            string name=Encoding.ASCII.GetString(ornaments,start,endName-start);
+            var transforms=new List<Matrix4x4>();
+            int count=O(at+48),data=O(at+44);
+            for(int j=0;j<count;j++) {
+                var v=new float[16];v[15]=1;int[] fields=[0,1,2,4,5,6,8,9,10,12,13,14];
+                for(int k=0;k<12;k++) v[fields[k]]=BinaryPrimitives.ReadSingleLittleEndian(ornaments.AsSpan(data+j*64+k*4,4));
+                transforms.Add(Matrix(v));
+            }
+            foreach(var entity in entities[name]) {
+                var v=entity.Element("TEMPLATETRANSFORM")!.Value.Split((char[]?)null,StringSplitOptions.RemoveEmptyEntries)
+                    .Select(n=>float.Parse(n,CultureInfo.InvariantCulture)).ToArray();
+                if(v.Length!=16 || v.Any(f=>!float.IsFinite(f))) throw new InvalidDataException("Invalid entity transform.");
+                transforms.Add(Matrix(v));
+            }
+            if(transforms.Count==0) continue;
+            var lo=new Vector3(BinaryPrimitives.ReadSingleLittleEndian(ornaments.AsSpan(at+4)),BinaryPrimitives.ReadSingleLittleEndian(ornaments.AsSpan(at+8)),BinaryPrimitives.ReadSingleLittleEndian(ornaments.AsSpan(at+12)));
+            var hi=new Vector3(BinaryPrimitives.ReadSingleLittleEndian(ornaments.AsSpan(at+16)),BinaryPrimitives.ReadSingleLittleEndian(ornaments.AsSpan(at+20)),BinaryPrimitives.ReadSingleLittleEndian(ornaments.AsSpan(at+24)));
+            foreach(var transform in transforms) {
+                if(!Matrix4x4.Invert(transform,out var inverse)) throw new InvalidDataException("Singular ornament transform.");
+                foreach(var corner in corners) {var point=Vector3.Transform(corner,inverse);lo=Vector3.Min(lo,point);hi=Vector3.Max(hi,point);}
+            }
+            lo-=Vector3.One;hi+=Vector3.One;
+            for(int k=0;k<3;k++) {
+                if(!float.IsFinite(lo[k]) || !float.IsFinite(hi[k])) throw new InvalidDataException("Nonfinite ornament bounds.");
+                BinaryPrimitives.WriteSingleLittleEndian(ornaments.AsSpan(at+4+k*4,4),lo[k]);
+                BinaryPrimitives.WriteSingleLittleEndian(ornaments.AsSpan(at+16+k*4,4),hi[k]);
+            }
+            int dynamicCount=transforms.Count-count;entityCount+=dynamicCount;staticCount+=count;
+            modelReports.Add(new {Model=name,NativeStaticPlacements=count,MovablePlacements=dynamicCount});
+        }
+        if(entityCount!=entities.Sum(g=>g.Count())) throw new InvalidDataException("Unaccounted native entity bounds.");
+        File.WriteAllBytes(ornamentPath,ornaments);
+        File.WriteAllBytes(path,bytes);
+        return new { OrnamentRecords=records.Count,SpatialNodes=nodes.Count,NativeModels=modelReports,
+            NativeStaticPlacements=staticCount,MovablePlacements=entityCount,
+            Bounds=new[]{min.X,min.Y,min.Z,max.X,max.Y,max.Z},
+            Mode="Whole-venue ornament visibility bounds",InstanceIdsAndGeometryPreserved=true,RuntimeValidated=false };
+    }
     static void Write(XDocument doc,string path)
     {
         var temporary=path+".visibility-tmp";

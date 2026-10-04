@@ -114,7 +114,7 @@ Select **Smelter** in CUSTOM tracks and choose **Build and install…** using yo
 | Atlantic Mill, Cole's Creek | Morning sun |
 | Dredger Duel, Furnace Duel | Evening sun; solo practice only |
 
-Use **Smelter → Manage… → Rebuild from source…** after updating to apply the scenery visibility test and add any missing layouts. Updating the launcher alone does not rebuild tracks. Existing tracks remain usable until the rebuild completes.
+Use **Smelter → Manage… → Rebuild from source…** after updating to apply the scenery visibility test and add any missing layouts. Updating the launcher alone does not rebuild tracks. Existing tracks remain usable until the rebuild completes. This test restores the previous log meshes and keeps trackside props eligible for drawing across the venue. Check the previously missing logs and flickering detail, including after an impact, and compare performance on the same stretch of road.
 
 Wet-weather handling still needs validation. Smelter Race and VR remain unavailable. Dredger Duel and Furnace Duel do not yet have competitive Head-to-head rules. New layouts still need timed-lap, reset and restart checks on a gaming PC. The concrete-barrier compatibility test remains visually unverified. Aspen keeps its existing modes.
 
