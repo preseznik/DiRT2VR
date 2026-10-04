@@ -2,6 +2,8 @@ Local Experimental test — Smelter County Loop
 
 Build County Loop from your own DiRT 3 Complete Edition installation in Launcher > CUSTOM tracks > Smelter > Build and install.
 
+This update corrects water conversion and extends scenery visibility. After updating, choose Smelter > Manage > Rebuild from source to apply the changes.
+
 This test supports desktop Direct practice in the Subaru STI. County Loop still needs a full lap, reset and restart check. Smelter Race, VR and the remaining layouts are not available yet.
 
 CUSTOM tracks now groups layouts by pack and remembers separate settings. Aspen remains available.

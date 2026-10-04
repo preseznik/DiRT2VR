@@ -47,9 +47,10 @@ public static class TrackPacks
 {
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
-    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.0.0", "0.17.24", ["desktop-solo"],
+    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.0.1", "0.17.25", ["desktop-solo"],
         [new("smelter-county-loop", "County Loop", "d2vr_smelter_0", "Morning sun")], ["surface_materials.xml", "database/database.bin"]);
     public static readonly TrackPack[] All = [Aspen, Smelter];
+    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml"];
     public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
     public static bool IsLayout(string? id) => All.Any(p => p.Layouts.Any(l => l.Id == id));
     public static TrackPack ForLayout(string id) => All.SingleOrDefault(p => p.IsLayout(id)) ?? throw new IOException("Unknown custom layout.");
@@ -73,7 +74,7 @@ public sealed class TrackPack
     public string[] RequiredTargets { get; }
     public string Support => "DiRT2VR/custom-tracks/" + Id;
     public string Receipt => Support + "/receipt.json";
-    public string[] SharedTargets => AspenPack.SharedTargets;
+    public string[] SharedTargets => Id == "smelter" ? TrackPacks.SessionTargets : AspenPack.SharedTargets;
     internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets)
     {
         Id = id; Name = name; Version = version; MinimumLauncher = minimumLauncher;
@@ -148,6 +149,9 @@ public sealed class TrackPack
                 var source = receipt.Sources.SingleOrDefault(p => p.Game == "dirt2" && p.Path == f.Path);
                 if (source?.Sha256 != f.OriginalSha256) throw new IOException("Session source fingerprint mismatch.");
             }
+            // Older installed Smelter receipts remain readable for rebuild/uninstall.
+            if (Id == "smelter" && System.Version.Parse(receipt.Version) >= new System.Version(1, 0, 1) && !targets.Contains("tracks/waterdefs.xml"))
+                throw new IOException("Missing Smelter water session definition. Rebuild from source.");
             foreach (var required in RequiredTargets)
                 if (!targets.Contains(required)) throw new IOException("Incomplete session inventory.");
         }

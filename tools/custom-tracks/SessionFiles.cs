@@ -47,7 +47,7 @@ public static class SessionFiles
         var pending = SafeFiles.ReadJson<Pending>(journal);
         if (pending.Schema != 1 || !Guid.TryParseExact(pending.Id, "N", out _) || pending.Files is null || pending.Files.Length == 0 || pending.Files.Any(f => f is null) ||
             pending.Files.Select(f => f.Path).Distinct().Count() != pending.Files.Length ||
-            pending.Files.Any(f => !AspenPack.SharedTargets.Contains(f.Path) || !SafeFiles.Digest(f.OriginalSha256) || !SafeFiles.Digest(f.AppliedSha256)))
+            pending.Files.Any(f => !TrackPacks.SessionTargets.Contains(f.Path) || !SafeFiles.Digest(f.OriginalSha256) || !SafeFiles.Digest(f.AppliedSha256)))
             throw new IOException("Invalid custom-track session journal; files preserved.");
         for (int i = 0; i < pending.Files.Length; i++)
             if (SafeFiles.Hash(SafeFiles.Inside(folder, pending.Id + "/" + i + ".original")) != pending.Files[i].OriginalSha256)

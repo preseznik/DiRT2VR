@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Correct County Loop water conversion and extend visibility for the chimney and trackside barriers. Rebuild Smelter from Manage after updating; visual confirmation is pending.
+
 - Keep Experimental patch updates in their existing version series.
 - Add a local Smelter County Loop test, built from your own DiRT 3 files. This first layout supports desktop Direct practice in the Subaru STI; rendering and driving still need playtesting. Other Smelter layouts, Race and VR follow later.
 - Organize CUSTOM tracks by pack, with separate saved settings and a Manage menu for verification, rebuilding and removal. Existing Aspen installations and choices are preserved.

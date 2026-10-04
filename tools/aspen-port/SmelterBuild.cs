@@ -58,7 +58,14 @@ internal static class SmelterBuild
                 if(!XNode.DeepEquals(doc,PortFiles.ReadXml(target))) throw new InvalidDataException("AI serialization changed.");
             }
             else if(name=="replay_camera_config.xml") PortFiles.WriteXml(ReplayCameras.Convert(PortFiles.ReadXml(path)),target,EgoEngineLibrary.Xml.XmlType.BinXml);
-            else if(name is "cloth.xml" or "lod_overrides.xml" or "tree_attributes.xml" or "ornament_attributes.xml")
+            else if(name is "route_overrides.xml" or "ornament_attributes.xml") {
+                var doc=PortFiles.ReadXml(path);
+                if(name=="route_overrides.xml") SmelterVisibility.Route(doc);
+                else SmelterVisibility.Barriers(doc);
+                PortFiles.WriteXml(doc,target,EgoEngineLibrary.Xml.XmlType.BinXml);
+                if(!XNode.DeepEquals(doc.Root,PortFiles.ReadXml(target).Root)) throw new InvalidDataException("Smelter visibility settings changed on serialization.");
+            }
+            else if(name is "cloth.xml" or "lod_overrides.xml" or "tree_attributes.xml")
                 PortFiles.WriteXml(PortFiles.ReadXml(path),target,EgoEngineLibrary.Xml.XmlType.BinXml);
             else PortFiles.CopyNew(path,target);
             copies.Add(new {Source=path,Target=Path.GetRelativePath(output,target)});
@@ -78,6 +85,7 @@ internal static class SmelterBuild
         PortFiles.Json(Path.Combine(output,"crowds.json"),Crowds.Restore(track,source,d2,inputs,sourceRoute:layout.Route,includeDayOnly:true,venueAliases:SmelterCrowds.Aliases));
         if(!originalLinks.SequenceEqual(PortFiles.ReadPssg(Path.Combine(route,"objects.ens")).Descendants("TEMPLATEENTITYLINK").Select(e=>e.ToString(SaveOptions.DisableFormatting))))
             throw new InvalidDataException("Linked barrier identities changed.");
+        PortFiles.Json(Path.Combine(output,"water.json"),SmelterWater.Build(track,d2,output,inputs));
         PortFiles.Json(Path.Combine(output,"scene-props.json"),StaticProps.Bake(track));
         PortFiles.Json(Path.Combine(output,"terrain-containers.json"),TerrainContainers.Convert(track));
         PortFiles.Json(Path.Combine(output,"terrain-visibility.json"),TerrainVisibility.Convert(track,source,TerrainVisibility.Mappings(System.Text.Json.JsonSerializer.SerializeToElement(placements)),layout.Route));

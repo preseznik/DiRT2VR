@@ -3128,5 +3128,10 @@
     "Game": "dirt3",
     "Path": "tracks/sponsors/sponsor_yokohama.pssg",
     "Sha256": "862C9B27D851B187F15B4A6FC278D2DC217EFFDE3FFDD11BB6A8210B7B8DB45D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/waterdefs.xml",
+    "Sha256": "3B64137E8158381855E61ADF2A039FAEC31EBC688D16C5C7A2A46913550F2431"
   }
 ]

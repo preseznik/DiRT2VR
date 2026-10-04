@@ -94,7 +94,7 @@ If source checking fails, choose the correct installation or verify its original
 
 Select **Smelter** in CUSTOM tracks and choose **Build and install…** using your DiRT 3 Complete Edition folder. This local test includes **County Loop — Morning sun**. Once verification finishes, select **Direct practice** and **Subaru STI**, then **Launch** for desktop play. Smelter Race and Launch VR are unavailable in this candidate; Aspen keeps its existing modes.
 
-County Loop has not yet passed its first gameplay check. Please test a full timed lap, an off-road reset and a restart, and check water, barriers, foliage and distant terrain. The remaining nine Smelter layouts are planned and are not installed by this build.
+After updating from the first County Loop test, choose **Smelter → Manage… → Rebuild from source…** to apply the water and scenery visibility changes. Updating the launcher alone does not rebuild an installed track. County Loop is still undergoing gameplay testing; check a full timed lap, off-road reset and restart, plus water, barriers, foliage and distant terrain. The remaining nine Smelter layouts are planned and are not installed by this build.
 
 To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
 

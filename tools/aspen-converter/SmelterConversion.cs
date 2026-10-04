@@ -56,6 +56,7 @@ public static class SmelterConversion
         foreach (var source in SafeFiles.Tree(Path.Combine(candidate, "track")))
             Copy(source, "tracks/usa/" + layout.Folder + "/" + Path.GetRelativePath(Path.Combine(candidate, "track"), source).Replace('\\', '/'));
         AddSession("surface_materials.xml", Path.Combine(candidate, "surface_materials.xml"));
+        AddSession("tracks/waterdefs.xml", Path.Combine(candidate, "waterdefs.xml"));
         using (var metadata = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(candidate, "session-metadata/metadata.json"))))
             foreach (var entry in metadata.RootElement.GetProperty("Files").EnumerateArray())
             {
