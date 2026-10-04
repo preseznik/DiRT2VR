@@ -13,7 +13,7 @@ public static class SmelterConversion
         var sources = JsonSerializer.Deserialize<Fingerprint[]>(stream)!;
         TrackPack.ValidateSources(sources);
         var pack = TrackPacks.Smelter;
-        return new(pack.Id, pack.Name, pack.Version, pack.MinimumLauncher, 4L << 30, 800L << 20,
+        return new(pack.Id, pack.Name, pack.Version, pack.MinimumLauncher, 12L << 30, 3L << 30,
             pack.Modes.ToArray(), pack.Layouts.ToArray(), sources);
     }
     public static int Run(string[] args)
@@ -34,7 +34,7 @@ public static class SmelterConversion
         SafeFiles.RequireClosed();
         d3 = Path.GetFullPath(d3); d2 = Path.GetFullPath(d2); output = Path.GetFullPath(output);
         PortFiles.NewOutput(output, d3, d2);
-        var profile = GetProfile(); var pack = TrackPacks.Smelter; var layout = pack.Layouts.Single();
+        var profile = GetProfile(); var pack = TrackPacks.Smelter;
         void Report(int percent, string message) => progress?.Invoke(new(percent, message));
         Report(0, "Checking your DiRT 2 and DiRT 3 source files");
         TrackPack.VerifySources(profile, d2, d3, null, default);
@@ -43,32 +43,45 @@ public static class SmelterConversion
         string schemaPath = Path.Combine(output, "schemaDirt2.xml");
         using (var schema = typeof(SmelterConversion).Assembly.GetManifestResourceStream("schemaDirt2.xml")!)
         using (var target = File.Create(schemaPath)) schema.CopyTo(target);
-        EgoEngineLibrary.Graphics.Pssg.PssgSchema.ResetSchema();
-        var candidate = Path.Combine(output, "build");
-        Report(10, "Building County Loop — Morning sun");
-        SmelterBuild.Run(d3, d2, schemaPath, candidate, message => Report(30, message));
-        foreach (var input in SafeFiles.ReadJson<Dictionary<string, string>>(Path.Combine(candidate, "inputs.json")).Where(p => p.Key != schemaPath))
-            if (!expected.TryGetValue(Path.GetFullPath(input.Key), out var hash) || hash != input.Value)
-                throw new IOException("Conversion used an unsupported source file: " + input.Key);
-        var files = new List<PackFile>(); var session = new List<SessionFile>();
+        var files = new List<PackFile>(); var sessions = new List<LayoutSession>();
         var install = Path.Combine(output, "install");
-        Report(90, "Preparing County Loop installation files");
-        foreach (var source in SafeFiles.Tree(Path.Combine(candidate, "track")))
-            Copy(source, "tracks/usa/" + layout.Folder + "/" + Path.GetRelativePath(Path.Combine(candidate, "track"), source).Replace('\\', '/'));
-        AddSession("surface_materials.xml", Path.Combine(candidate, "surface_materials.xml"));
-        AddSession("tracks/waterdefs.xml", Path.Combine(candidate, "waterdefs.xml"));
-        using (var metadata = JsonDocument.Parse(File.ReadAllBytes(Path.Combine(candidate, "session-metadata/metadata.json"))))
-            foreach (var entry in metadata.RootElement.GetProperty("Files").EnumerateArray())
-            {
-                var path = entry.GetProperty("Path").GetString()!;
-                AddSession(path, SafeFiles.Inside(Path.Combine(candidate, "session-metadata"), path));
+        for (int i=0;i<pack.Layouts.Length;i++)
+        {
+            SafeFiles.RequireClosed();
+            var layout=pack.Layouts[i];
+            var definition=SmelterLayout.All.Single(l=>l.Id==layout.Id);
+            EgoEngineLibrary.Graphics.Pssg.PssgSchema.ResetSchema();
+            var candidate=Path.Combine(output,"build",layout.Id);
+            Directory.CreateDirectory(Path.GetDirectoryName(candidate)!);
+            int percent=5+i*9;
+            Report(percent,"Building "+layout.Name+" — "+layout.Condition);
+            SmelterBuild.Run(d3,d2,schemaPath,candidate,message=>Report(percent,message),definition);
+            foreach(var input in SafeFiles.ReadJson<Dictionary<string,string>>(Path.Combine(candidate,"inputs.json")).Where(p=>p.Key!=schemaPath))
+                if(!expected.TryGetValue(Path.GetFullPath(input.Key),out var hash) || hash!=input.Value)
+                    throw new IOException("Conversion used an unsupported source file: "+input.Key);
+            foreach(var source in SafeFiles.Tree(Path.Combine(candidate,"track")))
+                Copy(source,"tracks/usa/"+layout.Folder+"/"+Path.GetRelativePath(Path.Combine(candidate,"track"),source).Replace('\\','/'));
+            var session=new List<SessionFile>();
+            AddSession("surface_materials.xml",Path.Combine(candidate,"surface_materials.xml"));
+            AddSession("tracks/waterdefs.xml",Path.Combine(candidate,"waterdefs.xml"));
+            using(var metadata=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(candidate,"session-metadata/metadata.json"))))
+                foreach(var entry in metadata.RootElement.GetProperty("Files").EnumerateArray()) {
+                    var path=entry.GetProperty("Path").GetString()!;
+                    AddSession(path,SafeFiles.Inside(Path.Combine(candidate,"session-metadata"),path));
+                }
+            sessions.Add(new(layout.Id,session.ToArray()));
+            void AddSession(string target,string source) {
+                var owned=pack.Support+"/"+layout.Id+"/"+target;
+                Copy(source,owned);
+                session.Add(new(target,expected[Path.GetFullPath(Path.Combine(d2,target))],owned));
             }
-        Report(95, "Verifying County Loop and original source files");
-        TrackPack.VerifySources(profile, d2, d3, null, default);
-        var receipt = new PackReceipt(1, pack.Id, pack.Version, pack.MinimumLauncher, files.ToArray(), [new(layout.Id, session.ToArray())], profile.Sources);
-        pack.Verify(install, receipt);
-        SafeFiles.WriteJson(SafeFiles.Inside(install, pack.Receipt), receipt);
-        Report(100, "County Loop is ready to install for desktop testing");
+        }
+        Report(95,"Verifying all ten Smelter layouts and original source files");
+        TrackPack.VerifySources(profile,d2,d3,null,default);
+        var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),profile.Sources);
+        pack.Verify(install,receipt);
+        SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
+        Report(100,"All ten layouts are ready to install for desktop practice testing");
 
         void Copy(string source, string relative)
         {
@@ -76,12 +89,6 @@ public static class SmelterConversion
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
             PortFiles.CopyNew(source, target);
             files.Add(new(relative, new FileInfo(target).Length, SafeFiles.Hash(target)));
-        }
-        void AddSession(string target, string source)
-        {
-            var owned = pack.Support + "/" + layout.Id + "/" + target;
-            Copy(source, owned);
-            session.Add(new(target, expected[Path.GetFullPath(Path.Combine(d2, target))], owned));
         }
     }
 }

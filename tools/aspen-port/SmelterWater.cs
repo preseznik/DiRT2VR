@@ -6,9 +6,9 @@ using System.Xml.Linq;
 internal static class SmelterWater
 {
     internal const string Type = "DiRT2VR_Smelter_Water";
-    internal static object Build(string track, string d2, string output, Dictionary<string, string> inputs)
+    internal static object Build(string track, string d2, string output, Dictionary<string, string> inputs, string condition = "day")
     {
-        var source = PortFiles.ReadXml(Path.Combine(track, "waterdefs_day.xml")).Root!.Elements("waterDef").Single();
+        var source = PortFiles.ReadXml(Path.Combine(track, $"waterdefs_{condition}.xml")).Root!.Elements("waterDef").Single();
         var definitionPath = Path.Combine(d2, "tracks/waterdefs.xml");
         inputs[definitionPath] = PortFiles.Hash(definitionPath);
         var definitions = PortFiles.ReadXml(definitionPath);

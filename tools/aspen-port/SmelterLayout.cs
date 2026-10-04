@@ -15,4 +15,10 @@ internal sealed record SmelterLayout(string Id, string Route, string Name, strin
         new("smelter-dredger-duel", "route_4", "Dredger Duel", "head_2_head", "day_alt"),
         new("smelter-furnace-duel", "route_5", "Furnace Duel", "head_2_head", "day_alt")];
     internal static SmelterLayout CountyLoop => All[0];
+    internal AspenCondition Lighting => Condition switch {
+        "day" => AspenCondition.Morning, "day_alt" => AspenCondition.Evening,
+        "wet" => new("wet", "wet", false), _ => throw new InvalidDataException("Unknown Smelter condition.")
+    };
+    internal int DonorModel => Discipline == "landrush" ? 127 : 144;
+    internal string StringId => Id.Replace('-', '_');
 }

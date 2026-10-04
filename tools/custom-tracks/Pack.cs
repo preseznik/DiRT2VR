@@ -1,7 +1,7 @@
 namespace DiRT2VR.CustomTracks;
 
 public sealed record TrackProgress(int Percent, string Message);
-public sealed record Layout(string Id, string Name, string Folder, string Condition);
+public sealed record Layout(string Id, string Name, string Folder, string Condition, string Discipline = "Rallycross");
 public sealed record Fingerprint(string Game, string Path, string Sha256);
 public sealed record PackFile(string Path, long Bytes, string Sha256);
 public sealed record SessionFile(string Path, string OriginalSha256, string InstalledPath);
@@ -47,8 +47,17 @@ public static class TrackPacks
 {
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
-    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.0.3", "0.17.27", ["desktop-solo"],
-        [new("smelter-county-loop", "County Loop", "d2vr_smelter_0", "Morning sun")], ["surface_materials.xml", "database/database.bin"]);
+    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.0", "0.17.28", ["desktop-solo"],
+        [new("smelter-county-loop", "County Loop", "d2vr_smelter_0", "Morning sun"),
+         new("smelter-portage-canal", "Portage Canal", "d2vr_smelter_1", "Morning sun"),
+         new("smelter-houghton-sprint", "Houghton Sprint", "d2vr_smelter_2", "Wet lighting (no rain)"),
+         new("smelter-waterfront-park", "Waterfront Park", "d2vr_smelter_3", "Wet lighting (no rain)"),
+         new("smelter-copper-run", "Copper Run", "d2vr_smelter_6", "Evening sun", "Landrush"),
+         new("smelter-maple-woods", "Maple Woods", "d2vr_smelter_7", "Evening sun", "Landrush"),
+         new("smelter-atlantic-mill", "Atlantic Mill", "d2vr_smelter_8", "Morning sun", "Landrush"),
+         new("smelter-coles-creek", "Cole's Creek", "d2vr_smelter_9", "Morning sun", "Landrush"),
+         new("smelter-dredger-duel", "Dredger Duel", "d2vr_smelter_4", "Evening sun", "Head-to-head"),
+         new("smelter-furnace-duel", "Furnace Duel", "d2vr_smelter_5", "Evening sun", "Head-to-head")], ["surface_materials.xml", "database/database.bin"]);
     public static readonly TrackPack[] All = [Aspen, Smelter];
     public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml"];
     public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
@@ -83,14 +92,18 @@ public sealed class TrackPack
     public string[] InstallRoots => Layouts.Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
     public Layout GetLayout(string id) => Layouts.SingleOrDefault(l => l.Id == id)
         ?? throw new IOException("This custom layout is unavailable. Select an installed layout.");
+    public Layout[] ReceiptLayouts(PackReceipt receipt) => Id == "smelter" &&
+        System.Version.TryParse(receipt.Version, out var version) && version < new System.Version(1, 1, 0)
+        ? [Layouts[0]] : Layouts;
+    public string PracticeCar(string id) => GetLayout(id).Discipline == "Landrush" ? "kin" : "sti";
     public bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
     public bool SupportsRace(PackReceipt receipt) => Modes.Contains("desktop-race") && System.Version.Parse(receipt.Version) >= new System.Version(1, 0, 1);
     public void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps)
     {
         GetLayout(id);
         if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")) ||
-            (Id == "smelter" && car != "sti"))
-            throw new IOException(Name + " currently supports desktop Direct practice in the Subaru STI only. Race and VR are not available in this test build.");
+            (Id == "smelter" && car != PracticeCar(id)))
+            throw new IOException(Name + " currently supports desktop Direct practice only: Subaru STI for Rallycross/solo Head-to-head courses, Kincaid Ford F-150 for Landrush. Race and VR are not available in this test build.");
         if (mode is not ("practice" or "race") || string.IsNullOrWhiteSpace(car) || laps is < 1 or > 20 ||
             (mode == "practice" ? opponents != 0 : opponents is < 1 or > 7))
             throw new IOException("Choose Direct practice or Race, an installed car, and one to twenty laps. Race supports one to seven opponents. LAN is unavailable.");
@@ -119,23 +132,24 @@ public sealed class TrackPack
     public void Validate(PackReceipt receipt)
     {
         if (receipt is null || receipt.Schema != 1 || receipt.Id != Id || !SafeFiles.Version(receipt.Version) || !SafeFiles.Version(receipt.MinimumLauncher) ||
-            receipt.Files is null || receipt.Files.Length < (Id == AspenPack.Id ? 100 : 7) || receipt.Files.Length > 4096 || receipt.Files.Any(f => f is null) || receipt.Sessions is null || receipt.Sessions.Length != Layouts.Length ||
-            receipt.Sessions.Any(s => s is null || s.Files is null || s.Files.Any(f => f is null)) || receipt.Sessions.Select(s => s.LayoutId).Distinct().Count() != Layouts.Length)
+            receipt.Files is null || receipt.Files.Length < (Id == AspenPack.Id ? 100 : 7) || receipt.Files.Length > 4096 || receipt.Files.Any(f => f is null) || receipt.Sessions is null || receipt.Sessions.Length != ReceiptLayouts(receipt).Length ||
+            receipt.Sessions.Any(s => s is null || s.Files is null || s.Files.Any(f => f is null)) || receipt.Sessions.Select(s => s.LayoutId).Distinct().Count() != ReceiptLayouts(receipt).Length)
             throw new IOException("Unsupported custom-track receipt.");
         ValidateSources(receipt.Sources);
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var allowedRoots = ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
         long total = 0;
         foreach (var f in receipt.Files)
         {
             SafeFiles.Relative(f.Path);
-            if (!paths.Add(f.Path) || f.Path == Receipt || !InstallRoots.Any(p => f.Path.StartsWith(p + "/", StringComparison.Ordinal)) ||
+            if (!paths.Add(f.Path) || f.Path == Receipt || !allowedRoots.Any(p => f.Path.StartsWith(p + "/", StringComparison.Ordinal)) ||
                 !SafeFiles.Digest(f.Sha256) || f.Bytes is < 0 or > 512L * 1024 * 1024 ||
                 !new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf" }.Contains(Path.GetExtension(f.Path)))
                 throw new IOException("Invalid custom-track file: " + f.Path);
             total = checked(total + f.Bytes);
         }
         if (total > 4L * 1024 * 1024 * 1024) throw new IOException("Custom-track inventory exceeds its size limit.");
-        foreach (var layout in Layouts)
+        foreach (var layout in ReceiptLayouts(receipt))
         {
             foreach (var name in new[] { "track.jpk", "routesplit.pssg", "track.vis", "grids.pssg", "progress_track.xml" })
                 if (!paths.Contains($"tracks/usa/{layout.Folder}/route_0/{name}")) throw new IOException("Incomplete custom layout: " + layout.Name);

@@ -175,7 +175,7 @@ Play
 For Aspen, choose a layout, Direct practice or Race, and a Car. Choose Launch for desktop play or Launch VR with SteamVR and your headset ready. Practice is solo; Race adds 1–7 AI opponents with same-car, mixed or same-class grids. Use the sliders to choose opponents and 1–20 laps. These options are experimental: Aspen headset rendering and broader AI race coverage still need gameplay validation. LAN is unavailable. Rebuild an existing Aspen installation once to update AI paths before racing; solo practice remains available. Conversion happens before installation, never during game loading.
 
 Smelter test
-County Loop — Morning sun is available for desktop Direct practice in the Subaru STI. Build the Smelter pack, then use Launch. Race, VR and the other nine layouts are pending. This candidate needs a full lap, off-road reset and restart check, plus inspection of scenery and water.
+All ten layouts are available for desktop Direct practice testing. Choose Smelter, build the pack, select a layout, then use Launch. Existing County Loop users should choose Manage → Rebuild from source. Landrush uses the Kincaid Ford F-150; other courses use the Subaru STI. Dredger Duel and Furnace Duel are solo practice only. Conditions follow source defaults, without active rain. Race and VR are pending; new layouts and the barrier correction need gameplay checks.
 
 Aspen layouts
 Lakeside: night. Lake View: morning sun. Snowmass Sprint: evening sun. Snowmass Loop: overcast. These are Rallycross layouts. Ski-lift animation, full snowfall and deformable snow remain unsupported.

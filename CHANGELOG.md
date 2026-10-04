@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add the remaining nine Smelter layouts for desktop practice, with layout-specific conditions and a Landrush truck. The two Head-to-head courses support solo practice only; active rain, Race and VR remain unavailable. Rebuild Smelter from Manage after updating. New layouts still need gameplay checks.
+
 - Fix missing County Loop lake and puddle water. Retain the extended scenery visibility ranges. Rebuild Smelter from Manage after updating.
 - Test a compatibility correction for missing County Loop concrete barriers. Rendering still needs confirmation on the gaming PC.
 

@@ -90,11 +90,21 @@ Each pack keeps its own layout, car, race and lap selections, separately from st
 
 If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source…**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
 
-### Smelter — County Loop test
+### Smelter — ten-layout test
 
-Select **Smelter** in CUSTOM tracks and choose **Build and install…** using your DiRT 3 Complete Edition folder. This local test includes **County Loop — Morning sun**. Once verification finishes, select **Direct practice** and **Subaru STI**, then **Launch** for desktop play. Smelter Race and Launch VR are unavailable in this candidate; Aspen keeps its existing modes.
+Select **Smelter** in CUSTOM tracks and choose **Build and install…** using your DiRT 3 Complete Edition folder. This local test includes all ten layouts. Select a layout, then **Launch** for desktop Direct practice. The launcher selects the **Subaru STI** for Rallycross and solo Head-to-head courses, and the **Kincaid Ford F-150** for Landrush.
 
-After updating from an earlier County Loop test, choose **Smelter → Manage… → Rebuild from source…** to apply the water and scenery visibility changes. Updating the launcher alone does not rebuild an installed track. County Loop is still undergoing gameplay testing; check a full timed lap, off-road reset and restart, plus water, barriers, foliage and distant terrain. The remaining nine Smelter layouts are planned and are not installed by this build.
+| Layouts | Conditions |
+| --- | --- |
+| County Loop, Portage Canal | Morning sun |
+| Houghton Sprint, Waterfront Park | Wet lighting, without active rain |
+| Copper Run, Maple Woods | Evening sun |
+| Atlantic Mill, Cole's Creek | Morning sun |
+| Dredger Duel, Furnace Duel | Evening sun; solo practice only |
+
+Use **Smelter → Manage… → Rebuild from source…** to add the new layouts to an existing County Loop installation. Updating the launcher alone does not rebuild tracks. Existing County Loop remains usable until the rebuild completes.
+
+Wet-weather handling still needs validation. Smelter Race and VR remain unavailable. Dredger Duel and Furnace Duel do not yet have competitive Head-to-head rules. New layouts still need timed-lap, reset and restart checks on a gaming PC. The concrete-barrier compatibility test remains visually unverified. Aspen keeps its existing modes.
 
 To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
 

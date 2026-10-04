@@ -5,7 +5,7 @@ namespace DiRT2VR.CustomTracks;
 public static class PackInstallation
 {
     const string Journal = "DiRT2VR/custom-track-install/pending.json";
-    sealed record Pending(int Schema, string Id, PackReceipt? Before, PackReceipt? After, bool[] Existed);
+    sealed record Pending(int Schema, string Id, PackReceipt? Before, PackReceipt? After, bool[] Existed, string[]? Roots = null);
     static string Work(string game, string id) => SafeFiles.Inside(game, "DiRT2VR/custom-track-install/" + id);
 
     public static void Install(string game, string staging, string launcherVersion)
@@ -16,6 +16,9 @@ public static class PackInstallation
         var next = pack.Read(staging);
         if (System.Version.Parse(next.MinimumLauncher) > System.Version.Parse(launcherVersion)) throw new IOException("Update DiRT2VR before installing this pack.");
         var before = Existing(game, pack);
+        var installRoots = pack.ReceiptLayouts(next).Select(l => "tracks/usa/" + l.Folder).Append(pack.Support).ToArray();
+        if (before is not null && pack.ReceiptLayouts(before).Length > pack.ReceiptLayouts(next).Length)
+            throw new IOException("Uninstall the newer Smelter pack before installing an older County Loop-only build.");
         string id = Guid.NewGuid().ToString("N"), work = Work(game, id);
         var fresh = Path.Combine(work, "new");
         foreach (var file in next.Files)
@@ -26,14 +29,14 @@ public static class PackInstallation
             File.Copy(SafeFiles.Inside(staging, file.Path), target, false);
         }
         pack.Verify(fresh, next);
-        var pending = new Pending(1, id, before, next, pack.InstallRoots.Select(p => Directory.Exists(SafeFiles.Inside(game, p))).ToArray());
+        var pending = new Pending(1, id, before, next, installRoots.Select(p => Directory.Exists(SafeFiles.Inside(game, p))).ToArray(), installRoots);
         // Recheck ownership immediately before journaling/moving any live folders.
         CheckOwned(game, before, allowMissing: true, pack: pack);
         SafeFiles.RequireClosed();
         SafeFiles.WriteJson(SafeFiles.Inside(game, Journal), pending);
         try
         {
-            foreach (var root in pack.InstallRoots)
+            foreach (var root in installRoots)
             {
                 var target = SafeFiles.Inside(game, root);
                 var backup = SafeFiles.Inside(work, "old/" + root);
@@ -56,7 +59,7 @@ public static class PackInstallation
         var before = Existing(game, pack);
         if (before is null) return;
         string id = Guid.NewGuid().ToString("N"), work = Work(game, id);
-        var pending = new Pending(1, id, before, null, pack.InstallRoots.Select(p => Directory.Exists(SafeFiles.Inside(game, p))).ToArray());
+        var pending = new Pending(1, id, before, null, pack.InstallRoots.Select(p => Directory.Exists(SafeFiles.Inside(game, p))).ToArray(), pack.InstallRoots);
         SafeFiles.WriteJson(SafeFiles.Inside(game, Journal), pending);
         try
         {
@@ -110,7 +113,13 @@ public static class PackInstallation
         if (pending.Before is null && pending.After is null) throw new IOException("Invalid installation journal; files preserved.");
         var pack = TrackPacks.Get((pending.After ?? pending.Before)!.Id);
         if (pending.Before is not null && pending.After is not null && pending.Before.Id != pending.After.Id) throw new IOException("Mixed-pack installation journal; files preserved.");
-        if (pending.Schema != 1 || !Guid.TryParseExact(pending.Id, "N", out _) || pending.Existed is null || pending.Existed.Length != pack.InstallRoots.Length ||
+        var roots = pending.Roots ?? (pack.Id == "smelter" && pending.Existed?.Length == 2 &&
+            new[] { pending.Before, pending.After }.Where(r => r is not null).All(r => pack.ReceiptLayouts(r!).Length == 1)
+            ? new[] { "tracks/usa/d2vr_smelter_0", pack.Support } : pack.InstallRoots);
+        if (!roots.SequenceEqual(pack.InstallRoots) && !(pack.Id == "smelter" && roots.SequenceEqual(new[] { "tracks/usa/d2vr_smelter_0", pack.Support }) &&
+            new[] { pending.Before, pending.After }.Where(r => r is not null).All(r => pack.ReceiptLayouts(r!).Length == 1)))
+            throw new IOException("Unknown installation roots; files preserved.");
+        if (pending.Schema != 1 || !Guid.TryParseExact(pending.Id, "N", out _) || pending.Existed is null || pending.Existed.Length != roots.Length ||
             (pending.Before is null && pending.After is null)) throw new IOException("Invalid installation journal; files preserved.");
         if (pending.Before is not null) pack.Validate(pending.Before);
         if (pending.After is not null) pack.Validate(pending.After);
@@ -128,18 +137,18 @@ public static class PackInstallation
         }
         if (pending.After is null && File.Exists(Path.Combine(work, "committed.json"))) { Finish(game, pending); return; }
         // Preflight every root before rollback; never overwrite a conflicting external edit.
-        for (int i = 0; i < pack.InstallRoots.Length; i++)
+        for (int i = 0; i < roots.Length; i++)
         {
-            var root = pack.InstallRoots[i];
+            var root = roots[i];
             var backup = SafeFiles.Inside(work, "old/" + root);
             var current = SafeFiles.Inside(game, root);
             if (Directory.Exists(backup)) CheckRoot(Path.Combine(work, "old"), root, pending.Before);
             if (Directory.Exists(current)) CheckRoot(game, root, Directory.Exists(backup) || !pending.Existed[i] ? pending.After : pending.Before);
             if (pending.Existed[i] && !Directory.Exists(backup) && !Directory.Exists(current)) throw new IOException("Installation backup is missing; files preserved.");
         }
-        for (int i = 0; i < pack.InstallRoots.Length; i++)
+        for (int i = 0; i < roots.Length; i++)
         {
-            var root = pack.InstallRoots[i];
+            var root = roots[i];
             var backup = SafeFiles.Inside(work, "old/" + root);
             var current = SafeFiles.Inside(game, root);
             if (Directory.Exists(backup) || !pending.Existed[i])

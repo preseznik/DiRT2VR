@@ -12,7 +12,8 @@ public static class SessionFiles
         SafeFiles.RequireClosed(); Recover(game);
         var pack = TrackPacks.ForLayout(layoutId);
         var receipt = pack.Read(game);
-        var session = receipt.Sessions.Single(s => s.LayoutId == pack.GetLayout(layoutId).Id);
+        var session = receipt.Sessions.SingleOrDefault(s => s.LayoutId == pack.GetLayout(layoutId).Id)
+            ?? throw new IOException("This layout is not installed. Use Manage > Rebuild from source to add it.");
         var entries = session.Files.Select(f => new Entry(f.Path, f.OriginalSha256,
             receipt.Files.Single(p => p.Path == f.InstalledPath).Sha256)).ToArray();
         var id = Guid.NewGuid().ToString("N");

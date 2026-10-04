@@ -2,15 +2,16 @@ using System.Xml.Linq;
 using EgoEngineLibrary.Archive.Jpk;
 using EgoEngineLibrary.Formats.TrackQuadTree;
 
-// Staged County Loop candidate. No installation, session preparation or game launch.
+// Staged Smelter layout candidate. No installation, session preparation or game launch.
 // Keep venue-specific reconstruction separate from the accepted Aspen pipeline.
 internal static class SmelterBuild
 {
-    internal static void Run(string d3, string d2, string schema, string output, Action<string>? progress = null)
+    internal static void Run(string d3, string d2, string schema, string output, Action<string>? progress = null, SmelterLayout? selectedLayout = null)
     {
         PortFiles.NewOutput(output,d3,d2);
         Entities.RegisterSchema(linkedEntities:true);
-        var layout=SmelterLayout.CountyLoop;
+        var layout=selectedLayout ?? SmelterLayout.CountyLoop;
+        var condition=layout.Lighting;
         var source=Path.Combine(d3,"tracks/locations/usa/smelter");
         var sourceRoute=Path.Combine(source,layout.Route);
         var track=Path.Combine(output,"track");var route=Path.Combine(track,"route_0");Directory.CreateDirectory(route);
@@ -21,10 +22,10 @@ internal static class SmelterBuild
         var entity=PortFiles.ReadPssg(entityPath);
         var originalLinks=entity.Descendants("TEMPLATEENTITYLINK").Select(e=>e.ToString(SaveOptions.DisableFormatting)).ToArray();
         var ornamentPath=Path.Combine(sourceRoute,"ornaments.bin");
-        var dryOrnaments=SmelterPlacements.Dry(File.ReadAllBytes(ornamentPath),entity,out var conditionProps);
+        var dryOrnaments=SmelterPlacements.Prepare(File.ReadAllBytes(ornamentPath),entity,condition.Suffix == "wet",out var conditionProps);
         PortFiles.Json(Path.Combine(output,"condition-props.json"),conditionProps);
         var ornaments=Placements.Convert(dryOrnaments,false,placements,entity);
-        progress?.Invoke("County Loop: converting scene assets and materials");
+        progress?.Invoke(layout.Name + ": converting scene assets and materials");
         void Copy(string path,string target)
         {
             inputs[path]=PortFiles.Hash(path);
@@ -73,10 +74,10 @@ internal static class SmelterBuild
         foreach(var root in new[]{source,sourceRoute})
         foreach(var path in Directory.EnumerateFiles(root).Order(StringComparer.Ordinal)) {
             string name=Path.GetFileName(path);
-            if(!AspenCondition.Morning.Include(name) || name is "track.jpk" or "crowd_standing2.bin") continue;
+            if(!condition.Include(name) || name is "track.jpk" or "crowd_standing2.bin") continue;
             Copy(path,Path.Combine(root==source ? track : route,name));
         }
-        foreach(var pair in new[]{($"{layout.Route}/sky_day.pssg","route_0/sky.pssg"),($"{layout.Route}/sky_day.pssg","sky.pssg"),("lighting_day.xml","lighting.xml"),("bouncemap_day.clm","baked_lights.clm"),($"{layout.Route}/shadow_map_day.clm","route_0/route.clm")})
+        foreach(var pair in new[]{($"{layout.Route}/sky_{condition.Suffix}.pssg","route_0/sky.pssg"),($"{layout.Route}/sky_{condition.Suffix}.pssg","sky.pssg"),($"lighting_{condition.Suffix}.xml","lighting.xml"),($"bouncemap_{condition.Suffix}.clm","baked_lights.clm"),($"{layout.Route}/shadow_map_{condition.Suffix}.clm","route_0/route.clm")})
             Copy(Path.Combine(source,pair.Item1),Path.Combine(track,pair.Item2));
         foreach(var pair in new[]{("sponsor_sparco.pssg","sponsor_pack_a.pssg"),("sponsor_slime.pssg","sponsor_pack_b.pssg"),("sponsor_yokohama.pssg","sponsor_pack_c.pssg"),("sponsor_quaife.pssg","sponsor_pack_d.pssg")})
             Copy(Path.Combine(d3,"tracks/sponsors",pair.Item1),Path.Combine(track,pair.Item2));
@@ -85,7 +86,8 @@ internal static class SmelterBuild
         PortFiles.Json(Path.Combine(output,"crowds.json"),Crowds.Restore(track,source,d2,inputs,sourceRoute:layout.Route,includeDayOnly:true,venueAliases:SmelterCrowds.Aliases));
         if(!originalLinks.SequenceEqual(PortFiles.ReadPssg(Path.Combine(route,"objects.ens")).Descendants("TEMPLATEENTITYLINK").Select(e=>e.ToString(SaveOptions.DisableFormatting))))
             throw new InvalidDataException("Linked barrier identities changed.");
-        PortFiles.Json(Path.Combine(output,"water.json"),SmelterWater.Build(track,d2,output,inputs));
+        PortFiles.Json(Path.Combine(output,"water.json"),SmelterWater.Build(track,d2,output,inputs,condition.Suffix));
+        if (condition.Suffix == "wet") SmelterWetObjects.Merge(track);
         var barrierPath = Path.Combine(track,"objects.pssg");
         var barrierMeshes = PortFiles.ReadPssg(barrierPath);
         PortFiles.Json(Path.Combine(output,"barrier-meshes.json"),SmelterBarrierMeshes.Convert(barrierMeshes));
@@ -99,9 +101,9 @@ internal static class SmelterBuild
             SmelterBarrierMeshes.Models));
         PortFiles.Json(Path.Combine(output,"terrain-containers.json"),TerrainContainers.Convert(track));
         PortFiles.Json(Path.Combine(output,"terrain-visibility.json"),TerrainVisibility.Convert(track,source,TerrainVisibility.Mappings(System.Text.Json.JsonSerializer.SerializeToElement(placements)),layout.Route));
-        PortFiles.Json(Path.Combine(output,"day-textures.json"),DayTextures.Resolve(track));
+        PortFiles.Json(Path.Combine(output,"day-textures.json"),DayTextures.Resolve(track,condition));
         PortFiles.Json(Path.Combine(output,"terrain-occlusion.json"),TerrainOcclusion.Convert(track));
-        progress?.Invoke("County Loop: rebuilding and verifying ground collision");
+        progress?.Invoke(layout.Name + ": rebuilding and verifying ground collision");
         using var input=PortFiles.OpenRead(Path.Combine(sourceRoute,"track.jpk"));var archive=new JpkFile();archive.Read(input);
         var ground=TrackGroundGltfConverter.Convert(TrackGround.Load(archive));
         var before=Path.Combine(output,"ground.glb");ground.SaveGLB(before);
@@ -112,19 +114,19 @@ internal static class SmelterBuild
         var a=GeometryCheck.Read(before);var b=GeometryCheck.Read(after);
         int missing=GeometryCheck.Unmatched(a,b),added=GeometryCheck.Unmatched(b,a);
         PortFiles.Json(Path.Combine(output,"geometry.json"),new{InputTriangles=a.Count,OutputTriangles=b.Count,Missing=missing,Added=added,ToleranceMetres=.02,SurfaceAndWindingChecked=true});
-        if(missing!=0 || added!=0) throw new InvalidDataException("County Loop collision changed.");
+        if(missing!=0 || added!=0) throw new InvalidDataException(layout.Name + " collision changed.");
         var surfaces=Path.Combine(d2,"surface_materials.xml");inputs[surfaces]=PortFiles.Hash(surfaces);
         var codes=a.Select(t=>t.Material).Distinct().Order().ToArray();
         PortFiles.WriteXml(SmelterSurfaces.Create(PortFiles.ReadXml(surfaces),codes),Path.Combine(output,"surface_materials.xml"));
         PortFiles.Json(Path.Combine(output,"surfaces.json"),codes.Select(c=>new{Code=c,Donor=SmelterSurfaces.Donors.GetValueOrDefault(c[..3],c[..3])+c[3]}).ToArray());
         inputs[schema]=PortFiles.Hash(schema);
         float length=AspenLayout.RouteLength(PortFiles.ReadXml(Path.Combine(route,"progress_track.xml")));
-        TrackMetadata.Create(d2,schema,Path.Combine(output,"session-metadata"),new(layout.Directory,"smelter_county_loop","COUNTY LOOP","smelter","SMELTER",144),length,false,inputs);
+        TrackMetadata.Create(d2,schema,Path.Combine(output,"session-metadata"),new(layout.Directory,layout.StringId,layout.Name.ToUpperInvariant(),"smelter","SMELTER",layout.DonorModel),length,false,inputs);
         foreach(var pair in inputs) if(PortFiles.Hash(pair.Key)!=pair.Value) throw new IOException("Source changed during conversion: "+pair.Key);
         PortFiles.Json(Path.Combine(output,"inputs.json"),inputs);
         PortFiles.Json(Path.Combine(output,"shaders.json"),shaders);PortFiles.Json(Path.Combine(output,"copies.json"),copies);PortFiles.Json(Path.Combine(output,"placements.json"),placements);
         var hashes=Directory.EnumerateFiles(track,"*",SearchOption.AllDirectories).Order().ToDictionary(p=>Path.GetRelativePath(track,p),PortFiles.Hash);
-        PortFiles.Json(Path.Combine(output,"candidate.json"),new{Schema=1,TrackId=layout.Id,SourceRoute=layout.Route,TrackDirectory=layout.Directory,Condition="Morning sun",Length=length,LinkedBarriers=originalLinks.Length,Files=hashes,RuntimeValidated=false,DistributionReady=false});
-        progress?.Invoke("County Loop staged; preparing installation receipt");
+        PortFiles.Json(Path.Combine(output,"candidate.json"),new{Schema=1,TrackId=layout.Id,SourceRoute=layout.Route,TrackDirectory=layout.Directory,Condition=condition.Name,Discipline=layout.Discipline,CompetitiveHeadToHead=false,Length=length,LinkedBarriers=originalLinks.Length,Files=hashes,RuntimeValidated=false,DistributionReady=false});
+        progress?.Invoke(layout.Name + " staged; preparing installation receipt");
     }
 }

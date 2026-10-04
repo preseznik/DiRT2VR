@@ -5,8 +5,8 @@ internal static class SmelterVisibility
     internal static void Route(XDocument route)
     {
         var blocks = route.Root!.Elements().Where(n => n.Attribute("track_lod_dist") is not null).ToArray();
-        if (blocks.Length != 12 || blocks.Any(n => n.Attribute("track_cull_dist") is null || n.Attribute("world_cull_dist") is null || n.Attribute("main_obj_size") is null))
-            throw new InvalidDataException("Unexpected County Loop visibility controls.");
+        if (blocks.Length == 0 || route.Root.Element("default")?.Attribute("track_lod_dist") is null || blocks.Any(n => n.Attribute("track_cull_dist") is null || n.Attribute("world_cull_dist") is null || n.Attribute("main_obj_size") is null))
+            throw new InvalidDataException("Unexpected Smelter visibility controls.");
         // Baked scenery lives in the terrain tiles, so their culling distances
         // must cover the venue too. Keep shadow/reflection distances unchanged.
         foreach (var block in blocks)
