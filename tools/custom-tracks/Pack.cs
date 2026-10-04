@@ -53,7 +53,7 @@ public static class TrackPacks
 {
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
-    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.0", "0.17.28", ["desktop-solo"],
+    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.1", "0.17.30", ["desktop-solo"],
         [new("smelter-county-loop", "County Loop", "d2vr_smelter_0", "Morning sun"),
          new("smelter-portage-canal", "Portage Canal", "d2vr_smelter_1", "Morning sun"),
          new("smelter-houghton-sprint", "Houghton Sprint", "d2vr_smelter_2", "Wet lighting (no rain)"),
@@ -65,7 +65,7 @@ public static class TrackPacks
          new("smelter-dredger-duel", "Dredger Duel", "d2vr_smelter_4", "Evening sun", "Head-to-head"),
          new("smelter-furnace-duel", "Furnace Duel", "d2vr_smelter_5", "Evening sun", "Head-to-head")], ["surface_materials.xml", "database/database.bin"]);
     public static readonly TrackPack[] All = [Aspen, Smelter];
-    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml"];
+    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"];
     public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
     public static bool IsLayout(string? id) => All.Any(p => p.Layouts.Any(l => l.Id == id));
     public static TrackPack ForLayout(string id) => All.SingleOrDefault(p => p.IsLayout(id)) ?? throw new IOException("Unknown custom layout.");
@@ -175,6 +175,8 @@ public sealed class TrackPack
             // Older installed Smelter receipts remain readable for rebuild/uninstall.
             if (Id == "smelter" && System.Version.Parse(receipt.Version) >= new System.Version(1, 0, 1) && !targets.Contains("tracks/waterdefs.xml"))
                 throw new IOException("Missing Smelter water session definition. Rebuild from source.");
+            if (Id == "smelter" && System.Version.Parse(receipt.Version) >= new System.Version(1, 1, 1) && !targets.Contains("tracks/ornament_system_settings.xml"))
+                throw new IOException("Missing Smelter scenery session definition. Rebuild from source.");
             foreach (var required in RequiredTargets)
                 if (!targets.Contains(required)) throw new IOException("Incomplete session inventory.");
         }

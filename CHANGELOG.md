@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Test a shared Smelter scenery correction for popping fences and trackside detail across all ten layouts. Rebuild Smelter from Manage after updating; in-game confirmation is still needed.
+
 - Add Aspen’s four Landrush and two Head-to-head courses for desktop practice testing, with source lighting defaults and a Landrush truck. Rebuild Aspen from Manage after updating. Buttermilk courses are solo practice only; the existing four Rallycross layouts keep their Race, VR and car options. New courses still need gameplay checks.
 
 - Add the remaining nine Smelter layouts for desktop practice, with layout-specific conditions and a Landrush truck. The two Head-to-head courses support solo practice only; active rain, Race and VR remain unavailable. Rebuild Smelter from Manage after updating. New layouts still need gameplay checks.

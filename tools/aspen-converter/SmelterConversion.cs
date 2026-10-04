@@ -64,6 +64,7 @@ public static class SmelterConversion
             var session=new List<SessionFile>();
             AddSession("surface_materials.xml",Path.Combine(candidate,"surface_materials.xml"));
             AddSession("tracks/waterdefs.xml",Path.Combine(candidate,"waterdefs.xml"));
+            AddSession("tracks/ornament_system_settings.xml",Path.Combine(candidate,"ornament_system_settings.xml"));
             using(var metadata=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(candidate,"session-metadata/metadata.json"))))
                 foreach(var entry in metadata.RootElement.GetProperty("Files").EnumerateArray()) {
                     var path=entry.GetProperty("Path").GetString()!;

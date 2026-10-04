@@ -62,7 +62,7 @@ internal static class SmelterBuild
             else if(name is "route_overrides.xml" or "ornament_attributes.xml") {
                 var doc=PortFiles.ReadXml(path);
                 if(name=="route_overrides.xml") SmelterVisibility.Route(doc);
-                else SmelterVisibility.Barriers(doc);
+                // Ornament ranges are completed from the converted placement inventory below.
                 PortFiles.WriteXml(doc,target,EgoEngineLibrary.Xml.XmlType.BinXml);
                 if(!XNode.DeepEquals(doc.Root,PortFiles.ReadXml(target).Root)) throw new InvalidDataException("Smelter visibility settings changed on serialization.");
             }
@@ -99,7 +99,13 @@ internal static class SmelterBuild
         // baking/clearing the static part can hide nearby movable instances.
         PortFiles.Json(Path.Combine(output,"scene-props.json"),StaticProps.Bake(track,
             SmelterBarrierMeshes.Models));
+        PortFiles.Json(Path.Combine(output,"ornament-visibility.json"),SmelterVisibility.Objects(track,d2,output,inputs));
         PortFiles.Json(Path.Combine(output,"terrain-containers.json"),TerrainContainers.Convert(track));
+        var landPath=Path.Combine(track,"land.pssg");var land=PortFiles.ReadPssg(landPath);
+        int refitted=SmelterVisibility.SceneBounds(land);
+        PortFiles.WritePssg(land,landPath+".tmp");
+        ObjectVertexLayout.Verify(land,PortFiles.ReadPssg(landPath+".tmp"));File.Move(landPath+".tmp",landPath,true);
+        PortFiles.Json(Path.Combine(output,"scene-bounds.json"),new { RefittedParents=refitted, GeometryPreserved=true, RuntimeValidated=false });
         PortFiles.Json(Path.Combine(output,"terrain-visibility.json"),TerrainVisibility.Convert(track,source,TerrainVisibility.Mappings(System.Text.Json.JsonSerializer.SerializeToElement(placements)),layout.Route));
         PortFiles.Json(Path.Combine(output,"day-textures.json"),DayTextures.Resolve(track,condition));
         PortFiles.Json(Path.Combine(output,"terrain-occlusion.json"),TerrainOcclusion.Convert(track));

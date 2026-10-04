@@ -3133,5 +3133,10 @@
     "Game": "dirt2",
     "Path": "tracks/waterdefs.xml",
     "Sha256": "3B64137E8158381855E61ADF2A039FAEC31EBC688D16C5C7A2A46913550F2431"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/ornament_system_settings.xml",
+    "Sha256": "A264B9FB8F966C8D8AE3C70BB0A31951F2B98C6B78AD22E4489A52A6E068E205"
   }
 ]
