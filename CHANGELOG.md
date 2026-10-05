@@ -6,9 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Continue investigating fixed bright snow patches on Buttermilk Climb and Descent. The first colour test did not identify the affected surface; the local diagnostic now covers ordinary road and infield materials. A visual correction is not yet confirmed.
+- Restore normal colours after the Buttermilk diagnostic and test restored road-shading detail on Climb and Descent. Rebuild Aspen from Manage after updating; the abrupt snow brightness boundary still needs a visual check.
 
-- Revert the log-mesh experiment that made Smelter logs disappear. Test broader visibility bounds for all native Smelter props while retaining their damage behavior. Rebuild Smelter from Manage after updating; rendering and performance still need a driving check.
+- Test a shared scenery-format correction for Smelter, including log and timber piles, while preserving breakable objects. Remove the unsuccessful whole-venue visibility experiment. Rebuild Smelter from Manage after updating; disappearing scenery is not yet confirmed fixed.
 
 - Add Aspen’s four Landrush and two Head-to-head courses for desktop practice testing, with source lighting defaults and a Landrush truck. Rebuild Aspen from Manage after updating. Buttermilk courses are solo practice only; the existing four Rallycross layouts keep their Race, VR and car options. New courses still need gameplay checks.
 

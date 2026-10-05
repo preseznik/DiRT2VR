@@ -15,7 +15,7 @@ public sealed record ConversionProfile(string Id, string Name, string Version, s
 public static class AspenPack
 {
     public const string Id = "aspen-rallycross";
-    public const string Version = "1.1.0";
+    public const string Version = "1.1.1";
     public const string MinimumLauncher = "0.17.29";
     public const string Support = "DiRT2VR/custom-tracks/aspen-rallycross";
     public const string Receipt = Support + "/receipt.json";
@@ -53,7 +53,7 @@ public static class TrackPacks
 {
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
-    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.3", "0.17.30", ["desktop-solo"],
+    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.4", "0.17.30", ["desktop-solo"],
         [new("smelter-county-loop", "County Loop", "d2vr_smelter_0", "Morning sun"),
          new("smelter-portage-canal", "Portage Canal", "d2vr_smelter_1", "Morning sun"),
          new("smelter-houghton-sprint", "Houghton Sprint", "d2vr_smelter_2", "Wet lighting (no rain)"),

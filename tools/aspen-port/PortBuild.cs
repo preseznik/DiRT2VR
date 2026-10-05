@@ -105,6 +105,8 @@ internal static class PortBuild
         PortFiles.Json(Path.Combine(output, "terrain-visibility.json"), TerrainVisibility.Convert(track,source,TerrainVisibility.Mappings(System.Text.Json.JsonSerializer.SerializeToElement(placements)),layout.SourceRoute));
         PortFiles.Json(Path.Combine(output, "day-textures.json"), DayTextures.Resolve(track,condition));
         PortFiles.Json(Path.Combine(output, "terrain-occlusion.json"), TerrainOcclusion.Convert(track));
+        if (layout == AspenLayout.ButtermilkClimb || layout == AspenLayout.ButtermilkDescent)
+            PortFiles.Json(Path.Combine(output, "road-colour.json"), ButtermilkRoadColour.Convert(track,source,layout.SourceRoute));
         Progress?.Invoke("Rebuilding collision and checking geometry");
         var collision = Path.Combine(sourceRoute, "track.jpk"); inputs[collision] = PortFiles.Hash(collision);
         using (var stream = PortFiles.OpenRead(collision))

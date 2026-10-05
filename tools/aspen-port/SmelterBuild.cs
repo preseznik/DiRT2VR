@@ -90,15 +90,15 @@ internal static class SmelterBuild
         if (condition.Suffix == "wet") SmelterWetObjects.Merge(track);
         var barrierPath = Path.Combine(track,"objects.pssg");
         var barrierMeshes = PortFiles.ReadPssg(barrierPath);
-        PortFiles.Json(Path.Combine(output,"barrier-meshes.json"),SmelterBarrierMeshes.Convert(barrierMeshes));
+        PortFiles.Json(Path.Combine(output,"object-meshes.json"),SmelterObjectMeshes.Convert(barrierMeshes));
         PortFiles.WritePssg(barrierMeshes,barrierPath+".tmp");
         ObjectVertexLayout.Verify(barrierMeshes,PortFiles.ReadPssg(barrierPath+".tmp"));
         File.Move(barrierPath+".tmp",barrierPath,true);
-        // These concrete models each have static and movable instances. Keep
-        // their native batches populated, as for Aspen's mixed plastic barriers;
-        // baking/clearing the static part can hide nearby movable instances.
+        // Preserve complete native batches for converted simple models with
+        // movable entities. Clearing only their static count can hide the intact
+        // movable mesh; never add a permanent terrain copy of a breakable prop.
         PortFiles.Json(Path.Combine(output,"scene-props.json"),StaticProps.Bake(track,
-            SmelterBarrierMeshes.Models));
+            SmelterObjectMeshes.NativeBatches(track)));
         PortFiles.Json(Path.Combine(output,"ornament-visibility.json"),SmelterVisibility.Objects(track,d2,output,inputs));
         PortFiles.Json(Path.Combine(output,"terrain-containers.json"),TerrainContainers.Convert(track));
         var landPath=Path.Combine(track,"land.pssg");var land=PortFiles.ReadPssg(landPath);
@@ -107,7 +107,6 @@ internal static class SmelterBuild
         ObjectVertexLayout.Verify(land,PortFiles.ReadPssg(landPath+".tmp"));File.Move(landPath+".tmp",landPath,true);
         PortFiles.Json(Path.Combine(output,"scene-bounds.json"),new { RefittedParents=refitted, GeometryPreserved=true, RuntimeValidated=false });
         PortFiles.Json(Path.Combine(output,"terrain-visibility.json"),TerrainVisibility.Convert(track,source,TerrainVisibility.Mappings(System.Text.Json.JsonSerializer.SerializeToElement(placements)),layout.Route));
-        PortFiles.Json(Path.Combine(output,"object-culling.json"),SmelterVisibility.ConservativeObjects(track));
         PortFiles.Json(Path.Combine(output,"day-textures.json"),DayTextures.Resolve(track,condition));
         PortFiles.Json(Path.Combine(output,"terrain-occlusion.json"),TerrainOcclusion.Convert(track));
         progress?.Invoke(layout.Name + ": rebuilding and verifying ground collision");
