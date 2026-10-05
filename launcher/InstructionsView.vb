@@ -184,7 +184,7 @@ Aspen layouts
 Lakeside: night. Lake View: morning sun. Snowmass Sprint: evening sun. Snowmass Loop: overcast. These are Rallycross layouts. Ski-lift animation, full snowfall and deformable snow remain unsupported.
 
 Offline and original tracks
-Installed tracks work offline without DiRT 3. Keep the source installation for rebuilds and updates. Each pack keeps its own layout, car, race and lap settings, separately from stock tracks. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
+Installed tracks work offline without DiRT 3. Keep the source installation for rebuilds and updates. Each pack keeps its own layout, car, race and lap settings, separately from stock tracks. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything. Successful file checks are remembered while the launcher stays open; installed-file changes trigger a new check. Manage → Verify installed files always checks again.
 
 Manage and recover
 Manage offers file verification, rebuilding from source and uninstalling the selected pack. Unsupported source files are named: choose the correct folder or verify original files in Steam. Cancellation keeps existing tracks usable. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files.",

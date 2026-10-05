@@ -6,11 +6,13 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Switching between custom-track locations reuses successful file checks during the current launcher session. Installation changes trigger a new check; Manage → Verify installed files always checks again.
+
 - Choose which Aspen or Smelter layouts to build or rebuild, with Select all / Select none and remembered choices for each location. Only selected layouts are converted; other installed layouts are kept.
 
-- Restore normal colours after the Buttermilk diagnostic and test restored road-shading detail on Climb and Descent. Rebuild Aspen from Manage after updating; the abrupt snow brightness boundary still needs a visual check.
+- Restore normal colours after the Buttermilk diagnostic and test restored road-shading detail on Climb and Descent. Rebuild Aspen from Manage after updating; the abrupt snow brightness boundary remains unresolved in the latest driving test.
 
-- Test a shared scenery-format correction for Smelter, including log and timber piles, while preserving breakable objects. Remove the unsuccessful whole-venue visibility experiment. Rebuild Smelter from Manage after updating; disappearing scenery is not yet confirmed fixed.
+- Test a shared scenery-format correction for Smelter, including log and timber piles, while preserving breakable objects. Remove the unsuccessful whole-venue visibility experiment. Rebuild Smelter from Manage after updating; general Maple Woods flicker has improved in testing, but log piles remain missing.
 
 - Add Aspen’s four Landrush and two Head-to-head courses for desktop practice testing, with source lighting defaults and a Landrush truck. Rebuild Aspen from Manage after updating. Buttermilk courses are solo practice only; the existing four Rallycross layouts keep their Race, VR and car options. New courses still need gameplay checks.
 

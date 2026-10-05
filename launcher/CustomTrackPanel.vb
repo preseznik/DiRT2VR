@@ -6,6 +6,7 @@ Imports System.Windows.Forms
 Public Class CustomTrackPanel
     Inherits VerticalStack
     Private ReadOnly context As InstallContext
+    Private ReadOnly verification As CustomTrackVerificationCache
     Private ReadOnly preferences As CustomTrackPreferences
     Private ReadOnly toggle As New CheckBox With {.Text = "CUSTOM tracks (Experimental)", .Name = "CustomTracks", .AutoSize = True}
     Private ReadOnly browser As New CustomTrackBrowser
@@ -81,6 +82,7 @@ Public Class CustomTrackPanel
     End Property
     Public Sub New(value As InstallContext)
         context = value : preferences = CustomTrackPreferences.Load(context)
+        verification = New CustomTrackVerificationCache(context.GameRoot)
         Name = "CustomTrackPanel" : detail = browser.Detail
         For Each choice In {layouts, launchMode, cars, opponentCars, browser.Picker}
             StyleChoice(choice, Me)
@@ -121,7 +123,6 @@ Public Class CustomTrackPanel
         Next
         AddHandler layouts.SelectedIndexChanged, Sub()
                                                     Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
-        raceReady = installedReceipt IsNot Nothing AndAlso currentPack IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).SupportsRace(installedReceipt, chosen?.Id)
                                                     condition.Text = If(chosen Is Nothing, "Choose a layout", chosen.Discipline & " · " & chosen.Condition)
                                                     If Not loading Then LoadLayoutSession()
                                                     RefreshRaceOptions()
@@ -140,12 +141,13 @@ Public Class CustomTrackPanel
         AddHandler installButton.Click, Async Sub() Await InstallPack()
         AddHandler cancelButton.Click, Sub() CancelOperation()
         AddHandler manage.Click, Sub() menu.Show(manage, New Point(0, manage.Height))
-        AddHandler menu.Items.Add("Verify installed files").Click, Async Sub() Await RefreshInstallation()
+        AddHandler menu.Items.Add("Verify installed files").Click, Async Sub() Await RefreshInstallation(True)
         AddHandler menu.Items.Add("Rebuild from source…").Click, Async Sub() Await InstallPack()
         AddHandler menu.Items.Add("Uninstall pack…").Click, Async Sub()
                                                                If Not currentPack.Available OrElse working Then Return
                                                                If MessageBox.Show(Me, "Remove " & currentPack.Name & " and its " & currentPack.Layouts.Length & " layouts? Original tracks, saves and other packs will be kept.", "Uninstall " & currentPack.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) <> DialogResult.OK Then Return
                                                                Await Operation(Async Function(token, progress)
+                                                                                   verification.Invalidate(currentPack.Id)
                                                                                    Await CustomTrackService.UninstallAsync(context, currentPack.Id)
                                                                                    installationValid = False : hasReceipt = False
                                                                                    SetStatus("Not installed", currentPack.Name & " removed. Your original tracks are available with CUSTOM tracks off.")
@@ -154,6 +156,7 @@ Public Class CustomTrackPanel
         AddHandler errorDetails.Click, Sub() MessageBox.Show(Me, errorText, currentPack.Name & " — details", MessageBoxButtons.OK, MessageBoxIcon.Information)
         AddHandler Disposed, Sub()
                                  cancellation?.Cancel()
+                                 verification.Dispose()
                                  menu.Dispose()
                                  For Each control As Control In New Control() {browser, setup, installCard, unavailable, manage, cancelButton, errorDetails, progressBar}
                                      control.Dispose()
@@ -275,8 +278,13 @@ Public Class CustomTrackPanel
         cancellation?.Cancel()
         If working Then status.Text = "Cancelling; waiting for the current safe operation to finish…"
     End Sub
-    Private Async Function RefreshInstallation() As Task
+    Private Async Function RefreshInstallation(Optional force As Boolean = False) As Task
         If working OrElse Not currentPack.Available Then Return
+        If force OrElse CustomTrackService.RecoveryPending(context) Then verification.Invalidate(currentPack.Id)
+        Dim cached = verification.TryGet(currentPack.Id)
+        If cached IsNot Nothing Then
+            ApplyVerifiedReceipt(cached) : RenderState() : Return
+        End If
         Await Operation(Async Function(token, progress)
                             installationValid = False : raceReady = False : installedReceipt = Nothing
                             hasReceipt = File.Exists(SafeFiles.Inside(context.GameRoot, TrackPacks.Get(currentPack.Id).Receipt))
@@ -285,17 +293,20 @@ Public Class CustomTrackPanel
                                 Return
                             End If
                             SetStatus("Checking…", "Checking installed " & currentPack.Name & " files…")
-                            Dim receipt = Await Task.Run(Function() TrackPacks.Get(currentPack.Id).Read(context.GameRoot, True, token), token)
-                            CustomTrackService.RequireLauncher(receipt)
-                            installationValid = True : installedReceipt = receipt : raceReady = TrackPacks.Get(currentPack.Id).SupportsRace(receipt, preferences.ForPack(currentPack.Id).LayoutId)
-                            installedLayouts = receipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal)
-                            SetStatus("Installed · Ready offline", receipt.Sessions.Length.ToString() & " of " & currentPack.Layouts.Length.ToString() & " layouts installed · Ready offline")
-                            If Not raceReady AndAlso currentPack.Id = AspenPack.Id Then status.Text &= ". Rebuild from source to enable AI races."
-                            If layouts.SelectedItem Is Nothing Then status.Text &= ". Your saved layout is unavailable; choose a layout."
-                            If cars.SelectedItem Is Nothing Then status.Text &= ". Your saved car is unavailable; choose an installed car."
-                            RefreshRaceOptions()
+                            Dim receipt = Await Task.Run(Function() verification.Read(TrackPacks.Get(currentPack.Id), token), token)
+                            ApplyVerifiedReceipt(receipt)
                         End Function)
     End Function
+    Private Sub ApplyVerifiedReceipt(receipt As PackReceipt)
+        errorText = ""
+        hasReceipt = True : installationValid = True : installedReceipt = receipt : raceReady = TrackPacks.Get(currentPack.Id).SupportsRace(receipt, preferences.ForPack(currentPack.Id).LayoutId)
+        installedLayouts = receipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal)
+        SetStatus("Installed · Ready offline", receipt.Sessions.Length.ToString() & " of " & currentPack.Layouts.Length.ToString() & " layouts installed · Ready offline")
+        If Not raceReady AndAlso currentPack.Id = AspenPack.Id Then status.Text &= ". Rebuild from source to enable AI races."
+        If layouts.SelectedItem Is Nothing Then status.Text &= ". Your saved layout is unavailable; choose a layout."
+        If cars.SelectedItem Is Nothing Then status.Text &= ". Your saved car is unavailable; choose an installed car."
+        RefreshRaceOptions()
+    End Sub
     Private Async Function InstallPack() As Task
         If working OrElse Not currentPack.Available Then Return
         CaptureSelection()
@@ -307,8 +318,9 @@ Public Class CustomTrackPanel
                                 selected.SourceFolder = picker.SourceFolder : selected.BuildLayoutIds = picker.SelectedLayoutIds : preferences.Save(context)
                             End Using
                             SetStatus("Building…", "Building " & selected.BuildLayoutIds.Length.ToString() & " selected " & currentPack.Name & " layouts…")
+                            verification.Invalidate(currentPack.Id)
                             Await CustomTrackService.InstallAsync(context, offer, selected.SourceFolder, progress, token, selected.BuildLayoutIds)
-                            installedReceipt = Await Task.Run(Function() TrackPacks.Get(currentPack.Id).Read(context.GameRoot, True, token), token)
+                            installedReceipt = Await Task.Run(Function() verification.Read(TrackPacks.Get(currentPack.Id), token), token)
                             installationValid = True : hasReceipt = True
                             installedLayouts = installedReceipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal) : RefreshRaceOptions()
                             SetStatus("Installed · Ready offline", selected.BuildLayoutIds.Length.ToString() & " layouts built · " & installedLayouts.Count.ToString() & " of " & offer.Layouts.Length.ToString() & " installed. Choose a layout, then Launch.")
