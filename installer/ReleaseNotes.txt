@@ -1,10 +1,10 @@
-DiRT2VR 0.17.44 — Experimental
+DiRT2VR 0.17.45 — Experimental
 
 Fix the direct Race startup crash introduced in 0.17.43 while assigning opponent names.
 
 Race opponents now have distinct stock driver names instead of all appearing as Travis Pastrana.
 
-Fix blank player names for single-word launcher profiles, such as 100percent. Existing profiles receive the display correction automatically in Normal Launch and direct events. No new profile is needed, and saved career progress is unchanged.
+Fix single-word launcher profile names still appearing blank on compact leaderboards and profile displays, such as 100percent. Existing profiles receive the display correction automatically in Normal Launch and direct events. No new profile is needed, and saved career progress is unchanged.
 
 Includes 0.17.41's clearer CUSTOM-track build status and Stop build button, Race difficulty selection, and live driving-input readings.
 
