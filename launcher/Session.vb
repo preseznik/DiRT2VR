@@ -48,7 +48,7 @@ Public Class Session
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         If customTrack Then CustomTracks.TrackPacks.ForLayout(settings.TrackId).RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
-        ButtermilkPostProcess.Validate(postProcessTest, settings.TrackId, Not vr)
+        ButtermilkPostProcess.Validate(postProcessTest, settings.TrackId)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
             Dim held As Boolean
             Try
@@ -105,7 +105,7 @@ Public Class Session
                         Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
                         start.Environment("DIRT2VR_SEAT_CHANNEL") = seat.Name
                         If settings.DirectMode Then
-                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
+                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest)
                             start.ArgumentList.Add("-demo")
                             start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                             start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"

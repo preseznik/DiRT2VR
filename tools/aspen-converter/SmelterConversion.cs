@@ -82,7 +82,7 @@ public static class SmelterConversion
         var receipt=new PackReceipt(2,pack.Id,pack.Version,TrackPack.SelectiveBuildLauncher,files.ToArray(),sessions.ToArray(),profile.Sources);
         pack.Verify(install,receipt);
         SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
-        Report(100,$"{layouts.Length} selected layouts are ready to install for desktop practice testing");
+        Report(100,$"{layouts.Length} selected layouts are ready to install");
 
         void Copy(string source, string relative)
         {

@@ -14,11 +14,13 @@ Public Class CustomTrackSettings
     Public Property Laps As Integer = 1
     Public Property PostProcessTest As String
     Public Sub ApplyTo(settings As VrSettings)
-        TrackPacks.ForLayout(LayoutId).RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", Opponents, 0), Laps)
+        Dim pack = TrackPacks.ForLayout(LayoutId)
+        Dim gridOpponents = Math.Min(Opponents, pack.MaximumOpponents(LayoutId))
+        pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), Laps)
         RaceCatalog.Current.Car(CarCode)
         If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
         settings.TrackId = LayoutId : settings.LaunchMode = LaunchMode : settings.CarCode = CarCode
-        settings.Opponents = Opponents : settings.OpponentCars = OpponentCars : settings.Laps = Laps
+        settings.Opponents = gridOpponents : settings.OpponentCars = OpponentCars : settings.Laps = Laps
     End Sub
 End Class
 

@@ -62,8 +62,8 @@ End Class
 
 Public Module Worker
     Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = Nothing)
-        postProcessTest = If(postProcessTest, If(operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
-        ButtermilkPostProcess.Validate(postProcessTest, trackId, operation = "prepare-desktop")
+        postProcessTest = If(postProcessTest, If(operation = "prepare" OrElse operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
+        ButtermilkPostProcess.Validate(postProcessTest, trackId)
         context.ValidateGame() : context.RequireClosed()
         Select Case operation
             Case "setup" : Call (New Installation(context)).Setup()
@@ -73,12 +73,13 @@ Public Module Worker
                     RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
                     Dim receipt = CustomTracks.TrackPacks.ForLayout(trackId).Read(context.GameRoot, False)
                     CustomTrackService.RequireLauncher(receipt)
-                    If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt, trackId) Then Throw New IOException("Rebuild Aspen to update its AI driving paths before starting a Race. Direct practice is still available.")
+                    If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt, trackId) Then Throw New IOException("Rebuild " & CustomTracks.TrackPacks.ForLayout(trackId).Name & " to update its AI driving paths before starting a Race. Direct practice is still available.")
                     CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId)
-                    Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
                 End If
                 Dim transaction As New AssetTransaction(context)
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars)
+                ' Layer exposure after VR motion-blur changes; recover in the reverse order.
+                If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
             Case "prepare-lan"
                 Call (New LanTransaction(context)).Prepare()
             Case "prepare-profile"
@@ -119,8 +120,8 @@ Public Module Worker
             start.ArgumentList.Add("--track-work") : start.ArgumentList.Add(workId)
         End If
         If operation = "prepare" OrElse operation = "prepare-desktop" Then
-            postProcessTest = If(postProcessTest, If(operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
-            ButtermilkPostProcess.Validate(postProcessTest, trackId, operation = "prepare-desktop")
+            postProcessTest = If(postProcessTest, If(operation = "prepare" OrElse operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
+            ButtermilkPostProcess.Validate(postProcessTest, trackId)
             start.ArgumentList.Add("--postprocess-test") : start.ArgumentList.Add(postProcessTest)
             start.ArgumentList.Add("--opponent-cars") : start.ArgumentList.Add(opponentCars)
             start.ArgumentList.Add("--opponents") : start.ArgumentList.Add(opponents.ToString(Globalization.CultureInfo.InvariantCulture))

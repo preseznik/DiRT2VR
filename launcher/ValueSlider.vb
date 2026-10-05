@@ -49,6 +49,17 @@ Public Class ValueSlider
             track.Value = value
         End Set
     End Property
+    <System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)>
+    Public Property Maximum As Integer
+        Get
+            Return track.Maximum
+        End Get
+        Set(value As Integer)
+            If labels IsNot Nothing OrElse value < track.Minimum Then Throw New ArgumentOutOfRangeException(NameOf(value))
+            track.Maximum = value
+            RefreshValue()
+        End Set
+    End Property
     Private Sub RefreshValue()
         valueText.Text = If(labels Is Nothing, (track.Value / divisor).ToString(If(divisor = 1D, "0", "0.0")) & suffix, labels(track.Value - track.Minimum))
         AccessibleDescription = valueText.Text

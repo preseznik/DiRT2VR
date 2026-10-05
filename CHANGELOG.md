@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Enable Direct practice, Race, desktop/VR and any installed car across all Aspen and Smelter layouts. The four Head-to-head courses allow one AI opponent to match their two-car grids; other layouts allow up to seven. Current tracks need no rebuild. Expanded AI/VR coverage and duel-course timing still need testing; knockout Head-to-head rules are not included.
+
 - Lower Buttermilk exposure by default to retain detail in bright snow. Climb's improvement is confirmed in desktop testing; Descent still needs a check, and the abrupt brightness border remains. No track rebuild is needed. Original-exposure and bloom-off comparisons remain available; other tracks keep their existing exposure.
 
 - Switching between custom-track locations reuses successful file checks during the current launcher session. Installation changes trigger a new check; Manage → Verify installed files always checks again.
@@ -16,9 +18,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Test a shared scenery-format correction for Smelter, including log and timber piles, while preserving breakable objects. Remove the unsuccessful whole-venue visibility experiment. Rebuild Smelter from Manage after updating; general Maple Woods flicker has improved in testing, but log piles remain missing.
 
-- Add Aspen’s four Landrush and two Head-to-head courses for desktop practice testing, with source lighting defaults and a Landrush truck. Rebuild Aspen from Manage after updating. Buttermilk courses are solo practice only; the existing four Rallycross layouts keep their Race, VR and car options. New courses still need gameplay checks.
+- Add Aspen’s four Landrush and two Head-to-head courses with source lighting defaults. Use Manage → Rebuild from source to add missing layouts. New courses still need broader gameplay checks.
 
-- Add the remaining nine Smelter layouts for desktop practice, with layout-specific conditions and a Landrush truck. The two Head-to-head courses support solo practice only; active rain, Race and VR remain unavailable. Rebuild Smelter from Manage after updating. New layouts still need gameplay checks.
+- Add the remaining nine Smelter layouts with layout-specific conditions. Use Manage → Rebuild from source to add missing layouts. Active rain remains unavailable; new layouts still need broader gameplay checks.
 
 - Fix missing County Loop lake and puddle water. Retain the extended scenery visibility ranges. Rebuild Smelter from Manage after updating.
 - Test a compatibility correction for missing County Loop concrete barriers. Rendering still needs confirmation on the gaming PC.

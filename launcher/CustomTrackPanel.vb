@@ -27,7 +27,7 @@ Public Class CustomTrackPanel
     Private ReadOnly laps As New ValueSlider("CustomLaps", 1, 20, 1)
     Private ReadOnly lightingTest As New ComboBox With {.Name = "ButtermilkLightingTest", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly lightingTestBox As New VerticalStack
-    Private ReadOnly modeHint As New Label With {.Name = "CustomModeHint", .AutoSize = False}
+    Private ReadOnly modeHint As New Label With {.Name = "CustomModeHint", .AutoSize = True}
     Private ReadOnly opponentHint As New Label With {.AutoSize = False}
     Private ReadOnly installButton As New Button With {.Text = "Build and install…", .Name = "BuildCustomTrack", .AutoSize = True}
     Private ReadOnly manage As New Button With {.Text = "Manage…", .Name = "ManageCustomTrack", .AutoSize = True}
@@ -43,9 +43,7 @@ Public Class CustomTrackPanel
     Private installedLayouts As New HashSet(Of String)(StringComparer.Ordinal)
     Private hasReceipt As Boolean
     Private installedReceipt As PackReceipt
-    Private testSession As Boolean
-    Private regularMode As Integer
-    Private regularCar As String
+    Private fullGridOpponents As Integer = 3
     Private raceReady As Boolean
     Private working As Boolean
     Private loading As Boolean
@@ -58,7 +56,7 @@ Public Class CustomTrackPanel
             Me.Value = value
         End Sub
         Public Overrides Function ToString() As String
-            Return Value.Name & If(Value.Discipline = "Head-to-head", " (solo practice)", "")
+            Return Value.Name
         End Function
     End Class
     Public ReadOnly Property CustomEnabled As Boolean
@@ -79,7 +77,7 @@ Public Class CustomTrackPanel
     End Property
     Public ReadOnly Property CanLaunchVr As Boolean
         Get
-            Return CanLaunch AndAlso Not TrackPacks.Get(currentPack.Id).DesktopPracticeOnly(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id) AndAlso TrackPacks.Get(currentPack.Id).Modes.Any(Function(m) m.StartsWith("vr-", StringComparison.Ordinal))
+            Return CanLaunch AndAlso TrackPacks.Get(currentPack.Id).Modes.Any(Function(m) m.StartsWith("vr-", StringComparison.Ordinal))
         End Get
     End Property
     Public Sub New(value As InstallContext)
@@ -190,7 +188,7 @@ Public Class CustomTrackPanel
         Try
             browser.PackList.SelectedItem = currentPack : browser.Picker.SelectedItem = currentPack
             title.Text = currentPack.Name : description.Text = currentPack.Description
-            installationValid = False : raceReady = False : installedReceipt = Nothing : hasReceipt = False : errorText = "" : installedLayouts.Clear() : testSession = False
+            installationValid = False : raceReady = False : installedReceipt = Nothing : hasReceipt = False : errorText = "" : installedLayouts.Clear()
             Dim selected = preferences.ForPack(currentPack.Id)
             layouts.Items.Clear()
             For Each trackLayout In currentPack.Layouts
@@ -201,11 +199,12 @@ Public Class CustomTrackPanel
             launchMode.Items.Add("Direct practice")
             If currentPack.Available AndAlso TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race") Then launchMode.Items.Add("Race")
             cars.Items.Clear()
-            cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) (currentPack.Id <> "smelter" OrElse c.Code = "sti") AndAlso File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
+            cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
             launchMode.SelectedIndex = If(selected.LaunchMode = "race" AndAlso launchMode.Items.Count = 1, -1, Array.IndexOf({"practice", "race"}, selected.LaunchMode))
             cars.SelectedItem = cars.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = selected.CarCode)
             opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, selected.OpponentCars)
-            opponents.Value = Math.Clamp(selected.Opponents, 1, 7) : laps.Value = Math.Clamp(selected.Laps, 1, 20)
+            opponents.Maximum = 7 : fullGridOpponents = Math.Clamp(selected.Opponents, 1, 7)
+            opponents.Value = fullGridOpponents : laps.Value = Math.Clamp(selected.Laps, 1, 20)
             status.Text = If(currentPack.Available, "Choose Build and install to prepare this pack.", If(currentPack.Id = "smelter", "In development · Gameplay validation pending", "Unavailable in this launcher"))
             unavailable.Text = If(currentPack.Id = "smelter", "Smelter is unavailable in this launcher.", "Choose an available pack from the list. Your saved selection has been kept.")
         Finally
@@ -216,25 +215,9 @@ Public Class CustomTrackPanel
     Private Sub LoadLayoutSession()
         If currentPack Is Nothing OrElse Not currentPack.Available OrElse layouts.SelectedItem Is Nothing Then Return
         Dim pack = TrackPacks.Get(currentPack.Id), id = DirectCast(layouts.SelectedItem, LayoutItem).Value.Id
-        Dim restricted = pack.DesktopPracticeOnly(id)
-        If Not restricted AndAlso Not testSession Then Return
-        If Not testSession Then
-            regularMode = launchMode.SelectedIndex
-            regularCar = If(TryCast(cars.SelectedItem, PracticeCar)?.Code, preferences.ForPack(currentPack.Id).CarCode)
-        End If
-        Dim wasLoading = loading
-        loading = True
-        Try
-            launchMode.Items.Clear() : launchMode.Items.Add("Direct practice")
-            If Not restricted Then launchMode.Items.Add("Race")
-            launchMode.SelectedIndex = If(restricted, 0, regularMode)
-            cars.Items.Clear()
-            cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) (Not restricted OrElse c.Code = pack.PracticeCar(id)) AndAlso File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
-            cars.SelectedItem = cars.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = If(restricted, pack.PracticeCar(id), regularCar))
-            testSession = restricted
-        Finally
-            loading = wasLoading
-        End Try
+        If opponents.Maximum > 1 Then fullGridOpponents = opponents.Value
+        opponents.Maximum = pack.MaximumOpponents(id)
+        opponents.Value = Math.Min(fullGridOpponents, opponents.Maximum)
     End Sub
     Private Sub CaptureSelection()
         If currentPack Is Nothing OrElse Not currentPack.Available Then Return
@@ -243,7 +226,7 @@ Public Class CustomTrackPanel
         If launchMode.SelectedIndex >= 0 Then selected.LaunchMode = {"practice", "race"}(launchMode.SelectedIndex)
         If cars.SelectedItem IsNot Nothing Then selected.CarCode = DirectCast(cars.SelectedItem, PracticeCar).Code
         If opponentCars.SelectedIndex >= 0 Then selected.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
-        selected.Opponents = CInt(opponents.Value) : selected.Laps = CInt(laps.Value)
+        selected.Opponents = If(opponents.Maximum = 1, fullGridOpponents, opponents.Value) : selected.Laps = CInt(laps.Value)
         selected.PostProcessTest = If(ButtermilkPostProcess.Supports(selected.LayoutId), {"normal", "bloom-off", "lower-exposure"}(Math.Max(0, lightingTest.SelectedIndex)), "normal")
     End Sub
     Public Sub Save()
@@ -252,7 +235,6 @@ Public Class CustomTrackPanel
     Private Sub RefreshRaceOptions()
         Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
         raceReady = installedReceipt IsNot Nothing AndAlso currentPack IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).SupportsRace(installedReceipt, chosen?.Id)
-        Dim restricted = currentPack IsNot Nothing AndAlso currentPack.Available AndAlso chosen IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).DesktopPracticeOnly(chosen.Id)
         If ButtermilkPostProcess.Supports(chosen?.Id) Then
             If Not setup.Controls.Contains(lightingTestBox) Then
                 setup.Controls.Add(lightingTestBox) : setup.Controls.SetChildIndex(lightingTestBox, 1)
@@ -260,11 +242,11 @@ Public Class CustomTrackPanel
         Else
             setup.Controls.Remove(lightingTestBox)
         End If
-        modeHint.Text = If(restricted, "Desktop practice test · Race and VR pending", "Desktop and VR · AI races are experimental · LAN unavailable")
-        If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Solo practice on a Head-to-head course; competitive Head-to-head is unavailable."
+        modeHint.Text = "Desktop and VR · AI races are experimental · LAN unavailable"
+        If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."
         Dim race = launchMode.SelectedIndex = 1
-        opponents.Enabled = race : opponentCars.Enabled = race
+        opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race
         Dim vehicle = TryCast(cars.SelectedItem, PracticeCar)
         opponentHint.Text = If(race AndAlso installationValid AndAlso Not raceReady, "Choose Manage → Rebuild from source to update AI driving paths before racing.", If(Not race, "Solo practice. Your race settings are kept for later.", If(opponentCars.SelectedIndex = 2,
             "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver."))))
@@ -378,7 +360,7 @@ Public Class CustomTrackPanel
             TextRenderer.DrawText(e.Graphics, pack.Name, bold, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         End Using
         bounds.Y += Px(Me, 24)
-        TextRenderer.DrawText(e.Graphics, If(pack.Id = AspenPack.Id, "10 layouts · 4 with Race/VR", If(pack.Id = "smelter", "10 layouts · Solo practice", "Saved selection")), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        TextRenderer.DrawText(e.Graphics, If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection"), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         bounds.Y += Px(Me, 24)
         TextRenderer.DrawText(e.Graphics, packStatuses(pack.Id), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         e.DrawFocusRectangle()

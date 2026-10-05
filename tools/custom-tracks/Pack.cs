@@ -54,7 +54,7 @@ public static class TrackPacks
 {
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
-    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.4", "0.17.30", ["desktop-solo"],
+    public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.4", "0.17.30", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("smelter-county-loop", "County Loop", "d2vr_smelter_0", "Morning sun"),
          new("smelter-portage-canal", "Portage Canal", "d2vr_smelter_1", "Morning sun"),
          new("smelter-houghton-sprint", "Houghton Sprint", "d2vr_smelter_2", "Wet lighting (no rain)"),
@@ -115,7 +115,8 @@ public sealed class TrackPack
         : System.Version.TryParse(receipt.Version, out var version) && version < new System.Version(1, 1, 0)
         ? Layouts.Take(Id == AspenPack.Id ? 4 : 1).ToArray() : Layouts;
     public string[] ReceiptRoots(PackReceipt receipt) => ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
-    public bool DesktopPracticeOnly(string id) => !Modes.Contains("desktop-race") || GetLayout(id).Discipline != "Rallycross";
+    // The four duel courses have two authored start positions, not an eight-car grid.
+    public int MaximumOpponents(string id) => GetLayout(id).Discipline == "Head-to-head" ? 1 : 7;
     public string PracticeCar(string id) => GetLayout(id).Discipline == "Landrush" ? "kin" : "sti";
     public bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
     public bool SupportsRace(PackReceipt receipt, string? layoutId = null)
@@ -125,11 +126,11 @@ public sealed class TrackPack
     }
     public void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps)
     {
-        GetLayout(id);
-        if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")) ||
-            (DesktopPracticeOnly(id) && (vr || mode != "practice" || car != PracticeCar(id))))
-            throw new IOException(GetLayout(id).Name + " currently supports desktop Direct practice only, using " +
-                (PracticeCar(id) == "kin" ? "the Kincaid Ford F-150" : "the Subaru STI") + ". Race and VR are unavailable for this test layout.");
+        var layout = GetLayout(id);
+        if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")))
+            throw new IOException("This custom-track launch mode is unavailable.");
+        if (mode == "race" && opponents > MaximumOpponents(id))
+            throw new IOException(layout.Name + " supports at most " + MaximumOpponents(id) + " AI opponent(s), matching its starting grid.");
         if (mode is not ("practice" or "race") || string.IsNullOrWhiteSpace(car) || laps is < 1 or > 20 ||
             (mode == "practice" ? opponents != 0 : opponents is < 1 or > 7))
             throw new IOException("Choose Direct practice or Race, an installed car, and one to twenty laps. Race supports one to seven opponents. LAN is unavailable.");
