@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix a direct Race startup crash introduced by the opponent-name correction in 0.17.43.
+
 - Give direct Race opponents distinct driver names instead of repeating Travis Pastrana across the grid.
 - Correct single-word launcher profile names on in-game name displays, including existing profiles. Saves and career progress are unchanged.
 

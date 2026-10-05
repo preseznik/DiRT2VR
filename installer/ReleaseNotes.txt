@@ -1,4 +1,6 @@
-DiRT2VR 0.17.43 — Experimental
+DiRT2VR 0.17.44 — Experimental
+
+Fix the direct Race startup crash introduced in 0.17.43 while assigning opponent names.
 
 Race opponents now have distinct stock driver names instead of all appearing as Travis Pastrana.
 
