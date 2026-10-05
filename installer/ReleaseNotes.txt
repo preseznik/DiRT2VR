@@ -1,4 +1,4 @@
-DiRT2VR 0.17.42 — Experimental
+DiRT2VR 0.17.43 — Experimental
 
 Race opponents now have distinct stock driver names instead of all appearing as Travis Pastrana.
 
