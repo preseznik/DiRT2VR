@@ -33,7 +33,7 @@ Direct practice and Race
 Practice is solo; Race adds 1–7 AI opponents. Mixed opponents draw from all installed classes; Same class uses your car's game-defined class. Laps apply to circuits; point-to-point stages are one run. Custom events do not award career progress.
 
 Finishing
-Restart repeats the event. Return to menus closes the game and reopens Normal Launch in the same Desktop or VR mode. Alt+F4 quits without reopening.
+Use Up/Down to select choices in the pause and finish menus. Restart repeats the event. Return to menus closes the game and reopens Normal Launch in the same Desktop or VR mode. Alt+F4 quits without reopening.
 
 Saving settings
 Save settings, then launch a new session. Quit the game normally so temporary files are restored. The background manager keeps running if you close the launcher window.

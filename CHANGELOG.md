@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix Up/Down navigation in the pause and finish menus for Direct practice and Race. Their vertical choices no longer require Left/Right.
+
 ## 0.17.23 — 2026-10-04 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.23)

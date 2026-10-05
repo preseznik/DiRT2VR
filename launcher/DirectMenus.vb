@@ -120,7 +120,8 @@ Public Class DirectMenus
             DirectCast(item.SelectSingleNode("IBSelectableSimple"), XmlElement).SetAttribute("link", items(i).Item2)
             generic.AppendChild(item)
         Next
-        generic.SelectSingleNode("itemflow").InnerText = String.Join(" ", Enumerable.Range(0, items.Count).Select(Function(i) "item_" & i))
+        ' itemflow uses newlines for rows and spaces for columns, regardless of glyph placement.
+        generic.SelectSingleNode("itemflow").InnerText = vbLf & String.Join(vbLf, Enumerable.Range(0, items.Count).Select(Function(i) "item_" & i)) & vbLf
         If Not paused Then DirectCast(generic.SelectSingleNode("Item[@id='title']/IBTextStatic"), XmlElement).SetAttribute("string", "lng_net_race_in_progress_finished")
     End Sub
     Private Function Target(index As Integer) As String
