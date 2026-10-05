@@ -72,7 +72,7 @@ Aspen adds ten layouts built from your own **DiRT 3 Complete Edition** installat
 
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
 2. Choose a **Track pack**, then **Build and install…**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the DiRT 3 Complete Edition game folder, wherever it is installed.
-3. Choose **Build and install**. Leave the launcher open while it checks your source files and builds the selected pack using the included tools. **Cancel** stops conversion safely; an existing installation stays usable.
+3. Check the **layouts to build**, using **Select all** or **Select none** as needed. Your choices are remembered for each location. Choose **Build and install** and leave the launcher open while it checks source files and converts only those layouts. Unchecked layouts already installed are kept. **Cancel** stops conversion safely; an existing installation stays usable.
 4. Select a layout and its available mode and car. Choose **Launch** for desktop play, or **Launch VR** on a supported layout with SteamVR and your headset ready. New practice-test layouts use a fixed vehicle and desktop mode. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
 
 | Layout | Default lighting |
@@ -86,7 +86,7 @@ Aspen’s four Rallycross layouts offer experimental **desktop and VR** play wit
 
 Snowmass Sprint omits the decorative beams on the ski hillside where they flickered with viewing angle or distance. The towers, bright lamp faces and ground lighting remain, along with the other beams around the course. The other three layouts are unchanged by this workaround.
 
-Each pack keeps its own layout, car, race and lap selections, separately from stock tracks. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Conversion-tool updates arrive with DiRT2VR updates.
+Each pack keeps its own layout, car, race and lap selections, separately from stock tracks. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Rebuild uses the same layout checkboxes: select just the courses you want to update or add. Choose Select all to update the whole location. The list shows which layouts are already installed, and the launcher reports the installed count. Conversion-tool updates arrive with DiRT2VR updates.
 
 If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source…**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
 

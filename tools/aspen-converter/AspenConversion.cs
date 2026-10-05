@@ -20,7 +20,7 @@ public static class AspenConversion
         {
             bool elevated = OperatingSystem.IsWindows() && new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator);
             ValidateInvocation(args, elevated);
-            Build(args[1], args[2], args[3], value => { Console.WriteLine(JsonSerializer.Serialize(value)); Console.Out.Flush(); });
+            Build(args[1], args[2], args[3], value => { Console.WriteLine(JsonSerializer.Serialize(value)); Console.Out.Flush(); }, ConversionSelection.Parse(args, "--convert-aspen", TrackPacks.Aspen));
             return 0;
         }
         catch (Exception e)
@@ -31,12 +31,12 @@ public static class AspenConversion
     }
     private static void ValidateInvocation(string[] args, bool elevated)
     {
-        if (args.Length != 4 || args[0] != "--convert-aspen" || args.Skip(1).Any(string.IsNullOrWhiteSpace))
-            throw new IOException("Usage: DiRT2VR.exe --convert-aspen <DiRT 3 folder> <DiRT 2 folder> <new output folder>");
+        ConversionSelection.Parse(args, "--convert-aspen", TrackPacks.Aspen);
         if (elevated) throw new IOException("Start the track converter normally, without Run as administrator.");
     }
-    public static void Build(string d3, string d2, string output, Action<TrackProgress>? progress)
+    public static void Build(string d3, string d2, string output, Action<TrackProgress>? progress, string[]? layoutIds = null)
     {
+        var layouts = TrackPacks.Aspen.SelectLayouts(layoutIds);
         SafeFiles.RequireClosed();
         d3 = Path.GetFullPath(d3); d2 = Path.GetFullPath(d2); output = Path.GetFullPath(output);
         PortFiles.NewOutput(output, d3, d2);
@@ -55,11 +55,11 @@ public static class AspenConversion
         using (var target = File.Create(PortBuild.SchemaPath)) schema.CopyTo(target);
         var files = new List<PackFile>(); var sessions = new List<LayoutSession>();
         string install = Path.Combine(output, "install");
-        for (int i = 0; i < AspenPack.Layouts.Length; i++)
+        for (int i = 0; i < layouts.Length; i++)
         {
             SafeFiles.RequireClosed();
-            var layout = AspenPack.Layouts[i];
-            int percent = 5 + i * 90 / AspenPack.Layouts.Length;
+            var layout = layouts[i];
+            int percent = 5 + i * 90 / layouts.Length;
             Report(percent, "Building " + layout.Name + " — " + layout.Condition);
             PortBuild.Progress = message => Report(percent, layout.Name + ": " + message);
             var candidate = Path.Combine(output, "build", layout.Id);
@@ -87,7 +87,7 @@ public static class AspenConversion
                     AddSession(path, SafeFiles.Inside(Path.Combine(candidate, name), path));
                 }
             }
-            sessions.Add(new(layout.Id, session.ToArray()));
+            sessions.Add(new(layout.Id, session.ToArray(), AspenPack.Version));
             void AddSession(string target, string source)
             {
                 string owned = AspenPack.Support + "/" + layout.Id + "/" + target;
@@ -95,13 +95,13 @@ public static class AspenConversion
                 session.Add(new(target, expected[Path.GetFullPath(Path.Combine(d2, target))], owned));
             }
         }
-        Report(95, "Verifying all ten Aspen layouts and original source files");
+        Report(95, $"Verifying {layouts.Length} selected Aspen layouts and original source files");
         foreach (var source in expected)
             if (SafeFiles.Hash(source.Key) != source.Value) throw new IOException("Source changed during conversion: " + source.Key);
-        var receipt = new PackReceipt(1, AspenPack.Id, AspenPack.Version, AspenPack.MinimumLauncher, files.ToArray(), sessions.ToArray(), sources);
+        var receipt = new PackReceipt(2, AspenPack.Id, AspenPack.Version, TrackPack.SelectiveBuildLauncher, files.ToArray(), sessions.ToArray(), sources);
         AspenPack.Verify(install, receipt);
         SafeFiles.WriteJson(SafeFiles.Inside(install, AspenPack.Receipt), receipt);
-        Report(100, "All ten Aspen layouts are ready to install");
+        Report(100, $"{layouts.Length} selected Aspen layouts are ready to install");
     
         void Copy(string source, string relative)
         {

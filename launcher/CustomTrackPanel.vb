@@ -39,6 +39,7 @@ Public Class CustomTrackPanel
     Private installationValid As Boolean
     Private installedLayouts As New HashSet(Of String)(StringComparer.Ordinal)
     Private hasReceipt As Boolean
+    Private installedReceipt As PackReceipt
     Private testSession As Boolean
     Private regularMode As Integer
     Private regularCar As String
@@ -120,6 +121,7 @@ Public Class CustomTrackPanel
         Next
         AddHandler layouts.SelectedIndexChanged, Sub()
                                                     Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
+        raceReady = installedReceipt IsNot Nothing AndAlso currentPack IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).SupportsRace(installedReceipt, chosen?.Id)
                                                     condition.Text = If(chosen Is Nothing, "Choose a layout", chosen.Discipline & " · " & chosen.Condition)
                                                     If Not loading Then LoadLayoutSession()
                                                     RefreshRaceOptions()
@@ -178,7 +180,7 @@ Public Class CustomTrackPanel
         Try
             browser.PackList.SelectedItem = currentPack : browser.Picker.SelectedItem = currentPack
             title.Text = currentPack.Name : description.Text = currentPack.Description
-            installationValid = False : raceReady = False : hasReceipt = False : errorText = "" : installedLayouts.Clear() : testSession = False
+            installationValid = False : raceReady = False : installedReceipt = Nothing : hasReceipt = False : errorText = "" : installedLayouts.Clear() : testSession = False
             Dim selected = preferences.ForPack(currentPack.Id)
             layouts.Items.Clear()
             For Each trackLayout In currentPack.Layouts
@@ -238,6 +240,7 @@ Public Class CustomTrackPanel
     End Sub
     Private Sub RefreshRaceOptions()
         Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
+        raceReady = installedReceipt IsNot Nothing AndAlso currentPack IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).SupportsRace(installedReceipt, chosen?.Id)
         Dim restricted = currentPack IsNot Nothing AndAlso currentPack.Available AndAlso chosen IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).DesktopPracticeOnly(chosen.Id)
         modeHint.Text = If(restricted, "Desktop practice test · Race and VR pending", "Desktop and VR · AI races are experimental · LAN unavailable")
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Solo practice on a Head-to-head course; competitive Head-to-head is unavailable."
@@ -275,7 +278,7 @@ Public Class CustomTrackPanel
     Private Async Function RefreshInstallation() As Task
         If working OrElse Not currentPack.Available Then Return
         Await Operation(Async Function(token, progress)
-                            installationValid = False : raceReady = False
+                            installationValid = False : raceReady = False : installedReceipt = Nothing
                             hasReceipt = File.Exists(SafeFiles.Inside(context.GameRoot, TrackPacks.Get(currentPack.Id).Receipt))
                             If Not hasReceipt Then
                                 SetStatus("Not installed", "Not installed · Build once from your own DiRT 3 files.")
@@ -284,9 +287,9 @@ Public Class CustomTrackPanel
                             SetStatus("Checking…", "Checking installed " & currentPack.Name & " files…")
                             Dim receipt = Await Task.Run(Function() TrackPacks.Get(currentPack.Id).Read(context.GameRoot, True, token), token)
                             CustomTrackService.RequireLauncher(receipt)
-                            installationValid = True : raceReady = TrackPacks.Get(currentPack.Id).SupportsRace(receipt)
+                            installationValid = True : installedReceipt = receipt : raceReady = TrackPacks.Get(currentPack.Id).SupportsRace(receipt, preferences.ForPack(currentPack.Id).LayoutId)
                             installedLayouts = receipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal)
-                            SetStatus("Installed · Ready offline", "Installed · " & currentPack.Name & " " & receipt.Version & " · Ready offline")
+                            SetStatus("Installed · Ready offline", receipt.Sessions.Length.ToString() & " of " & currentPack.Layouts.Length.ToString() & " layouts installed · Ready offline")
                             If Not raceReady AndAlso currentPack.Id = AspenPack.Id Then status.Text &= ". Rebuild from source to enable AI races."
                             If layouts.SelectedItem Is Nothing Then status.Text &= ". Your saved layout is unavailable; choose a layout."
                             If cars.SelectedItem Is Nothing Then status.Text &= ". Your saved car is unavailable; choose an installed car."
@@ -299,15 +302,16 @@ Public Class CustomTrackPanel
         Await Operation(Async Function(token, progress)
                             context.RequireClosed()
                             Dim offer = If(currentPack.Id = AspenPack.Id, Aspen.AspenConversion.GetProfile(), Aspen.SmelterConversion.GetProfile()), selected = preferences.ForPack(currentPack.Id)
-                            Using picker As New AspenSourceForm(selected.SourceFolder, CustomTrackService.SourceFolders(), offer)
+                            Using picker As New AspenSourceForm(selected.SourceFolder, CustomTrackService.SourceFolders(), offer, selected.BuildLayoutIds, installedReceipt)
                                 If picker.ShowDialog(Me) <> DialogResult.OK Then Return
-                                selected.SourceFolder = picker.SourceFolder : preferences.Save(context)
+                                selected.SourceFolder = picker.SourceFolder : selected.BuildLayoutIds = picker.SelectedLayoutIds : preferences.Save(context)
                             End Using
-                            SetStatus("Building…", "Building " & currentPack.Name & "…")
-                            Await CustomTrackService.InstallAsync(context, offer, selected.SourceFolder, progress, token)
-                            installationValid = True : hasReceipt = True : raceReady = TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race")
-                            installedLayouts = offer.Layouts.Select(Function(l) l.Id).ToHashSet(StringComparer.Ordinal) : RefreshRaceOptions()
-                            SetStatus("Installed · Ready offline", currentPack.Name & " " & offer.Version & " installed. Choose a layout, then Launch.")
+                            SetStatus("Building…", "Building " & selected.BuildLayoutIds.Length.ToString() & " selected " & currentPack.Name & " layouts…")
+                            Await CustomTrackService.InstallAsync(context, offer, selected.SourceFolder, progress, token, selected.BuildLayoutIds)
+                            installedReceipt = Await Task.Run(Function() TrackPacks.Get(currentPack.Id).Read(context.GameRoot, True, token), token)
+                            installationValid = True : hasReceipt = True
+                            installedLayouts = installedReceipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal) : RefreshRaceOptions()
+                            SetStatus("Installed · Ready offline", selected.BuildLayoutIds.Length.ToString() & " layouts built · " & installedLayouts.Count.ToString() & " of " & offer.Layouts.Length.ToString() & " installed. Choose a layout, then Launch.")
                         End Function)
     End Function
     Private Async Function Operation(action As Func(Of CancellationToken, IProgress(Of TrackProgress), Task)) As Task
@@ -391,19 +395,32 @@ End Class
 Public Class AspenSourceForm
     Inherits Form
     Private ReadOnly source As New ComboBox With {.Name = "Dirt3SourceFolder", .DropDownStyle = ComboBoxStyle.DropDown}
+    Private ReadOnly choices As New List(Of CheckBox)
+    Private ReadOnly selectionStatus As New Label With {.Name = "BuildLayoutCount", .AutoSize = True}
+    Private ReadOnly install As New Button With {.Name = "ConfirmTrackBuild", .Text = "Build and install", .AutoSize = True}
+    Public ReadOnly Property SelectedLayoutIds As String()
+        Get
+            Return choices.Where(Function(c) c.Checked).Select(Function(c) CStr(c.Tag)).ToArray()
+        End Get
+    End Property
+    Private Sub UpdateSelection()
+        Dim count = SelectedLayoutIds.Length
+        selectionStatus.Text = count.ToString() & " of " & choices.Count.ToString() & " layouts selected"
+        install.Enabled = count > 0
+    End Sub
     Public ReadOnly Property SourceFolder As String
         Get
             Return source.Text.Trim().Trim(""""c)
         End Get
     End Property
-    Public Sub New(previous As String, detected As String(), offer As ConversionProfile)
-        Text = "Install " & offer.Name & " — locate DiRT 3" : Font = New Font("Segoe UI", 10)
+    Public Sub New(previous As String, detected As String(), offer As ConversionProfile, Optional selectedIds As String() = Nothing, Optional installed As PackReceipt = Nothing)
+        Text = "Build " & offer.Name & " layouts" : Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi : StartPosition = FormStartPosition.CenterParent
         StyleChoice(source, Me)
-        ClientSize = New Size(640, 340) : MinimumSize = New Size(480, 350)
-        Dim content As New VerticalStack With {.Dock = DockStyle.Top, .Padding = New Padding(18)}
+        ClientSize = New Size(720, 690) : MinimumSize = New Size(480, 440)
+        Dim content As New TrackBuildStack With {.Dock = DockStyle.Top, .Padding = New Padding(18)}
         content.Controls.Add(New Label With {.Text = "Choose your DiRT 3 Complete Edition folder", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
-        content.Controls.Add(New Label With {.Text = "Select a detected Steam installation, paste its folder path, or use Browse. The source game stays unchanged.", .AutoSize = False})
+        content.Controls.Add(New Label With {.Text = "Select a detected installation, paste its folder path, or use Browse.", .AutoSize = True})
         source.Items.AddRange(detected.Cast(Of Object).ToArray())
         source.Text = If(previous <> "", previous, detected.FirstOrDefault())
         content.Controls.Add(source)
@@ -414,18 +431,67 @@ Public Class AspenSourceForm
                                      End Using
                                  End Sub
         content.Controls.Add(browse)
-        content.Controls.Add(New Label With {.Text = $"Conversion tools are included with DiRT2VR. No download is needed. Allow {Math.Ceiling(offer.StagingBytes / 1073741824.0)} GB for building. DiRT 3 is only needed to build or rebuild the tracks.", .AutoSize = False})
+        content.Controls.Add(New Label With {.Text = "Layouts to build", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
+        content.Controls.Add(New Label With {.Text = "Only checked layouts are built. Unchecked layouts already installed will be kept.", .AutoSize = True})
+        Dim selectionButtons As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
+        Dim all As New Button With {.Name = "SelectAllLayouts", .Text = "Select all", .AutoSize = True}
+        Dim none As New Button With {.Name = "SelectNoLayouts", .Text = "Select none", .AutoSize = True}
+        AddHandler all.Click, Sub()
+                                  For Each choice In choices : choice.Checked = True : Next
+                              End Sub
+        AddHandler none.Click, Sub()
+                                   For Each choice In choices : choice.Checked = False : Next
+                               End Sub
+        selectionButtons.Controls.AddRange({all, none}) : content.Controls.Add(selectionButtons)
+        For Each trackLayout In offer.Layouts
+            Dim session = installed?.Sessions.FirstOrDefault(Function(s) s.LayoutId = trackLayout.Id)
+            Dim status = If(session Is Nothing, "Not installed", "Installed")
+            Dim choice As New CheckBox With {.Name = "BuildLayout_" & trackLayout.Id, .Tag = trackLayout.Id, .AutoSize = True,
+                .Text = trackLayout.Name & " · " & status,
+                .Checked = selectedIds Is Nothing OrElse selectedIds.Contains(trackLayout.Id, StringComparer.Ordinal), .AccessibleName = trackLayout.Name}
+            choices.Add(choice) : content.Controls.Add(choice)
+            AddHandler choice.CheckedChanged, Sub() UpdateSelection()
+        Next
+        content.Controls.Add(New Label With {.Text = $"Conversion runs locally. Allow up to {Math.Ceiling(offer.StagingBytes / 1073741824.0)} GB of working space. Your original games stay unchanged.", .AutoSize = True})
+        UpdateSelection()
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True}
-        Dim install As New Button With {.Text = "Build and install", .AutoSize = True}
         Dim cancel As New Button With {.Text = "Cancel", .AutoSize = True, .DialogResult = DialogResult.Cancel}
         AddHandler install.Click, Sub()
+                                      If SelectedLayoutIds.Length = 0 Then Return
                                       If Not Directory.Exists(IO.Path.Combine(SourceFolder, "tracks/locations/usa/" & If(offer.Id = "smelter", "smelter", "aspen"))) Then
                                           MessageBox.Show(Me, "Choose the DiRT 3 Complete Edition game folder containing the " & offer.Name & " track files.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
                                           Return
                                       End If
                                       DialogResult = DialogResult.OK
                                   End Sub
-        buttons.Controls.AddRange({install, cancel}) : content.Controls.Add(buttons)
-        Controls.Add(content) : AcceptButton = install : CancelButton = cancel : AutoScroll = True
+        buttons.Controls.AddRange({install, cancel})
+        Dim footer As New TrackBuildStack With {.Dock = DockStyle.Bottom, .Padding = New Padding(18, 8, 18, 12)}
+        footer.Controls.Add(selectionStatus) : footer.Controls.Add(buttons)
+        Dim viewport As New Panel With {.Dock = DockStyle.Fill, .AutoScroll = True}
+        viewport.Controls.Add(content)
+        Controls.Add(viewport) : Controls.Add(footer)
+        AcceptButton = install : CancelButton = cancel
+    End Sub
+End Class
+
+' Constrain wrapping to this dialog without changing the shared launcher layout.
+Public Class TrackBuildStack
+    Inherits VerticalStack
+    Private arranging As Boolean
+    Protected Overrides Sub OnLayout(e As LayoutEventArgs)
+        If arranging Then Return
+        arranging = True
+        Try
+            For Each child As Control In Controls
+                If TypeOf child Is Label OrElse TypeOf child Is CheckBox Then
+                    Dim width = Math.Max(1, ClientSize.Width - Padding.Horizontal - child.Margin.Horizontal)
+                    child.MaximumSize = New Size(width, 0)
+                    child.Height = child.GetPreferredSize(New Size(width, 0)).Height
+                End If
+            Next
+            MyBase.OnLayout(e)
+        Finally
+            arranging = False
+        End Try
     End Sub
 End Class

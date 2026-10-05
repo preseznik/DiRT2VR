@@ -71,7 +71,7 @@ Public Module Worker
                     RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
                     Dim receipt = CustomTracks.TrackPacks.ForLayout(trackId).Read(context.GameRoot, False)
                     CustomTrackService.RequireLauncher(receipt)
-                    If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt) Then Throw New IOException("Rebuild Aspen to update its AI driving paths before starting a Race. Direct practice is still available.")
+                    If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt, trackId) Then Throw New IOException("Rebuild Aspen to update its AI driving paths before starting a Race. Direct practice is still available.")
                     CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId)
                 End If
                 Dim transaction As New AssetTransaction(context)

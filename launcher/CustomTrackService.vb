@@ -6,6 +6,7 @@ Imports System.Threading.Tasks
 Public Class CustomTrackSettings
     Public Property LayoutId As String = "aspen-lakeside"
     Public Property SourceFolder As String = ""
+    Public Property BuildLayoutIds As String()
     Public Property LaunchMode As String = "practice"
     Public Property CarCode As String = "sti"
     Public Property Opponents As Integer = 3
@@ -112,16 +113,17 @@ Public Module CustomTrackService
             End Try
         End Using
     End Sub
-    Public Function InstallAsync(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken) As Task
+    Public Function InstallAsync(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, Optional layoutIds As String() = Nothing) As Task
         Return Task.Run(Sub()
-                            WithSessionLock(Sub() Install(context, offer, source, progress, cancel))
+                            WithSessionLock(Sub() Install(context, offer, source, progress, cancel, layoutIds))
                         End Sub, cancel)
     End Function
-    Private Sub Install(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken)
+    Private Sub Install(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, layoutIds As String())
         context.ValidateGame() : context.RequireClosed()
         Worker.Invoke(context, "recover")
         Dim pack = TrackPacks.Get(offer.Id)
         pack.Validate(offer, BuildInfo.Version)
+        Dim selectedLayouts = pack.SelectLayouts(layoutIds)
         Dim id = Guid.NewGuid().ToString("N"), stage = Staging(context, id)
         Directory.CreateDirectory(stage)
         Try
@@ -135,6 +137,8 @@ Public Module CustomTrackService
         For Each argument In {If(pack.Id = AspenPack.Id, "--convert-aspen", "--convert-smelter"), IO.Path.GetFullPath(source), context.GameRoot, IO.Path.Combine(stage, "conversion")}
             start.ArgumentList.Add(argument)
         Next
+        start.ArgumentList.Add("--layouts")
+        start.ArgumentList.Add(String.Join(",", selectedLayouts.Select(Function(l) l.Id)))
         Using child = Process.Start(start)
             Dim errors = child.StandardError.ReadToEndAsync()
             AddHandler child.OutputDataReceived, Sub(sender, e)
@@ -160,11 +164,11 @@ Public Module CustomTrackService
         Dim built = IO.Path.Combine(stage, "conversion/install")
         Dim receipt = pack.Read(built, True, cancel)
         RequireLauncher(receipt)
-        If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(offer.Sources) Then Throw New IOException("Converted pack does not match the selected package.")
+        If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(offer.Sources) OrElse Not receipt.Sessions.Select(Function(s) s.LayoutId).SequenceEqual(selectedLayouts.Select(Function(l) l.Id)) Then Throw New IOException("Converted pack does not match the selected package.")
         cancel.ThrowIfCancellationRequested() : context.RequireClosed()
         progress.Report(New TrackProgress(100, "Installing verified layouts; please wait for the safe commit to finish"))
         Worker.Invoke(context, "install-custom", workId:=id)
-        progress.Report(New TrackProgress(100, pack.Name & " installed. Select a layout, then choose Launch."))
+        progress.Report(New TrackProgress(100, selectedLayouts.Length.ToString() & " " & pack.Name & " layouts built. Other installed layouts were kept."))
         Finally
             Try
                 SafeFiles.DeleteWorkTree(context.UserRoot, "custom-track-builds/" & id)

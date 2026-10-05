@@ -20,17 +20,17 @@ public static class SmelterConversion
     {
         try
         {
-            if (args.Length != 4 || args[0] != "--convert-smelter" || args.Skip(1).Any(string.IsNullOrWhiteSpace))
-                throw new IOException("Usage: DiRT2VR.exe --convert-smelter <DiRT 3 folder> <DiRT 2 folder> <new output folder>");
+            var selection = ConversionSelection.Parse(args, "--convert-smelter", TrackPacks.Smelter);
             if (OperatingSystem.IsWindows() && new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
                 throw new IOException("Start the track converter normally, without Run as administrator.");
-            Build(args[1], args[2], args[3], value => { Console.WriteLine(JsonSerializer.Serialize(value)); Console.Out.Flush(); });
+            Build(args[1], args[2], args[3], value => { Console.WriteLine(JsonSerializer.Serialize(value)); Console.Out.Flush(); }, selection);
             return 0;
         }
         catch (Exception e) { Console.Error.WriteLine(e.Message); return 1; }
     }
-    public static void Build(string d3, string d2, string output, Action<TrackProgress>? progress)
+    public static void Build(string d3, string d2, string output, Action<TrackProgress>? progress, string[]? layoutIds = null)
     {
+        var layouts = TrackPacks.Smelter.SelectLayouts(layoutIds);
         SafeFiles.RequireClosed();
         d3 = Path.GetFullPath(d3); d2 = Path.GetFullPath(d2); output = Path.GetFullPath(output);
         PortFiles.NewOutput(output, d3, d2);
@@ -45,15 +45,15 @@ public static class SmelterConversion
         using (var target = File.Create(schemaPath)) schema.CopyTo(target);
         var files = new List<PackFile>(); var sessions = new List<LayoutSession>();
         var install = Path.Combine(output, "install");
-        for (int i=0;i<pack.Layouts.Length;i++)
+        for (int i=0;i<layouts.Length;i++)
         {
             SafeFiles.RequireClosed();
-            var layout=pack.Layouts[i];
+            var layout=layouts[i];
             var definition=SmelterLayout.All.Single(l=>l.Id==layout.Id);
             EgoEngineLibrary.Graphics.Pssg.PssgSchema.ResetSchema();
             var candidate=Path.Combine(output,"build",layout.Id);
             Directory.CreateDirectory(Path.GetDirectoryName(candidate)!);
-            int percent=5+i*9;
+            int percent=5+i*90/layouts.Length;
             Report(percent,"Building "+layout.Name+" — "+layout.Condition);
             SmelterBuild.Run(d3,d2,schemaPath,candidate,message=>Report(percent,message),definition);
             foreach(var input in SafeFiles.ReadJson<Dictionary<string,string>>(Path.Combine(candidate,"inputs.json")).Where(p=>p.Key!=schemaPath))
@@ -70,19 +70,19 @@ public static class SmelterConversion
                     var path=entry.GetProperty("Path").GetString()!;
                     AddSession(path,SafeFiles.Inside(Path.Combine(candidate,"session-metadata"),path));
                 }
-            sessions.Add(new(layout.Id,session.ToArray()));
+            sessions.Add(new(layout.Id,session.ToArray(),pack.Version));
             void AddSession(string target,string source) {
                 var owned=pack.Support+"/"+layout.Id+"/"+target;
                 Copy(source,owned);
                 session.Add(new(target,expected[Path.GetFullPath(Path.Combine(d2,target))],owned));
             }
         }
-        Report(95,"Verifying all ten Smelter layouts and original source files");
+        Report(95,$"Verifying {layouts.Length} selected Smelter layouts and original source files");
         TrackPack.VerifySources(profile,d2,d3,null,default);
-        var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),profile.Sources);
+        var receipt=new PackReceipt(2,pack.Id,pack.Version,TrackPack.SelectiveBuildLauncher,files.ToArray(),sessions.ToArray(),profile.Sources);
         pack.Verify(install,receipt);
         SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
-        Report(100,"All ten layouts are ready to install for desktop practice testing");
+        Report(100,$"{layouts.Length} selected layouts are ready to install for desktop practice testing");
 
         void Copy(string source, string relative)
         {
