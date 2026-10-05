@@ -6,6 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Make CUSTOM-track checking and building progress larger and green, with a nearby **Stop build** button. Stopping safely keeps installed tracks; final installation finishes without interruption.
+- Choose the game’s six difficulty levels for stock and CUSTOM-track Race launches. Each custom location remembers its own choice; existing settings keep the game’s difficulty.
+- See live controller, wheel and pedal input in Driving controls, including axes, buttons and POV hats, without changing bindings.
+- Carry forward Up/Down navigation for the direct-session pause and finish menus.
+
 - Enable Direct practice, Race, desktop/VR and any installed car across all Aspen and Smelter layouts. The four Head-to-head courses allow one AI opponent to match their two-car grids; other layouts allow up to seven. Current tracks need no rebuild. Expanded AI/VR coverage and duel-course timing still need testing; knockout Head-to-head rules are not included.
 
 - Lower Buttermilk exposure by default to retain detail in bright snow. Climb's improvement is confirmed in desktop testing; Descent still needs a check, and the abrupt brightness border remains. No track rebuild is needed. Original-exposure and bloom-off comparisons remain available; other tracks keep their existing exposure.

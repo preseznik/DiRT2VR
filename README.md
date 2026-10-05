@@ -52,6 +52,8 @@ The launcher minimizes after starting either mode and stays minimized during pla
 
 DiRT 2 may briefly fall behind other windows as it replaces its startup window. The launcher hands focus to the replacement once; the brief drop followed by immediate return has been confirmed on desktop.
 
+**Race difficulty** controls AI opponents in stock and CUSTOM-track Race launches. Choose Easy, Casual, Serious, Savage, Extreme or Hardcore; **Use game setting** leaves the game’s saved choice in effect. Each custom location remembers its own choice. This does not change career difficulty in Normal Launch or multiplayer.
+
 Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and temporarily enable human control, the selected race and the direct-session menus. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.
@@ -72,7 +74,7 @@ Aspen and Smelter each add ten layouts built from your own **DiRT 3 Complete Edi
 
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
 2. Choose a **Track pack**, then **Build and install…**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the DiRT 3 Complete Edition game folder, wherever it is installed.
-3. Check the **layouts to build**, using **Select all** or **Select none** as needed. Your choices are remembered for each location. Choose **Build and install** and leave the launcher open while it checks source files and converts only those layouts. Unchecked layouts already installed are kept. **Cancel** stops conversion safely; an existing installation stays usable.
+3. Check the **layouts to build**, using **Select all** or **Select none** as needed. Your choices are remembered for each location. Choose **Build and install** and leave the launcher open while it checks source files and converts only those layouts. Unchecked layouts already installed are kept. **Stop build**, beside the green progress message, stops checking or conversion safely and keeps installed tracks. Once final installation begins, Stop is disabled until it finishes.
 4. Select a layout, **Direct practice** or **Race**, and any installed car. Choose **Launch** for desktop play, or **Launch VR** with SteamVR and your headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
 
 | Layout | Default lighting |
@@ -82,7 +84,7 @@ Aspen and Smelter each add ten layouts built from your own **DiRT 3 Complete Edi
 | Snowmass Sprint | Evening sun |
 | Snowmass Loop | Overcast |
 
-All twenty Aspen and Smelter layouts offer experimental **desktop and VR** play with any installed car. **Direct practice** is solo; **Race** adds AI opponents, using the same car, mixed cars or cars in your class. Rallycross and Landrush courses allow **1–7 AI opponents**. The four Head-to-head courses have two-car starting grids, so their Race mode allows **one AI opponent**. Race timing on these separate-lane courses still needs testing; DiRT 3's knockout Head-to-head rules are not included. Use the sliders to choose opponents and **1–20 laps**. Your normal opponent count is remembered when moving to and from a two-car course.
+All twenty Aspen and Smelter layouts offer experimental **desktop and VR** play with any installed car. **Direct practice** is solo; **Race** adds AI opponents, using the same car, mixed cars or cars in your class. Rallycross and Landrush courses allow **1–7 AI opponents**. The four Head-to-head courses have two-car starting grids, so their Race mode allows **one AI opponent**. Race timing on these separate-lane courses still needs testing; DiRT 3's knockout Head-to-head rules are not included. Choose **Race difficulty** from Easy, Casual, Serious, Savage, Extreme or Hardcore, as in DiRT 2. **Use game setting** keeps your saved difficulty. Use the sliders to choose opponents and **1–20 laps**. Your normal opponent count is remembered when moving to and from a two-car course.
 
 **No rebuild is needed to unlock these options on current installed layouts.** Very old Aspen installs may request an AI-path rebuild before racing; Direct practice remains available. Expanded AI racing, car combinations and headset rendering need gameplay validation. LAN is unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
 
@@ -232,6 +234,8 @@ For a custom controller or wheel, bind **Pause** and **Menu Start Button** to yo
 During capture, turn the wheel clearly left/right and press pedals fully. Small pedal movements are ignored; these capture thresholds do not change driving sensitivity.
 
 To change just one action, select it and choose **Bind keyboard…** or **Bind device…**. **Calibration…** adjusts direction, dead zone and saturation; saved values are shown beside each controller assignment. Enabled launcher assignments and calibration reapply on every launch, replacing in-game changes for those actions. To retain zero steering deadzone, set 0% for both **Steer Left** and **Steer Right**, then **Save driving controls**. Alternatively, disable launcher driving bindings and use the game's saved controls. The editor warns about identical left/right steering directions and inverted Xbox triggers; repair old assignments with the wizard or Xbox preset. Physical Fanatec handbrake validation remains pending.
+
+**Live device input** shows the selected controller, wheel or pedals while you move them, including axes, buttons and POV hats. Choose **Refresh** after connecting a device. These are raw readings before calibration; a resting pedal at one end of its range is normal. Viewing inputs does not change bindings.
 
 The editor includes steering, accelerator, brake, clutch, handbrake, sequential shifts and H-pattern gears. Select the appropriate transmission/assist settings in the game as well. It applies to Normal Launch, Practice, Race and HOST/JOIN, in desktop and VR modes, using the DX11 renderer. Unassigned actions retain game settings; assigning an action replaces that action's saved inputs, so assign both keyboard and controller inputs if wanted. **Use game binding** removes that action's launcher override. Disabling overrides does not undo bindings subsequently saved by the game.
 

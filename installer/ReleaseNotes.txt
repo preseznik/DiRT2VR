@@ -1,9 +1,11 @@
-Local Experimental test — Smelter County Loop
+DiRT2VR 0.17.41 — Experimental
 
-Build County Loop from your own DiRT 3 Complete Edition installation in Launcher > CUSTOM tracks > Smelter > Build and install.
+CUSTOM-track progress is now larger and green. Use Stop build beside the message to safely stop checking or conversion. Installed tracks are kept; final installation is allowed to finish.
 
-This test addresses missing water and concrete barriers disappearing nearby. The extended scenery visibility ranges are retained. After updating, choose Smelter > Manage > Rebuild from source to apply the changes.
+Choose Race difficulty for stock and CUSTOM tracks: Easy, Casual, Serious, Savage, Extreme or Hardcore. Use game setting keeps your saved choice. Each custom location remembers its own difficulty.
 
-This test supports desktop Direct practice in the Subaru STI. County Loop still needs a full lap, reset and restart check. Smelter Race, VR and the remaining layouts are not available yet.
+Driving controls now shows live controller, wheel and pedal readings, including axes, buttons and POV hats. Choose Refresh after connecting a device. This display does not change your bindings.
 
-CUSTOM tracks now groups layouts by pack and remembers separate settings. Aspen remains available.
+Includes the current Aspen and Smelter layouts, Race options and car choices, plus Up/Down navigation in direct-session pause menus. No track rebuild is required for these launcher changes.
+
+This is an opt-in Experimental build. New race difficulty and live input feedback need wider gameplay and hardware testing.

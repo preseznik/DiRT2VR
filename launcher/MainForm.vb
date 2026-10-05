@@ -44,6 +44,7 @@ Public Class MainForm
     Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = False}
     Private ReadOnly fieldOfView As New ValueSlider("FieldOfView", 70, 100, 100, "%")
     Private ReadOnly opponentCars As ComboBox = Choice("OpponentCars")
+    Private ReadOnly raceDifficulty As ComboBox = Choice("RaceDifficulty")
     Private ReadOnly opponentHint As New Label With {.AutoSize = False, .MinimumSize = New Size(0, 44), .MaximumSize = New Size(710, 0)}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
@@ -369,6 +370,11 @@ Public Class MainForm
             StyleChoice(choices(i), Me)
             Field(If(i = 4, race, selection), labels(i), choices(i))
         Next
+        StyleChoice(raceDifficulty, Me)
+        raceDifficulty.Items.AddRange(DirectRaceDifficulty.Labels)
+        raceDifficulty.SelectedIndex = settings.RaceDifficulty + 1
+        Field(race, "Race difficulty", raceDifficulty)
+        Tip(raceDifficulty, "How hard the computer drivers race. Uses DiRT 2's difficulty levels." & vbCrLf & "Use game setting keeps your saved choice. Race mode only.")
         opponents.Value = settings.Opponents : Field(race, "AI opponents", opponents)
         laps.Value = settings.Laps : Field(race, "Laps (circuits)", laps)
         AddHandler trackChoice.SelectedIndexChanged, Sub() RefreshLaps()
@@ -396,6 +402,7 @@ Public Class MainForm
                                                         For Each control In {eventChoice, trackChoice, carChoice}
                                                             control.Enabled = launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2
                                                         Next
+                                                        raceDifficulty.Enabled = launchMode.SelectedIndex = 2
                                                         opponents.Enabled = launchMode.SelectedIndex = 2
                                                         opponentCars.Enabled = launchMode.SelectedIndex = 2
                                                         RefreshOpponentHint()
@@ -726,6 +733,7 @@ Public Class MainForm
         settings.Opponents = CInt(opponents.Value)
         settings.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         settings.Laps = CInt(laps.Value)
+        settings.RaceDifficulty = raceDifficulty.SelectedIndex - 1
         If settings.DirectMode AndAlso Not customTracks.CustomEnabled Then
             Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)

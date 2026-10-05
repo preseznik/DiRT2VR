@@ -104,6 +104,7 @@ Public Class Session
                         view.Write(0, &H32565244) : view.Write(4, 1) : view.Write(8, 0UI) : view.Write(12, 0UI)
                         Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
                         start.Environment("DIRT2VR_SEAT_CHANNEL") = seat.Name
+                        DirectRaceDifficulty.Configure(start, settings)
                         If settings.DirectMode Then
                             Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest)
                             start.ArgumentList.Add("-demo")
@@ -230,6 +231,7 @@ Public Class Session
         profile.Prepare(False)
         PrepareMenus()
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
+        DirectRaceDifficulty.Configure(start, settings)
         Dim returnToMenus = WaitForGame(start)
         profile.ConfirmStartup(False)
         Return returnToMenus

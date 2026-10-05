@@ -12,6 +12,7 @@ Public Class CustomTrackSettings
     Public Property Opponents As Integer = 3
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
+    Public Property RaceDifficulty As Integer = -1
     Public Property PostProcessTest As String
     Public Sub ApplyTo(settings As VrSettings)
         Dim pack = TrackPacks.ForLayout(LayoutId)
@@ -19,6 +20,8 @@ Public Class CustomTrackSettings
         pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), Laps)
         RaceCatalog.Current.Car(CarCode)
         If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
+        DirectRaceDifficulty.Validate(RaceDifficulty)
+        settings.RaceDifficulty = RaceDifficulty
         settings.TrackId = LayoutId : settings.LaunchMode = LaunchMode : settings.CarCode = CarCode
         settings.Opponents = gridOpponents : settings.OpponentCars = OpponentCars : settings.Laps = Laps
     End Sub
@@ -157,6 +160,8 @@ Public Module CustomTrackService
                                                      Try
                                                          If Not child.HasExited Then child.Kill(entireProcessTree:=True)
                                                      Catch ex As InvalidOperationException
+                                                     Catch ex As ComponentModel.Win32Exception
+                                                         ' Keep waiting for the owned converter; never interrupt the install worker.
                                                      End Try
                                                  End Sub)
                 child.WaitForExit()
@@ -169,9 +174,9 @@ Public Module CustomTrackService
         RequireLauncher(receipt)
         If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(offer.Sources) OrElse Not receipt.Sessions.Select(Function(s) s.LayoutId).SequenceEqual(selectedLayouts.Select(Function(l) l.Id)) Then Throw New IOException("Converted pack does not match the selected package.")
         cancel.ThrowIfCancellationRequested() : context.RequireClosed()
-        progress.Report(New TrackProgress(100, "Installing verified layouts; please wait for the safe commit to finish"))
+        progress.Report(New TrackProgress(100, "Finishing installation — please wait. It is no longer safe to stop.", False))
         Worker.Invoke(context, "install-custom", workId:=id)
-        progress.Report(New TrackProgress(100, selectedLayouts.Length.ToString() & " " & pack.Name & " layouts built. Other installed layouts were kept."))
+        progress.Report(New TrackProgress(100, selectedLayouts.Length.ToString() & " " & pack.Name & " layouts built. Other installed layouts were kept.", False))
         Finally
             Try
                 SafeFiles.DeleteWorkTree(context.UserRoot, "custom-track-builds/" & id)

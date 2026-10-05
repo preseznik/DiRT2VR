@@ -1,6 +1,6 @@
 namespace DiRT2VR.CustomTracks;
 
-public sealed record TrackProgress(int Percent, string Message);
+public sealed record TrackProgress(int Percent, string Message, bool CanCancel = true);
 public sealed record Layout(string Id, string Name, string Folder, string Condition, string Discipline = "Rallycross");
 public sealed record Fingerprint(string Game, string Path, string Sha256);
 public sealed record PackFile(string Path, long Bytes, string Sha256);
@@ -217,7 +217,7 @@ public sealed class TrackPack
         {
             cancel.ThrowIfCancellationRequested();
             var path = SafeFiles.Inside(root, file.Path);
-            if (!File.Exists(path) || new FileInfo(path).Length != file.Bytes || SafeFiles.Hash(path) != file.Sha256)
+            if (!File.Exists(path) || new FileInfo(path).Length != file.Bytes || SafeFiles.Hash(path, cancel) != file.Sha256)
                 throw new IOException("Custom-track file is missing or changed: " + file.Path + ". Use Manage > Rebuild from source.");
         }
     }
@@ -228,7 +228,7 @@ public sealed class TrackPack
         {
             cancel.ThrowIfCancellationRequested(); var source = offer.Sources[i];
             string path = SafeFiles.Inside(source.Game == "dirt2" ? dirt2 : dirt3, source.Path);
-            if (!File.Exists(path) || SafeFiles.Hash(path) != source.Sha256)
+            if (!File.Exists(path) || SafeFiles.Hash(path, cancel) != source.Sha256)
                 throw new IOException($"Missing or unsupported {source.Game} source file: {source.Path}. Choose the correct game folder or verify the original files in Steam.");
             progress?.Report(new((i + 1) * 100 / offer.Sources.Length, "Checking original game files"));
         }

@@ -13,7 +13,8 @@ Public Class CustomTrackPanel
     Private ReadOnly detail As VerticalStack
     Private ReadOnly title As New Label With {.AutoSize = True, .Font = New Font("Segoe UI", 12, FontStyle.Bold)}
     Private ReadOnly description As New Label With {.AutoSize = False}
-    Private ReadOnly status As New Label With {.Name = "CustomTrackStatus", .AutoSize = False}
+    Private ReadOnly status As New TrackStatusLabel With {.Name = "CustomTrackStatus", .AutoSize = True, .Font = New Font("Segoe UI", 12, FontStyle.Bold), .Padding = New Padding(8)}
+    Private ReadOnly workActions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
     Private ReadOnly setup As New VerticalStack With {.Name = "CustomTrackSetup"}
     Private ReadOnly body As New VerticalStack
     Private ReadOnly installCard As New VerticalStack
@@ -23,6 +24,7 @@ Public Class CustomTrackPanel
     Private ReadOnly launchMode As New ComboBox With {.Name = "CustomLaunchMode", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly cars As New ComboBox With {.Name = "CustomCar", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly opponentCars As New ComboBox With {.Name = "CustomOpponentCars", .DropDownStyle = ComboBoxStyle.DropDownList}
+    Private ReadOnly raceDifficulty As New ComboBox With {.Name = "CustomRaceDifficulty", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly opponents As New ValueSlider("CustomOpponents", 1, 7, 3)
     Private ReadOnly laps As New ValueSlider("CustomLaps", 1, 20, 1)
     Private ReadOnly lightingTest As New ComboBox With {.Name = "ButtermilkLightingTest", .DropDownStyle = ComboBoxStyle.DropDownList}
@@ -31,9 +33,9 @@ Public Class CustomTrackPanel
     Private ReadOnly opponentHint As New Label With {.AutoSize = False}
     Private ReadOnly installButton As New Button With {.Text = "Build and install…", .Name = "BuildCustomTrack", .AutoSize = True}
     Private ReadOnly manage As New Button With {.Text = "Manage…", .Name = "ManageCustomTrack", .AutoSize = True}
-    Private ReadOnly cancelButton As New Button With {.Text = "Cancel", .Name = "CancelCustomTrack", .AutoSize = True}
+    Private ReadOnly cancelButton As New Button With {.Text = "Stop build", .Name = "CancelCustomTrack", .AutoSize = True}
     Private ReadOnly errorDetails As New Button With {.Text = "Details…", .Name = "CustomTrackErrorDetails", .AutoSize = True}
-    Private ReadOnly progressBar As New ProgressBar With {.Name = "CustomTrackProgress", .Minimum = 0, .Maximum = 100, .Height = 18}
+    Private ReadOnly progressBar As New ProgressBar With {.Name = "CustomTrackProgress", .Minimum = 0, .Maximum = 100, .Height = 18, .Width = 220}
     Private ReadOnly actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
     Private ReadOnly menu As New ContextMenuStrip
     Private ReadOnly packStatuses As New Dictionary(Of String, String)
@@ -84,11 +86,12 @@ Public Class CustomTrackPanel
         context = value : preferences = CustomTrackPreferences.Load(context)
         verification = New CustomTrackVerificationCache(context.GameRoot)
         Name = "CustomTrackPanel" : detail = browser.Detail
-        For Each choice In {layouts, launchMode, cars, opponentCars, browser.Picker, lightingTest}
+        For Each choice In {layouts, launchMode, cars, opponentCars, raceDifficulty, browser.Picker, lightingTest}
             StyleChoice(choice, Me)
         Next
         Controls.Add(toggle)
-        detail.Controls.Add(title) : detail.Controls.Add(description) : detail.Controls.Add(status) : detail.Controls.Add(body)
+        detail.Controls.Add(title) : detail.Controls.Add(description) : detail.Controls.Add(status)
+        detail.Controls.Add(workActions) : detail.Controls.Add(body)
         Dim layoutColumns As New ResponsiveColumns With {.WideAt = 560}
         Field(layoutColumns.First, "Layout", layouts) : Field(layoutColumns.Second, "Conditions", condition)
         setup.Controls.Add(layoutColumns)
@@ -97,7 +100,9 @@ Public Class CustomTrackPanel
         launchMode.Items.AddRange({"Direct practice", "Race"})
         cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
         opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
+        raceDifficulty.Items.AddRange(DirectRaceDifficulty.Labels)
         Field(columns.First, "Launch mode", launchMode) : Field(columns.First, "Car", cars)
+        Field(columns.Second, "Race difficulty", raceDifficulty)
         Field(columns.Second, "AI opponents", opponents) : Field(columns.Second, "Opponent cars", opponentCars)
         Field(setup, "Laps", laps) : setup.Controls.Add(opponentHint)
         setup.Controls.Add(modeHint)
@@ -122,7 +127,7 @@ Public Class CustomTrackPanel
         AddHandler browser.PackList.DrawItem, AddressOf DrawPack
         AddHandler browser.PackList.SelectedIndexChanged, Async Sub() Await SelectPack(TryCast(browser.PackList.SelectedItem, CustomTrackPack))
         AddHandler browser.Picker.SelectedIndexChanged, Async Sub() Await SelectPack(TryCast(browser.Picker.SelectedItem, CustomTrackPack))
-        For Each choice In {launchMode, cars, opponentCars}
+        For Each choice In {launchMode, cars, opponentCars, raceDifficulty}
             AddHandler choice.SelectedIndexChanged, Sub() RefreshRaceOptions()
         Next
         AddHandler layouts.SelectedIndexChanged, Sub()
@@ -153,6 +158,7 @@ Public Class CustomTrackPanel
                                                                If MessageBox.Show(Me, "Remove " & currentPack.Name & " and its " & currentPack.Layouts.Length & " layouts? Original tracks, saves and other packs will be kept.", "Uninstall " & currentPack.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) <> DialogResult.OK Then Return
                                                                Await Operation(Async Function(token, progress)
                                                                                    verification.Invalidate(currentPack.Id)
+                                                                                   progress.Report(New TrackProgress(0, "Removing installed pack — please wait for safe completion.", False))
                                                                                    Await CustomTrackService.UninstallAsync(context, currentPack.Id)
                                                                                    installationValid = False : hasReceipt = False
                                                                                    SetStatus("Not installed", currentPack.Name & " removed. Your original tracks are available with CUSTOM tracks off.")
@@ -202,6 +208,7 @@ Public Class CustomTrackPanel
             cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
             launchMode.SelectedIndex = If(selected.LaunchMode = "race" AndAlso launchMode.Items.Count = 1, -1, Array.IndexOf({"practice", "race"}, selected.LaunchMode))
             cars.SelectedItem = cars.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = selected.CarCode)
+            raceDifficulty.SelectedIndex = Math.Clamp(selected.RaceDifficulty, -1, 5) + 1
             opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, selected.OpponentCars)
             opponents.Maximum = 7 : fullGridOpponents = Math.Clamp(selected.Opponents, 1, 7)
             opponents.Value = fullGridOpponents : laps.Value = Math.Clamp(selected.Laps, 1, 20)
@@ -226,6 +233,7 @@ Public Class CustomTrackPanel
         If launchMode.SelectedIndex >= 0 Then selected.LaunchMode = {"practice", "race"}(launchMode.SelectedIndex)
         If cars.SelectedItem IsNot Nothing Then selected.CarCode = DirectCast(cars.SelectedItem, PracticeCar).Code
         If opponentCars.SelectedIndex >= 0 Then selected.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
+        selected.RaceDifficulty = raceDifficulty.SelectedIndex - 1
         selected.Opponents = If(opponents.Maximum = 1, fullGridOpponents, opponents.Value) : selected.Laps = CInt(laps.Value)
         selected.PostProcessTest = If(ButtermilkPostProcess.Supports(selected.LayoutId), {"normal", "bloom-off", "lower-exposure"}(Math.Max(0, lightingTest.SelectedIndex)), "normal")
     End Sub
@@ -246,6 +254,7 @@ Public Class CustomTrackPanel
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."
         Dim race = launchMode.SelectedIndex = 1
+        raceDifficulty.Enabled = race
         opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race
         Dim vehicle = TryCast(cars.SelectedItem, PracticeCar)
         opponentHint.Text = If(race AndAlso installationValid AndAlso Not raceReady, "Choose Manage → Rebuild from source to update AI driving paths before racing.", If(Not race, "Solo practice. Your race settings are kept for later.", If(opponentCars.SelectedIndex = 2,
@@ -259,10 +268,11 @@ Public Class CustomTrackPanel
         End If
         actions.Controls.Clear()
         If hasReceipt Then actions.Controls.Add(manage)
-        If working Then actions.Controls.Add(cancelButton)
+        If working AndAlso Not workActions.Controls.Contains(cancelButton) Then workActions.Controls.Add(cancelButton)
+        If Not working Then workActions.Controls.Remove(cancelButton)
         If errorText <> "" Then actions.Controls.Add(errorDetails)
-        If working AndAlso Not detail.Controls.Contains(progressBar) Then detail.Controls.Add(progressBar)
-        If Not working Then detail.Controls.Remove(progressBar)
+        If working AndAlso Not workActions.Controls.Contains(progressBar) Then workActions.Controls.Add(progressBar)
+        If Not working Then workActions.Controls.Remove(progressBar)
         toggle.Enabled = Not working : browser.PackList.Enabled = Not working : browser.Picker.Enabled = Not working
         setup.Enabled = Not working : installButton.Enabled = Not working : manage.Enabled = Not working
         browser.PackList.Invalidate() : PerformLayout()
@@ -272,8 +282,9 @@ Public Class CustomTrackPanel
         packStatuses(currentPack.Id) = packStatus : status.Text = message : browser.PackList.Invalidate()
     End Sub
     Public Sub CancelOperation()
-        cancellation?.Cancel()
-        If working Then status.Text = "Cancelling; waiting for the current safe operation to finish…"
+        If Not working OrElse Not cancelButton.Enabled Then Return
+        cancelButton.Enabled = False : cancellation?.Cancel()
+        status.Text = "Stopping safely… Your installed tracks will be kept."
     End Sub
     Private Async Function RefreshInstallation(Optional force As Boolean = False) As Task
         If working OrElse Not currentPack.Available Then Return
@@ -317,7 +328,8 @@ Public Class CustomTrackPanel
                             SetStatus("Building…", "Building " & selected.BuildLayoutIds.Length.ToString() & " selected " & currentPack.Name & " layouts…")
                             verification.Invalidate(currentPack.Id)
                             Await CustomTrackService.InstallAsync(context, offer, selected.SourceFolder, progress, token, selected.BuildLayoutIds)
-                            installedReceipt = Await Task.Run(Function() verification.Read(TrackPacks.Get(currentPack.Id), token), token)
+                            ' InstallAsync has committed successfully; a late stop must not misreport it as cancelled.
+                            installedReceipt = Await Task.Run(Function() verification.Read(TrackPacks.Get(currentPack.Id), CancellationToken.None))
                             installationValid = True : hasReceipt = True
                             installedLayouts = installedReceipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal) : RefreshRaceOptions()
                             SetStatus("Installed · Ready offline", selected.BuildLayoutIds.Length.ToString() & " layouts built · " & installedLayouts.Count.ToString() & " of " & offer.Layouts.Length.ToString() & " installed. Choose a layout, then Launch.")
@@ -329,10 +341,13 @@ Public Class CustomTrackPanel
         ' Keep verification/progress continuations on the owning UI thread.
         If Not TypeOf SynchronizationContext.Current Is WindowsFormsSynchronizationContext Then SynchronizationContext.SetSynchronizationContext(New WindowsFormsSynchronizationContext())
         working = True : errorText = "" : progressBar.Value = 0
-        cancellation = New CancellationTokenSource() : RenderState()
+        cancellation = New CancellationTokenSource() : cancelButton.Enabled = True : RenderState()
+        Dim operationCancellation = cancellation
         Try
             Dim progress As New Progress(Of TrackProgress)(Sub(value)
-                                                              If IsDisposed OrElse Not working Then Return
+                                                              If IsDisposed OrElse Not working OrElse cancellation IsNot operationCancellation Then Return
+                                                              cancelButton.Enabled = value.CanCancel AndAlso Not operationCancellation.IsCancellationRequested
+                                                              If operationCancellation.IsCancellationRequested AndAlso value.CanCancel Then Return
                                                               progressBar.Value = Math.Clamp(value.Percent, 0, 100) : status.Text = value.Message
                                                           End Sub)
             Await action(cancellation.Token, progress)
