@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Give direct Race opponents distinct driver names instead of repeating Travis Pastrana across the grid.
+- Correct single-word launcher profile names on in-game name displays, including existing profiles. Saves and career progress are unchanged.
+
 - Make CUSTOM-track checking and building progress larger and green, with a nearby **Stop build** button. Stopping safely keeps installed tracks; final installation finishes without interruption.
 - Choose the game’s six difficulty levels for stock and CUSTOM-track Race launches. Each custom location remembers its own choice; existing settings keep the game’s difficulty.
 - See live controller, wheel and pedal input in Driving controls, including axes, buttons and POV hats, without changing bindings.

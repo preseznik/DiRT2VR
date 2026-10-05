@@ -1,11 +1,9 @@
-DiRT2VR 0.17.41 — Experimental
+DiRT2VR 0.17.42 — Experimental
 
-CUSTOM-track progress is now larger and green. Use Stop build beside the message to safely stop checking or conversion. Installed tracks are kept; final installation is allowed to finish.
+Race opponents now have distinct stock driver names instead of all appearing as Travis Pastrana.
 
-Choose Race difficulty for stock and CUSTOM tracks: Easy, Casual, Serious, Savage, Extreme or Hardcore. Use game setting keeps your saved choice. Each custom location remembers its own difficulty.
+Fix blank player names for single-word launcher profiles, such as 100percent. Existing profiles receive the display correction automatically in Normal Launch and direct events. No new profile is needed, and saved career progress is unchanged.
 
-Driving controls now shows live controller, wheel and pedal readings, including axes, buttons and POV hats. Choose Refresh after connecting a device. This display does not change your bindings.
+Includes 0.17.41's clearer CUSTOM-track build status and Stop build button, Race difficulty selection, and live driving-input readings.
 
-Includes the current Aspen and Smelter layouts, Race options and car choices, plus Up/Down navigation in direct-session pause menus. No track rebuild is required for these launcher changes.
-
-This is an opt-in Experimental build. New race difficulty and live input feedback need wider gameplay and hardware testing.
+This is an opt-in Experimental build. Please check the player and opponent names in your next race.

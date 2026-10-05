@@ -30,6 +30,8 @@ Your original saves stay in their current location. New profiles have separate s
 
 Use **Refresh** after saving in-game. Unreadable details show **Unavailable**; intermediate completion percentages and garage counts are not yet supported. If the original game has multiple careers, choose between them in its Load Profile menu. A missing or incompatible selected profile blocks launch until you explicitly choose a valid one.
 
+Single-word launcher profile names also appear on screens which normally show a surname. Existing profiles receive this display correction automatically, without renaming or rewriting their saves.
+
 ## Install alongside your game
 
 **A second copy of the game is not required.** Run DiRT 2 normally once before installing, then close it.
@@ -153,6 +155,8 @@ Choose **Race**, an event, track and car, then set **AI opponents** from 1 to 7.
 - **Same class:** other models in your car's game-defined class.
 
 Mixed/class grids are randomized each launch, repeating models if the available pool is small. If no other eligible model is installed, they use your model. Direct practice remains solo regardless of saved opponent settings. Start with Landrush or Rallycross. Other disciplines and track/car combinations need testing.
+
+AI opponents use distinct stock driver identities; their names do not depend on the opponent-car selection.
 
 Use **Laps (circuits)** to choose 1–20 laps in either **Race** or **Direct practice**. On point-to-point stages this control is disabled and the session is one stage run; your saved circuit lap preference is retained. The three-lap HUD and continuation into lap 2 have been confirmed on desktop at Baja – Ensenada Sprint. Other counts, complete multi-lap finishes and VR still need testing.
 

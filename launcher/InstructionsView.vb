@@ -14,6 +14,8 @@ Profile lists Current game career and careers created in DiRT2VR. Select a row, 
 Create a new career
 Choose Create new profile, enter a name, then Fresh career or 100% completed career. Use 1–24 letters (A–Z) or numbers (0–9), without spaces or symbols. Creation finishes in the launcher and automatically makes the new career active. The active row is green and marked Active. Use this profile switches to an existing career. Existing names stay unchanged. There is no unlock option for an existing career.
 
+Single-word names also appear on in-game surname displays. This works with existing launcher profiles and does not rewrite their saves.
+
 Delete a career
 Select a launcher-created career and Delete profile. Confirm its name before permanently deleting its saves from this Windows account. Choose another career for launching first. Current game career cannot be deleted here.
 
