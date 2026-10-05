@@ -12,6 +12,7 @@ Public Class CustomTrackSettings
     Public Property Opponents As Integer = 3
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
+    Public Property PostProcessTest As String = "normal"
     Public Sub ApplyTo(settings As VrSettings)
         TrackPacks.ForLayout(LayoutId).RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", Opponents, 0), Laps)
         RaceCatalog.Current.Car(CarCode)
@@ -63,7 +64,7 @@ Public Class CustomTrackPreferences
 End Class
 Public Module CustomTrackService
     Public Function RecoveryPending(context As InstallContext) As Boolean
-        Return File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
+        Return New ButtermilkPostProcess(context).Pending OrElse File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
             File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-install/pending.json"))
     End Function
     Public Sub RequireLauncher(receipt As PackReceipt)

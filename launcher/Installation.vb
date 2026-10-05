@@ -61,7 +61,8 @@ Public Class Installation
 End Class
 
 Public Module Worker
-    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing)
+    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = "normal")
+        ButtermilkPostProcess.Validate(postProcessTest, trackId, operation = "prepare-desktop")
         context.ValidateGame() : context.RequireClosed()
         Select Case operation
             Case "setup" : Call (New Installation(context)).Setup()
@@ -73,6 +74,7 @@ Public Module Worker
                     CustomTrackService.RequireLauncher(receipt)
                     If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt, trackId) Then Throw New IOException("Rebuild Aspen to update its AI driving paths before starting a Race. Direct practice is still available.")
                     CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId)
+                    Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
                 End If
                 Dim transaction As New AssetTransaction(context)
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars)
@@ -85,6 +87,7 @@ Public Module Worker
             Case "prepare-direct-menus", "prepare-direct-menus-movies"
                 Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies")
             Case "recover"
+                Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Recover(context.GameRoot)
                 Call (New DirectMenus(context)).Recover()
@@ -92,17 +95,20 @@ Public Module Worker
                 Call (New LanTransaction(context)).Recover()
                 Call (New AssetTransaction(context)).Recover()
             Case "install-custom"
+                Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
             Case "remove-custom"
+                Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
+                Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 Call (New Installation(context)).RemoveProxy()
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing)
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = "normal")
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
@@ -112,6 +118,8 @@ Public Module Worker
             start.ArgumentList.Add("--track-work") : start.ArgumentList.Add(workId)
         End If
         If operation = "prepare" OrElse operation = "prepare-desktop" Then
+            ButtermilkPostProcess.Validate(postProcessTest, trackId, operation = "prepare-desktop")
+            start.ArgumentList.Add("--postprocess-test") : start.ArgumentList.Add(postProcessTest)
             start.ArgumentList.Add("--opponent-cars") : start.ArgumentList.Add(opponentCars)
             start.ArgumentList.Add("--opponents") : start.ArgumentList.Add(opponents.ToString(Globalization.CultureInfo.InvariantCulture))
             start.ArgumentList.Add("--car") : start.ArgumentList.Add(carCode)

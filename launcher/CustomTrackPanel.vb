@@ -25,6 +25,8 @@ Public Class CustomTrackPanel
     Private ReadOnly opponentCars As New ComboBox With {.Name = "CustomOpponentCars", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly opponents As New ValueSlider("CustomOpponents", 1, 7, 3)
     Private ReadOnly laps As New ValueSlider("CustomLaps", 1, 20, 1)
+    Private ReadOnly lightingTest As New ComboBox With {.Name = "ButtermilkLightingTest", .DropDownStyle = ComboBoxStyle.DropDownList}
+    Private ReadOnly lightingTestBox As New VerticalStack
     Private ReadOnly modeHint As New Label With {.Name = "CustomModeHint", .AutoSize = False}
     Private ReadOnly opponentHint As New Label With {.AutoSize = False}
     Private ReadOnly installButton As New Button With {.Text = "Build and install…", .Name = "BuildCustomTrack", .AutoSize = True}
@@ -84,7 +86,7 @@ Public Class CustomTrackPanel
         context = value : preferences = CustomTrackPreferences.Load(context)
         verification = New CustomTrackVerificationCache(context.GameRoot)
         Name = "CustomTrackPanel" : detail = browser.Detail
-        For Each choice In {layouts, launchMode, cars, opponentCars, browser.Picker}
+        For Each choice In {layouts, launchMode, cars, opponentCars, browser.Picker, lightingTest}
             StyleChoice(choice, Me)
         Next
         Controls.Add(toggle)
@@ -101,6 +103,10 @@ Public Class CustomTrackPanel
         Field(columns.Second, "AI opponents", opponents) : Field(columns.Second, "Opponent cars", opponentCars)
         Field(setup, "Laps", laps) : setup.Controls.Add(opponentHint)
         setup.Controls.Add(modeHint)
+        lightingTest.Items.AddRange({"Normal (reference)", "Bloom off (diagnostic)", "Lower exposure (diagnostic)"})
+        lightingTest.SelectedIndex = 0
+        Field(lightingTestBox, "Snow lighting test", lightingTest)
+        lightingTestBox.Controls.Add(New Label With {.Name = "ButtermilkLightingHint", .AutoSize = True, .Text = "Compare the same spot in separate desktop sessions. No track rebuild needed. Original effects return after exit; this choice resets when you change layout or reopen the launcher."})
         installCard.Controls.Add(New Label With {.Text = "Build this pack from your own DiRT 3 Complete Edition files. You can select a detected installation or browse to its folder. Installed tracks work offline.", .AutoSize = False})
         installCard.Controls.Add(installButton)
         detail.Controls.Add(actions)
@@ -122,6 +128,7 @@ Public Class CustomTrackPanel
             AddHandler choice.SelectedIndexChanged, Sub() RefreshRaceOptions()
         Next
         AddHandler layouts.SelectedIndexChanged, Sub()
+                                                    lightingTest.SelectedIndex = 0
                                                     Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
                                                     condition.Text = If(chosen Is Nothing, "Choose a layout", chosen.Discipline & " · " & chosen.Condition)
                                                     If Not loading Then LoadLayoutSession()
@@ -158,7 +165,7 @@ Public Class CustomTrackPanel
                                  cancellation?.Cancel()
                                  verification.Dispose()
                                  menu.Dispose()
-                                 For Each control As Control In New Control() {browser, setup, installCard, unavailable, manage, cancelButton, errorDetails, progressBar}
+                                 For Each control As Control In New Control() {browser, setup, installCard, unavailable, manage, cancelButton, errorDetails, progressBar, lightingTestBox}
                                      control.Dispose()
                                  Next
                              End Sub
@@ -237,6 +244,7 @@ Public Class CustomTrackPanel
         If cars.SelectedItem IsNot Nothing Then selected.CarCode = DirectCast(cars.SelectedItem, PracticeCar).Code
         If opponentCars.SelectedIndex >= 0 Then selected.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         selected.Opponents = CInt(opponents.Value) : selected.Laps = CInt(laps.Value)
+        selected.PostProcessTest = If(ButtermilkPostProcess.Supports(selected.LayoutId), {"normal", "bloom-off", "lower-exposure"}(Math.Max(0, lightingTest.SelectedIndex)), "normal")
     End Sub
     Public Sub Save()
         CaptureSelection() : preferences.Save(context)
@@ -245,6 +253,13 @@ Public Class CustomTrackPanel
         Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
         raceReady = installedReceipt IsNot Nothing AndAlso currentPack IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).SupportsRace(installedReceipt, chosen?.Id)
         Dim restricted = currentPack IsNot Nothing AndAlso currentPack.Available AndAlso chosen IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).DesktopPracticeOnly(chosen.Id)
+        If ButtermilkPostProcess.Supports(chosen?.Id) Then
+            If Not setup.Controls.Contains(lightingTestBox) Then
+                setup.Controls.Add(lightingTestBox) : setup.Controls.SetChildIndex(lightingTestBox, 1)
+            End If
+        Else
+            setup.Controls.Remove(lightingTestBox)
+        End If
         modeHint.Text = If(restricted, "Desktop practice test · Race and VR pending", "Desktop and VR · AI races are experimental · LAN unavailable")
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Solo practice on a Head-to-head course; competitive Head-to-head is unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."

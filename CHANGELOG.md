@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add temporary Buttermilk snow-lighting comparisons: Normal, Bloom off and Lower exposure. Switch profiles between desktop sessions without rebuilding tracks; original effects are restored afterward. The snow-brightness border remains under investigation.
+
 - Switching between custom-track locations reuses successful file checks during the current launcher session. Installation changes trigger a new check; Manage → Verify installed files always checks again.
 
 - Choose which Aspen or Smelter layouts to build or rebuild, with Select all / Select none and remembered choices for each location. Only selected layouts are converted; other installed layouts are kept.
