@@ -12,7 +12,7 @@ Public Class CustomTrackSettings
     Public Property Opponents As Integer = 3
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
-    Public Property PostProcessTest As String = "normal"
+    Public Property PostProcessTest As String
     Public Sub ApplyTo(settings As VrSettings)
         TrackPacks.ForLayout(LayoutId).RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", Opponents, 0), Laps)
         RaceCatalog.Current.Car(CarCode)

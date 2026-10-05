@@ -3,7 +3,7 @@ Imports System.Xml
 Imports DiRT2VR.CustomTracks
 Imports EgoEngineLibrary.Xml
 
-' Temporary desktop diagnostics. Owned by the launcher session, never the converter.
+' Buttermilk desktop exposure and comparison profiles, owned by the launcher session.
 Public Class ButtermilkPostProcess
     Private Shared ReadOnly Targets As String() = {"postprocess/effects.xml", "tracks/effects.xml"}
     Private ReadOnly context As InstallContext
@@ -34,8 +34,11 @@ Public Class ButtermilkPostProcess
     Public Shared Function Supports(layoutId As String) As Boolean
         Return layoutId = "aspen-buttermilk-climb" OrElse layoutId = "aspen-buttermilk-descent"
     End Function
+    Public Shared Function DefaultProfile(layoutId As String) As String
+        Return If(Supports(layoutId), "lower-exposure", "normal")
+    End Function
     Public Shared Sub Validate(profile As String, layoutId As String, desktop As Boolean)
-        If Not {"normal", "bloom-off", "lower-exposure"}.Contains(profile) Then Throw New IOException("Unknown Buttermilk lighting test. Select Normal in the launcher.")
+        If Not {"normal", "bloom-off", "lower-exposure"}.Contains(profile) Then Throw New IOException("Unknown Buttermilk lighting profile. Choose a Snow lighting option in the launcher.")
         If profile <> "normal" AndAlso (Not desktop OrElse Not Supports(layoutId)) Then Throw New IOException("Lighting tests are available only for Buttermilk Climb/Descent in desktop play.")
     End Sub
     Public Shared Function Patch(original As Byte(), profile As String) As Byte()

@@ -37,7 +37,7 @@ Public Class Session
             If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM tracks off before starting LAN multiplayer.")
             customTrack = True
             custom.ApplyTo(settings)
-            postProcessTest = custom.ForPack(custom.SelectedPackId).PostProcessTest
+            postProcessTest = If(custom.ForPack(custom.SelectedPackId).PostProcessTest, ButtermilkPostProcess.DefaultProfile(settings.TrackId))
         End If
         driving = DrivingControls.Load(context)
         If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()

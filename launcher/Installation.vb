@@ -61,7 +61,8 @@ Public Class Installation
 End Class
 
 Public Module Worker
-    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = "normal")
+    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = Nothing)
+        postProcessTest = If(postProcessTest, If(operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
         ButtermilkPostProcess.Validate(postProcessTest, trackId, operation = "prepare-desktop")
         context.ValidateGame() : context.RequireClosed()
         Select Case operation
@@ -108,7 +109,7 @@ Public Module Worker
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = "normal")
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = Nothing)
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
@@ -118,6 +119,7 @@ Public Module Worker
             start.ArgumentList.Add("--track-work") : start.ArgumentList.Add(workId)
         End If
         If operation = "prepare" OrElse operation = "prepare-desktop" Then
+            postProcessTest = If(postProcessTest, If(operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
             ButtermilkPostProcess.Validate(postProcessTest, trackId, operation = "prepare-desktop")
             start.ArgumentList.Add("--postprocess-test") : start.ArgumentList.Add(postProcessTest)
             start.ArgumentList.Add("--opponent-cars") : start.ArgumentList.Add(opponentCars)

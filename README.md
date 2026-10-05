@@ -100,7 +100,7 @@ After updating, choose **Aspen → Manage… → Rebuild from source…** to add
 | Brush Creek Sprint, Brush Creek Dash | Evening sun | Kincaid Ford F-150 |
 | Buttermilk Descent, Buttermilk Climb | Overcast snow lighting | Subaru STI |
 
-These six layouts are **desktop Direct practice tests**. Race and VR are unavailable for them; the four Rallycross layouts keep their existing modes and car selection. Buttermilk Descent and Climb are solo courses without competitive Head-to-head rules. Lighting follows source defaults; full snowfall remains unsupported. New layouts need timed-lap, reset, restart and rendering checks on a gaming PC, including the truck's snow handling and night headlights.
+These six layouts are **desktop Direct practice tests**. Race and VR are unavailable for them; the four Rallycross layouts keep their existing modes and car selection. Buttermilk Descent and Climb are solo courses without competitive Head-to-head rules. Time of day follows source defaults, with reduced exposure on Buttermilk to retain snow detail; full snowfall remains unsupported. New layouts need timed-lap, reset, restart and rendering checks on a gaming PC, including the truck's snow handling and night headlights.
 
 ### Smelter — ten-layout test
 
@@ -116,7 +116,7 @@ Select **Smelter** in CUSTOM tracks and choose **Build and install…** using yo
 
 Use **Smelter → Manage… → Rebuild from source…** after updating to apply the scenery visibility test and add any missing layouts. Updating the launcher alone does not rebuild tracks. Existing tracks remain usable until the rebuild completes. General Maple Woods scenery flicker has improved in testing, but some log piles remain missing. Other layouts and performance still need wider testing.
 
-For the Buttermilk snow test, select **Aspen → Buttermilk Climb** or **Buttermilk Descent**, then choose a **Snow lighting test**: **Normal (reference)**, **Bloom off (diagnostic)** or **Lower exposure (diagnostic)**. Launch a separate desktop session for each and compare the same bridge view after waiting a few seconds. **No track rebuild is needed** if the layout is installed. Exit the game before changing the profile. Original post-processing files are restored after exit; interrupted sessions use the usual recovery, preserving external edits. The choice resets to Normal when changing layout or reopening the launcher. These are diagnostic comparisons, not a confirmed correction for the abrupt snow-brightness border.
+**Buttermilk Climb and Descent now use lower exposure by default** to retain detail in bright snow. Climb's improved snow detail has been confirmed in desktop testing; Descent still needs a visual check. The abrupt brightness border remains unresolved. **No track rebuild is needed** for installed layouts. Under **Snow lighting**, choose **Original exposure (reference)** or **Bloom off (diagnostic)** for comparisons; exit the game between profiles. Comparison choices reset to **Lower exposure (default)** when changing layout or reopening the launcher. Original post-processing files are restored after exit; interrupted sessions use the usual recovery, preserving external edits. Other tracks keep their existing exposure.
 
 Wet-weather handling still needs validation. Smelter Race and VR remain unavailable. Dredger Duel and Furnace Duel do not yet have competitive Head-to-head rules. New layouts still need timed-lap, reset and restart checks on a gaming PC. The concrete-barrier compatibility test remains visually unverified. Aspen keeps its existing modes.
 

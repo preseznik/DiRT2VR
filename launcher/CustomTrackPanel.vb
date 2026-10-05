@@ -103,10 +103,10 @@ Public Class CustomTrackPanel
         Field(columns.Second, "AI opponents", opponents) : Field(columns.Second, "Opponent cars", opponentCars)
         Field(setup, "Laps", laps) : setup.Controls.Add(opponentHint)
         setup.Controls.Add(modeHint)
-        lightingTest.Items.AddRange({"Normal (reference)", "Bloom off (diagnostic)", "Lower exposure (diagnostic)"})
-        lightingTest.SelectedIndex = 0
-        Field(lightingTestBox, "Snow lighting test", lightingTest)
-        lightingTestBox.Controls.Add(New Label With {.Name = "ButtermilkLightingHint", .AutoSize = True, .Text = "Compare the same spot in separate desktop sessions. No track rebuild needed. Original effects return after exit; this choice resets when you change layout or reopen the launcher."})
+        lightingTest.Items.AddRange({"Original exposure (reference)", "Bloom off (diagnostic)", "Lower exposure (default)"})
+        lightingTest.SelectedIndex = 2
+        Field(lightingTestBox, "Snow lighting", lightingTest)
+        lightingTestBox.Controls.Add(New Label With {.Name = "ButtermilkLightingHint", .AutoSize = True, .Text = "Lower exposure preserves snow detail; the abrupt brightness border remains. No track rebuild needed. Original effects return after exit. Comparison choices reset to lower exposure when changing layout or reopening the launcher."})
         installCard.Controls.Add(New Label With {.Text = "Build this pack from your own DiRT 3 Complete Edition files. You can select a detected installation or browse to its folder. Installed tracks work offline.", .AutoSize = False})
         installCard.Controls.Add(installButton)
         detail.Controls.Add(actions)
@@ -128,7 +128,7 @@ Public Class CustomTrackPanel
             AddHandler choice.SelectedIndexChanged, Sub() RefreshRaceOptions()
         Next
         AddHandler layouts.SelectedIndexChanged, Sub()
-                                                    lightingTest.SelectedIndex = 0
+                                                    lightingTest.SelectedIndex = 2
                                                     Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
                                                     condition.Text = If(chosen Is Nothing, "Choose a layout", chosen.Discipline & " · " & chosen.Condition)
                                                     If Not loading Then LoadLayoutSession()
