@@ -14,6 +14,8 @@ Profile lists Current game career and careers created in DiRT2VR. Select a row, 
 Create a new career
 Choose Create new profile, enter a name, then Fresh career or 100% completed career. Use 1–24 letters (A–Z) or numbers (0–9), without spaces or symbols. Creation finishes in the launcher and automatically makes the new career active. The active row is green and marked Active. Use this profile switches to an existing career. Existing names stay unchanged. There is no unlock option for an existing career.
 
+Single-word names also appear on in-game surname displays. This works with existing launcher profiles and does not rewrite their saves.
+
 Delete a career
 Select a launcher-created career and Delete profile. Confirm its name before permanently deleting its saves from this Windows account. Choose another career for launching first. Current game career cannot be deleted here.
 
@@ -94,7 +96,7 @@ Button conflicts
 Controller buttons still reach DiRT 2. Avoid combinations that also trigger driving or menu actions. Disconnected assignments are kept; Xbox slot changes may require selecting the controller again.
 
 Driving controls
-Direct practice and Race load the existing profile's controls. Already-signed-in accounts continue straight to the event; otherwise, sign in when GFWL asks. Canceling sign-in or a career-load error ends the launch without creating a replacement save. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
+Direct practice and Race load the existing profile's controls. Already-signed-in accounts continue straight to the event; otherwise, sign in when GFWL asks. Canceling sign-in or a career-load error ends the launch without creating a replacement save. Live device input shows axes, pressed buttons and POV hats for the selected device without changing bindings. Refresh after connecting a device. These are raw readings before calibration; resting pedals can read at either end of an axis. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
 
 Cockpit animation (experimental)
 Remove artificial steering corrections targets extra wheel/hand twitch in desktop and VR cockpit views. Off by default. Desktop requires DX11; select cockpit view yourself. Keeps the original animation range and steering filter without changing handling or force feedback. It does not match 540 or 900 degrees. Desktop testing and the PC3080 VR check confirmed that wheel judder is removed. The previously reported PC1060 VR launch crash is marked resolved after the user could no longer reproduce it in 0.17.22. Missing hands or a static wheel on other setups remain under investigation. Save and relaunch to apply.
@@ -168,23 +170,32 @@ Controls also provides six optional seat movement bindings. These are unassigned
 
 Current testing
 Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
-        "Custom track packs (Experimental)
-Close DiRT 2. On Launcher, check CUSTOM tracks select Aspen, then choose Build and install. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Build and install to check the source files and build all four layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
+        "Custom tracks (Experimental)
+Close DiRT 2. On Launcher, check CUSTOM tracks, choose a Track pack, then Build and install…. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Check the layouts you want to build, using Select all or Select none as needed. Choose Build and install to check the source files and convert only the checked layouts. Unchecked layouts already installed are kept; your choices are remembered for each location. Manage → Rebuild from source uses the same checkboxes, so you can update or add individual layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
 
 Play
-After installation, choose a layout, Direct practice or Race, and a Car. Choose Launch for desktop play or Launch VR with SteamVR and your headset ready. Practice is solo; Race adds 1–7 AI opponents with same-car, mixed or same-class grids. Use the sliders to choose opponents and 1–20 laps. These options are experimental: Aspen headset rendering and broader AI race coverage still need gameplay validation. LAN is unavailable. Rebuild an existing Aspen installation once to update AI paths before racing; solo practice remains available. Conversion happens before installation, never during game loading.
+For any Aspen or Smelter layout, choose Direct practice or Race and any installed Car. Choose Launch for desktop play or Launch VR with SteamVR and your headset ready. Practice is solo; Race supports same-car, mixed or same-class opponents. Use the sliders to choose opponents and 1–20 laps. Rallycross/Landrush allow up to seven AI opponents; Head-to-head courses allow one. Broader AI racing and headset rendering still need gameplay validation, especially duel-course timing. LAN and knockout Head-to-head rules are unavailable. Current installed tracks need no rebuild for these options; very old Aspen installs may request an AI-path update. Conversion happens before installation, never during game loading.
 
-Layouts
+Buttermilk snow lighting
+Buttermilk Climb and Descent use Lower exposure (default) to retain bright-snow detail. Climb has been visually checked; Descent still needs a check. The abrupt brightness border remains unresolved. No track rebuild is needed for installed layouts. Snow lighting also offers Original exposure (reference) and Bloom off (diagnostic). Exit between comparison sessions; changing layout or reopening the launcher returns to lower exposure. Original effects are restored after exit, and other tracks keep their existing exposure.
+
+Additional Aspen layouts
+All ten Aspen layouts offer Direct practice and Race, any installed car, and desktop or VR play. Rallycross and Landrush support 1–7 AI opponents; Buttermilk Climb/Descent have two-car grids and allow one AI. Your larger-grid opponent count is kept when switching layouts. The Buttermilk courses use separate starting lanes: AI timing and finishes still need testing, and knockout Head-to-head rules are unavailable. Current installed layouts do not need rebuilding for these options. Eagle Hill uses night lighting, Brush Creek evening sun, and Buttermilk overcast snow lighting. Broader AI, car and headset checks remain pending.
+
+Smelter test
+All ten Smelter layouts offer Direct practice and Race with any installed car, in desktop or VR. Dredger Duel and Furnace Duel allow one AI opponent; other courses allow up to seven. Race timing on the separate-lane duel courses needs testing; knockout Head-to-head rules are unavailable. Current installations need no rebuild to unlock modes/cars. Use Manage → Rebuild from source to add missing layouts or apply conversion fixes. Conditions follow source defaults, without active rain. Expanded AI racing and headset rendering still need gameplay checks.
+
+Aspen layouts
 Lakeside: night. Lake View: morning sun. Snowmass Sprint: evening sun. Snowmass Loop: overcast. These are Rallycross layouts. Ski-lift animation, full snowfall and deformable snow remain unsupported.
 
 Nordschleife
 Nordschleife uses your installed Assetto Corsa standard circuit. Select CUSTOM tracks → Nordschleife → Build and install…, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. Choose Daylight, Overcast or Evening, an installed car, and Launch for one lap of desktop Direct practice. These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. Best lap shows your fastest completed time and its car for the selected conditions. The full trackside scenery and distant landscape are included. A complete evening lap has been player-tested; lighting and visibility/LODs remain in development. Race and VR are unavailable.
 
 Offline and original tracks
-Installed tracks work offline without the source game. Keep the source installation for rebuilds and updates. Custom layout, car, race and lap settings are saved separately for each pack. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
+Installed tracks work offline without the source game. Keep the source installation for rebuilds and updates. Each pack keeps its own layout, car, race, difficulty and lap settings, separately from stock tracks. Race difficulty uses Easy, Casual, Serious, Savage, Extreme and Hardcore, as in DiRT 2. Use game setting keeps the saved game choice. It applies to stock and custom Race launches, without changing career or multiplayer difficulty. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything. Successful file checks are remembered while the launcher stays open; installed-file changes trigger a new check. Manage → Verify installed files always checks again.
 
 Manage and recover
-Manage offers optional track updates, file verification, rebuilding and uninstalling. Unsupported source files are named: choose the correct folder or verify original files in Steam. Cancellation keeps existing tracks usable. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files.",
+Manage offers file verification, rebuilding from source and uninstalling the selected pack. Unsupported source files are named: choose the correct folder or verify original files in Steam. The green status message shows checking and building progress. Stop build cancels these steps safely and keeps installed tracks. Stop is disabled during final installation; wait for it to finish. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files.",
         "Modern interface
 Settings → Appearance → Modern interface previews the modern compact layout immediately. Off restores Classic. Save settings keeps your choice. Existing settings start in Classic; fresh installations start in Modern. Both follow Windows light/dark appearance and high-contrast colours.
 

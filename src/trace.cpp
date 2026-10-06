@@ -27,6 +27,8 @@
 #include "startup_hooks.h"
 #include "steering_animation.h"
 #include "direct_startup_trace.h"
+#include "race_difficulty.h"
+#include "race_drivers.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
 #include <d3d11shader.h>
@@ -121,6 +123,14 @@ void EnableDirectPractice() {
                     ExitProcess(ERROR_BAD_EXE_FORMAT);
                 }
                 Log("direct start: requested laps=%lu (memory only)",laps);
+            }
+            if(!EnableRaceDifficulty()) {
+                Log("direct race: difficulty validation failed; stopping launch");
+                ExitProcess(ERROR_BAD_EXE_FORMAT);
+            }
+            if(!EnableRaceDrivers()) {
+                Log("direct race: opponent identity validation failed; stopping launch");
+                ExitProcess(ERROR_BAD_EXE_FORMAT);
             }
             EnableDirectStartupTrace();
             applied=true;

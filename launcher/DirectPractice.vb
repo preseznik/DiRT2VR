@@ -43,7 +43,7 @@ Public Class RaceCatalog
     Public Function Track(id As String) As PracticeTrack
         If CustomTracks.TrackPacks.IsLayout(id) Then
             Dim layout = CustomTracks.TrackPacks.ForLayout(id).GetLayout(id)
-            Return New PracticeTrack With {.Id = id, .Event = "Rallycross", .Label = CustomTracks.TrackPacks.ForLayout(id).Name & " — " & layout.Name,
+            Return New PracticeTrack With {.Id = id, .Event = layout.Discipline, .Label = CustomTracks.TrackPacks.ForLayout(id).Name & " — " & layout.Name,
                 .Country = "usa", .Track = layout.Folder, .Route = "route_0", .Circuit = True}
         End If
         Dim result = Tracks.SingleOrDefault(Function(t) t.Id = id)

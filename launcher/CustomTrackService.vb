@@ -6,17 +6,24 @@ Imports System.Threading.Tasks
 Public Class CustomTrackSettings
     Public Property LayoutId As String = "aspen-lakeside"
     Public Property SourceFolder As String = ""
+    Public Property BuildLayoutIds As String()
     Public Property LaunchMode As String = "practice"
     Public Property CarCode As String = "sti"
     Public Property Opponents As Integer = 3
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
+    Public Property RaceDifficulty As Integer = -1
+    Public Property PostProcessTest As String
     Public Sub ApplyTo(settings As VrSettings)
-        TrackPacks.ForLayout(LayoutId).RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", Opponents, 0), Laps)
+        Dim pack = TrackPacks.ForLayout(LayoutId)
+        Dim gridOpponents = Math.Min(Opponents, pack.MaximumOpponents(LayoutId))
+        pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), Laps)
         RaceCatalog.Current.Car(CarCode)
         If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
+        DirectRaceDifficulty.Validate(RaceDifficulty)
+        settings.RaceDifficulty = RaceDifficulty
         settings.TrackId = LayoutId : settings.LaunchMode = LaunchMode : settings.CarCode = CarCode
-        settings.Opponents = Opponents : settings.OpponentCars = OpponentCars : settings.Laps = Laps
+        settings.Opponents = gridOpponents : settings.OpponentCars = OpponentCars : settings.Laps = Laps
     End Sub
 End Class
 
@@ -62,7 +69,7 @@ Public Class CustomTrackPreferences
 End Class
 Public Module CustomTrackService
     Public Function RecoveryPending(context As InstallContext) As Boolean
-        Return File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
+        Return New ButtermilkPostProcess(context).Pending OrElse File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
             File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-install/pending.json"))
     End Function
     Public Sub RequireLauncher(receipt As PackReceipt)
@@ -71,13 +78,14 @@ Public Module CustomTrackService
     Public Function Profile(packId As String) As ConversionProfile
         Select Case packId
             Case AspenPack.Id : Return Aspen.AspenConversion.GetProfile()
+            Case "smelter" : Return Aspen.SmelterConversion.GetProfile()
             Case "nordschleife" : Return Nordschleife.NordschleifeConversion.GetProfile()
             Case Else : Throw New IOException("Unknown custom-track pack.")
         End Select
     End Function
     Public Function SourceTrackFolder(packId As String) As String
         TrackPacks.Get(packId)
-        Return If(packId = "nordschleife", "content/tracks/ks_nordschleife", "tracks/locations/usa/aspen")
+        Return If(packId = "nordschleife", "content/tracks/ks_nordschleife", "tracks/locations/usa/" & If(packId = "smelter", "smelter", "aspen"))
     End Function
     Public Function SourceFolders(Optional packId As String = AspenPack.Id) As String()
         Dim result As New List(Of String)
@@ -123,16 +131,18 @@ Public Module CustomTrackService
             End Try
         End Using
     End Sub
-    Public Function InstallAsync(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken) As Task
+    Public Function InstallAsync(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, Optional layoutIds As String() = Nothing) As Task
         Return Task.Run(Sub()
-                            WithSessionLock(Sub() Install(context, offer, source, progress, cancel))
+                            WithSessionLock(Sub() Install(context, offer, source, progress, cancel, layoutIds))
                         End Sub, cancel)
     End Function
-    Private Sub Install(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken)
+    Private Sub Install(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, layoutIds As String())
         context.ValidateGame() : context.RequireClosed()
         Worker.Invoke(context, "recover")
         Dim pack = TrackPacks.Get(offer.Id)
         pack.Validate(offer, BuildInfo.Version)
+        Dim selectedLayouts = pack.SelectLayouts(layoutIds)
+        If pack.Id = "nordschleife" AndAlso selectedLayouts.Length <> pack.Layouts.Length Then Throw New IOException("Nordschleife builds all three lighting presets together.")
         Dim id = Guid.NewGuid().ToString("N"), stage = Staging(context, id)
         Directory.CreateDirectory(stage)
         Try
@@ -143,10 +153,14 @@ Public Module CustomTrackService
         context.RequireClosed()
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {
             .UseShellExecute = False, .CreateNoWindow = True, .WorkingDirectory = stage, .RedirectStandardOutput = True, .RedirectStandardError = True}
-        Dim command = If(pack.Id = "nordschleife", "--convert-nordschleife", "--convert-aspen")
+        Dim command = If(pack.Id = "nordschleife", "--convert-nordschleife", If(pack.Id = AspenPack.Id, "--convert-aspen", "--convert-smelter"))
         For Each argument In {command, IO.Path.GetFullPath(source), context.GameRoot, IO.Path.Combine(stage, "conversion")}
             start.ArgumentList.Add(argument)
         Next
+        If pack.Id <> "nordschleife" Then
+            start.ArgumentList.Add("--layouts")
+            start.ArgumentList.Add(String.Join(",", selectedLayouts.Select(Function(l) l.Id)))
+        End If
         Using child = Process.Start(start)
             Dim errors = child.StandardError.ReadToEndAsync()
             AddHandler child.OutputDataReceived, Sub(sender, e)
@@ -162,6 +176,8 @@ Public Module CustomTrackService
                                                      Try
                                                          If Not child.HasExited Then child.Kill(entireProcessTree:=True)
                                                      Catch ex As InvalidOperationException
+                                                     Catch ex As ComponentModel.Win32Exception
+                                                         ' Keep waiting for the owned converter; never interrupt the install worker.
                                                      End Try
                                                  End Sub)
                 child.WaitForExit()
@@ -172,11 +188,11 @@ Public Module CustomTrackService
         Dim built = IO.Path.Combine(stage, "conversion/install")
         Dim receipt = pack.Read(built, True, cancel)
         RequireLauncher(receipt)
-        If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(offer.Sources) Then Throw New IOException("Converted pack does not match the selected package.")
+        If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(offer.Sources) OrElse Not receipt.Sessions.Select(Function(s) s.LayoutId).SequenceEqual(selectedLayouts.Select(Function(l) l.Id)) Then Throw New IOException("Converted pack does not match the selected package.")
         cancel.ThrowIfCancellationRequested() : context.RequireClosed()
-        progress.Report(New TrackProgress(100, "Installing verified layouts; please wait for the safe commit to finish"))
+        progress.Report(New TrackProgress(100, "Finishing installation — please wait. It is no longer safe to stop.", False))
         Worker.Invoke(context, "install-custom", workId:=id)
-        progress.Report(New TrackProgress(100, pack.Name & " installed. Select a layout, then choose Launch."))
+        progress.Report(New TrackProgress(100, selectedLayouts.Length.ToString() & " " & pack.Name & " layouts built. Other installed layouts were kept.", False))
         Finally
             Try
                 SafeFiles.DeleteWorkTree(context.UserRoot, "custom-track-builds/" & id)

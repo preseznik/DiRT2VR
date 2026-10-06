@@ -10,6 +10,9 @@ internal sealed record AspenCondition(string Name, string Suffix, bool Night)
     };
     internal static AspenCondition Default(AspenLayout layout) => layout.SourceRoute switch {
         "route_0" => NightTime, "route_1" => Morning, "route_2" => Evening, "route_3" => Overcast,
+        "route_6" or "route_7" => NightTime,
+        "route_8" or "route_9" => Evening,
+        "route_4" or "route_5" => Overcast,
         _ => throw new InvalidDataException("No default condition for layout.")
     };
     internal bool Include(string name)

@@ -5,7 +5,7 @@ namespace DiRT2VR.CustomTracks;
 public static class PackInstallation
 {
     const string Journal = "DiRT2VR/custom-track-install/pending.json";
-    sealed record Pending(int Schema, string Id, PackReceipt? Before, PackReceipt? After, bool[] Existed);
+    sealed record Pending(int Schema, string Id, PackReceipt? Before, PackReceipt? After, bool[] Existed, string[]? Roots = null);
     static string Work(string game, string id) => SafeFiles.Inside(game, "DiRT2VR/custom-track-install/" + id);
 
     public static void Install(string game, string staging, string launcherVersion)
@@ -13,27 +13,39 @@ public static class PackInstallation
         SafeFiles.RequireClosed(); Recover(game);
         SessionFiles.Recover(game);
         var pack = TrackPacks.FromStaging(staging);
-        var next = pack.Read(staging);
+        var built = pack.Read(staging);
+        var next = built;
         if (System.Version.Parse(next.MinimumLauncher) > System.Version.Parse(launcherVersion)) throw new IOException("Update DiRT2VR before installing this pack.");
         var before = Existing(game, pack);
+        var installRoots = pack.ReceiptRoots(built);
+        if (built.Schema == 1 && before is not null && pack.ReceiptLayouts(before).Length > pack.ReceiptLayouts(next).Length)
+            throw new IOException("Uninstall the newer " + pack.Name + " pack before installing an older build with fewer layouts.");
+        if (built.Schema == 2 && before is not null) next = Merge(pack, before, built);
+        if (System.Version.Parse(next.MinimumLauncher) > System.Version.Parse(launcherVersion)) throw new IOException("Update DiRT2VR before keeping these installed layouts.");
+        var builtPaths = built.Files.Select(f => f.Path).ToHashSet(StringComparer.Ordinal);
+        bool Replaced(string path) => installRoots.Any(root => path.StartsWith(root + "/", StringComparison.Ordinal));
+        // Unselected track directories stay in place. Their receipt entries and
+        // shared-session copies are retained, including their original build version.
+        foreach (var file in next.Files.Where(f => !builtPaths.Contains(f.Path))) VerifyFile(game, file);
         string id = Guid.NewGuid().ToString("N"), work = Work(game, id);
         var fresh = Path.Combine(work, "new");
-        foreach (var file in next.Files)
+        foreach (var file in next.Files.Where(f => Replaced(f.Path)))
         {
             SafeFiles.RequireClosed();
             var target = SafeFiles.Inside(fresh, file.Path);
             Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            File.Copy(SafeFiles.Inside(staging, file.Path), target, false);
+            File.Copy(SafeFiles.Inside(builtPaths.Contains(file.Path) ? staging : game, file.Path), target, false);
+            VerifyFile(fresh, file);
         }
-        pack.Verify(fresh, next);
-        var pending = new Pending(1, id, before, next, pack.InstallRoots.Select(p => Directory.Exists(SafeFiles.Inside(game, p))).ToArray());
+        pack.Verify(fresh, built);
+        var pending = new Pending(built.Schema == 2 ? 2 : 1, id, before, next, installRoots.Select(p => Directory.Exists(SafeFiles.Inside(game, p))).ToArray(), installRoots);
         // Recheck ownership immediately before journaling/moving any live folders.
         CheckOwned(game, before, allowMissing: true, pack: pack);
         SafeFiles.RequireClosed();
         SafeFiles.WriteJson(SafeFiles.Inside(game, Journal), pending);
         try
         {
-            foreach (var root in pack.InstallRoots)
+            foreach (var root in installRoots)
             {
                 var target = SafeFiles.Inside(game, root);
                 var backup = SafeFiles.Inside(work, "old/" + root);
@@ -49,6 +61,32 @@ public static class PackInstallation
         catch { Recover(game); throw; }
     }
 
+    static void VerifyFile(string root, PackFile file)
+    {
+        var path = SafeFiles.Inside(root, file.Path);
+        if (!File.Exists(path) || new FileInfo(path).Length != file.Bytes || SafeFiles.Hash(path) != file.Sha256)
+            throw new IOException("A retained layout file is missing or changed: " + file.Path + ". Include that layout in the rebuild.");
+    }
+    static PackReceipt Merge(TrackPack pack, PackReceipt before, PackReceipt built)
+    {
+        var selected = pack.ReceiptLayouts(built);
+        var retained = before.Sessions.Where(s => !selected.Any(l => l.Id == s.LayoutId)).ToArray();
+        if (retained.Length == 0) return built;
+        var retainedLayouts = retained.Select(s => pack.GetLayout(s.LayoutId)).ToArray();
+        var sources = before.Sources.Concat(built.Sources).GroupBy(s => s.Game + "/" + s.Path, StringComparer.OrdinalIgnoreCase).ToArray();
+        if (sources.Any(g => g.Select(s => s.Sha256).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 1))
+            throw new IOException("The original game versions differ from your installed layouts. Rebuild all installed layouts together.");
+        var sessions = retained.Select(s => s with { Version = s.Version ?? before.Version }).Concat(built.Sessions).ToArray();
+        var merged = built with {
+            MinimumLauncher = new[] { before.MinimumLauncher, built.MinimumLauncher }.MaxBy(System.Version.Parse)!,
+            Files = before.Files.Where(f => retainedLayouts.Any(l => pack.Owns(l, f.Path))).Concat(built.Files).ToArray(),
+            Sessions = pack.Layouts.Where(l => sessions.Any(s => s.LayoutId == l.Id)).Select(l => sessions.Single(s => s.LayoutId == l.Id)).ToArray(),
+            Sources = sources.Select(g => g.First()).ToArray()
+        };
+        pack.Validate(merged);
+        return merged;
+    }
+
     public static void Uninstall(string game, string packId = AspenPack.Id)
     {
         SafeFiles.RequireClosed(); Recover(game); SessionFiles.Recover(game);
@@ -56,7 +94,7 @@ public static class PackInstallation
         var before = Existing(game, pack);
         if (before is null) return;
         string id = Guid.NewGuid().ToString("N"), work = Work(game, id);
-        var pending = new Pending(1, id, before, null, pack.InstallRoots.Select(p => Directory.Exists(SafeFiles.Inside(game, p))).ToArray());
+        var pending = new Pending(1, id, before, null, pack.InstallRoots.Select(p => Directory.Exists(SafeFiles.Inside(game, p))).ToArray(), pack.InstallRoots);
         SafeFiles.WriteJson(SafeFiles.Inside(game, Journal), pending);
         try
         {
@@ -110,10 +148,18 @@ public static class PackInstallation
         if (pending.Before is null && pending.After is null) throw new IOException("Invalid installation journal; files preserved.");
         var pack = TrackPacks.Get((pending.After ?? pending.Before)!.Id);
         if (pending.Before is not null && pending.After is not null && pending.Before.Id != pending.After.Id) throw new IOException("Mixed-pack installation journal; files preserved.");
-        if (pending.Schema != 1 || !Guid.TryParseExact(pending.Id, "N", out _) || pending.Existed is null || pending.Existed.Length != pack.InstallRoots.Length ||
-            (pending.Before is null && pending.After is null)) throw new IOException("Invalid installation journal; files preserved.");
         if (pending.Before is not null) pack.Validate(pending.Before);
         if (pending.After is not null) pack.Validate(pending.After);
+        // Old journals predate layout expansion and have no explicit root list.
+        // The receipt version defines their exact compiled-in destinations.
+        var receiptRoots = pack.ReceiptRoots((pending.After ?? pending.Before)!);
+        var roots = pending.Roots ?? receiptRoots;
+        bool selectedRoots = pending.Schema == 2 && roots.Length >= 2 && roots.Last() == pack.Support &&
+            roots.SequenceEqual(pack.InstallRoots.Where(roots.Contains)) && roots.All(receiptRoots.Contains);
+        if (!selectedRoots && !roots.SequenceEqual(pack.InstallRoots) && !roots.SequenceEqual(receiptRoots))
+            throw new IOException("Unknown installation roots; files preserved.");
+        if (pending.Schema is not (1 or 2) || !Guid.TryParseExact(pending.Id, "N", out _) || pending.Existed is null || pending.Existed.Length != roots.Length ||
+            (pending.Before is null && pending.After is null)) throw new IOException("Invalid installation journal; files preserved.");
         var work = Work(game, pending.Id);
         var receiptPath = SafeFiles.Inside(game, pack.Receipt);
         if (pending.After is not null && File.Exists(receiptPath) &&
@@ -128,18 +174,18 @@ public static class PackInstallation
         }
         if (pending.After is null && File.Exists(Path.Combine(work, "committed.json"))) { Finish(game, pending); return; }
         // Preflight every root before rollback; never overwrite a conflicting external edit.
-        for (int i = 0; i < pack.InstallRoots.Length; i++)
+        for (int i = 0; i < roots.Length; i++)
         {
-            var root = pack.InstallRoots[i];
+            var root = roots[i];
             var backup = SafeFiles.Inside(work, "old/" + root);
             var current = SafeFiles.Inside(game, root);
             if (Directory.Exists(backup)) CheckRoot(Path.Combine(work, "old"), root, pending.Before);
             if (Directory.Exists(current)) CheckRoot(game, root, Directory.Exists(backup) || !pending.Existed[i] ? pending.After : pending.Before);
             if (pending.Existed[i] && !Directory.Exists(backup) && !Directory.Exists(current)) throw new IOException("Installation backup is missing; files preserved.");
         }
-        for (int i = 0; i < pack.InstallRoots.Length; i++)
+        for (int i = 0; i < roots.Length; i++)
         {
-            var root = pack.InstallRoots[i];
+            var root = roots[i];
             var backup = SafeFiles.Inside(work, "old/" + root);
             var current = SafeFiles.Inside(game, root);
             if (Directory.Exists(backup) || !pending.Existed[i])

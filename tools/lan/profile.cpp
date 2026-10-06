@@ -1,4 +1,5 @@
 #include "profile.h"
+#include "profile_names.h"
 #include <shlobj.h>
 #include <cstring>
 #include <cstdint>
@@ -42,7 +43,7 @@ bool ConfigureLanDocuments(HMODULE host, bool sharedCareer, const std::wstring& 
     wchar_t path[32768]{};
     const auto length=GetEnvironmentVariableW(L"DIRT2VR_PROFILE_ROOT",path,32768);
     if (!length) return true;
-    return length<32768 && InstallSaveMount(host,path);
+    return length<32768 && InstallSaveMount(host,path) && InstallManagedProfileNames(host);
 }
 
 bool InstallLanDocumentsRedirect(HMODULE host, const std::wstring& documents) {

@@ -30,6 +30,8 @@ Your original saves stay in their current location. New profiles have separate s
 
 Use **Refresh** after saving in-game. Unreadable details show **Unavailable**; intermediate completion percentages and garage counts are not yet supported. If the original game has multiple careers, choose between them in its Load Profile menu. A missing or incompatible selected profile blocks launch until you explicitly choose a valid one.
 
+Single-word launcher profile names also appear on screens which normally show a surname. Existing profiles receive this display correction automatically, without renaming or rewriting their saves.
+
 ## Install alongside your game
 
 **A second copy of the game is not required.** Run DiRT 2 normally once before installing, then close it.
@@ -52,6 +54,8 @@ The launcher minimizes after starting either mode and stays minimized during pla
 
 DiRT 2 may briefly fall behind other windows as it replaces its startup window. The launcher hands focus to the replacement once; the brief drop followed by immediate return has been confirmed on desktop.
 
+**Race difficulty** controls AI opponents in stock and CUSTOM-track Race launches. Choose Easy, Casual, Serious, Savage, Extreme or Hardcore; **Use game setting** leaves the game’s saved choice in effect. Each custom location remembers its own choice. This does not change career difficulty in Normal Launch or multiplayer.
+
 Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and temporarily enable human control, the selected race and the direct-session menus. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.
@@ -66,14 +70,14 @@ For quick launch with saved settings, use **Start-DiRT2VR.cmd**. It runs the sam
 
 For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The existing `Start-DiRT2VR.cmd` continues to launch VR.
 
-## Custom track packs (experimental)
+## Custom tracks (experimental)
 
-Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edition** installation. Conversion tools are included with DiRT2VR; no additional download is needed and no game assets are distributed. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
+Aspen and Smelter each add ten layouts built from your own **DiRT 3 Complete Edition** installation. Conversion tools are included with DiRT2VR; no additional download is needed and no game assets are distributed. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
 
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
-2. Select **Aspen** in the pack list (or **Track pack** dropdown in a narrow window), then choose **Build and install…**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the game folder containing `tracks\locations\usa\aspen`, wherever Steam installed it.
-3. Choose **Build and install**. Leave the launcher open while it checks your source files and builds all four layouts using the included tools. **Cancel** stops conversion safely; an existing installation stays usable.
-4. Select a layout, **Direct practice** or **Race**, and a **Car**. Choose **Launch** for desktop play or **Launch VR** with SteamVR and your headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
+2. Choose a **Track pack**, then **Build and install…**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the DiRT 3 Complete Edition game folder, wherever it is installed.
+3. Check the **layouts to build**, using **Select all** or **Select none** as needed. Your choices are remembered for each location. Choose **Build and install** and leave the launcher open while it checks source files and converts only those layouts. Unchecked layouts already installed are kept. **Stop build**, beside the green progress message, stops checking or conversion safely and keeps installed tracks. Once final installation begins, Stop is disabled until it finishes.
+4. Select a layout, **Direct practice** or **Race**, and any installed car. Choose **Launch** for desktop play, or **Launch VR** with SteamVR and your headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
 
 | Layout | Default lighting |
 | --- | --- |
@@ -82,15 +86,47 @@ Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edi
 | Snowmass Sprint | Evening sun |
 | Snowmass Loop | Overcast |
 
-Aspen offers experimental **desktop and VR** play with installed cars. **Direct practice** is solo; **Race** adds 1–7 AI opponents, using the same car, mixed cars or cars in your class. Use the sliders to choose opponents and 1–20 laps. If Aspen was already installed, choose **Rebuild Aspen** once to update its AI paths before racing; solo practice remains available. Aspen headset rendering and broader AI race coverage still need gameplay validation; LAN is unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
+All twenty Aspen and Smelter layouts offer experimental **desktop and VR** play with any installed car. **Direct practice** is solo; **Race** adds AI opponents, using the same car, mixed cars or cars in your class. Rallycross and Landrush courses allow **1–7 AI opponents**. The four Head-to-head courses have two-car starting grids, so their Race mode allows **one AI opponent**. Race timing on these separate-lane courses still needs testing; DiRT 3's knockout Head-to-head rules are not included. Choose **Race difficulty** from Easy, Casual, Serious, Savage, Extreme or Hardcore, as in DiRT 2. **Use game setting** keeps your saved difficulty. Use the sliders to choose opponents and **1–20 laps**. Your normal opponent count is remembered when moving to and from a two-car course.
+
+**No rebuild is needed to unlock these options on current installed layouts.** Very old Aspen installs may request an AI-path rebuild before racing; Direct practice remains available. Expanded AI racing, car combinations and headset rendering need gameplay validation. LAN is unavailable. Trackside effects and snow spray are included; ski-lift animation, full snowfall and deformable snow remain unsupported. Snow handling is an adaptation for DiRT 2, not an exact recreation of DiRT 3 physics.
 
 Snowmass Sprint omits the decorative beams on the ski hillside where they flickered with viewing angle or distance. The towers, bright lamp faces and ground lighting remain, along with the other beams around the course. The other three layouts are unchanged by this workaround.
 
-Custom layout, car, race and lap selections are saved separately. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Conversion-tool updates arrive with DiRT2VR updates.
+Each pack keeps its own layout, car, race and lap selections, separately from stock tracks. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed custom layouts work **offline**, without their source game. Keep the source installation available if you want to rebuild or update a pack. Successful file checks are remembered while the launcher stays open, so switching locations does not repeat the scan. Installed-file changes trigger a new check. Use **Manage… → Verify installed files** to check again at any time. The **Manage…** menu also offers rebuilding and removal. Rebuild uses the same layout checkboxes: select just the courses you want to update or add. Choose Select all to update the whole location. The list shows which layouts are already installed, and the launcher reports the installed count. Conversion-tool updates arrive with DiRT2VR updates.
 
-The **Nordschleife** pack uses your installed **Assetto Corsa** standard circuit. Select **CUSTOM tracks → Nordschleife → Build and install…**, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. Choose **Daylight**, **Overcast** or **Evening**, an installed car, and **Launch** for one lap of desktop Direct practice. These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. **Best lap** shows your fastest completed time and its car for the selected conditions. The full trackside scenery and distant landscape are included. A complete evening lap has been player-tested; lighting and visibility/LODs remain in development. Race and VR are unavailable. See [development status](docs/nordschleife-port.md) for the current test evidence.
+The **Nordschleife** pack uses your installed **Assetto Corsa** standard circuit. Select **CUSTOM tracks → Nordschleife → Build and install…**, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. All three lighting presets are built together. Choose **Daylight**, **Overcast** or **Evening**, an installed car, and **Launch** for one lap of desktop Direct practice. These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. **Best lap** shows your fastest completed time and its car for the selected conditions. The full trackside scenery and distant landscape are included. A complete evening lap has been player-tested; lighting and visibility/LODs remain in development. Race and VR are unavailable. See [development status](docs/nordschleife-port.md) for the current test evidence.
 
-If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
+If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source…**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
+
+### Additional Aspen layouts
+
+After updating, choose **Aspen → Manage… → Rebuild from source…** to add the six new layouts. Existing Rallycross installations remain usable until rebuilding finishes. Choose your car and mode after selecting the layout.
+
+| Layouts | Conditions |
+| --- | --- |
+| Eagle Hill Rise, Eagle Hill Loop | Night |
+| Brush Creek Sprint, Brush Creek Dash | Evening sun |
+| Buttermilk Descent, Buttermilk Climb | Overcast snow lighting |
+
+These courses offer the same modes and car selection as Rallycross, with the two-car limit on Buttermilk. Time of day follows source defaults, with reduced exposure on Buttermilk to retain snow detail; full snowfall remains unsupported. Broader racing and VR checks are still needed, including snow handling and night headlights.
+
+### Smelter — ten-layout test
+
+Select **Smelter** in CUSTOM tracks and choose **Build and install…** using your DiRT 3 Complete Edition folder. This local test includes all ten layouts. Select a layout, mode and car, then **Launch** or **Launch VR**. Dredger Duel and Furnace Duel allow one AI opponent; the other layouts allow up to seven.
+
+| Layouts | Conditions |
+| --- | --- |
+| County Loop, Portage Canal | Morning sun |
+| Houghton Sprint, Waterfront Park | Wet lighting, without active rain |
+| Copper Run, Maple Woods | Evening sun |
+| Atlantic Mill, Cole's Creek | Morning sun |
+| Dredger Duel, Furnace Duel | Evening sun |
+
+Use **Smelter → Manage… → Rebuild from source…** after updating to apply the scenery visibility test and add any missing layouts. Updating the launcher alone does not rebuild tracks. Existing tracks remain usable until the rebuild completes. General Maple Woods scenery flicker has improved in testing, but some log piles remain missing. Other layouts and performance still need wider testing.
+
+**Buttermilk Climb and Descent now use lower exposure by default** to retain detail in bright snow. Climb's improved snow detail has been confirmed in desktop testing; Descent still needs a visual check. The abrupt brightness border remains unresolved. **No track rebuild is needed** for installed layouts. Under **Snow lighting**, choose **Original exposure (reference)** or **Bloom off (diagnostic)** for comparisons; exit the game between profiles. Comparison choices reset to **Lower exposure (default)** when changing layout or reopening the launcher. Original post-processing files are restored after exit; interrupted sessions use the usual recovery, preserving external edits. Other tracks keep their existing exposure.
+
+Wet-weather handling, expanded AI races and VR still need gameplay validation. The four Head-to-head courses particularly need start, timing and finish checks with an opponent. The concrete-barrier compatibility test remains visually unverified.
 
 To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
 
@@ -121,6 +157,8 @@ Choose **Race**, an event, track and car, then set **AI opponents** from 1 to 7.
 - **Same class:** other models in your car's game-defined class.
 
 Mixed/class grids are randomized each launch, repeating models if the available pool is small. If no other eligible model is installed, they use your model. Direct practice remains solo regardless of saved opponent settings. Start with Landrush or Rallycross. Other disciplines and track/car combinations need testing.
+
+AI opponents use distinct stock driver identities; their names do not depend on the opponent-car selection.
 
 Use **Laps (circuits)** to choose 1–20 laps in either **Race** or **Direct practice**. On point-to-point stages this control is disabled and the session is one stage run; your saved circuit lap preference is retained. The three-lap HUD and continuation into lap 2 have been confirmed on desktop at Baja – Ensenada Sprint. Other counts, complete multi-lap finishes and VR still need testing.
 
@@ -202,6 +240,8 @@ For a custom controller or wheel, bind **Pause** and **Menu Start Button** to yo
 During capture, turn the wheel clearly left/right and press pedals fully. Small pedal movements are ignored; these capture thresholds do not change driving sensitivity.
 
 To change just one action, select it and choose **Bind keyboard…** or **Bind device…**. **Calibration…** adjusts direction, dead zone and saturation; saved values are shown beside each controller assignment. Enabled launcher assignments and calibration reapply on every launch, replacing in-game changes for those actions. To retain zero steering deadzone, set 0% for both **Steer Left** and **Steer Right**, then **Save driving controls**. Alternatively, disable launcher driving bindings and use the game's saved controls. The editor warns about identical left/right steering directions and inverted Xbox triggers; repair old assignments with the wizard or Xbox preset. Physical Fanatec handbrake validation remains pending.
+
+**Live device input** shows the selected controller, wheel or pedals while you move them, including axes, buttons and POV hats. Choose **Refresh** after connecting a device. These are raw readings before calibration; a resting pedal at one end of its range is normal. Viewing inputs does not change bindings.
 
 The editor includes steering, accelerator, brake, clutch, handbrake, sequential shifts and H-pattern gears. Select the appropriate transmission/assist settings in the game as well. It applies to Normal Launch, Practice, Race and HOST/JOIN, in desktop and VR modes, using the DX11 renderer. Unassigned actions retain game settings; assigning an action replaces that action's saved inputs, so assign both keyboard and controller inputs if wanted. **Use game binding** removes that action's launcher override. Disabling overrides does not undo bindings subsequently saved by the game.
 

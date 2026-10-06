@@ -16,7 +16,8 @@ End Class
 
 Public Module CustomTrackCatalog
     Public ReadOnly Packs As CustomTrackPack() = {
-        New CustomTrackPack(AspenPack.Id, "Aspen", "Four Rallycross layouts", True, AspenPack.Layouts),
+        New CustomTrackPack(AspenPack.Id, "Aspen", "Ten layouts · Direct practice and Race · Desktop and VR", True, AspenPack.Layouts),
+        New CustomTrackPack("smelter", "Smelter", "Ten layouts · Direct practice and Race · Desktop and VR", True, TrackPacks.Smelter.Layouts),
         New CustomTrackPack("nordschleife", "Nordschleife", "Standard circuit · Desktop practice · Daylight, overcast and evening", True, TrackPacks.Nordschleife.Layouts)}
     Public Function Find(id As String) As CustomTrackPack
         Return Packs.SingleOrDefault(Function(p) p.Id = id)

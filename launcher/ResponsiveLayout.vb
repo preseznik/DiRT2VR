@@ -64,8 +64,15 @@ Public Class VerticalStack
     Private arranging As Boolean
     Protected Overrides Sub OnControlAdded(e As ControlEventArgs)
         e.Control.Dock = DockStyle.None
-        AddHandler e.Control.SizeChanged, Sub() PerformLayout()
+        AddHandler e.Control.SizeChanged, AddressOf ChildSizeChanged
         MyBase.OnControlAdded(e)
+    End Sub
+    Protected Overrides Sub OnControlRemoved(e As ControlEventArgs)
+        RemoveHandler e.Control.SizeChanged, AddressOf ChildSizeChanged
+        MyBase.OnControlRemoved(e)
+    End Sub
+    Private Sub ChildSizeChanged(sender As Object, e As EventArgs)
+        PerformLayout()
     End Sub
     Protected Overrides Sub OnLayout(e As LayoutEventArgs)
         MyBase.OnLayout(e)
@@ -135,10 +142,10 @@ End Class
 
 Public Class ResponsiveColumns
     Inherits Panel
-    Public ReadOnly First As VerticalStack = Stack()
-    Public ReadOnly Second As VerticalStack = Stack()
     <System.ComponentModel.DefaultValue(1060)>
     Public Property WideAt As Integer = 1060
+    Public ReadOnly First As VerticalStack = Stack()
+    Public ReadOnly Second As VerticalStack = Stack()
     Private arranging As Boolean
     Public Sub New()
         Dock = DockStyle.Top : Margin = New Padding(0) : TabStop = False : AutoSize = True : AutoSizeMode = AutoSizeMode.GrowAndShrink

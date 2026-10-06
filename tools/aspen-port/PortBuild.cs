@@ -61,10 +61,10 @@ internal static class PortBuild
             }
             else if (Path.GetFileName(path) == "replay_camera_config.xml")
                 PortFiles.WriteXml(ReplayCameras.Convert(PortFiles.ReadXml(path)), target, EgoEngineLibrary.Xml.XmlType.BinXml);
-            else if (Path.GetFileName(path) == "route_overrides.xml" && layout == AspenLayout.SnowmassSprint)
+            else if (Path.GetFileName(path) == "route_overrides.xml" && (layout == AspenLayout.SnowmassSprint || layout.PracticeTest))
             {
                 var settings = PortFiles.ReadXml(path);
-                TerrainRange.Convert(settings);
+                TerrainRange.Convert(settings, layout.PracticeTest);
                 PortFiles.WriteXml(settings, target, EgoEngineLibrary.Xml.XmlType.BinXml);
                 if (!XNode.DeepEquals(settings, PortFiles.ReadXml(target)))
                     throw new InvalidDataException("Terrain range settings changed during serialization.");
@@ -105,6 +105,8 @@ internal static class PortBuild
         PortFiles.Json(Path.Combine(output, "terrain-visibility.json"), TerrainVisibility.Convert(track,source,TerrainVisibility.Mappings(System.Text.Json.JsonSerializer.SerializeToElement(placements)),layout.SourceRoute));
         PortFiles.Json(Path.Combine(output, "day-textures.json"), DayTextures.Resolve(track,condition));
         PortFiles.Json(Path.Combine(output, "terrain-occlusion.json"), TerrainOcclusion.Convert(track));
+        if (layout == AspenLayout.ButtermilkClimb || layout == AspenLayout.ButtermilkDescent)
+            PortFiles.Json(Path.Combine(output, "road-colour.json"), ButtermilkRoadColour.Convert(track,source,layout.SourceRoute));
         Progress?.Invoke("Rebuilding collision and checking geometry");
         var collision = Path.Combine(sourceRoute, "track.jpk"); inputs[collision] = PortFiles.Hash(collision);
         using (var stream = PortFiles.OpenRead(collision))
@@ -124,7 +126,7 @@ internal static class PortBuild
             var codes = a.Select(t => t.Material).Distinct().Order().ToArray();
             var surfacePath = Path.Combine(d2, "surface_materials.xml"); inputs[surfacePath] = PortFiles.Hash(surfacePath);
             PortFiles.WriteXml(SnowSurfaces.Create(PortFiles.ReadXml(surfacePath), codes), Path.Combine(output, "surface_materials.xml"));
-            PortFiles.Json(Path.Combine(output, "surfaces.json"), codes.ToDictionary(c => c, c => SnowSurfaces.Recipes[c[..3]]));
+            PortFiles.Json(Path.Combine(output, "surfaces.json"), codes.ToDictionary(c => c, c => SnowSurfaces.Recipes.TryGetValue(c[..3], out var recipe) ? (object)recipe : new { Native = c }));
         }
         PortFiles.Json(Path.Combine(output, "visibility.json"), VisibilityAudit.Check(File.ReadAllBytes(Path.Combine(route, "track.vis"))));
         Entities.Verify(routeEntities, PortFiles.ReadPssg(Path.Combine(route, "objects.ens")));

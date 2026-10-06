@@ -4,26 +4,29 @@ Imports System.Windows.Forms
 Public Class DrivingControlsForm
     Inherits LauncherForm
     Private ReadOnly context As InstallContext
+    Private ReadOnly liveInput As DrivingInputMonitor
     Private ReadOnly settings As DrivingControls
     Private ReadOnly enabledBox As New CheckBox With {.Text = "Use launcher driving bindings (all launcher modes, DX11)", .AutoSize = True}
     Private ReadOnly list As New ListView With {.Name = "DrivingBindings", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .ShowItemToolTips = True, .Dock = DockStyle.Fill}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(820, 0)}
     Public Sub New(value As InstallContext)
         context = value : settings = DrivingControls.Load(context)
+        liveInput = New DrivingInputMonitor(context)
         Text = "DiRT2VR — Driving controls" : Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath)
         AutoScaleMode = AutoScaleMode.Dpi : StartPosition = FormStartPosition.CenterParent
-        ClientSize = New Size(900, 720) : MinimumSize = New Size(720, 560)
-        Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .ColumnCount = 1, .RowCount = 5, .Padding = New Padding(16)}
+        ClientSize = New Size(940, 820) : MinimumSize = New Size(720, 620)
+        Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .ColumnCount = 1, .RowCount = 6, .Padding = New Padding(16)}
         layout.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
-        For Each sizing As SizeType In {SizeType.AutoSize, SizeType.AutoSize, SizeType.Percent, SizeType.AutoSize, SizeType.AutoSize}
+        For Each sizing As SizeType In {SizeType.AutoSize, SizeType.AutoSize, SizeType.Percent, SizeType.AutoSize, SizeType.AutoSize, SizeType.AutoSize}
             layout.RowStyles.Add(New RowStyle(sizing, If(sizing = SizeType.Percent, 100, 0)))
         Next
         enabledBox.Checked = settings.Enabled : layout.Controls.Add(enabledBox)
-        layout.Controls.Add(New Label With {.Text = "Launcher assignments reapply on every launch. Unassigned actions use the game's saved controls. Bind Pause and Menu Start Button to Start; Menu Select confirms and Menu Back cancels. Assign both keyboard and controller inputs if you want both. Save below when finished.", .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
+        layout.Controls.Add(New Label With {.Text = "Assigned controls apply in every launcher mode; unassigned actions keep the game's bindings. Use the wizard or select an action, then save.", .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
         list.Columns.Add("Action", 125) : list.Columns.Add("Keyboard", 100) : list.Columns.Add("Controller / wheel / pedals", 190)
         list.Columns.Add("Dead zone", 110) : list.Columns.Add("Saturation", 110)
         AddHandler list.Resize, Sub() list.Columns(2).Width = Math.Max(190, list.ClientSize.Width - 125 - 100 - 110 - 110 - 24)
         list.AccessibleName = "Driving bindings" : layout.Controls.Add(list)
+        layout.Controls.Add(liveInput)
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill}
         AddButton(buttons, "Binding wizard…", Sub() BindActions())
         AddButton(buttons, "Xbox preset", Sub()
@@ -53,9 +56,15 @@ Public Class DrivingControlsForm
                                                       End Sub)
         AddButton(buttons, "Cancel", Sub() Close())
         layout.Controls.Add(buttons) : layout.Controls.Add(status) : Controls.Add(layout)
-        status.Text = "H-pattern and clutch bindings still require the appropriate transmission/assist settings in the game. Save to apply on the next launch. Turning overrides off does not undo controls already saved by the game."
+        status.Text = "Choose transmission and assists in-game for clutch and H-pattern gears. Save to apply on the next launch."
         RefreshRows()
         If settings.Problems().Count > 0 Then status.Text = String.Join(" ", settings.Problems())
+    End Sub
+    Protected Overrides Sub OnShown(e As EventArgs)
+        MyBase.OnShown(e)
+        Dim area = Screen.FromControl(Me).WorkingArea
+        MinimumSize = New Size(Math.Min(MinimumSize.Width, area.Width), Math.Min(MinimumSize.Height, area.Height))
+        Size = New Size(Math.Min(Width, area.Width), Math.Min(Height, area.Height))
     End Sub
     Private Shared Sub AddButton(panel As FlowLayoutPanel, text As String, action As Action)
         Dim button As New Button With {.Text = text, .AutoSize = True}
@@ -86,6 +95,7 @@ Public Class DrivingControlsForm
         BindActions(action, keyboard)
     End Sub
     Private Sub BindActions(Optional action As String = Nothing, Optional keyboard As Boolean = False)
+        liveInput.SuspendMonitoring()
         Try
             Using dialog As New DrivingBindingWizard(context, action, keyboard)
                 If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
@@ -99,6 +109,8 @@ Public Class DrivingControlsForm
             status.Text = If(settings.Problems().Count > 0, String.Join(" ", settings.Problems()), "Bindings applied. Save driving controls to use them on the next launch.")
         Catch ex As Exception
             status.Text = ex.Message
+        Finally
+            liveInput.ResumeMonitoring()
         End Try
     End Sub
     Private Sub Calibrate()

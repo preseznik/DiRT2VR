@@ -18,7 +18,7 @@ internal static class ShaderConversion
         ["foliage_trunk_snow.fx"] = "foliage_environment.fx",
         ["terrain_dynamic_reveal_tessellation.fx"] = "terrain_road.fx"
     };
-    internal static void Convert(XDocument file, Dictionary<string, XElement> templates, string name, List<object> report)
+    internal static void Convert(XDocument file, Dictionary<string, XElement> templates, string name, List<object> report, IReadOnlyDictionary<string,string>? venueAliases = null)
     {
         var groups = file.Descendants("SHADERGROUP").ToArray();
         // Snapshot source bindings: aliases may collide with another source group's ID.
@@ -27,7 +27,7 @@ internal static class ShaderConversion
         foreach (var group in groups)
         {
             var sourceId = (string)group.Attribute("id")!;
-            var targetId = templates.ContainsKey(sourceId) ? sourceId : Aliases.GetValueOrDefault(sourceId);
+            var targetId = templates.ContainsKey(sourceId) ? sourceId : venueAliases?.GetValueOrDefault(sourceId) ?? Aliases.GetValueOrDefault(sourceId);
             if (targetId is null || !templates.TryGetValue(targetId, out var template)) throw new InvalidDataException($"No shader mapping for {name}: {sourceId}");
             var sourceInputs = group.Elements("SHADERINPUTDEFINITION").ToArray();
             var targetInputs = template.Elements("SHADERINPUTDEFINITION").ToArray();

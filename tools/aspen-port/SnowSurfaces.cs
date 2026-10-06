@@ -25,6 +25,10 @@ internal static class SnowSurfaces
         var result = new XDocument(original);
         foreach (var code in required.Distinct().Order())
         {
+            // Buttermilk includes native metal. Preserve DiRT 2's complete definition;
+            // custom snow codes must still be generated from a clean stock source.
+            if (code.Length == 4 && !Recipes.ContainsKey(code[..3]) &&
+                original.Descendants("MATERIAL").Any(e => (string?)e.Attribute("name") == code)) continue;
             if (code.Length != 4 || code[3] is not ('+' or '*') || !Recipes.TryGetValue(code[..3], out var recipe))
                 throw new InvalidDataException("Unsupported Aspen collision surface: " + code);
             if (result.Descendants("MATERIAL").Any(e => (string?)e.Attribute("name") == code))

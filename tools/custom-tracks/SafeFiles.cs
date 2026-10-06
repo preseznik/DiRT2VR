@@ -31,11 +31,19 @@ public static class SafeFiles
         NoLinks(path);
         return path;
     }
-    public static string Hash(string path)
+    public static string Hash(string path, CancellationToken cancel = default)
     {
+        cancel.ThrowIfCancellationRequested();
         NoLinks(path);
         using var stream = File.OpenRead(path);
-        return Convert.ToHexString(SHA256.HashData(stream));
+        using var hash = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        byte[] buffer = System.Buffers.ArrayPool<byte>.Shared.Rent(1024 * 1024);
+        try {
+            int count;
+            while ((count = stream.Read(buffer)) != 0) { cancel.ThrowIfCancellationRequested(); hash.AppendData(buffer, 0, count); }
+            cancel.ThrowIfCancellationRequested();
+            return Convert.ToHexString(hash.GetHashAndReset());
+        } finally { System.Buffers.ArrayPool<byte>.Shared.Return(buffer); }
     }
     public static T ReadJson<T>(string path)
     {

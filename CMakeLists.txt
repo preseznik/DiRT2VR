@@ -28,8 +28,8 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS launcher/assets/r
 execute_process(COMMAND "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/generate_diagnostic_catalog.py"
   "${CMAKE_SOURCE_DIR}/launcher/assets/race-catalog.json" "${CMAKE_BINARY_DIR}/diagnostic_catalog.h" COMMAND_ERROR_IS_FATAL ANY)
 add_library(d3d11 SHARED src/proxy.cpp src/trace.cpp src/direct_menus.cpp src/gfwl_compat.cpp src/water_trace.cpp src/shadow_trace.cpp src/pipeline_trace.cpp src/shadow_mask.cpp src/exposure_window.cpp src/common.cpp src/eye_pair.cpp src/eye_blit.cpp src/hud_capture.cpp src/camera_math.cpp src/game_xr.cpp src/test_message.cpp src/xr_frames.cpp src/vr_hotkeys.cpp "${CMAKE_BINARY_DIR}/exports.def")
-target_sources(d3d11 PRIVATE src/event_diagnostics.cpp src/direct_startup_trace.cpp src/steering_animation.cpp src/driving_controls.cpp src/cockpit_start.cpp src/scene_camera.cpp src/startup_hooks.cpp src/draw_distance.cpp src/flashback.cpp src/seat_adjustment.cpp src/seat_input.cpp)
-target_sources(d3d11 PRIVATE src/lap_results.cpp)
+target_sources(d3d11 PRIVATE src/race_drivers.cpp src/race_difficulty.cpp src/direct_startup_trace.cpp src/steering_animation.cpp src/driving_controls.cpp src/cockpit_start.cpp src/scene_camera.cpp src/startup_hooks.cpp src/draw_distance.cpp src/flashback.cpp src/seat_adjustment.cpp src/seat_input.cpp)
+target_sources(d3d11 PRIVATE src/event_diagnostics.cpp src/lap_results.cpp)
 target_include_directories(d3d11 PRIVATE "${CMAKE_BINARY_DIR}" src)
 target_link_libraries(d3d11 PRIVATE minhook d3dcompiler dxguid psapi bcrypt gdiplus dinput8 openxr_loader)
 target_compile_definitions(d3d11 PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX XR_USE_PLATFORM_WIN32 XR_USE_GRAPHICS_API_D3D11)

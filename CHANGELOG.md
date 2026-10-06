@@ -6,11 +6,47 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Restore the complete ten-layout Aspen and ten-layout Smelter locations and their existing launcher, conversion and session features alongside Nordschleife. Correct the 0.17.47 package regression.
+
 - Add Nordschleife under CUSTOM, built locally from your installed Assetto Corsa standard circuit. Include the full course, trackside scenery and distant landscape, Daylight/Overcast/Evening presets, GPS outline, eight timing checkpoints and best completed lap with its car for each preset. Correct road recovery near 11.8 km and restore the asphalt detail layer. A complete evening desktop lap is player-tested; lighting, visibility/LOD refinement and VR remain pending.
 
 - Include effective DiRT2VR settings, driving calibration, initial seat positions and build details in each diagnostic session folder. VR traces now identify observed track/route loads and player cars, including changes between events; the career series title is not yet available. Logging remains opt-in, and in-game transition testing is still pending.
 
 - Fix Up/Down navigation in the pause and finish menus for Direct practice and Race. Their vertical choices no longer require Left/Right.
+
+- Fix a direct Race startup crash introduced by the opponent-name correction in 0.17.43.
+
+- Give direct Race opponents distinct driver names instead of repeating Travis Pastrana across the grid.
+- Correct single-word launcher profile names on compact leaderboards and profile displays, including existing profiles. Saves and career progress are unchanged.
+
+- Make CUSTOM-track checking and building progress larger and green, with a nearby **Stop build** button. Stopping safely keeps installed tracks; final installation finishes without interruption.
+- Choose the game’s six difficulty levels for stock and CUSTOM-track Race launches. Each custom location remembers its own choice; existing settings keep the game’s difficulty.
+- See live controller, wheel and pedal input in Driving controls, including axes, buttons and POV hats, without changing bindings.
+- Carry forward Up/Down navigation for the direct-session pause and finish menus.
+
+- Enable Direct practice, Race, desktop/VR and any installed car across all Aspen and Smelter layouts. The four Head-to-head courses allow one AI opponent to match their two-car grids; other layouts allow up to seven. Current tracks need no rebuild. Expanded AI/VR coverage and duel-course timing still need testing; knockout Head-to-head rules are not included.
+
+- Lower Buttermilk exposure by default to retain detail in bright snow. Climb's improvement is confirmed in desktop testing; Descent still needs a check, and the abrupt brightness border remains. No track rebuild is needed. Original-exposure and bloom-off comparisons remain available; other tracks keep their existing exposure.
+
+- Switching between custom-track locations reuses successful file checks during the current launcher session. Installation changes trigger a new check; Manage → Verify installed files always checks again.
+
+- Choose which Aspen or Smelter layouts to build or rebuild, with Select all / Select none and remembered choices for each location. Only selected layouts are converted; other installed layouts are kept.
+
+- Restore normal colours after the Buttermilk diagnostic and test restored road-shading detail on Climb and Descent. Rebuild Aspen from Manage after updating; the abrupt snow brightness boundary remains unresolved in the latest driving test.
+
+- Test a shared scenery-format correction for Smelter, including log and timber piles, while preserving breakable objects. Remove the unsuccessful whole-venue visibility experiment. Rebuild Smelter from Manage after updating; general Maple Woods flicker has improved in testing, but log piles remain missing.
+
+- Add Aspen’s four Landrush and two Head-to-head courses with source lighting defaults. Use Manage → Rebuild from source to add missing layouts. New courses still need broader gameplay checks.
+
+- Add the remaining nine Smelter layouts with layout-specific conditions. Use Manage → Rebuild from source to add missing layouts. Active rain remains unavailable; new layouts still need broader gameplay checks.
+
+- Fix missing County Loop lake and puddle water. Retain the extended scenery visibility ranges. Rebuild Smelter from Manage after updating.
+- Test a compatibility correction for missing County Loop concrete barriers. Rendering still needs confirmation on the gaming PC.
+
+- Keep Experimental patch updates in their existing version series.
+- Add a local Smelter County Loop test, built from your own DiRT 3 files. This first layout supports desktop Direct practice in the Subaru STI; rendering and driving still need playtesting. Other Smelter layouts, Race and VR follow later.
+- Organize CUSTOM tracks by pack, with separate saved settings and a Manage menu for verification, rebuilding and removal. Existing Aspen installations and choices are preserved.
+- Fix recovery after an interrupted rebuild of an unchanged custom-track version.
 
 ## 0.17.23 — 2026-10-04 — Experimental
 

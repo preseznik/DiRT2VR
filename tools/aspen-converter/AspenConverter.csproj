@@ -11,6 +11,7 @@
     <ProjectReference Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/EgoEngineLibrary.csproj" />
     <Compile Include="../aspen-port/*.cs" Exclude="../aspen-port/*Tests.cs;../aspen-port/Program.cs;../aspen-port/DiagnosticVariant.cs;../aspen-port/GripComparison.cs;../aspen-port/LayoutAudit.cs;../aspen-port/LiftAnimations.cs;../aspen-port/ReferenceAudit.cs;../aspen-port/TerrainBatching.cs;../aspen-port/*Transaction.cs" />
     <EmbeddedResource Include="sources.json" LogicalName="sources.json" />
+    <EmbeddedResource Include="smelter-sources.json" LogicalName="smelter-sources.json" />
     <EmbeddedResource Include="../../.deps/Ego-Engine-Modding/src/EgoDatabaseEditor/schema/schemaDirt2.xml" LogicalName="schemaDirt2.xml" />
   </ItemGroup>
 </Project>

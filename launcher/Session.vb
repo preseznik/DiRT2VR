@@ -28,6 +28,7 @@ Public Class Session
     Private displayWarning As String = ""
     Private desktopBounds As Drawing.Rectangle?
     Private customTrack As Boolean
+    Private ReadOnly postProcessTest As String = "normal"
     Private profile As ProfileSession
     Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing)
         context = value : settings = VrSettings.Load(context)
@@ -36,6 +37,7 @@ Public Class Session
             If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM tracks off before starting LAN multiplayer.")
             customTrack = True
             custom.ApplyTo(settings)
+            postProcessTest = If(custom.ForPack(custom.SelectedPackId).PostProcessTest, ButtermilkPostProcess.DefaultProfile(settings.TrackId))
         End If
         driving = DrivingControls.Load(context)
         If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
@@ -46,6 +48,7 @@ Public Class Session
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         If customTrack Then CustomTracks.TrackPacks.ForLayout(settings.TrackId).RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
+        ButtermilkPostProcess.Validate(postProcessTest, settings.TrackId)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
             Dim held As Boolean
             Try
@@ -101,8 +104,9 @@ Public Class Session
                         view.Write(0, &H32565244) : view.Write(4, 1) : view.Write(8, 0UI) : view.Write(12, 0UI)
                         Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
                         start.Environment("DIRT2VR_SEAT_CHANNEL") = seat.Name
+                        DirectRaceDifficulty.Configure(start, settings)
                         If settings.DirectMode Then
-                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
+                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest)
                             start.ArgumentList.Add("-demo")
                             start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                             start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
@@ -216,7 +220,7 @@ Public Class Session
             If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice and Race require the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
             Worker.Invoke(context, "setup")
             Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
-            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
+            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest)
             config = New AssetTransaction(context).PracticeConfig()
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
@@ -225,6 +229,7 @@ Public Class Session
         profile.Prepare(False)
         PrepareMenus()
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
+        DirectRaceDifficulty.Configure(start, settings)
         Dim returnToMenus = WaitForGame(start)
         profile.ConfirmStartup(False)
         Return returnToMenus

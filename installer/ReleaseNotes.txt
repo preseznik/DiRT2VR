@@ -1,10 +1,11 @@
-DiRT2VR 0.17.24 - Experimental test build
+DiRT2VR — Experimental
 
-Up/Down navigation for direct-event menus
-The pause and finish menus in Direct practice and Race now use Up/Down to select their vertical choices, instead of requiring Left/Right.
+Restore all ten Aspen and ten Smelter layouts and their existing features after the 0.17.47 regression.
 
-Restart and Return to menus keep their existing behavior. This build retains the accepted Hammada scenery and cockpit-steering improvements.
+Add Nordschleife in CUSTOM, converted locally from your installed Assetto Corsa standard circuit. Includes full trackside scenery and distant landscape, fixed Daylight, Overcast and Evening presets, GPS outline, eight timing checkpoints and best completed lap with its car. A complete Evening desktop lap is player-tested. Lighting and visibility/LODs remain in development; Nordschleife Race and VR are unavailable.
 
-Automated menu and recovery checks passed. In-game navigation confirmation is still pending.
+Aspen and Smelter retain layout selection, installed cars, Direct practice/Race, desktop/VR, race difficulty and safe partial rebuilds. Duel courses allow one AI opponent.
 
-This installer is for local testing and has not been published.
+Includes live controller input in Driving controls, safer build progress and Stop controls, direct-menu navigation, distinct opponent names and compact profile-name corrections.
+
+Buttermilk retains lower exposure by default and comparison settings. Its abrupt snow brightness border and some missing Smelter log piles remain unresolved; broader AI/VR testing is needed.

@@ -6,6 +6,7 @@ Public Module Program
     Public Function Main(args As String()) As Integer
         If args.Contains("--convert-aspen") Then Return Aspen.AspenConversion.Run(args)
         If args.Contains("--convert-nordschleife") Then Return Nordschleife.NordschleifeConversion.Run(args)
+        If args.Contains("--convert-smelter") Then Return Aspen.SmelterConversion.Run(args)
         Try
             ' Theme initialization can create a hidden HWND. Set text rendering first,
             ' including in background session/worker processes launched by the UI.
@@ -17,7 +18,7 @@ Public Module Program
             Dim context As New InstallContext(root, If(args.Contains("--worker"), Argument(args, "--owner-base", Nothing), Nothing))
             If args.Contains("--worker") Then
                 Try
-                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"), Argument(args, "--track-work", Nothing))
+                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"), Argument(args, "--track-work", Nothing), Argument(args, "--postprocess-test", Nothing))
                     Return 0
                 Catch ex As Exception
                     Dim failure = WorkerFailure.FromException(Argument(args, "--worker", ""), args.Contains("--worker-elevated"), ex)
