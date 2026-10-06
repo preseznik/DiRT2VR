@@ -137,6 +137,8 @@ Public Class ResponsiveColumns
     Inherits Panel
     Public ReadOnly First As VerticalStack = Stack()
     Public ReadOnly Second As VerticalStack = Stack()
+    <System.ComponentModel.DefaultValue(1060)>
+    Public Property WideAt As Integer = 1060
     Private arranging As Boolean
     Public Sub New()
         Dock = DockStyle.Top : Margin = New Padding(0) : TabStop = False : AutoSize = True : AutoSizeMode = AutoSizeMode.GrowAndShrink
@@ -150,7 +152,7 @@ Public Class ResponsiveColumns
         If arranging OrElse First Is Nothing OrElse Width <= 0 Then Return
         arranging = True
         Try
-            Dim wide = Width >= Px(Me, 1060), gap = Px(Me, 30)
+            Dim wide = Width >= Px(Me, WideAt), gap = Px(Me, 30)
             Dim firstWidth = If(wide, CInt((Width - gap) * 0.54), Width)
             First.SetBounds(0, 0, firstWidth, First.GetPreferredSize(New Size(firstWidth, 0)).Height)
             Dim secondWidth = If(wide, Width - firstWidth - gap, Width)

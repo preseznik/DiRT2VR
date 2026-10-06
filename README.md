@@ -66,12 +66,12 @@ For quick launch with saved settings, use **Start-DiRT2VR.cmd**. It runs the sam
 
 For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The existing `Start-DiRT2VR.cmd` continues to launch VR.
 
-## Aspen custom tracks (experimental)
+## Custom track packs (experimental)
 
 Aspen adds four **Rallycross** layouts built from your own **DiRT 3 Complete Edition** installation. Conversion tools are included with DiRT2VR; no additional download is needed and no game assets are distributed. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
 
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
-2. Choose **Install Aspen**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the game folder containing `tracks\locations\usa\aspen`, wherever Steam installed it.
+2. Select **Aspen** in the pack list (or **Track pack** dropdown in a narrow window), then choose **Build and install…**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the game folder containing `tracks\locations\usa\aspen`, wherever Steam installed it.
 3. Choose **Build and install**. Leave the launcher open while it checks your source files and builds all four layouts using the included tools. **Cancel** stops conversion safely; an existing installation stays usable.
 4. Select a layout, **Direct practice** or **Race**, and a **Car**. Choose **Launch** for desktop play or **Launch VR** with SteamVR and your headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
 
@@ -88,7 +88,9 @@ Snowmass Sprint omits the decorative beams on the ski hillside where they flicke
 
 Custom layout, car, race and lap selections are saved separately. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed Aspen layouts work **offline**, without DiRT 3 present. Keep DiRT 3 available if you want to rebuild or update the pack. The **Manage…** menu offers file verification, rebuilding and removal. Conversion-tool updates arrive with DiRT2VR updates.
 
-If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Rebuild Aspen from source**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
+The **Nordschleife** pack uses your installed **Assetto Corsa** standard circuit. Select **CUSTOM tracks → Nordschleife → Build and install…**, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. Choose **Daylight**, **Overcast** or **Evening**, an installed car, and **Launch** for one lap of desktop Direct practice. These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. **Best lap** shows your fastest completed time and its car for the selected conditions. The full trackside scenery and distant landscape are included. A complete evening lap has been player-tested; lighting and visibility/LODs remain in development. Race and VR are unavailable. See [development status](docs/nordschleife-port.md) for the current test evidence.
+
+If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
 
 To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
 

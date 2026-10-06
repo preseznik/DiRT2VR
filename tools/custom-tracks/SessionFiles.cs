@@ -1,6 +1,6 @@
 namespace DiRT2VR.CustomTracks;
 
-// One journal covers all shared Aspen files, including optional night lighting.
+// One journal covers all shared custom-track files, including optional night lighting.
 // The fixed allowlist is compiled into the launcher, not supplied by a download.
 public static class SessionFiles
 {
@@ -10,8 +10,9 @@ public static class SessionFiles
     public static void Prepare(string game, string layoutId)
     {
         SafeFiles.RequireClosed(); Recover(game);
-        var receipt = AspenPack.Read(game);
-        var session = receipt.Sessions.Single(s => s.LayoutId == AspenPack.GetLayout(layoutId).Id);
+        var pack = TrackPacks.ForLayout(layoutId);
+        var receipt = pack.Read(game);
+        var session = receipt.Sessions.Single(s => s.LayoutId == pack.GetLayout(layoutId).Id);
         var entries = session.Files.Select(f => new Entry(f.Path, f.OriginalSha256,
             receipt.Files.Single(p => p.Path == f.InstalledPath).Sha256)).ToArray();
         var id = Guid.NewGuid().ToString("N");
@@ -20,7 +21,7 @@ public static class SessionFiles
         for (int i = 0; i < entries.Length; i++)
         {
             var entry = entries[i]; var target = SafeFiles.Inside(game, entry.Path);
-            if (SafeFiles.Hash(target) != entry.OriginalSha256) throw new IOException("Aspen needs the original game file: " + entry.Path + ". External edits were preserved.");
+            if (SafeFiles.Hash(target) != entry.OriginalSha256) throw new IOException("This track needs the original game file: " + entry.Path + ". External edits were preserved.");
             var backup = SafeFiles.Inside(folder, id + "/" + i + ".original");
             Directory.CreateDirectory(Path.GetDirectoryName(backup)!);
             File.Copy(target, backup);

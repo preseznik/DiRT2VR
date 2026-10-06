@@ -417,7 +417,7 @@ Public Class MainForm
     Private Sub RefreshLaunchAvailability()
         Dim working = busy OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
         desktopButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
-        launchButton.Enabled = desktopButton.Enabled
+        launchButton.Enabled = desktopButton.Enabled AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunchVr)
         saveButton.Enabled = Not working : recoverButton.Enabled = Not working
         hostButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
         joinButton.Enabled = hostButton.Enabled AndAlso If(SelectedHost()?.Joinable, False)
@@ -848,6 +848,7 @@ Public Class MainForm
         Try
             If DateTime.UtcNow >= nextResolutionRefresh Then
                 RefreshResolutionReport() : nextResolutionRefresh = DateTime.UtcNow.AddSeconds(1)
+                customTracks?.RefreshBestTime()
             End If
             Dim statusPath = IO.Path.Combine(context.UserRoot, "session.json")
             Dim status = If(File.Exists(statusPath), Files.ReadJson(Of SessionStatus)(statusPath), Nothing)

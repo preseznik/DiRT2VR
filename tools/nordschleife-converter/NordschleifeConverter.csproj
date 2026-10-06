@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <OutputType Condition="'$(NordschleifeCli)' == 'true'">Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <Compile Remove="Program.cs" Condition="'$(NordschleifeCli)' != 'true'" />
+    <ProjectReference Include="../aspen-converter/AspenConverter.csproj" />
+    <ProjectReference Include="../custom-tracks/CustomTracks.csproj" />
+    <ProjectReference Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/EgoEngineLibrary.csproj" />
+    <EmbeddedResource Include="nordschleife-sources.json" LogicalName="nordschleife-sources.json" />
+  </ItemGroup>
+</Project>

@@ -30,19 +30,74 @@ public static class AspenPack
         "language/language_ita.lng", "language/language_jpn.lng", "language/language_pol.lng",
         "language/language_rus.lng", "language/language_spa.lng", "language/language_use.lng",
         "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml", "tracks/light_definitions.xml"];
-    public static string[] InstallRoots => Layouts.Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
-    public static Layout GetLayout(string id) => Layouts.SingleOrDefault(l => l.Id == id)
-        ?? throw new IOException("This custom layout is unavailable. Select an installed Aspen layout.");
-    public static bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
-    public static bool SupportsRace(PackReceipt receipt) => System.Version.Parse(receipt.Version) >= new System.Version(1, 0, 1);
-    public static void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps)
+    public static string[] InstallRoots => TrackPacks.Aspen.InstallRoots;
+    public static Layout GetLayout(string id) => TrackPacks.Aspen.GetLayout(id);
+    public static bool IsLayout(string id) => TrackPacks.Aspen.IsLayout(id);
+    public static bool SupportsRace(PackReceipt receipt) => TrackPacks.Aspen.SupportsRace(receipt);
+    public static void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps) => TrackPacks.Aspen.RequireMode(id, vr, mode, car, opponents, laps);
+    public static void Validate(ConversionProfile offer, string launcherVersion) => TrackPacks.Aspen.Validate(offer, launcherVersion);
+    public static void Validate(PackReceipt receipt) => TrackPacks.Aspen.Validate(receipt);
+    public static void ValidateSources(Fingerprint[] sources) => TrackPack.ValidateSources(sources);
+    public static PackReceipt Read(string game, bool verify = true, CancellationToken cancel = default) => TrackPacks.Aspen.Read(game, verify, cancel);
+    public static void Verify(string root, PackReceipt receipt, CancellationToken cancel = default) => TrackPacks.Aspen.Verify(root, receipt, cancel);
+    public static void VerifySources(ConversionProfile offer, string dirt2, string dirt3, IProgress<TrackProgress>? progress, CancellationToken cancel) => TrackPack.VerifySources(offer, dirt2, dirt3, progress, cancel);
+}
+
+public static class TrackPacks
+{
+    public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
+        ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
+    public static readonly TrackPack Nordschleife = new("nordschleife", "Nordschleife", "1.0.0", "0.17.23", ["desktop-solo"],
+        [new("nordschleife-daylight", "Standard circuit", "d2vr_nord_day", "Daylight"),
+         new("nordschleife-overcast", "Standard circuit", "d2vr_nord_cloud", "Overcast"),
+         new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
+    public static readonly TrackPack[] All = [Aspen, Nordschleife];
+    public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
+    public static bool IsLayout(string? id) => All.Any(p => p.Layouts.Any(l => l.Id == id));
+    public static TrackPack ForLayout(string id) => All.SingleOrDefault(p => p.IsLayout(id)) ?? throw new IOException("Unknown custom layout.");
+    public static TrackPack FromStaging(string directory)
+    {
+        var packs = All.Where(p => File.Exists(SafeFiles.Inside(directory, p.Receipt))).ToArray();
+        if (packs.Length != 1) throw new IOException("Conversion staging must contain exactly one known pack.");
+        return packs[0];
+    }
+}
+
+// Destinations and supported modes are compiled in, never supplied by a receipt.
+public sealed class TrackPack
+{
+    public string Id { get; }
+    public string Name { get; }
+    public string Version { get; }
+    public string MinimumLauncher { get; }
+    public string[] Modes { get; }
+    public Layout[] Layouts { get; }
+    public string[] RequiredTargets { get; }
+    public string Support => "DiRT2VR/custom-tracks/" + Id;
+    public string Receipt => Support + "/receipt.json";
+    public string[] SharedTargets => AspenPack.SharedTargets;
+    internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets)
+    {
+        Id = id; Name = name; Version = version; MinimumLauncher = minimumLauncher;
+        Modes = modes; Layouts = layouts; RequiredTargets = requiredTargets;
+    }
+    public string[] InstallRoots => Layouts.Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
+    public Layout GetLayout(string id) => Layouts.SingleOrDefault(l => l.Id == id)
+        ?? throw new IOException("This custom layout is unavailable. Select an installed layout.");
+    public bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
+    public bool SupportsRace(PackReceipt receipt) => Modes.Contains("desktop-race") && System.Version.Parse(receipt.Version) >= new System.Version(1, 0, 1);
+    public void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps)
     {
         GetLayout(id);
+        if (Id == "nordschleife" && laps != 1)
+            throw new IOException("Nordschleife currently supports one complete lap per Direct practice session.");
+        if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")))
+            throw new IOException(Name + " currently supports desktop Direct practice. Race and VR are not available in this test build.");
         if (mode is not ("practice" or "race") || string.IsNullOrWhiteSpace(car) || laps is < 1 or > 20 ||
             (mode == "practice" ? opponents != 0 : opponents is < 1 or > 7))
-            throw new IOException("Choose Aspen Direct practice or Race, an installed car, and one to twenty laps. Race supports one to seven opponents. LAN is unavailable.");
+            throw new IOException("Choose Direct practice or Race, an installed car, and one to twenty laps. Race supports one to seven opponents. LAN is unavailable.");
     }
-    public static void Validate(ConversionProfile offer, string launcherVersion)
+    public void Validate(ConversionProfile offer, string launcherVersion)
     {
         if (offer is null || offer.Id != Id || !SafeFiles.Version(offer.Version) || !SafeFiles.Version(offer.MinimumLauncher) ||
             System.Version.Parse(launcherVersion) < System.Version.Parse(offer.MinimumLauncher))
@@ -51,33 +106,36 @@ public static class AspenPack
             offer.InstalledBytes is <= 0 or > 4L * 1024 * 1024 * 1024 ||
             offer.Modes is null || !offer.Modes.SequenceEqual(Modes) ||
             offer.Layouts is null || !offer.Layouts.SequenceEqual(Layouts))
-            throw new IOException("The bundled Aspen tools are unsupported. Reinstall DiRT2VR.");
-        ValidateSources(offer.Sources);
+            throw new IOException("The bundled conversion tools are unsupported. Reinstall DiRT2VR.");
+        ValidateSources(offer.Sources, Id == "nordschleife" ? "assettocorsa" : "dirt3");
     }
-    public static void ValidateSources(Fingerprint[] sources)
+    public static void ValidateSources(Fingerprint[] sources, string sourceGame = "dirt3")
     {
-        if (sources is null || sources.Length is < 2 or > 4096 || sources.Any(f => f is null) ||
+        if (sourceGame is not ("dirt3" or "assettocorsa") || sources is null || sources.Length is < 2 or > 4096 || sources.Any(f => f is null) ||
             sources.Select(f => f.Game + "/" + f.Path).Distinct(StringComparer.OrdinalIgnoreCase).Count() != sources.Length ||
-            sources.Any(f => f.Game is not ("dirt2" or "dirt3") || !SafeFiles.Digest(f.Sha256)))
+            sources.Any(f => (f.Game != "dirt2" && f.Game != sourceGame) || !SafeFiles.Digest(f.Sha256)))
             throw new IOException("Invalid source fingerprint inventory.");
         foreach (var f in sources) SafeFiles.Relative(f.Path);
-        if (!sources.Any(f => f.Game == "dirt2") || !sources.Any(f => f.Game == "dirt3")) throw new IOException("Missing source inventory.");
+        if (!sources.Any(f => f.Game == "dirt2") || !sources.Any(f => f.Game == sourceGame)) throw new IOException("Missing source inventory.");
     }
-    public static void Validate(PackReceipt receipt)
+    public void Validate(PackReceipt receipt)
     {
         if (receipt is null || receipt.Schema != 1 || receipt.Id != Id || !SafeFiles.Version(receipt.Version) || !SafeFiles.Version(receipt.MinimumLauncher) ||
-            receipt.Files is null || receipt.Files.Length is < 100 or > 4096 || receipt.Files.Any(f => f is null) || receipt.Sessions is null || receipt.Sessions.Length != 4 ||
-            receipt.Sessions.Any(s => s is null || s.Files is null || s.Files.Any(f => f is null)) || receipt.Sessions.Select(s => s.LayoutId).Distinct().Count() != 4)
+            receipt.Files is null || receipt.Files.Length < (Id == AspenPack.Id ? 100 : 7) || receipt.Files.Length > 4096 || receipt.Files.Any(f => f is null) || receipt.Sessions is null || receipt.Sessions.Length != Layouts.Length ||
+            receipt.Sessions.Any(s => s is null || s.Files is null || s.Files.Any(f => f is null)) || receipt.Sessions.Select(s => s.LayoutId).Distinct().Count() != Layouts.Length)
             throw new IOException("Unsupported custom-track receipt.");
-        ValidateSources(receipt.Sources);
+        ValidateSources(receipt.Sources, Id == "nordschleife" ? "assettocorsa" : "dirt3");
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         long total = 0;
         foreach (var f in receipt.Files)
         {
             SafeFiles.Relative(f.Path);
+            string extension = Path.GetExtension(f.Path);
+            bool supported = new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng" }.Contains(extension) ||
+                (Id == "nordschleife" && extension is ".nfs" or ".gssp" or ".htf");
             if (!paths.Add(f.Path) || f.Path == Receipt || !InstallRoots.Any(p => f.Path.StartsWith(p + "/", StringComparison.Ordinal)) ||
                 !SafeFiles.Digest(f.Sha256) || f.Bytes is < 0 or > 512L * 1024 * 1024 ||
-                !new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng" }.Contains(Path.GetExtension(f.Path)))
+                !supported)
                 throw new IOException("Invalid custom-track file: " + f.Path);
             total = checked(total + f.Bytes);
         }
@@ -96,18 +154,18 @@ public static class AspenPack
                 var source = receipt.Sources.SingleOrDefault(p => p.Game == "dirt2" && p.Path == f.Path);
                 if (source?.Sha256 != f.OriginalSha256) throw new IOException("Session source fingerprint mismatch.");
             }
-            foreach (var required in new[] { "surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml" })
+            foreach (var required in RequiredTargets)
                 if (!targets.Contains(required)) throw new IOException("Incomplete session inventory.");
         }
     }
-    public static PackReceipt Read(string game, bool verify = true, CancellationToken cancel = default)
+    public PackReceipt Read(string game, bool verify = true, CancellationToken cancel = default)
     {
         var receipt = SafeFiles.ReadJson<PackReceipt>(SafeFiles.Inside(game, Receipt));
         Validate(receipt);
         if (verify) Verify(game, receipt, cancel);
         return receipt;
     }
-    public static void Verify(string root, PackReceipt receipt, CancellationToken cancel = default)
+    public void Verify(string root, PackReceipt receipt, CancellationToken cancel = default)
     {
         Validate(receipt);
         foreach (var file in receipt.Files)
@@ -115,12 +173,13 @@ public static class AspenPack
             cancel.ThrowIfCancellationRequested();
             var path = SafeFiles.Inside(root, file.Path);
             if (!File.Exists(path) || new FileInfo(path).Length != file.Bytes || SafeFiles.Hash(path) != file.Sha256)
-                throw new IOException("Custom-track file is missing or changed: " + file.Path + ". Use Rebuild Aspen.");
+                throw new IOException("Custom-track file is missing or changed: " + file.Path + ". Use Manage > Rebuild from source.");
         }
     }
     public static void VerifySources(ConversionProfile offer, string dirt2, string dirt3, IProgress<TrackProgress>? progress, CancellationToken cancel)
     {
-        AspenPack.ValidateSources(offer.Sources);
+        var pack=TrackPacks.Get(offer.Id);
+        ValidateSources(offer.Sources, pack.Id == "nordschleife" ? "assettocorsa" : "dirt3");
         for (int i = 0; i < offer.Sources.Length; i++)
         {
             cancel.ThrowIfCancellationRequested(); var source = offer.Sources[i];

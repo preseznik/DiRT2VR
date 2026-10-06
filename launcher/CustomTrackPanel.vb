@@ -8,34 +8,52 @@ Public Class CustomTrackPanel
     Private ReadOnly context As InstallContext
     Private ReadOnly preferences As CustomTrackPreferences
     Private ReadOnly toggle As New CheckBox With {.Text = "CUSTOM tracks (Experimental)", .Name = "CustomTracks", .AutoSize = True}
-    Private ReadOnly detail As New VerticalStack
-    Private ReadOnly status As New Label With {.Name = "CustomTrackStatus", .AutoSize = False, .Text = "Not installed"}
+    Private ReadOnly browser As New CustomTrackBrowser
+    Private ReadOnly detail As VerticalStack
+    Private ReadOnly title As New Label With {.AutoSize = True, .Font = New Font("Segoe UI", 12, FontStyle.Bold)}
+    Private ReadOnly description As New Label With {.AutoSize = False}
+    Private ReadOnly status As New Label With {.Name = "CustomTrackStatus", .AutoSize = False}
+    Private ReadOnly setup As New VerticalStack With {.Name = "CustomTrackSetup"}
+    Private ReadOnly body As New VerticalStack
+    Private ReadOnly installCard As New VerticalStack
+    Private ReadOnly installHint As New Label With {.AutoSize = False}
+    Private ReadOnly unavailable As New Label With {.Name = "CustomPackUnavailable", .AutoSize = False}
     Private ReadOnly layouts As New ComboBox With {.Name = "CustomTrackLayout", .DropDownStyle = ComboBoxStyle.DropDownList}
+    Private ReadOnly condition As New Label With {.Name = "CustomTrackCondition", .AutoSize = False, .TextAlign = ContentAlignment.MiddleLeft}
+    Private ReadOnly bestTime As New Label With {.Name = "CustomBestTime", .AutoSize = False}
     Private ReadOnly launchMode As New ComboBox With {.Name = "CustomLaunchMode", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly cars As New ComboBox With {.Name = "CustomCar", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly opponentCars As New ComboBox With {.Name = "CustomOpponentCars", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly opponents As New ValueSlider("CustomOpponents", 1, 7, 3)
     Private ReadOnly laps As New ValueSlider("CustomLaps", 1, 20, 1)
+    Private ReadOnly modeHint As New Label With {.AutoSize = False}
     Private ReadOnly opponentHint As New Label With {.AutoSize = False}
-    Private ReadOnly installButton As New Button With {.Text = "Install Aspen", .Name = "InstallAspen", .AutoSize = True}
-    Private ReadOnly manage As New Button With {.Text = "Manage…", .Name = "ManageAspen", .AutoSize = True}
-    Private ReadOnly cancelButton As New Button With {.Text = "Cancel", .Name = "CancelAspen", .AutoSize = True, .Enabled = False}
-    Private ReadOnly progressBar As New ProgressBar With {.Minimum = 0, .Maximum = 100, .Height = 18}
+    Private ReadOnly installButton As New Button With {.Text = "Build and install…", .Name = "BuildCustomTrack", .AutoSize = True}
+    Private ReadOnly manage As New Button With {.Text = "Manage…", .Name = "ManageCustomTrack", .AutoSize = True}
+    Private ReadOnly cancelButton As New Button With {.Text = "Cancel", .Name = "CancelCustomTrack", .AutoSize = True}
+    Private ReadOnly errorDetails As New Button With {.Text = "Details…", .Name = "CustomTrackErrorDetails", .AutoSize = True}
+    Private ReadOnly progressBar As New ProgressBar With {.Name = "CustomTrackProgress", .Minimum = 0, .Maximum = 100, .Height = 18}
+    Private ReadOnly actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
     Private ReadOnly menu As New ContextMenuStrip
-    Private offer As ConversionProfile
+    Private ReadOnly packStatuses As New Dictionary(Of String, String)
+    Private currentPack As CustomTrackPack
     Private cancellation As CancellationTokenSource
     Private installationValid As Boolean
+    Private hasReceipt As Boolean
     Private raceReady As Boolean
     Private working As Boolean
+    Private loading As Boolean
     Private initialized As Boolean
+    Private errorText As String = ""
     Public Event AvailabilityChanged As EventHandler
     Private Class LayoutItem
         Public ReadOnly Value As Layout
-        Public Sub New(value As Layout)
-            Me.Value = value
+        Private ReadOnly conditionName As Boolean
+        Public Sub New(value As Layout, Optional showCondition As Boolean = False)
+            Me.Value = value : conditionName = showCondition
         End Sub
         Public Overrides Function ToString() As String
-            Return Value.Name & " — " & Value.Condition
+            Return If(conditionName, Value.Condition, Value.Name)
         End Function
     End Class
     Public ReadOnly Property CustomEnabled As Boolean
@@ -50,167 +68,318 @@ Public Class CustomTrackPanel
     End Property
     Public ReadOnly Property CanLaunch As Boolean
         Get
-            Return Not working AndAlso installationValid AndAlso layouts.SelectedItem IsNot Nothing AndAlso
+            Return currentPack IsNot Nothing AndAlso currentPack.Available AndAlso Not working AndAlso installationValid AndAlso layouts.SelectedItem IsNot Nothing AndAlso
                 launchMode.SelectedIndex >= 0 AndAlso (launchMode.SelectedIndex <> 1 OrElse raceReady) AndAlso cars.SelectedItem IsNot Nothing AndAlso opponentCars.SelectedIndex >= 0
+        End Get
+    End Property
+    Public ReadOnly Property CanLaunchVr As Boolean
+        Get
+            Return CanLaunch AndAlso TrackPacks.Get(currentPack.Id).Modes.Any(Function(m) m.StartsWith("vr-", StringComparison.Ordinal))
         End Get
     End Property
     Public Sub New(value As InstallContext)
         context = value : preferences = CustomTrackPreferences.Load(context)
-        Name = "CustomTrackPanel"
-        For Each choice In {layouts, launchMode, cars, opponentCars}
+        Name = "CustomTrackPanel" : detail = browser.Detail
+        For Each choice In {layouts, launchMode, cars, opponentCars, browser.Picker}
             StyleChoice(choice, Me)
         Next
         Controls.Add(toggle)
-        detail.Controls.Add(New Label With {.Text = "Aspen · Four Rallycross layouts", .AutoSize = True, .Font = New Font("Segoe UI", 11, FontStyle.Bold)})
-        detail.Controls.Add(New Label With {.Text = "Build once from your own DiRT 3 Complete Edition files, then play offline. Choose Launch VR or Launch for desktop play.", .AutoSize = False})
-        detail.Controls.Add(status)
-        For Each trackLayout In AspenPack.Layouts
-            layouts.Items.Add(New LayoutItem(trackLayout))
-        Next
-        layouts.SelectedItem = layouts.Items.Cast(Of LayoutItem).FirstOrDefault(Function(item) item.Value.Id = preferences.LayoutId)
-        Field(detail, "Layout and lighting", layouts)
-        Dim columns As New ResponsiveColumns
-        detail.Controls.Add(columns)
-        launchMode.Items.AddRange({"Direct practice (experimental)", "Race (experimental)"})
-        launchMode.SelectedIndex = Array.IndexOf({"practice", "race"}, preferences.LaunchMode)
+        detail.Controls.Add(title) : detail.Controls.Add(description) : detail.Controls.Add(bestTime) : detail.Controls.Add(status) : detail.Controls.Add(body)
+        Dim layoutColumns As New ResponsiveColumns With {.WideAt = 560}
+        Field(layoutColumns.First, "Layout", layouts) : Field(layoutColumns.Second, "Conditions", condition)
+        setup.Controls.Add(layoutColumns)
+        Dim columns As New ResponsiveColumns With {.WideAt = 560}
+        setup.Controls.Add(columns)
+        launchMode.Items.AddRange({"Direct practice", "Race"})
         cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
-        cars.SelectedItem = cars.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = preferences.CarCode)
         opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
-        opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, preferences.OpponentCars)
-        opponents.Value = Math.Clamp(preferences.Opponents, 1, 7)
-        laps.Value = Math.Clamp(preferences.Laps, 1, 20)
-        Field(columns.First, "Launch mode", launchMode)
-        Field(columns.First, "Car", cars)
-        Field(columns.Second, "AI opponents", opponents)
-        Field(columns.Second, "Opponent cars", opponentCars)
-        Field(columns.Second, "Laps", laps)
-        detail.Controls.Add(opponentHint)
+        Field(columns.First, "Launch mode", launchMode) : Field(columns.First, "Car", cars)
+        Field(columns.Second, "AI opponents", opponents) : Field(columns.Second, "Opponent cars", opponentCars)
+        Field(setup, "Laps", laps) : setup.Controls.Add(opponentHint)
+        setup.Controls.Add(modeHint)
+        installCard.Controls.Add(installHint)
+        installCard.Controls.Add(installButton)
+        detail.Controls.Add(actions)
+        detail.Controls.Add(New Label With {.Text = "Turn CUSTOM tracks off to restore your original track, car and race selections.", .AutoSize = False})
+        For Each pack In CustomTrackCatalog.Packs
+            browser.PackList.Items.Add(pack) : browser.Picker.Items.Add(pack)
+            packStatuses(pack.Id) = If(pack.Available, If(File.Exists(SafeFiles.Inside(context.GameRoot, TrackPacks.Get(pack.Id).Receipt)), "Installed", "Not installed"), "In development")
+        Next
+        currentPack = CustomTrackCatalog.Find(preferences.SelectedPackId)
+        If currentPack Is Nothing Then
+            currentPack = New CustomTrackPack(preferences.SelectedPackId, "Unavailable pack", "Your saved pack is not supported by this launcher.", False, Array.Empty(Of Layout)())
+            browser.PackList.Items.Add(currentPack) : browser.Picker.Items.Add(currentPack)
+            packStatuses(currentPack.Id) = "Unavailable"
+        End If
+        AddHandler browser.PackList.DrawItem, AddressOf DrawPack
+        AddHandler browser.PackList.SelectedIndexChanged, Async Sub() Await SelectPack(TryCast(browser.PackList.SelectedItem, CustomTrackPack))
+        AddHandler browser.Picker.SelectedIndexChanged, Async Sub() Await SelectPack(TryCast(browser.Picker.SelectedItem, CustomTrackPack))
         For Each choice In {launchMode, cars, opponentCars}
             AddHandler choice.SelectedIndexChanged, Sub() RefreshRaceOptions()
         Next
-        RefreshRaceOptions()
-        Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
-        buttons.Controls.AddRange({installButton, manage, cancelButton})
-        detail.Controls.Add(buttons)
-        detail.Controls.Add(New Label With {.Text = "VR and AI races are experimental. LAN remains unavailable. Turn CUSTOM tracks off to restore your original track, car and race selections.", .AutoSize = False})
+        AddHandler layouts.SelectedIndexChanged, Sub()
+                                                    condition.Text = If(currentPack?.Id = "nordschleife", "Standard circuit", If(TryCast(layouts.SelectedItem, LayoutItem)?.Value.Condition, "Choose a layout"))
+                                                    RefreshBestTime()
+                                                    RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
+                                                End Sub
         AddHandler toggle.CheckedChanged, Async Sub()
                                              If toggle.Checked Then
-                                                 If Not Controls.Contains(detail) Then Controls.Add(detail)
+                                                 If Not Controls.Contains(browser) Then Controls.Add(browser)
                                              Else
-                                                 Controls.Remove(detail)
+                                                 Controls.Remove(browser)
                                              End If
                                              preferences.Enabled = toggle.Checked
                                              RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
                                              If initialized AndAlso toggle.Checked Then Await RefreshInstallation()
                                          End Sub
-        AddHandler layouts.SelectedIndexChanged, Sub()
-                                                    Dim selected = TryCast(layouts.SelectedItem, LayoutItem)
-                                                    If selected IsNot Nothing Then preferences.LayoutId = selected.Value.Id
-                                                    RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
-                                                End Sub
         AddHandler installButton.Click, Async Sub() Await InstallPack()
         AddHandler cancelButton.Click, Sub() CancelOperation()
         AddHandler manage.Click, Sub() menu.Show(manage, New Point(0, manage.Height))
         AddHandler menu.Items.Add("Verify installed files").Click, Async Sub() Await RefreshInstallation()
-        AddHandler menu.Items.Add("Rebuild Aspen from source").Click, Async Sub() Await InstallPack()
-        AddHandler menu.Items.Add("Uninstall Aspen").Click, Async Sub()
-                                                                If MessageBox.Show(Me, "Remove the installed Aspen layouts? Your original tracks and settings will be kept.", "Uninstall Aspen", MessageBoxButtons.OKCancel, MessageBoxIcon.Question) <> DialogResult.OK Then Return
-                                                                Await Operation(Async Function(token, progress)
-                                                                                    Await CustomTrackService.UninstallAsync(context)
-                                                                                    installationValid = False : status.Text = "Aspen removed. Original tracks are available with CUSTOM tracks off."
-                                                                                End Function)
-                                                            End Sub
+        AddHandler menu.Items.Add("Rebuild from source…").Click, Async Sub() Await InstallPack()
+        AddHandler menu.Items.Add("Uninstall pack…").Click, Async Sub()
+                                                               If Not currentPack.Available OrElse working Then Return
+                                                               If MessageBox.Show(Me, "Remove " & currentPack.Name & " and its " & currentPack.Layouts.Length & " layouts? Original tracks, saves and other packs will be kept.", "Uninstall " & currentPack.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) <> DialogResult.OK Then Return
+                                                               Await Operation(Async Function(token, progress)
+                                                                                   Await CustomTrackService.UninstallAsync(context, currentPack.Id)
+                                                                                   installationValid = False : hasReceipt = False
+                                                                                   SetStatus("Not installed", currentPack.Name & " removed. Your original tracks are available with CUSTOM tracks off.")
+                                                                               End Function)
+                                                           End Sub
+        AddHandler errorDetails.Click, Sub() MessageBox.Show(Me, errorText, currentPack.Name & " — details", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        AddHandler Disposed, Sub()
+                                 cancellation?.Cancel()
+                                 menu.Dispose()
+                                 For Each control As Control In New Control() {browser, setup, installCard, unavailable, manage, cancelButton, errorDetails, progressBar}
+                                     control.Dispose()
+                                 Next
+                             End Sub
+        LoadSelection()
         toggle.Checked = preferences.Enabled
         initialized = True
-        AddHandler HandleCreated, Async Sub()
-                                          If CustomEnabled Then Await RefreshInstallation()
-                                      End Sub
-        AddHandler Disposed, Sub() menu.Dispose()
+        AddHandler HandleCreated, Sub()
+                                      BeginInvoke(New Action(Async Sub()
+                                                                 If IsDisposed Then Return
+                                                                 If CustomEnabled Then Await RefreshInstallation()
+                                                             End Sub))
+                                  End Sub
+    End Sub
+    Private Async Function SelectPack(pack As CustomTrackPack) As Task
+        If loading OrElse working OrElse pack Is Nothing OrElse pack Is currentPack Then Return
+        CaptureSelection() : currentPack = pack : preferences.SelectedPackId = pack.Id
+        LoadSelection()
+        If initialized AndAlso CustomEnabled Then Await RefreshInstallation()
+    End Function
+    Private Sub LoadSelection()
+        loading = True
+        Try
+            browser.PackList.SelectedItem = currentPack : browser.Picker.SelectedItem = currentPack
+            title.Text = currentPack.Name : description.Text = currentPack.Description
+            Dim nord = currentPack.Id = "nordschleife"
+            layouts.AccessibleName = If(nord, "Conditions", "Layout")
+            setup.Controls.Find("CustomTrackLayoutLabel", True).Single().Text = If(nord, "Conditions", "Layout")
+            setup.Controls.Find("CustomTrackConditionLabel", True).Single().Text = If(nord, "Layout", "Conditions")
+            installHint.Text = "Build this pack from your own " & If(nord, "Assetto Corsa Nordschleife", "DiRT 3 Complete Edition") & " files. Select a detected installation or browse to its folder. Installed tracks work offline."
+            installationValid = False : raceReady = False : hasReceipt = False : errorText = ""
+            Dim selected = preferences.ForPack(currentPack.Id)
+            layouts.Items.Clear()
+            For Each trackLayout In currentPack.Layouts
+                layouts.Items.Add(New LayoutItem(trackLayout, nord))
+            Next
+            layouts.SelectedItem = layouts.Items.Cast(Of LayoutItem).FirstOrDefault(Function(item) item.Value.Id = selected.LayoutId)
+            launchMode.Items.Clear()
+            launchMode.Items.Add("Direct practice")
+            If currentPack.Available AndAlso TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race") Then launchMode.Items.Add("Race")
+            cars.Items.Clear()
+            cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
+            launchMode.SelectedIndex = If(selected.LaunchMode = "race" AndAlso launchMode.Items.Count = 1, -1, Array.IndexOf({"practice", "race"}, selected.LaunchMode))
+            cars.SelectedItem = cars.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = selected.CarCode)
+            opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, selected.OpponentCars)
+            opponents.Value = Math.Clamp(selected.Opponents, 1, 7) : laps.Value = Math.Clamp(selected.Laps, 1, 20)
+            If nord Then laps.Value = 1
+            status.Text = If(currentPack.Available, "Choose Build and install to prepare this pack.", "Unavailable in this launcher")
+            unavailable.Text = "Choose an available pack from the list. Your saved selection has been kept."
+        Finally
+            loading = False
+        End Try
+        RefreshRaceOptions() : RefreshBestTime() : RenderState()
+    End Sub
+    Private Sub CaptureSelection()
+        If currentPack Is Nothing OrElse Not currentPack.Available Then Return
+        Dim selected = preferences.ForPack(currentPack.Id)
+        If layouts.SelectedItem IsNot Nothing Then selected.LayoutId = DirectCast(layouts.SelectedItem, LayoutItem).Value.Id
+        If launchMode.SelectedIndex >= 0 Then selected.LaunchMode = {"practice", "race"}(launchMode.SelectedIndex)
+        If cars.SelectedItem IsNot Nothing Then selected.CarCode = DirectCast(cars.SelectedItem, PracticeCar).Code
+        If opponentCars.SelectedIndex >= 0 Then selected.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
+        selected.Opponents = CInt(opponents.Value) : selected.Laps = CInt(laps.Value)
     End Sub
     Public Sub Save()
-        If CustomEnabled AndAlso (launchMode.SelectedIndex < 0 OrElse cars.SelectedItem Is Nothing OrElse opponentCars.SelectedIndex < 0 OrElse layouts.SelectedItem Is Nothing) Then Throw New IOException("Select an available custom layout, launch mode, car and opponent selection.")
-        If launchMode.SelectedIndex >= 0 Then preferences.LaunchMode = {"practice", "race"}(launchMode.SelectedIndex)
-        If cars.SelectedItem IsNot Nothing Then preferences.CarCode = DirectCast(cars.SelectedItem, PracticeCar).Code
-        If opponentCars.SelectedIndex >= 0 Then preferences.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
-        preferences.Opponents = CInt(opponents.Value) : preferences.Laps = CInt(laps.Value)
-        preferences.Save(context)
+        CaptureSelection() : preferences.Save(context)
+    End Sub
+    Public Sub RefreshBestTime()
+        bestTime.Visible = currentPack?.Id = "nordschleife"
+        If Not bestTime.Visible Then Return
+        Dim layoutId = TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id
+        If layoutId Is Nothing Then
+            bestTime.Text = "Best lap: choose conditions"
+            Return
+        End If
+        Try
+            Dim lap = BestLapStore.Best(context, layoutId, TrackPacks.Nordschleife.Version)
+            bestTime.Text = If(lap Is Nothing, "Best lap: no completed lap yet", "Best lap: " & BestLapStore.Display(lap))
+        Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.Text.Json.JsonException
+            bestTime.Text = "Best lap history unavailable; saved file kept"
+        End Try
     End Sub
     Private Sub RefreshRaceOptions()
+        modeHint.Text = If(currentPack?.Id = "nordschleife", "Desktop practice · One lap · Race and VR pending", "Desktop and VR · AI races are experimental · LAN unavailable")
+        laps.Enabled = currentPack?.Id <> "nordschleife"
         Dim race = launchMode.SelectedIndex = 1
         opponents.Enabled = race : opponentCars.Enabled = race
         Dim vehicle = TryCast(cars.SelectedItem, PracticeCar)
-        opponentHint.Text = If(race AndAlso installationValid AndAlso Not raceReady, "Choose Rebuild Aspen to update AI driving paths before racing.", If(Not race, "Solo practice. Your race settings are kept for later.", If(opponentCars.SelectedIndex = 2,
-            "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1,
-            "Mixed: all installed classes.", "All opponents use the same car as the driver."))))
+        opponentHint.Text = If(race AndAlso installationValid AndAlso Not raceReady, "Choose Manage → Rebuild from source to update AI driving paths before racing.", If(Not race, "Solo practice. Your race settings are kept for later.", If(opponentCars.SelectedIndex = 2,
+            "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver."))))
+        If Not loading Then RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
+    End Sub
+    Private Sub RenderState()
+        Dim content As Control = If(Not currentPack.Available, CType(unavailable, Control), If(installationValid, CType(setup, Control), installCard))
+        If Not body.Controls.Contains(content) Then
+            body.Controls.Clear() : body.Controls.Add(content)
+        End If
+        actions.Controls.Clear()
+        If hasReceipt Then actions.Controls.Add(manage)
+        If working Then actions.Controls.Add(cancelButton)
+        If errorText <> "" Then actions.Controls.Add(errorDetails)
+        If working AndAlso Not detail.Controls.Contains(progressBar) Then detail.Controls.Add(progressBar)
+        If Not working Then detail.Controls.Remove(progressBar)
+        toggle.Enabled = Not working : browser.PackList.Enabled = Not working : browser.Picker.Enabled = Not working
+        setup.Enabled = Not working : installButton.Enabled = Not working : manage.Enabled = Not working
+        browser.PackList.Invalidate() : PerformLayout()
         RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
+    End Sub
+    Private Sub SetStatus(packStatus As String, message As String)
+        packStatuses(currentPack.Id) = packStatus : status.Text = message : browser.PackList.Invalidate()
     End Sub
     Public Sub CancelOperation()
         cancellation?.Cancel()
         If working Then status.Text = "Cancelling; waiting for the current safe operation to finish…"
     End Sub
     Private Async Function RefreshInstallation() As Task
-        If working Then Return
+        If working OrElse Not currentPack.Available Then Return
         Await Operation(Async Function(token, progress)
-                            installationValid = False
-                            If Not File.Exists(SafeFiles.Inside(context.GameRoot, AspenPack.Receipt)) Then
-                                status.Text = "Not installed. Install Aspen to build all four layouts from your DiRT 3 files."
+                            installationValid = False : raceReady = False
+                            hasReceipt = File.Exists(SafeFiles.Inside(context.GameRoot, TrackPacks.Get(currentPack.Id).Receipt))
+                            If Not hasReceipt Then
+                                SetStatus("Not installed", "Not installed · Build once from your own " & If(currentPack.Id = "nordschleife", "Assetto Corsa", "DiRT 3") & " files.")
                                 Return
                             End If
-                            status.Text = "Checking installed Aspen files…"
-                            Dim receipt = Await Task.Run(Function() AspenPack.Read(context.GameRoot, True, token), token)
+                            SetStatus("Checking…", "Checking installed " & currentPack.Name & " files…")
+                            Dim receipt = Await Task.Run(Function() TrackPacks.Get(currentPack.Id).Read(context.GameRoot, True, token), token)
                             CustomTrackService.RequireLauncher(receipt)
-                            installationValid = True
-                            raceReady = AspenPack.SupportsRace(receipt)
-                            status.Text = "Installed · Aspen " & receipt.Version & " · ready offline"
-                            If Not raceReady Then status.Text &= ". Rebuild Aspen to enable AI races."
+                            installationValid = True : raceReady = TrackPacks.Get(currentPack.Id).SupportsRace(receipt)
+                            SetStatus("Installed · Ready offline", "Installed · " & currentPack.Name & " " & receipt.Version & " · Ready offline")
+                            If Not raceReady AndAlso currentPack.Id = AspenPack.Id Then status.Text &= ". Rebuild from source to enable AI races."
+                            If layouts.SelectedItem Is Nothing Then status.Text &= ". Your saved layout is unavailable; choose a layout."
+                            If cars.SelectedItem Is Nothing Then status.Text &= ". Your saved car is unavailable; choose an installed car."
                             RefreshRaceOptions()
-                            If layouts.SelectedItem Is Nothing Then status.Text &= ". Your saved layout is unavailable; select a layout."
                         End Function)
     End Function
     Private Async Function InstallPack() As Task
+        If working OrElse Not currentPack.Available Then Return
+        CaptureSelection()
         Await Operation(Async Function(token, progress)
                             context.RequireClosed()
-                            status.Text = "Preparing Aspen build…"
-                            offer = Aspen.AspenConversion.GetProfile()
-                            Using picker As New AspenSourceForm(preferences.SourceFolder, CustomTrackService.SourceFolders(), offer)
+                            Dim offer = CustomTrackService.Profile(currentPack.Id), selected = preferences.ForPack(currentPack.Id)
+                            Using picker As New AspenSourceForm(selected.SourceFolder, CustomTrackService.SourceFolders(currentPack.Id), offer)
                                 If picker.ShowDialog(Me) <> DialogResult.OK Then Return
-                                preferences.SourceFolder = picker.SourceFolder : preferences.Save(context)
+                                selected.SourceFolder = picker.SourceFolder : preferences.Save(context)
                             End Using
-                            Await CustomTrackService.InstallAsync(context, offer, preferences.SourceFolder, progress, token)
-                            installationValid = True
-                            raceReady = True : RefreshRaceOptions()
-                            status.Text = "Aspen " & offer.Version & " installed · ready offline. Select a layout, then choose Launch."
+                            SetStatus("Building…", "Building " & currentPack.Name & "…")
+                            Await CustomTrackService.InstallAsync(context, offer, selected.SourceFolder, progress, token)
+                            installationValid = True : hasReceipt = True : raceReady = TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race") : RefreshRaceOptions()
+                            SetStatus("Installed · Ready offline", currentPack.Name & " " & offer.Version & " installed. Choose " & If(currentPack.Id = "nordschleife", "conditions", "a layout") & ", then " & If(CanLaunchVr, "Launch or Launch VR.", "Launch for desktop practice."))
                         End Function)
     End Function
     Private Async Function Operation(action As Func(Of CancellationToken, IProgress(Of TrackProgress), Task)) As Task
         If working Then Return
-        working = True : toggle.Enabled = False : installButton.Enabled = False : manage.Enabled = False : layouts.Enabled = False
-        cancelButton.Enabled = True : detail.Controls.Add(progressBar)
-        cancellation = New CancellationTokenSource()
-        RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
+        ' A saved CUSTOM selection can be restored before Application.Run starts.
+        ' Keep verification/progress continuations on the owning UI thread.
+        If Not TypeOf SynchronizationContext.Current Is WindowsFormsSynchronizationContext Then SynchronizationContext.SetSynchronizationContext(New WindowsFormsSynchronizationContext())
+        working = True : errorText = "" : progressBar.Value = 0
+        cancellation = New CancellationTokenSource() : RenderState()
         Try
             Dim progress As New Progress(Of TrackProgress)(Sub(value)
-                                                              If IsDisposed Then Return
-                                                              progressBar.Value = Math.Clamp(value.Percent, 0, 100)
-                                                              status.Text = value.Message
+                                                              If IsDisposed OrElse Not working Then Return
+                                                              progressBar.Value = Math.Clamp(value.Percent, 0, 100) : status.Text = value.Message
                                                           End Sub)
             Await action(cancellation.Token, progress)
         Catch ex As OperationCanceledException
-            status.Text = "Cancelled. Existing tracks are unchanged. Choose Install Aspen to try again."
+            SetStatus(If(installationValid, "Installed · Ready offline", "Not verified"), "Cancelled. Existing tracks are kept. You can verify or build again.")
         Catch ex As Exception
-            status.Text = ex.Message
+            errorText = ex.Message
+            SetStatus(If(installationValid, "Installed · Build failed", "Needs attention"), If(installationValid, "Build failed; your installed pack is still available. ", "This pack could not be verified or built. ") & "Check Details for the affected file and remedy.")
         Finally
             cancellation.Dispose() : cancellation = Nothing : working = False
-            installButton.Text = If(installationValid, "Rebuild Aspen", "Install Aspen")
-            toggle.Enabled = True : installButton.Enabled = True : manage.Enabled = True : layouts.Enabled = True
-            cancelButton.Enabled = False : detail.Controls.Remove(progressBar)
-            RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
+            If Not IsDisposed Then RenderState()
         End Try
     End Function
+    Private Sub DrawPack(sender As Object, e As DrawItemEventArgs)
+        If e.Index < 0 Then Return
+        Dim pack = DirectCast(browser.PackList.Items(e.Index), CustomTrackPack)
+        Dim selected = (e.State And DrawItemState.Selected) <> 0
+        Dim background = If(selected, SystemColors.Highlight, BackColor)
+        Dim foreground = If(selected, If(background.GetBrightness() < 0.5F, Color.White, Color.Black), ForeColor)
+        Using brush As New SolidBrush(background)
+            e.Graphics.FillRectangle(brush, e.Bounds)
+        End Using
+        Dim bounds = Rectangle.Inflate(e.Bounds, -Px(Me, 10), -Px(Me, 7))
+        Using bold As New Font(Font, FontStyle.Bold)
+            TextRenderer.DrawText(e.Graphics, pack.Name, bold, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        End Using
+        bounds.Y += Px(Me, 24)
+        TextRenderer.DrawText(e.Graphics, If(pack.Id = AspenPack.Id, "4 Rallycross layouts", If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", "Saved selection")), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        bounds.Y += Px(Me, 24)
+        TextRenderer.DrawText(e.Graphics, packStatuses(pack.Id), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        e.DrawFocusRectangle()
+    End Sub
 End Class
 
+Public Class CustomTrackBrowser
+    Inherits Panel
+    Public ReadOnly PackList As New ListBox With {.Name = "CustomPackList", .DrawMode = DrawMode.OwnerDrawFixed, .IntegralHeight = False, .AccessibleName = "Track packs"}
+    Public ReadOnly Picker As New ComboBox With {.Name = "CustomPack", .DropDownStyle = ComboBoxStyle.DropDownList, .AccessibleName = "Track pack"}
+    Public ReadOnly Detail As New VerticalStack
+    Private ReadOnly compact As SettingRow
+    Private arranging As Boolean
+    Public Sub New()
+        Name = "CustomTrackBrowser" : Margin = New Padding(0, 12, 0, 0)
+        compact = New SettingRow("Track pack", Picker)
+        Controls.AddRange({PackList, compact, Detail})
+        AddHandler Detail.SizeChanged, Sub() PerformLayout()
+    End Sub
+    Protected Overrides Sub OnLayout(e As LayoutEventArgs)
+        MyBase.OnLayout(e)
+        If arranging OrElse Detail Is Nothing OrElse compact Is Nothing OrElse Width <= 0 Then Return
+        arranging = True
+        Try
+            Dim narrow = Width < Px(Me, 800), gap = Px(Me, 22), listWidth = Px(Me, 215)
+            PackList.Visible = Not narrow : compact.Visible = narrow
+            PackList.ItemHeight = Px(Me, 88)
+            PackList.SetBounds(0, 0, listWidth, Math.Min(PackList.Items.Count, 5) * PackList.ItemHeight + Px(Me, 6))
+            compact.SetBounds(0, 0, Width, compact.Height) : compact.PerformLayout()
+            Dim left = If(narrow, 0, listWidth + gap), top = If(narrow, compact.Bottom + gap, 0)
+            Detail.SetBounds(left, top, Math.Max(1, Width - left), Detail.Height) : Detail.PerformLayout()
+            Height = Math.Max(Detail.Bottom, If(narrow, 0, PackList.Bottom))
+        Finally
+            arranging = False
+        End Try
+    End Sub
+    Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
+        Return New Size(Width, Height)
+    End Function
+End Class
 Public Class AspenSourceForm
-    Inherits LauncherForm
+    Inherits Form
     Private ReadOnly source As New ComboBox With {.Name = "Dirt3SourceFolder", .DropDownStyle = ComboBoxStyle.DropDown}
     Public ReadOnly Property SourceFolder As String
         Get
@@ -218,30 +387,32 @@ Public Class AspenSourceForm
         End Get
     End Property
     Public Sub New(previous As String, detected As String(), offer As ConversionProfile)
-        Text = "Install Aspen — locate DiRT 3" : Font = New Font("Segoe UI", 10)
+        Dim sourceGame = If(offer.Id = "nordschleife", "Assetto Corsa", "DiRT 3 Complete Edition")
+        source.Name = If(offer.Id = "nordschleife", "AssettoCorsaSourceFolder", "Dirt3SourceFolder")
+        Text = "Install " & offer.Name & " — locate " & sourceGame : Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi : StartPosition = FormStartPosition.CenterParent
         StyleChoice(source, Me)
         ClientSize = New Size(640, 340) : MinimumSize = New Size(480, 350)
         Dim content As New VerticalStack With {.Dock = DockStyle.Top, .Padding = New Padding(18)}
-        content.Controls.Add(New Label With {.Text = "Choose your DiRT 3 Complete Edition folder", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
+        content.Controls.Add(New Label With {.Text = "Choose your " & sourceGame & " folder", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
         content.Controls.Add(New Label With {.Text = "Select a detected Steam installation, paste its folder path, or use Browse. The source game stays unchanged.", .AutoSize = False})
         source.Items.AddRange(detected.Cast(Of Object).ToArray())
         source.Text = If(previous <> "", previous, detected.FirstOrDefault())
         content.Controls.Add(source)
         Dim browse As New Button With {.Text = "Browse…", .AutoSize = True}
         AddHandler browse.Click, Sub()
-                                     Using picker As New FolderBrowserDialog With {.Description = "Select DiRT 3 Complete Edition", .UseDescriptionForTitle = True, .SelectedPath = SourceFolder}
+                                     Using picker As New FolderBrowserDialog With {.Description = "Select " & sourceGame, .UseDescriptionForTitle = True, .SelectedPath = SourceFolder}
                                          If picker.ShowDialog(Me) = DialogResult.OK Then source.Text = picker.SelectedPath
                                      End Using
                                  End Sub
         content.Controls.Add(browse)
-        content.Controls.Add(New Label With {.Text = $"Conversion tools are included with DiRT2VR. No download is needed. Allow {Math.Ceiling(offer.StagingBytes / 1073741824.0)} GB for building. DiRT 3 is only needed to build or rebuild the tracks.", .AutoSize = False})
+        content.Controls.Add(New Label With {.Text = $"Conversion tools are included with DiRT2VR. No download is needed. Allow {Math.Ceiling(offer.StagingBytes / 1073741824.0)} GB for building. {sourceGame} is only needed to build or rebuild the tracks.", .AutoSize = False})
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True}
         Dim install As New Button With {.Text = "Build and install", .AutoSize = True}
         Dim cancel As New Button With {.Text = "Cancel", .AutoSize = True, .DialogResult = DialogResult.Cancel}
         AddHandler install.Click, Sub()
-                                      If Not Directory.Exists(IO.Path.Combine(SourceFolder, "tracks/locations/usa/aspen")) Then
-                                          MessageBox.Show(Me, "Choose the DiRT 3 Complete Edition game folder containing tracks\locations\usa\aspen.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
+                                      If Not Directory.Exists(IO.Path.Combine(SourceFolder, CustomTrackService.SourceTrackFolder(offer.Id))) Then
+                                          MessageBox.Show(Me, "Choose the " & sourceGame & " game folder containing the " & offer.Name & " track files.", Text, MessageBoxButtons.OK, MessageBoxIcon.Information)
                                           Return
                                       End If
                                       DialogResult = DialogResult.OK

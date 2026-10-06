@@ -168,8 +168,8 @@ Controls also provides six optional seat movement bindings. These are unassigned
 
 Current testing
 Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
-        "Install Aspen (Experimental)
-Close DiRT 2. On Launcher, check CUSTOM tracks and choose Install Aspen. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Build and install to check the source files and build all four layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
+        "Custom track packs (Experimental)
+Close DiRT 2. On Launcher, check CUSTOM tracks select Aspen, then choose Build and install. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Choose Build and install to check the source files and build all four layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
 
 Play
 After installation, choose a layout, Direct practice or Race, and a Car. Choose Launch for desktop play or Launch VR with SteamVR and your headset ready. Practice is solo; Race adds 1–7 AI opponents with same-car, mixed or same-class grids. Use the sliders to choose opponents and 1–20 laps. These options are experimental: Aspen headset rendering and broader AI race coverage still need gameplay validation. LAN is unavailable. Rebuild an existing Aspen installation once to update AI paths before racing; solo practice remains available. Conversion happens before installation, never during game loading.
@@ -177,8 +177,11 @@ After installation, choose a layout, Direct practice or Race, and a Car. Choose 
 Layouts
 Lakeside: night. Lake View: morning sun. Snowmass Sprint: evening sun. Snowmass Loop: overcast. These are Rallycross layouts. Ski-lift animation, full snowfall and deformable snow remain unsupported.
 
+Nordschleife
+Nordschleife uses your installed Assetto Corsa standard circuit. Select CUSTOM tracks → Nordschleife → Build and install…, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. Choose Daylight, Overcast or Evening, an installed car, and Launch for one lap of desktop Direct practice. These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. Best lap shows your fastest completed time and its car for the selected conditions. The full trackside scenery and distant landscape are included. A complete evening lap has been player-tested; lighting and visibility/LODs remain in development. Race and VR are unavailable.
+
 Offline and original tracks
-Installed tracks work offline without DiRT 3. Keep the source installation for rebuilds and updates. Custom layout, car, race and lap settings are saved separately. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
+Installed tracks work offline without the source game. Keep the source installation for rebuilds and updates. Custom layout, car, race and lap settings are saved separately for each pack. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything.
 
 Manage and recover
 Manage offers optional track updates, file verification, rebuilding and uninstalling. Unsupported source files are named: choose the correct folder or verify original files in Steam. Cancellation keeps existing tracks usable. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files.",

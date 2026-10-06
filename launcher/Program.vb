@@ -5,6 +5,7 @@ Public Module Program
     <STAThread>
     Public Function Main(args As String()) As Integer
         If args.Contains("--convert-aspen") Then Return Aspen.AspenConversion.Run(args)
+        If args.Contains("--convert-nordschleife") Then Return Nordschleife.NordschleifeConversion.Run(args)
         Try
             ' Theme initialization can create a hidden HWND. Set text rendering first,
             ' including in background session/worker processes launched by the UI.

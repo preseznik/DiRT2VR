@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Nordschleife under CUSTOM, built locally from your installed Assetto Corsa standard circuit. Include the full course, trackside scenery and distant landscape, Daylight/Overcast/Evening presets, GPS outline, eight timing checkpoints and best completed lap with its car for each preset. Correct road recovery near 11.8 km and restore the asphalt detail layer. A complete evening desktop lap is player-tested; lighting, visibility/LOD refinement and VR remain pending.
+
 - Include effective DiRT2VR settings, driving calibration, initial seat positions and build details in each diagnostic session folder. VR traces now identify observed track/route loads and player cars, including changes between events; the career series title is not yet available. Logging remains opt-in, and in-game transition testing is still pending.
 
 - Fix Up/Down navigation in the pause and finish menus for Direct practice and Race. Their vertical choices no longer require Left/Right.

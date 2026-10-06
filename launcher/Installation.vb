@@ -66,12 +66,12 @@ Public Module Worker
         Select Case operation
             Case "setup" : Call (New Installation(context)).Setup()
             Case "prepare", "prepare-desktop"
-                If CustomTracks.AspenPack.IsLayout(trackId) Then
-                    CustomTracks.AspenPack.RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
+                If CustomTracks.TrackPacks.IsLayout(trackId) Then
+                    CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
                     RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
-                    Dim receipt = CustomTracks.AspenPack.Read(context.GameRoot, False)
+                    Dim receipt = CustomTracks.TrackPacks.ForLayout(trackId).Read(context.GameRoot, False)
                     CustomTrackService.RequireLauncher(receipt)
-                    If opponents > 0 AndAlso Not CustomTracks.AspenPack.SupportsRace(receipt) Then Throw New IOException("Rebuild Aspen to update its AI driving paths before starting a Race. Direct practice is still available.")
+                    If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt) Then Throw New IOException("Rebuild Aspen to update its AI driving paths before starting a Race. Direct practice is still available.")
                     CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId)
                 End If
                 Dim transaction As New AssetTransaction(context)
@@ -95,7 +95,7 @@ Public Module Worker
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
             Case "remove-custom"
-                CustomTracks.PackInstallation.Uninstall(context.GameRoot)
+                CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 Call (New Installation(context)).RemoveProxy()
@@ -118,6 +118,10 @@ Public Module Worker
             If trackId IsNot Nothing Then
                 start.ArgumentList.Add("--track") : start.ArgumentList.Add(trackId)
             End If
+        End If
+        If operation = "remove-custom" AndAlso trackId IsNot Nothing Then
+            CustomTracks.TrackPacks.Get(trackId)
+            start.ArgumentList.Add("--track") : start.ArgumentList.Add(trackId)
         End If
         If quiet OrElse Environment.GetCommandLineArgs().Contains("--quiet") Then start.ArgumentList.Add("--quiet")
         Dim token = Guid.NewGuid().ToString("N")

@@ -22,6 +22,7 @@
 #include "direct_menus.h"
 #include "gfwl_compat.h"
 #include "driving_controls.h"
+#include "lap_results.h"
 #include "cockpit_start.h"
 #include "startup_hooks.h"
 #include "steering_animation.h"
@@ -88,6 +89,7 @@ bool EnableDirectLaps(unsigned char* base,unsigned laps) {
 // The demo start path otherwise forces the local vehicle back to AI every update.
 // Only change the controller's override, preserving the frontend's loading flow.
 void EnableDirectPractice() {
+    EnableLapResults();
     static bool applied{};
     wchar_t enabled[8]{};
     if(applied || GetEnvironmentVariableW(L"DIRT2VR_DIRECT_PRACTICE",enabled,8)!=1 || enabled[0]!=L'1') return;
