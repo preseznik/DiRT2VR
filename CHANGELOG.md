@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add desktop Race to all three Nordschleife lighting presets, with one lap, one to seven AI opponents, car selection and race difficulty. Rebuilding older solo packs adds eight separated road-supported starting slots. Retain previous best laps because the timed course is unchanged. AI race completion remains experimental; VR stays unavailable.
+
 - Restore the complete ten-layout Aspen and ten-layout Smelter locations and their existing launcher, conversion and session features alongside Nordschleife. Correct the 0.17.47 package regression. Keep the Nordschleife best-lap row beside its location details after switching packs.
 
 - Add Nordschleife under CUSTOM, built locally from your installed Assetto Corsa standard circuit. Include the full course, trackside scenery and distant landscape, Daylight/Overcast/Evening presets, GPS outline, eight timing checkpoints and best completed lap with its car for each preset. Correct road recovery near 11.8 km and restore the asphalt detail layer. A complete evening desktop lap is player-tested; lighting, visibility/LOD refinement and VR remain pending.

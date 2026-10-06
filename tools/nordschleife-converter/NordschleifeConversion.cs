@@ -98,7 +98,7 @@ public static class NordschleifeConversion
         TrackPack.VerifySources(profile,d2,ac,null,default);
         var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),profile.Sources);
         pack.Verify(install,receipt);SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
-        Report(100,"Nordschleife is ready for desktop practice");
+        Report(100,"Nordschleife is ready for desktop practice and Race");
         void Copy(string source,string relative)
         {
             string target=SafeFiles.Inside(install,relative);Directory.CreateDirectory(Path.GetDirectoryName(target)!);

@@ -264,7 +264,7 @@ Public Class Session
         Dim focus As New StartupFocus(context)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
-            lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode, settings.TrackId, ""), settings.CarCode)
+            lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode)
             Using child = Process.Start(start)
                 Status("Running")
                 Dim seenGame As Boolean

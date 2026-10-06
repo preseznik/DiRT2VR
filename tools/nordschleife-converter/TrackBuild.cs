@@ -80,16 +80,17 @@ internal static class TrackBuild
     }
     static void Route(Scene scene,string donor,string output)
     {
-        const float leadIn=20;
+        float leadIn=scene.FullCourse?StartingGrid.ApproachMetres:20;
         const float pointPadding=5;
         var start=scene.Gates[0];var tangent=Vector3.Normalize(new Vector3(start.Tangent.X,0,start.Tangent.Z));
-        var approach=start.Position-tangent*leadIn;approach.Y=scene.RoadHeight(approach)+(start.Position.Y-scene.RoadHeight(start.Position));
+        var approachGate=scene.FullCourse?scene.BeforeStart(leadIn):start with{Position=start.Position-tangent*leadIn};
+        var approach=approachGate.Position;approach.Y=scene.RoadHeight(approach)+(start.Position.Y-scene.RoadHeight(start.Position));
         // Stock point-to-point routes have an approach gate before the start split.
         // Include the grid in the centre-line range rather than beginning ahead of the car.
         // A one-lap tour uses distinct start/end gate identities at the same physical
         // finish line. Point-to-point HUD data displays timing checkpoint markers.
         var routeGates=(scene.FullCourse?scene.Gates.Append(start with{Distance=scene.Length}):scene.Gates.Concat(scene.RunoutGates))
-            .Select(g=>g with{Distance=g.Distance+leadIn+pointPadding}).Prepend(start with{Position=approach,Distance=pointPadding}).ToArray();
+            .Select(g=>g with{Distance=g.Distance+leadIn+pointPadding}).Prepend(approachGate with{Position=approach,Distance=pointPadding}).ToArray();
         // The native progress HUD supports ten splits including start and finish.
         // Divide the full course into nine sectors, about 2.3 km each.
         var checkpointDistances=scene.FullCourse?Enumerable.Range(1,8).Select(i=>i*scene.Length/9).ToArray():[];
@@ -127,7 +128,7 @@ internal static class TrackBuild
         // The HUD route and distance calculation use centre-line points, not just crossing gates.
         // The native open-route mapper needs strict plane crossings inside line segments;
         // a vertex on a gate plane can leave its segment reference at -1.
-        var before=routeGates[0].Position-tangent*pointPadding;before.Y=scene.RoadHeight(before)+(start.Position.Y-scene.RoadHeight(start.Position));
+        var before=scene.FullCourse?scene.BeforeStart(leadIn+pointPadding).Position:routeGates[0].Position-tangent*pointPadding;before.Y=scene.RoadHeight(before)+(start.Position.Y-scene.RoadHeight(start.Position));
         var after=routeGates[^1].Position+routeGates[^1].Tangent*pointPadding;
         var lineGates=routeGates.Zip(routeGates.Skip(1),(a,b)=>new Gate((a.Position+b.Position)/2,Vector3.Normalize(a.Tangent+b.Tangent),(a.Left+b.Left)/2,(a.Right+b.Right)/2,(a.Distance+b.Distance)/2))
             .Prepend(routeGates[0] with{Position=before,Distance=.01f}).Append(routeGates[^1] with{Position=after,Distance=routeGates[^1].Distance+pointPadding}).ToArray();
@@ -156,15 +157,7 @@ internal static class TrackBuild
         Files.Xml(new XDocument(new XElement("progress_track_data",new XAttribute("exporter_version","3.0.0"),new XElement("track",new XAttribute("type","point_to_point"),new XAttribute("total_distance",F(lineGates[^1].Distance+.01f))),
             new XElement("routes",new XAttribute("num_routes",1),splits),progress,points)),Path.Combine(output,"progress_track.xml"));
         Files.Json(Path.Combine(output,"progress.json"),new{DenseSourceLinePoints=denseLinePoints,CentreLinePoints=lineGates.Length,PointLineBudget=ProgressGates.PointLineBudget,AiGates=aiGates.Length,AiGateBudget=ProgressGates.AiGateBudget,ResetGates=scene.Gates.Length,ProgressGates=crossingGates.Length,NativeProgressGateLimit=ProgressGates.NativeLimit,ApproachMetres=leadIn,PointPaddingMetres=pointPadding,RunoutMetres=scene.FullCourse?pointPadding:routeGates[^1].Distance-scene.Length-leadIn-pointPadding,StartGate=1,StartSplit="finish",DemoLapInitialization=true,FinishGate=scene.FullCourse?crossingGates.Length-1:scene.Gates.Length,TimingGates=splitGates.Where(s=>s.Item2=="time").Select(s=>s.Item1),CheckpointSpacingMetres=scene.FullCourse?scene.Length/9:0,OneLapTour=scene.FullCourse,FullCourse=scene.FullCourse,RuntimeValidated=false});
-        var grids=Files.Pssg(Path.Combine(donor,"route_1/grids.pssg"));var right=Vector3.Normalize(Vector3.Cross(Vector3.UnitY,-tangent));
-        var spawn=start.Position-tangent*10;float roadHeight=scene.RoadHeight(spawn);spawn.Y=roadHeight+.6f;
-        foreach(var node in grids.Elements<PssgNode>())
-        {
-            node.Transform.Transform=Matrix4x4.Identity;
-            if(node.Id.StartsWith("slot_",StringComparison.Ordinal))node.Transform.Transform=new(right.X,right.Y,right.Z,0,0,1,0,0,-tangent.X,-tangent.Y,-tangent.Z,0,spawn.X,spawn.Y,spawn.Z,1);
-        }
-        Files.Save(grids,Path.Combine(output,"grids.pssg"));
-        Files.Json(Path.Combine(output,"grid.json"),new{Position=new[]{spawn.X,spawn.Y,spawn.Z},RoadHeight=roadHeight,ClearanceMetres=.6f,BehindStartMetres=10,RuntimeValidated=false});
+        StartingGrid.Write(scene,donor,output);
         using(var input=File.OpenRead(Path.Combine(donor,"route_1/ai_vehicle_track.xml")))
         {
             var vehicle=new XmlFile(input);foreach(System.Xml.XmlElement brake in vehicle.Document.SelectNodes("//brake_lines")!){brake.RemoveAll();brake.SetAttribute("num_brake_lines","0");}

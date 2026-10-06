@@ -277,7 +277,8 @@ Public Class CustomTrackPanel
             setup.Controls.Remove(lightingTestBox)
         End If
         laps.Enabled = currentPack?.Id <> "nordschleife"
-        modeHint.Text = If(currentPack?.Id = "nordschleife", "Desktop practice · One lap · Race and VR pending", "Desktop and VR · AI races are experimental · LAN unavailable")
+        modeHint.Text = If(currentPack?.Id = "nordschleife", "Desktop · One lap · AI races are experimental · VR unavailable", "Desktop and VR · AI races are experimental · LAN unavailable")
+        If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."
         Dim race = launchMode.SelectedIndex = 1

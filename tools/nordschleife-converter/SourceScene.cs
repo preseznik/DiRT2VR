@@ -157,6 +157,17 @@ internal sealed class Scene
         }
         return closest ?? throw new InvalidDataException("No original road collision under the starting grid.");
     }
+    internal Gate BeforeStart(float metres)
+    {
+        float distance = Length - metres;
+        int index = Array.FindLastIndex(Gates, g => g.Distance <= distance);
+        if (!FullCourse || index < 0) throw new InvalidDataException("Missing full-course starting approach.");
+        var a = Gates[index];
+        var b = index + 1 < Gates.Length ? Gates[index + 1] : Gates[0] with { Distance = Length };
+        float at = (distance - a.Distance) / (b.Distance - a.Distance);
+        return new(Vector3.Lerp(a.Position, b.Position, at), Vector3.Normalize(Vector3.Lerp(a.Tangent, b.Tangent, at)),
+            a.Left + (b.Left - a.Left) * at, a.Right + (b.Right - a.Right) * at, -metres);
+    }
     internal static string Surface(string name)
     {
         string key=Regex.Replace(name,"^[0-9]+","").ToUpperInvariant();
