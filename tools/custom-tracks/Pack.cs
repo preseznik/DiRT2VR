@@ -131,8 +131,8 @@ public sealed class TrackPack
     public void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps)
     {
         var layout = GetLayout(id);
-        if (Id == "nordschleife" && laps != 1)
-            throw new IOException("Nordschleife currently supports one complete lap per session.");
+        if (Id == "nordschleife" && mode == "practice" && laps != 1)
+            throw new IOException("Nordschleife Direct practice supports one complete lap per session.");
         if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")))
             throw new IOException("This custom-track launch mode is unavailable.");
         if (mode == "race" && opponents > MaximumOpponents(id))

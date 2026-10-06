@@ -48,6 +48,7 @@ Public Class CustomTrackPanel
     Private hasReceipt As Boolean
     Private installedReceipt As PackReceipt
     Private fullGridOpponents As Integer = 3
+    Private nordRaceLaps As Integer = 1
     Private raceReady As Boolean
     Private working As Boolean
     Private loading As Boolean
@@ -133,6 +134,9 @@ Public Class CustomTrackPanel
         For Each choice In {launchMode, cars, opponentCars, raceDifficulty}
             AddHandler choice.SelectedIndexChanged, Sub() RefreshRaceOptions()
         Next
+        AddHandler laps.ValueChanged, Sub()
+                                          If Not loading AndAlso currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then nordRaceLaps = laps.Value
+                                      End Sub
         AddHandler layouts.SelectedIndexChanged, Sub()
                                                     lightingTest.SelectedIndex = 2
                                                     Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
@@ -206,6 +210,7 @@ Public Class CustomTrackPanel
             installHint.Text = "Build this pack from your own " & If(nord, "Assetto Corsa Nordschleife", "DiRT 3 Complete Edition") & " files. Select a detected installation or browse to its folder. Installed tracks work offline."
             installationValid = False : raceReady = False : installedReceipt = Nothing : hasReceipt = False : errorText = "" : installedLayouts.Clear()
             Dim selected = preferences.ForPack(currentPack.Id)
+            nordRaceLaps = Math.Clamp(selected.Laps, 1, 20)
             layouts.Items.Clear()
             For Each trackLayout In currentPack.Layouts
                 layouts.Items.Add(New LayoutItem(trackLayout, nord))
@@ -221,7 +226,7 @@ Public Class CustomTrackPanel
             raceDifficulty.SelectedIndex = Math.Clamp(selected.RaceDifficulty, -1, 5) + 1
             opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, selected.OpponentCars)
             opponents.Maximum = 7 : fullGridOpponents = Math.Clamp(selected.Opponents, 1, 7)
-            opponents.Value = fullGridOpponents : laps.Value = If(nord, 1, Math.Clamp(selected.Laps, 1, 20))
+            opponents.Value = fullGridOpponents : laps.Value = If(nord AndAlso launchMode.SelectedIndex <> 1, 1, nordRaceLaps)
             status.Text = If(currentPack.Available, "Choose Build and install to prepare this pack.", If(currentPack.Id = "smelter", "In development · Gameplay validation pending", "Unavailable in this launcher"))
             unavailable.Text = If(currentPack.Id = "smelter", "Smelter is unavailable in this launcher.", "Choose an available pack from the list. Your saved selection has been kept.")
         Finally
@@ -244,7 +249,7 @@ Public Class CustomTrackPanel
         If cars.SelectedItem IsNot Nothing Then selected.CarCode = DirectCast(cars.SelectedItem, PracticeCar).Code
         If opponentCars.SelectedIndex >= 0 Then selected.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         selected.RaceDifficulty = raceDifficulty.SelectedIndex - 1
-        selected.Opponents = If(opponents.Maximum = 1, fullGridOpponents, opponents.Value) : selected.Laps = CInt(laps.Value)
+        selected.Opponents = If(opponents.Maximum = 1, fullGridOpponents, opponents.Value) : selected.Laps = If(currentPack.Id = "nordschleife", nordRaceLaps, laps.Value)
         selected.PostProcessTest = If(ButtermilkPostProcess.Supports(selected.LayoutId), {"normal", "bloom-off", "lower-exposure"}(Math.Max(0, lightingTest.SelectedIndex)), "normal")
     End Sub
     Public Sub Save()
@@ -276,12 +281,14 @@ Public Class CustomTrackPanel
         Else
             setup.Controls.Remove(lightingTestBox)
         End If
-        laps.Enabled = currentPack?.Id <> "nordschleife"
-        modeHint.Text = If(currentPack?.Id = "nordschleife", "Desktop · One lap · AI races are experimental · VR unavailable", "Desktop and VR · AI races are experimental · LAN unavailable")
+        Dim race = launchMode.SelectedIndex = 1
+        Dim nord = currentPack?.Id = "nordschleife"
+        laps.Enabled = Not nord OrElse race
+        If nord AndAlso Not loading Then laps.Value = If(race, nordRaceLaps, 1)
+        modeHint.Text = If(nord, "Desktop · " & If(race, "1–20 laps", "One lap") & " · AI races are experimental · VR unavailable", "Desktop and VR · AI races are experimental · LAN unavailable")
         If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."
-        Dim race = launchMode.SelectedIndex = 1
         raceDifficulty.Enabled = race
         opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race
         Dim vehicle = TryCast(cars.SelectedItem, PracticeCar)

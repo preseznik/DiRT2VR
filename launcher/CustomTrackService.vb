@@ -17,13 +17,14 @@ Public Class CustomTrackSettings
     Public Sub ApplyTo(settings As VrSettings)
         Dim pack = TrackPacks.ForLayout(LayoutId)
         Dim gridOpponents = Math.Min(Opponents, pack.MaximumOpponents(LayoutId))
-        pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), Laps)
+        Dim sessionLaps = If(pack.Id = "nordschleife" AndAlso LaunchMode = "practice", 1, Laps)
+        pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), sessionLaps)
         RaceCatalog.Current.Car(CarCode)
         If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
         DirectRaceDifficulty.Validate(RaceDifficulty)
         settings.RaceDifficulty = RaceDifficulty
         settings.TrackId = LayoutId : settings.LaunchMode = LaunchMode : settings.CarCode = CarCode
-        settings.Opponents = gridOpponents : settings.OpponentCars = OpponentCars : settings.Laps = Laps
+        settings.Opponents = gridOpponents : settings.OpponentCars = OpponentCars : settings.Laps = sessionLaps
     End Sub
 End Class
 
