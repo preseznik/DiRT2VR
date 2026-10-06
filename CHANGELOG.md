@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.52 — 2026-06-10 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.52)
+
 - Enable experimental native VR for Nordschleife Direct practice and Race in Daylight, Overcast and Evening. Use the existing stereo/OpenXR launch path and retain the one-to-twenty Race lap selection. Existing packs need no rebuild; full-course headset rendering and performance still need player testing.
 
 - Allow one to twenty laps in Nordschleife desktop Race, matching the other circuit events. Remember the selected race lap count when switching conditions, locations or Direct practice. Existing race packs need no rebuild; full multi-lap AI race completion remains experimental.
