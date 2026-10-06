@@ -252,6 +252,7 @@ Public Class CustomTrackPanel
     End Sub
     Public Sub RefreshBestTime()
         bestTime.Visible = currentPack?.Id = "nordschleife"
+        detail.Controls.SetChildIndex(bestTime, 2)
         If currentPack?.Id <> "nordschleife" Then Return
         Dim layoutId = TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id
         If layoutId Is Nothing Then
