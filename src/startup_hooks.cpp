@@ -1,4 +1,5 @@
 #include "startup_hooks.h"
+#include "event_diagnostics.h"
 #include "draw_distance.h"
 #include "gfwl_compat.h"
 #include "driving_controls.h"
@@ -25,6 +26,7 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     if(!observerReady) Log("camera observer: unavailable; original steering visuals retained");
     if(steering && (!playerCameraReady || !observerReady || !EnableSteeringAnimation(headset))) Log("steering animation: unavailable; original visuals retained");
     if(headset && !EnableSeatAdjustment()) Log("seat adjustment: unavailable; existing VR remains active");
+    EnableEventDiagnostics();
     return true;
 }
 }

@@ -95,7 +95,7 @@ Public Class Session
                     graphics.Recover() : Worker.Invoke(context, "recover")
                     Worker.Invoke(context, "setup")
                     Status("Preparing")
-                    Dim logFolder = CreateLogFolder(context, settings.LoggingEnabled OrElse Environment.GetCommandLineArgs().Contains("--diagnostic-capture"))
+                    Dim logFolder = CreateSessionLog(True)
                     ProbeRuntime(logFolder)
                     Dim channel = "Local\DiRT2VR.Input." & Guid.NewGuid().ToString("N")
                     Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor(), seat As New SeatChannel(context, settings)
@@ -199,7 +199,7 @@ Public Class Session
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
-            ConfigureLogging(lanStart, CreateLogFolder(context, settings.LoggingEnabled))
+            ConfigureLogging(lanStart, CreateSessionLog(False))
             profile.Configure(lanStart, True)
             profile.Prepare(True)
             WaitForGame(lanStart)
@@ -207,7 +207,7 @@ Public Class Session
             Return False
         End If
         Dim config As String = Nothing
-        Dim logFolder As String = Nothing
+        Dim logFolder As String = CreateSessionLog(False)
         If settings.DirectMode Then
             ' Human control is enabled by the DX11 proxy; desktop rendering settings
             ' stay untouched rather than silently running an AI-driven DX9 session.
@@ -219,9 +219,7 @@ Public Class Session
             Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
             Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars)
             config = New AssetTransaction(context).PracticeConfig()
-            logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         End If
-        If (FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation) AndAlso logFolder Is Nothing Then logFolder = CreateLogFolder(context, settings.LoggingEnabled)
         Dim start = DesktopStartInfo(context, config, logFolder)
         If FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation Then ConfigureLogging(start, logFolder)
         profile.Configure(start, False)
@@ -295,6 +293,11 @@ Public Class Session
             If returnChannel.ProfileLoadFailed Then Throw New IOException("The career could not be loaded for this direct event, or sign-in was canceled. Use Normal Launch to sign in to your usual GFWL profile and confirm it loads. No replacement career was created.")
             Return returnChannel.Requested
         End Using
+    End Function
+    Private Function CreateSessionLog(vr As Boolean) As String
+        Dim folder = CreateLogFolder(context, settings.LoggingEnabled OrElse (vr AndAlso Environment.GetCommandLineArgs().Contains("--diagnostic-capture")))
+        SessionDiagnostics.Save(context, folder, settings, driving, vr)
+        Return folder
     End Function
     Public Shared Function CreateLogFolder(context As InstallContext, enabled As Boolean) As String
         If Not enabled Then Return Nothing

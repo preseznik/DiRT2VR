@@ -1,4 +1,5 @@
 #include "seat_adjustment.h"
+#include "event_diagnostics.h"
 #include "common.h"
 #include "gfwl_compat.h"
 #include "eye_blit.h"
@@ -192,6 +193,8 @@ void SeatSelectCamera(void* manager) {
     if(auto found=identities.find(manager);found!=identities.end()) {
         for(unsigned i=0;i<Read<unsigned>(184);++i) if(CarString(int(i),0,16)==found->second) { index=int(i); break; }
     }
+    const auto found=identities.find(manager);
+    ObserveDiagnosticCar(found!=identities.end() ? found->second.c_str() : nullptr);
     selected=index;
     Log("seat adjustment: active car=%s manager=%p known=%u",index>=0 ? CarString(index,0,16).c_str() : "unknown",manager,unsigned(identities.size()));
 }
