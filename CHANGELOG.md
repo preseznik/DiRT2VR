@@ -6,9 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Enable experimental native VR for Nordschleife Direct practice and Race in Daylight, Overcast and Evening. Use the existing stereo/OpenXR launch path and retain the one-to-twenty Race lap selection. Existing packs need no rebuild; full-course headset rendering and performance still need player testing.
+
 - Allow one to twenty laps in Nordschleife desktop Race, matching the other circuit events. Remember the selected race lap count when switching conditions, locations or Direct practice. Existing race packs need no rebuild; full multi-lap AI race completion remains experimental.
 
-- Add desktop Race to all three Nordschleife lighting presets, with one lap, one to seven AI opponents, car selection and race difficulty. Rebuilding older solo packs adds eight separated road-supported starting slots. Retain previous best laps because the timed course is unchanged. AI race completion remains experimental; VR stays unavailable.
+- Add desktop Race to all three Nordschleife lighting presets, with one lap, one to seven AI opponents, car selection and race difficulty. Rebuilding older solo packs adds eight separated road-supported starting slots. Retain previous best laps because the timed course is unchanged. AI race completion remains experimental.
 
 - Restore the complete ten-layout Aspen and ten-layout Smelter locations and their existing launcher, conversion and session features alongside Nordschleife. Correct the 0.17.47 package regression. Keep the Nordschleife best-lap row beside its location details after switching packs.
 

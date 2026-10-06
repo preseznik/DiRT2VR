@@ -285,7 +285,7 @@ Public Class CustomTrackPanel
         Dim nord = currentPack?.Id = "nordschleife"
         laps.Enabled = Not nord OrElse race
         If nord AndAlso Not loading Then laps.Value = If(race, nordRaceLaps, 1)
-        modeHint.Text = If(nord, "Desktop · " & If(race, "1–20 laps", "One lap") & " · AI races are experimental · VR unavailable", "Desktop and VR · AI races are experimental · LAN unavailable")
+        modeHint.Text = If(nord, "Desktop and VR · " & If(race, "1–20 laps", "One lap") & " · VR and AI races are experimental", "Desktop and VR · AI races are experimental · LAN unavailable")
         If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."

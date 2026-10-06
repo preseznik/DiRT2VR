@@ -65,7 +65,7 @@ public static class TrackPacks
          new("smelter-coles-creek", "Cole's Creek", "d2vr_smelter_9", "Morning sun", "Landrush"),
          new("smelter-dredger-duel", "Dredger Duel", "d2vr_smelter_4", "Evening sun", "Head-to-head"),
          new("smelter-furnace-duel", "Furnace Duel", "d2vr_smelter_5", "Evening sun", "Head-to-head")], ["surface_materials.xml", "database/database.bin"]);
-    public static readonly TrackPack Nordschleife = new("nordschleife", "Nordschleife", "1.0.1", "0.17.50", ["desktop-solo", "desktop-race"],
+    public static readonly TrackPack Nordschleife = new("nordschleife", "Nordschleife", "1.0.1", "0.17.52", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("nordschleife-daylight", "Standard circuit", "d2vr_nord_day", "Daylight"),
          new("nordschleife-overcast", "Standard circuit", "d2vr_nord_cloud", "Overcast"),
          new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
