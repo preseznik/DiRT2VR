@@ -258,6 +258,7 @@ Public Class Session
         Return start
     End Function
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
+        NordschleifeProgress.Configure(start, settings)
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         FlashbackLaunch.Configure(start, settings)
         SteeringAnimationLaunch.Configure(start, settings)

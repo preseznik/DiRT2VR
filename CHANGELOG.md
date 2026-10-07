@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Correct the Nordschleife player progress marker in Direct practice and Race while retaining all eight timing checkpoints. One-lap sessions show checkpoint ticks; multi-lap Race uses the game's lap divisions. Existing packs need no rebuild; the launcher applies and restores the circuit route for each desktop or VR session.
+
 - Fix Nordschleife Build and install rejecting a converted pack made with the accepted alternate DiRT 2 light-animation file. Check the receipt against the actual verified sources while retaining version and layout checks.
 
 - Show one Nordschleife best practice lap and its car across Daylight, Overcast and Evening. Retain the fastest existing saved lap when changing lighting presets.

@@ -88,10 +88,49 @@ bool EnableDirectLaps(unsigned char* base,unsigned laps) {
     Log("direct start: demo lap override=%u hook=%s",laps,MH_StatusToString(status));
     return status==MH_OK;
 }
+// Circuit races normally divide this bar by laps. Single-lap Nordschleife retains its
+// eight timing checkpoints instead, using the native route-split renderer.
+bool EnableNordschleifeCheckpoints() {
+    wchar_t enabled[8]{};
+    const auto length=GetEnvironmentVariableW(L"DIRT2VR_NORDSCHLEIFE_CHECKPOINTS",enabled,8);
+    if(!length) return true;
+    if(length!=1 || enabled[0]!=L'1' || !SupportedHost()) return false;
+    static bool applied{};
+    if(applied) return true;
+    auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+    constexpr unsigned char compare[]={0x80,0x79,0x54,0x01};
+    constexpr unsigned char checkpoints[]={0x80,0x79,0x54,0x02};
+    constexpr unsigned char finishBranch[]={0x74,0x2c};
+    constexpr unsigned char showFinish[]={0xeb,0x2c};
+    struct Edit { unsigned rva,size; const unsigned char *before,*after; };
+    const Edit edits[]={{0x3c445f,sizeof(compare),compare,checkpoints},
+                        {0x3c487a,sizeof(finishBranch),finishBranch,showFinish}};
+    for(const auto& edit:edits)
+        if(memcmp(base+edit.rva,edit.before,edit.size)) return false;
+    // Select native checkpoint positions rather than lap divisions. Then append
+    // the native finish tick at 100 percent: nine splits plus finish use ten slots.
+    // The shared circuit/lap descriptor and timing state remain untouched.
+    for(const auto& edit:edits) {
+        auto target=base+edit.rva;
+        DWORD previous{},ignored{};
+        if(!VirtualProtect(target,edit.size,PAGE_EXECUTE_READWRITE,&previous)) return false;
+        memcpy(target,edit.after,edit.size);
+        for(unsigned i=0;i<edit.size;++i)
+            if(edit.before[i]!=edit.after[i]) RecordCodeByte(target+i,edit.before[i],edit.after[i]);
+        if(!VirtualProtect(target,edit.size,previous,&ignored) || !FlushInstructionCache(GetCurrentProcess(),target,edit.size)) return false;
+    }
+    applied=true;
+    Log("Nordschleife: native circuit progress with timing checkpoint markers (memory only)");
+    return true;
+}
 // The demo start path otherwise forces the local vehicle back to AI every update.
 // Only change the controller's override, preserving the frontend's loading flow.
 void EnableDirectPractice() {
     EnableLapResults();
+    if(!EnableNordschleifeCheckpoints()) {
+        Log("Nordschleife: checkpoint display guard failed; stopping launch");
+        ExitProcess(ERROR_BAD_EXE_FORMAT);
+    }
     static bool applied{};
     wchar_t enabled[8]{};
     if(applied || GetEnvironmentVariableW(L"DIRT2VR_DIRECT_PRACTICE",enabled,8)!=1 || enabled[0]!=L'1') return;

@@ -70,14 +70,19 @@ Public Module Worker
             Case "prepare", "prepare-desktop"
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
+                    CustomTracks.SessionFiles.Recover(context.GameRoot)
                     RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
                     Dim receipt = CustomTracks.TrackPacks.ForLayout(trackId).Read(context.GameRoot, False)
                     CustomTrackService.RequireLauncher(receipt)
                     If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt, trackId) Then Throw New IOException("Rebuild " & CustomTracks.TrackPacks.ForLayout(trackId).Name & " to update its AI driving paths before starting a Race. Direct practice is still available.")
-                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId)
                 End If
                 Dim transaction As New AssetTransaction(context)
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars)
+                If CustomTracks.TrackPacks.IsLayout(trackId) Then
+                    Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
+                    If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
+                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
+                End If
                 ' Layer exposure after VR motion-blur changes; recover in the reverse order.
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
             Case "prepare-lan"
