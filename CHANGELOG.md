@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix Nordschleife Build and install rejecting a converted pack made with the accepted alternate DiRT 2 light-animation file. Check the receipt against the actual verified sources while retaining version and layout checks.
+
 - Show one Nordschleife best practice lap and its car across Daylight, Overcast and Evening. Retain the fastest existing saved lap when changing lighting presets.
 
 - Fix Nordschleife builds rejecting the compatible LF-only variant of DiRT 2's Battersea light-animation file. Keep validation strict for other source files and record the actual accepted source hashes.

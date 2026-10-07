@@ -149,7 +149,7 @@ Public Module CustomTrackService
         Try
         If New DriveInfo(IO.Path.GetPathRoot(stage)).AvailableFreeSpace < offer.StagingBytes Then Throw New IOException("Not enough free space for conversion. Free at least " & Math.Ceiling(offer.StagingBytes / 1073741824.0).ToString() & " GB on " & IO.Path.GetPathRoot(stage))
         If New DriveInfo(IO.Path.GetPathRoot(context.GameRoot)).AvailableFreeSpace < offer.InstalledBytes * 2 Then Throw New IOException("Not enough free space beside DiRT 2 for the track and its rollback copy.")
-        TrackPack.VerifySources(offer, context.GameRoot, source, progress, cancel)
+        Dim sources = TrackPack.VerifySources(offer, context.GameRoot, source, progress, cancel)
         cancel.ThrowIfCancellationRequested()
         context.RequireClosed()
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {
@@ -189,7 +189,7 @@ Public Module CustomTrackService
         Dim built = IO.Path.Combine(stage, "conversion/install")
         Dim receipt = pack.Read(built, True, cancel)
         RequireLauncher(receipt)
-        If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(offer.Sources) OrElse Not receipt.Sessions.Select(Function(s) s.LayoutId).SequenceEqual(selectedLayouts.Select(Function(l) l.Id)) Then Throw New IOException("Converted pack does not match the selected package.")
+        If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(sources) OrElse Not receipt.Sessions.Select(Function(s) s.LayoutId).SequenceEqual(selectedLayouts.Select(Function(l) l.Id)) Then Throw New IOException("Converted pack does not match the selected package.")
         cancel.ThrowIfCancellationRequested() : context.RequireClosed()
         progress.Report(New TrackProgress(100, "Finishing installation — please wait. It is no longer safe to stop.", False))
         Worker.Invoke(context, "install-custom", workId:=id)
