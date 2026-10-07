@@ -43,6 +43,7 @@ Public Class Installation
     End Sub
     Public Sub RemoveProxy()
         context.RequireClosed()
+        Call (New BloomTransaction(context)).Recover()
         Call (New DirectMenus(context)).Recover()
         Call (New StartupMovies(context)).Recover()
         Call (New LanTransaction(context)).Recover()
@@ -87,6 +88,8 @@ Public Module Worker
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
             Case "prepare-lan"
                 Call (New LanTransaction(context)).Prepare()
+            Case "prepare-bloom"
+                Call (New BloomTransaction(context)).Prepare()
             Case "prepare-profile"
                 Call (New LanTransaction(context)).Prepare(offlineProfile:=True)
             Case "prepare-movies"
@@ -94,6 +97,7 @@ Public Module Worker
             Case "prepare-direct-menus", "prepare-direct-menus-movies"
                 Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies")
             Case "recover"
+                Call (New BloomTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Recover(context.GameRoot)
@@ -102,13 +106,16 @@ Public Module Worker
                 Call (New LanTransaction(context)).Recover()
                 Call (New AssetTransaction(context)).Recover()
             Case "install-custom"
+                Call (New BloomTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
             Case "remove-custom"
+                Call (New BloomTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
+                Call (New BloomTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 Call (New Installation(context)).RemoveProxy()

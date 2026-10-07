@@ -34,6 +34,8 @@ Public Class MainForm
     Private ReadOnly laps As New ValueSlider("Laps", 1, 20, 1) With {.AccessibleName = "Laps"}
     Private ReadOnly borderless As New CheckBox With {.Text = "Borderless fullscreen (desktop only)", .Name = "BorderlessDesktop", .AutoSize = True}
     Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
+    Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
+    Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 100, "%")
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
@@ -186,6 +188,8 @@ Public Class MainForm
             "Lower uses less memory but can blur the view. 100% keeps the" & vbCrLf &
             "size SteamVR recommends. This is not car or road texture quality.")
         Tip(msaa, "Smooths jagged edges in VR. Higher settings use more memory" & vbCrLf & "and GPU power; 4× and 8× can cause crashes. 2× is the default.")
+        Tip(desktopBloom, "Soft glow around bright areas. On keeps the game's effects;" & vbCrLf & "Off removes the glow. Save and relaunch desktop play to apply.")
+        Tip(vrBloom, "Soft glow around bright areas. On keeps the game's effects;" & vbCrLf & "Off removes the glow in VR, including its virtual screen." & vbCrLf & "Save and relaunch VR to apply. This is separate from shadows.")
         Tip(fieldOfView, "Lower values trim the edges of your VR view to reduce rendering" & vbCrLf & "work. 100% keeps the full view; objects keep their normal scale.")
         Tip(mirrors, "Turn the car's rear-view mirrors on or off in VR." & vbCrLf & "Off can improve performance. Game setting keeps your usual choice.")
         Tip(extendedViews, "Use headset 3D and head tracking in supported cameras outside the cockpit." & vbCrLf & "First stage: bonnet, bumper and chase views. Menus and replays stay on the virtual screen." & vbCrLf & "Off by default. Save and relaunch VR to apply. Toggle VR always returns to the flat screen.")
@@ -498,6 +502,7 @@ Public Class MainForm
         Dim desktop = Section(columns.First, "Desktop")
         borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen", borderless)
         desktopVSync.Checked = settings.DesktopVSync : Field(desktop, "VSync", desktopVSync)
+        desktopBloom.Checked = settings.DesktopBloom : Field(desktop, "Bloom", desktopBloom)
         Dim render = Section(columns.First, "VR rendering")
         renderScale.Value = settings.RenderScale : headsetScale.Value = settings.HeadsetScale : fieldOfView.Value = settings.FieldOfView
         mirrors.Items.AddRange({"Game setting", "On", "Off"})
@@ -510,6 +515,7 @@ Public Class MainForm
         RefreshMsaaWarning()
         Field(render, "Field of view", fieldOfView) : Field(render, "Car mirrors", mirrors)
         vrShadows.Checked = settings.VrShadows : Field(render, "Shadows (experimental)", vrShadows)
+        vrBloom.Checked = settings.VrBloom : Field(render, "Bloom", vrBloom)
         treeDetail.Value = settings.TreeDetail : objectDetail.Value = settings.ObjectDetail
         Field(render, "Tree detail", treeDetail) : Field(render, "Object detail", objectDetail)
         Field(render, "Headset refresh rate", refreshLabel)
@@ -532,6 +538,7 @@ Public Class MainForm
         Dim defaults As New Button With {.Text = "Restore defaults", .Name = "GraphicsDefaults", .AutoSize = True}
         AddHandler defaults.Click, Sub()
                                        borderless.Checked = False : desktopVSync.Checked = True
+                                       desktopBloom.Checked = True : vrBloom.Checked = True
                                        msaa.Value = 1 : vrShadows.Checked = False
                                        renderScale.Value = 100 : headsetScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False : hudDistance.Value = 2
@@ -721,6 +728,7 @@ Public Class MainForm
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.BorderlessDesktop = borderless.Checked
         settings.DesktopVSync = desktopVSync.Checked
+        settings.DesktopBloom = desktopBloom.Checked : settings.VrBloom = vrBloom.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.VrMsaa = {0, 2, 4, 8}(msaa.Value) : settings.VrShadows = vrShadows.Checked
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)

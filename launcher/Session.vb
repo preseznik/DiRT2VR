@@ -258,6 +258,8 @@ Public Class Session
         Return start
     End Function
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
+        ' Last effect layer for every launch path, including LAN and return to menus.
+        If Not BloomTransaction.Enabled(settings, start) Then Worker.Invoke(context, "prepare-bloom")
         NordschleifeProgress.Configure(start, settings)
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         FlashbackLaunch.Configure(start, settings)

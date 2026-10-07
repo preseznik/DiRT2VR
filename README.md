@@ -56,7 +56,7 @@ DiRT 2 may briefly fall behind other windows as it replaces its startup window. 
 
 **Race difficulty** controls AI opponents in stock and CUSTOM-track Race launches. Choose Easy, Casual, Serious, Savage, Extreme or Hardcore; **Use game setting** leaves the game’s saved choice in effect. Each custom location remembers its own choice. This does not change career difficulty in Normal Launch or multiplayer.
 
-Regular Launch needs no SteamVR or headset and keeps your normal camera, effects and graphics settings. Desktop Direct practice and Race require DX11 and temporarily enable human control, the selected race and the direct-session menus. VR shortcuts and Graphics-tab overrides apply only to Launch VR.
+Regular Launch needs no SteamVR or headset and uses your desktop graphics preferences. Desktop Direct practice and Race require DX11 and temporarily enable human control, the selected race and the direct-session menus. VR shortcuts and the VR rendering/HUD settings apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.
 2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Normal Launch** on **Launcher**, and select **Launch VR**.
@@ -174,6 +174,8 @@ The initial Subaru Group N / Croatia — Velebit Adventure desktop test retained
 
 Graphics groups settings into **Desktop**, **VR rendering** and **VR HUD**. Hover over a setting, its label or its slider for a short explanation. Open **? → Instructions** for more detail and troubleshooting. Tabs adapt to wide and portrait windows; smaller windows scroll vertically while the action buttons remain available.
 
+**Bloom** adds a soft glow around bright areas. Desktop and VR rendering have separate Bloom toggles, both **On** by default. On keeps the game's existing effects; Off removes bloom without disabling colour grading, exposure adjustment or shadows. Save and relaunch to apply. This covers Normal Launch, Practice, Race, custom tracks and multiplayer HOST/JOIN. VR's choice also applies to its flat virtual screen. Original effect files are restored after play. Bloom does not override a custom track's separate lighting choice; for example, Buttermilk's lower exposure stays in effect.
+
 **Borderless fullscreen** is off by default. Enable it to fill the primary monitor at its current desktop resolution without window borders. It applies to desktop Normal Launch, Practice, Race and multiplayer HOST/JOIN, including desktop quick launch. The separate **VSync** toggle defaults to **On** for desktop play, with or without borderless. Turn it off for uncapped rendering. Both settings are temporary and the original display settings are restored after play. Windows resolution/refresh rate and VR launches stay unchanged. Save and relaunch to apply; Restore defaults turns it off.
 
 Borderless mode uses the game's windowed rendering path as a workaround for its exclusive-fullscreen frame-rate limitation. Driver limits, desktop composition and performance can still affect FPS; a frame rate above 60 is not guaranteed. Native desktop resolution may cost more GPU time than your previous game resolution. If Windows rejects the window change, the launcher reports a warning and leaves ordinary windowed play available. Alt+Tab and minimization remain available.
@@ -193,7 +195,7 @@ The following settings apply to VR:
 | Distance (VR HUD) | 1 m | Move the cockpit HUD between 1–20 metres in 0.5 m steps. Its apparent size stays constant. Applies to fixed and follow-view modes. |
 | Show HUD areas | Gauges off; others on | Show or hide gauges, lap/time, race position, route map and stage progress in the cockpit HUD. |
 
-Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore defaults** restores the VR baseline, turns desktop VSync on and borderless off; save afterward.
+Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore defaults** restores the VR baseline, turns both Bloom toggles and desktop VSync on and borderless off; save afterward.
 
 VR render resolution now sets the game scene dimensions even when they exceed the desktop size. At full field of view, 100% is 1600 × 1200, 150% is 2400 × 1800 and 200% is 3200 × 2400 per eye. Check the measured game resolution in Graphics after a VR launch. Headset texture scale is a separate output limit: a low value can still reduce visible detail. Higher scene resolutions also increase GPU and memory use.
 

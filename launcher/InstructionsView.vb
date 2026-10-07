@@ -48,6 +48,9 @@ Fills the primary monitor at its current desktop resolution. It applies to deskt
 VSync
 On by default for desktop play, independently of borderless. Turn it off to allow uncapped rendering. The preference is temporary and the original game setting is restored after play. VR keeps its own timing and VSync setup.
 
+Bloom
+Adds a soft glow around bright areas. On keeps the game's existing effects; Off removes the glow without disabling colour grading, exposure adjustment or shadows. Desktop and VR have separate choices, both On by default. Save and relaunch to apply. Works with Normal Launch, Practice, Race, custom tracks and HOST/JOIN. Original effect files are restored after play; use Restore original files if recovery is interrupted. Separate custom-track lighting choices are retained.
+
 Frame rate
 Driver settings, Windows and your monitor can affect frame rate and presentation. Borderless uses the game's windowed rendering path; it does not guarantee a particular frame rate.
 
@@ -75,6 +78,9 @@ Set refresh rate in SteamVR or your headset connection software before launching
 
 Shadows (experimental)
 Off retains the current shadow-free VR rendering and performance. On enables shadows using the game's saved shadow quality. Includes corrected VR exposure metering. Shadows can brighten sunlit areas through the game's normal exposure adjustment. This remains experimental; turn it off if the appearance or performance is unsuitable. Shadows may also reduce performance. Save and relaunch to apply. Desktop play is unchanged.
+
+Bloom
+Adds a soft glow around bright areas. On keeps the game's existing effects; Off removes the glow in VR, including its flat virtual screen. This is separate from shadows and does not disable exposure adjustment or colour grading. Default: On. Save and relaunch VR to apply; the Desktop choice is independent. Works with all launch modes and custom tracks, retaining their separate lighting choices. Original effect files are restored after play.
 
 Rendering baseline
 VR keeps the current reduced-effects configuration for crowds, particles and motion blur. Temporary graphics changes, including shadows, are restored after play.",

@@ -123,6 +123,8 @@ Public Class VrSettings
     Public Property Bindings As New List(Of ControllerBinding)
     Public Property BorderlessDesktop As Boolean = False
     Public Property DesktopVSync As Boolean = True
+    Public Property DesktopBloom As Boolean = True
+    Public Property VrBloom As Boolean = True
     Public Property RenderScale As Integer = 100
     Public Property HeadsetScale As Integer = 100
     Public Property VrShadows As Boolean = False

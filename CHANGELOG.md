@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add separate Bloom switches under Graphics → Desktop and VR rendering. Turn off the soft glow around bright areas while retaining colour grading, exposure and shadows. Both default to On; save and relaunch to apply. Original effects are restored after play.
+
 ## 0.17.55 — 2026-10-07 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.55)
