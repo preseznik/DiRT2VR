@@ -259,11 +259,7 @@ Public Class CustomTrackPanel
         bestTime.Visible = currentPack?.Id = "nordschleife"
         detail.Controls.SetChildIndex(bestTime, 2)
         If currentPack?.Id <> "nordschleife" Then Return
-        Dim layoutId = TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id
-        If layoutId Is Nothing Then
-            bestTime.Text = "Best lap: choose conditions"
-            Return
-        End If
+        Dim layoutId = If(TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id, TrackPacks.Nordschleife.Layouts(0).Id)
         Try
             Dim lap = BestLapStore.Best(context, layoutId, TrackPacks.Nordschleife.Version)
             bestTime.Text = If(lap Is Nothing, "Best lap: no completed lap yet", "Best lap: " & BestLapStore.Display(lap))

@@ -230,17 +230,27 @@ public sealed class TrackPack
                 throw new IOException("Custom-track file is missing or changed: " + file.Path + ". Use Manage > Rebuild from source.");
         }
     }
-    public static void VerifySources(ConversionProfile offer, string dirt2, string dirt3, IProgress<TrackProgress>? progress, CancellationToken cancel)
+    public static Fingerprint[] VerifySources(ConversionProfile offer, string dirt2, string dirt3, IProgress<TrackProgress>? progress, CancellationToken cancel)
     {
         var pack=TrackPacks.Get(offer.Id);
         ValidateSources(offer.Sources, pack.Id == "nordschleife" ? "assettocorsa" : "dirt3");
+        var verified = new Fingerprint[offer.Sources.Length];
         for (int i = 0; i < offer.Sources.Length; i++)
         {
             cancel.ThrowIfCancellationRequested(); var source = offer.Sources[i];
             string path = SafeFiles.Inside(source.Game == "dirt2" ? dirt2 : dirt3, source.Path);
-            if (!File.Exists(path) || SafeFiles.Hash(path, cancel) != source.Sha256)
+            string hash = File.Exists(path) ? SafeFiles.Hash(path, cancel) : "";
+            if (hash != source.Sha256 && !KnownSourceVariant(pack.Id, source, hash))
                 throw new IOException($"Missing or unsupported {source.Game} source file: {source.Path}. Choose the correct game folder or verify the original files in Steam.");
+            verified[i] = source with { Sha256 = hash };
             progress?.Report(new((i + 1) * 100 / offer.Sources.Length, "Checking original game files"));
         }
+        return verified;
     }
+    // Inspected XML-form PSSG: these two files are byte-identical after CRLF/LF normalization.
+    static bool KnownSourceVariant(string pack, Fingerprint source, string hash) =>
+        pack == "nordschleife" && source.Game == "dirt2" &&
+        source.Path == "tracks/london/battersea/track_light_anims.pssg" &&
+        source.Sha256 == "BEAC14E6B3910B404640ADEC1FBE8E687F3505DF4479B8D3924DF42D03A0FD6D" &&
+        hash == "7C54720E9C0921E5C1CAC46FD1C8B22DF27E80DE177FAEDACB6282AD4B06BF99";
 }

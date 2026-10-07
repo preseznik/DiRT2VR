@@ -31,18 +31,29 @@ Public Module BestLapStore
             RaceCatalog.Current.Cars.Any(Function(c) c.Code = record.CarCode) AndAlso record.Milliseconds >= 1000 AndAlso record.Milliseconds <= 7200000 AndAlso
             record.CompletedUtc.Kind = DateTimeKind.Utc AndAlso record.CompletedUtc >= New DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)
     End Function
-    Public Function Best(context As InstallContext, layoutId As String, version As String) As BestLapRecord
+    Private Function TimedLayout(layoutId As String) As String
+        ' These condition IDs share the same standard circuit and finish line.
+        Select Case layoutId
+            Case "nordschleife-daylight", "nordschleife-overcast", "nordschleife-evening"
+                Return "nordschleife-standard"
+            Case Else
+                Return layoutId
+        End Select
+    End Function
+    Private Function CompatibleVersion(saved As String, current As String) As Boolean
         ' 1.0.1 adds race grids; the timed course and finish line are unchanged.
-        Return Load(context).Records.Where(Function(r) r.LayoutId = layoutId AndAlso
-            (r.PackVersion = version OrElse version = "1.0.1" AndAlso r.PackVersion = "1.0.0")).OrderBy(Function(r) r.Milliseconds).FirstOrDefault()
+        Return saved = current OrElse current = "1.0.1" AndAlso saved = "1.0.0"
+    End Function
+    Public Function Best(context As InstallContext, layoutId As String, version As String) As BestLapRecord
+        Return Load(context).Records.Where(Function(r) TimedLayout(r.LayoutId) = TimedLayout(layoutId) AndAlso
+            CompatibleVersion(r.PackVersion, version)).OrderBy(Function(r) r.Milliseconds).FirstOrDefault()
     End Function
     Public Function Record(context As InstallContext, lap As BestLapRecord) As Boolean
         If Not Valid(lap) Then Throw New IOException("Invalid completed lap result.")
         Dim history = Load(context)
         Dim bestTime = Best(context, lap.LayoutId, lap.PackVersion)
         If bestTime IsNot Nothing AndAlso bestTime.Milliseconds <= lap.Milliseconds Then Return False
-        Dim previous = history.Records.SingleOrDefault(Function(r) r.LayoutId = lap.LayoutId AndAlso r.PackVersion = lap.PackVersion)
-        If previous IsNot Nothing Then history.Records.Remove(previous)
+        history.Records.RemoveAll(Function(r) TimedLayout(r.LayoutId) = TimedLayout(lap.LayoutId) AndAlso CompatibleVersion(r.PackVersion, lap.PackVersion))
         history.Records.Add(lap)
         Files.SaveJson(HistoryPath(context), history)
         Return True

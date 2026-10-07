@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Show one Nordschleife best practice lap and its car across Daylight, Overcast and Evening. Retain the fastest existing saved lap when changing lighting presets.
+
+- Fix Nordschleife builds rejecting the compatible LF-only variant of DiRT 2's Battersea light-animation file. Keep validation strict for other source files and record the actual accepted source hashes.
+
 ## 0.17.52 — 2026-06-10 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.52)

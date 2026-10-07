@@ -37,8 +37,8 @@ public static class NordschleifeConversion
         var profile=GetProfile();var pack=TrackPacks.Nordschleife;
         void Report(int percent,string message)=>progress?.Invoke(new(percent,message));
         Report(0,"Checking your Assetto Corsa and DiRT 2 source files");
-        TrackPack.VerifySources(profile,d2,ac,null,default);
-        var expected=profile.Sources.ToDictionary(f=>Path.GetFullPath(Path.Combine(f.Game=="dirt2"?d2:ac,f.Path)),f=>f.Sha256,StringComparer.OrdinalIgnoreCase);
+        var sources=TrackPack.VerifySources(profile,d2,ac,null,default);
+        var expected=sources.ToDictionary(f=>Path.GetFullPath(Path.Combine(f.Game=="dirt2"?d2:ac,f.Path)),f=>f.Sha256,StringComparer.OrdinalIgnoreCase);
         string schema=Path.Combine(output,"schemaDirt2.xml");
         using(var input=typeof(Aspen.AspenConversion).Assembly.GetManifestResourceStream("schemaDirt2.xml")!)
         using(var target=File.Create(schema))input.CopyTo(target);
@@ -95,8 +95,9 @@ public static class NordschleifeConversion
             sessions.Add(new(layout.Id,session.ToArray()));
         }
         Report(95,"Verifying every installed file and original source");
-        TrackPack.VerifySources(profile,d2,ac,null,default);
-        var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),profile.Sources);
+        if(!sources.SequenceEqual(TrackPack.VerifySources(profile,d2,ac,null,default)))
+            throw new IOException("Source files changed during conversion. Retry with the original files unchanged.");
+        var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources);
         pack.Verify(install,receipt);SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
         Report(100,"Nordschleife is ready for desktop and experimental VR practice and Race");
         void Copy(string source,string relative)
