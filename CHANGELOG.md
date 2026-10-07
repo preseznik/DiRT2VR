@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.55 — 2026-10-07 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.55)
+
 - Correct the Nordschleife player progress marker in Direct practice and Race while retaining all eight timing checkpoints. One-lap sessions show checkpoint ticks; multi-lap Race uses the game's lap divisions. Existing packs need no rebuild; the launcher applies and restores the circuit route for each desktop or VR session.
 
 - Fix Nordschleife Build and install rejecting a converted pack made with the accepted alternate DiRT 2 light-animation file. Check the receipt against the actual verified sources while retaining version and layout checks.
@@ -14,7 +18,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Fix Nordschleife builds rejecting the compatible LF-only variant of DiRT 2's Battersea light-animation file. Keep validation strict for other source files and record the actual accepted source hashes.
 
-## 0.17.52 — 2026-06-10 — Experimental
+## 0.17.52 — 2026-10-06 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.52)
 
