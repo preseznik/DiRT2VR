@@ -1,7 +1,7 @@
 Imports System.Drawing
 Imports System.Windows.Forms
 
-' The editor owns a draft; launch selections remain independent of what is being edited.
+' Opening an editor draft preserves saved selections; choosing another preset selects both launch modes.
 Public Class FilterPanel
     Inherits UserControl
     Private ReadOnly store As FilterStore, settings As VrSettings
@@ -28,7 +28,7 @@ Public Class FilterPanel
             StyleChoice(box, Me)
         Next
         Field(selection, "Desktop preset", desktop) : Field(selection, "VR preset", headset)
-        selection.Controls.Add(New Label With {.Text = "Changes apply on the next launch. Main's Bloom switches still apply.", .AutoSize = True})
+        selection.Controls.Add(New Label With {.Text = "Editor choices select both modes. Save settings and relaunch to apply.", .AutoSize = True})
         Dim editing = Section(content, "Preset editor")
         Field(editing, "Edit preset", editor)
         Dim actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
@@ -84,7 +84,7 @@ Public Class FilterPanel
                                              MarkDirty() : ShowVariant()
                                          End Using
                                      End Sub
-        ReloadLibrary("original", settings.DesktopFilterId, settings.VrFilterId)
+        ReloadLibrary(settings.DesktopFilterId, settings.DesktopFilterId, settings.VrFilterId)
     End Sub
     Private ReadOnly Property CurrentVariant As FilterVariant
         Get
@@ -148,11 +148,16 @@ Public Class FilterPanel
             If Not LeaveDraft() Then
                 loading = True : editor.SelectedItem = editor.Items.Cast(Of FilterPreset)().First(Function(p) p.Id = draft.Id) : loading = False : Return
             End If
-            LoadDraft(store.Load(nextPreset.Id)) : ShowVariant()
+            LoadDraft(store.Load(nextPreset.Id)) : ShowVariant() : SelectForLaunch()
         Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
             loading = True : editor.SelectedItem = editor.Items.Cast(Of FilterPreset)().First(Function(p) p.Id = draft.Id) : loading = False
             MessageBox.Show(Me, ex.Message, "Filters", MessageBoxButtons.OK, MessageBoxIcon.Warning)
         End Try
+    End Sub
+    Private Sub SelectForLaunch()
+        For Each box In {desktop, headset}
+            box.SelectedItem = box.Items.Cast(Of FilterPreset)().First(Function(p) p.Id = draft.Id)
+        Next
     End Sub
     Private Function LeaveDraft() As Boolean
         If Not dirty Then Return True
@@ -212,7 +217,7 @@ Public Class FilterPanel
         Dim source = If(copy, draft.Copy(), New FilterPreset())
         Dim name = AskName(If(copy, draft.Name & " copy", "My filter"))
         If name Is Nothing OrElse Not LeaveDraft() Then Return
-        source.Id = Guid.NewGuid().ToString("N") : source.Name = name : store.Save(source) : ReloadLibrary(source.Id)
+        source.Id = Guid.NewGuid().ToString("N") : source.Name = name : store.Save(source) : ReloadLibrary(source.Id) : SelectForLaunch()
     End Sub
     Private Sub RenamePreset()
         Dim name = AskName(draft.Name)
@@ -228,7 +233,7 @@ Public Class FilterPanel
         If Not LeaveDraft() Then Return
         Using dialog As New OpenFileDialog With {.Filter = "DiRT2VR filter (*.json)|*.json", .CheckFileExists = True}
             If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
-            Dim preset = store.Import(dialog.FileName) : ReloadLibrary(preset.Id)
+            Dim preset = store.Import(dialog.FileName) : ReloadLibrary(preset.Id) : SelectForLaunch()
         End Using
     End Sub
     Private Sub ExportPreset()

@@ -4,4 +4,6 @@ New: Graphics → Filters lets you create and share your own visual presets.
 
 Choose separate presets for Desktop and VR, with Day and Night adjustments for colour, bloom and exposure. Original keeps the game's look. Save settings and relaunch to apply; Main retains the existing graphics controls and Bloom switches.
 
+Choosing, creating or importing a preset in the editor selects it for both Desktop and VR. You can still change the two launch selectors separately afterward.
+
 Presets can be imported and exported as DiRT2VR JSON files. Changes are restored after play. Filters are experimental: desktop appearance, headset rendering and differing presets in LAN still need player testing.

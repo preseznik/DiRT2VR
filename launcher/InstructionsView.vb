@@ -33,7 +33,7 @@ Bloom
 Adds a soft glow around bright areas. On keeps the game's existing effects; Off removes the glow without disabling colour grading, exposure adjustment or shadows. Desktop and VR have separate choices, both On by default. Save and relaunch to apply. Works with Normal Launch, Practice, Race, custom tracks and HOST/JOIN. Original effect files are restored after play; use Restore original files if recovery is interrupted. Separate custom-track lighting choices are retained.
 
 Filters
-Graphics opens on Main; Filters contains separate Desktop and VR preset choices. Original keeps the track's look. Choose New or Save as, name the preset, then edit its Day and Night adjustments. Select it for the desired launch mode and Save settings. Changes apply on the next launch; there is no live preview.
+Graphics opens on Main; Filters contains Desktop and VR preset choices. Original keeps the track's look. Choose New or Save as, name the preset, then edit its Day and Night adjustments. Selecting a preset in the editor, creating one or importing one also selects it for both Desktop and VR. You can choose different presets with the two launch selectors afterward. Save settings and relaunch to apply; there is no live preview.
 
 100% preserves each track's value; brightness offset 0 and tint Off preserve their original values. Reset adjustments resets the displayed Day or Night variant. Exposure controls scale native game values; their visual response still needs comparison testing. VR motion blur stays disabled. Main's Bloom Off overrides preset glow settings. Differing presets in LAN and headset appearance still need testing; use Original if problems occur.
 
