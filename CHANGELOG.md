@@ -9,6 +9,10 @@ Version headings identify distribution builds; published packages include a GitH
 - Improve preparation, recovery and cleanup when game files are read-only, including menus, graphics settings and offline profiles. Retain original file protection after interrupted sessions and report locked files more clearly.
 - Allow updates and removal of read-only launcher package files without changing permissions on the game folder.
 
+## 0.17.68 — 2026-10-08 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.68)
+
 - Applying the Xbox preset now also fills missing keyboard controls with the game's default keys, while keeping your custom keyboard bindings. Apply the preset again and save if an earlier preset left keyboard controls blank.
 - Fix VR preparation failing on read-only camera and effect files. Original file contents and read-only flags are preserved through recovery.
 
