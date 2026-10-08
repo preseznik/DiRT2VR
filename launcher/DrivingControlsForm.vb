@@ -30,10 +30,9 @@ Public Class DrivingControlsForm
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill}
         AddButton(buttons, "Binding wizard…", Sub() BindActions())
         AddButton(buttons, "Xbox preset", Sub()
-                                               settings.Bindings.RemoveAll(Function(b) Not b.Keyboard)
-                                               settings.Bindings.AddRange(DrivingControls.XboxPreset())
+                                               settings.ApplyXboxPreset()
                                                enabledBox.Checked = True : RefreshRows()
-                                               status.Text = "Xbox driving and menu controls applied: Start pauses/starts, A confirms, B goes back, D-pad navigates. Keyboard bindings retained. Save to use them."
+                                               status.Text = "Xbox controls applied. Missing keyboard bindings filled with game defaults; your custom keys are kept. Save to use both."
                                            End Sub)
         AddButton(buttons, "Bind keyboard…", Sub() BindSelected(True))
         AddButton(buttons, "Bind device…", Sub() BindSelected(False))

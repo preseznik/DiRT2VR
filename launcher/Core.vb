@@ -22,19 +22,9 @@ Public Module Files
         End Try
     End Function
     Public Sub AtomicWrite(filename As String, bytes As Byte())
-        Dim temporary = filename & "." & Guid.NewGuid().ToString("N") & ".tmp"
-        Try
-            Directory.CreateDirectory(IO.Path.GetDirectoryName(filename))
-            Using stream As New FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)
-                stream.Write(bytes)
-                stream.Flush(True)
-            End Using
-            File.Move(temporary, filename, True)
-        Catch ex As Exception
-            ex.Data("DiRT2VR.Target") = filename : Throw
-        Finally
-            If File.Exists(temporary) Then File.Delete(temporary)
-        End Try
+        ' Use the same attribute-preserving replacement as custom tracks and
+        ' filters. Administrator privileges do not bypass a read-only target.
+        CustomTracks.SafeFiles.Atomic(filename, bytes)
     End Sub
     Public Sub SaveJson(Of T)(filename As String, value As T)
         AtomicWrite(filename, JsonSerializer.SerializeToUtf8Bytes(value, JsonOptions))

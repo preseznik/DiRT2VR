@@ -77,6 +77,25 @@ Public Class DrivingControls
         Next
         Return result
     End Function
+    Public Shared Function KeyboardPreset() As List(Of DrivingBinding)
+        ' Primary keys from the shipped Keyboard action map, for the actions
+        ' replaced by XboxPreset. Other actions retain their native bindings.
+        Dim actions = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Hand Brake", "Gear Up", "Gear Down", "Change View", "Look Back", "Horn", "Pause", "Menu Start Button", "Menu Select", "Menu Back", "Menu Up", "Menu Down", "Menu Left", "Menu Right"}
+        Dim keys = {"left", "right", "up", "down", "space", "a", "z", "c", "end", "x", "escape", "return", "return", "escape", "up", "down", "left", "right"}
+        Dim result As New List(Of DrivingBinding)
+        For i = 0 To actions.Length - 1
+            result.Add(New DrivingBinding With {.Action = actions(i), .DeviceId = "Keyboard", .Device = "Keyboard", .Input = "win_key_" & keys(i), .Saturation = If(i < 2, 0.5D, If(i < 4, 0.25D, 1D))})
+        Next
+        Return result
+    End Function
+    Public Sub ApplyXboxPreset()
+        Bindings.RemoveAll(Function(b) Not b.Keyboard)
+        Bindings.AddRange(XboxPreset())
+        For Each binding In KeyboardPreset()
+            If Not Bindings.Any(Function(b) b.Keyboard AndAlso b.Action = binding.Action) Then Bindings.Add(binding)
+        Next
+        Enabled = True
+    End Sub
     Public Function ToXml() As Byte()
         Validate()
         Dim root As New XElement("ActionMap")

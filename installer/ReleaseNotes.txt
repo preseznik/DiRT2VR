@@ -1,5 +1,9 @@
 DiRT2VR — Experimental
 
+Xbox preset now fills missing keyboard controls with the game's default keys and keeps your custom keys. If keyboard controls were left blank by an earlier preset, apply Xbox preset again and Save driving controls.
+
+VR preparation now handles read-only camera and effect files. If an older build failed on a read-only cameras.xml file, update, choose Restore original files and retry.
+
 Chase-camera Free look now hides the Windows mouse pointer over the game picture. Pause, menus, other camera views and switching apps restore it. Window borders keep their usual cursor.
 
 With chase-camera Free look enabled, scroll forward to move closer or backward to move farther away. No mouse button is needed. Changing chase views resets the distance. Desktop zoom is player-tested; headset checks remain pending.

@@ -61,6 +61,7 @@ Public Class AssetEntry
     Public Property OriginalHash As String = ""
     Public Property AppliedHash As String = ""
     Public Property Restored As Boolean
+    Public Property ReadOnlyFile As Boolean?
 End Class
 Public Class AssetJournal
     Public Property Version As Integer = 1
@@ -96,7 +97,7 @@ Public Class AssetTransaction
         If trackId IsNot Nothing Then RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
         Dim configBytes = If(trackId Is Nothing, Nothing, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context))
         ' Version 4 journals own only a desktop practice config, with no asset entries.
-        Dim journal As New AssetJournal With {.Version = If(configOnly, 4, 3), .CarCode = carCode, .SettingsJournal = If(configOnly, "", IO.Path.Combine(context.UserRoot, "graphics-pending.json"))}
+        Dim journal As New AssetJournal With {.Version = If(configOnly, 4, 5), .CarCode = carCode, .SettingsJournal = If(configOnly, "", IO.Path.Combine(context.UserRoot, "graphics-pending.json"))}
         Dim targets = AssetNames(journal)
         Dim replacements As New List(Of Byte())
         For i = 0 To If(configOnly, 0, Names.Length) - 1
@@ -113,7 +114,7 @@ Public Class AssetTransaction
             Dim backup = BackupPath(journal, i)
             If File.Exists(backup) Then Throw New IOException("Backup already exists.")
             Files.AtomicWrite(backup, original)
-            journal.Entries.Add(New AssetEntry With {.Index = i, .OriginalHash = Files.Hash(backup), .AppliedHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(replacement))})
+            journal.Entries.Add(New AssetEntry With {.Index = i, .OriginalHash = Files.Hash(backup), .AppliedHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(replacement)), .ReadOnlyFile = (File.GetAttributes(target) And FileAttributes.ReadOnly) <> 0})
         Next
         If trackId IsNot Nothing Then
             Dim config = IO.Path.Combine(context.GameRoot, ConfigRelative(journal))
@@ -140,7 +141,7 @@ Public Class AssetTransaction
         If Not Pending Then Return
         Dim journal = Files.ReadJson(Of AssetJournal)(journalPath)
         Dim parsed As Guid
-        If journal Is Nothing OrElse Not {1, 2, 3, 4}.Contains(journal.Version) OrElse Not Guid.TryParseExact(journal.Id, "N", parsed) OrElse journal.Entries Is Nothing Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
+        If journal Is Nothing OrElse Not {1, 2, 3, 4, 5}.Contains(journal.Version) OrElse Not Guid.TryParseExact(journal.Id, "N", parsed) OrElse journal.Entries Is Nothing OrElse journal.Entries.Any(Function(e) e Is Nothing OrElse (journal.Version = 5 AndAlso Not e.ReadOnlyFile.HasValue)) Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
         Dim expectedEntries = If(journal.Version = 4, 0, Names.Length)
         If journal.Entries.Count <> expectedEntries OrElse journal.Entries.Select(Function(e) e.Index).Distinct().Count() <> expectedEntries OrElse (journal.Version = 4 AndAlso String.IsNullOrEmpty(journal.PracticeConfigHash)) Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
         Dim targets = AssetNames(journal)
@@ -160,6 +161,7 @@ Public Class AssetTransaction
             Else
                 Throw New IOException("Recovery conflict: " & target & Environment.NewLine & "Its contents changed outside DiRT2VR. The current file and original backup were preserved.")
             End If
+            If journal.Version = 5 Then CustomTracks.SafeFiles.SetReadOnly(target, entry.ReadOnlyFile.Value)
             Files.SaveJson(journalPath, journal)
         Next
         If journal.Version >= 2 AndAlso journal.PracticeConfigHash <> "" Then
@@ -187,7 +189,7 @@ Public Class AssetTransaction
     End Function
     Public Function PracticeConfig() As String
         Dim journal = Files.ReadJson(Of AssetJournal)(journalPath)
-        If Not {2, 3, 4}.Contains(journal.Version) OrElse String.IsNullOrEmpty(journal.PracticeConfigHash) Then Throw New IOException("Practice preparation is incomplete.")
+        If Not {2, 3, 4, 5}.Contains(journal.Version) OrElse String.IsNullOrEmpty(journal.PracticeConfigHash) Then Throw New IOException("Practice preparation is incomplete.")
         Dim relative = ConfigRelative(journal)
         Dim filename = IO.Path.Combine(context.GameRoot, relative)
         Files.NoLinks(filename)
