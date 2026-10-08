@@ -89,7 +89,7 @@ public static class SessionFiles
         for (int i = 0; i < pending.Files.Length; i++)
         {
             var backup = SafeFiles.Inside(folder, pending.Id + "/" + i + ".original");
-            try { if (SafeFiles.Hash(backup) == pending.Files[i].OriginalSha256) { SafeFiles.SetReadOnly(backup, false); File.Delete(backup); } }
+            try { if (SafeFiles.Hash(backup) == pending.Files[i].OriginalSha256) SafeFiles.DeleteOwned(backup); }
             catch (IOException) { }
             catch (UnauthorizedAccessException) { }
         }

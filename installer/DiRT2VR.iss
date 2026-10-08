@@ -31,9 +31,10 @@ SetupIconFile=..\launcher\assets\DiRT2VR.ico
 UninstallDisplayIcon={app}\DiRT2VR.exe
 
 [Files]
-Source: "{#Stage}\DiRT2VR.exe"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Stage}\Start-DiRT2VR.cmd"; DestDir: "{app}"; Flags: ignoreversion
-Source: "{#Stage}\DiRT2VR\*"; DestDir: "{app}\DiRT2VR"; Flags: ignoreversion recursesubdirs createallsubdirs
+; Only packaged mod files are replaced here; original game assets use journalled recovery.
+Source: "{#Stage}\DiRT2VR.exe"; DestDir: "{app}"; Flags: ignoreversion overwritereadonly uninsremovereadonly
+Source: "{#Stage}\Start-DiRT2VR.cmd"; DestDir: "{app}"; Flags: ignoreversion overwritereadonly uninsremovereadonly
+Source: "{#Stage}\DiRT2VR\*"; DestDir: "{app}\DiRT2VR"; Flags: ignoreversion overwritereadonly uninsremovereadonly recursesubdirs createallsubdirs
 
 [Messages]
 WizardInfoBefore=What's new in DiRT2VR {#PackageVersion}

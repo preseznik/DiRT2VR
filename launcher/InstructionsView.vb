@@ -137,6 +137,9 @@ Desktop two-PC racing through results has been confirmed. Broader multiplayer VR
         "Restore original files
 Close the game, then choose Restore original files. Interrupted sessions are recovered before the next managed launch. Unexpected file edits are preserved and reported as conflicts.
 
+Read-only files
+The launcher temporarily handles read-only game files and restores their original protection afterward. If recovery reports a file in use, close the application using it and retry. Other access-denied errors identify the affected file; Windows folder permissions are not changed automatically.
+
 Diagnostic logging
 Off by default. Enable it in Settings only for troubleshooting and turn it off afterward. Open logs shows the log folder. Existing logs are not deleted automatically; recovery records remain available even when logging is off.
 

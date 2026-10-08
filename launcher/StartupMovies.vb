@@ -51,7 +51,8 @@ Public Class StartupMovies
         Else
             Files.AtomicWrite(backup, original)
         End If
-        Files.SaveJson(pendingPath, New LanJournal With {.OriginalHash = OriginalHash, .AppliedHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(modified))})
+        Files.SaveJson(pendingPath, New LanJournal With {.Version = 2, .OriginalHash = OriginalHash, .AppliedHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(modified)),
+            .ReadOnlyFile = (File.GetAttributes(target) And FileAttributes.ReadOnly) <> 0})
         afterJournal?.Invoke()
         If Files.Hash(target) <> OriginalHash Then Throw New IOException("Startup movie definitions changed during preparation.")
         Files.AtomicWrite(target, modified)
@@ -60,13 +61,14 @@ Public Class StartupMovies
         CheckPaths()
         If Not Pending Then Return
         Dim journal = Files.ReadJson(Of LanJournal)(pendingPath)
-        If journal Is Nothing OrElse journal.Version <> 1 OrElse journal.OriginalHash <> OriginalHash OrElse journal.AppliedHash Is Nothing OrElse Not System.Text.RegularExpressions.Regex.IsMatch(journal.AppliedHash, "\A[A-Fa-f0-9]{64}\z") Then Throw New IOException("Invalid startup movie recovery journal. Backups were preserved.")
+        If journal Is Nothing OrElse Not {1, 2}.Contains(journal.Version) OrElse (journal.Version = 2 AndAlso Not journal.ReadOnlyFile.HasValue) OrElse journal.OriginalHash <> OriginalHash OrElse journal.AppliedHash Is Nothing OrElse Not System.Text.RegularExpressions.Regex.IsMatch(journal.AppliedHash, "\A[A-Fa-f0-9]{64}\z") Then Throw New IOException("Invalid startup movie recovery journal. Backups were preserved.")
         If Not File.Exists(backup) OrElse Files.Hash(backup) <> OriginalHash Then Throw New IOException("The startup movie backup is missing or changed.")
         Dim current = If(File.Exists(target), Files.Hash(target), "")
         If current <> OriginalHash Then
             If current <> journal.AppliedHash Then Throw New IOException("Startup movie definitions changed outside DiRT2VR. Current file and backup were preserved.")
             Files.AtomicWrite(target, File.ReadAllBytes(backup))
         End If
-        File.Delete(pendingPath)
+        If journal.Version = 2 Then CustomTracks.SafeFiles.SetReadOnly(target, journal.ReadOnlyFile.Value)
+        CustomTracks.SafeFiles.DeleteOwned(pendingPath)
     End Sub
 End Class

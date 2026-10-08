@@ -169,7 +169,7 @@ Public Class AssetTransaction
             Files.NoLinks(config)
             If File.Exists(config) Then
                 If Files.Hash(config) <> journal.PracticeConfigHash Then Throw New IOException("Practice configuration changed outside DiRT2VR. It and the recovery journal were preserved.")
-                File.Delete(config)
+                CustomTracks.SafeFiles.DeleteOwned(config)
             End If
         End If
         File.Move(journalPath, IO.Path.Combine(folder, journal.Id & "-restored.json"))
@@ -209,6 +209,7 @@ Public Class GraphicsChange
 End Class
 Public Class GraphicsJournal
     Public Property Version As Integer = 1
+    Public Property ReadOnlyFile As Boolean?
     Public Property OriginalHash As String = ""
     Public Property AppliedHash As String = ""
     Public Property Changes As New List(Of GraphicsChange)
@@ -253,7 +254,7 @@ Public Class GraphicsTransaction
         If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once to create graphics settings.")
         Dim original = File.ReadAllBytes(context.GraphicsPath)
         Dim document = XmlPatches.Read(original)
-        Dim journal As New GraphicsJournal()
+        Dim journal As New GraphicsJournal With {.Version = 2, .ReadOnlyFile = (File.GetAttributes(context.GraphicsPath) And FileAttributes.ReadOnly) <> 0}
         For Each spec In specs
             Dim parts = spec.Split("|"c)
             Dim node = TryCast(document.SelectSingleNode("/hardware_settings_config/" & parts(0)), XmlElement)
@@ -273,7 +274,7 @@ Public Class GraphicsTransaction
         context.RequireClosed()
         If Not Pending Then Return
         Dim journal = Files.ReadJson(Of GraphicsJournal)(journalPath)
-        If journal Is Nothing OrElse journal.Version <> 1 OrElse Not File.Exists(backup) OrElse Files.Hash(backup) <> journal.OriginalHash Then Throw New IOException("Graphics recovery backup is missing or changed.")
+        If journal Is Nothing OrElse Not {1, 2}.Contains(journal.Version) OrElse (journal.Version = 2 AndAlso Not journal.ReadOnlyFile.HasValue) OrElse Not File.Exists(backup) OrElse Files.Hash(backup) <> journal.OriginalHash Then Throw New IOException("Graphics recovery backup is missing or changed.")
         Dim current = Files.Hash(context.GraphicsPath)
         If current = journal.AppliedHash Then
             Files.AtomicWrite(context.GraphicsPath, File.ReadAllBytes(backup))
@@ -287,6 +288,7 @@ Public Class GraphicsTransaction
             Next
             Files.AtomicWrite(context.GraphicsPath, XmlPatches.Bytes(document))
         End If
-        File.Delete(journalPath)
+        If journal.Version = 2 Then CustomTracks.SafeFiles.SetReadOnly(context.GraphicsPath, journal.ReadOnlyFile.Value)
+        CustomTracks.SafeFiles.DeleteOwned(journalPath)
     End Sub
 End Class

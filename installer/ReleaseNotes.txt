@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+More reliable launch preparation and recovery for read-only game files, including after interrupted sessions. Updates also handle read-only launcher files, and file-operation errors provide clearer details.
+
 Xbox preset now fills missing keyboard controls with the game's default keys and keeps your custom keys. If keyboard controls were left blank by an earlier preset, apply Xbox preset again and Save driving controls.
 
 VR preparation now handles read-only camera and effect files. If an older build failed on a read-only cameras.xml file, update, choose Restore original files and retry.

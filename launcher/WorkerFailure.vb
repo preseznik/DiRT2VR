@@ -7,6 +7,9 @@ Public Class WorkerFailure
     Public Property Message As String = ""
     Public Property Target As String = ""
     Public Property Attributes As String = ""
+    Public Property FileOperation As String = ""
+    Public Property WindowsErrorCode As Integer?
+    Public Property CleanupFailure As String = ""
     Public Property Details As String = ""
     Public Property UpdatedUtc As DateTime = DateTime.UtcNow
 
@@ -15,6 +18,13 @@ Public Class WorkerFailure
             .Operation = operation, .Elevated = elevated, .ExitCode = If(TypeOf ex Is UnauthorizedAccessException, 5, 1),
             .ExceptionType = ex.GetType().FullName, .HResult = "0x" & ex.HResult.ToString("X8"),
             .Message = ex.Message, .Target = TryCast(ex.Data("DiRT2VR.Target"), String), .Details = ex.ToString()}
+        result.FileOperation = TryCast(ex.Data("DiRT2VR.FileOperation"), String)
+        result.CleanupFailure = TryCast(ex.Data("DiRT2VR.Cleanup"), String)
+        If TypeOf ex Is ComponentModel.Win32Exception Then
+            result.WindowsErrorCode = DirectCast(ex, ComponentModel.Win32Exception).NativeErrorCode
+        ElseIf (ex.HResult And &HFFFF0000) = &H80070000 Then
+            result.WindowsErrorCode = ex.HResult And &HFFFF
+        End If
         If result.Target IsNot Nothing Then
             Try
                 result.Attributes = File.GetAttributes(result.Target).ToString()
@@ -51,6 +61,12 @@ Public Class WorkerFailure
             ". Exit code " & failure.ExitCode.ToString() & " (0x" & failure.ExitCode.ToString("X8") & ")." & Environment.NewLine & failure.Message
         If Not String.IsNullOrEmpty(failure.ExceptionType) Then message &= Environment.NewLine & failure.ExceptionType & " " & failure.HResult
         If Not String.IsNullOrEmpty(failure.Target) Then message &= Environment.NewLine & "File: " & failure.Target & If(failure.Attributes = "", "", " [" & failure.Attributes & "]")
+        If Not String.IsNullOrEmpty(failure.FileOperation) Then message &= Environment.NewLine & "Action: " & failure.FileOperation
+        If failure.WindowsErrorCode.HasValue Then
+            message &= Environment.NewLine & "Windows error " & failure.WindowsErrorCode.Value.ToString() & ": " & New ComponentModel.Win32Exception(failure.WindowsErrorCode.Value).Message
+            If {32, 33}.Contains(failure.WindowsErrorCode.Value) Then message &= " Close the application using this file, then retry recovery."
+        End If
+        If Not String.IsNullOrEmpty(failure.CleanupFailure) Then message &= Environment.NewLine & "Cleanup or protection restoration also failed; details are included in the report."
         Dim report = IO.Path.Combine(context.UserRoot, "worker-error.json")
         Try
             ' One bounded failure report, even when optional rendering logs are off.

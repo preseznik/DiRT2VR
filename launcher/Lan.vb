@@ -5,6 +5,7 @@ Public Class LanJournal
     Public Property OriginalHash As String = ""
     Public Property AppliedHash As String = ""
     Public Property OfflineProfile As Boolean
+    Public Property ReadOnlyFile As Boolean?
 End Class
 
 ' Compatible with the lab journal; no paths from the journal are trusted.
@@ -37,7 +38,7 @@ Public Class LanTransaction
         Get
             If Not Pending Then Return False
             Dim journal = Files.ReadJson(Of LanJournal)(journalPath)
-            If journal Is Nothing OrElse journal.Version <> 1 Then Throw New IOException("Invalid offline-provider recovery journal.")
+            If journal Is Nothing OrElse Not {1, 2}.Contains(journal.Version) OrElse (journal.Version = 2 AndAlso Not journal.ReadOnlyFile.HasValue) Then Throw New IOException("Invalid offline-provider recovery journal.")
             Return Not journal.OfflineProfile
         End Get
     End Property
@@ -60,7 +61,8 @@ Public Class LanTransaction
         ElseIf original <> "" Then
             Files.AtomicWrite(backup, File.ReadAllBytes(target))
         End If
-        Files.SaveJson(journalPath, New LanJournal With {.OriginalHash = original, .AppliedHash = expected, .OfflineProfile = offlineProfile})
+        Files.SaveJson(journalPath, New LanJournal With {.Version = 2, .OriginalHash = original, .AppliedHash = expected, .OfflineProfile = offlineProfile,
+            .ReadOnlyFile = File.Exists(target) AndAlso (File.GetAttributes(target) And FileAttributes.ReadOnly) <> 0})
         afterJournal?.Invoke()
         If HashOrEmpty(target) <> original Then Throw New IOException("xlive.dll changed during LAN preparation.")
         Files.AtomicWrite(target, File.ReadAllBytes(payload))
@@ -69,19 +71,20 @@ Public Class LanTransaction
         CheckPaths()
         If Not Pending Then Return
         Dim journal = Files.ReadJson(Of LanJournal)(journalPath)
-        If journal Is Nothing OrElse journal.Version <> 1 OrElse journal.AppliedHash Is Nothing OrElse journal.OriginalHash Is Nothing OrElse
+        If journal Is Nothing OrElse Not {1, 2}.Contains(journal.Version) OrElse (journal.Version = 2 AndAlso Not journal.ReadOnlyFile.HasValue) OrElse journal.AppliedHash Is Nothing OrElse journal.OriginalHash Is Nothing OrElse
             Not Regex.IsMatch(journal.AppliedHash, "\A[A-Fa-f0-9]{64}\z") OrElse (journal.OriginalHash <> "" AndAlso Not Regex.IsMatch(journal.OriginalHash, "\A[A-Fa-f0-9]{64}\z")) Then Throw New IOException("Invalid LAN recovery journal. Backups were preserved.")
         If journal.OriginalHash <> "" AndAlso HashOrEmpty(backup) <> journal.OriginalHash Then Throw New IOException("The original LAN backup is missing or changed.")
         Dim current = HashOrEmpty(target)
         If current <> journal.OriginalHash Then
             If current <> journal.AppliedHash Then Throw New IOException("xlive.dll changed outside DiRT2VR. Current file and backup were preserved; resolve the LAN recovery conflict first.")
             If journal.OriginalHash = "" Then
-                File.Delete(target)
+                CustomTracks.SafeFiles.DeleteOwned(target)
             Else
                 Files.AtomicWrite(target, File.ReadAllBytes(backup))
             End If
         End If
-        File.Delete(journalPath)
+        If journal.Version = 2 AndAlso journal.OriginalHash <> "" Then CustomTracks.SafeFiles.SetReadOnly(target, journal.ReadOnlyFile.Value)
+        CustomTracks.SafeFiles.DeleteOwned(journalPath)
     End Sub
 End Class
 

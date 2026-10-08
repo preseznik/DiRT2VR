@@ -56,9 +56,9 @@ Public Class Installation
             If Not File.Exists(receiptPath) Then Throw New IOException("The proxy has no ownership receipt. It was preserved.")
             Dim receipt = Files.ReadJson(Of InstallationReceipt)(receiptPath)
             If receipt Is Nothing OrElse receipt.Version <> 1 OrElse Files.Hash(target) <> receipt.ProxyHash Then Throw New IOException("The installed proxy changed outside DiRT2VR. It was preserved.")
-            File.Delete(target)
+            CustomTracks.SafeFiles.DeleteOwned(target)
         End If
-        If File.Exists(receiptPath) Then File.Delete(receiptPath)
+        If File.Exists(receiptPath) Then CustomTracks.SafeFiles.DeleteOwned(receiptPath)
     End Sub
 End Class
 

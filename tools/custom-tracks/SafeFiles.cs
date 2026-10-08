@@ -56,6 +56,7 @@ public static class SafeFiles
     public static void Atomic(string path, byte[] bytes)
     {
         string temporary = path + "." + Guid.NewGuid().ToString("N") + ".tmp";
+        Exception? failure = null;
         try
         {
             NoLinks(path); Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -65,28 +66,64 @@ public static class SafeFiles
             // Give the replacement the original flags before the atomic rename.
             if (attributes.HasValue) File.SetAttributes(temporary, attributes.Value);
             bool readOnly = attributes.HasValue && (attributes.Value & FileAttributes.ReadOnly) != 0;
+            Exception? replaceFailure = null;
             try
             {
                 if (readOnly) SetReadOnly(path, false);
                 File.Move(temporary, path, true);
             }
+            catch (Exception ex) { replaceFailure = ex; throw; }
             finally
             {
-                if (readOnly && File.Exists(path)) SetReadOnly(path, true);
+                try { if (readOnly && File.Exists(path)) SetReadOnly(path, true); }
+                catch (Exception ex) when (replaceFailure != null) { RecordCleanup(replaceFailure, ex); }
             }
         }
         catch (Exception ex)
         {
-            ex.Data["DiRT2VR.Target"] = path;
+            failure = ex;
+            Annotate(ex, path, "replace");
             throw;
         }
         finally
         {
             // Only remove this call's uncommitted file; retain the original error.
             try { if (File.Exists(temporary)) { SetReadOnly(temporary, false); File.Delete(temporary); } }
-            catch (IOException) { }
-            catch (UnauthorizedAccessException) { }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                if (failure != null) RecordCleanup(failure, ex);
+                else { Annotate(ex, temporary, "remove temporary file"); throw; }
+            }
         }
+    }
+    // Callers must establish ownership and validate any expected content hash first.
+    public static void DeleteOwned(string path)
+    {
+        bool readOnly = false;
+        try
+        {
+            NoLinks(path);
+            if (!File.Exists(path)) return;
+            readOnly = (File.GetAttributes(path) & FileAttributes.ReadOnly) != 0;
+            if (readOnly) SetReadOnly(path, false);
+            File.Delete(path);
+        }
+        catch (Exception ex)
+        {
+            try { if (readOnly && File.Exists(path)) SetReadOnly(path, true); }
+            catch (Exception cleanup) { RecordCleanup(ex, cleanup); }
+            Annotate(ex, path, "delete");
+            throw;
+        }
+    }
+    private static void RecordCleanup(Exception primary, Exception cleanup)
+    {
+        primary.Data["DiRT2VR.Cleanup"] = (primary.Data["DiRT2VR.Cleanup"] as string ?? "") + cleanup + Environment.NewLine;
+    }
+    private static void Annotate(Exception ex, string path, string operation)
+    {
+        ex.Data["DiRT2VR.Target"] = path;
+        ex.Data["DiRT2VR.FileOperation"] = operation;
     }
     public static void SetReadOnly(string path, bool readOnly)
     {
@@ -97,7 +134,7 @@ public static class SafeFiles
             var updated = readOnly ? attributes | FileAttributes.ReadOnly : attributes & ~FileAttributes.ReadOnly;
             if (updated != attributes) File.SetAttributes(path, updated);
         }
-        catch (Exception ex) { ex.Data["DiRT2VR.Target"] = path; throw; }
+        catch (Exception ex) { Annotate(ex, path, "restore/set read-only protection"); throw; }
     }
     public static IEnumerable<string> Tree(string root)
     {
@@ -132,10 +169,7 @@ public static class SafeFiles
         {
             // Older converters copied read-only source flags into their private
             // work directories. Only clear that flag inside the validated tree.
-            var attributes = File.GetAttributes(file);
-            if ((attributes & FileAttributes.ReadOnly) != 0)
-                File.SetAttributes(file, attributes & ~FileAttributes.ReadOnly);
-            File.Delete(file);
+            DeleteOwned(file);
         }
         foreach (var directory in directories) Directory.Delete(directory);
         Directory.Delete(root);

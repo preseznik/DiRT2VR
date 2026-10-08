@@ -141,7 +141,7 @@ Public Class DirectMenus
         If Pending OrElse New StartupMovies(context).Pending OrElse New LanTransaction(context).BlocksMenuChanges Then Throw New IOException("Restore pending files before preparing direct-session menus.")
         Dim original = Names.Select(Function(n) File.ReadAllBytes(IO.Path.Combine(context.GameRoot, "system", n))).ToArray()
         Dim modified = {Patch(original(0), False, skipMovies), Patch(original(1), True)}
-        Dim journal As New DirectMenuJournal
+        Dim journal As New DirectMenuJournal With {.Version = 2, .ReadOnlyFiles = New List(Of Boolean)}
         For i = 0 To 1
             If File.Exists(Backup(i)) Then
                 If Files.Hash(Backup(i)) <> Hashes(i) Then Throw New IOException("Original direct-session menu backup changed; it was preserved.")
@@ -149,6 +149,7 @@ Public Class DirectMenus
                 Files.AtomicWrite(Backup(i), original(i))
             End If
             journal.Applied.Add(Convert.ToHexString(Security.Cryptography.SHA256.HashData(modified(i))))
+            journal.ReadOnlyFiles.Add((File.GetAttributes(Target(i)) And FileAttributes.ReadOnly) <> 0)
         Next
         Files.SaveJson(journalPath, journal)
         For i = 0 To 1
@@ -160,7 +161,7 @@ Public Class DirectMenus
         CheckPaths()
         If Not Pending Then Return
         Dim journal = Files.ReadJson(Of DirectMenuJournal)(journalPath)
-        If journal Is Nothing OrElse journal.Version <> 1 OrElse journal.Applied Is Nothing OrElse journal.Applied.Count <> 2 OrElse journal.Applied.Any(Function(h) h Is Nothing OrElse Not System.Text.RegularExpressions.Regex.IsMatch(h, "\A[A-Fa-f0-9]{64}\z")) Then Throw New IOException("Invalid direct-session menu journal; files preserved.")
+        If journal Is Nothing OrElse Not {1, 2}.Contains(journal.Version) OrElse (journal.Version = 2 AndAlso (journal.ReadOnlyFiles Is Nothing OrElse journal.ReadOnlyFiles.Count <> 2)) OrElse journal.Applied Is Nothing OrElse journal.Applied.Count <> 2 OrElse journal.Applied.Any(Function(h) h Is Nothing OrElse Not System.Text.RegularExpressions.Regex.IsMatch(h, "\A[A-Fa-f0-9]{64}\z")) Then Throw New IOException("Invalid direct-session menu journal; files preserved.")
         ' Check both before restoring either. Partly completed recovery remains repeatable.
         For i = 0 To 1
             If Not File.Exists(Backup(i)) OrElse Files.Hash(Backup(i)) <> Hashes(i) Then Throw New IOException("Original direct-session menu backup is missing or changed.")
@@ -168,11 +169,13 @@ Public Class DirectMenus
         Next
         For i = 0 To 1
             If Files.Hash(Target(i)) <> Hashes(i) Then Files.AtomicWrite(Target(i), File.ReadAllBytes(Backup(i)))
+            If journal.Version = 2 Then CustomTracks.SafeFiles.SetReadOnly(Target(i), journal.ReadOnlyFiles(i))
         Next
-        File.Delete(journalPath)
+        CustomTracks.SafeFiles.DeleteOwned(journalPath)
     End Sub
 End Class
 Public Class DirectMenuJournal
     Public Property Version As Integer = 1
     Public Property Applied As New List(Of String)
+    Public Property ReadOnlyFiles As List(Of Boolean)
 End Class
