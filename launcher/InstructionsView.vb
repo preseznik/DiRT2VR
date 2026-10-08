@@ -83,7 +83,13 @@ Choose gauges (speedometer, gear and revs), lap/time, race position, route map a
 
 Scope
 These options affect the cockpit HUD, not the centre of the view, desktop HUD, menus or virtual screen. Save and relaunch VR to apply. Alternative HUD layouts and nondefault distances still need broader headset testing.",
-        "VR shortcuts
+        "Controls tabs
+General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter. Driving opens the driving-controls editor. Seat contains Open seat adjustment and the collapsed optional bindings. Switching tabs cancels an unfinished binding capture and retains your other edits.
+
+Chase camera (experimental)
+Enable General → Chase camera → Free look, save settings and relaunch. Hold the right mouse button and move, or use an Xbox-compatible controller's right stick. The camera stays at the chosen angle while stopped; when moving it returns behind the car after you release the controls. Mouse and right-stick sensitivity are independent. Invert vertical reverses up/down for both. Desktop requires DX11. VR also requires Advanced → Graphics → 3D beyond the cockpit; only genuine chase views are affected. Desktop orbit has been checked; headset validation remains pending.
+
+VR shortcuts
 Click a keyboard binding, then press a key with optional Ctrl, Alt or Shift. In Modern, click a controller cell to replace it, + to add another, or × to remove it. In Classic, use Bind and Remove selected. Assign one button or a two-button combination on the same device. Release the buttons to finish. Escape cancels. Multiple devices may be assigned.
 
 Button conflicts

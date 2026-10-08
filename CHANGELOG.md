@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Organize Controls into General, VR, Driving and Seat tabs. General contains cockpit animation and the new experimental chase-camera free look, with separate mouse/stick sensitivity and an Invert vertical switch.
+- Orbit the chase camera with the right stick or by holding the right mouse button. Keep your chosen angle while stopped and return behind the car when moving. Free look defaults off; desktop testing is approved, while VR validation remains pending.
+
 - Enable experimental VR for Mizu Mountain Direct practice and Race. Change its pre-race location label to MIZU; rebuild an existing Mizu pack to update the label.
 
 - Add desktop Race to Mizu Mountain with up to seven AI opponents, your choice of opponent cars and race difficulty. Existing Mizu installations need Manage → Rebuild from source once. Each race covers the full route once; LAN remains unavailable.

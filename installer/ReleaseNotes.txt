@@ -1,5 +1,9 @@
 DiRT2VR — Experimental
 
+New: Controls is organized into General, VR, Driving and Seat tabs. Find cockpit animation and chase-camera settings in General, VR shortcuts in VR, driving bindings in Driving, and seat shortcuts in Seat.
+
+New: Experimental chase-camera free look. Hold the right mouse button and move, or use the right stick, to look around your car. Your angle stays while stopped and smoothly returns behind the car when driving. Adjust mouse/stick sensitivity and Invert vertical in Controls → General. Free look starts off; save and relaunch after enabling it. Desktop requires DX11. VR also needs Advanced → Graphics → 3D beyond the cockpit; headset testing remains pending.
+
 New: Mizu Mountain in CUSTOM tracks. Build the full 10.4 km daylight route from your own GRID 2 installation, then Launch or Launch VR for Direct practice or experimental Race against up to seven opponents. Choose opponent cars and difficulty as usual. Already installed Mizu? Use Manage → Rebuild from source for the starting grid and MIZU pre-race label. Each race covers the route once; VR is experimental and LAN remains unavailable.
 
 New: Graphics → Filters lets you create and share your own visual presets.

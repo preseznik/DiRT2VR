@@ -39,5 +39,6 @@ bool LiveDrivingCameraState();
 bool ExtendedViewsEnabled();
 bool EnableSceneCameraObserver(bool required=false);
 SceneCamera ObservedSceneCamera(void* manager);
+void* ObservedCameraObject(void* manager);
 SceneCamera IdentifySceneCamera(const float* a,const float* b,uint64_t frame);
 }

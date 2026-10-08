@@ -5,6 +5,7 @@
 #include "eye_pair.h"
 #include "camera_math.h"
 #include "scene_camera.h"
+#include "game_pause.h"
 #include "game_xr.h"
 #include "hud_capture.h"
 #include "hud_elements.h"
@@ -350,20 +351,7 @@ void __fastcall ProjectedSetup(void* self,void*,void* light,void* context,void* 
 }
 bool cameraHooksReady{};
 bool cameraSetupHookReady{};
-using PauseWorldFn = int (__thiscall*)(void*,const void*);
-PauseWorldFn realPauseWorld{};
 bool pauseHookReady{};
-std::atomic<bool> pauseWorld{};
-int __fastcall PauseWorld(void* self,void*,const void* message) {
-    // RenderPauseWorld's handler copies message+4 to frontend+0x96.
-    // Observe the engine event, including gamepad pause; never change it.
-    const auto bytes=static_cast<const unsigned char*>(message);
-    const bool paused=bytes[4]!=0;
-    const int result=realPauseWorld(self,message);
-    if(pauseWorld.exchange(paused)!=paused)
-        Log("OpenXR pause world=%d frame=%llu auxiliary=%u",paused,frame.load(),bytes[5]);
-    return result;
-}
 // The game updates its inline render camera during scene preparation. Classify
 // the original, validated main view once; never retain that identity next frame.
 thread_local void* classifiedRenderer{};
@@ -399,7 +387,7 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
         if(ExtendedViewsEnabled()) {
             preparedCameraRenderer=renderer;preparedCameraFrame=frame.load();preparedCameraKind=kind;
         }
-        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),pauseWorld.load(),true) && VisibilityBox(a,b,matrix.data())) {
+        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),GamePaused(),true) && VisibilityBox(a,b,matrix.data())) {
             buildFrustum(volume.data(),matrix.data());
             bool finite=true; for(float v:volume) finite &= std::isfinite(v);
             if(finite) {
@@ -496,8 +484,8 @@ bool TakeCaptureRequest(uint64_t f,bool cockpit) {
     // A mode-specific request survives replying in another window and the
     // game's automatic pause. Empty requests retain the original behavior.
     std::ifstream input(request);std::string mode;input>>mode;input.close();
-    if((mode=="cockpit" && (!cockpit || pauseWorld.load())) ||
-       (mode=="screen" && (cockpit || pauseWorld.load())))return false;
+    if((mode=="cockpit" && (!cockpit || GamePaused())) ||
+       (mode=="screen" && (cockpit || GamePaused())))return false;
     static uint64_t warning{};
     if(TestMessagesEnabled()) {
         if(!TestMessageCurrent(warning))
@@ -706,7 +694,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     // A paused cockpit retains its near plane. Render the original complete
     // frame (including modal dialogs) on the screen instead of replaying it.
     // Preserve the requested mode so resuming returns to cockpit VR.
-    if(!StereoCameraAllowed(camera,ExtendedViewsEnabled(),pauseWorld.load(),lightingHooksReady && pauseHookReady)) return false;
+    if(!StereoCameraAllowed(camera,ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady)) return false;
     if(!cockpit) SeatInactive();
     if(!preparedLights.Snapshot(f,context,eyeLights)) {
         Log("lighting replay capacity exceeded; using virtual screen frame=%llu",f);
@@ -854,7 +842,7 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
     // Keep the first paired shadow comparison on the existing detailed-capture
     // frame. This desktop diagnostic never changes the headset render path.
     if(ExtendedViewsEnabled() && (f<1200 || !StereoCameraAllowed(
-        RenderSceneCamera(self,static_cast<float*>(cameraA),static_cast<float*>(cameraB),f),true,pauseWorld.load(),true)))return false;
+        RenderSceneCamera(self,static_cast<float*>(cameraA),static_cast<float*>(cameraB),f),true,GamePaused(),true)))return false;
     if(!continuousMain || disabled || f<(shadowProbe && !PipelineOption(L"DIRT2VR_PIPELINE_SETTLE") ? 3000u : 300u) || !gameSwapchain) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) {
@@ -975,7 +963,7 @@ void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,v
             if(cameraA==renderer+0x5e0 && cameraB==renderer+0x650) {
                 const bool cockpit=!ScreenMode() && StereoCameraAllowed(
                     RenderSceneCamera(self,static_cast<const float*>(cameraA),static_cast<const float*>(cameraB),frame.load()),
-                    ExtendedViewsEnabled(),pauseWorld.load(),lightingHooksReady && pauseHookReady);
+                    ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady);
                 TakeCaptureRequest(frame.load(),cockpit);
             }
         }
@@ -1566,16 +1554,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         }
         if(ContinuousReplayEnabled()) {
             auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
-            if(HeadsetEnabled() && !realPauseWorld) {
-                const unsigned char pause[]={0x8b,0x44,0x24,0x04,0x8a,0x50,0x04,0x56,0x8b,0xf1,
-                    0x8a,0x8e,0x96,0,0,0,0x88,0x96,0x96,0,0,0};
-                if(memcmp(base+0x16ec90,pause,sizeof(pause))==0) {
-                    auto status=MH_CreateHook(base+0x16ec90,reinterpret_cast<void*>(PauseWorld),reinterpret_cast<void**>(&realPauseWorld));
-                    if(status==MH_OK) status=EnableRecordedHook(base+0x16ec90);
-                    pauseHookReady=status==MH_OK;
-                    Log("pause world hook RVA=0x16ec90 status=%s",MH_StatusToString(status));
-                } else Log("pause world hook rejected instruction guard; using virtual screen");
-            }
+            if(HeadsetEnabled())pauseHookReady=EnablePauseObserver();
             if((HeadsetEnabled() || PipelineOption(L"DIRT2VR_PIPELINE_WIDE")) && (WideVisibility() || ExtendedViewsEnabled()) && !realFrustumCopy) {
                 const unsigned char copy[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0xc1,0x8b,0x4d,0x08};
                 const unsigned char build[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x04,0x01,0,0};

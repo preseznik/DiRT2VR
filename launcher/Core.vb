@@ -132,6 +132,10 @@ Public Class VrSettings
     Public Property VrShadows As Boolean = False
     Public Property VrSteeringAnimation As Boolean = False
     Public Property SteeringObserveOnly As Boolean = False
+    Public Property ChaseFreeLook As Boolean = False
+    Public Property ChaseMouseSensitivity As Integer = 100
+    Public Property ChaseStickSensitivity As Integer = 100
+    Public Property ChaseInvertVertical As Boolean = True
     Public Property VrExtendedViews As Boolean = False
     Public Property VrMsaa As Integer = 2
     <Serialization.JsonIgnore>
@@ -196,6 +200,7 @@ Public Class VrSettings
         End Get
     End Property
     Public Sub Validate()
+        If ChaseMouseSensitivity < 25 OrElse ChaseMouseSensitivity > 300 OrElse ChaseStickSensitivity < 25 OrElse ChaseStickSensitivity > 300 Then Throw New IOException("Choose chase-camera sensitivity between 25% and 300%.")
         If Not {0, 2, 4, 8}.Contains(VrMsaa) Then Throw New IOException("Choose Off, 2×, 4× or 8× VR anti-aliasing.")
         HudDistance = Math.Round(Math.Clamp(HudDistance, 1D, 20D) * 2D, MidpointRounding.AwayFromZero) / 2D
         If Version <> 3 Then Throw New IOException("Unsupported settings version.")

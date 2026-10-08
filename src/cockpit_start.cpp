@@ -2,6 +2,7 @@
 #include "common.h"
 #include "seat_adjustment.h"
 #include "steering_animation.h"
+#include "chase_camera.h"
 #include "gfwl_compat.h"
 #include <MinHook.h>
 #include <intrin.h>
@@ -22,7 +23,8 @@ int __fastcall FindView(void* manager,void*,const char* name) {
         if(caller!=gameBase+call+5) continue;
         SeatSelectCamera(manager);
         SteeringSelectCamera(manager);
-        if(!forceCockpitStart) return findView(manager,name);
+        ChaseSelectCamera(manager);
+        if(!forceCockpitStart && !ChaseCameraDiagnostic()) return findView(manager,name);
         const char* startup="head-cam";
         char diagnostic[48]{};
         if(LoggingEnabled() && GetEnvironmentVariableA("DIRT2VR_CAMERA_PROBE",diagnostic,sizeof(diagnostic)))

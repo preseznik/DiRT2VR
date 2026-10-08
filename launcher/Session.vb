@@ -192,6 +192,7 @@ Public Class Session
         start.Environment("DIRT2VR_WATER_REFLECTIONS") = "1"
         start.Environment("DIRT2VR_SHADOWS") = If(settings.VrShadows, "1", "0")
         SteeringAnimationLaunch.Configure(start, settings)
+        ChaseCameraLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_EXTENDED_VIEWS") = If(settings.VrExtendedViews, "1", "0")
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
         start.Environment("DIRT2VR_WORLD_SCALE") = "1"
@@ -210,7 +211,8 @@ Public Class Session
     Private Function RunDesktop() As Boolean
         FlashbackLaunch.RequireDesktopRenderer(context, settings)
         SteeringAnimationLaunch.RequireDesktopRenderer(context, settings)
-        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation Then Worker.Invoke(context, "setup")
+        ChaseCameraLaunch.RequireDesktopRenderer(context, settings)
+        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook Then Worker.Invoke(context, "setup")
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
@@ -277,6 +279,7 @@ Public Class Session
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         FlashbackLaunch.Configure(start, settings)
         SteeringAnimationLaunch.Configure(start, settings)
+        ChaseCameraLaunch.Configure(start, settings)
         Dim focus As New StartupFocus(context)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),

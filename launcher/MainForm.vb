@@ -13,6 +13,10 @@ Public Class MainForm
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
     Private ReadOnly flashback As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalFlashback", .AccessibleName = "Frame-rate-independent rewind (Experimental)", .AutoSize = True}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
+    Private ReadOnly chaseFreeLook As New CheckBox With {.Text = "On (Experimental)", .Name = "ChaseFreeLook", .AutoSize = True}
+    Private ReadOnly chaseInvert As New CheckBox With {.Text = "On", .Name = "ChaseInvertVertical", .AutoSize = True}
+    Private ReadOnly chaseMouse As New ValueSlider("ChaseMouseSensitivity", 25, 300, 100, "%")
+    Private ReadOnly chaseStick As New ValueSlider("ChaseStickSensitivity", 25, 300, 100, "%")
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
     Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (single-player launches)", .Name = "SkipStartupMovies", .AutoSize = True}
     Private ReadOnly serverList As New LanServerList With {.Name = "LanServers", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Top, .Height = 300, .ShowItemToolTips = True}
@@ -616,11 +620,29 @@ Public Class MainForm
     End Sub
     Private Sub BuildControlsTab()
         Dim content = TabLayout("Controls")
+        Dim page = DirectCast(content.Parent, TabPage)
+        page.Controls.Remove(content) : content.Dispose() : page.AutoScroll = False
+        Dim controlTabs As New ModernTabs With {.Name = "ControlsTabs", .Dock = DockStyle.Fill}
+        page.Controls.Add(controlTabs)
+        Dim general = ControlsPage(controlTabs, "General")
+        Dim vr = ControlsPage(controlTabs, "VR")
+        Dim drivingContent = ControlsPage(controlTabs, "Driving")
+        Dim seat = ControlsPage(controlTabs, "Seat")
+        AddHandler controlTabs.SelectedIndexChanged, Sub()
+                                                        CancelBindingCapture()
+                                                        inputLabel.Text = "Select a binding to change it."
+                                                        RefreshBindings()
+                                                    End Sub
+        content = vr
         inputLabel.Height = Px(Me, 36)
         inputLabel.Margin = New Padding(0, 0, 0, 6)
         content.Controls.Add(New Label With {.Text = "VR shortcuts", .Font = New Font(Font, FontStyle.Bold), .AutoSize = True})
         content.Controls.Add(inputLabel)
         content.Controls.Add(New BindingColumns())
+        Dim seatStatus As New Label With {.Text = inputLabel.Text, .AutoSize = True}
+        AddHandler inputLabel.TextChanged, Sub() seatStatus.Text = inputLabel.Text
+        seat.Controls.Add(seatStatus)
+        seat.Controls.Add(New BindingColumns())
 
         Dim individualSeats As New CollapsibleSection("Individual seat bindings (optional)") With {.Name = "IndividualSeatBindings"}
         AddHandler individualSeats.Collapsed, Sub()
@@ -632,6 +654,7 @@ Public Class MainForm
                                                  RefreshBindings()
                                              End Sub
         For action = 0 To SeatActions.Names.Length - 1
+            content = If(action < 2, vr, seat)
             Dim selectedAction = action
 
             Dim keyCell As Control
@@ -697,7 +720,8 @@ Public Class MainForm
             End If
         Next
 
-        content.Controls.Add(New Label With {.Text = "Driving controls", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
+        content = drivingContent
+        content.Controls.Add(New Label With {.Text = "Driving controls", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 0, 0, 8)})
         Dim driving As New Button With {.Text = "Configure driving controls…", .AutoSize = True, .Name = "DrivingControls"}
         AddHandler driving.Click, Sub()
                                      If busy Then Return
@@ -708,6 +732,7 @@ Public Class MainForm
                                                 End Sub)
                                  End Sub
         content.Controls.Add(driving)
+        content = general
         content.Controls.Add(New Label With {.Text = "Cockpit animation", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
         steeringAnimation.Checked = settings.VrSteeringAnimation
         Tip(steeringAnimation, "Try removing extra wheel and hand twitch in desktop or VR cockpit view. Desktop requires DX11. Keeps the original rotation range; does not change handling or force feedback. Save and relaunch. Still experimental.")
@@ -717,7 +742,36 @@ Public Class MainForm
         AddHandler steeringAnimation.CheckedChanged, Sub() steeringObserve.Enabled = steeringAnimation.Checked
         Tip(steeringObserve, "For testing: run the animation hooks without applying the correction. Enable Settings → diagnostic logging to record a short comparison. Turn the main option off for the unmodified baseline. Save and relaunch between tests.")
         Field(content, "Diagnostic mode", steeringObserve)
+        BuildChaseControls(content)
         content.Controls.Add(HelpLink(Sub() ShowAbout("Controls")))
+    End Sub
+    Private Function ControlsPage(owner As ModernTabs, title As String) As VerticalStack
+        Dim page As New TabPage(title) With {.Name = "Controls" & title, .AutoScroll = True, .UseVisualStyleBackColor = False, .Padding = New Padding(8)}
+        Dim content = Stack()
+        page.Controls.Add(content) : owner.TabPages.Add(page)
+        AddHandler content.SizeChanged, Sub() FitLabels(content)
+        Return content
+    End Function
+    Private Sub BuildChaseControls(content As VerticalStack)
+        content.Controls.Add(New Label With {.Text = "Chase camera", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
+        chaseFreeLook.Checked = settings.ChaseFreeLook
+        chaseMouse.Value = settings.ChaseMouseSensitivity : chaseStick.Value = settings.ChaseStickSensitivity
+        chaseInvert.Checked = settings.ChaseInvertVertical
+        Tip(chaseFreeLook, "Hold the right mouse button and move, or use the right stick, to look around your car. Holds the angle while stopped; returns behind you when driving. VR also needs Advanced → Graphics → 3D beyond the cockpit. Save and relaunch.")
+        Tip(chaseMouse, "How quickly the chase camera moves when you drag with the right mouse button.")
+        Tip(chaseStick, "How quickly the chase camera moves with the controller's right stick.")
+        Tip(chaseInvert, "Reverse up and down for both mouse and right-stick camera movement.")
+        Field(content, "Free look", chaseFreeLook)
+        Field(content, "Mouse sensitivity", chaseMouse)
+        Field(content, "Right-stick sensitivity", chaseStick)
+        Field(content, "Invert vertical", chaseInvert)
+        Dim refresh As Action = Sub()
+                                    chaseMouse.Enabled = chaseFreeLook.Checked
+                                    chaseStick.Enabled = chaseFreeLook.Checked
+                                    chaseInvert.Enabled = chaseFreeLook.Checked
+                                End Sub
+        AddHandler chaseFreeLook.CheckedChanged, Sub() refresh()
+        refresh()
     End Sub
     Private Sub SafeAction(action As Action)
         Try
@@ -734,6 +788,9 @@ Public Class MainForm
         settings.VrExtendedViews = extendedViews.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked
         settings.SteeringObserveOnly = steeringObserve.Checked
+        settings.ChaseFreeLook = chaseFreeLook.Checked
+        settings.ChaseMouseSensitivity = chaseMouse.Value : settings.ChaseStickSensitivity = chaseStick.Value
+        settings.ChaseInvertVertical = chaseInvert.Checked
         settings.SkipIntroduction = skipIntroduction.Checked
         settings.SkipStartupMovies = skipStartupMovies.Checked
         settings.BorderlessDesktop = borderless.Checked

@@ -40,6 +40,13 @@ SceneCamera ObservedSceneCamera(void* manager) {
         if(sample.manager==manager && sample.tick && now-sample.tick<250) return NamedSceneCamera(sample.name);
     return SceneCamera::Unknown;
 }
+void* ObservedCameraObject(void* manager) {
+    std::lock_guard lock(mutex);
+    const auto now=GetTickCount64();
+    for(const auto& sample:samples)
+        if(sample.manager==manager && sample.tick && now-sample.tick<250)return sample.object;
+    return nullptr;
+}
 bool EnableSceneCameraObserver(bool required) {
     if(!required && !ExtendedViewsEnabled())return true;
     if(activeCamera)return true;
