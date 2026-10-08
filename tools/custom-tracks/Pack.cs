@@ -69,7 +69,7 @@ public static class TrackPacks
         [new("nordschleife-daylight", "Standard circuit", "d2vr_nord_day", "Daylight"),
          new("nordschleife-overcast", "Standard circuit", "d2vr_nord_cloud", "Overcast"),
          new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
-    public static readonly TrackPack Mizu = new("mizu-mountain", "Mizu Mountain", "1.0.1", "0.17.60", ["desktop-solo", "desktop-race"],
+    public static readonly TrackPack Mizu = new("mizu-mountain", "Mizu Mountain", "1.0.2", "0.17.61", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
     public static readonly TrackPack[] All = [Aspen, Smelter, Nordschleife, Mizu];
     public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"];

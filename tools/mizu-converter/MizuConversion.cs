@@ -75,7 +75,7 @@ public static class MizuConversion
             }
             foreach(var (relative,source) in assets)Copy(source,"tracks/usa/"+layout.Folder+"/"+relative);
             string metadata=Path.Combine(variant,"metadata");
-            TrackMetadata.Create(d2,schema,metadata,new(layout.Folder,"mizu_route","MIZU MOUNTAIN", "mizu","JAPAN",donorModel),length,false);
+            TrackMetadata.Create(d2,schema,metadata,new(layout.Folder,"mizu_route","MIZU MOUNTAIN", "mizu","MIZU",donorModel),length,false);
             var session=new List<SessionFile>();
             using(var manifest=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(metadata,"metadata.json"))))
                 foreach(var entry in manifest.RootElement.GetProperty("Files").EnumerateArray())
@@ -91,7 +91,7 @@ public static class MizuConversion
             throw new IOException("Source files changed during conversion. Retry with the original files unchanged.");
         var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources);
         pack.Verify(install,receipt);SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
-        Report(100,"Mizu Mountain is ready for desktop Direct practice and Race");
+        Report(100,"Mizu Mountain is ready for Direct practice and Race, on desktop or in VR");
         void Copy(string source,string relative)
         {
             string target=SafeFiles.Inside(install,relative);Directory.CreateDirectory(Path.GetDirectoryName(target)!);

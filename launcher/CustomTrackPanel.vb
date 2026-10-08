@@ -285,7 +285,7 @@ Public Class CustomTrackPanel
         If nord AndAlso Not loading Then laps.Value = If(race, nordRaceLaps, 1)
         modeHint.Text = If(nord, "Desktop and VR · " & If(race, "1–20 laps", "One lap") & " · VR and AI races are experimental", "Desktop and VR · AI races are experimental · LAN unavailable")
         If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
-        If pointToPoint Then modeHint.Text = "Desktop · One 10.4 km run · AI races are experimental · VR and LAN unavailable"
+        If pointToPoint Then modeHint.Text = "Desktop and VR · One 10.4 km run · VR and AI races are experimental · LAN unavailable"
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."
         raceDifficulty.Enabled = race
@@ -409,7 +409,7 @@ Public Class CustomTrackPanel
             TextRenderer.DrawText(e.Graphics, pack.Name, bold, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         End Using
         bounds.Y += Px(Me, 24)
-        TextRenderer.DrawText(e.Graphics, If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", If(pack.Id = "mizu-mountain", "Point-to-point · 10.4 km · Desktop", If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection"))), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        TextRenderer.DrawText(e.Graphics, If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", If(pack.Id = "mizu-mountain", "Point-to-point · 10.4 km · Race and VR", If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection"))), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         bounds.Y += Px(Me, 24)
         TextRenderer.DrawText(e.Graphics, packStatuses(pack.Id), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         e.DrawFocusRectangle()

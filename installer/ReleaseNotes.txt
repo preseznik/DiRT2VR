@@ -1,6 +1,6 @@
 DiRT2VR — Experimental
 
-New: Mizu Mountain in CUSTOM tracks. Build the full 10.4 km daylight route from your own GRID 2 installation, then Launch desktop Direct practice or experimental Race against up to seven opponents. Choose opponent cars and difficulty as usual. Already installed Mizu? Use Manage → Rebuild from source once. Each race covers the route once; VR and LAN remain unavailable.
+New: Mizu Mountain in CUSTOM tracks. Build the full 10.4 km daylight route from your own GRID 2 installation, then Launch or Launch VR for Direct practice or experimental Race against up to seven opponents. Choose opponent cars and difficulty as usual. Already installed Mizu? Use Manage → Rebuild from source for the starting grid and MIZU pre-race label. Each race covers the route once; VR is experimental and LAN remains unavailable.
 
 New: Graphics → Filters lets you create and share your own visual presets.
 
