@@ -1,6 +1,7 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include "chase_camera.h"
 #include "chase_transform.h"
+#include "chase_mouse.h"
 #include "common.h"
 #include "gfwl_compat.h"
 #include "scene_camera.h"
@@ -36,6 +37,7 @@ using XboxFn=DWORD (WINAPI*)(DWORD,XINPUT_STATE*);
 XboxFn xbox{};
 unsigned mode{};
 float mouseSensitivity=1,stickSensitivity=1;bool invert{};
+ChaseMouseMode mouseMode=ChaseMouseMode::Right;
 unsigned selectedSlot=4;
 bool EnvFlag(const char* name) {
  char value[8]{};return GetEnvironmentVariableA(name,value,sizeof(value))==1 && value[0]=='1';
@@ -80,12 +82,15 @@ Inputs Poll(float dt) {
   armed=false;
  }
  DIMOUSESTATE2 state{};
+ bool available=false;
  if(mouse) {
-  if(FAILED(mouse->GetDeviceState(sizeof(state),&state))){mouse->Acquire();state={};}
+  available=SUCCEEDED(mouse->GetDeviceState(sizeof(state),&state));
+  if(!available){if(SUCCEEDED(mouse->Acquire()))mouse->GetDeviceState(sizeof(state),&state);state={};}
  }
- const bool held=(GetAsyncKeyState(VK_RBUTTON)&0x8000)!=0;
- result.held=held;result.neutral=!held;
- if(held){result.x=-float(state.lX)*.003f*mouseSensitivity;result.y=-float(state.lY)*.003f*mouseSensitivity;}
+ const auto activation=ChaseMouseActivation(mouseMode,(GetAsyncKeyState(VK_LBUTTON)&0x8000)!=0,
+     (GetAsyncKeyState(VK_RBUTTON)&0x8000)!=0,state.lX!=0 || state.lY!=0,available);
+ result.held=activation.held;result.neutral=activation.neutral;
+ if(activation.active){result.x=-float(state.lX)*.003f*mouseSensitivity;result.y=-float(state.lY)*.003f*mouseSensitivity;}
  if(!xbox) {
   auto module=LoadLibraryExW(L"xinput1_4.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32);
   if(module)xbox=reinterpret_cast<XboxFn>(GetProcAddress(module,"XInputGetState"));
@@ -178,6 +183,8 @@ bool EnableChaseCamera() {
  char value[8]{};GetEnvironmentVariableA("DIRT2VR_CHASE_PROBE",value,sizeof(value));mode=ChaseCameraDiagnostic() && value[0]=='1'?1:2;
  mouseSensitivity=Sensitivity("DIRT2VR_CHASE_MOUSE_SENSITIVITY");stickSensitivity=Sensitivity("DIRT2VR_CHASE_STICK_SENSITIVITY");
  invert=EnvFlag("DIRT2VR_CHASE_INVERT_VERTICAL");
+ char mouseValue[16]{};const auto mouseLength=GetEnvironmentVariableA("DIRT2VR_CHASE_MOUSE_MODE",mouseValue,sizeof(mouseValue));
+ mouseMode=ParseChaseMouseMode(mouseLength<sizeof(mouseValue)?mouseValue:"");
  base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
  const unsigned char updateGuard[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x14,0x01,0,0};
  const unsigned char collisionGuard[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x48,0x56};

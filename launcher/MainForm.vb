@@ -18,6 +18,7 @@ Public Class MainForm
     Private ReadOnly chaseFreeLook As New CheckBox With {.Text = "On (Experimental)", .Name = "ChaseFreeLook", .AutoSize = True}
     Private ReadOnly chaseInvert As New CheckBox With {.Text = "On", .Name = "ChaseInvertVertical", .AutoSize = True}
     Private ReadOnly chaseMouse As New ValueSlider("ChaseMouseSensitivity", 25, 300, 100, "%")
+    Private ReadOnly chaseMouseMode As New MouseLookPicker()
     Private ReadOnly chaseStick As New ValueSlider("ChaseStickSensitivity", 25, 300, 100, "%")
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
     Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (single-player launches)", .Name = "SkipStartupMovies", .AutoSize = True}
@@ -768,17 +769,24 @@ Public Class MainForm
         content.Controls.Add(New Label With {.Text = "Chase camera", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
         chaseFreeLook.Checked = settings.ChaseFreeLook
         chaseMouse.Value = settings.ChaseMouseSensitivity : chaseStick.Value = settings.ChaseStickSensitivity
+        chaseMouseMode.SelectedMode = settings.ChaseMouseMode
         chaseInvert.Checked = settings.ChaseInvertVertical
-        Tip(chaseFreeLook, "Hold the right mouse button and move, or use the right stick, to look around your car. Hold the right stick pressed in to look behind; release to return to normal chase view. Holds orbit angles while stopped; returns behind you when driving. VR also needs Advanced → Graphics → 3D beyond the cockpit. Save and relaunch.")
-        Tip(chaseMouse, "How quickly the chase camera moves when you drag with the right mouse button.")
+        Tip(chaseFreeLook, "Use the mouse or right stick to look around your car. Choose a mouse button below, or Always on. Hold the right stick pressed in to look behind; release to return to normal chase view. Holds orbit angles while stopped; returns behind you when driving. VR also needs Advanced → Graphics → 3D beyond the cockpit. Save and relaunch.")
+        Tip(chaseMouseMode, "Choose which mouse button to hold, or Always on to look around without clicking. Only active in chase view while driving; menus and pause keep normal mouse behavior.")
+        For Each choice As RadioButton In chaseMouseMode.Controls
+            Tip(choice, choice.AccessibleDescription & " Applies to chase-camera Free look. Save settings and relaunch.")
+        Next
+        Tip(chaseMouse, "How quickly the chase camera moves when you move the mouse.")
         Tip(chaseStick, "How quickly the chase camera moves with the controller's right stick.")
         Tip(chaseInvert, "Reverse up and down for both mouse and right-stick camera movement.")
         Field(content, "Free look", chaseFreeLook)
+        Field(content, "Mouse look", chaseMouseMode)
         Field(content, "Mouse sensitivity", chaseMouse)
         Field(content, "Right-stick sensitivity", chaseStick)
         Field(content, "Invert vertical", chaseInvert)
         Dim refresh As Action = Sub()
                                     chaseMouse.Enabled = chaseFreeLook.Checked
+                                    chaseMouseMode.Enabled = chaseFreeLook.Checked
                                     chaseStick.Enabled = chaseFreeLook.Checked
                                     chaseInvert.Enabled = chaseFreeLook.Checked
                                 End Sub
@@ -802,6 +810,7 @@ Public Class MainForm
         settings.SteeringObserveOnly = steeringObserve.Checked
         settings.ChaseFreeLook = chaseFreeLook.Checked
         settings.ChaseMouseSensitivity = chaseMouse.Value : settings.ChaseStickSensitivity = chaseStick.Value
+        settings.ChaseMouseMode = chaseMouseMode.SelectedMode
         settings.ChaseInvertVertical = chaseInvert.Checked
         settings.SkipIntroduction = skipIntroduction.Checked
         settings.SkipStartupMovies = skipStartupMovies.Checked
