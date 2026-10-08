@@ -6,7 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Add Mizu Mountain to CUSTOM tracks. Build the full 10.4 km daylight route from your own GRID 2 installation and launch desktop Direct practice. This version supports solo point-to-point driving; Race, VR and LAN remain unavailable.
+- Add desktop Race to Mizu Mountain with up to seven AI opponents, your choice of opponent cars and race difficulty. Existing Mizu installations need Manage → Rebuild from source once. Each race covers the full route once; VR and LAN remain unavailable.
+- Add Mizu Mountain to CUSTOM tracks. Build the full 10.4 km daylight route from your own GRID 2 installation and launch desktop Direct practice or experimental Race.
 
 - Choosing a preset in the Filters editor now also selects it for Desktop and VR. New, imported and copied presets become selected too; Save settings and relaunch to apply. The two launch selectors can still be changed separately.
 

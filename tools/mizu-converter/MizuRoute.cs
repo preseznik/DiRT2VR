@@ -5,7 +5,6 @@ using System.Xml.Linq;
 using DiRT2VR.Nordschleife;
 using EgoEngineLibrary.Formats.TrackQuadTree;
 using EgoEngineLibrary.Formats.TrackQuadTree.Static;
-using EgoEngineLibrary.Graphics.Pssg.Elements;
 using EgoEngineLibrary.Xml;
 
 internal static class MizuRoute
@@ -14,7 +13,7 @@ internal static class MizuRoute
     static XElement Vector(string name,Vector3 v)=>new(name,new XAttribute("format","float3"),F(v.X)+" "+F(v.Y)+" "+F(v.Z));
     internal static void Write(Scene scene,string donor,string output)
     {
-        const float leadIn=20;
+        const float leadIn=StartingGrid.ApproachMetres;
         const float pointPadding=5;
         var start=scene.Gates[0];var tangent=Vector3.Normalize(new Vector3(start.Tangent.X,0,start.Tangent.Z));
         var approach=start.Position-tangent*leadIn;approach.Y=scene.RoadHeight(approach)+(start.Position.Y-scene.RoadHeight(start.Position));
@@ -89,15 +88,9 @@ internal static class MizuRoute
         Files.Xml(new XDocument(new XElement("progress_track_data",new XAttribute("exporter_version","3.0.0"),new XElement("track",new XAttribute("type","point_to_point"),new XAttribute("total_distance",F(lineGates[^1].Distance+.01f))),
             new XElement("routes",new XAttribute("num_routes",1),splits),progress,points)),Path.Combine(output,"progress_track.xml"));
         Files.Json(Path.Combine(output,"progress.json"),new{DenseSourceLinePoints=denseLinePoints,CentreLinePoints=lineGates.Length,PointLineBudget=ProgressGates.PointLineBudget,AiGates=aiGates.Length,AiGateBudget=ProgressGates.AiGateBudget,ResetGates=scene.Gates.Length,ProgressGates=crossingGates.Length,NativeProgressGateLimit=ProgressGates.NativeLimit,ApproachMetres=leadIn,PointPaddingMetres=pointPadding,RunoutMetres=routeGates[^1].Distance-scene.Length-leadIn-pointPadding,StartGate=1,StartSplit="finish",DemoLapInitialization=true,FinishGate=finishGate,TimingGates=splitGates.Where(s=>s.Item2=="time").Select(s=>s.Item1),CheckpointDistances=checkpointDistances,Circuit=false,FullCourse=scene.FullCourse,RuntimeValidated=false});
-        var grids=Files.Pssg(Path.Combine(donor,"route_1/grids.pssg"));var right=Vector3.Normalize(Vector3.Cross(Vector3.UnitY,-tangent));
-        var spawn=start.Position-tangent*10;float roadHeight=scene.RoadHeight(spawn);spawn.Y=roadHeight+.6f;
-        foreach(var node in grids.Elements<PssgNode>())
-        {
-            node.Transform.Transform=Matrix4x4.Identity;
-            if(node.Id.StartsWith("slot_",StringComparison.Ordinal))node.Transform.Transform=new(right.X,right.Y,right.Z,0,0,1,0,0,-tangent.X,-tangent.Y,-tangent.Z,0,spawn.X,spawn.Y,spawn.Z,1);
-        }
-        Files.Save(grids,Path.Combine(output,"grids.pssg"));
-        Files.Json(Path.Combine(output,"grid.json"),new{Position=new[]{spawn.X,spawn.Y,spawn.Z},RoadHeight=roadHeight,ClearanceMetres=.6f,BehindStartMetres=10,RuntimeValidated=false});
+        // Keep the solo slot and use separate, collision-checked positions for opponents.
+        // The approach above must cover the last row as well as the player's car.
+        StartingGrid.Write(scene,donor,output);
         using(var input=File.OpenRead(Path.Combine(donor,"route_1/ai_vehicle_track.xml")))
         {
             var vehicle=new XmlFile(input);foreach(System.Xml.XmlElement brake in vehicle.Document.SelectNodes("//brake_lines")!){brake.RemoveAll();brake.SetAttribute("num_brake_lines","0");}
