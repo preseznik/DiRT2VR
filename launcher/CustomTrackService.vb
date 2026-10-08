@@ -70,7 +70,7 @@ Public Class CustomTrackPreferences
 End Class
 Public Module CustomTrackService
     Public Function RecoveryPending(context As InstallContext) As Boolean
-        Return New BloomTransaction(context).Pending OrElse New ButtermilkPostProcess(context).Pending OrElse File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
+        Return New BloomTransaction(context).Pending OrElse New FilterTransaction(context).Pending OrElse New ButtermilkPostProcess(context).Pending OrElse File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
             File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-install/pending.json"))
     End Function
     Public Sub RequireLauncher(receipt As PackReceipt)

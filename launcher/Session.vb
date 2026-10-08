@@ -30,6 +30,7 @@ Public Class Session
     Private customTrack As Boolean
     Private ReadOnly postProcessTest As String = "normal"
     Private profile As ProfileSession
+    Private filterSnapshot As String
     Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing)
         context = value : settings = VrSettings.Load(context)
         Dim custom = CustomTrackPreferences.Load(context)
@@ -60,6 +61,7 @@ Public Class Session
             Dim graphics As New GraphicsTransaction(context)
             Try
                 profile = New ProfileSession(context)
+                filterSnapshot = FilterLaunch.Create(context, settings, vr AndAlso (settings.LaunchMode <> "lan" OrElse lanVr))
                 Do
                     Status("Checking")
                     context.ValidateGame() : context.RequireClosed()
@@ -70,6 +72,7 @@ Public Class Session
                     If Not vr Then
                         Status("Restoring", "Checking for an interrupted session")
                         graphics.Recover() : Worker.Invoke(context, "recover")
+                        FilterLaunch.ValidateFiles(context, filterSnapshot)
                         If settings.BorderlessDesktop Then
                             If Screen.PrimaryScreen Is Nothing Then Throw New IOException("The primary display is unavailable.")
                             desktopBounds = Screen.PrimaryScreen.Bounds
@@ -95,6 +98,7 @@ Public Class Session
                     If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once to create graphics settings.")
                     Status("Restoring", "Checking for an interrupted session")
                     graphics.Recover() : Worker.Invoke(context, "recover")
+                    FilterLaunch.ValidateFiles(context, filterSnapshot)
                     Worker.Invoke(context, "setup")
                     Status("Preparing")
                     Dim logFolder = CreateSessionLog(True)
@@ -165,6 +169,14 @@ Public Class Session
                 Status("Failed", message, ex)
                 Throw New IOException(message, ex)
             Finally
+                If filterSnapshot IsNot Nothing Then
+                    Try
+                        File.Delete(FilterLaunch.SnapshotPath(context, filterSnapshot))
+                    Catch ex As IOException
+                        ' An interrupted snapshot is harmless; never obscure recovery errors.
+                    Catch ex As UnauthorizedAccessException
+                    End Try
+                End If
                 guard.ReleaseMutex()
             End Try
         End Using
@@ -259,6 +271,7 @@ Public Class Session
     End Function
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
         ' Last effect layer for every launch path, including LAN and return to menus.
+        If filterSnapshot IsNot Nothing Then Worker.Invoke(context, "prepare-filter", filterSnapshot:=filterSnapshot)
         If Not BloomTransaction.Enabled(settings, start) Then Worker.Invoke(context, "prepare-bloom")
         NordschleifeProgress.Configure(start, settings)
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")

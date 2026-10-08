@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Graphics → Filters with separate Desktop and VR presets, Day/Night adjustments, and import/export. Keep Original or create your own colour, bloom and exposure settings; save and relaunch to apply. Main retains the existing graphics controls and Bloom master switches. Filters are experimental; desktop, headset and differing-preset LAN comparisons are still pending.
+- Restore filter changes after play or an interrupted launch while preserving custom-track lighting and external file edits.
+
 ## 0.17.56 — 2026-10-07 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.56)

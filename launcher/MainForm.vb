@@ -79,6 +79,7 @@ Public Class MainForm
     Private buttonCapture As ControllerCapture
     Private busy As Boolean
     Private customTracks As CustomTrackPanel
+    Private filters As FilterPanel
     Private ReadOnly updateNotice As New Button With {.Text = "New version available", .Name = "UpdateAvailable", .AutoSize = True, .Visible = False, .Anchor = AnchorStyles.Right}
     Private ReadOnly updateCancellation As New CancellationTokenSource()
     Private ReadOnly checkForUpdate As Func(Of CancellationToken, Task(Of ReleaseUpdate))
@@ -498,6 +499,14 @@ Public Class MainForm
     End Sub
     Private Sub BuildGraphicsTab()
         Dim content = TabLayout("Graphics")
+        Dim page = DirectCast(content.Parent, TabPage)
+        page.Controls.Remove(content) : page.AutoScroll = False
+        Dim graphicsTabs As New ModernTabs With {.Name = "GraphicsTabs", .Dock = DockStyle.Fill}
+        Dim mainPage As New TabPage("Main") With {.AutoScroll = True, .UseVisualStyleBackColor = False}
+        Dim filtersPage As New TabPage("Filters") With {.UseVisualStyleBackColor = False}
+        mainPage.Controls.Add(content)
+        filters = New FilterPanel(context, settings) : filtersPage.Controls.Add(filters)
+        graphicsTabs.TabPages.AddRange({mainPage, filtersPage}) : page.Controls.Add(graphicsTabs)
         Dim columns As New ResponsiveColumns() : content.Controls.Add(columns)
         Dim desktop = Section(columns.First, "Desktop")
         borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen", borderless)
@@ -539,6 +548,7 @@ Public Class MainForm
         AddHandler defaults.Click, Sub()
                                        borderless.Checked = False : desktopVSync.Checked = True
                                        desktopBloom.Checked = True : vrBloom.Checked = True
+                                       filters.ResetSelections()
                                        msaa.Value = 1 : vrShadows.Checked = False
                                        renderScale.Value = 100 : headsetScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False : hudDistance.Value = 2
@@ -750,6 +760,7 @@ Public Class MainForm
             settings.TrackId = track.Id : settings.CarCode = car.Code
         End If
         settings.Validate()
+        filters.Save(settings)
         SaveSeats()
         Files.SaveJson(context.PreferencesPath, settings)
         customTracks.Save()

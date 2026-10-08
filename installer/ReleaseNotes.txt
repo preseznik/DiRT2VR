@@ -1,7 +1,7 @@
 DiRT2VR — Experimental
 
-New: separate Bloom switches in Graphics for Desktop and VR rendering.
+New: Graphics → Filters lets you create and share your own visual presets.
 
-Turn Bloom off to remove the soft glow around bright areas while keeping colour grading, exposure and shadows. Both switches start On, preserving your existing look. Save settings and relaunch to apply.
+Choose separate presets for Desktop and VR, with Day and Night adjustments for colour, bloom and exposure. Original keeps the game's look. Save settings and relaunch to apply; Main retains the existing graphics controls and Bloom switches.
 
-Your choice applies to Normal Launch, Practice, Race, custom tracks and multiplayer HOST/JOIN. VR's choice also applies to the flat virtual screen. Original effects are restored after play.
+Presets can be imported and exported as DiRT2VR JSON files. Changes are restored after play. Filters are experimental: desktop appearance, headset rendering and differing presets in LAN still need player testing.

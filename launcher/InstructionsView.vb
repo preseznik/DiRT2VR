@@ -1,4 +1,4 @@
-Imports System.Drawing
+﻿Imports System.Drawing
 Imports System.Windows.Forms
 
 Public Class InstructionsView
@@ -7,26 +7,7 @@ Public Class InstructionsView
     Private ReadOnly picker As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Name = "InstructionTopicPicker", .AccessibleName = "Instruction topic"}
     Private ReadOnly article As New RichTextBox With {.ReadOnly = True, .BorderStyle = BorderStyle.None, .WordWrap = True, .ScrollBars = RichTextBoxScrollBars.Vertical, .DetectUrls = False, .Name = "InstructionArticle", .AccessibleName = "Instructions"}
     Private updating As Boolean
-    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom tracks", "Appearance", "Profiles",
-        "Choose a career
-Profile lists Current game career and careers created in DiRT2VR. Select a row, then Use this profile. Selection is saved immediately, separately from Save settings, and applies to Normal Launch, Practice, Race and LAN in Desktop or VR. Return to menus keeps the same career. Close the game before switching or creating profiles.
-
-Create a new career
-Choose Create new profile, enter a name, then Fresh career or 100% completed career. Use 1–24 letters (A–Z) or numbers (0–9), without spaces or symbols. Creation finishes in the launcher and automatically makes the new career active. The active row is green and marked Active. Use this profile switches to an existing career. Existing names stay unchanged. There is no unlock option for an existing career.
-
-Single-word names also appear on in-game surname displays. This works with existing launcher profiles and does not rewrite their saves.
-
-Delete a career
-Select a launcher-created career and Delete profile. Confirm its name before permanently deleting its saves from this Windows account. Choose another career for launching first. Current game career cannot be deleted here.
-
-Completed careers
-Includes stock career wins, cars, liveries, rewards, All-Star upgrades and teammate relationships. Achievements, personal-best times and external content are not included.
-
-Save locations
-Your current game career stays where it is. New careers are stored under %LOCALAPPDATA%\DiRT2VR\profiles and are shared between DiRT2VR installations on this Windows account. Each installation remembers its own selection. Normal launches outside DiRT2VR still use your original game career. Graphics settings and launcher bindings are shared between careers.
-
-Details and recovery
-Refresh reads the latest saved data. Unreadable details show Unavailable; intermediate completion percentages and the garage count are not yet supported. When the original game has several saved careers, choose between them inside its Load Profile menu. An unavailable selected career blocks launching until you explicitly select a valid one. Keep backups of your saves."}
+    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom tracks", "Appearance", "Profiles"}
     Private Shared ReadOnly Pages As String() = {
         "Launch
 Launch plays on your monitor. Launch VR uses SteamVR: start SteamVR and connect your headset first. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
@@ -50,6 +31,13 @@ On by default for desktop play, independently of borderless. Turn it off to allo
 
 Bloom
 Adds a soft glow around bright areas. On keeps the game's existing effects; Off removes the glow without disabling colour grading, exposure adjustment or shadows. Desktop and VR have separate choices, both On by default. Save and relaunch to apply. Works with Normal Launch, Practice, Race, custom tracks and HOST/JOIN. Original effect files are restored after play; use Restore original files if recovery is interrupted. Separate custom-track lighting choices are retained.
+
+Filters
+Graphics opens on Main; Filters contains separate Desktop and VR preset choices. Original keeps the track's look. Choose New or Save as, name the preset, then edit its Day and Night adjustments. Select it for the desired launch mode and Save settings. Changes apply on the next launch; there is no live preview.
+
+100% preserves each track's value; brightness offset 0 and tint Off preserve their original values. Reset adjustments resets the displayed Day or Night variant. Exposure controls scale native game values; their visual response still needs comparison testing. VR motion blur stays disabled. Main's Bloom Off overrides preset glow settings. Differing presets in LAN and headset appearance still need testing; use Original if problems occur.
+
+Import and Export use DiRT2VR preset JSON, not game XML or Assetto Corsa ppfilters. Presets are shared by this Windows account. Rename and Delete manage custom presets; select and save another preset before deleting one used for launching. Original cannot be changed. Changing the edited preset prompts you to save or discard unsaved adjustments.
 
 Frame rate
 Driver settings, Windows and your monitor can affect frame rate and presentation. Borderless uses the game's windowed rendering path; it does not guarantee a particular frame rate.
@@ -209,7 +197,26 @@ Controls
 Click a keyboard cell to change it. In Modern, click a controller cell to replace that assignment, + to add another, or × to remove one. Hover a shortened cell to read the full device and button names, including disconnected devices. Classic keeps its Bind and Remove selected buttons. Assignments work the same in either layout.
 
 Seat adjustment
-Open seat adjustment is recommended instead of six separate movement bindings. Expand Individual seat bindings (optional) for all six directions and Panel sideways modifier, Panel save and Panel cancel. Fixed panel keyboard shortcuts are read-only. Collapsing that section or changing appearance cancels active binding capture."
+Open seat adjustment is recommended instead of six separate movement bindings. Expand Individual seat bindings (optional) for all six directions and Panel sideways modifier, Panel save and Panel cancel. Fixed panel keyboard shortcuts are read-only. Collapsing that section or changing appearance cancels active binding capture.",
+        "Choose a career
+Profile lists Current game career and careers created in DiRT2VR. Select a row, then Use this profile. Selection is saved immediately, separately from Save settings, and applies to Normal Launch, Practice, Race and LAN in Desktop or VR. Return to menus keeps the same career. Close the game before switching or creating profiles.
+
+Create a new career
+Choose Create new profile, enter a name, then Fresh career or 100% completed career. Use 1–24 letters (A–Z) or numbers (0–9), without spaces or symbols. Creation finishes in the launcher and automatically makes the new career active. The active row is green and marked Active. Use this profile switches to an existing career. Existing names stay unchanged. There is no unlock option for an existing career.
+
+Single-word names also appear on in-game surname displays. This works with existing launcher profiles and does not rewrite their saves.
+
+Delete a career
+Select a launcher-created career and Delete profile. Confirm its name before permanently deleting its saves from this Windows account. Choose another career for launching first. Current game career cannot be deleted here.
+
+Completed careers
+Includes stock career wins, cars, liveries, rewards, All-Star upgrades and teammate relationships. Achievements, personal-best times and external content are not included.
+
+Save locations
+Your current game career stays where it is. New careers are stored under %LOCALAPPDATA%\DiRT2VR\profiles and are shared between DiRT2VR installations on this Windows account. Each installation remembers its own selection. Normal launches outside DiRT2VR still use your original game career. Graphics settings and launcher bindings are shared between careers.
+
+Details and recovery
+Refresh reads the latest saved data. Unreadable details show Unavailable; intermediate completion percentages and the garage count are not yet supported. When the original game has several saved careers, choose between them inside its Load Profile menu. An unavailable selected career blocks launching until you explicitly select a valid one. Keep backups of your saves."
 }
     Public Sub New()
         Dock = DockStyle.Fill
