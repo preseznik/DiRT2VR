@@ -31,6 +31,7 @@
     <ProjectReference Include="../tools/aspen-converter/AspenConverter.csproj" />
     <ProjectReference Include="../tools/nordschleife-converter/NordschleifeConverter.csproj" />
     <ProjectReference Include="../tools/custom-tracks/CustomTracks.csproj" />
+    <ProjectReference Include="../tools/mizu-converter/MizuConverter.csproj" />
     <ProjectReference Include="../tools/profiles/Profiles.csproj" />
   </ItemGroup>
 </Project>

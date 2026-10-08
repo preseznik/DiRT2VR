@@ -20,6 +20,7 @@ internal sealed class Scene
     internal readonly Dictionary<string, string> Inputs = new(StringComparer.OrdinalIgnoreCase);
     internal readonly Dictionary<string, long> Surfaces = new(StringComparer.Ordinal);
     internal readonly Dictionary<string, string> CollisionMappings = new(StringComparer.Ordinal);
+    internal readonly HashSet<string> RoadSurfaces = new(StringComparer.Ordinal) { "RDT+" };
     internal Gate[] Gates = [];
     internal Gate[] RunoutGates = [];
     internal Vector3 Origin;
@@ -137,12 +138,15 @@ internal sealed class Scene
     internal static Mesh Compact(Mesh mesh, IReadOnlyList<ushort> selected)
     {
         var used=selected.Distinct().Order().ToArray();var map=used.Select((old,index)=>(old,index)).ToDictionary(x=>x.old,x=>checked((ushort)x.index));
-        return mesh with { Positions=used.Select(i=>mesh.Positions[i]).ToArray(),Normals=used.Select(i=>mesh.Normals[i]).ToArray(),UV=used.Select(i=>mesh.UV[i]).ToArray(),Tangents=used.Select(i=>mesh.Tangents[i]).ToArray(),Indices=selected.Select(i=>map[i]).ToArray() };
+        return mesh with { Positions=used.Select(i=>mesh.Positions[i]).ToArray(),Normals=used.Select(i=>mesh.Normals[i]).ToArray(),UV=used.Select(i=>mesh.UV[i]).ToArray(),Tangents=used.Select(i=>mesh.Tangents[i]).ToArray(),Indices=selected.Select(i=>map[i]).ToArray(),
+            Colors=mesh.Colors is null?null:used.Select(i=>mesh.Colors[i]).ToArray(),
+            TexCoords=mesh.TexCoords?.Select(set=>used.Select(i=>set[i]).ToArray()).ToArray(),
+            Binormals=mesh.Binormals is null?null:used.Select(i=>mesh.Binormals[i]).ToArray() };
     }
     internal float RoadHeight(Vector3 position)
     {
         float? closest=null;
-        foreach(var triangle in Collision.Where(t=>t.Material=="RDT+"))
+        foreach(var triangle in Collision.Where(t=>RoadSurfaces.Contains(t.Material)))
         {
             var a=triangle.Position0;var b=triangle.Position1;var c=triangle.Position2;
             float divisor=(b.Z-c.Z)*(a.X-c.X)+(c.X-b.X)*(a.Z-c.Z);

@@ -31,6 +31,9 @@ internal static class VisualBatches
         }
         return meshes[0] with{Name=meshes[0].Name+"_batch",Positions=meshes.SelectMany(m=>m.Positions).ToArray(),
             Normals=meshes.SelectMany(m=>m.Normals).ToArray(),UV=meshes.SelectMany(m=>m.UV).ToArray(),
-            Tangents=meshes.SelectMany(m=>m.Tangents).ToArray(),Indices=indices.ToArray()};
+            Tangents=meshes.SelectMany(m=>m.Tangents).ToArray(),Indices=indices.ToArray(),
+            Colors=meshes[0].Colors is null?null:meshes.SelectMany(m=>m.Colors!).ToArray(),
+            TexCoords=meshes[0].TexCoords is null?null:Enumerable.Range(0,meshes[0].TexCoords!.Length).Select(s=>meshes.SelectMany(m=>m.TexCoords![s]).ToArray()).ToArray(),
+            Binormals=meshes[0].Binormals is null?null:meshes.SelectMany(m=>m.Binormals!).ToArray()};
     }
 }

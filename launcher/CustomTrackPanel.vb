@@ -207,7 +207,7 @@ Public Class CustomTrackPanel
             layouts.AccessibleName = If(nord, "Conditions", "Layout")
             setup.Controls.Find("CustomTrackLayoutLabel", True).Single().Text = If(nord, "Conditions", "Layout")
             setup.Controls.Find("CustomTrackConditionLabel", True).Single().Text = If(nord, "Layout", "Conditions")
-            installHint.Text = "Build this pack from your own " & If(nord, "Assetto Corsa Nordschleife", "DiRT 3 Complete Edition") & " files. Select a detected installation or browse to its folder. Installed tracks work offline."
+            installHint.Text = "Build this pack from your own " & TrackPacks.Get(currentPack.Id).SourceName & " files. Select a detected installation or browse to its folder. Installed tracks work offline."
             installationValid = False : raceReady = False : installedReceipt = Nothing : hasReceipt = False : errorText = "" : installedLayouts.Clear()
             Dim selected = preferences.ForPack(currentPack.Id)
             nordRaceLaps = Math.Clamp(selected.Laps, 1, 20)
@@ -279,10 +279,13 @@ Public Class CustomTrackPanel
         End If
         Dim race = launchMode.SelectedIndex = 1
         Dim nord = currentPack?.Id = "nordschleife"
-        laps.Enabled = Not nord OrElse race
+        Dim pointToPoint = chosen IsNot Nothing AndAlso Not chosen.Circuit
+        laps.Enabled = Not pointToPoint AndAlso (Not nord OrElse race)
+        If pointToPoint Then laps.Value = 1
         If nord AndAlso Not loading Then laps.Value = If(race, nordRaceLaps, 1)
         modeHint.Text = If(nord, "Desktop and VR · " & If(race, "1–20 laps", "One lap") & " · VR and AI races are experimental", "Desktop and VR · AI races are experimental · LAN unavailable")
         If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
+        If pointToPoint Then modeHint.Text = "Desktop Direct practice · One 10.4 km run · Race, VR and LAN unavailable"
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."
         raceDifficulty.Enabled = race
@@ -328,7 +331,7 @@ Public Class CustomTrackPanel
                             installationValid = False : raceReady = False : installedReceipt = Nothing
                             hasReceipt = File.Exists(SafeFiles.Inside(context.GameRoot, TrackPacks.Get(currentPack.Id).Receipt))
                             If Not hasReceipt Then
-                                SetStatus("Not installed", "Not installed · Build once from your own " & If(currentPack.Id = "nordschleife", "Assetto Corsa", "DiRT 3") & " files.")
+                                SetStatus("Not installed", "Not installed · Build once from your own " & TrackPacks.Get(currentPack.Id).SourceName & " files.")
                                 Return
                             End If
                             SetStatus("Checking…", "Checking installed " & currentPack.Name & " files…")
@@ -406,7 +409,7 @@ Public Class CustomTrackPanel
             TextRenderer.DrawText(e.Graphics, pack.Name, bold, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         End Using
         bounds.Y += Px(Me, 24)
-        TextRenderer.DrawText(e.Graphics, If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection")), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        TextRenderer.DrawText(e.Graphics, If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", If(pack.Id = "mizu-mountain", "Point-to-point · 10.4 km · Desktop", If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection"))), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         bounds.Y += Px(Me, 24)
         TextRenderer.DrawText(e.Graphics, packStatuses(pack.Id), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         e.DrawFocusRectangle()
@@ -470,8 +473,8 @@ Public Class AspenSourceForm
     End Property
     Public Sub New(previous As String, detected As String(), offer As ConversionProfile, Optional selectedIds As String() = Nothing, Optional installed As PackReceipt = Nothing)
         Dim nord = offer.Id = "nordschleife"
-        Dim sourceGame = If(nord, "Assetto Corsa", "DiRT 3 Complete Edition")
-        source.Name = If(nord, "AssettoCorsaSourceFolder", "Dirt3SourceFolder")
+        Dim sourceGame = TrackPacks.Get(offer.Id).SourceName
+        source.Name = If(nord, "AssettoCorsaSourceFolder", If(offer.Id = "mizu-mountain", "Grid2SourceFolder", "Dirt3SourceFolder"))
         Text = "Build " & offer.Name & " layouts — " & sourceGame : Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi : StartPosition = FormStartPosition.CenterParent
         StyleChoice(source, Me)

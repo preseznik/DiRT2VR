@@ -20,6 +20,7 @@ internal static class Visuals
     };
     internal static string Target(Material material)
     {
+        if(material.Native is {} native)return (string)native.Group.Attribute("id")!;
         if (!Supported.Contains(material.Shader)) throw new InvalidDataException("Unmapped AC shader: " + material.Shader);
         if (material.Blend != 0 || material.Shader == "ksPerPixelAlpha") return "glass_simple.fx";
         if (RoadMaterial.Read(material) is not null) return "terrain_infield.fx";
@@ -28,9 +29,9 @@ internal static class Visuals
         // The static object shader clips diffuse alpha and preserves source positions.
         return "object_simple.fx";
     }
-    internal static bool IsOpaque(Material material) => Target(material) is "object_simple.fx" or "terrain_infield.fx" &&
+    internal static bool IsOpaque(Material material) => material.Native?.Opaque ?? (Target(material) is "object_simple.fx" or "terrain_infield.fx" &&
         !material.AlphaTest && material.Shader is not ("ksTree" or "ksGrass" or "ksPerPixelAT") &&
-        !material.Shader.Contains("_AT",StringComparison.Ordinal);
+        !material.Shader.Contains("_AT",StringComparison.Ordinal));
     static XElement Element(PssgElement element)
     {
         var root = new XElement("root"); element.WriteXml(root); return root.Elements().Single();
@@ -68,8 +69,9 @@ internal static class Visuals
         foreach(var lib in route.Elements<PssgLibrary>().Where(l=>l.Type!="NODE").ToArray())lib.RemoveChildElements();
         var doc=Files.Document(route);
         var renderTemplate=doc.Descendants("RENDERNODE").First();
+        bool nativeDecals=scene.Visuals.Any(m=>Target(m.Material)=="decal_ao.fx");
         foreach(var root in doc.Descendants("NODE").Where(n=>((string?)n.Attribute("id"))?.StartsWith("ROOT_",StringComparison.Ordinal)==true))
-        foreach(string prefix in new[]{"HIGH_","LOW_","HIGHBATCH_","LOWBATCH_"})
+        foreach(string prefix in nativeDecals?new[]{"HIGH_","LOW_","HIGHBATCH_","LOWBATCH_","DECAL_"}:new[]{"HIGH_","LOW_","HIGHBATCH_","LOWBATCH_"})
         {
             string id=prefix+((string)root.Attribute("id")!)[5..];
             if(root.Elements("RENDERNODE").Any(n=>(string?)n.Attribute("id")==id))continue;
@@ -97,19 +99,25 @@ internal static class Visuals
         Library("SHADERGROUP").Add(depthTemplate);
         Library("SHADERINSTANCE").Add(depthMaterial);
         var sourceMaterials=scene.Visuals.Select(m=>m.Material).DistinctBy(m=>m.Id).OrderBy(m=>m.Id,StringComparer.Ordinal).ToArray();
+        foreach(var material in sourceMaterials.Where(m=>m.Native is not null))
+        {
+            var native=material.Native!;string target=Target(material);
+            layouts[target]=native.Layout;templates[target]=(native.Group,native.Instance);
+        }
         var ids=new Dictionary<string,string>();var shaderMappings=new List<object>();
         var addedGroups=new HashSet<string>();var textureBytes=new Dictionary<string,byte[]>();
-        string TextureId(string name,bool opaque,bool roadShading=false)
+        string TextureId(string name,bool opaque,bool roadShading=false,bool preserveChannels=false)
         {
+            if(preserveChannels && (name is "nord_black" or "nord_white" or "nord_normal" or "nord_normal_dxt5"))return name;
             if(!scene.Textures.TryGetValue(name,out var texture))throw new InvalidDataException("Missing embedded texture: "+name);
-            string id="nord_tex_"+texture.Hash[..20]+(roadShading?"_road_shading":opaque?"_opaque":"");textureBytes.TryAdd(id,texture.Dds);return id;
+            string id="nord_tex_"+texture.Hash[..20]+(preserveChannels?"_native":roadShading?"_road_shading":opaque?"_opaque":"");textureBytes.TryAdd(id,texture.Dds);return id;
         }
         for(int i=0;i<sourceMaterials.Length;i++)
         {
             var material=sourceMaterials[i];string target=Target(material);var template=templates[target];
             if(addedGroups.Add(target))Library("SHADERGROUP").Add(new XElement(template.Group));
             string id="nord_material_"+i;ids[material.Id]=id;
-            var instance=new XElement(template.Instance);instance.SetAttributeValue("id",id);
+            var instance=new XElement(material.Native?.Instance??template.Instance);instance.SetAttributeValue("id",id);
             var definitions=template.Group.Elements("SHADERINPUTDEFINITION").ToArray();
             if(!material.Textures.TryGetValue("txDiffuse",out var diffuse))throw new InvalidDataException("Material has no diffuse map: "+material.Id);
             var grass=GrassMaterial.Read(material);
@@ -120,6 +128,11 @@ internal static class Visuals
                 if((string?)definitions[j].Attribute("type")!="texture")continue;
                 string name=(string)definitions[j].Attribute("name")!;
                 var input=instance.Elements("SHADERINPUT").SingleOrDefault(x=>(int?)x.Attribute("parameterID")==j);
+                if(material.Native is not null)
+                {
+                    if(input is not null)input.SetAttributeValue("texture","tracksplit.pssg#"+TextureId(material.Textures[name],false,preserveChannels:true));
+                    continue;
+                }
                 if(input is null){input=new XElement("SHADERINPUT",new XAttribute("parameterID",j));instance.Add(input);}
                 string texture=road is not null ? name.StartsWith("TDiffuseSpecMap",StringComparison.Ordinal)?TextureId(road.Detail,true):name=="TAmbientOcclusion"?TextureId(road.Shading,false,true):"nord_black" :
                     name=="TDiffuseAlphaMap"?TextureId(grass?.Detail??diffuse,IsOpaque(material)):name=="TOcclusionMap"?(grass is null?"nord_white":TextureId(grass.Shading,false)):name=="TNormalMap"?"nord_normal":"nord_black";
@@ -143,11 +156,13 @@ internal static class Visuals
             var attributes=layouts[target].BlockInputs.SelectMany(b=>b.VertexInputs).Select(v=>v.Name).Distinct().ToArray();
             shaderMappings.Add(new { Source=material.Id,material.Name,material.Shader,Target=target,Diffuse=road?.Detail??grass?.Detail??diffuse,Grass=grass,Road=road,
                 VertexAttributes=attributes,SourceNormalsUsed=attributes.Contains("Normal"),
-                DiffuseAlpha=IsOpaque(material)?"Opaque coverage; source mask alpha discarded, RGB retained":"Source coverage retained",
-                Approximation=road is not null?"Primary asphalt detail uses source world XZ scale and phase; base shading uses original UVs. Additional mask layers, coloured shading and normal packing remain approximate":grass is null?"Diffuse, source UVs and normals retained; static cutout meshes use diffuse alpha clipping. Multilayer blending, AC specular/normal packing and animated effects are not reproduced":
+                DiffuseAlpha=target=="decal_ao.fx"?"Source diffuse/specular retained; source shadow alpha repacked into target R/G, baked indirect luminance into B":material.Native is not null?"All source texture channels retained for native shader inputs":IsOpaque(material)?"Opaque coverage; source mask alpha discarded, RGB retained":"Source coverage retained",
+                Approximation=target=="decal_ao.fx"?"Native decal alpha blending, source coverage, UV sets and shadow occlusion retained; neutral packed normal supplied. GRID 2 GIS indirect lighting is reduced to luminance":material.Native is not null?"Native terrain layers, UV sets and translated world mapping retained. Unsupported source shader inputs are listed in terrain-materials.json; colour atlas, GIS lighting, feathering and some mask math remain approximate":road is not null?"Primary asphalt detail uses source world XZ scale and phase; base shading uses original UVs. Additional mask layers, coloured shading and normal packing remain approximate":grass is null?"Diffuse, source UVs and normals retained; static cutout meshes use diffuse alpha clipping. Multilayer blending, AC specular/normal packing and animated effects are not reproduced":
                     "Primary source grass detail uses original world XZ scale and phase; source diffuse shading uses original UVs as occlusion. Remaining soil/detail mask blends and normal/specular packing are not reproduced" });
         }
-        foreach(var id in textureBytes.Keys.Concat(new[]{"nord_white","nord_black","nord_normal"}))
+        var constants=new List<string>{"nord_white","nord_black","nord_normal"};
+        if(sourceMaterials.Any(m=>m.Native is not null&&m.Textures.Values.Contains("nord_normal_dxt5")))constants.Add("nord_normal_dxt5");
+        foreach(var id in textureBytes.Keys.Concat(constants))
         {
             var texture=new XElement(textureTemplate);texture.SetAttributeValue("id",id);textureLibrary.Add(texture);
         }
@@ -161,7 +176,7 @@ internal static class Visuals
                 using var memory=new MemoryStream(payload,false);dds=new DdsFile(memory);
                 if(dds.header.width==0 || dds.header.height==0 || dds.header.width>8192 || dds.header.height>8192)throw new InvalidDataException("Invalid DDS dimensions.");
                 if(texture.Id.EndsWith("_road_shading",StringComparison.Ordinal))RoadMaterial.PackShading(dds);
-                else DdsAlpha.Prepare(dds,texture.Id.EndsWith("_opaque",StringComparison.Ordinal));
+                else if(!texture.Id.EndsWith("_native",StringComparison.Ordinal))DdsAlpha.Prepare(dds,texture.Id.EndsWith("_opaque",StringComparison.Ordinal));
             }
             else
             {
@@ -169,7 +184,7 @@ internal static class Visuals
                 dds.header.ddspf.flags=DdsPixelFormat.Flags.DDPF_RGB|DdsPixelFormat.Flags.DDPF_ALPHAPIXELS;
                 dds.header.ddspf.rGBBitCount=32;dds.header.ddspf.rBitMask=0x00ff0000;dds.header.ddspf.gBitMask=0x0000ff00;
                 dds.header.ddspf.bBitMask=0x000000ff;dds.header.ddspf.aBitMask=0xff000000;
-                dds.bdata=texture.Id switch{"nord_white"=>[255,255,255,255],"nord_normal"=>[255,128,128,255],_=>[0,0,0,255]};
+                dds.bdata=texture.Id switch{"nord_white"=>[255,255,255,255],"nord_normal"=>[255,128,128,255],"nord_normal_dxt5"=>[255,128,128,128],_=>[0,0,0,255]};
             }
             dds.ToPssgElement(texture);texture.AutoMipMap=false;
             if(texture.TexelFormat is not ("dxt1" or "dxt3" or "dxt5" or "ui8x4"))throw new InvalidDataException("Unsupported target texture format: "+texture.Id+" "+texture.TexelFormat);
@@ -192,13 +207,19 @@ internal static class Visuals
                 for(int i=0;i<mesh.Positions.Length;i++)
                 {
                     var p=mesh.Positions[i];bounds=bounds.Union(new(p,p));writer.Positions.Add(p);writer.Normals.Add(mesh.Normals[i]);
-                    writer.Tangents.Add(new(mesh.Tangents[i],1));writer.Colors.Add(Vector4.One);
-                    writer.TexCoords0.Add(grass?.UV(p,scene.Origin,mesh.Positions[0])??mesh.UV[i]);writer.TexCoords1.Add(mesh.UV[i]);writer.TexCoords2.Add(mesh.UV[i]);writer.TexCoords3.Add(mesh.UV[i]);
+                    float handedness=mesh.Binormals is null?1:Vector3.Dot(Vector3.Cross(mesh.Normals[i],mesh.Tangents[i]),mesh.Binormals[i])<0?-1:1;
+                    writer.Tangents.Add(new(mesh.Tangents[i],handedness));writer.Colors.Add(mesh.Colors?[i]??Vector4.One);
+                    Vector2 UV(int set)=>mesh.TexCoords is null?mesh.UV[i]:mesh.TexCoords[Math.Min(set,mesh.TexCoords.Length-1)][i];
+                    writer.TexCoords0.Add(grass?.UV(p,scene.Origin,mesh.Positions[0])??UV(0));writer.TexCoords1.Add(UV(1));writer.TexCoords2.Add(UV(2));writer.TexCoords3.Add(UV(3));
                 }
                 writer.Indices.AddRange(mesh.Indices.Select(i=>(uint)i));
                 var segment=new PssgSegmentSet(route,segmentLib){Id=id+"_segments",SegmentCount=1};segmentLib.AppendChild(segment);
                 writer.Write(layouts[Target(mesh.Material)],segment,dataLib,state);segment.Segments.Single().Primitive="triangles";
-                foreach(var node in new[]{high,low})
+                // Native decals have their own terrain list and draw after the
+                // road. In HIGH/LOW they are hidden by the opaque terrain pass.
+                var colourNodes=Target(mesh.Material)=="decal_ao.fx"?
+                    new[]{root.ChildElements.OfType<PssgRenderNode>().Single(n=>n.Id=="DECAL_"+root.Id[5..])}:new[]{high,low};
+                foreach(var node in colourNodes)
                 {
                     var instance=new PssgRenderStreamInstance(route,node){Id=id+"_"+node.Id,SourceCount=1,Indices="#"+id,StreamCount=0,Shader="#"+ids[mesh.Material.Id]};
                     node.AppendChild(instance);instance.AppendChild(new PssgRenderInstanceSource(route,instance){Source="#"+id});

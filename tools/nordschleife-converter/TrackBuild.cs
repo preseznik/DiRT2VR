@@ -188,7 +188,7 @@ internal static class TrackBuild
         }
         Files.Json(Path.Combine(output,"gates.json"),scene.Gates.Select(g=>new{Position=new[]{g.Position.X,g.Position.Y,g.Position.Z},Tangent=new[]{g.Tangent.X,g.Tangent.Y,g.Tangent.Z},g.Distance,g.Left,g.Right}));
     }
-    static void Verify(Scene scene,string output)
+    internal static void Verify(Scene scene,string output)
     {
         using var stream=File.OpenRead(Path.Combine(output,"track.jpk"));var archive=new JpkFile();archive.Read(stream);var ground=TrackGround.Load(archive);
         var readback=ground.TraverseGrid().SelectMany(c=>c.QuadTree.GetTriangles()).ToArray();

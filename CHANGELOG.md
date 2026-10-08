@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Mizu Mountain to CUSTOM tracks. Build the full 10.4 km daylight route from your own GRID 2 installation and launch desktop Direct practice. This version supports solo point-to-point driving; Race, VR and LAN remain unavailable.
+
 - Choosing a preset in the Filters editor now also selects it for Desktop and VR. New, imported and copied presets become selected too; Save settings and relaunch to apply. The two launch selectors can still be changed separately.
 
 - Add Graphics → Filters with separate Desktop and VR presets, Day/Night adjustments, and import/export. Keep Original or create your own colour, bloom and exposure settings; save and relaunch to apply. Main retains the existing graphics controls and Bloom master switches. Initial desktop use is player-approved; headset and differing-preset LAN comparisons remain unverified.

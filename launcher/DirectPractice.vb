@@ -44,7 +44,7 @@ Public Class RaceCatalog
         If CustomTracks.TrackPacks.IsLayout(id) Then
             Dim layout = CustomTracks.TrackPacks.ForLayout(id).GetLayout(id)
             Return New PracticeTrack With {.Id = id, .Event = layout.Discipline, .Label = CustomTracks.TrackPacks.ForLayout(id).Name & " — " & layout.Name,
-                .Country = "usa", .Track = layout.Folder, .Route = "route_0", .Circuit = True}
+                .Country = "usa", .Track = layout.Folder, .Route = "route_0", .Circuit = layout.Circuit}
         End If
         Dim result = Tracks.SingleOrDefault(Function(t) t.Id = id)
         If result Is Nothing Then Throw New IOException("Unknown practice track.")

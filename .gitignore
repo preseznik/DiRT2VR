@@ -68,3 +68,5 @@ tests/launcher/obj/
 /tools/nordschleife-converter/obj/
 /tools/nordschleife-converter/Program.cs
 /tools/nordschleife-converter/*.ps1
+/tools/mizu-converter/bin/
+/tools/mizu-converter/obj/

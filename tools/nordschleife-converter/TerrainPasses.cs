@@ -38,7 +38,7 @@ internal static class TerrainPasses
     static bool IsOpaque(PssgRenderStreamInstance draw)
     {
         var material=draw.GetShaderInstance();
-        if(material.ShaderGroup=="#terrain_infield.fx")return true;
+        if(material.ShaderGroup.StartsWith("#terrain_",StringComparison.Ordinal))return true;
         if(material.ShaderGroup!="#object_simple.fx")return false;
         var definitions=material.GetShaderGroup().InputDefinitions.ToArray();
         int diffuse=Array.FindIndex(definitions,d=>d.InputName=="TDiffuseAlphaMap");

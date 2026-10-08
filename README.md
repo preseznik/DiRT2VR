@@ -72,6 +72,8 @@ For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The exis
 
 ## Custom tracks (experimental)
 
+**Mizu Mountain** adds the full 10.4 km daylight point-to-point route from your own **GRID 2** installation. Choose **CUSTOM tracks → Mizu Mountain → Build and install…**, select the GRID 2 folder, then use **Launch** for desktop Direct practice. One run covers the route from start to finish with three timing checkpoints. The Subaru STI is the tested car; other installed cars can be selected. Race, VR and LAN are unavailable for this version. Some materials and lighting are approximations, movable props and soft vegetation are visual-only, and crowds and some dynamic effects are omitted. Built tracks work offline; keep GRID 2 installed for future rebuilds.
+
 Aspen and Smelter each add ten layouts built from your own **DiRT 3 Complete Edition** installation. Conversion tools are included with DiRT2VR; no additional download is needed and no game assets are distributed. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
 
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.

@@ -1,7 +1,7 @@
 namespace DiRT2VR.CustomTracks;
 
 public sealed record TrackProgress(int Percent, string Message, bool CanCancel = true);
-public sealed record Layout(string Id, string Name, string Folder, string Condition, string Discipline = "Rallycross");
+public sealed record Layout(string Id, string Name, string Folder, string Condition, string Discipline = "Rallycross", bool Circuit = true);
 public sealed record Fingerprint(string Game, string Path, string Sha256);
 public sealed record PackFile(string Path, long Bytes, string Sha256);
 public sealed record SessionFile(string Path, string OriginalSha256, string InstalledPath);
@@ -69,7 +69,9 @@ public static class TrackPacks
         [new("nordschleife-daylight", "Standard circuit", "d2vr_nord_day", "Daylight"),
          new("nordschleife-overcast", "Standard circuit", "d2vr_nord_cloud", "Overcast"),
          new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
-    public static readonly TrackPack[] All = [Aspen, Smelter, Nordschleife];
+    public static readonly TrackPack Mizu = new("mizu-mountain", "Mizu Mountain", "1.0.0", "0.17.59", ["desktop-solo"],
+        [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
+    public static readonly TrackPack[] All = [Aspen, Smelter, Nordschleife, Mizu];
     public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"];
     public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
     public static bool IsLayout(string? id) => All.Any(p => p.Layouts.Any(l => l.Id == id));
@@ -94,6 +96,8 @@ public sealed class TrackPack
     public string[] RequiredTargets { get; }
     public string Support => "DiRT2VR/custom-tracks/" + Id;
     public string Receipt => Support + "/receipt.json";
+    public string SourceGame => Id switch { "nordschleife" => "assettocorsa", "mizu-mountain" => "grid2", _ => "dirt3" };
+    public string SourceName => Id switch { "nordschleife" => "Assetto Corsa", "mizu-mountain" => "GRID 2", _ => "DiRT 3 Complete Edition" };
     public string[] SharedTargets => Id == "smelter" ? TrackPacks.SessionTargets : AspenPack.SharedTargets;
     internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets)
     {
@@ -131,6 +135,8 @@ public sealed class TrackPack
     public void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps)
     {
         var layout = GetLayout(id);
+        if (!layout.Circuit && laps != 1)
+            throw new IOException(Name + " is point-to-point. Choose one complete run.");
         if (Id == "nordschleife" && mode == "practice" && laps != 1)
             throw new IOException("Nordschleife Direct practice supports one complete lap per session.");
         if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")))
@@ -151,11 +157,11 @@ public sealed class TrackPack
             offer.Modes is null || !offer.Modes.SequenceEqual(Modes) ||
             offer.Layouts is null || !offer.Layouts.SequenceEqual(Layouts))
             throw new IOException("The bundled conversion tools are unsupported. Reinstall DiRT2VR.");
-        ValidateSources(offer.Sources, Id == "nordschleife" ? "assettocorsa" : "dirt3");
+        ValidateSources(offer.Sources, SourceGame);
     }
     public static void ValidateSources(Fingerprint[] sources, string sourceGame = "dirt3")
     {
-        if (sourceGame is not ("dirt3" or "assettocorsa") || sources is null || sources.Length is < 2 or > 4096 || sources.Any(f => f is null) ||
+        if (sourceGame is not ("dirt3" or "assettocorsa" or "grid2") || sources is null || sources.Length is < 2 or > 4096 || sources.Any(f => f is null) ||
             sources.Select(f => f.Game + "/" + f.Path).Distinct(StringComparer.OrdinalIgnoreCase).Count() != sources.Length ||
             sources.Any(f => (f.Game != "dirt2" && f.Game != sourceGame) || !SafeFiles.Digest(f.Sha256)))
             throw new IOException("Invalid source fingerprint inventory.");
@@ -171,7 +177,7 @@ public sealed class TrackPack
         if (receipt.Schema == 2 && (System.Version.Parse(receipt.MinimumLauncher) < System.Version.Parse(SelectiveBuildLauncher) ||
             receipt.Sessions.Any(s => !SafeFiles.Version(s.Version!)))) throw new IOException("Invalid selective-build receipt.");
         if (receipt.Schema == 1 && receipt.Sessions.Any(s => s.Version is not null)) throw new IOException("Invalid legacy layout version.");
-        ValidateSources(receipt.Sources, Id == "nordschleife" ? "assettocorsa" : "dirt3");
+        ValidateSources(receipt.Sources, SourceGame);
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var allowedRoots = ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
         long total = 0;
@@ -180,7 +186,7 @@ public sealed class TrackPack
             SafeFiles.Relative(f.Path);
             string extension = Path.GetExtension(f.Path);
             bool supported = new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf" }.Contains(extension) ||
-                (Id == "nordschleife" && extension is ".nfs" or ".gssp");
+                (Id is "nordschleife" or "mizu-mountain" && extension is ".nfs" or ".gssp");
             if (!paths.Add(f.Path) || f.Path == Receipt || !allowedRoots.Any(p => f.Path.StartsWith(p + "/", StringComparison.Ordinal)) ||
                 (receipt.Schema == 2 && !ReceiptLayouts(receipt).Any(l => Owns(l, f.Path))) ||
                 !SafeFiles.Digest(f.Sha256) || f.Bytes is < 0 or > 512L * 1024 * 1024 ||
@@ -233,7 +239,7 @@ public sealed class TrackPack
     public static Fingerprint[] VerifySources(ConversionProfile offer, string dirt2, string dirt3, IProgress<TrackProgress>? progress, CancellationToken cancel)
     {
         var pack=TrackPacks.Get(offer.Id);
-        ValidateSources(offer.Sources, pack.Id == "nordschleife" ? "assettocorsa" : "dirt3");
+        ValidateSources(offer.Sources, pack.SourceGame);
         var verified = new Fingerprint[offer.Sources.Length];
         for (int i = 0; i < offer.Sources.Length; i++)
         {
@@ -249,7 +255,7 @@ public sealed class TrackPack
     }
     // Inspected XML-form PSSG: these two files are byte-identical after CRLF/LF normalization.
     static bool KnownSourceVariant(string pack, Fingerprint source, string hash) =>
-        pack == "nordschleife" && source.Game == "dirt2" &&
+        (pack is "nordschleife" or "mizu-mountain") && source.Game == "dirt2" &&
         source.Path == "tracks/london/battersea/track_light_anims.pssg" &&
         source.Sha256 == "BEAC14E6B3910B404640ADEC1FBE8E687F3505DF4479B8D3924DF42D03A0FD6D" &&
         hash == "7C54720E9C0921E5C1CAC46FD1C8B22DF27E80DE177FAEDACB6282AD4B06BF99";

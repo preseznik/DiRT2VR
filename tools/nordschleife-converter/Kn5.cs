@@ -7,7 +7,10 @@ namespace DiRT2VR.Nordschleife;
 internal sealed record Material(string Id, string Name, string Shader, byte Blend, bool AlphaTest, Dictionary<string, string> Textures)
 {
     internal Dictionary<string,float[]> Properties { get; init; } = new(StringComparer.Ordinal);
+    internal NativeMaterial? Native { get; init; }
 }
+internal sealed record NativeMaterial(System.Xml.Linq.XElement Group,System.Xml.Linq.XElement Instance,
+    EgoEngineLibrary.Formats.Pssg.ShaderInputInfo Layout,bool Opaque);
 internal sealed record Mesh(string Name, Material Material, bool Physical, Vector3[] Positions, Vector3[] Normals, Vector2[] UV, Vector3[] Tangents, ushort[] Indices)
 {
     internal bool Visible { get; init; } = true;
@@ -16,6 +19,9 @@ internal sealed record Mesh(string Name, Material Material, bool Physical, Vecto
     internal int SourceNode { get; init; }
     internal float LodIn { get; init; }
     internal float LodOut { get; init; }
+    internal Vector4[]? Colors { get; init; }
+    internal Vector2[][]? TexCoords { get; init; }
+    internal Vector3[]? Binormals { get; init; }
 }
 internal sealed record Texture(byte[] Dds, string Hash);
 
