@@ -87,7 +87,9 @@ These options affect the cockpit HUD, not the centre of the view, desktop HUD, m
 General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter. Driving opens the driving-controls editor. Seat contains Open seat adjustment and the collapsed optional bindings. Switching tabs cancels an unfinished binding capture and retains your other edits.
 
 Chase camera (experimental)
-Scroll forward to zoom in, backward to zoom out. No mouse button is needed. Free look must be enabled. Distance is limited to 60–180% of the ordinary chase distance; field of view stays unchanged. The game still checks for obstructions. Changing chase views or starting another session resets the distance. Mouse-wheel zoom still needs wall/terrain and headset checks.
+Free look hides the mouse pointer over the game picture while driving in chase view. Pause, menus, other views, window borders and switching apps restore it. The pointer is not locked to the window.
+
+Scroll forward to zoom in, backward to zoom out. No mouse button is needed. Free look must be enabled. Distance is limited to 60–180% of the ordinary chase distance; field of view stays unchanged. The game still checks for obstructions. Changing chase views or starting another session resets the distance. Desktop zoom is player-tested; headset checks remain pending.
 
 Hold the right stick pressed in (R3) to look behind the car with Free look enabled. Release it to return to the normal chase angle, even while stopped. This temporarily takes priority over mouse and stick orbit movement.
 

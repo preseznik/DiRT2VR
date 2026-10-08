@@ -3,6 +3,7 @@
 #include "chase_transform.h"
 #include "chase_mouse.h"
 #include "chase_zoom.h"
+#include "chase_cursor.h"
 #include "common.h"
 #include "gfwl_compat.h"
 #include "scene_camera.h"
@@ -131,6 +132,7 @@ void __fastcall Update(void* camera,void*,const float* timing,void* record) {
   float dt{},speed{};
   const auto now=GetTickCount64();Read(timing,0,dt);
   const bool ready=mode==2 && !GamePaused() && LiveDrivingCameraState() && Focus() && dt>0 && dt<=.25f && Movement(camera,speed);
+  UpdateChaseCursor(Focus(),ready);
   if(orbitCamera!=camera || now-inputTick>250){orbit.Reset();zoom.Reset();armed=false;orbitCamera=camera;}
   inputTick=now;
   usingOrbit=false;

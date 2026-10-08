@@ -237,7 +237,9 @@ The launcher automatically remembers its window size and maximized state when cl
 
 With chase-camera Free look enabled, hold the right stick pressed in (**R3**) to look behind the car. Release it to return to the normal chase angle, even when stopped.
 
-Scroll the mouse wheel forward to move closer or backward to move farther away, without holding a mouse button. Zoom changes camera distance, not field of view, and is limited to 60–180% of the ordinary chase distance. The game still checks for obstructions. The chosen distance stays while driving and resets when changing chase views or starting another session. Mouse-wheel zoom is experimental; wall/terrain and headset checks are pending.
+Scroll the mouse wheel forward to move closer or backward to move farther away, without holding a mouse button. Zoom changes camera distance, not field of view, and is limited to 60–180% of the ordinary chase distance. The game still checks for obstructions. The chosen distance stays while driving and resets when changing chase views or starting another session. Desktop zoom is player-tested; headset checks remain pending.
+
+Free look hides the Windows mouse pointer over the game picture while driving in chase view. It returns for pause, menus, other camera views, window borders and switching to another app. The pointer is not locked inside the window.
 
 **General → Chase camera → Free look (Experimental)** lets you orbit with the right stick or mouse. Select **Hold left**, **Hold right** (default), or **Always on** using the mouse-icon buttons. Always on needs no button held; it still stops during pause, menus and when the game loses focus. Your angle stays while stopped. When driving, the camera smoothly returns behind the car after input stops. Mouse/stick sensitivity and **Invert vertical** are configurable; save settings and relaunch to apply. Free look defaults off. Desktop requires DX11; VR also needs **Advanced → Graphics → 3D beyond the cockpit** and a genuine chase view. Desktop orbit is player-tested; headset validation remains pending.
 

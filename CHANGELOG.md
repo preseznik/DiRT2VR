@@ -6,7 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Scroll the mouse wheel to move the experimental chase camera closer or farther away, without holding a button. Zoom retains the field of view and native obstruction checks; gameplay validation is pending.
+- Hide the Windows mouse pointer over the game picture while chase-camera Free look is active. Restore it for pause, menus, other camera views and switching apps; window borders keep their usual cursor.
+
+- Scroll the mouse wheel to move the experimental chase camera closer or farther away, without holding a button. Zoom retains the field of view and native obstruction checks. Desktop zoom is player-approved; headset validation remains pending.
 
 - Choose Hold left, Hold right or Always on for chase-camera mouse look using the mouse-icon buttons in Controls → General. Existing settings keep Hold right. Save settings and relaunch to apply.
 
