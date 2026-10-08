@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.67 — 2026-10-08 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.67)
+
 - Refresh the README with current custom tracks, Filters and chase-camera controls. Clarify desktop/headset requirements, saved Experimental update preferences, track rebuild instructions and remaining headset limitations.
 
 - Hide the Windows mouse pointer over the game picture while chase-camera Free look is active. Restore it for pause, menus, other camera views and switching apps; window borders keep their usual cursor.
