@@ -67,7 +67,7 @@ bool Movement(void* camera,float& speed) {
     !Read(physics,0x2218,speed)||!std::isfinite(speed)||std::abs(speed)>200)return false;
  speed*=3.6f;return true;
 }
-struct Inputs {float x{},y{};bool held{};bool neutral{true};};
+struct Inputs {float x{},y{};bool held{},rearHeld{};bool neutral{true};};
 Inputs Poll(float dt) {
  Inputs result;const auto window=Focus();if(!window)return result;
  if(mouseWindow!=window) {
@@ -95,10 +95,13 @@ Inputs Poll(float dt) {
   if(xbox(slot,&value)!=ERROR_SUCCESS){if(slot==selectedSlot){selectedSlot=4;armed=false;}continue;}
   float x=value.Gamepad.sThumbRX/32767.f,y=value.Gamepad.sThumbRY/32767.f;
   const float length=std::sqrt(x*x+y*y);
-  if(length<=.2f)continue;
+  const bool rear=(value.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB)!=0;
+  if(length<=.2f && !rear)continue;
   result.neutral=false;
   if(selectedSlot==4)selectedSlot=slot;
   if(slot!=selectedSlot)continue;
+  result.rearHeld=rear;
+  if(length<=.2f)continue;
   const float amount=std::min((length-.2f)/.8f,1.f)/length;
   result.x-=x*amount*2.5f*dt*stickSensitivity;
   result.y+=y*amount*1.5f*dt*stickSensitivity;result.held=true;
@@ -124,7 +127,7 @@ void __fastcall Update(void* camera,void*,const float* timing,void* record) {
   if(ready) {
    const auto inputs=Poll(dt);
    if(!armed){if(inputs.neutral)armed=true;}
-   else if(orbit.Step(dt,speed,inputs.x,inputs.y,inputs.held))usingOrbit=true;
+   else if(orbit.Step(dt,speed,inputs.x,inputs.y,inputs.held,inputs.rearHeld))usingOrbit=true;
   } else {armed=false;orbit.Reset();}
   // Feed the game's native look direction. It computes yaw and distance using
   // its ordinary chase solver, then runs the original obstruction pass.

@@ -233,6 +233,10 @@ For a comparison, use the same car and event for three short runs: main option *
 
 Controls has **General**, **VR**, **Driving** and **Seat** subtabs. General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter; Seat contains the seat panel shortcut and optional individual bindings. The binding rows have **Action**, **Keyboard** and **Controller / wheel** columns. Click an action's keyboard binding to change it, optionally with Ctrl, Alt or Shift. Escape or switching tabs cancels capture without discarding other edits.
 
+The launcher automatically remembers its window size and maximized state when closed. Reopening fits it to the current screen and display scaling. This does not save any uncommitted game settings.
+
+With chase-camera Free look enabled, hold the right stick pressed in (**R3**) to look behind the car. Release it to return to the normal chase angle, even when stopped.
+
 **General → Chase camera → Free look (Experimental)** lets you orbit with the right stick or by holding the right mouse button and moving the mouse. Your angle stays while stopped. When driving, the camera smoothly returns behind the car after input stops. Mouse/stick sensitivity and **Invert vertical** are configurable; save settings and relaunch to apply. Free look defaults off. Desktop requires DX11; VR also needs **Advanced → Graphics → 3D beyond the cockpit** and a genuine chase view. Desktop orbit is player-tested; headset validation remains pending.
 
 Controller shortcuts start unassigned. Choose **Bind…** in the desired action's row, press one button or two buttons together on the same device, then release them. Multiple devices may be assigned to each action. Select an assignment and choose **Remove selected** to clear it. The launcher rejects overlapping assignments. Choose **Save settings**; changes apply on the next launch.

@@ -1,5 +1,9 @@
 DiRT2VR — Experimental
 
+Hold the right stick pressed in to look behind the car while chase-camera Free look is enabled. Release it to return to the normal chase view.
+
+The launcher now remembers its window size and maximized state when you close it. No need to resize it every time.
+
 New: Controls is organized into General, VR, Driving and Seat tabs. Find cockpit animation and chase-camera settings in General, VR shortcuts in VR, driving bindings in Driving, and seat shortcuts in Seat.
 
 New: Experimental chase-camera free look. Hold the right mouse button and move, or use the right stick, to look around your car. Your angle stays while stopped and smoothly returns behind the car when driving. Adjust mouse/stick sensitivity and Invert vertical in Controls → General. Free look starts off; save and relaunch after enabling it. Desktop requires DX11. VR also needs Advanced → Graphics → 3D beyond the cockpit; headset testing remains pending.

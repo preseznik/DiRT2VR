@@ -7,6 +7,8 @@ Public Class MainForm
     Private ReadOnly settingsTips As New ToolTip With {.InitialDelay = 450, .ReshowDelay = 150, .AutoPopDelay = 15000, .ShowAlways = True}
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
+    Private windowReady As Boolean
+    Private lastWindowState As FormWindowState = FormWindowState.Normal
     Private ReadOnly modernInterface As New AppearanceSwitch()
     Private ReadOnly bindingCells(SeatActions.Names.Length - 1) As ControllerBindingCell
     Private replacementBinding As ControllerBinding
@@ -163,6 +165,9 @@ Public Class MainForm
         ConfigureTooltips()
         AddHandler Disposed, Sub() settingsTips.Dispose()
         AddHandler SizeChanged, Sub() stateLabel.MaximumSize = New Size(Math.Max(1, ClientSize.Width - layout.Padding.Horizontal), 0)
+        AddHandler Resize, Sub()
+                               If windowReady AndAlso WindowState <> FormWindowState.Minimized Then lastWindowState = WindowState
+                           End Sub
         RefreshBindings() : RefreshDisplayRate()
         AddHandler input.StateChanged, AddressOf OnController
         AddHandler inputTimer.Tick, Sub() input.Poll()
@@ -179,6 +184,10 @@ Public Class MainForm
                                     If customTracks.IsWorking Then
                                         customTracks.CancelOperation()
                                         e.Cancel = True
+                                    End If
+                                    If Not e.Cancel AndAlso windowReady Then
+                                        Dim normal = If(WindowState = FormWindowState.Normal, Size, RestoreBounds.Size)
+                                        WindowPreferences.Capture(normal, DeviceDpi, lastWindowState = FormWindowState.Maximized).Save(context)
                                     End If
                                 End Sub
         inputTimer.Start() : timer.Start() : RefreshStatus()
@@ -289,9 +298,12 @@ Public Class MainForm
     End Sub
     Private Sub FitInitialWindow()
         Dim work = Screen.FromControl(Me).WorkingArea
+        Dim saved = WindowPreferences.Load(context)
         MinimumSize = New Size(Math.Min(Px(Me, 560), work.Width), Math.Min(Px(Me, 540), work.Height))
-        Size = New Size(Math.Min(Width, work.Width), Math.Min(Height, work.Height))
+        Size = saved.Fit(work.Size, DeviceDpi, Size)
         Location = New Point(work.Left + (work.Width - Width) \ 2, work.Top + (work.Height - Height) \ 2)
+        windowReady = True
+        If saved.Maximized Then WindowState = FormWindowState.Maximized
     End Sub
     Private Sub BuildMultiplayerTab()
         Dim content = TabLayout("Multiplayer")
@@ -757,7 +769,7 @@ Public Class MainForm
         chaseFreeLook.Checked = settings.ChaseFreeLook
         chaseMouse.Value = settings.ChaseMouseSensitivity : chaseStick.Value = settings.ChaseStickSensitivity
         chaseInvert.Checked = settings.ChaseInvertVertical
-        Tip(chaseFreeLook, "Hold the right mouse button and move, or use the right stick, to look around your car. Holds the angle while stopped; returns behind you when driving. VR also needs Advanced → Graphics → 3D beyond the cockpit. Save and relaunch.")
+        Tip(chaseFreeLook, "Hold the right mouse button and move, or use the right stick, to look around your car. Hold the right stick pressed in to look behind; release to return to normal chase view. Holds orbit angles while stopped; returns behind you when driving. VR also needs Advanced → Graphics → 3D beyond the cockpit. Save and relaunch.")
         Tip(chaseMouse, "How quickly the chase camera moves when you drag with the right mouse button.")
         Tip(chaseStick, "How quickly the chase camera moves with the controller's right stick.")
         Tip(chaseInvert, "Reverse up and down for both mouse and right-stick camera movement.")

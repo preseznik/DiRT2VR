@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Hold the right stick pressed in to look behind the car with chase-camera Free look enabled. Releasing returns to the normal chase view, including while stopped.
+- Remember the launcher's window size and maximized state automatically. Reopening adapts to the current screen and display scaling; closing never saves uncommitted game-setting edits.
+
 - Organize Controls into General, VR, Driving and Seat tabs. General contains cockpit animation and the new experimental chase-camera free look, with separate mouse/stick sensitivity and an Invert vertical switch.
 - Orbit the chase camera with the right stick or by holding the right mouse button. Keep your chosen angle while stopped and return behind the car when moving. Free look defaults off; desktop testing is approved, while VR validation remains pending.
 

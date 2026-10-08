@@ -87,6 +87,8 @@ These options affect the cockpit HUD, not the centre of the view, desktop HUD, m
 General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter. Driving opens the driving-controls editor. Seat contains Open seat adjustment and the collapsed optional bindings. Switching tabs cancels an unfinished binding capture and retains your other edits.
 
 Chase camera (experimental)
+Hold the right stick pressed in (R3) to look behind the car with Free look enabled. Release it to return to the normal chase angle, even while stopped. This temporarily takes priority over mouse and stick orbit movement.
+
 Enable General → Chase camera → Free look, save settings and relaunch. Hold the right mouse button and move, or use an Xbox-compatible controller's right stick. The camera stays at the chosen angle while stopped; when moving it returns behind the car after you release the controls. Mouse and right-stick sensitivity are independent. Invert vertical reverses up/down for both. Desktop requires DX11. VR also requires Advanced → Graphics → 3D beyond the cockpit; only genuine chase views are affected. Desktop orbit has been checked; headset validation remains pending.
 
 VR shortcuts
@@ -201,6 +203,9 @@ Manage and recover
 Manage offers file verification, rebuilding from source and uninstalling the selected pack. Unsupported source files are named: choose the correct folder or verify original files in Steam. The green status message shows checking and building progress. Stop build cancels these steps safely and keeps installed tracks. Stop is disabled during final installation; wait for it to finish. External edits are preserved; move them aside before retrying. After an interrupted session, close DiRT 2 and choose Restore original files.",
         "Modern interface
 Settings → Appearance → Modern interface previews the modern compact layout immediately. Off restores Classic. Save settings keeps your choice. Existing settings start in Classic; fresh installations start in Modern. Both follow Windows light/dark appearance and high-contrast colours.
+
+Window size
+The launcher remembers its size and maximized state when closed, without saving other settings edits. It fits within the current screen and adapts to display scaling when reopened.
 
 Controls
 Click a keyboard cell to change it. In Modern, click a controller cell to replace that assignment, + to add another, or × to remove one. Hover a shortened cell to read the full device and button names, including disconnected devices. Classic keeps its Bind and Remove selected buttons. Assignments work the same in either layout.
