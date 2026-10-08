@@ -2,6 +2,7 @@
 #include "chase_camera.h"
 #include "chase_transform.h"
 #include "chase_mouse.h"
+#include "chase_zoom.h"
 #include "common.h"
 #include "gfwl_compat.h"
 #include "scene_camera.h"
@@ -28,6 +29,7 @@ std::atomic<void*> selected{};
 thread_local void* sampled{};
 thread_local ULONGLONG last{};
 thread_local ChaseOrbit orbit;
+thread_local ChaseZoom zoom;
 thread_local void* orbitCamera{};
 thread_local void* applyingCamera{};
 thread_local bool armed{},usingOrbit{};
@@ -69,7 +71,7 @@ bool Movement(void* camera,float& speed) {
     !Read(physics,0x2218,speed)||!std::isfinite(speed)||std::abs(speed)>200)return false;
  speed*=3.6f;return true;
 }
-struct Inputs {float x{},y{};bool held{},rearHeld{};bool neutral{true};};
+struct Inputs {float x{},y{},wheel{};bool held{},rearHeld{};bool neutral{true};};
 Inputs Poll(float dt) {
  Inputs result;const auto window=Focus();if(!window)return result;
  if(mouseWindow!=window) {
@@ -90,6 +92,9 @@ Inputs Poll(float dt) {
  const auto activation=ChaseMouseActivation(mouseMode,(GetAsyncKeyState(VK_LBUTTON)&0x8000)!=0,
      (GetAsyncKeyState(VK_RBUTTON)&0x8000)!=0,state.lX!=0 || state.lY!=0,available);
  result.held=activation.held;result.neutral=activation.neutral;
+ // Scrolling works in every activation mode without holding a mouse button.
+ result.wheel=available?float(state.lZ):0;
+ if(result.wheel!=0)result.neutral=false;
  if(activation.active){result.x=-float(state.lX)*.003f*mouseSensitivity;result.y=-float(state.lY)*.003f*mouseSensitivity;}
  if(!xbox) {
   auto module=LoadLibraryExW(L"xinput1_4.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32);
@@ -126,13 +131,13 @@ void __fastcall Update(void* camera,void*,const float* timing,void* record) {
   float dt{},speed{};
   const auto now=GetTickCount64();Read(timing,0,dt);
   const bool ready=mode==2 && !GamePaused() && LiveDrivingCameraState() && Focus() && dt>0 && dt<=.25f && Movement(camera,speed);
-  if(orbitCamera!=camera || now-inputTick>250){orbit.Reset();armed=false;orbitCamera=camera;}
+  if(orbitCamera!=camera || now-inputTick>250){orbit.Reset();zoom.Reset();armed=false;orbitCamera=camera;}
   inputTick=now;
   usingOrbit=false;
   if(ready) {
    const auto inputs=Poll(dt);
    if(!armed){if(inputs.neutral)armed=true;}
-   else if(orbit.Step(dt,speed,inputs.x,inputs.y,inputs.held,inputs.rearHeld))usingOrbit=true;
+   else if(orbit.Step(dt,speed,inputs.x,inputs.y,inputs.held,inputs.rearHeld) && zoom.Step(dt,inputs.wheel))usingOrbit=true;
   } else {armed=false;orbit.Reset();}
   // Feed the game's native look direction. It computes yaw and distance using
   // its ordinary chase solver, then runs the original obstruction pass.
@@ -149,9 +154,9 @@ void __fastcall Update(void* camera,void*,const float* timing,void* record) {
 }
 float* __fastcall Target(void* camera,void*,float* output,void* record,bool flag) {
  auto result=target(camera,output,record,flag);
- if(camera==applyingCamera && _ReturnAddress()==base+0x71f553 && result==output && usingOrbit && orbit.pitch!=0) {
+ if(camera==applyingCamera && _ReturnAddress()==base+0x71f553 && result==output && usingOrbit && (orbit.pitch!=0 || zoom.scale!=1)) {
   std::array<float,8> pose{};Read(record,0,pose);
-  if(OrbitChasePose(pose,{output[12],output[13],output[14]},0,orbit.pitch)) {
+  if(OrbitChasePose(pose,{output[12],output[13],output[14]},0,orbit.pitch,zoom.scale)) {
    std::memcpy(record,pose.data(),sizeof(pose));
    std::memcpy(static_cast<char*>(record)+0xf0,pose.data()+4,16);
    std::memcpy(static_cast<char*>(record)+0x100,pose.data(),16);

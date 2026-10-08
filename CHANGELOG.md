@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Scroll the mouse wheel to move the experimental chase camera closer or farther away, without holding a button. Zoom retains the field of view and native obstruction checks; gameplay validation is pending.
+
 - Choose Hold left, Hold right or Always on for chase-camera mouse look using the mouse-icon buttons in Controls → General. Existing settings keep Hold right. Save settings and relaunch to apply.
 
 - Hold the right stick pressed in to look behind the car with chase-camera Free look enabled. Releasing returns to the normal chase view, including while stopped.

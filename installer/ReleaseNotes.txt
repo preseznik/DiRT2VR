@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+With chase-camera Free look enabled, scroll forward to move closer or backward to move farther away. No mouse button is needed. Changing chase views resets the distance. Mouse-wheel zoom is experimental; wall/terrain and headset checks are pending.
+
 Choose Hold left, Hold right or Always on for mouse look under Controls → General → Chase camera. The three mouse-icon buttons show your choice. Hold right remains the default; save settings and relaunch to apply.
 
 Hold the right stick pressed in to look behind the car while chase-camera Free look is enabled. Release it to return to the normal chase view.

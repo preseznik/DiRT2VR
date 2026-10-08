@@ -781,6 +781,7 @@ Public Class MainForm
         Tip(chaseInvert, "Reverse up and down for both mouse and right-stick camera movement.")
         Field(content, "Free look", chaseFreeLook)
         Field(content, "Mouse look", chaseMouseMode)
+        content.Controls.Add(New Label With {.Text = "Scroll to zoom in / out — no mouse button needed.", .AutoSize = True, .Margin = New Padding(0, 0, 0, 8)})
         Field(content, "Mouse sensitivity", chaseMouse)
         Field(content, "Right-stick sensitivity", chaseStick)
         Field(content, "Invert vertical", chaseInvert)
