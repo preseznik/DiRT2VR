@@ -1,10 +1,10 @@
 # DiRT2VR
 
-[**Download the latest release**](https://github.com/preseznik/DiRT2VR/releases/latest) · [All releases](https://github.com/preseznik/DiRT2VR/releases)
+[**Stable download**](https://github.com/preseznik/DiRT2VR/releases/latest) · [**All releases, including Experimental**](https://github.com/preseznik/DiRT2VR/releases)
 
-Open **Assets** on the release page and choose the installer or ZIP.
+Open **Assets** on the release page and choose the installer or ZIP. Choose a release marked **Pre-release** for the latest Experimental features. In an existing launcher, enable **? → About → Include experimental releases** to receive these updates. **Return to stable…** lets you go back.
 
-An experimental cockpit VR mod for **DiRT 2**, with stereoscopic rendering, head tracking and a virtual screen for menus.
+A desktop and VR launcher for **DiRT 2**, with custom tracks, visual presets and experimental stereoscopic VR with head tracking. Game menus use a virtual screen in VR.
 
 Tested with **Quest 3 through SteamVR**, primarily in the Subaru Impreza STI. Xbox-compatible controller binding, launching, Toggle VR and Recenter have been tested in game. Other headsets and wheel button bindings need testing; **PSVR2, Logitech and Fanatec hardware are not yet verified**. This remains an experimental build.
 
@@ -12,9 +12,9 @@ This mod will remain free forever. If you'd like to support the work, you can [s
 
 ## Requirements
 
-- Windows x64 and a PC capable of running DiRT 2 and SteamVR.
+- Windows x64 and a PC capable of running DiRT 2. SteamVR is required for VR play.
 - Your own working **DiRT 2 version 1.1.0.0** installation. Setup checks the exact supported executable.
-- A headset connected and ready in **SteamVR**.
+- For VR, a headset connected and ready in **SteamVR**. Desktop play needs no headset.
 - Your usual keyboard, gamepad or steering wheel and pedals. Motion controllers are not used.
 - A packaged DiRT2VR installer or ZIP. Packages include the .NET runtime; no development tools or separate .NET installation are needed. The source repository alone is not a playable package.
 
@@ -72,7 +72,24 @@ For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The exis
 
 ## Custom tracks (experimental)
 
-**Mizu Mountain** adds the full 10.4 km daylight point-to-point route from your own **GRID 2** installation. Choose **CUSTOM tracks → Mizu Mountain → Build and install…**, select the GRID 2 folder, then use **Launch** or **Launch VR** for Direct practice or experimental **Race**. Race supports one to seven opponents, the usual opponent-car choices and race difficulty. If Mizu is already installed, use **Manage → Rebuild from source** to update the starting grid and the **MIZU** pre-race label. Each session covers the route once from start to finish with three timing checkpoints. The Subaru STI is the tested practice car; other installed cars can be selected. VR is experimental; LAN is unavailable. Some materials and lighting are approximations, movable props and soft vegetation are visual-only, and crowds and some dynamic effects are omitted. Built tracks work offline; keep GRID 2 installed for future rebuilds.
+Build tracks from your own installed source games. Conversion tools are included; game assets are not distributed. No SDK or separate .NET installation is required. Once installed, custom tracks work offline without their source game; keep it available for future rebuilds.
+
+| Track pack | Required source game | Courses |
+| --- | --- | --- |
+| Mizu Mountain | GRID 2 | One 10.4 km daylight route |
+| Nordschleife | Assetto Corsa, standard Nordschleife circuit | Full circuit in Daylight, Overcast and Evening |
+| Aspen | DiRT 3 Complete Edition | Ten layouts |
+| Smelter | DiRT 3 Complete Edition | Ten layouts |
+
+All four packs offer **Direct practice** and experimental **Race** on desktop or in VR. Custom-track LAN is unavailable. The limits and testing status below differ by location.
+
+### Mizu Mountain
+
+Choose **CUSTOM tracks → Mizu Mountain → Build and install…**, select your GRID 2 game folder, then choose an installed car and **Direct practice** or **Race**. Use **Launch** for desktop or **Launch VR** with SteamVR and your headset ready. The full route is 10.4 km, with three timing checkpoints and a single run from start to finish. Race supports **1–7 AI opponents**, opponent-car choices and race difficulty.
+
+Older Mizu packs need **Manage… → Rebuild from source…** to add the separated starting grid and the **MIZU** pre-race label. Current race packs need no rebuild to enable VR. Desktop practice and Race have passed player checks; headset rendering still needs testing. Some materials and lighting are approximations, movable props and soft vegetation do not have matching collision, and crowds and some animated effects are omitted.
+
+### Aspen and Smelter
 
 Aspen and Smelter each add ten layouts built from your own **DiRT 3 Complete Edition** installation. Conversion tools are included with DiRT2VR; no additional download is needed and no game assets are distributed. You also need the supported original DiRT 2 files. No SDK or separate .NET installation is required.
 
@@ -96,13 +113,19 @@ Snowmass Sprint omits the decorative beams on the ski hillside where they flicke
 
 Each pack keeps its own layout, car, race and lap selections, separately from stock tracks. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed custom layouts work **offline**, without their source game. Keep the source installation available if you want to rebuild or update a pack. Successful file checks are remembered while the launcher stays open, so switching locations does not repeat the scan. Installed-file changes trigger a new check. Use **Manage… → Verify installed files** to check again at any time. The **Manage…** menu also offers rebuilding and removal. Rebuild uses the same layout checkboxes: select just the courses you want to update or add. Choose Select all to update the whole location. The list shows which layouts are already installed, and the launcher reports the installed count. Conversion-tool updates arrive with DiRT2VR updates.
 
-The **Nordschleife** pack uses your installed **Assetto Corsa** standard circuit. Select **CUSTOM tracks → Nordschleife → Build and install…**, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. All three lighting presets are built together. Choose **Daylight**, **Overcast** or **Evening**, an installed car, and **Direct practice** or **Race**. Race supports one to twenty laps on desktop or in VR, one to seven AI opponents, car choices and difficulty settings. Direct practice uses one lap. Existing solo installations need **Manage… → Rebuild from source…** to add the separated race grid; Direct practice remains available, and previous best laps are retained. These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. **Best lap** shows your fastest completed Direct practice time and its car for the layout, across all lighting presets; Race results appear in game. The full trackside scenery and distant landscape are included. A complete evening practice lap has been player-tested; AI races are experimental, and lighting and visibility/LODs remain in development. For native VR, start SteamVR, connect your headset and choose **Launch VR**. Nordschleife VR is experimental; full-course headset rendering and performance still need player testing. Existing packs need no rebuild to enable VR. See [development status](docs/nordschleife-port.md) for the current test evidence.
+### Nordschleife
+
+The **Nordschleife** pack uses your installed **Assetto Corsa** standard circuit. Select **CUSTOM tracks → Nordschleife → Build and install…**, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. All three lighting presets are built together. Choose **Daylight**, **Overcast** or **Evening**, an installed car, and **Direct practice** or **Race**. Race supports **1–20 laps** and **1–7 AI opponents** on desktop or in VR, with car choices and difficulty settings. Direct practice uses one lap. Older solo packs need **Manage… → Rebuild from source…** to add the race grid; previous best laps are kept.
+
+These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. **Best lap** shows your fastest completed Direct practice time and its car across all lighting presets; Race results appear in game. The stage progress marker follows your position around the circuit. One-lap sessions show checkpoint divisions; multi-lap races show lap divisions. Existing packs need no rebuild for the progress correction.
+
+The full trackside scenery and distant landscape are included. A complete evening desktop practice lap and a short native VR session have been player-tested. Full-course headset performance and AI Race finishes still need testing; scenery detail and lighting remain in development. For VR, start SteamVR, connect your headset and choose **Launch VR**. Existing packs need no rebuild to enable VR.
 
 If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source…**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
 
-### Additional Aspen layouts
+### Aspen Landrush and head-to-head layouts
 
-After updating, choose **Aspen → Manage… → Rebuild from source…** to add the six new layouts. Existing Rallycross installations remain usable until rebuilding finishes. Choose your car and mode after selecting the layout.
+Aspen includes these six courses alongside the four Rallycross layouts listed above. To add missing layouts or update existing ones, choose **Aspen → Manage… → Rebuild from source…** and select the courses you want. Other installed layouts remain available.
 
 | Layouts | Conditions |
 | --- | --- |
@@ -112,9 +135,9 @@ After updating, choose **Aspen → Manage… → Rebuild from source…** to add
 
 These courses offer the same modes and car selection as Rallycross, with the two-car limit on Buttermilk. Time of day follows source defaults, with reduced exposure on Buttermilk to retain snow detail; full snowfall remains unsupported. Broader racing and VR checks are still needed, including snow handling and night headlights.
 
-### Smelter — ten-layout test
+### Smelter — ten layouts
 
-Select **Smelter** in CUSTOM tracks and choose **Build and install…** using your DiRT 3 Complete Edition folder. This local test includes all ten layouts. Select a layout, mode and car, then **Launch** or **Launch VR**. Dredger Duel and Furnace Duel allow one AI opponent; the other layouts allow up to seven.
+Select **Smelter** in CUSTOM tracks and choose **Build and install…** using your DiRT 3 Complete Edition folder. Select a layout, mode and car, then **Launch** or **Launch VR**. Dredger Duel and Furnace Duel allow one AI opponent; the other layouts allow up to seven.
 
 | Layouts | Conditions |
 | --- | --- |
@@ -124,19 +147,21 @@ Select **Smelter** in CUSTOM tracks and choose **Build and install…** using yo
 | Atlantic Mill, Cole's Creek | Morning sun |
 | Dredger Duel, Furnace Duel | Evening sun |
 
-Use **Smelter → Manage… → Rebuild from source…** after updating to apply the scenery visibility test and add any missing layouts. Updating the launcher alone does not rebuild tracks. Existing tracks remain usable until the rebuild completes. General Maple Woods scenery flicker has improved in testing, but some log piles remain missing. Other layouts and performance still need wider testing.
+Use **Smelter → Manage… → Rebuild from source…** after updating to apply scenery updates and add missing layouts. Updating the launcher alone does not rebuild tracks. Existing tracks remain usable until the rebuild completes. General Maple Woods scenery flicker has improved in testing, but some log piles remain missing. Other layouts and performance still need wider testing.
 
-**Buttermilk Climb and Descent now use lower exposure by default** to retain detail in bright snow. Climb's improved snow detail has been confirmed in desktop testing; Descent still needs a visual check. The abrupt brightness border remains unresolved. **No track rebuild is needed** for installed layouts. Under **Snow lighting**, choose **Original exposure (reference)** or **Bloom off (diagnostic)** for comparisons; exit the game between profiles. Comparison choices reset to **Lower exposure (default)** when changing layout or reopening the launcher. Original post-processing files are restored after exit; interrupted sessions use the usual recovery, preserving external edits. Other tracks keep their existing exposure.
+**Buttermilk Climb and Descent use lower exposure by default** to retain detail in bright snow. Climb's improved snow detail has been confirmed in desktop testing; Descent still needs a visual check. The abrupt brightness border remains unresolved. **No track rebuild is needed** for installed layouts. Under **Snow lighting**, choose **Original exposure (reference)** or **Bloom off (diagnostic)** for comparisons; exit the game between profiles. Comparison choices reset to **Lower exposure (default)** when changing layout or reopening the launcher. Original post-processing files are restored after exit; interrupted sessions use the usual recovery, preserving external edits. Other tracks keep their existing exposure.
 
 Wet-weather handling, expanded AI races and VR still need gameplay validation. The four Head-to-head courses particularly need start, timing and finish checks with an opponent. The concrete-barrier compatibility test remains visually unverified.
 
-To play on the desktop, close the VR session and launch the game through Steam normally. Without a VR-launch session, the proxy forwards to system D3D11 without enabling VR hooks or creating diagnostics.
+To switch from VR to desktop, quit the game and choose **Launch** in DiRT2VR. This uses your saved desktop graphics and filter choices. Launching the game outside DiRT2VR uses the original game settings.
 
 ## Launcher settings
 
 The launcher matches the Windows app light/dark setting when opened. Reopen it after changing that setting. Native dark mode requires Windows 11; Windows 10 and Windows contrast themes retain the standard accessible system appearance.
 
 **Launcher** selects how to start. **Settings** contains the game location, SteamVR runtime and setup instructions. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts and graphics preferences are preserved when upgrading.
+
+The launcher remembers its window size and maximized state when closed. It adapts to your current screen and display scaling when reopened. Closing the window does not save uncommitted game-setting edits; use **Save settings** for those.
 
 **Settings → Appearance → Modern interface** previews the compact modern look immediately; turn it off for Classic. Select **Save settings** to keep your choice. Existing installations start in Classic; fresh installations start in Modern. Both follow Windows light/dark appearance. In Modern Controls, click a binding cell to change it, **+** to add another controller assignment and **×** to remove one. Hover shortened cells for full device details.
 
@@ -221,7 +246,7 @@ Field-of-view cropping keeps a narrower cockpit view rather than stretching the 
 
 ### Controls
 
-**Cockpit animation → Remove artificial steering corrections (Experimental)** is off by default and now supports the player's desktop and VR cockpit views. Desktop requires DX11; select cockpit view yourself. It retains the game's steering filter and original animation range, without changing handling or force feedback. It does not provide full 540°/900° wheel matching. Save settings and relaunch to apply. The desktop check confirmed that correction removed the wheel judder, with diagnostic samples matching the accepted steering input. The PC3080 headset check confirmed that the remaining VR wheel judder is gone. The previously reported PC1060 VR launch crash is marked resolved after retesting 0.17.22 on 4 October 2026; it could no longer be reproduced. This does not establish compatibility with every setup. The earlier missing-hands and static-wheel report remains unresolved.
+**Controls → General → Cockpit animation → Remove artificial steering corrections (Experimental)** is off by default. It removes the reported extra cockpit wheel judder on desktop and in VR while retaining the game's steering filter and original animation range. Handling and force feedback are unchanged. Desktop requires DX11; select cockpit view yourself. Save settings and relaunch to apply. The correction has passed desktop and headset checks, but compatibility with every wheel and setup is not established. It does not provide full 540°/900° wheel matching; the earlier missing-hands and static-wheel report remains unresolved.
 
 For a comparison, use the same car and event for three short runs: main option **off** (original behavior); main option **on** with **Observe only — no correction** checked (hooks active, original animation values retained); then Observe only **unchecked** (correction applied). Enable **Settings → Enable diagnostic logging** for the last two runs. Drive in cockpit view, hold the wheel centred, turn slowly both ways, then drive over rough ground. The log records a bounded set of steering values, wheel-animation positions and hand-blend weights. Observe only does not enable logging by itself.
 
@@ -233,15 +258,16 @@ For a comparison, use the same car and event for three short runs: main option *
 
 Controls has **General**, **VR**, **Driving** and **Seat** subtabs. General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter; Seat contains the seat panel shortcut and optional individual bindings. The binding rows have **Action**, **Keyboard** and **Controller / wheel** columns. Click an action's keyboard binding to change it, optionally with Ctrl, Alt or Shift. Escape or switching tabs cancels capture without discarding other edits.
 
-The launcher automatically remembers its window size and maximized state when closed. Reopening fits it to the current screen and display scaling. This does not save any uncommitted game settings.
+**Chase-camera free look (experimental):** enable **Controls → General → Chase camera → Free look**, save settings and relaunch, then select a chase view using the game's camera control. Free look starts **off**. Desktop play requires DX11. In VR, also enable **Advanced → Graphics → 3D beyond the cockpit**. Desktop orbit, rear view and zoom have passed player checks; headset use still needs testing.
 
-With chase-camera Free look enabled, hold the right stick pressed in (**R3**) to look behind the car. Release it to return to the normal chase angle, even when stopped.
+- Move the **right stick** to orbit around your car, or use the mouse. Choose **Hold left**, **Hold right** (default) or **Always on** with the mouse-icon buttons.
+- Hold the **right stick pressed in (R3)** to look behind. Release it to return to the normal chase angle, even while stopped.
+- Scroll the **mouse wheel forward** to move closer or **backward** to move farther away. No mouse button is needed. Zoom is limited to 60–180% of the normal distance and resets when changing chase views or starting a new session.
+- Adjust mouse/stick sensitivity and **Invert vertical** to suit your controls.
 
-Scroll the mouse wheel forward to move closer or backward to move farther away, without holding a mouse button. Zoom changes camera distance, not field of view, and is limited to 60–180% of the ordinary chase distance. The game still checks for obstructions. The chosen distance stays while driving and resets when changing chase views or starting another session. Desktop zoom is player-tested; headset checks remain pending.
+Your angle stays while stopped. When moving, the camera smoothly returns behind the car after you stop looking around. Pause, menus and switching apps stop mouse look. The Windows pointer is hidden over the game picture while free look is active and returns for menus, other camera views and window borders.
 
-Free look hides the Windows mouse pointer over the game picture while driving in chase view. It returns for pause, menus, other camera views, window borders and switching to another app. The pointer is not locked inside the window.
-
-**General → Chase camera → Free look (Experimental)** lets you orbit with the right stick or mouse. Select **Hold left**, **Hold right** (default), or **Always on** using the mouse-icon buttons. Always on needs no button held; it still stops during pause, menus and when the game loses focus. Your angle stays while stopped. When driving, the camera smoothly returns behind the car after input stops. Mouse/stick sensitivity and **Invert vertical** are configurable; save settings and relaunch to apply. Free look defaults off. Desktop requires DX11; VR also needs **Advanced → Graphics → 3D beyond the cockpit** and a genuine chase view. Desktop orbit is player-tested; headset validation remains pending.
+**VR shortcuts:**
 
 Controller shortcuts start unassigned. Choose **Bind…** in the desired action's row, press one button or two buttons together on the same device, then release them. Multiple devices may be assigned to each action. Select an assignment and choose **Remove selected** to clear it. The launcher rejects overlapping assignments. Choose **Save settings**; changes apply on the next launch.
 
@@ -273,9 +299,9 @@ Driving capture uses XInput for Xbox controllers and non-exclusive DirectInput f
 
 Click **?** at the top right of the launcher (or press **F1**) for **Help / About**. It shows the installed version and build, credits developer **Bohloney**, and links to instructions, GitHub issues and releases.
 
-The launcher checks GitHub Releases once in the background when its window opens. When a newer version exists, **New version available** appears beside **?**; click it to review the update. New builds use plain major.minor.patch versions and check regular releases. Older alpha builds also include experimental releases. Offline checks stay quiet and never block launching. Quick launch and background game sessions do not check for updates.
+The launcher checks GitHub Releases once in the background when its window opens. When a newer eligible version exists, **New version available** appears beside **?**; click it to review the update. Stable releases are always eligible. Experimental releases are included only when **Include experimental releases** is enabled. Offline checks stay quiet and never block launching. Quick launch and background game sessions do not check for updates.
 
-Choose **Check for updates** in Help / About to retry manually; no GitHub account is required. **Include experimental releases** is off by default in new builds and remains selected by default in older alpha builds. This choice applies to the current Help / About window. Downloads and installation always require your action.
+Choose **Check for updates** in Help / About to retry manually; no GitHub account is required. Downloads and installation always require your action.
 
 When a newer release has a verified installer, **Download and install** downloads it, checks its SHA-256 checksum and opens setup for your current game folder. Close the game first. The launcher restores pending changes before handing over to setup, then closes. Complete the normal setup prompts, including Windows administrator approval if requested. Preferences are retained. This is an assisted update, not a silent background installation. ZIP users can use it too; doing so adds the installer and uninstaller to that installation.
 
@@ -334,14 +360,15 @@ Older test-kit profiles and imported copies are not listed in the Profile tab. T
 - Game-menu launches prepare the Subaru STI camera. Direct practice prepares the selected car, but other interiors and broader stage coverage are not yet visually verified.
 - Scenery visibility and car-aligned headlights passed the reported tests; other lighting, mirrors and interiors need testing.
 - Road rubble is retained in both eyes in the tested Novigrad scene. Other stages and ground-cover variants still need testing.
-- Crowds, particles, shadows and motion blur are reduced or disabled. Water stays visible and uses per-eye reflections in VR; the Ensenada Sprint puddle fix has been checked in Quest 3. Other tracks, reflected objects when looking behind, and scenery pop-in still need testing. The HUD layer awaits full headset validation. Seat adjustment is experimental; replay transitions and calibrated world scale still need work.
+- VR reduces crowds, particles and motion blur. **Graphics → VR rendering → Shadows** can enable experimental shadows; keep them off if brightness or performance looks wrong. Water stays visible and uses per-eye reflections in VR; the Ensenada Sprint puddle fix has been checked in Quest 3. Other tracks, reflected objects when looking behind, scenery pop-in and HUD placement still need testing.
+- Mizu VR, chase-camera free look in a headset, nighttime filters and different filter presets between LAN players still need wider testing. Use **Original** in Filters if a custom preset looks wrong.
 - Occasional hitching remains; a steady headset frame rate is not guaranteed.
 - Headset reconnection during play is unsupported. Quit and relaunch after reconnecting.
 - Installation acceptance in protected folders and interruption scenarios is still in progress. Packages are experimental.
 
 **Runtime not found:** use **Browse…** beside SteamVR runtime and select SteamVR's `steamxr_win32.json`. This is a per-session choice; it does not change the global OpenXR runtime.
 
-**No VR / shortcuts do nothing:** select cockpit view, focus the game window, and use Toggle VR. Check connected-device indicators and saved bindings. Recognized non-cockpit cameras stay on the virtual screen.
+**No VR / shortcuts do nothing:** select cockpit view, focus the game window, and use Toggle VR. Check connected-device indicators and saved bindings. Other camera views use the virtual screen unless **Advanced → Graphics → 3D beyond the cockpit** is enabled; that option supports bonnet, bumper and chase views.
 
 **Unsupported executable or foreign proxy:** use the supported game build and resolve the reported conflict. Do not bypass compatibility checks or download replacement game executables from an untrusted source.
 
@@ -354,8 +381,6 @@ See the [changelog](CHANGELOG.md).
 Third-party license notices are included in `DiRT2VR/licenses` in packaged builds. This product includes software developed by Jon Skeet and Marc Gravell. Contact skeet@pobox.com, or see https://jonskeet.uk).
 
 Matching LAN library source is preserved in the [repository](https://github.com/preseznik/DiRT2VR/tree/main/source-archives/lan). It is not needed to play. Installed license notices include its download link and checksum.
-
-Microsoft GFWL 3.5.95.0: this build corrects a startup-order defect in the VR compatibility fix. It keeps the existing GFWL career/profile functions and leaves Windows DLLs unchanged. PC3/PC4 gameplay confirmation is still pending.
 
 ### VR seat position (Experimental)
 

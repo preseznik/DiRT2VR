@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Refresh the README with current custom tracks, Filters and chase-camera controls. Clarify desktop/headset requirements, saved Experimental update preferences, track rebuild instructions and remaining headset limitations.
+
 - Hide the Windows mouse pointer over the game picture while chase-camera Free look is active. Restore it for pause, menus, other camera views and switching apps; window borders keep their usual cursor.
 
 - Scroll the mouse wheel to move the experimental chase camera closer or farther away, without holding a button. Zoom retains the field of view and native obstruction checks. Desktop zoom is player-approved; headset validation remains pending.
