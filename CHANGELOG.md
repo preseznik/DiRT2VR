@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.70 — 2026-10-08 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.70)
+
 - Improve preparation, recovery and cleanup when game files are read-only, including menus, graphics settings and offline profiles. Retain original file protection after interrupted sessions and report locked files more clearly.
 - Allow updates and removal of read-only launcher package files without changing permissions on the game folder.
 
