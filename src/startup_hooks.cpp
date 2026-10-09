@@ -9,6 +9,7 @@
 #include "steering_animation.h"
 #include "chase_camera.h"
 #include "replay_camera.h"
+#include "test_message.h"
 namespace vr { bool EnableSeatAdjustment(); }
 #include "common.h"
 
@@ -31,6 +32,7 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     if(steering && (!playerCameraReady || !observerReady || !EnableSteeringAnimation(headset))) Log("steering animation: unavailable; original visuals retained");
     if(chase && (!playerCameraReady || !observerReady || !EnableChaseCamera())) Log("chase camera: unavailable; native view retained");
     if(headset && !EnableSeatAdjustment()) Log("seat adjustment: unavailable; existing VR remains active");
+    if(headset && TestMessagesEnabled())Log("headset reply input ready=%d",EnableTestMessageInput());
     EnableEventDiagnostics();
     return true;
 }

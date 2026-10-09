@@ -65,7 +65,7 @@ Headset refresh rate
 Set refresh rate in SteamVR or your headset connection software before launching. The launcher can show the last reported rate, not a live measurement. Desktop VSync does not select headset Hz.
 
 Shadows (experimental)
-Off retains the current shadow-free VR rendering and performance. On enables shadows using the game's saved shadow quality. Includes corrected VR exposure metering. Shadows can brighten sunlit areas through the game's normal exposure adjustment. This remains experimental; turn it off if the appearance or performance is unsuitable. Shadows may also reduce performance. Save and relaunch to apply. Desktop play is unchanged.
+Off retains the current shadow-free VR rendering and performance. On enables shadows using the game's saved shadow quality. Cockpit VR keeps detailed trackside shadows farther away, improving the coarse/flickering shadows reported at Baja. Includes corrected VR exposure metering. Some shadow-detail pop-in remains while driving, and cockpit shadows may lose detail sooner than other camera views. Shadows can brighten sunlit areas through the game's normal exposure adjustment. This remains experimental; turn it off if the appearance or performance is unsuitable. Shadows may also reduce performance. Save and relaunch to apply. Desktop play is unchanged.
 
 Bloom
 Adds a soft glow around bright areas. On keeps the game's existing effects; Off removes the glow in VR, including its flat virtual screen. This is separate from shadows and does not disable exposure adjustment or colour grading. Default: On. Save and relaunch VR to apply; the Desktop choice is independent. Works with all launch modes and custom tracks, retaining their separate lighting choices. Original effect files are restored after play.
@@ -145,6 +145,9 @@ The launcher temporarily handles read-only game files and restores their origina
 
 Diagnostic logging
 Off by default. Enable it in Settings only for troubleshooting and turn it off afterward. Open logs shows the log folder. Existing logs are not deleted automatically; recovery records remain available even when logging is off.
+
+Guided headset tests
+When a test card is shown, press Enter to type a reply, then Enter again to save it locally for the tester to read. Escape cancels. Keep the game focused and the car stopped while typing; the race continues. Replies are available only in explicitly enabled test sessions.
 
 Updates
 About shows the installed version, Stable/Experimental channel, build and GitHub update controls. Include experimental releases is off by default and saved immediately; it controls both startup notices and manual checks. Enabling it includes newer experimental and normal releases. Disabling it does not replace the installed build. Experimental builds offer Return to stable…: this asks before installing the latest normal release, even if older, and disables experimental updates. Launcher settings and bindings are backed up under updates/rollback-preferences in the installation user-data folder; your career is not reset. Close the game before updating. Downloads are verified before setup opens; settings are retained. Windows may ask for administrator approval. ZIP installs become installer-managed when updated through setup.

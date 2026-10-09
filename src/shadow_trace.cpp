@@ -6,6 +6,25 @@
 #include <cstring>
 using Microsoft::WRL::ComPtr;
 namespace vr {
+bool ShadowSequenceFrame(uint64_t frame) {
+    static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_SHADOW_SEQUENCE",value,8)==1 && value[0]==L'1'; }();
+    return enabled && LoggingEnabled() && frame>=3000 && frame<=3002;
+}
+void TraceShadowCamera(uint64_t frame,unsigned eye,const float* projection,const float* view) {
+    if(!ShadowSequenceFrame(frame))return;
+    auto out=TraceFile(Output()/"shadow-camera.csv",std::ios::app);
+    out<<frame<<','<<eye;
+    for(unsigned i=0;i<16;++i)out<<','<<projection[i];
+    for(unsigned i=0;i<16;++i)out<<','<<view[i];
+    out<<'\n';
+}
+void TraceShadowRays(uint64_t frame,unsigned eye,uint64_t shader,const float* rays) {
+    if(!ShadowSequenceFrame(frame))return;
+    auto out=TraceFile(Output()/"shadow-rays.csv",std::ios::app);
+    out<<frame<<','<<eye<<','<<std::hex<<shader<<std::dec;
+    for(unsigned i=0;i<4;++i)out<<','<<rays[i];
+    out<<'\n';
+}
 void TraceShadowInputs(ID3D11DeviceContext* context,uint64_t shader,uint64_t frame,unsigned eye,bool requested) {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_SHADOW_PROBE",value,8)==1 && value[0]==L'1'; }();
     // Diagnostic only: three reflected shaders with the same 208-byte shadow

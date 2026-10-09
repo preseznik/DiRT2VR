@@ -20,6 +20,8 @@
 #include "pipeline_trace.h"
 #include "test_message.h"
 #include "shadow_mask.h"
+#include "scene_depth.h"
+#include "shadow_coverage.h"
 #include "exposure_window.h"
 #include "direct_menus.h"
 #include "gfwl_compat.h"
@@ -222,6 +224,32 @@ bool ShadowsEnabled() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_SHADOWS",value,8)==1 && value[0]==L'1'; }();
     return enabled;
 }
+using ShadowInteriorDefaultsFn=void (__thiscall*)(void*);
+ShadowInteriorDefaultsFn realShadowInteriorDefaults{};
+void* shadowSystem{};
+void __declspec(naked) ShadowInteriorDefaults() {
+    // Native callers reuse ECX across adjacent leaf initializers. Preserve
+    // every register and flag, including nominally caller-saved registers.
+    // Observe the live object only; native defaults stay unchanged.
+    __asm {
+        call dword ptr [realShadowInteriorDefaults]
+        mov dword ptr [shadowSystem],ecx
+        ret
+    }
+}
+float* ShadowWorldRange() {
+    // The renderer owns this object. Recheck its concrete type and native
+    // self-reference each time, including after track unload/reload.
+    auto* object=static_cast<unsigned char*>(shadowSystem);
+    auto* base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+    __try {
+        if(!object || *reinterpret_cast<void**>(object)!=base+0xf20540 ||
+           *reinterpret_cast<void**>(object+0x6d4)!=object)return nullptr;
+        return reinterpret_cast<float*>(object+0xd64);
+    } __except(EXCEPTION_EXECUTE_HANDLER) {return nullptr;}
+}
+ShadowCoverage shadowCoverage;
+bool CockpitShadowMode();
 thread_local void* waterEyeRenderer{};
 void* waterRenderer{};
 uint64_t waterRendererFrame=~uint64_t{};
@@ -385,6 +413,11 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
         // This is the last unmodified camera before the engine prepares the scene.
         // Carry its verified identity only to this renderer's scene in this frame.
         const auto kind=IdentifySceneCamera(a,b,frame.load());
+        if(ShadowsEnabled()) {
+            const bool before=shadowCoverage.Active();
+            shadowCoverage.Update(ShadowWorldRange(),kind==SceneCamera::Cockpit && CockpitShadowMode());
+            if(before!=shadowCoverage.Active())Log("cockpit shadow preparation frame=%llu extended=%d",frame.load(),shadowCoverage.Active());
+        }
         if(ExtendedViewsEnabled() || ReplayStereoEnabled()) {
             preparedCameraRenderer=renderer;preparedCameraFrame=frame.load();preparedCameraKind=kind;
         }
@@ -440,6 +473,8 @@ void __fastcall CameraUpload(void* self,void*,void* context) {
     }
     if(eyeCameraSetup && !waterEyeRenderer && ShadowsEnabled())
         shadowRays=ShadowViewRays(reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x120));
+    if(!waterEyeRenderer && ShadowSequenceFrame(frame.load()))
+        TraceShadowCamera(frame.load(),lightingEye,reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x120),reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x160));
     realCameraUpload(self,context);
 }
 thread_local bool sampleInner{};
@@ -479,6 +514,7 @@ uint64_t requestedCaptureFrame=~uint64_t{};
 unsigned requestedCaptureCount{};
 bool TakeCaptureRequest(uint64_t f,bool cockpit) {
     if(!RequestedCapturesEnabled() || requestedCaptureCount>=4 || f%60) return false;
+    if(TestMessageTyping())return false;
     std::error_code error;
     const auto request=Output()/"capture.request";
     if(!std::filesystem::exists(request,error))return false;
@@ -563,6 +599,11 @@ void PollHeadsetKeys() {
         Log("OpenXR requested mode=%s frame=%llu",ScreenMode()?"screen":"cockpit",frame.load());
     }
     if(keys&Recenter) recenterRequested=true;
+}
+bool CockpitShadowMode() {
+    if(!HeadsetEnabled())return ContinuousReplayEnabled(); // isolated stereo diagnostics
+    PollHeadsetKeys();
+    return gameXr && gameXr->Active() && gameXr->Visible() && !ScreenMode() && !GamePaused();
 }
 void PrepareHeadsetViews(const std::array<XrView,2>& views) {
     if(recenterRequested) {
@@ -758,6 +799,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             auto relative=RelativePose(headsetReference,view.pose);
             if(cockpit) relative=SeatEyePose(relative);
             ScopedEyePose pose(cameraA,cameraB,relative,scale);
+            ScopedSceneDepth depthRange(static_cast<unsigned char*>(self)+0x40);
             shadowRays={}; meterWindow={};
             eyeRenderer=self; eyeFov=&view.fov; lightingEye=eye+1; lightsRefreshed=false;
             RenderEyeReflection(cameraA);
@@ -893,6 +935,9 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
             }
             if(PipelineOption(L"DIRT2VR_PIPELINE_STEREO"))pipelinePose.position.x+=(eye==0?-.032f:.032f);
             ScopedEyePose pipelineEye(cameraA,cameraB,pipelinePose,1.f);
+            auto clip=reinterpret_cast<float*>(static_cast<unsigned char*>(self)+0x40);
+            ScopedSceneDepth depthRange(clip);
+            if(ShadowSequenceFrame(f))Log("shadow sequence clip before frame=%llu eye=%u near=%.8f far=%.8f",f,eye+1,clip[0],clip[1]);
             shadowRays={}; meterWindow={};
             eyeRenderer=self; projectionShift=(eye==0?-1.f:1.f)*shift;
             XrFovf pipelineFov{-.947f,.698f,.768f,-.960f};
@@ -905,6 +950,7 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
             realInner(self,lists,cameraA,cameraB,context,scene,flags);
             hudEye=0;
             eyeRenderer=nullptr; eyeFov=nullptr; projectionShift=0; lightingEye=0;
+            if(ShadowSequenceFrame(f))Log("shadow sequence clip after frame=%llu eye=%u near=%.8f far=%.8f",f,eye+1,clip[0],clip[1]);
         }
         eyeDraws[eye]=draws.load()-before;
         restored &= memcmp(originalA.data(),cameraA,112)==0 && memcmp(originalB.data(),cameraB,112)==0;
@@ -1219,13 +1265,15 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
         }
     }
     static const bool skipWater=[] { wchar_t value[16]{}; return GetEnvironmentVariableW(L"DIRT2VR_SKIP_WATER",value,16)>0 && wcscmp(value,L"1")==0; }();
-    if(!scenePass && !skipWater && requestedCaptureFrame!=frame.load() && !(PipelineTraceEnabled() && frame.load()==3000)) return true;
+    if(!scenePass && !skipWater && !ShadowSequenceFrame(frame.load()) && requestedCaptureFrame!=frame.load() && !(PipelineTraceEnabled() && frame.load()==3000)) return true;
     ComPtr<ID3D11PixelShader> ps;
     ComPtr<ID3D11VertexShader> vs;
     context->PSGetShader(&ps,nullptr,nullptr); context->VSGetShader(&vs,nullptr,nullptr);
     uint64_t ph{},vh{};
     { std::lock_guard lock(shaderMutex); ph=shaderNames[ps.Get()]; vh=shaderNames[vs.Get()]; }
     TracePipelineDraw(context,frame.load(),lightingEye,waterEyeRenderer!=nullptr,kind,count,instances,vh,ph);
+    if(ShadowSequenceFrame(frame.load()) && !waterEyeRenderer)
+        TraceShadowInputs(context,ph,frame.load(),lightingEye,true);
     if(scenePass==1) {
         static bool depthTraced=false, colourTraced=false;
         if(ph==0x4822905e184bebd9ull && !depthTraced) { depthTraced=true; Stack("CockpitDepth"); }
@@ -1422,6 +1470,7 @@ void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) {
         }
         static ShadowMaskPass shadowMask;
         if(ShadowsEnabled() && shadowMask.Draw(c,vertex,pixel,shadowRays,[&] {
+            TraceShadowRays(frame.load(),lightingEye,pixel,shadowRays.values.data());
             if(PipelineTraceEnabled() && frame.load()==3000) {
                 ComPtr<ID3D11VertexShader> applied;c->VSGetShader(&applied,nullptr,nullptr);uint64_t actual{};
                 {std::lock_guard lock(shaderMutex);actual=shaderNames[applied.Get()];}
@@ -1557,7 +1606,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         if(ContinuousReplayEnabled()) {
             auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
             if(HeadsetEnabled())pauseHookReady=EnablePauseObserver();
-            if((HeadsetEnabled() || PipelineOption(L"DIRT2VR_PIPELINE_WIDE")) && (WideVisibility() || ExtendedViewsEnabled() || ReplayStereoEnabled()) && !realFrustumCopy) {
+            if((HeadsetEnabled() || PipelineOption(L"DIRT2VR_PIPELINE_WIDE")) && (WideVisibility() || ExtendedViewsEnabled() || ReplayStereoEnabled() || ShadowsEnabled()) && !realFrustumCopy) {
                 const unsigned char copy[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0xc1,0x8b,0x4d,0x08};
                 const unsigned char build[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x04,0x01,0,0};
                 if(memcmp(base+0x2b7db0,copy,sizeof(copy))==0 && memcmp(base+0xd26c40,build,sizeof(build))==0) {
@@ -1596,6 +1645,16 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                     Log("water camera-only hook status=%s",MH_StatusToString(status));
                     if(status!=MH_OK) waterPrepareTail=nullptr;
                 }
+            }
+            if(ShadowsEnabled() && !realShadowInteriorDefaults) {
+                const auto operand=reinterpret_cast<uintptr_t>(base+0xf1fe00);
+                const unsigned char prefix[]={0xf3,0x0f,0x10,0x05};
+                if(!memcmp(base+0x2865d0,prefix,sizeof(prefix)) &&
+                   *reinterpret_cast<const uintptr_t*>(base+0x2865d4)==operand) {
+                    auto status=MH_CreateHook(base+0x2865d0,reinterpret_cast<void*>(ShadowInteriorDefaults),reinterpret_cast<void**>(&realShadowInteriorDefaults));
+                    if(status==MH_OK)status=EnableRecordedHook(base+0x2865d0);
+                    Log("cockpit shadow coverage observer status=%s",MH_StatusToString(status));
+                } else Log("cockpit shadow coverage observer rejected instruction guard");
             }
             const unsigned char setupPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0xe4,0,0,0};
             const unsigned char uploadPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x54};

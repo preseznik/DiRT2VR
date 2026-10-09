@@ -167,6 +167,8 @@ The launcher remembers its window size and maximized state when closed. It adapt
 
 **Settings → Enable diagnostic logging** is off by default, including when upgrading older settings. Enable it and save before a troubleshooting run to collect preflight details and game-side logs in **Open logs**. Turn it off afterward to stop generating session logs, frame CSVs and diagnostic captures. Existing logs are kept; you can remove them yourself when no longer needed. Settings, the latest session/refresh-rate/resolution summaries and recovery journals remain available with logging off so the launcher can restore your game files safely.
 
+During a guided headset test, a message card may appear below your forward view. **Enter** opens its reply box; type your answer and press **Enter** again to save it, or **Escape** to cancel. Replies stay in that test's local logs for the person running the test to read. Keep the game focused and stop the car before typing; the race continues. This input is active only in explicitly enabled diagnostic sessions.
+
 ### Direct practice (experimental)
 
 On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**, and a **Car**, then **Launch VR**. Event filters the track list by discipline; this is solo practice, not a career event. The launcher lists installed routes and cars from the supported game's catalog.
@@ -236,7 +238,7 @@ For vegetation and object pop-in, try **Tree detail → Ultra** and **Object det
 
 Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
 
-**Graphics → VR rendering → Shadows (experimental)** is off by default. Enable it to try the game's shadows in VR at your saved game quality; sunlight-shadow placement and VR exposure metering are corrected. Shadows can brighten sunlit areas through the game's normal exposure adjustment. This option remains experimental; turn it off if the appearance or performance is unsuitable. Save and relaunch to apply. Desktop play is unaffected, and the game's original shadow setting is restored after VR play.
+**Graphics → VR rendering → Shadows (experimental)** is off by default. Enable it to try the game's shadows in VR at your saved game quality; sunlight-shadow placement and VR exposure metering are corrected. Cockpit VR keeps detailed trackside shadows farther away, reducing coarse and flickering shadows seen at Baja. Some shadow-detail pop-in remains while driving, and cockpit shadows may lose detail sooner than other camera views. Shadows can brighten sunlit areas through the game's normal exposure adjustment. This option remains experimental; turn it off if the appearance or performance is unsuitable. Save and relaunch to apply. Desktop play is unaffected, and the game's original shadow setting is restored after VR play.
 
 The cockpit HUD is a transparent panel showing the game's race information. **VR HUD → Distance** changes its depth without shrinking the text. **Recenter** places the fixed HUD ahead of your seated position at that distance. Save and relaunch VR to apply. **Follow view** is off by default; Restore defaults also resets distance to 1 m. Pause menus still use their separate virtual screen. Desktop HUD capture and automated rendering checks pass, but headset placement and distance changes still need testing.
 

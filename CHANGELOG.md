@@ -6,6 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.74 — 2026-10-09 — Experimental
+
+- Improve coarse and flickering trackside shadows in cockpit VR, including Baja Spillway. Shadows remain optional and experimental; some shadow-detail pop-in remains while driving.
+- Reply directly to guided headset-test cards: press Enter to type, Enter again to send, or Escape to cancel. You can send follow-up replies without pausing the game or returning to the desktop chat.
+
 ## 0.17.72 — 2026-10-09 — Experimental
 
 - Add an optional Crowds switch under Graphics → Main → VR rendering. It starts off; enabling it shows spectators using the game's saved crowd quality on the next VR launch. Desktop settings are unchanged. Crowd rendering remains experimental.

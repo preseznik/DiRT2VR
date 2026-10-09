@@ -1,5 +1,9 @@
 DiRT2VR — Experimental
 
+Improved coarse and flickering trackside shadows in cockpit VR, including Baja Spillway. Shadows remain optional and experimental. Some shadow-detail pop-in remains while driving, and cockpit shadows can lose detail sooner than other camera views.
+
+Guided headset tests now support replies without returning to the desktop: press Enter to type, Enter again to send, or Escape to cancel. Follow-up replies remain available, and sending no longer pauses the game.
+
 New: Optional VR crowds. Enable Graphics → Main → VR rendering → Crowds (experimental), save and relaunch to show spectators using your saved crowd quality. The default remains Off. Desktop crowd settings are unchanged; crowd rendering still needs broader headset testing.
 
 New: 3D chase replays. Enable Advanced → Graphics → 3D chase replays for stereo depth and head tracking, including paused playback. Cinematic replay angles remain on the flat screen.

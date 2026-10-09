@@ -4,6 +4,7 @@
 #include "gfwl_compat.h"
 #include "eye_blit.h"
 #include "vr_hotkeys.h"
+#include "test_message.h"
 #include <MinHook.h>
 #include <dinput.h>
 #include <gdiplus.h>
@@ -58,7 +59,7 @@ void Publish(bool commit=false) {
 }
 void Commit() { if(CanAdjust() && current!=saved) { saved=current; Publish(true); } dirty=false; }
 void Cancel() { if(panel) current=opening; panel=false; movement.Reset(); }
-bool Key(unsigned vk) { return vk && (GetAsyncKeyState(int(vk))&0x8000)!=0; }
+bool Key(unsigned vk) { return vk && !TestMessageBlocksKey(vk) && (GetAsyncKeyState(int(vk))&0x8000)!=0; }
 unsigned Modifiers() { return (Key(VK_CONTROL)?1:0)|(Key(VK_MENU)?2:0)|(Key(VK_SHIFT)?4:0); }
 unsigned HeldKeys() {
     unsigned held=0;
@@ -206,6 +207,7 @@ void SeatInactive() {
 }
 void SeatPrepare(const std::array<XrView,2>& views) {
     if(!channel) return;
+    if(TestMessageTyping()){SeatInactive();return;}
     std::lock_guard lock(mutex);
     eligible=inputReady;
     const auto now=GetTickCount64(); const double dt=lastTick ? double(now-lastTick)/1000 : 0; lastTick=now;

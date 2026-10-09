@@ -1,5 +1,6 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include "seat_adjustment.h"
+#include "test_message.h"
 #include "gfwl_compat.h"
 #include "common.h"
 #include <dinput.h>
@@ -29,12 +30,21 @@ bool GameCaller(void* caller) {
 }
 SHORT WINAPI AsyncKey(int key) {
     auto value=asyncKey(key);
-    return GameCaller(_ReturnAddress()) && SeatBlocksKey(unsigned(key)) ? 0 : value;
+    return GameCaller(_ReturnAddress()) && (TestMessageBlocksKey(unsigned(key)) || SeatBlocksKey(unsigned(key))) ? 0 : value;
+}
+void FilterInput(Device& device,DWORD offset,DWORD type,void* value,DWORD size) {
+    if(device.keyboard && size==1) {
+        const auto scan=DIDFT_GETINSTANCE(type);
+        const auto code=(scan&0x80)?0xe000u|(scan&0x7f):scan;
+        const auto key=MapVirtualKeyW(code,MAPVK_VSC_TO_VK_EX);
+        if(TestMessageBlocksKey(key)){*static_cast<BYTE*>(value)=0;return;}
+    }
+    SeatFilterController(device.id,device.keyboard,offset,type,value,size);
 }
 void Filter(Device& device,DWORD offset,void* value,DWORD bytes) {
     for(const auto& object:device.objects) {
         const DWORD size=(object.dwType&DIDFT_BUTTON)?1:4;
-        if(offset==object.dwOfs && bytes>=size) { SeatFilterController(device.id,device.keyboard,offset,object.dwType,value,size); break; }
+        if(offset==object.dwOfs && bytes>=size) { FilterInput(device,offset,object.dwType,value,size); break; }
     }
 }
 HRESULT STDMETHODCALLTYPE State(IDirectInputDevice8W* self,DWORD length,void* output) {
@@ -44,7 +54,7 @@ HRESULT STDMETHODCALLTYPE State(IDirectInputDevice8W* self,DWORD length,void* ou
         if(auto it=devices.find(self);it!=devices.end()) for(const auto& object:it->second.objects) {
             const unsigned size=(object.dwType&DIDFT_BUTTON)?1:4;
             if(object.dwOfs<=length && size<=length-object.dwOfs)
-                SeatFilterController(it->second.id,it->second.keyboard,object.dwOfs,object.dwType,static_cast<BYTE*>(output)+object.dwOfs,size);
+                FilterInput(it->second,object.dwOfs,object.dwType,static_cast<BYTE*>(output)+object.dwOfs,size);
         }
     }
     return hr;
@@ -117,6 +127,9 @@ template<unsigned I> DWORD WINAPI Xbox(DWORD slot,XINPUT_STATE* output) {
 }
 }
 bool EnableSeatInput() {
+    static bool attempted{},ready{};
+    if(attempted)return ready;
+    attempted=true;
     auto module=LoadLibraryExW(L"dinput8.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32);
     if(!module) return false;
     using Factory=HRESULT (WINAPI*)(HINSTANCE,DWORD,REFIID,void**,IUnknown*);
@@ -145,6 +158,6 @@ bool EnableSeatInput() {
             ok=Hook(target,replacements[i],reinterpret_cast<void**>(&xbox[i])) && ok; targets.push_back(target);
         }
     }
-    return ok;
+    ready=ok;return ready;
 }
 }
