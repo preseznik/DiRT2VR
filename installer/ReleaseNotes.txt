@@ -1,5 +1,9 @@
 DiRT2VR — Experimental
 
+New: 3D chase replays. Enable Advanced → Graphics → 3D chase replays for stereo depth and head tracking, including paused playback. Cinematic replay angles remain on the flat screen.
+
+Chase-camera Free look and zoom now work in replays on desktop and in VR, using your existing mouse and controller settings. Select chase views with the game's replay camera buttons (default F8/F7 or Xbox RB/LB). Start an event through Normal Launch for the game's replays.
+
 More reliable launch preparation and recovery for read-only game files, including after interrupted sessions. Updates also handle read-only launcher files, and file-operation errors provide clearer details.
 
 Xbox preset now fills missing keyboard controls with the game's default keys and keeps your custom keys. If keyboard controls were left blank by an earlier preset, apply Xbox preset again and Save driving controls.
@@ -8,7 +12,7 @@ VR preparation now handles read-only camera and effect files. If an older build 
 
 Chase-camera Free look now hides the Windows mouse pointer over the game picture. Pause, menus, other camera views and switching apps restore it. Window borders keep their usual cursor.
 
-With chase-camera Free look enabled, scroll forward to move closer or backward to move farther away. No mouse button is needed. Changing chase views resets the distance. Desktop zoom is player-tested; headset checks remain pending.
+With chase-camera Free look enabled, scroll forward to move closer or backward to move farther away. No mouse button is needed. Changing chase views resets the distance. Desktop zoom and VR chase-replay zoom have passed player checks.
 
 Choose Hold left, Hold right or Always on for mouse look under Controls → General → Chase camera. The three mouse-icon buttons show your choice. Hold right remains the default; save settings and relaunch to apply.
 
@@ -18,7 +22,7 @@ The launcher now remembers its window size and maximized state when you close it
 
 New: Controls is organized into General, VR, Driving and Seat tabs. Find cockpit animation and chase-camera settings in General, VR shortcuts in VR, driving bindings in Driving, and seat shortcuts in Seat.
 
-New: Experimental chase-camera free look. Move the mouse using your chosen activation mode, or use the right stick, to look around your car. Your angle stays while stopped and smoothly returns behind the car when driving. Adjust mouse/stick sensitivity and Invert vertical in Controls → General. Free look starts off; save and relaunch after enabling it. Desktop requires DX11. VR also needs Advanced → Graphics → 3D beyond the cockpit; headset testing remains pending.
+New: Experimental chase-camera free look. Move the mouse using your chosen activation mode, or use the right stick, to look around your car. Your angle stays while stopped and smoothly returns behind the car when driving. Adjust mouse/stick sensitivity and Invert vertical in Controls → General. Free look starts off; save and relaunch after enabling it. Desktop requires DX11. VR also needs Advanced → Graphics → 3D beyond the cockpit; VR chase-replay orbit and zoom have passed a headset check.
 
 New: Mizu Mountain in CUSTOM tracks. Build the full 10.4 km daylight route from your own GRID 2 installation, then Launch or Launch VR for Direct practice or experimental Race against up to seven opponents. Choose opponent cars and difficulty as usual. Already installed Mizu? Use Manage → Rebuild from source for the starting grid and MIZU pre-race label. Each race covers the route once; VR is experimental and LAN remains unavailable.
 

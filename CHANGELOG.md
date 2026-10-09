@@ -6,6 +6,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.71 — 2026-10-09 — Experimental
+
+- Add optional 3D chase replays in Advanced → Graphics, with head tracking during playback and while paused. Cinematic replay angles remain on the flat screen.
+- Extend chase-camera free look and zoom to replays, using your existing mouse and controller settings. Use the game's replay camera buttons to select chase or cinematic views.
+- Keep the native near chase camera available when expanded VR views or 3D chase replays are enabled.
+
 ## 0.17.70 — 2026-10-08 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.70)

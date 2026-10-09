@@ -47,6 +47,7 @@ Public Class MainForm
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 100, "%")
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
     Private ReadOnly extendedViews As New CheckBox With {.Text = "On (Experimental)", .Name = "VrExtendedViews", .AccessibleName = "3D beyond the cockpit (Experimental)", .AutoSize = True}
+    Private ReadOnly replayCameras As New CheckBox With {.Text = "On (Experimental)", .Name = "VrReplayCameras", .AccessibleName = "3D chase replays (Experimental)", .AutoSize = True}
     Private ReadOnly vrShadows As New CheckBox With {.Text = "On", .Name = "VrShadows", .AutoSize = True}
     Private ReadOnly steeringObserve As New CheckBox With {.Text = "Observe only — no correction", .Name = "SteeringObserveOnly", .AutoSize = True}
     Private ReadOnly steeringAnimation As New CheckBox With {.Text = "On (Experimental)", .Name = "VrSteeringAnimation", .AccessibleName = "Remove artificial steering corrections (Experimental)", .AutoSize = True}
@@ -207,7 +208,8 @@ Public Class MainForm
         Tip(vrBloom, "Soft glow around bright areas. On keeps the game's effects;" & vbCrLf & "Off removes the glow in VR, including its virtual screen." & vbCrLf & "Save and relaunch VR to apply. This is separate from shadows.")
         Tip(fieldOfView, "Lower values trim the edges of your VR view to reduce rendering" & vbCrLf & "work. 100% keeps the full view; objects keep their normal scale.")
         Tip(mirrors, "Turn the car's rear-view mirrors on or off in VR." & vbCrLf & "Off can improve performance. Game setting keeps your usual choice.")
-        Tip(extendedViews, "Use headset 3D and head tracking in supported cameras outside the cockpit." & vbCrLf & "First stage: bonnet, bumper and chase views. Menus and replays stay on the virtual screen." & vbCrLf & "Off by default. Save and relaunch VR to apply. Toggle VR always returns to the flat screen.")
+        Tip(extendedViews, "Use headset 3D and head tracking in bonnet, bumper and chase views while driving. Replay 3D has its own switch below. Menus stay on the virtual screen. Save and relaunch VR to apply.")
+        Tip(replayCameras, "Watch chase-camera replays in 3D, with head tracking, even while playback is paused. Cinematic angles stay on the flat screen. For orbit and zoom, enable Controls → General → Chase camera → Free look. Save and relaunch VR to apply.")
         Tip(vrShadows, "Experimental: enable shadows in VR using the game's shadow quality." & vbCrLf & "Off keeps the current faster rendering. Shadows may still disagree between eyes." & vbCrLf & "Applies on next VR launch; desktop play is unchanged.")
         Tip(treeDetail, "Higher keeps detailed vegetation visible farther away, but" & vbCrLf & "costs performance. Game keeps your usual setting.")
         Tip(objectDetail, "Higher keeps detailed buildings and trackside objects farther" & vbCrLf & "away, but costs performance. Game keeps your usual setting.")
@@ -512,6 +514,8 @@ Public Class MainForm
         Dim graphics = Section(content, "Graphics")
         extendedViews.Checked = settings.VrExtendedViews
         Field(graphics, "3D beyond the cockpit", extendedViews)
+        replayCameras.Checked = settings.VrReplayCameras
+        Field(graphics, "3D chase replays", replayCameras)
         content.Controls.Add(HelpLink(Sub() ShowAbout("Advanced")))
     End Sub
     Private Sub BuildGraphicsTab()
@@ -771,7 +775,7 @@ Public Class MainForm
         chaseMouse.Value = settings.ChaseMouseSensitivity : chaseStick.Value = settings.ChaseStickSensitivity
         chaseMouseMode.SelectedMode = settings.ChaseMouseMode
         chaseInvert.Checked = settings.ChaseInvertVertical
-        Tip(chaseFreeLook, "Use the mouse or right stick to look around your car. Choose a mouse button below, or Always on. Hold the right stick pressed in to look behind; release to return to normal chase view. Holds orbit angles while stopped; returns behind you when driving. VR also needs Advanced → Graphics → 3D beyond the cockpit. Save and relaunch.")
+        Tip(chaseFreeLook, "Use the mouse or right stick to look around your car. Choose a mouse button below, or Always on. Hold the right stick pressed in to look behind; release to return to normal chase view. Holds orbit angles while stopped; returns behind you when driving. VR driving needs 3D beyond the cockpit; replay 3D has its own switch under Advanced → Graphics. Also works in paused or playing chase replays. Save and relaunch.")
         Tip(chaseMouseMode, "Choose which mouse button to hold, or Always on to look around without clicking. Only active in chase view while driving; menus and pause keep normal mouse behavior.")
         For Each choice As RadioButton In chaseMouseMode.Controls
             Tip(choice, choice.AccessibleDescription & " Applies to chase-camera Free look. Save settings and relaunch.")
@@ -807,6 +811,7 @@ Public Class MainForm
         settings.LoggingEnabled = logging.Checked
         settings.ExperimentalFlashback = flashback.Checked
         settings.VrExtendedViews = extendedViews.Checked
+        settings.VrReplayCameras = replayCameras.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked
         settings.SteeringObserveOnly = steeringObserve.Checked
         settings.ChaseFreeLook = chaseFreeLook.Checked

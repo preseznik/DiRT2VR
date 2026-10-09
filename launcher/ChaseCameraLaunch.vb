@@ -13,7 +13,7 @@ Public NotInheritable Class ChaseCameraLaunch
             start.Environment.Remove(key)
         Next
         Dim headset = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
-        If Not settings.ChaseFreeLook OrElse (headset AndAlso Not settings.VrExtendedViews) Then Return
+        If Not settings.ChaseFreeLook OrElse (headset AndAlso Not settings.VrExtendedViews AndAlso Not settings.VrReplayCameras) Then Return
         start.Environment("DIRT2VR_CHASE_FREE_LOOK") = "1"
         start.Environment("DIRT2VR_CHASE_MOUSE_MODE") = settings.ChaseMouseMode
         start.Environment("DIRT2VR_CHASE_MOUSE_SENSITIVITY") = settings.ChaseMouseSensitivity.ToString(Globalization.CultureInfo.InvariantCulture)

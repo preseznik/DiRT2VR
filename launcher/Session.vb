@@ -194,6 +194,7 @@ Public Class Session
         SteeringAnimationLaunch.Configure(start, settings)
         ChaseCameraLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_EXTENDED_VIEWS") = If(settings.VrExtendedViews, "1", "0")
+        ReplayCameraLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
         start.Environment("DIRT2VR_WORLD_SCALE") = "1"
         start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
@@ -281,6 +282,7 @@ Public Class Session
         SteeringAnimationLaunch.Configure(start, settings)
         ChaseCameraLaunch.Configure(start, settings)
         Dim focus As New StartupFocus(context)
+        ReplayCameraLaunch.Configure(start, settings)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
             lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode)

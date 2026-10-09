@@ -3,6 +3,7 @@
 #include "seat_adjustment.h"
 #include "steering_animation.h"
 #include "chase_camera.h"
+#include "replay_camera.h"
 #include "gfwl_compat.h"
 #include <MinHook.h>
 #include <intrin.h>
@@ -19,6 +20,14 @@ unsigned char* gameBase{};
 constexpr unsigned startupCalls[]={0x233ce4,0x3217b0,0x352772,0x245360};
 int __fastcall FindView(void* manager,void*,const char* name) {
     const auto caller=reinterpret_cast<unsigned char*>(_ReturnAddress());
+    if(ReplayCameraProbe()) {
+        static unsigned count{};
+        char observed[48]{};SIZE_T bytes{};
+        if(count<256 && name && ReadProcessMemory(GetCurrentProcess(),name,observed,sizeof(observed)-1,&bytes)) {
+            Log("replay camera lookup manager=%p name=%s caller=%x",manager,observed,unsigned(caller-gameBase));
+            ++count;
+        }
+    }
     for(const auto call:startupCalls) {
         if(caller!=gameBase+call+5) continue;
         SeatSelectCamera(manager);

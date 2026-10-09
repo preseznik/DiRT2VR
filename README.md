@@ -258,7 +258,7 @@ For a comparison, use the same car and event for three short runs: main option *
 
 Controls has **General**, **VR**, **Driving** and **Seat** subtabs. General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter; Seat contains the seat panel shortcut and optional individual bindings. The binding rows have **Action**, **Keyboard** and **Controller / wheel** columns. Click an action's keyboard binding to change it, optionally with Ctrl, Alt or Shift. Escape or switching tabs cancels capture without discarding other edits.
 
-**Chase-camera free look (experimental):** enable **Controls → General → Chase camera → Free look**, save settings and relaunch, then select a chase view using the game's camera control. Free look starts **off**. Desktop play requires DX11. In VR, also enable **Advanced → Graphics → 3D beyond the cockpit**. Desktop orbit, rear view and zoom have passed player checks; headset use still needs testing.
+**Chase-camera free look (experimental):** enable **Controls → General → Chase camera → Free look**, save settings and relaunch, then select a chase view using the game's camera control. Free look starts **off**. Desktop play requires DX11. For VR driving, enable **Advanced → Graphics → 3D beyond the cockpit**; for replay 3D, use the separate **3D chase replays** switch. Desktop controls and VR chase-replay orbit/zoom have passed player checks.
 
 - Move the **right stick** to orbit around your car, or use the mouse. Choose **Hold left**, **Hold right** (default) or **Always on** with the mouse-icon buttons.
 - Hold the **right stick pressed in (R3)** to look behind. Release it to return to the normal chase angle, even while stopped.
@@ -396,4 +396,12 @@ Xbox controllers use the D-pad, **X** as the sideways modifier, **A** to save an
 
 **Advanced → Graphics → 3D beyond the cockpit** is off by default. Save and relaunch VR, then use the game's Change camera control to try supported bonnet, bumper and chase views with stereo depth and head tracking. Toggle VR still returns to the virtual screen. Desktop play is unchanged.
 
-This first stage keeps menus, dialogs, replays and movies on the virtual screen. Seat adjustments apply only in the cockpit and are retained when switching cameras. Chase views retain the game's camera movement and may be less comfortable. Leaning can expose geometry omitted from the original fixed-camera view. The external views passed the user headset check. Some camera switches briefly return to the virtual screen while the game blends between views; this remains a known limitation.
+Menus, dialogs and movies stay on the virtual screen. Replay 3D has its own switch below. Seat adjustments apply only in the cockpit and are retained when switching cameras. Chase views retain the game's camera movement and may be less comfortable. Leaning can expose geometry omitted from the original fixed-camera view. The external views passed the user headset check. Some camera switches briefly return to the virtual screen while the game blends between views; this remains a known limitation.
+
+### Chase replays (Experimental)
+
+Enable **Advanced → Graphics → 3D chase replays**, save and relaunch VR for stereo depth and head tracking in replay chase views. It starts off and works independently of **3D beyond the cockpit**. Cinematic replay angles stay on the flat screen; Toggle VR also returns to the flat screen.
+
+For orbit and zoom on desktop or in VR, enable **Controls → General → Chase camera → Free look**. The same mouse activation, sensitivity and invert settings apply. Orbit and zoom work during playback and while the replay is paused. Pausing playback holds the angle rather than returning behind the car; opening the game menu or switching away suspends input.
+
+Use the game's **replay camera next/previous** controls to choose a chase view or return to cinematic angles (default **F8/F7**, or Xbox **RB/LB**). These are the replay controls, not the driving Change camera action. Desktop and headset chase-replay checks passed; other replay angles remain outside this first stage. Start an event through **Normal Launch** to use the game's replays. Direct Practice/Race replay availability is unchanged.

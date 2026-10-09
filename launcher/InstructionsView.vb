@@ -1,4 +1,4 @@
-﻿Imports System.Drawing
+Imports System.Drawing
 Imports System.Windows.Forms
 
 Public Class InstructionsView
@@ -93,7 +93,7 @@ Scroll forward to zoom in, backward to zoom out. No mouse button is needed. Free
 
 Hold the right stick pressed in (R3) to look behind the car with Free look enabled. Release it to return to the normal chase angle, even while stopped. This temporarily takes priority over mouse and stick orbit movement.
 
-Enable General → Chase camera → Free look, save settings and relaunch. Choose Hold left, Hold right (default) or Always on with the mouse-icon buttons, or use an Xbox-compatible controller's right stick. Always on needs no mouse button held. The camera stays at the chosen angle while stopped; when moving it returns behind the car after mouse/stick movement stops. Input is suspended in menus, pause and when another window has focus. Mouse and right-stick sensitivity are independent. Invert vertical reverses up/down for both. Desktop requires DX11. VR also requires Advanced → Graphics → 3D beyond the cockpit; only genuine chase views are affected. Desktop orbit has been checked; headset validation remains pending.
+Enable General → Chase camera → Free look, save settings and relaunch. Choose Hold left, Hold right (default) or Always on with the mouse-icon buttons, or use an Xbox-compatible controller's right stick. Always on needs no mouse button held. The camera stays at the chosen angle while stopped; when moving it returns behind the car after mouse/stick movement stops. Input is suspended in menus, pause and when another window has focus. Mouse and right-stick sensitivity are independent. Invert vertical reverses up/down for both. Desktop requires DX11. VR driving requires Advanced → Graphics → 3D beyond the cockpit; replay 3D uses the separate 3D chase replays switch. Only genuine chase views are affected. Desktop controls and VR chase-replay orbit/zoom have passed player checks.
 
 VR shortcuts
 Click a keyboard binding, then press a key with optional Ctrl, Alt or Shift. In Modern, click a controller cell to replace it, + to add another, or × to remove it. In Classic, use Bind and Remove selected. Assign one button or a two-button combination on the same device. Release the buttons to finish. Escape cancels. Multiple devices may be assigned.
@@ -151,7 +151,12 @@ The installed README contains setup, controls, recovery and current limitations.
         "3D beyond the cockpit (Experimental)
 Advanced → Graphics → 3D beyond the cockpit adds headset 3D and head tracking to supported bonnet, bumper and chase cameras. Off by default; save and relaunch VR to apply. Use the game's Change camera control to switch views. Toggle VR still returns to the virtual screen. Desktop play is unchanged.
 
-This is the first stage of expanded VR views. Menus, dialogs, replay cameras and movies still use the virtual screen. Seat adjustments apply only inside the cockpit and are retained when you change cameras. Chase cameras retain the game's movement and may be less comfortable than the cockpit.
+Menus, dialogs and movies still use the virtual screen. Replay 3D has its own switch. Seat adjustments apply only inside the cockpit and are retained when you change cameras. Chase cameras retain the game's movement and may be less comfortable than the cockpit.
+
+3D chase replays (Experimental)
+Enable Advanced → Graphics → 3D chase replays, save and relaunch VR. This separate switch adds stereo depth and head tracking to replay chase views, including paused playback. Cinematic replay angles remain flat. Toggle VR returns to the flat screen.
+
+Enable Controls → General → Chase camera → Free look for replay orbit and zoom on desktop or in VR. The existing mouse/stick settings apply. Paused playback holds your angle; game menus and loss of focus suspend input. Select views with the game's replay camera next/previous controls (default F8/F7 or Xbox RB/LB), not the driving Change camera action. Start an event through Normal Launch for the game's replays; direct-launch replay availability is unchanged.
 
 Experimental rewind
 Advanced → Frame-rate-independent rewind → On (Experimental) is off by default. Save settings and launch a new session to apply it. It works in single-player Normal Launch, Direct practice and Race, for desktop and VR. LAN ignores this setting. Desktop play requires DirectX 11.

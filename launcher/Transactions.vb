@@ -15,7 +15,7 @@ Public Module XmlPatches
             Return output.ToArray()
         End Using
     End Function
-    Public Function Asset(original As Byte(), camera As Boolean) As Byte()
+    Public Function Asset(original As Byte(), camera As Boolean, Optional preserveChase As Boolean = False) As Byte()
         Using input As New MemoryStream(original)
             Dim binary As New XmlFile(input)
             Dim document = binary.Document
@@ -33,9 +33,11 @@ Public Module XmlPatches
                 Next
                 Parameter(replacement, "headBuffeting", "false")
                 head.ParentNode.ReplaceChild(replacement, head)
-                Dim chaseCopy = DirectCast(replacement.CloneNode(True), XmlElement)
-                chaseCopy.SetAttribute("ident", "chase_close")
-                chase.ParentNode.ReplaceChild(chaseCopy, chase)
+                If Not preserveChase Then
+                    Dim chaseCopy = DirectCast(replacement.CloneNode(True), XmlElement)
+                    chaseCopy.SetAttribute("ident", "chase_close")
+                    chase.ParentNode.ReplaceChild(chaseCopy, chase)
+                End If
             Else
                 Dim parameters = document.SelectNodes("//ParameterGroup[@name='MotionBlur']/Param[@name='blurLength']")
                 If parameters.Count = 0 Then Throw New IOException("Unsupported motion-blur definitions.")
@@ -86,7 +88,7 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same")
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False)
         context.RequireClosed()
         If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
@@ -106,7 +108,7 @@ Public Class AssetTransaction
             Dim original = Files.ReadBytes(target)
             Dim replacement As Byte()
             Try
-                replacement = XmlPatches.Asset(original, i = 0)
+                replacement = XmlPatches.Asset(original, i = 0, preserveChase)
             Catch ex As Exception
                 ex.Data("DiRT2VR.Target") = target : Throw
             End Try

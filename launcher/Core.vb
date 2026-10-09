@@ -128,6 +128,7 @@ Public Class VrSettings
     Public Property ChaseStickSensitivity As Integer = 100
     Public Property ChaseInvertVertical As Boolean = True
     Public Property VrExtendedViews As Boolean = False
+    Public Property VrReplayCameras As Boolean = False
     Public Property VrMsaa As Integer = 2
     <Serialization.JsonIgnore>
     Public ReadOnly Property VrMsaaToken As String

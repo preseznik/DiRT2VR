@@ -4,7 +4,7 @@
 #include <string_view>
 #include <utility>
 namespace vr {
-enum class SceneCamera { Unknown, Cockpit, External, Replay, Frontend };
+enum class SceneCamera { Unknown, Cockpit, External, Replay, Frontend, ReplayChase };
 inline SceneCamera NamedSceneCamera(std::string_view name) {
     if(name=="head-cam")return SceneCamera::Cockpit;
     for(auto n:{"bonnet","bonnet_reverse","bumper","bumper_reverse","chase_close","chase_close_reverse","chase_far","chase_far_reverse","head-cam_reverse","drift_cam_rear"})
@@ -32,8 +32,9 @@ inline bool MatchingSceneCamera(const float* a,const float* b) {
         if(!std::isfinite(a[i]) || !std::isfinite(b[i]) || std::abs(a[i]-b[i])>.005f)return false;
     return true;
 }
-inline bool StereoCameraAllowed(SceneCamera camera,bool extended,bool paused,bool ready) {
-    return !paused && ready && (camera==SceneCamera::Cockpit || (extended && camera==SceneCamera::External));
+inline bool StereoCameraAllowed(SceneCamera camera,bool extended,bool paused,bool ready,bool replay=false) {
+    return !paused && ready && (camera==SceneCamera::Cockpit ||
+        (extended && camera==SceneCamera::External) || (replay && camera==SceneCamera::ReplayChase));
 }
 bool LiveDrivingCameraState();
 bool ExtendedViewsEnabled();

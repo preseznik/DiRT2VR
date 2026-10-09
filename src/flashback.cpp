@@ -3,11 +3,13 @@
 #include "scene_camera.h"
 #include "steering_animation.h"
 #include "chase_camera.h"
+#include "replay_camera.h"
 #include <intrin.h>
 #include "gfwl_compat.h"
 #include <MinHook.h>
 #include <atomic>
 #include <cstring>
+#include <mutex>
 
 namespace vr {
 namespace {
@@ -20,6 +22,8 @@ void* recordingCaller{};
 thread_local ReplaySampleClock sampleClock;
 thread_local void* samplingOwner{};
 thread_local void* activeRecorder{};
+std::mutex playbackMutex;
+ReplayPlayback playback;
 template<class T> T Field(const void* object, unsigned offset) {
     T value{};
     std::memcpy(&value, static_cast<const unsigned char*>(object)+offset, sizeof(value));
@@ -40,7 +44,13 @@ void __fastcall Update(void* root, void*, const double* dt) {
     samplingOwner=root;
     auto previousRecorder=activeRecorder;
     activeRecorder=static_cast<unsigned char*>(root)+0x10;
+    if(ReplayCamerasEnabled())BeginReplayCameraFrame();
     update(root, dt);
+    if(ReplayCamerasEnabled()) {
+        std::lock_guard lock(playbackMutex);
+        playback={Field<int>(root,0xa60),playback.frame+1,GetTickCount64(),
+            Field<double>(static_cast<unsigned char*>(root)+0x10,0x1b8),dt?*dt:0.0};
+    }
     liveRecordingTick.store(Field<int>(root,0xa60)==0 ? GetTickCount64() : 0);
     activeRecorder=previousRecorder;
     if(!LoggingEnabled()) return;
@@ -65,6 +75,9 @@ void __fastcall Update(void* root, void*, const double* dt) {
     last=now; lastRecorded=count; lastSkipped=dropped; ticks=0; lastState=state; lastRoot=root;
 }
 }
+ReplayPlayback ObservedReplayPlayback() {
+    std::lock_guard lock(playbackMutex);return playback;
+}
 bool LiveDrivingCameraState() {
     const auto tick=liveRecordingTick.load();
     return tick && GetTickCount64()-tick<500;
@@ -72,7 +85,7 @@ bool LiveDrivingCameraState() {
 bool EnableFlashback() {
     wchar_t enabled[8]{};
     sample60=GetEnvironmentVariableW(L"DIRT2VR_FLASHBACK60",enabled,8)==1 && enabled[0]==L'1';
-    if(!sample60 && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested()) return true;
+    if(!sample60 && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled()) return true;
     if(update && (!sample60 || serialize)) return true;
     if(!SupportedHost()) return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));

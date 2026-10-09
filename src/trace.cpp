@@ -5,6 +5,7 @@
 #include "eye_pair.h"
 #include "camera_math.h"
 #include "scene_camera.h"
+#include "replay_camera.h"
 #include "game_pause.h"
 #include "game_xr.h"
 #include "hud_capture.h"
@@ -360,7 +361,7 @@ thread_local void* preparedCameraRenderer{};
 thread_local uint64_t preparedCameraFrame=~uint64_t{};
 thread_local SceneCamera preparedCameraKind=SceneCamera::Unknown;
 SceneCamera RenderSceneCamera(void* renderer,const float* a,const float* b,uint64_t f) {
-    if(ExtendedViewsEnabled() && renderer==classifiedRenderer)return classifiedCamera;
+    if((ExtendedViewsEnabled() || ReplayStereoEnabled()) && renderer==classifiedRenderer)return classifiedCamera;
     return IdentifySceneCamera(a,b,f);
 }
 using FrustumCopyFn = void* (__thiscall*)(void*,const void*);
@@ -384,10 +385,10 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
         // This is the last unmodified camera before the engine prepares the scene.
         // Carry its verified identity only to this renderer's scene in this frame.
         const auto kind=IdentifySceneCamera(a,b,frame.load());
-        if(ExtendedViewsEnabled()) {
+        if(ExtendedViewsEnabled() || ReplayStereoEnabled()) {
             preparedCameraRenderer=renderer;preparedCameraFrame=frame.load();preparedCameraKind=kind;
         }
-        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),GamePaused(),true) && VisibilityBox(a,b,matrix.data())) {
+        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),GamePaused(),true,ReplayStereoEnabled()) && VisibilityBox(a,b,matrix.data())) {
             buildFrustum(volume.data(),matrix.data());
             bool finite=true; for(float v:volume) finite &= std::isfinite(v);
             if(finite) {
@@ -687,14 +688,14 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     const bool cockpit=camera==SceneCamera::Cockpit;
     static int previousCandidate=-1;
     if(previousCandidate!=static_cast<int>(camera)) {
-        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f",cockpit?"cockpit":camera==SceneCamera::External?"external":"screen",f,
+        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f",cockpit?"cockpit":camera==SceneCamera::External?"external":camera==SceneCamera::ReplayChase?"replay-chase":"screen",f,
             static_cast<const float*>(cameraA)[21],static_cast<const float*>(cameraB)[21]);
         previousCandidate=static_cast<int>(camera);
     }
     // A paused cockpit retains its near plane. Render the original complete
     // frame (including modal dialogs) on the screen instead of replaying it.
     // Preserve the requested mode so resuming returns to cockpit VR.
-    if(!StereoCameraAllowed(camera,ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady)) return false;
+    if(!StereoCameraAllowed(camera,ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady,ReplayStereoEnabled())) return false;
     if(!cockpit) SeatInactive();
     if(!preparedLights.Snapshot(f,context,eyeLights)) {
         Log("lighting replay capacity exceeded; using virtual screen frame=%llu",f);
@@ -841,8 +842,8 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
     static const bool shadowProbe=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_SHADOW_PROBE",value,8)==1 && value[0]==L'1'; }();
     // Keep the first paired shadow comparison on the existing detailed-capture
     // frame. This desktop diagnostic never changes the headset render path.
-    if(ExtendedViewsEnabled() && (f<1200 || !StereoCameraAllowed(
-        RenderSceneCamera(self,static_cast<float*>(cameraA),static_cast<float*>(cameraB),f),true,GamePaused(),true)))return false;
+    if((ExtendedViewsEnabled() || ReplayStereoEnabled()) && (f<1200 || !StereoCameraAllowed(
+        RenderSceneCamera(self,static_cast<float*>(cameraA),static_cast<float*>(cameraB),f),true,GamePaused(),true,ReplayStereoEnabled())))return false;
     if(!continuousMain || disabled || f<(shadowProbe && !PipelineOption(L"DIRT2VR_PIPELINE_SETTLE") ? 3000u : 300u) || !gameSwapchain) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) {
@@ -963,7 +964,7 @@ void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,v
             if(cameraA==renderer+0x5e0 && cameraB==renderer+0x650) {
                 const bool cockpit=!ScreenMode() && StereoCameraAllowed(
                     RenderSceneCamera(self,static_cast<const float*>(cameraA),static_cast<const float*>(cameraB),frame.load()),
-                    ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady);
+                    ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady,ReplayStereoEnabled());
                 TakeCaptureRequest(frame.load(),cockpit);
             }
         }
@@ -1043,7 +1044,8 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     const auto previousCamera=classifiedCamera;
     classifiedRenderer=mainView ? self : nullptr;
     classifiedCamera=SceneCamera::Unknown;
-    if(mainView && ExtendedViewsEnabled()) {
+    if(mainView)ObserveReplayRenderCamera(a,b);
+    if(mainView && (ExtendedViewsEnabled() || ReplayStereoEnabled())) {
         classifiedCamera=(preparedCameraRenderer==self && preparedCameraFrame==f) ? preparedCameraKind :
             IdentifySceneCamera(static_cast<float*>(a),static_cast<float*>(b),f);
         if(f%120==0)Log("extended main frame=%llu kind=%u prepared=%d",f,unsigned(classifiedCamera),preparedCameraRenderer==self && preparedCameraFrame==f);
@@ -1555,7 +1557,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         if(ContinuousReplayEnabled()) {
             auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
             if(HeadsetEnabled())pauseHookReady=EnablePauseObserver();
-            if((HeadsetEnabled() || PipelineOption(L"DIRT2VR_PIPELINE_WIDE")) && (WideVisibility() || ExtendedViewsEnabled()) && !realFrustumCopy) {
+            if((HeadsetEnabled() || PipelineOption(L"DIRT2VR_PIPELINE_WIDE")) && (WideVisibility() || ExtendedViewsEnabled() || ReplayStereoEnabled()) && !realFrustumCopy) {
                 const unsigned char copy[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x8b,0xc1,0x8b,0x4d,0x08};
                 const unsigned char build[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x04,0x01,0,0};
                 if(memcmp(base+0x2b7db0,copy,sizeof(copy))==0 && memcmp(base+0xd26c40,build,sizeof(build))==0) {

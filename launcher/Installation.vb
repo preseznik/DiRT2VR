@@ -79,7 +79,8 @@ Public Module Worker
                     If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt, trackId) Then Throw New IOException("Rebuild " & CustomTracks.TrackPacks.ForLayout(trackId).Name & " to update its AI driving paths before starting a Race. Direct practice is still available.")
                 End If
                 Dim transaction As New AssetTransaction(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars)
+                Dim settings = VrSettings.Load(context)
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras)
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
