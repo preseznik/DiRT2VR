@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.76 — 2026-10-09 — Experimental
+
+- Fix wheels and pedals missing from Driving controls → Live device input even when the binding wizard detects them.
+
 ## 0.17.75 — 2026-10-09 — Experimental
 
 - Fix typing in headset reply cards triggering game controls, including C changing camera; checked in the headset.

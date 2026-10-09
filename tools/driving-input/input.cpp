@@ -50,6 +50,10 @@ BOOL CALLBACK Enumerate(const DIDEVICEINSTANCEW* info, void* user) {
 }
 extern "C" __declspec(dllexport) void* __cdecl CaptureOpen(HWND window) {
     try {
+        // Embedded monitors supply a child HWND; DirectInput requires our top-level window.
+        window=GetAncestor(window,GA_ROOT);
+        DWORD owner{};
+        if(!window || !GetWindowThreadProcessId(window,&owner) || owner!=GetCurrentProcessId()) return nullptr;
         auto capture=std::make_unique<Capture>(); capture->window=window;
         if(FAILED(DirectInput8Create(GetModuleHandleW(nullptr),DIRECTINPUT_VERSION,IID_IDirectInput8W,
                                     reinterpret_cast<void**>(&capture->input),nullptr))) return nullptr;

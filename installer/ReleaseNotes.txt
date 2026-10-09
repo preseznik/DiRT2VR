@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Fixed wheels and pedals missing from Driving controls → Live device input even when the binding wizard detects them. Existing bindings are unchanged.
+
 Fixed missing trackside shadows and close-range shadow pop-in in cockpit VR, checked at Baja Spillway Long. Shadows remain optional, experimental and off by default.
 
 Graphics → Main now offers VR shadow quality (Game, Low, Medium or High) and a detailed-distance slider. The recommended 14-metre default retains the tested appearance. Longer distances can improve road detail but may cause rapid shadow flicker on walls and scenery; return to 14 metres if this happens. Save and relaunch to apply.
