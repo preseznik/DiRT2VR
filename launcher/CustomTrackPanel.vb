@@ -5,6 +5,7 @@ Imports System.Windows.Forms
 
 Public Class CustomTrackPanel
     Inherits VerticalStack
+    Public Event VehicleSetupRequested As EventHandler
     Private ReadOnly context As InstallContext
     Private ReadOnly verification As CustomTrackVerificationCache
     Private ReadOnly preferences As CustomTrackPreferences
@@ -106,6 +107,9 @@ Public Class CustomTrackPanel
         opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
         raceDifficulty.Items.AddRange(DirectRaceDifficulty.Labels)
         Field(columns.First, "Launch mode", launchMode) : Field(columns.First, "Car", cars)
+        Dim vehicleSetup As New Button With {.Text = "Vehicle setup…", .Name = "CustomVehicleSetup", .AutoSize = True}
+        columns.First.Controls.Add(vehicleSetup)
+        AddHandler vehicleSetup.Click, Sub() RaiseEvent VehicleSetupRequested(Me, EventArgs.Empty)
         Field(columns.Second, "Race difficulty", raceDifficulty)
         Field(columns.Second, "AI opponents", opponents) : Field(columns.Second, "Opponent cars", opponentCars)
         Field(setup, "Laps", laps) : setup.Controls.Add(opponentHint)

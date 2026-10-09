@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.79 — 2026-10-09 — Experimental
+
+- Add a Vehicle setup popup for stock and CUSTOM direct launches, with the game’s five-position gear ratio, downforce, suspension, ride height, differential and brake-bias controls. Save one setup for Practice and Race on desktop or in VR, or leave the game’s setup in use.
+
 ## 0.17.78 — 2026-10-09 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.78)

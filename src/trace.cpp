@@ -32,6 +32,7 @@
 #include "steering_animation.h"
 #include "direct_startup_trace.h"
 #include "race_difficulty.h"
+#include "car_setup.h"
 #include "race_drivers.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
@@ -169,6 +170,10 @@ void EnableDirectPractice() {
             }
             if(!EnableRaceDifficulty()) {
                 Log("direct race: difficulty validation failed; stopping launch");
+                ExitProcess(ERROR_BAD_EXE_FORMAT);
+            }
+            if(!EnableCarSetup()) {
+                Log("direct car setup: validation failed; stopping launch");
                 ExitProcess(ERROR_BAD_EXE_FORMAT);
             }
             if(!EnableRaceDrivers()) {

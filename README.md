@@ -56,6 +56,8 @@ DiRT 2 may briefly fall behind other windows as it replaces its startup window. 
 
 **Race difficulty** controls AI opponents in stock and CUSTOM-track Race launches. Choose Easy, Casual, Serious, Savage, Extreme or Hardcore; **Use game setting** leaves the game’s saved choice in effect. Each custom location remembers its own choice. This does not change career difficulty in Normal Launch or multiplayer.
 
+**Vehicle setup…** opens the six game-style adjustments: gear ratio, downforce, suspension, ride height, differential and brake bias. Enable **Use this setup for direct launches**, choose one of five positions on each bar, then **Apply**. Save settings or launch to keep your choice. **Reset to centre** returns all six bars to the middle; uncheck the option to use the game’s setup. The same setup applies to your car in stock and CUSTOM Direct practice and Race, on desktop or in VR. Normal Launch, opponents and career saves are unchanged.
+
 Regular Launch needs no SteamVR or headset and uses your desktop graphics preferences. Desktop Direct practice and Race require DX11 and temporarily enable human control, the selected race and the direct-session menus. VR shortcuts and the VR rendering/HUD settings apply only to Launch VR.
 
 1. Start SteamVR and connect your headset.

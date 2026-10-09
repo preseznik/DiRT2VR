@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+New: Vehicle setup… beside the car selection. Adjust gear ratio, downforce, suspension, ride height, differential and brake bias using the game’s five-position controls. Enable the setup, Apply, then save or launch. Your choice is shared across stock and custom Direct practice and Race on desktop and VR; Normal Launch and career saves are unchanged.
+
 Fixed wheels and pedals missing from Driving controls → Live device input even when the binding wizard detects them. Existing bindings are unchanged.
 
 Fixed missing trackside shadows and close-range shadow pop-in in cockpit VR, checked at Baja Spillway Long. Shadows remain optional, experimental and off by default.

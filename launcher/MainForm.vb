@@ -381,6 +381,7 @@ Public Class MainForm
     Private Sub BuildLaunchTab()
         Dim content = TabLayout("Launcher")
         customTracks = New CustomTrackPanel(context)
+        AddHandler customTracks.VehicleSetupRequested, Sub() EditCarSetup()
         content.Controls.Add(customTracks)
         Dim columns As New ResponsiveColumns()
         content.Controls.Add(columns)
@@ -401,6 +402,9 @@ Public Class MainForm
             StyleChoice(choices(i), Me)
             Field(If(i = 4, race, selection), labels(i), choices(i))
         Next
+        Dim setupButton As New Button With {.Text = "Vehicle setup…", .Name = "VehicleSetup", .AutoSize = True}
+        selection.Controls.Add(setupButton)
+        AddHandler setupButton.Click, Sub() EditCarSetup()
         StyleChoice(raceDifficulty, Me)
         raceDifficulty.Items.AddRange(DirectRaceDifficulty.Labels)
         raceDifficulty.SelectedIndex = settings.RaceDifficulty + 1
@@ -433,6 +437,7 @@ Public Class MainForm
                                                         For Each control In {eventChoice, trackChoice, carChoice}
                                                             control.Enabled = launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2
                                                         Next
+                                                        setupButton.Enabled = launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2
                                                         raceDifficulty.Enabled = launchMode.SelectedIndex = 2
                                                         opponents.Enabled = launchMode.SelectedIndex = 2
                                                         opponentCars.Enabled = launchMode.SelectedIndex = 2
@@ -442,6 +447,11 @@ Public Class MainForm
         launchMode.SelectedIndex = Math.Max(0, Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode))
         content.Controls.Add(opponentHint)
         content.Controls.Add(HelpLink(Sub() ShowAbout(If(customTracks.CustomEnabled, "Custom tracks", "Getting started"))))
+    End Sub
+    Private Sub EditCarSetup()
+        Using dialog As New CarSetupForm(settings.DirectCarSetup)
+            If dialog.ShowDialog(Me) = DialogResult.OK Then settings.DirectCarSetup = dialog.Result
+        End Using
     End Sub
     Private Sub RefreshOpponentHint()
         RefreshLaunchAvailability()

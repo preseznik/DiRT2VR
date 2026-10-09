@@ -164,6 +164,7 @@ Public Class VrSettings
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
     Public Property RaceDifficulty As Integer = -1
+    Public Property DirectCarSetup As New CarSetup()
     <Serialization.JsonIgnore>
     Public ReadOnly Property DirectMode As Boolean
         Get
@@ -206,6 +207,8 @@ Public Class VrSettings
         If Opponents < 1 OrElse Opponents > 7 Then Throw New IOException("Choose between one and seven race opponents.")
         If Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Unknown opponent car selection.")
         DirectRaceDifficulty.Validate(RaceDifficulty)
+        If DirectCarSetup Is Nothing Then Throw New IOException("Vehicle setup is missing. Reset it before launching.")
+        DirectCarSetup.Validate()
         If Laps < 1 OrElse Laps > 20 Then Throw New IOException("Choose between one and twenty laps.")
         RaceCatalog.Current.Track(TrackId) : RaceCatalog.Current.Car(CarCode)
         If RenderScale < 50 OrElse RenderScale > 300 OrElse HeadsetScale < 25 OrElse HeadsetScale > 100 OrElse FieldOfView < 70 OrElse FieldOfView > 100 OrElse Not {"game", "on", "off"}.Contains(Mirrors) Then Throw New IOException("Invalid VR graphics settings.")
