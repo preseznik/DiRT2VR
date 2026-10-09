@@ -17,7 +17,7 @@ Public Class CustomTrackSettings
     Public Sub ApplyTo(settings As VrSettings)
         Dim pack = TrackPacks.ForLayout(LayoutId)
         Dim gridOpponents = Math.Min(Opponents, pack.MaximumOpponents(LayoutId))
-        Dim sessionLaps = If(Not pack.GetLayout(LayoutId).Circuit OrElse (pack.Id = "nordschleife" AndAlso LaunchMode = "practice"), 1, Laps)
+        Dim sessionLaps = If(Not pack.GetLayout(LayoutId).Circuit OrElse ((pack.Id = "nordschleife" OrElse pack.Id = "misty-loch") AndAlso LaunchMode = "practice"), 1, Laps)
         pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), sessionLaps)
         RaceCatalog.Current.Car(CarCode)
         If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
@@ -82,11 +82,13 @@ Public Module CustomTrackService
             Case "smelter" : Return Aspen.SmelterConversion.GetProfile()
             Case "nordschleife" : Return Nordschleife.NordschleifeConversion.GetProfile()
             Case "mizu-mountain" : Return Mizu.MizuConversion.GetProfile()
+            Case "misty-loch" : Return Misty.MistyConversion.GetProfile()
             Case Else : Throw New IOException("Unknown custom-track pack.")
         End Select
     End Function
     Public Function SourceTrackFolder(packId As String) As String
         TrackPacks.Get(packId)
+        If packId = "misty-loch" Then Return "content/tracks/rt_misty_loch"
         If packId = "mizu-mountain" Then Return "tracks/locations/p2p/okutama"
         Return If(packId = "nordschleife", "content/tracks/ks_nordschleife", "tracks/locations/usa/" & If(packId = "smelter", "smelter", "aspen"))
     End Function
@@ -100,7 +102,7 @@ Public Module CustomTrackService
         End Try
         For Each library In libraries
             Try
-                Dim manifest = IO.Path.Combine(library, "steamapps", If(packId = "nordschleife", "appmanifest_347990.acf", If(packId = "mizu-mountain", "appmanifest_44350.acf", "appmanifest_321040.acf")))
+                Dim manifest = IO.Path.Combine(library, "steamapps", If(TrackPacks.Get(packId).SourceGame = "assettocorsa", "appmanifest_244210.acf", If(packId = "mizu-mountain", "appmanifest_44350.acf", "appmanifest_321040.acf")))
                 If Not File.Exists(manifest) Then Continue For
                 Dim match = Regex.Match(File.ReadAllText(manifest), """installdir""\s+""([^""]+)""")
                 If Not match.Success Then Continue For
@@ -156,11 +158,11 @@ Public Module CustomTrackService
         context.RequireClosed()
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {
             .UseShellExecute = False, .CreateNoWindow = True, .WorkingDirectory = stage, .RedirectStandardOutput = True, .RedirectStandardError = True}
-        Dim command = If(pack.Id = "mizu-mountain", "--convert-mizu", If(pack.Id = "nordschleife", "--convert-nordschleife", If(pack.Id = AspenPack.Id, "--convert-aspen", "--convert-smelter")))
+        Dim command = If(pack.Id = "misty-loch", "--convert-misty", If(pack.Id = "mizu-mountain", "--convert-mizu", If(pack.Id = "nordschleife", "--convert-nordschleife", If(pack.Id = AspenPack.Id, "--convert-aspen", "--convert-smelter"))))
         For Each argument In {command, IO.Path.GetFullPath(source), context.GameRoot, IO.Path.Combine(stage, "conversion")}
             start.ArgumentList.Add(argument)
         Next
-        If pack.Id <> "nordschleife" AndAlso pack.Id <> "mizu-mountain" Then
+        If pack.Id <> "nordschleife" AndAlso pack.Id <> "mizu-mountain" AndAlso pack.Id <> "misty-loch" Then
             start.ArgumentList.Add("--layouts")
             start.ArgumentList.Add(String.Join(",", selectedLayouts.Select(Function(l) l.Id)))
         End If

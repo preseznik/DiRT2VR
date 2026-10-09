@@ -19,7 +19,8 @@ Public Module CustomTrackCatalog
         New CustomTrackPack(AspenPack.Id, "Aspen", "Ten layouts · Direct practice and Race · Desktop and VR", True, AspenPack.Layouts),
         New CustomTrackPack("smelter", "Smelter", "Ten layouts · Direct practice and Race · Desktop and VR", True, TrackPacks.Smelter.Layouts),
         New CustomTrackPack("nordschleife", "Nordschleife", "Standard circuit · Desktop and VR · Daylight, overcast and evening", True, TrackPacks.Nordschleife.Layouts),
-        New CustomTrackPack("mizu-mountain", "Mizu Mountain", "10.4 km point-to-point · Desktop and VR · Direct practice and Race", True, TrackPacks.Mizu.Layouts)}
+        New CustomTrackPack("mizu-mountain", "Mizu Mountain", "10.4 km point-to-point · Desktop and VR · Direct practice and Race", True, TrackPacks.Mizu.Layouts),
+        New CustomTrackPack("misty-loch", "Misty Loch", "6.45 km circuit · One-lap desktop Direct practice", True, TrackPacks.Misty.Layouts)}
     Public Function Find(id As String) As CustomTrackPack
         Return Packs.SingleOrDefault(Function(p) p.Id = id)
     End Function

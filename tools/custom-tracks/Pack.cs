@@ -71,8 +71,10 @@ public static class TrackPacks
          new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
     public static readonly TrackPack Mizu = new("mizu-mountain", "Mizu Mountain", "1.0.2", "0.17.61", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
-    public static readonly TrackPack[] All = [Aspen, Smelter, Nordschleife, Mizu];
-    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"];
+    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.0.0", "0.17.77", ["desktop-solo"],
+        [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
+    public static readonly TrackPack[] All = [Aspen, Smelter, Nordschleife, Mizu, Misty];
+    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml", "dx11/shaderpack/shaderpack.pssg"];
     public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
     public static bool IsLayout(string? id) => All.Any(p => p.Layouts.Any(l => l.Id == id));
     public static TrackPack ForLayout(string id) => All.SingleOrDefault(p => p.IsLayout(id)) ?? throw new IOException("Unknown custom layout.");
@@ -96,9 +98,9 @@ public sealed class TrackPack
     public string[] RequiredTargets { get; }
     public string Support => "DiRT2VR/custom-tracks/" + Id;
     public string Receipt => Support + "/receipt.json";
-    public string SourceGame => Id switch { "nordschleife" => "assettocorsa", "mizu-mountain" => "grid2", _ => "dirt3" };
-    public string SourceName => Id switch { "nordschleife" => "Assetto Corsa", "mizu-mountain" => "GRID 2", _ => "DiRT 3 Complete Edition" };
-    public string[] SharedTargets => Id == "smelter" ? TrackPacks.SessionTargets : AspenPack.SharedTargets;
+    public string SourceGame => Id switch { "nordschleife" or "misty-loch" => "assettocorsa", "mizu-mountain" => "grid2", _ => "dirt3" };
+    public string SourceName => Id switch { "nordschleife" or "misty-loch" => "Assetto Corsa", "mizu-mountain" => "GRID 2", _ => "DiRT 3 Complete Edition" };
+    public string[] SharedTargets => Id == "misty-loch" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"] : Id == "smelter" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"] : AspenPack.SharedTargets;
     internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets)
     {
         Id = id; Name = name; Version = version; MinimumLauncher = minimumLauncher;
@@ -137,8 +139,8 @@ public sealed class TrackPack
         var layout = GetLayout(id);
         if (!layout.Circuit && laps != 1)
             throw new IOException(Name + " is point-to-point. Choose one complete run.");
-        if (Id == "nordschleife" && mode == "practice" && laps != 1)
-            throw new IOException("Nordschleife Direct practice supports one complete lap per session.");
+        if (Id is "nordschleife" or "misty-loch" && mode == "practice" && laps != 1)
+            throw new IOException(Name + " Direct practice supports one complete lap per session.");
         if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")))
             throw new IOException("This custom-track launch mode is unavailable.");
         if (mode == "race" && opponents > MaximumOpponents(id))
@@ -186,10 +188,12 @@ public sealed class TrackPack
             SafeFiles.Relative(f.Path);
             string extension = Path.GetExtension(f.Path);
             bool supported = new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf" }.Contains(extension) ||
-                (Id is "nordschleife" or "mizu-mountain" && extension is ".nfs" or ".gssp");
+                (Id is "nordschleife" or "mizu-mountain" or "misty-loch" && extension is ".nfs" or ".gssp");
+            // Misty retains its full-resolution source textures in one 517 MiB bundle.
+            long maximumFileBytes = Id == "misty-loch" && f.Path == "tracks/usa/d2vr_misty/tracksplit.pssg" ? 768L * 1024 * 1024 : 512L * 1024 * 1024;
             if (!paths.Add(f.Path) || f.Path == Receipt || !allowedRoots.Any(p => f.Path.StartsWith(p + "/", StringComparison.Ordinal)) ||
                 (receipt.Schema == 2 && !ReceiptLayouts(receipt).Any(l => Owns(l, f.Path))) ||
-                !SafeFiles.Digest(f.Sha256) || f.Bytes is < 0 or > 512L * 1024 * 1024 ||
+                !SafeFiles.Digest(f.Sha256) || f.Bytes < 0 || f.Bytes > maximumFileBytes ||
                 !supported)
                 throw new IOException("Invalid custom-track file: " + f.Path);
             total = checked(total + f.Bytes);
@@ -255,7 +259,7 @@ public sealed class TrackPack
     }
     // Inspected XML-form PSSG: these two files are byte-identical after CRLF/LF normalization.
     static bool KnownSourceVariant(string pack, Fingerprint source, string hash) =>
-        (pack is "nordschleife" or "mizu-mountain") && source.Game == "dirt2" &&
+        (pack is "nordschleife" or "mizu-mountain" or "misty-loch") && source.Game == "dirt2" &&
         source.Path == "tracks/london/battersea/track_light_anims.pssg" &&
         source.Sha256 == "BEAC14E6B3910B404640ADEC1FBE8E687F3505DF4479B8D3924DF42D03A0FD6D" &&
         hash == "7C54720E9C0921E5C1CAC46FD1C8B22DF27E80DE177FAEDACB6282AD4B06BF99";

@@ -70,3 +70,6 @@ tests/launcher/obj/
 /tools/nordschleife-converter/*.ps1
 /tools/mizu-converter/bin/
 /tools/mizu-converter/obj/
+
+/tools/misty-converter/bin/
+/tools/misty-converter/obj/

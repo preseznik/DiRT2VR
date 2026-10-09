@@ -6,6 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Correct automatic Assetto Corsa folder detection for custom-track builds.
+- Add Misty Loch from Assetto Corsa as a full 6.45 km circuit for one-lap desktop Direct practice. Conversion uses only the player's DiRT 2 files and Misty Loch 1.4 folder.
+- Preserve Misty Loch's layered road and terrain textures, add roadside grass from its own plant sheet, and animate the waterfall, lake and floating boats. Lighting and some source effects remain approximations.
+- Show Misty Loch on the loading intro and raise its camera above the start straight.
+
 ## 0.17.76 — 2026-10-09 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.76)

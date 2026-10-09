@@ -1,0 +1,9 @@
+<Project>
+  <!-- DiRT2VR uses EGO binary readers/writers, not its image/glTF export UI.
+       Exclude those unused helpers and their ImageSharp dependency so release
+       builds retain normal NuGet auditing without carrying unused image codecs. -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' == 'EgoEngineLibrary'">
+    <Compile Remove="Formats/Pssg/*PssgGltfConverter.cs;Graphics/BcnExtensions.cs" />
+    <PackageReference Remove="SixLabors.ImageSharp" />
+  </ItemGroup>
+</Project>

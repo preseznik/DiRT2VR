@@ -1,0 +1,982 @@
+[
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/100.kn5",
+    "Sha256": "1220E516251DB02C430998C9BFFBEE54C8D901A0144DFF03E7C3DBB26C2C16D8"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/extension/ext_config.ini",
+    "Sha256": "1689385DCC5246FD6EA9149C1C58CD6C8F3083C00B011C1E6A90DC9B923481C4"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/heli.kn5",
+    "Sha256": "5D86A7B3C7511DFAFB61A4AF4D9E100AC799CA9D7F2D160128812440A3E3CC80"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/models_normal.ini",
+    "Sha256": "138D46AAC144E32A13DE16D17DC1B1C73653146BE3CE276733094480C1E186ED"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/normal/ai/fast_lane.ai",
+    "Sha256": "C7C1A98D47FD182C229DF3E1BE81570A9FBCDC33A6FC340B2A3AC57CFC5711B5"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/normal/data/surfaces.ini",
+    "Sha256": "6E9DFD91D560B369B1B0CFFEF9A20ED16D078C1907EFC9438014ADB49E25C3B1"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/readme.txt",
+    "Sha256": "8A7863393D03FBFA7EDAF126FCA4A1041106E3997B6EF32DB0F1CCEEFF06DE63"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch.kn5",
+    "Sha256": "3A0319DA1C5D02C4A1CAC2BED43B52344B5B30BBA20E1691F2267A7B057A685A"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch_audio.kn5",
+    "Sha256": "17C28DCCFEB4055DB8815E6664A21832F8C2779D648DD906C04522E44040B5E9"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch_groove.kn5",
+    "Sha256": "36E7D3C01102F6AD3CE6C6293B89A5A836FA73FFFE393B34508A62CA41D64A64"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch_marker.kn5",
+    "Sha256": "7AA38BDC59D1181468B01D1486C7D6C359EC4E4291159B125AAF79E6092B6501"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch_phy.kn5",
+    "Sha256": "72DB19CCC33BC2A31501C497380F7741BBBEC01C06D946346088EAAFDB86AAD2"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch_ships.kn5",
+    "Sha256": "25D3D359A26B811EB2E75835DE99C6CD6F94071D628C71118653BC25F6E3A755"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch_slabs.kn5",
+    "Sha256": "980FA57307684D582290190D6A3E5A5D230C8CBDD6AF645A1B09076E1B65E76D"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch_trees.kn5",
+    "Sha256": "22B41AF9378FD8C642A8903FDC4D6F24E700FB0F72F4032570850A5A8E7C1026"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/ui/normal/ui_track.json",
+    "Sha256": "6BD8C4F337E625B10A34FF9CCC16D1D60198080AE4EAC658D79AE5A8C9E6514C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "database/database.bin",
+    "Sha256": "61617E83CC640D4B2D6A8A0CEA7974BD4E621AF85BF07FE1E83AB316368214B2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "dirt2_game.exe",
+    "Sha256": "49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "dx11/shaderpack/shaderpack.pssg",
+    "Sha256": "B3B9A5414B38EC4F1A105234C01B0F63387242F497BD4902B0ED5F8A28BF5203"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_eng.lng",
+    "Sha256": "ACB369E0EBCC370E38BE76A688027272BAC01B40F6CAE3168FF819A3BC246406"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_fre.lng",
+    "Sha256": "0F94B8D6219228E015BAED7D0F53B516B3E94588056899DF401FCC474EBF3290"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_ger.lng",
+    "Sha256": "CDC4DB0B52DAEE6074929C73ABC751B2968CE6168805923302D07B7D2EE123CE"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_ita.lng",
+    "Sha256": "C4E770FD2B606756B4AC97EB5F06EE9108E4AC3DE71CF3128E586516EF28D178"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_jpn.lng",
+    "Sha256": "059E7DB4FDA62C7C6C915D7529ECB86D6DB62F7887D83123BBEDE8F6267EC0ED"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_pol.lng",
+    "Sha256": "BE442A35FD7D4327A35419C3C76BFDC755B9AFD8AF4BA752CD5E15FCD2BC39D1"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_rus.lng",
+    "Sha256": "142E684672622B6D624F2176D645465B0D6F8930369AEB6EC5DA58665346AC8D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_spa.lng",
+    "Sha256": "6845A3544AC26E14847251DE1DB8962257A1F4F7E5DFD1CA64BEEB18AEEF3FE5"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "language/language_use.lng",
+    "Sha256": "38B6D99CC66B4099C75EAADF0931AEED62D4B13CD9128BBDCD856F0E29E9D190"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "surface_materials.xml",
+    "Sha256": "93BEFA45A04F6DD45EF9CE67EAEF1F267F9208475D02873246A02BA608346DC6"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/objects.pssg",
+    "Sha256": "A7AF9EBF2C5CFF4971D0C8F159EEE9C0EBE8E9EE26BD89029D597263309699AC"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/route_0/niwater.pssg",
+    "Sha256": "1060FDC3A33BB1048CE415D64885CAD8BFCBB966DADC1110B649408CF85E5A57"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/china/china_rally/objects.pssg",
+    "Sha256": "487022919E54329A39A65144E1083976F431A5BFF8888A0FCFADCEE23638755A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/croatia/croatia_raid/tracksplit.pssg",
+    "Sha256": "8C6EE9B5B51990A60AEE3A2A88660BCB790243E8426CAFD6DF262DEEBE1575C0"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/ambience_triggers.xml",
+    "Sha256": "4D7F23FF0D50A82411D55B0AA32334F762D575D8737D5CB2060F51A12BA1E778"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/baked_lights.clm",
+    "Sha256": "B8E012D8D2C5921FB6D33F0854133499D52409977AB4D14388CDA74119FBC920"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/baked_lights.pssg",
+    "Sha256": "6DCD11E764010126CDCEDDBE357AD76FB7071564D6A282719DAB67179F906FD2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/basewind.xml",
+    "Sha256": "01F21E74E1B5168F5FA791E71E8D5E7FB4FA3F5006320F2CCD9FB7F64FFF172C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/basewind2.xml",
+    "Sha256": "DAF6F6703D9DE078C283BDC1BE2D8B8D8943C93AB033E3CD9A5D2BCCF578F84C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/cloth.xml",
+    "Sha256": "222646AF65843052DBDC11EDB7DCBEA36495563D725BC0E9C8E1281FEFB6F191"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/cloth2.xml",
+    "Sha256": "D47BE19AAA8B38A4256480336CB58E01F92C3E366560BDC0DBC54338CFFFB715"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/effects.xml",
+    "Sha256": "06A6A1C00EDF3CE8C3C1CB308FDD3BF01C5E135C1EACC6169D4CA2B4864745E4"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/grass.grs",
+    "Sha256": "9258747F4180D4955137916CC0A12C7C5B2EE999AEF8CD58C0492A582B3DE33D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/ground_cover.pssg",
+    "Sha256": "CEE89C87FC60C56E2B648C786AC014B771AEC0DC1DD329F38FF16F3F801028C6"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/ground_cover.xml",
+    "Sha256": "00CF85584A5251B8851D1A1D1EE784407DABE1AB7E8C39F9C3816F0549655E4F"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/intro_sequence.xml",
+    "Sha256": "A672D3137EB52C3C2CE86094C552EC60E4C1A5DC49C02FE5780C77CD26106FA9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/land.pssg",
+    "Sha256": "54F7F72ACDFE3B6EE27BAD37E9A28D5951637520FBA748430C79D4B91FA4E090"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/light_anim_sequences.xml",
+    "Sha256": "23296EDBB60D36CDB4E85B4BA8CBE443CAF416B17D98C93AF67BEF688873DA13"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/lighting.xml",
+    "Sha256": "B56306299AD6C0353657E3E1255C4C58E4E135E1EAEA465A5DFB21933076A25A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/lod_overrides.xml",
+    "Sha256": "66458431436C3D279DD1797650224BB2B36ED6DAC83443AD3D843B53994CFC14"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/mud.xml",
+    "Sha256": "F9CA5CCBF07059B5D89BB39526E72F677B39626E6DDF0F53220B3E8F3A32A47A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/night_effects.xml",
+    "Sha256": "A2BA3882D3EF0BEC172690FA9913FFBF932EE95E75F9AC11EBFB3B7576E968E1"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/night_lighting.xml",
+    "Sha256": "492F37A2ECC3ED5CD89C8A21D09023FDCD032C10DAFDDDF739A33EC306DC69DE"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/objectmips.nfs",
+    "Sha256": "C364BAF8EE73713748C7E276707814642A7FEEFF419F48954A9270B4A0CB3488"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/objects.gssp",
+    "Sha256": "BA5AA8EA9791032C5354CE0042589BE29DEAD5E4FE2B38059C2C1A1B71FC98A6"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/objects.pssg",
+    "Sha256": "B78F39603B377C75A41640AB254DEE5F1421F60B12E5F66F74F7B10FAFD6057A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/objectstextures.gssp",
+    "Sha256": "0CDCEBCFA104B2E2DBE16D54F4C87618E85072A96468711493BFA58BBC3CE901"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/objectstextures.pssg",
+    "Sha256": "02CB34BCDA7D9CFD380E41ECCA5075148641D364FBBFD17E468816CFA2DB49E6"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/objecttypes.pssg",
+    "Sha256": "5BF48982A07C1B59400D43E68AD0203EB8CE63DD3253A9B1B561EBE7D111C214"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/organism_track_dataset.xml",
+    "Sha256": "3127A5F5337C4F09E123ECBF1888B61BC3CBC814DA3C77A0B4AB50A999D2CC7C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/patchup_ot.pssg",
+    "Sha256": "26CE5A92A42352B1B66A0C432F57E65D21F3D4C119E53035C8F7211320112651"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/ai_track.xml",
+    "Sha256": "A9F476781C8D0EA7CD9763A61B73D15813477A23784236D2E2C32BA5C993E94E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/ai_vehicle_track.xml",
+    "Sha256": "09D699ED174A6CBF09E06ED7D21E40B8285118332BE7C1478CE3DBBF17EED345"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/ao.clm",
+    "Sha256": "8E328CA33016169DCACD34D723A4284E27983CA47496C5944D8CE01F3A88430B"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/boundarylines.cqtc",
+    "Sha256": "D1CC633F26675F295DEB73EE7E4A6E3DB713AFF10D10E70B9F05780945E3F7B2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/cameralines.cqtc",
+    "Sha256": "DFB1330042A22E03B76B2CAC58F95485625B18A270919560AE99CB5728486A79"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/clothFile.bin",
+    "Sha256": "5EF110DA543712FAB29FEF8ABBFE6D53A5F3344078C2ADA4CA1CBA782622A224"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/crowd_standing.bin",
+    "Sha256": "58AD4A777EEBD11AFE2FBFC4ECAC7FFB2E685440484B8A9C8FB697519BF1A5F5"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/crowd_standing.cns",
+    "Sha256": "3F2E8BC91497085E4E2B43052AE424E712D57EF516CB82CE052EF0B834622788"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/crowd_standing2.bin",
+    "Sha256": "6424802893CD5B3D8A0E3191A042C38F141E8C76E919F9E83183A4403449397B"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/dev_ai_track.xml",
+    "Sha256": "E2F64BBE533E1824AA5C45BC9C7AE172882D660976B820D1D518119D0C41CBB8"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/grass.grs",
+    "Sha256": "7E641FB152F040CB0585CEA4CC467068DF66F56635E7AD919B7BF6A8BCBDEB3C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/grids.pssg",
+    "Sha256": "D62BE4E8D15F946FBACC5C37E164A1BF095D01156A56DE0C330854DE00F1AD89"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/iwater.htf",
+    "Sha256": "5089FEF164E0BB093AC119D109857B5881DDABBAC9456A6F4BD2ABF61B9CE8B4"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/iwater.pssg",
+    "Sha256": "42E470F5076308503BB5CFC0CB2B91840D689C9F6C739B873A4FB8C061468411"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/iwater.xml",
+    "Sha256": "10B30D16D902A00B3BD3EF9F3D825CA4CEAA92B8A3DB972E8C555DB45BCB86B1"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/light_placement.xml",
+    "Sha256": "A2342231562FD9C0912DAC7A3AB4D13678840E3C1449B1BA0A899C7DB0418865"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/light_textures.pssg",
+    "Sha256": "70F6A010CC3BA21391B39259BAD2F080666870346E780924E07E5C7563582D0D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/niwater.pssg",
+    "Sha256": "34CADA4862D13646CE5DC5CCC8C2E3ECBE8D209AE4862F98BAB2890C239757FB"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/niwater.xml",
+    "Sha256": "3E64582639119B6607AC7C9BEC5C69E06EBFEF1689578E9B93FB3B2C570FB4C9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/objects.ens",
+    "Sha256": "4F80DC401F3D4E34C80421BFFC95693E5350BBEA9D4670829E7685D29A2ED672"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/organism_track_dataset.xml",
+    "Sha256": "3127A5F5337C4F09E123ECBF1888B61BC3CBC814DA3C77A0B4AB50A999D2CC7C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/ornament_attributes.xml",
+    "Sha256": "566EADB7CB5205E39F08594752DDF2E393AF0F65284249DA94FF95E77B3D7157"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/ornaments.bin",
+    "Sha256": "B8CB7FF17C70AF8547D0AB50552BE74337372341AD505B46A147D7847C1323AC"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/ornaments.xml",
+    "Sha256": "41278A47C5A7A6766CB5FEE8409BA4AF8795C7FDD9C5536163813B01D700DDBB"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/pfx.xml",
+    "Sha256": "3E525D481C3588BA4CFB5C2F34C97100619A33DD002A327B89C400FAC4586BC6"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/pfx_atmospheric.xml",
+    "Sha256": "6F3657350C4A5543AC09B3F1EDE02EC0446550AACE886398E1AA4EB020FE0F61"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/profile.xml",
+    "Sha256": "0A8A6D24A95A342CE12F7BCF3B6985CE10A822D32CE00D2DDC6FC2FC1848B8B9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/progress_track.xml",
+    "Sha256": "BD98C1E4CD23062B63508CCBD27C5EB6500E26EB6D8BB73C51AA0929FEEA7860"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/replay_camera_config.xml",
+    "Sha256": "EC15371BAFE04CFAA94E527B5D42233AC0CCBE30C24785710085159C5DB9DE72"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/resetlines.cqtc",
+    "Sha256": "0364D17DD108DA24007F565D43D8EC2978B7B1A85A83DA7492EE76BAC6279057"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/route.clm",
+    "Sha256": "79515D22A9CF74EF3E7DA4164F8804114E6E3C04C138C597D56EB8A2FD5B1725"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/route_overrides.xml",
+    "Sha256": "009658013D963A334440707BC1780B1446A735F182BE88B65AFB4F0E037139C6"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/routesplit.pssg",
+    "Sha256": "111DFC285ECB9949394ECF95ED124B9A4036B7603BB624D225EEA2CF9A1BEE98"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/sky.pssg",
+    "Sha256": "9CFE72CFD40721806EFBB84B5F4C2EB6DE71B1EAD726B861E0623BE1A58C5252"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/track.jpk",
+    "Sha256": "D0B853FE24E206637057D59F06A567C4438E48B94E00F8ECBF975C6E6B8DB8A0"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/track.vis",
+    "Sha256": "406B781DEF7FB60A8D5B98BCD34AC3A7399553CEB0C6001B4D466447FBD2F80F"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/tree_attributes.xml",
+    "Sha256": "4FB5A62987DDD7DEA530C6BE84D860041EEF6F341F3CC52FF914E49B465B5422"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/trees.bin",
+    "Sha256": "168886A1AAEFB92C57CE1088DDF805128572D13FA2B53D9039213B2BDAA0FF1E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/trees.xml",
+    "Sha256": "C603FC83057BA23FA47241F97EEFAAD92B0414760F699F99C7B1C7EAD3253A29"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/triggers_effects.xml",
+    "Sha256": "66D0A0A9916AD64910F910C0E7EEA6937A42B46C1E1EEED8495DBC288BB1C42A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/triggers_light.xml",
+    "Sha256": "DD48B9FD9D961ED3E2E87B1D7BB7A945CE57177D93AB0B65B133CE4013033B65"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_0/triggers_owned.xml",
+    "Sha256": "E6C4783448236EE936E62807D5B2638895641E65CF6BC03A31E6FF1A5EA0804E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/ai_track.xml",
+    "Sha256": "C193E12C07C3F7F877A3B6AECA2A866B2575DD799B4E7369F85C774DF2BEC166"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/ai_vehicle_track.xml",
+    "Sha256": "C353A7ABEB7D552B4C53A02CDD8072CBFAB66A331D11639798DC9358A46D1D11"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/ao.clm",
+    "Sha256": "8EE596772BFACB7DFEB7DD819D91591359ED7812C645866E73FC8225F1CB5388"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/boundarylines.cqtc",
+    "Sha256": "48425A819EE61C3D71F508DBDC33F8E5AC8652E8BD7CDDA29B6DBE7341504E82"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/cameralines.cqtc",
+    "Sha256": "DFB1330042A22E03B76B2CAC58F95485625B18A270919560AE99CB5728486A79"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/clothFile.bin",
+    "Sha256": "5468F8AF82AB177399FC02A25E9AB1D8F783541B96BA3DE521256ABD3117C612"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/crowd_standing.bin",
+    "Sha256": "AB95FD12A18F299AF38EC6AFF2E415F78415A8F6D6B84734B8F24F9DCF1819C8"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/crowd_standing.cns",
+    "Sha256": "451AD1C80B4D745C5AF4CCED7E3E4B98BD99BEECBB7F008418127D08F09CD58E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/crowd_standing2.bin",
+    "Sha256": "1FED780A30D0F78D8CD35FC5A0AD94815B6D608B7C2E67FE395DA2C6EA8A1107"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/dev_ai_track.xml",
+    "Sha256": "E2F64BBE533E1824AA5C45BC9C7AE172882D660976B820D1D518119D0C41CBB8"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/grass.grs",
+    "Sha256": "95C88A2020DF389F0DF150E6483D62538BE2ACBA91FC83D89F168A2461BA3D3F"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/grids.pssg",
+    "Sha256": "02FBBF5113501FC7AADC3832E1B7B074BFD276DF790A5C1760C88A59E1BDCB89"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/iwater.htf",
+    "Sha256": "5089FEF164E0BB093AC119D109857B5881DDABBAC9456A6F4BD2ABF61B9CE8B4"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/iwater.pssg",
+    "Sha256": "42E470F5076308503BB5CFC0CB2B91840D689C9F6C739B873A4FB8C061468411"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/iwater.xml",
+    "Sha256": "10B30D16D902A00B3BD3EF9F3D825CA4CEAA92B8A3DB972E8C555DB45BCB86B1"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/light_placement.xml",
+    "Sha256": "6ED5B89E8945362BBAD0F9EFBA080BFB032000A0383EAF8A68BFE3FFFD91281D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/light_textures.pssg",
+    "Sha256": "72B0250A65DCA610844B335575DC76E9DB06C1EFF88AA4636DDE6477CFF9B470"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/niwater.pssg",
+    "Sha256": "34CADA4862D13646CE5DC5CCC8C2E3ECBE8D209AE4862F98BAB2890C239757FB"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/niwater.xml",
+    "Sha256": "3E64582639119B6607AC7C9BEC5C69E06EBFEF1689578E9B93FB3B2C570FB4C9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/objects.ens",
+    "Sha256": "274D25E478757C9279D3DCF5B2345BB8BBF232706DB01916078F08F5AD5F2D6D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/organism_track_dataset.xml",
+    "Sha256": "3127A5F5337C4F09E123ECBF1888B61BC3CBC814DA3C77A0B4AB50A999D2CC7C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/ornament_attributes.xml",
+    "Sha256": "DBEDF760767867ADF04615E6D3480816690738F94E43E9CA27F007D609AE3E5B"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/ornaments.bin",
+    "Sha256": "3DEA6115BA76579CF3ABEFDF2263C2FEE3D98B9687F1035D616D0330846651BB"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/ornaments.xml",
+    "Sha256": "EC97711B964B230836588447CF453321D9A660370AA854D9C4EC033C69395124"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/pfx.xml",
+    "Sha256": "449E04B30D04263601748B32F04A566ABB7B7B0CB5414CB02B20C9E5325232F2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/pfx_atmospheric.xml",
+    "Sha256": "6F3657350C4A5543AC09B3F1EDE02EC0446550AACE886398E1AA4EB020FE0F61"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/progress_track.xml",
+    "Sha256": "487A65D70DE6BDF503CB61343DDEC5545872EC7489CF75787F5CFE27F74B7159"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/replay_camera_config.xml",
+    "Sha256": "4E31990A3A9C18CB8285298B442956A922415904444887EF6483D2E7CADC64B0"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/resetlines.cqtc",
+    "Sha256": "0364D17DD108DA24007F565D43D8EC2978B7B1A85A83DA7492EE76BAC6279057"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/route.clm",
+    "Sha256": "5FAF3E8975E96A36EFA3BC0B5EDC4727A3F9A88FA6E6867A33630F53B5862AD6"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/route_overrides.xml",
+    "Sha256": "B70A8541F48A86A296269F8A9BBFF0C74E81F58CD941D4D208494EAA66D5C136"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/routesplit.pssg",
+    "Sha256": "BB094F2B0DDAC566EAB86F350DFAE9475A09D068B8F83D5C5AD1F2F9A60E8E01"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/sky.pssg",
+    "Sha256": "EC70558CB5379A707EC3E2E73AF79B6D4DFC732F8ACBD89B3A22D4BBE732CF03"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/track.jpk",
+    "Sha256": "D0B853FE24E206637057D59F06A567C4438E48B94E00F8ECBF975C6E6B8DB8A0"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/track.vis",
+    "Sha256": "B5A4CE10FDD433DF71814EBF081581ED6CED3966E34E01DB645809A7F1DEAA97"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/tree_attributes.xml",
+    "Sha256": "2A0F07B81E54D401CD5104A5FA2BCCC46FAAA0B9E8AF7D8486C888F006178A02"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/trees.bin",
+    "Sha256": "168886A1AAEFB92C57CE1088DDF805128572D13FA2B53D9039213B2BDAA0FF1E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/trees.xml",
+    "Sha256": "C603FC83057BA23FA47241F97EEFAAD92B0414760F699F99C7B1C7EAD3253A29"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/triggers_effects.xml",
+    "Sha256": "CF329FA7165D3BBBC188CB391709CE58D58DE71BF0E12439E4B7928814633D78"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/triggers_handbrake.xml",
+    "Sha256": "37AEA7878F4D9259D03A227CF97FF6EDD5EEDC4A33239B0327501B5564384700"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_1/triggers_owned.xml",
+    "Sha256": "7E428ECD1C1A74523F09A18F5CCC5CF70AECD323660C7313945AB9BFBB03D0E9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/ai_track.xml",
+    "Sha256": "542D739C3722B6183479821E1435BD69F82E7BA5AC44F1980C0DD72D63692AA5"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/ai_vehicle_track.xml",
+    "Sha256": "7877D10B2E72E2DEAEE4C417A799E4C369381BCC427F071038C75E8A1787BF39"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/ao.clm",
+    "Sha256": "783C6AD5EC6D48C6F53A09988A48903EBDCE2E73EC486D2D904F38F2662B12A2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/boundarylines.cqtc",
+    "Sha256": "D1CC633F26675F295DEB73EE7E4A6E3DB713AFF10D10E70B9F05780945E3F7B2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/cameralines.cqtc",
+    "Sha256": "DFB1330042A22E03B76B2CAC58F95485625B18A270919560AE99CB5728486A79"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/clothFile.bin",
+    "Sha256": "A2B1452A7BDE99DAC1E2313EC285367D4D66142520A34755A217ED85CC706723"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/crowd_standing.bin",
+    "Sha256": "0A706A5CFC75D725F7881DE724C68667F73E50C12ED788FDF4798C4361A08408"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/crowd_standing.cns",
+    "Sha256": "60CABEAF899D8A7A0A57B3737032124EA8FFDF036F3A193C1CB65367FFB3308B"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/crowd_standing2.bin",
+    "Sha256": "8A2F29232075F4DCEC493C7E107AC37EBA09E8F7E09A9DEA580F875EA93E553E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/dev_ai_track.xml",
+    "Sha256": "E2F64BBE533E1824AA5C45BC9C7AE172882D660976B820D1D518119D0C41CBB8"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/grass.grs",
+    "Sha256": "7E641FB152F040CB0585CEA4CC467068DF66F56635E7AD919B7BF6A8BCBDEB3C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/grids.pssg",
+    "Sha256": "02FBBF5113501FC7AADC3832E1B7B074BFD276DF790A5C1760C88A59E1BDCB89"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/iwater.htf",
+    "Sha256": "5089FEF164E0BB093AC119D109857B5881DDABBAC9456A6F4BD2ABF61B9CE8B4"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/iwater.pssg",
+    "Sha256": "42E470F5076308503BB5CFC0CB2B91840D689C9F6C739B873A4FB8C061468411"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/iwater.xml",
+    "Sha256": "10B30D16D902A00B3BD3EF9F3D825CA4CEAA92B8A3DB972E8C555DB45BCB86B1"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/light_placement.xml",
+    "Sha256": "B8D5C9A3F6FD7A3FCD728F5FE82B9A79523A77911F8E43B1E2DE57CBBE84DE05"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/light_textures.pssg",
+    "Sha256": "70F6A010CC3BA21391B39259BAD2F080666870346E780924E07E5C7563582D0D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/niwater.pssg",
+    "Sha256": "34CADA4862D13646CE5DC5CCC8C2E3ECBE8D209AE4862F98BAB2890C239757FB"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/niwater.xml",
+    "Sha256": "3E64582639119B6607AC7C9BEC5C69E06EBFEF1689578E9B93FB3B2C570FB4C9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/objects.ens",
+    "Sha256": "B2623E012941E4DE478E31D0DAC544919CD3CF11ABCCB3385B47A680BFEB96A1"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/organism_track_dataset.xml",
+    "Sha256": "3127A5F5337C4F09E123ECBF1888B61BC3CBC814DA3C77A0B4AB50A999D2CC7C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/ornament_attributes.xml",
+    "Sha256": "426932AAC5113E217A82898FDB9970C6087BFC37C3D1955EBAE77ED073FD3CAE"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/ornaments.bin",
+    "Sha256": "7E70D3EFE97329F94258B3F44DADB8E2BAABD4EF242111F15843F38D94E46922"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/ornaments.xml",
+    "Sha256": "1AB99DF26BCA6E790DDAFB7AB10496DEC1F8878BCD14652C8A8506FFC64870A2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/pfx.xml",
+    "Sha256": "95CD5B9CD0DD57ECF99934BC7A6669BACB44E1F69B9F0ED01C8853B88D5DD0CC"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/pfx_atmospheric.xml",
+    "Sha256": "6F3657350C4A5543AC09B3F1EDE02EC0446550AACE886398E1AA4EB020FE0F61"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/progress_track.xml",
+    "Sha256": "7B298C0DC7E94AB23EE64D7FF45F7E142FCA35ADC756C38B812D83C851EDBC9D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/reducedmechanics.jpk",
+    "Sha256": "EEE06E9C8770B08B0473CF394CEC737A743635527C91DE3B7172C5B4DC40FC65"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/replay_camera_config.xml",
+    "Sha256": "D0E0029002AA6D0536668B97FAE92367163B5D359B7F292429681AB8718CC20C"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/resetlines.cqtc",
+    "Sha256": "0364D17DD108DA24007F565D43D8EC2978B7B1A85A83DA7492EE76BAC6279057"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/route.clm",
+    "Sha256": "720F5D5BB4779C1CE2AC35B88AAAA7D09617577B2FED91AE5FB9F0B48DAC81E7"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/route_overrides.xml",
+    "Sha256": "A650C3AC7CEB347FEAB6105896B3F255D9B41860F4526DECBCD485F7DB381407"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/routesplit.pssg",
+    "Sha256": "D1E7325EE5E8F4CA654E6AD04553BCFF4CC5A0C3339BA631C18CFF0A5BEDEFEB"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/sky.pssg",
+    "Sha256": "9CFE72CFD40721806EFBB84B5F4C2EB6DE71B1EAD726B861E0623BE1A58C5252"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/track.jpk",
+    "Sha256": "D0B853FE24E206637057D59F06A567C4438E48B94E00F8ECBF975C6E6B8DB8A0"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/track.vis",
+    "Sha256": "1EDF0E072657866B69E6F75ACB32C11E04FC3952742E71FA67CB40B4EF6E6382"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/tree_attributes.xml",
+    "Sha256": "2A0F07B81E54D401CD5104A5FA2BCCC46FAAA0B9E8AF7D8486C888F006178A02"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/trees.bin",
+    "Sha256": "168886A1AAEFB92C57CE1088DDF805128572D13FA2B53D9039213B2BDAA0FF1E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/trees.xml",
+    "Sha256": "C603FC83057BA23FA47241F97EEFAAD92B0414760F699F99C7B1C7EAD3253A29"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/triggers_effects.xml",
+    "Sha256": "CF329FA7165D3BBBC188CB391709CE58D58DE71BF0E12439E4B7928814633D78"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/triggers_light.xml",
+    "Sha256": "DD48B9FD9D961ED3E2E87B1D7BB7A945CE57177D93AB0B65B133CE4013033B65"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/route_2/triggers_owned.xml",
+    "Sha256": "8869CF81F1BB6D2579A88075F32012B63953A4A077E955C7B3B14BF914985100"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/sky.pssg",
+    "Sha256": "EC424C55B47874C676809D47A715D6B1C9BA4816AB0D02402830A283A03B48E2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/start_lights.xml",
+    "Sha256": "FC448EC31702D3645511F01400265238C82B45340AF66D53787468D5AEE0AD13"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/track_light_anims.pssg",
+    "Sha256": "BEAC14E6B3910B404640ADEC1FBE8E687F3505DF4479B8D3924DF42D03A0FD6D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/tracksplit.pssg",
+    "Sha256": "37E55E72769E3CEB6756EF72A1C3DB3B36D3CEF2DCBEF21DB3775E80D55BE661"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/trees.pssg",
+    "Sha256": "D5C7DC1FE951253A19C9460D87F8DD9AABE8570792B04771E47A2F5112AAE056"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/treestextures.pssg",
+    "Sha256": "4736887B89B918DA74381361765FA9138234AF13FE1F17B993CFF3859A0D7AA5"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/london/battersea/weather_fx.xml",
+    "Sha256": "BA1EA034309A2DD01EA712A16491B6E934E7B0A24ABFE8FBA5EF113ED2EA6FDD"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/usa/la_stadium/objects.pssg",
+    "Sha256": "225CF324EE8E97D1DEB71BFFC7D4A74E749E00C49638BFDB8153EF86A1C2023E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/waterdefs.xml",
+    "Sha256": "3B64137E8158381855E61ADF2A039FAEC31EBC688D16C5C7A2A46913550F2431"
+  }
+]

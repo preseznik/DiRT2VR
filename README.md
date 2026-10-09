@@ -78,10 +78,17 @@ Build tracks from your own installed source games. Conversion tools are included
 | --- | --- | --- |
 | Mizu Mountain | GRID 2 | One 10.4 km daylight route |
 | Nordschleife | Assetto Corsa, standard Nordschleife circuit | Full circuit in Daylight, Overcast and Evening |
+| Misty Loch | Assetto Corsa with Misty Loch 1.4 (`rt_misty_loch`) | Full 6.45 km circuit, one-lap desktop Direct practice |
 | Aspen | DiRT 3 Complete Edition | Ten layouts |
 | Smelter | DiRT 3 Complete Edition | Ten layouts |
 
-All four packs offer **Direct practice** and experimental **Race** on desktop or in VR. Custom-track LAN is unavailable. The limits and testing status below differ by location.
+Mizu Mountain, Nordschleife, Aspen and Smelter offer **Direct practice** and experimental **Race** on desktop or in VR. Misty Loch currently supports one-lap desktop **Direct practice**. Custom-track LAN is unavailable.
+
+### Misty Loch
+
+Choose **CUSTOM tracks → Misty Loch → Build and install…** and select the Assetto Corsa folder containing `content\tracks\rt_misty_loch`. Only your installed DiRT 2 files and Misty Loch 1.4 folder are used; no other track, extra grass atlas or CSP installation is required. Original game assets are not included in DiRT2VR downloads.
+
+Choose an installed car and use **Launch** for one complete lap in desktop Direct practice. VR, AI races and LAN are unavailable for this pack. The port includes layered road/terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Assetto Corsa lighting and some effects remain approximate; the boats do not follow their original sailing routes.
 
 ### Mizu Mountain
 
