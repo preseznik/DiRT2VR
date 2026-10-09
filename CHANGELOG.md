@@ -8,6 +8,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.76 — 2026-10-09 — Experimental
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.76)
+
 - Fix wheels and pedals missing from Driving controls → Live device input even when the binding wizard detects them.
 
 ## 0.17.75 — 2026-10-09 — Experimental
