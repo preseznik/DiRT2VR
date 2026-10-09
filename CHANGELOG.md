@@ -6,6 +6,13 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.75 — 2026-10-09 — Experimental
+
+- Fix typing in headset reply cards triggering game controls, including C changing camera; checked in the headset.
+- Fix missing trackside shadows and close-range shadow pop-in in cockpit VR, confirmed at Baja Spillway Long. Shadows remain experimental and off by default.
+- Add VR shadow quality and a detailed-distance slider under Graphics → Main. The recommended 14-metre default retains the tested appearance. Longer distances remain experimental and may cause shadow flicker on walls and scenery; a warning appears when increasing the range.
+- Add optional diagnostic timing to help investigate sudden VR slowdowns.
+
 ## 0.17.74 — 2026-10-09 — Experimental
 
 - Improve coarse and flickering trackside shadows in cockpit VR, including Baja Spillway. Shadows remain optional and experimental; some shadow-detail pop-in remains while driving.

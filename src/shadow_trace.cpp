@@ -18,8 +18,8 @@ void TraceShadowCamera(uint64_t frame,unsigned eye,const float* projection,const
     for(unsigned i=0;i<16;++i)out<<','<<view[i];
     out<<'\n';
 }
-void TraceShadowRays(uint64_t frame,unsigned eye,uint64_t shader,const float* rays) {
-    if(!ShadowSequenceFrame(frame))return;
+void TraceShadowRays(uint64_t frame,unsigned eye,uint64_t shader,const float* rays,bool requested) {
+    if(!LoggingEnabled() || (!requested && !ShadowSequenceFrame(frame)))return;
     auto out=TraceFile(Output()/"shadow-rays.csv",std::ios::app);
     out<<frame<<','<<eye<<','<<std::hex<<shader<<std::dec;
     for(unsigned i=0;i<4;++i)out<<','<<rays[i];
@@ -77,7 +77,18 @@ void TraceShadowInputs(ID3D11DeviceContext* context,uint64_t shader,uint64_t fra
         D3D11_TEXTURE2D_DESC desc{}; texture->GetDesc(&desc);
         meta << "srv=" << slot << " resource=" << resource.Get() << " width=" << desc.Width << " height=" << desc.Height
              << " format=" << desc.Format << " samples=" << desc.SampleDesc.Count << '\n';
-        if(desc.ArraySize!=1 || desc.MipLevels!=1 || desc.SampleDesc.Count!=1 || uint64_t(desc.Width)*desc.Height>2048*2048) continue;
+        // Requested headset captures also need full-resolution screen depth to
+        // reconstruct the actual wall receivers. Bound both allocation and disk
+        // cost; ordinary automatic probes retain the old 2048-square limit.
+        static uint64_t capturedBytes{};
+        constexpr uint64_t budget=512ull*1024*1024;
+        const uint64_t maximum=requested?64ull*1024*1024:16ull*1024*1024;
+        const unsigned bytesPerPixel=desc.Format==DXGI_FORMAT_R32_TYPELESS?4u:
+            desc.Format==DXGI_FORMAT_R16_TYPELESS?2u:0u;
+        const uint64_t expectedBytes=uint64_t(desc.Width)*desc.Height*bytesPerPixel;
+        if(!bytesPerPixel || desc.ArraySize!=1 || desc.MipLevels!=1 || desc.SampleDesc.Count!=1 ||
+           (!requested && uint64_t(desc.Width)*desc.Height>2048*2048) ||
+           expectedBytes>maximum || expectedBytes>budget-capturedBytes)continue;
         desc.Usage=D3D11_USAGE_STAGING;desc.BindFlags=desc.MiscFlags=0;desc.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
         ComPtr<ID3D11Texture2D> copy;
         if(FAILED(device->CreateTexture2D(&desc,nullptr,&copy))) continue;
@@ -85,9 +96,11 @@ void TraceShadowInputs(ID3D11DeviceContext* context,uint64_t shader,uint64_t fra
         D3D11_MAPPED_SUBRESOURCE map{};
         if(FAILED(context->Map(copy.Get(),0,D3D11_MAP_READ,0,&map))) continue;
         meta << "row_pitch=" << map.RowPitch << '\n';
-        if(uint64_t(map.RowPitch)*desc.Height<=16*1024*1024) {
+        const auto bytes=uint64_t(map.RowPitch)*desc.Height;
+        if(bytes<=maximum && bytes<=budget-capturedBytes) {
             auto out=TraceFile(Output()/(prefix+"-srv-"+std::to_string(slot)+".bin"),std::ios::binary);
-            out.write(static_cast<const char*>(map.pData),size_t(map.RowPitch)*desc.Height);
+            out.write(static_cast<const char*>(map.pData),size_t(bytes));
+            capturedBytes+=bytes;
         }
         context->Unmap(copy.Get(),0);
     }

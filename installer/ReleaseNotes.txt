@@ -1,6 +1,10 @@
 DiRT2VR — Experimental
 
-Improved coarse and flickering trackside shadows in cockpit VR, including Baja Spillway. Shadows remain optional and experimental. Some shadow-detail pop-in remains while driving, and cockpit shadows can lose detail sooner than other camera views.
+Fixed missing trackside shadows and close-range shadow pop-in in cockpit VR, checked at Baja Spillway Long. Shadows remain optional, experimental and off by default.
+
+Graphics → Main now offers VR shadow quality (Game, Low, Medium or High) and a detailed-distance slider. The recommended 14-metre default retains the tested appearance. Longer distances can improve road detail but may cause rapid shadow flicker on walls and scenery; return to 14 metres if this happens. Save and relaunch to apply.
+
+Fixed headset reply typing triggering game controls, including C changing the camera.
 
 Guided headset tests now support replies without returning to the desktop: press Enter to type, Enter again to send, or Escape to cancel. Follow-up replies remain available, and sending no longer pauses the game.
 

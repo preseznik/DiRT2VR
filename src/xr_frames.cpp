@@ -5,6 +5,7 @@
 #include <cstdio>
 #include <stdexcept>
 #include <cstdarg>
+#include <chrono>
 
 void XrFrames::Report(const char* format,...) {
     char message[512]{}; va_list args; va_start(args,format);
@@ -126,9 +127,16 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
     }
     if(XR_FAILED(eventResult)) { exiting_=true; return false; }
     if(!running_ || exiting_) return false;
+    // Opt-in wall-clock diagnostics: no texture readback or forced GPU wait.
+    static const bool timing=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_TIMING_PROBE",value,8)==1 && value[0]==L'1'; }();
+    using Clock=std::chrono::steady_clock;
+    auto stamp=[&] { return timing?Clock::now():Clock::time_point{}; };
+    auto milliseconds=[](Clock::time_point a,Clock::time_point b) { return std::chrono::duration<double,std::milli>(b-a).count(); };
+    const auto started=stamp();
     XrFrameWaitInfo wait{XR_TYPE_FRAME_WAIT_INFO};
     XrFrameState frame{XR_TYPE_FRAME_STATE};
     if(!Check(xrWaitFrame(session_,&wait,&frame),"xrWaitFrame")) { exiting_=true; return false; }
+    const auto waitedFrame=stamp();
     XrFrameBeginInfo begin{XR_TYPE_FRAME_BEGIN_INFO};
     if(!Check(xrBeginFrame(session_,&begin),"xrBeginFrame")) { exiting_=true; return false; }
     XrFrameEndInfo end{XR_TYPE_FRAME_END_INFO};
@@ -154,11 +162,14 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         catch(const std::exception& error) { valid=false; exiting_=true; Report("frame preparation failed: %s",error.what()); }
         catch(...) { valid=false; exiting_=true; Report("frame preparation failed: unknown exception"); }
     }
+    const auto preparedFrame=stamp();
+    std::array<double,4> acquireMs{},drawMs{},releaseMs{};
     if(!panel || !panel->enabled || !panel->draw) panel=nullptr;
     if(panel && !CreatePanel()) { Report("seat panel allocation failed"); if(panel->unavailable) panel->unavailable(); panel=nullptr; }
     std::array<XrCompositionLayerProjectionView,2> projectionViews{{{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW},{XR_TYPE_COMPOSITION_LAYER_PROJECTION_VIEW}}};
     for(unsigned i=0;valid && i<(panel ? 4u : screen ? 1u : overlay ? 3u : 2u);++i) {
         if((screen && (i==1 || i==2)) || (i==2 && !overlay)) continue;
+        const auto acquireStarted=stamp();
         auto& eye=eyes_[i]; uint32_t index{};
         XrSwapchainImageAcquireInfo acquire{XR_TYPE_SWAPCHAIN_IMAGE_ACQUIRE_INFO};
         if(!Check(xrAcquireSwapchainImage(eye.chain,&acquire,&index),"acquire image")) { valid=false; break; }
@@ -166,6 +177,8 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         XrResult waited;
         do { waited=xrWaitSwapchainImage(eye.chain,&imageWait); } while(waited==XR_TIMEOUT_EXPIRED);
         if(!Check(waited,"wait image")) { valid=false; exiting_=true; break; }
+        const auto acquired=stamp();
+        acquireMs[i]=milliseconds(acquireStarted,acquired);
         try {
             if(index>=eye.targets.size()) throw std::out_of_range("OpenXR image index");
             (i==3 ? panel->draw : i==2 ? overlay->draw : draw)(i,views[i%2],eye.targets[index].Get(),eye.width,eye.height);
@@ -180,8 +193,11 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
             if(i==3) { if(panel->unavailable) panel->unavailable(); panel=nullptr; }
             else { valid=false; exiting_=true; }
         }
+        const auto drawn=stamp();
+        drawMs[i]=milliseconds(acquired,drawn);
         XrSwapchainImageReleaseInfo release{XR_TYPE_SWAPCHAIN_IMAGE_RELEASE_INFO};
         if(!Check(xrReleaseSwapchainImage(eye.chain,&release),"release image")) { valid=false; exiting_=true; }
+        releaseMs[i]=milliseconds(drawn,stamp());
         if(i<2) {
             projectionViews[i].pose=views[i].pose; projectionViews[i].fov=views[i].fov;
             projectionViews[i].subImage.swapchain=eye.chain;
@@ -217,7 +233,21 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
     if(panel) layers[layerCount++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&seat);
     if(screen) layers[0]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quad);
     if(valid) { end.layerCount=layerCount; end.layers=layers; }
+    const auto endStarted=stamp();
     if(!Check(xrEndFrame(session_,&end),"xrEndFrame")) { exiting_=true; return false; }
+    if(timing) {
+        const auto ended=stamp();
+        static unsigned reports{};
+        // Bounded even if the session remains slow for a long time.
+        if(reports<500 && (milliseconds(started,ended)>50 || submitted_%120==0)) {
+            ++reports;
+            Report("frame timing submitted=%llu total_ms=%.3f wait_ms=%.3f prepare_ms=%.3f end_ms=%.3f screen=%d visible=%d render=%d predicted_period_ms=%.3f",
+                static_cast<unsigned long long>(submitted_),milliseconds(started,ended),milliseconds(started,waitedFrame),
+                milliseconds(waitedFrame,preparedFrame),milliseconds(endStarted,ended),screen!=nullptr,visible_,frame.shouldRender,frame.predictedDisplayPeriod/1000000.0);
+            for(unsigned i=0;i<4;++i) if(acquireMs[i]+drawMs[i]+releaseMs[i]>0)
+                Report("frame timing layer=%u acquire_wait_ms=%.3f draw_ms=%.3f release_ms=%.3f",i,acquireMs[i],drawMs[i],releaseMs[i]);
+        }
+    }
     if(valid && overlay && !hudPlacementReported_) {
         const XrVector3f centre{(views[0].pose.position.x+views[1].pose.position.x)*.5f,
             (views[0].pose.position.y+views[1].pose.position.y)*.5f,(views[0].pose.position.z+views[1].pose.position.z)*.5f};

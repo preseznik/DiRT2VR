@@ -249,7 +249,121 @@ float* ShadowWorldRange() {
     } __except(EXCEPTION_EXECUTE_HANDLER) {return nullptr;}
 }
 ShadowCoverage shadowCoverage;
+float ShadowDetailDistance() {
+    static const float distance=[] {
+        wchar_t value[16]{};const auto size=GetEnvironmentVariableW(L"DIRT2VR_SHADOW_DETAIL_DISTANCE",value,16);
+        if(!size || size>=16)return 14.f;
+        wchar_t* end{};const auto parsed=wcstoul(value,&end,10);
+        return end!=value && !*end && parsed>=14 && parsed<=60 ? float(parsed):14.f;
+    }();return distance;
+}
 bool CockpitShadowMode();
+void* shadowCasterFovContinue{};
+bool shadowCasterFovReady{},shadowCasterFovActive{};
+// The native selection job uses FOV for object-size rejection. Keep its
+// normal chase threshold: the widened VR camera must not discard road casters.
+// This field is separate from the light matrices and visible camera.
+float shadowCasterFovValue=0.907571211f; // Native chase 52 degrees.
+void __declspec(naked) ShadowCasterFov() {
+    __asm {
+        fld dword ptr [eax+50h]
+        fstp dword ptr [esi+0f0h]
+        pushfd
+        cmp byte ptr [shadowCasterFovActive],0
+        je unchanged
+        cmp dword ptr [ebx+2ch],1
+        jne unchanged
+        push eax
+        mov eax,dword ptr [shadowCasterFovValue]
+        mov dword ptr [esi+0f0h],eax
+        pop eax
+    unchanged:
+        popfd
+        jmp dword ptr [shadowCasterFovContinue]
+    }
+}
+// Read-only, explicitly opt-in shadow-caster diagnostics. Never change the
+// native visibility decision, camera, bounds or returned fade value.
+using ShadowCastersFn=void (__thiscall*)(void*,int,void*,void*);
+using ShadowFadeFn=float (__cdecl*)(const float*,const float*,float,float,float,float,float,float);
+using ShadowItemFn=void (__thiscall*)(void*,const float*,float,unsigned,unsigned,unsigned);
+ShadowCastersFn realShadowCasters{};
+ShadowFadeFn realShadowFade{};
+ShadowItemFn realShadowItem{};
+thread_local int shadowCasterCascade{};
+thread_local float shadowCasterFov{};
+void __fastcall ShadowCasters(void* self,void*,int cascade,void* context,void* list) {
+    const auto previous=shadowCasterCascade;const auto previousFov=shadowCasterFov;
+    if(self==shadowSystem && context && ShadowWorldRange() && ShadowSequenceFrame(frame.load())) {
+        shadowCasterCascade=cascade;
+        shadowCasterFov=*reinterpret_cast<float*>(static_cast<unsigned char*>(context)+0xf4);
+        if(list && cascade>0 && cascade<=2) {
+            static std::mutex mutex;std::lock_guard lock(mutex);
+            static auto out=TraceFile(Output()/"shadow-caster-context.csv");
+            const auto* object=static_cast<unsigned char*>(self);
+            const auto* native=*reinterpret_cast<unsigned char* const*>(object+0x94+cascade*4);
+            out<<frame.load()<<','<<*reinterpret_cast<const unsigned*>(object+0x2c)<<','<<cascade;
+            for(const auto* p:{static_cast<unsigned char*>(context),static_cast<unsigned char*>(list)})
+                for(auto offset:{0xc0,0xc4,0xc8,0xf4,0xf8,0xfc,0x100})out<<','<<*reinterpret_cast<const float*>(p+offset);
+            if(native) {
+                for(auto offset:{0x28,0xd0,0x34,0xf4})out<<','<<*reinterpret_cast<const unsigned*>(native+offset);
+                out<<','<<*reinterpret_cast<const float*>(native+0x2c0)<<','<<*reinterpret_cast<const float*>(native+0x2c8);
+            }
+            out<<std::endl;
+        }
+    }
+    realShadowCasters(self,cascade,context,list);
+    shadowCasterCascade=previous;shadowCasterFov=previousFov;
+}
+float __cdecl ShadowFade(const float* bounds,const float* position,float low,float high,float start,float end,float fovScale,float bias) {
+    const float result=realShadowFade(bounds,position,low,high,start,end,fovScale,bias);
+    auto* base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+    if(shadowCasterCascade && _ReturnAddress()==base+0x97bec9) {
+        static std::mutex mutex;std::lock_guard lock(mutex);
+        static unsigned rows{};
+        if(rows>=12000)return result;
+        static auto out=TraceFile(Output()/"shadow-caster-fade.csv");
+        if(!rows)out<<"frame,preset,cascade,fov,fovScale,low,high,start,end,bias,result,minX,minY,minZ,maxX,maxY,maxZ,viewX,viewY,viewZ\n";
+        ++rows;
+        out<<frame.load()<<','<<*reinterpret_cast<unsigned*>(static_cast<unsigned char*>(shadowSystem)+0x2c)<<','<<shadowCasterCascade<<','<<shadowCasterFov<<','<<fovScale<<','<<low<<','<<high<<','<<start<<','<<end<<','<<bias<<','<<result;
+        for(auto i:{0,1,2,4,5,6})out<<','<<bounds[i];
+        for(int i=0;i<3;++i)out<<','<<position[i];
+        out<<std::endl;
+    }
+    return result;
+}
+void __fastcall ShadowItem(void* self,void*,const float* position,float scale,unsigned index,unsigned flags,unsigned selector) {
+    if(shadowCasterCascade && flags==0x401 && selector<12) {
+        const auto* object=*reinterpret_cast<unsigned char**>(static_cast<unsigned char*>(self)+0x3c0)+index*128;
+        const auto* model=*reinterpret_cast<unsigned char* const*>(object+0x64);
+        unsigned before[3]{},after[3]{};
+        for(unsigned i=0;i<3;++i)before[i]=*reinterpret_cast<const unsigned*>(model+0x98+(selector+i*12)*4);
+        realShadowItem(self,position,scale,index,flags,selector);
+        for(unsigned i=0;i<3;++i)after[i]=*reinterpret_cast<const unsigned*>(model+0x98+(selector+i*12)*4);
+        static std::mutex mutex;std::lock_guard lock(mutex);static unsigned rows{};
+        if(rows++>=12000)return;
+        static auto out=TraceFile(Output()/"shadow-caster-items.csv");
+        if(rows==1)out<<"frame,preset,cascade,selector,index,flag6d,flag6f,model35,minX,minY,minZ,maxX,maxY,maxZ,lod0delta,lod1delta,lod2delta\n";
+        out<<frame.load()<<','<<*reinterpret_cast<unsigned*>(static_cast<unsigned char*>(shadowSystem)+0x2c)<<','<<shadowCasterCascade<<','<<selector<<','<<index<<','<<unsigned(object[0x6d])<<','<<unsigned(object[0x6f])<<','<<unsigned(model[0x35]);
+        const auto* bounds=reinterpret_cast<const float*>(object+0x30);
+        for(auto i:{0,1,2,4,5,6})out<<','<<bounds[i];
+        for(unsigned i=0;i<3;++i)out<<','<<int(after[i]-before[i]);
+        out<<std::endl;return;
+    }
+    realShadowItem(self,position,scale,index,flags,selector);
+}
+void TraceShadowPresets(uint64_t f) {
+    if(!ShadowSequenceFrame(f) || !ShadowWorldRange())return;
+    auto* object=static_cast<unsigned char*>(shadowSystem);
+    auto out=TraceFile(Output()/"shadow-presets.csv",std::ios::app);
+    const auto active=*reinterpret_cast<const unsigned*>(object+0x2c);
+    const auto quality=*reinterpret_cast<const unsigned*>(object+0x720);
+    for(unsigned preset=0;preset<4;++preset)for(unsigned offset=0;offset<0x94;offset+=4) {
+        unsigned bits{};float value{};
+        memcpy(&bits,object+0xc78+preset*0x94+offset,4);memcpy(&value,&bits,4);
+        out<<f<<','<<active<<','<<quality<<','<<preset<<','<<offset<<','<<bits<<','<<value<<'\n';
+    }
+}
 thread_local void* waterEyeRenderer{};
 void* waterRenderer{};
 uint64_t waterRendererFrame=~uint64_t{};
@@ -415,7 +529,11 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
         const auto kind=IdentifySceneCamera(a,b,frame.load());
         if(ShadowsEnabled()) {
             const bool before=shadowCoverage.Active();
-            shadowCoverage.Update(ShadowWorldRange(),kind==SceneCamera::Cockpit && CockpitShadowMode());
+            auto* range=ShadowWorldRange();
+            const bool cockpit=kind==SceneCamera::Cockpit && CockpitShadowMode();
+            shadowCoverage.Update(range,cockpit,ShadowDetailDistance());
+            shadowCasterFovActive=shadowCasterFovReady && range && cockpit;
+            TraceShadowPresets(frame.load());
             if(before!=shadowCoverage.Active())Log("cockpit shadow preparation frame=%llu extended=%d",frame.load(),shadowCoverage.Active());
         }
         if(ExtendedViewsEnabled() || ReplayStereoEnabled()) {
@@ -1470,7 +1588,7 @@ void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) {
         }
         static ShadowMaskPass shadowMask;
         if(ShadowsEnabled() && shadowMask.Draw(c,vertex,pixel,shadowRays,[&] {
-            TraceShadowRays(frame.load(),lightingEye,pixel,shadowRays.values.data());
+            TraceShadowRays(frame.load(),lightingEye,pixel,shadowRays.values.data(),requestedCaptureFrame==frame.load());
             if(PipelineTraceEnabled() && frame.load()==3000) {
                 ComPtr<ID3D11VertexShader> applied;c->VSGetShader(&applied,nullptr,nullptr);uint64_t actual{};
                 {std::lock_guard lock(shaderMutex);actual=shaderNames[applied.Get()];}
@@ -1655,6 +1773,33 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                     if(status==MH_OK)status=EnableRecordedHook(base+0x2865d0);
                     Log("cockpit shadow coverage observer status=%s",MH_StatusToString(status));
                 } else Log("cockpit shadow coverage observer rejected instruction guard");
+            }
+            if(ShadowsEnabled() && !shadowCasterFovReady) {
+                const unsigned char assign[]={0xd9,0x40,0x50,0xd9,0x9e,0xf0,0,0,0};
+                if(!memcmp(base+0x2abc3f,assign,sizeof(assign))) {
+                    shadowCasterFovContinue=base+0x2abc48;
+                    void* unused{};
+                    auto status=MH_CreateHook(base+0x2abc3f,reinterpret_cast<void*>(ShadowCasterFov),&unused);
+                    if(status==MH_OK)status=EnableRecordedHook(base+0x2abc3f);
+                    shadowCasterFovReady=status==MH_OK;
+                    Log("cockpit road-shadow selection hook=%s; detailed range=%.0fm",MH_StatusToString(status),ShadowDetailDistance());
+                } else Log("cockpit road-shadow selection rejected instruction guard");
+            }
+            if(LoggingEnabled() && !realShadowCasters && !realShadowFade) {
+                wchar_t probe[8]{};
+                const unsigned char collect[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x34};
+                const unsigned char fade[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x30};
+                const unsigned char item[]={0x8b,0x44,0x24,0x0c,0x53,0x55};
+                if(GetEnvironmentVariableW(L"DIRT2VR_SHADOW_CASTER_PROBE",probe,8)==1 && probe[0]==L'1' &&
+                   !memcmp(base+0x297170,collect,sizeof(collect)) && !memcmp(base+0x970900,fade,sizeof(fade)) && !memcmp(base+0x97be00,item,sizeof(item))) {
+                    auto status=MH_CreateHook(base+0x297170,reinterpret_cast<void*>(ShadowCasters),reinterpret_cast<void**>(&realShadowCasters));
+                    if(status==MH_OK)status=MH_CreateHook(base+0x970900,reinterpret_cast<void*>(ShadowFade),reinterpret_cast<void**>(&realShadowFade));
+                    if(status==MH_OK)status=MH_CreateHook(base+0x97be00,reinterpret_cast<void*>(ShadowItem),reinterpret_cast<void**>(&realShadowItem));
+                    if(status==MH_OK)status=EnableRecordedHook(base+0x297170);
+                    if(status==MH_OK)status=EnableRecordedHook(base+0x970900);
+                    if(status==MH_OK)status=EnableRecordedHook(base+0x97be00);
+                    Log("shadow caster observation hooks=%s",MH_StatusToString(status));
+                }
             }
             const unsigned char setupPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0xe4,0,0,0};
             const unsigned char uploadPrologue[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x54};

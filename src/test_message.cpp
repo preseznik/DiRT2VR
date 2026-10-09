@@ -131,7 +131,9 @@ bool TestMessageBlocksKey(unsigned key) {
     if(!TestMessagesEnabled() || key>=256)return false;
     std::lock_guard lock(messageMutex);
     const bool down=(GetAsyncKeyState(int(key))&0x8000)!=0;
-    const bool owned=inputReady && acceptInput && Foreground() && (reply.editing || key==VK_RETURN);
+    // Submission gates opening a reply, not ownership of an existing draft.
+    // A skipped XR frame must not send typing to the game's input readers.
+    const bool owned=inputReady && Foreground() && (reply.editing || (acceptInput && key==VK_RETURN));
     const bool block=owned || keysBlocked[key];
     keysBlocked[key]=down && block;
     return block;
@@ -141,8 +143,8 @@ bool TestMessageWindowKey(UINT message,WPARAM key,LPARAM flags) {
     std::lock_guard lock(messageMutex);
     if(message==WM_KILLFOCUS) {reply.Cancel();acceptInput=false;++paintVersion;return false;}
     if(!inputReady)return false;
-    if(message==WM_KEYUP && key<256) {const bool block=keysBlocked[key];keysBlocked[key]=false;return block || (acceptInput && Foreground() && (reply.editing || key==VK_RETURN));}
-    if(!acceptInput || !Foreground())return false;
+    if(message==WM_KEYUP && key<256) {const bool block=keysBlocked[key];keysBlocked[key]=false;return block || (Foreground() && (reply.editing || (acceptInput && key==VK_RETURN)));}
+    if((!acceptInput && !reply.editing) || !Foreground())return false;
     if(message==WM_CHAR && key<256 && keysBlocked[key] && (key==13 || key==27))return true;
     if(message==WM_CHAR && reply.editing) {reply.Character(wchar_t(key));++paintVersion;return true;}
     if(message!=WM_KEYDOWN || key>=256)return false;

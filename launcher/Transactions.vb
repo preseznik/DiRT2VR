@@ -235,6 +235,11 @@ Public Class GraphicsTransaction
         settings.Validate()
         Dim specs As New List(Of String) From {$"crowd|enabled|{If(settings.VrCrowds, "true", "false")}", "particles|enabled|false", $"shadows|enabled|{If(settings.VrShadows, "true", "false")}", "postprocess|quality|0", "cpu/threadStrategy|parallelUpdateRender|false", "dynamic_ambient_occ|enabled|false", $"graphics_card/resolution|width|{settings.RenderWidth}", $"graphics_card/resolution|height|{settings.RenderHeight}", "graphics_card/resolution|fullscreen|false", "graphics_card/resolution|vsync|0"}
         specs.Add("graphics_card/resolution|multisampling|" & settings.VrMsaaToken)
+        If settings.VrShadows AndAlso settings.VrShadowQuality > 0 Then
+            ' Native Low / Medium / High presets. Off already supplies Ultra low's disabled shadows.
+            specs.Add("shadows|size|" & {"768", "1024", "2048"}(settings.VrShadowQuality - 1))
+            specs.Add("shadows|maskQuality|1")
+        End If
         If settings.Mirrors <> "game" Then specs.Add("mirrors|enabled|" & If(settings.Mirrors = "on", "true", "false"))
         ' Values from the supported game's hardware_settings_options.xml.
         For Each detail In {("trees", settings.TreeDetail), ("objects", settings.ObjectDetail)}
