@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+New: Optional VR crowds. Enable Graphics → Main → VR rendering → Crowds (experimental), save and relaunch to show spectators using your saved crowd quality. The default remains Off. Desktop crowd settings are unchanged; crowd rendering still needs broader headset testing.
+
 New: 3D chase replays. Enable Advanced → Graphics → 3D chase replays for stereo depth and head tracking, including paused playback. Cinematic replay angles remain on the flat screen.
 
 Chase-camera Free look and zoom now work in replays on desktop and in VR, using your existing mouse and controller settings. Select chase views with the game's replay camera buttons (default F8/F7 or Xbox RB/LB). Start an event through Normal Launch for the game's replays.

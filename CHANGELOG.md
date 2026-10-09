@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.72 — 2026-10-09 — Experimental
+
+- Add an optional Crowds switch under Graphics → Main → VR rendering. It starts off; enabling it shows spectators using the game's saved crowd quality on the next VR launch. Desktop settings are unchanged. Crowd rendering remains experimental.
+
 ## 0.17.71 — 2026-10-09 — Experimental
 
 - Add optional 3D chase replays in Advanced → Graphics, with head tracking during playback and while paused. Cinematic replay angles remain on the flat screen.

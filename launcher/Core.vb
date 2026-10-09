@@ -120,6 +120,7 @@ Public Class VrSettings
     Public Property RenderScale As Integer = 100
     Public Property HeadsetScale As Integer = 100
     Public Property VrShadows As Boolean = False
+    Public Property VrCrowds As Boolean = False
     Public Property VrSteeringAnimation As Boolean = False
     Public Property SteeringObserveOnly As Boolean = False
     Public Property ChaseFreeLook As Boolean = False

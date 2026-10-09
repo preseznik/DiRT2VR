@@ -70,8 +70,11 @@ Off retains the current shadow-free VR rendering and performance. On enables sha
 Bloom
 Adds a soft glow around bright areas. On keeps the game's existing effects; Off removes the glow in VR, including its flat virtual screen. This is separate from shadows and does not disable exposure adjustment or colour grading. Default: On. Save and relaunch VR to apply; the Desktop choice is independent. Works with all launch modes and custom tracks, retaining their separate lighting choices. Original effect files are restored after play.
 
+Crowds (experimental)
+Crowds are off by default in VR. Enable Graphics → Main → VR rendering → Crowds, save and relaunch to show spectators using the game's saved crowd quality. This adds rendering work; crowd animation and stereo appearance need broader headset testing. Desktop crowd settings are unchanged. This cannot add spectators to custom tracks that do not include them.
+
 Rendering baseline
-VR keeps the current reduced-effects configuration for crowds, particles and motion blur. Temporary graphics changes, including shadows, are restored after play.",
+VR reduces particles and motion blur, with crowds and shadows off unless enabled in the launcher. Temporary graphics changes are restored after play. Changing crowds only inside the game does not change the launcher's choice for the next VR session.",
         "Distance
 Choose 1–20 metres in 0.5 m steps. This changes stereo depth while keeping text at the same apparent size. Default: 1 m.
 

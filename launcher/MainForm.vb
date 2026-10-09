@@ -49,6 +49,7 @@ Public Class MainForm
     Private ReadOnly extendedViews As New CheckBox With {.Text = "On (Experimental)", .Name = "VrExtendedViews", .AccessibleName = "3D beyond the cockpit (Experimental)", .AutoSize = True}
     Private ReadOnly replayCameras As New CheckBox With {.Text = "On (Experimental)", .Name = "VrReplayCameras", .AccessibleName = "3D chase replays (Experimental)", .AutoSize = True}
     Private ReadOnly vrShadows As New CheckBox With {.Text = "On", .Name = "VrShadows", .AutoSize = True}
+    Private ReadOnly vrCrowds As New CheckBox With {.Text = "On", .Name = "VrCrowds", .AutoSize = True}
     Private ReadOnly steeringObserve As New CheckBox With {.Text = "Observe only — no correction", .Name = "SteeringObserveOnly", .AutoSize = True}
     Private ReadOnly steeringAnimation As New CheckBox With {.Text = "On (Experimental)", .Name = "VrSteeringAnimation", .AccessibleName = "Remove artificial steering corrections (Experimental)", .AutoSize = True}
     Private ReadOnly msaaWarning As New Label With {.Name = "MsaaWarning", .AutoSize = False}
@@ -211,6 +212,7 @@ Public Class MainForm
         Tip(extendedViews, "Use headset 3D and head tracking in bonnet, bumper and chase views while driving. Replay 3D has its own switch below. Menus stay on the virtual screen. Save and relaunch VR to apply.")
         Tip(replayCameras, "Watch chase-camera replays in 3D, with head tracking, even while playback is paused. Cinematic angles stay on the flat screen. For orbit and zoom, enable Controls → General → Chase camera → Free look. Save and relaunch VR to apply.")
         Tip(vrShadows, "Experimental: enable shadows in VR using the game's shadow quality." & vbCrLf & "Off keeps the current faster rendering. Shadows may still disagree between eyes." & vbCrLf & "Applies on next VR launch; desktop play is unchanged.")
+        Tip(vrCrowds, "Show spectators in VR using the game's saved crowd quality." & vbCrLf & "Experimental: crowds add rendering work and may have visual issues." & vbCrLf & "Save and relaunch VR to apply. Desktop play is unchanged.")
         Tip(treeDetail, "Higher keeps detailed vegetation visible farther away, but" & vbCrLf & "costs performance. Game keeps your usual setting.")
         Tip(objectDetail, "Higher keeps detailed buildings and trackside objects farther" & vbCrLf & "away, but costs performance. Game keeps your usual setting.")
         Tip(borderless, "Fill the main monitor without window borders during desktop" & vbCrLf & "play. Alt+Tab still works. This does not affect VR or its mirror.")
@@ -545,6 +547,7 @@ Public Class MainForm
         RefreshMsaaWarning()
         Field(render, "Field of view", fieldOfView) : Field(render, "Car mirrors", mirrors)
         vrShadows.Checked = settings.VrShadows : Field(render, "Shadows (experimental)", vrShadows)
+        vrCrowds.Checked = settings.VrCrowds : Field(render, "Crowds (experimental)", vrCrowds)
         vrBloom.Checked = settings.VrBloom : Field(render, "Bloom", vrBloom)
         treeDetail.Value = settings.TreeDetail : objectDetail.Value = settings.ObjectDetail
         Field(render, "Tree detail", treeDetail) : Field(render, "Object detail", objectDetail)
@@ -570,7 +573,7 @@ Public Class MainForm
                                        borderless.Checked = False : desktopVSync.Checked = True
                                        desktopBloom.Checked = True : vrBloom.Checked = True
                                        filters.ResetSelections()
-                                       msaa.Value = 1 : vrShadows.Checked = False
+                                       msaa.Value = 1 : vrShadows.Checked = False : vrCrowds.Checked = False
                                        renderScale.Value = 100 : headsetScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        hudFollow.Checked = False : hudDistance.Value = 2
                                        treeDetail.Value = 0 : objectDetail.Value = 0 : hudGauges.Checked = False
@@ -825,6 +828,7 @@ Public Class MainForm
         settings.DesktopBloom = desktopBloom.Checked : settings.VrBloom = vrBloom.Checked
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.VrMsaa = {0, 2, 4, 8}(msaa.Value) : settings.VrShadows = vrShadows.Checked
+        settings.VrCrowds = vrCrowds.Checked
         settings.FieldOfView = CInt(fieldOfView.Value) : settings.Mirrors = {"game", "on", "off"}(mirrors.SelectedIndex)
         settings.HudFollowView = hudFollow.Checked
         settings.HudDistance = hudDistance.Value / 2D
