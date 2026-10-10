@@ -72,6 +72,8 @@ For desktop quick launch, use `DiRT2VR.exe --launch --desktop --no-ui`. The exis
 
 ## Custom tracks (experimental)
 
+See the [custom track catalogue](CUSTOM_TRACKS.md) for source games, course descriptions, every available layout and special attributes.
+
 Build tracks from your own installed source games. Conversion tools are included; game assets are not distributed. No SDK or separate .NET installation is required. Once installed, custom tracks work offline without their source game; keep it available for future rebuilds.
 
 | Track pack | Required source game | Courses |

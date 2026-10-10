@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add a custom-track catalogue with source games, course descriptions, all Aspen and Smelter layouts, supported play modes and current limitations; link it from the README.
+
 ## 0.17.78 — 2026-10-09 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.78)
