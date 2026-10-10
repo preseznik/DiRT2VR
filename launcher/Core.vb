@@ -102,6 +102,7 @@ Public Class VrSettings
     Public Property ModernInterface As Boolean = True
     Public Property LoggingEnabled As Boolean = False
     Public Property ExperimentalFlashback As Boolean = False
+    Public Property KeepRunningUnfocused As Boolean = False
     Public Property SkipIntroduction As Boolean = False
     Public Property SkipStartupMovies As Boolean = False
     Public Property Runtime As String = Discovery.RuntimePath()

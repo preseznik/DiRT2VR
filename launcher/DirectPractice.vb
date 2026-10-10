@@ -86,7 +86,7 @@ Public Class RaceCatalog
                 remaining.RemoveAt(index)
             Next
         End If
-        Dim document As New XDocument(New XElement("config", New XAttribute("skipreplays", "true"),
+        Dim document As New XDocument(New XElement("config", New XAttribute("skipreplays", "false"),
             New XElement("track", New XAttribute("country", route.Country), New XAttribute("name", route.Track), New XAttribute("route", route.Route),
                 entries)))
         Return Text.Encoding.UTF8.GetBytes(document.ToString())

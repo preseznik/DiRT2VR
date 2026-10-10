@@ -31,7 +31,7 @@ Public Class DirectMenus
         child.SetAttribute("id", id) : child.SetAttribute("state", state) : parent.AppendChild(child)
         Return child
     End Function
-    Public Shared Function Patch(original As Byte(), flow As Boolean, Optional skipMovies As Boolean = False) As Byte()
+    Public Shared Function Patch(original As Byte(), flow As Boolean, Optional skipMovies As Boolean = False, Optional savedReplay As Boolean = False) As Byte()
         Dim expected = If(flow, FlowHash, StartupMovies.OriginalHash)
         If Convert.ToHexString(Security.Cryptography.SHA256.HashData(original)) <> expected Then Throw New IOException("Direct-session menus require the original supported system files.")
         If Not flow AndAlso skipMovies Then original = StartupMovies.Patch(original)
@@ -47,9 +47,47 @@ Public Class DirectMenus
                     Dim finish = One(document, "//node[@id='" & group.Item1 & "']")
                     ' Stop before career/result advancement. The unmodified graph is
                     ' restored before the subsequent Normal Launch process starts.
-                    finish.RemoveAll() : finish.SetAttribute("id", group.Item1) : finish.SetAttribute("state", "d2vr_finish_menu")
-                    Link(finish, "restart_race", group.Item2) : Link(finish, "back", group.Item1)
-                    Link(finish, "return_menus", leave.GetAttribute("id"))
+                    finish.RemoveAll() : finish.SetAttribute("id", group.Item1) : finish.SetAttribute("state", "d2vr_full_replay_check")
+                    For Each available In {True, False}
+                        Dim menu = Node(finish.ParentNode, "d2vr_finish_" & group.Item1 & If(available, "", "_unavailable"),
+                            If(available, "d2vr_finish_menu", "d2vr_finish_no_replay"))
+                        Link(finish, If(available, "enabled", "disabled"), menu.GetAttribute("id"))
+                        Link(menu, "restart_race", group.Item2) : Link(menu, "back", group.Item1)
+                        Link(menu, "return_menus", leave.GetAttribute("id"))
+                        If available Then Link(menu, "view_replay", If(group.Item1 = "11e", "10V", "276"))
+                    Next
+                    ' Keep native recording enabled, but stop at our menu before any
+                    ' automatic playback. Manual viewing reuses the complete native
+                    ' setup/cleanup path, including its replay interface and audio.
+                    Dim first = group.Item1 = "11e"
+                    Dim stopReplay = Node(finish.ParentNode, "d2vr_stop_" & group.Item1, "replay_stop")
+                    One(document, "//node[@id='" & If(first, "10T", "274") & "']/link[@id='next']").SetAttribute("target", stopReplay.GetAttribute("id"))
+                    Link(stopReplay, "next", If(first, "1ae", "2gq"))
+                    One(document, "//node[@id='" & If(first, "119", "27l") & "']/link[@id='loop']").SetAttribute("target", If(first, "11a", "27m"))
+                    ' The replay screen owns its input and presentation. Release that
+                    ' screen before showing a pause screen; nesting the two hides the
+                    ' menu and traps playback. Resume re-enters without replay_begin.
+                    Dim replayPlay = If(first, "119", "27l")
+                    Dim replayExit = If(first, "11a", "27m")
+                    Dim replayScope = finish.ParentNode
+                    Dim replayPause = Node(replayScope, "d2vr_replay_pause_" & group.Item1, "set_replay_system_pause")
+                    Dim replayMenu = Node(replayScope, "d2vr_replay_menu_" & group.Item1, "d2vr_replay_menu")
+                    Dim replayRearm = Node(replayScope, "d2vr_replay_rearm_" & group.Item1, "d2vr_replay_rearm")
+                    Dim replayResume = Node(replayScope, "d2vr_replay_resume_" & group.Item1, "set_replay_system_play")
+                    One(document, "//node[@id='" & replayPlay & "']/link[@id='next']").SetAttribute("target", replayPause.GetAttribute("id"))
+                    Link(replayPause, "next", replayMenu.GetAttribute("id"))
+                    Link(replayMenu, "back", replayRearm.GetAttribute("id"))
+                    Link(replayRearm, "enabled", replayResume.GetAttribute("id"))
+                    Link(replayRearm, "disabled", replayExit)
+                    Link(replayResume, "next", replayPlay)
+                    Link(replayMenu, "view_replay", If(first, "10V", "276"))
+                    Link(replayMenu, "exit_replay", replayExit)
+                    ' Replay exit resumes its native playback clock, even when the
+                    ' pause-decorated finish menu is visible. Pause that clock after
+                    ' render cleanup; replay_begin resets it when watching again.
+                    Dim holdReplay = Node(finish.ParentNode, "d2vr_hold_" & group.Item1, "set_replay_system_pause")
+                    One(document, "//node[@id='" & If(first, "11d", "27p") & "']/link[@id='next']").SetAttribute("target", holdReplay.GetAttribute("id"))
+                    Link(holdReplay, "next", group.Item1)
                     Dim pause = One(document, "//node[@id='" & group.Item3 & "']")
                     Link(pause, "restart_race", group.Item4)
                     Dim unpause = Node(pause.ParentNode, "d2vr_unpause_" & group.Item1, "send_unpause_msg")
@@ -57,7 +95,24 @@ Public Class DirectMenus
                     Link(pause, "return_menus", unpause.GetAttribute("id"))
                     Link(unpause, "next", endRace.GetAttribute("id")) : Link(endRace, "next", leave.GetAttribute("id"))
                 Next
+                ' This runs only at a fresh attempt, never while resuming flashback
+                ' or watching the same recording again.
+                For Each record As XmlElement In document.SelectNodes("//node[@state='set_replay_system_record']").Cast(Of XmlElement)().ToArray()
+                    Dim native = Node(record.ParentNode, "d2vr_record_" & record.GetAttribute("id"), "set_replay_system_record")
+                    For Each child As XmlNode In record.ChildNodes.Cast(Of XmlNode)().ToArray()
+                        native.AppendChild(child)
+                    Next
+                    record.SetAttribute("state", "d2vr_record_begin")
+                    Link(record, "enabled", native.GetAttribute("id")) : Link(record, "disabled", native.GetAttribute("id"))
+                Next
+                If savedReplay Then PrepareSavedPlayback(document)
             Else
+                Dim replayCheck = DirectCast(One(document, "//StateReplayEnabledCheck[@id='replay_enabled_check']").CloneNode(True), XmlElement)
+                replayCheck.SetAttribute("id", "d2vr_full_replay_check") : document.DocumentElement.AppendChild(replayCheck)
+                Dim recordBegin = DirectCast(replayCheck.CloneNode(True), XmlElement)
+                recordBegin.SetAttribute("id", "d2vr_record_begin") : document.DocumentElement.AppendChild(recordBegin)
+                Dim replayRearm = DirectCast(replayCheck.CloneNode(True), XmlElement)
+                replayRearm.SetAttribute("id", "d2vr_replay_rearm") : document.DocumentElement.AppendChild(replayRearm)
                 Dim shutdown = document.CreateElement("StateShutDownGame")
                 shutdown.SetAttribute("id", "d2vr_return") : document.DocumentElement.AppendChild(shutdown)
                 Dim profileFailure = DirectCast(shutdown.CloneNode(True), XmlElement)
@@ -65,13 +120,52 @@ Public Class DirectMenus
                 Dim pause = One(document, "//ScreenPauseDecorator[@id='benchmark_pause_menu']")
                 Dim finish = DirectCast(pause.CloneNode(True), XmlElement)
                 finish.SetAttribute("id", "d2vr_finish_menu") : pause.ParentNode.AppendChild(finish)
-                BuildMenu(pause, True) : BuildMenu(finish, False)
+                Dim unavailable = DirectCast(pause.CloneNode(True), XmlElement)
+                unavailable.SetAttribute("id", "d2vr_finish_no_replay") : pause.ParentNode.AppendChild(unavailable)
+                Dim replayMenu = DirectCast(pause.CloneNode(True), XmlElement)
+                replayMenu.SetAttribute("id", "d2vr_replay_menu") : pause.ParentNode.AppendChild(replayMenu)
+                BuildMenu(replayMenu, True, True, True)
+                BuildMenu(pause, True) : BuildMenu(finish, False) : BuildMenu(unavailable, False, False)
+                If savedReplay Then
+                    ' A library replay cannot restart its one-second initialization race.
+                    For Each screen In {pause, finish, unavailable}
+                        RemoveRestart(screen)
+                    Next
+                End If
             End If
             Using output As New MemoryStream()
                 binary.Write(output, XmlType.BinXml) : Return output.ToArray()
             End Using
         End Using
     End Function
+    Private Shared Sub RemoveRestart(screen As XmlElement)
+        Dim generic = One(screen.OwnerDocument, "//*[@id='" & screen.GetAttribute("id") & "']/ScreenGeneric")
+        For Each item As XmlElement In generic.SelectNodes("Item[IBSelectableSimple/@link='restart_race']")
+            generic.RemoveChild(item)
+        Next
+        generic.SelectSingleNode("itemflow").InnerText = vbLf & String.Join(vbLf, generic.SelectNodes("Item[IBSelectableSimple]").Cast(Of XmlElement)().Select(Function(i) i.GetAttribute("id"))) & vbLf
+    End Sub
+    Private Shared Sub PrepareSavedPlayback(document As XmlDocument)
+        For Each pair In {("11e", "10V"), ("27q", "276")}
+            Dim stopNode = One(document, "//node[@id='d2vr_stop_" & pair.Item1 & "']")
+            Dim gate = Node(stopNode.ParentNode, "d2vr_saved_" & pair.Item1, "d2vr_full_replay_check")
+            Link(gate, "enabled", pair.Item2) : Link(gate, "disabled", pair.Item1)
+            DirectCast(stopNode.SelectSingleNode("link[@id='next']"), XmlElement).SetAttribute("target", gate.GetAttribute("id"))
+        Next
+        For Each record As XmlElement In document.SelectNodes("//node[@state='set_replay_system_record']")
+            Dim scope As XmlElement = record
+            While scope IsNot Nothing AndAlso scope.GetAttribute("id") <> "Y8" AndAlso scope.GetAttribute("id") <> "24j"
+                scope = TryCast(scope.ParentNode, XmlElement)
+            End While
+            If scope Is Nothing Then Continue For
+            Dim suffix = record.GetAttribute("id")
+            Dim wait = Node(record.ParentNode, "d2vr_saved_wait_" & suffix, "necessary_1_second_pause")
+            Dim finish = Node(record.ParentNode, "d2vr_saved_end_" & suffix, "end_race")
+            Link(wait, "next", finish.GetAttribute("id"))
+            Link(finish, "next", If(scope.GetAttribute("id") = "Y8", "10G", "26R"))
+            DirectCast(record.SelectSingleNode("link[@id='next']"), XmlElement).SetAttribute("target", wait.GetAttribute("id"))
+        Next
+    End Sub
     Private Shared Sub LoadDrivingProfile(document As XmlDocument, root As XmlElement)
         ' Demo startup skips the press-start/profile sequence. Use the native loader
         ' before constructing the selected event; never create or save a career here.
@@ -101,13 +195,19 @@ Public Class DirectMenus
             Link(load, outcome, If(outcome = "pcfail" OrElse outcome = "x360fail", "d2vr_control_failed", "2FG"))
         Next
     End Sub
-    Private Shared Sub BuildMenu(screen As XmlElement, paused As Boolean)
+    Private Shared Sub BuildMenu(screen As XmlElement, paused As Boolean, Optional replayAvailable As Boolean = True, Optional replayPaused As Boolean = False)
         Dim generic = DirectCast(screen.SelectSingleNode("ScreenGeneric"), XmlElement)
         Dim template = DirectCast(generic.SelectSingleNode("Item[@id='item_0']"), XmlElement)
         Dim items As New List(Of (String, String))
         If paused Then items.Add(("lng_continue_button_title", "back"))
-        items.Add(("lng_restart_button_title", "restart_race"))
-        items.Add(("Return to menus", "return_menus"))
+        If Not paused Then items.Add((If(replayAvailable, "Full Replay", "Full Replay - recording unavailable"), "view_replay"))
+        If replayPaused Then
+            items.Add(("Full Replay", "view_replay"))
+            items.Add(("Exit replay", "exit_replay"))
+        Else
+            items.Add(("lng_restart_button_title", "restart_race"))
+            items.Add(("Return to menus", "return_menus"))
+        End If
         generic.RemoveChild(template)
         For i = 0 To items.Count - 1
             Dim item = DirectCast(template.CloneNode(True), XmlElement)
@@ -118,10 +218,12 @@ Public Class DirectMenus
             DirectCast(item.SelectSingleNode("IBGlyphLink"), XmlElement).SetAttribute("linked_glyph", i & ".root.library.pill")
             DirectCast(item.SelectSingleNode("IBTextStatic"), XmlElement).SetAttribute("string", items(i).Item1)
             DirectCast(item.SelectSingleNode("IBSelectableSimple"), XmlElement).SetAttribute("link", items(i).Item2)
+            If Not paused AndAlso Not replayAvailable AndAlso i = 0 Then item.RemoveChild(item.SelectSingleNode("IBSelectableSimple"))
             generic.AppendChild(item)
         Next
         ' itemflow uses newlines for rows and spaces for columns, regardless of glyph placement.
-        generic.SelectSingleNode("itemflow").InnerText = vbLf & String.Join(vbLf, Enumerable.Range(0, items.Count).Select(Function(i) "item_" & i)) & vbLf
+        Dim firstSelectable = If(Not paused AndAlso Not replayAvailable, 1, 0)
+        generic.SelectSingleNode("itemflow").InnerText = vbLf & String.Join(vbLf, Enumerable.Range(firstSelectable, items.Count - firstSelectable).Select(Function(i) "item_" & i)) & vbLf
         If Not paused Then DirectCast(generic.SelectSingleNode("Item[@id='title']/IBTextStatic"), XmlElement).SetAttribute("string", "lng_net_race_in_progress_finished")
     End Sub
     Private Function Target(index As Integer) As String
@@ -136,11 +238,11 @@ Public Class DirectMenus
             Files.NoLinks(Target(i)) : Files.NoLinks(Backup(i))
         Next
     End Sub
-    Public Sub Prepare(Optional skipMovies As Boolean = False, Optional afterWrite As Action(Of Integer) = Nothing)
+    Public Sub Prepare(Optional skipMovies As Boolean = False, Optional afterWrite As Action(Of Integer) = Nothing, Optional savedReplay As Boolean = False)
         CheckPaths()
         If Pending OrElse New StartupMovies(context).Pending OrElse New LanTransaction(context).BlocksMenuChanges Then Throw New IOException("Restore pending files before preparing direct-session menus.")
         Dim original = Names.Select(Function(n) File.ReadAllBytes(IO.Path.Combine(context.GameRoot, "system", n))).ToArray()
-        Dim modified = {Patch(original(0), False, skipMovies), Patch(original(1), True)}
+        Dim modified = {Patch(original(0), False, skipMovies, savedReplay), Patch(original(1), True, savedReplay:=savedReplay)}
         Dim journal As New DirectMenuJournal With {.Version = 2, .ReadOnlyFiles = New List(Of Boolean)}
         For i = 0 To 1
             If File.Exists(Backup(i)) Then

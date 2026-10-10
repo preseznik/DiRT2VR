@@ -10,6 +10,7 @@
 #include "chase_camera.h"
 #include "replay_camera.h"
 #include "test_message.h"
+#include "background_play.h"
 namespace vr { bool EnableSeatAdjustment(); }
 #include "common.h"
 
@@ -23,6 +24,7 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
         Log("GFWL compatibility: initialization failed; stopping launch"); return false;
     }
     if(!EnableFlashback()) { Log("flashback: incompatible process"); return false; }
+    if(!EnableBackgroundPlay()) { Log("background play: incompatible process"); return false; }
     if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); return false; }
     const bool playerCameraReady=!(cockpit || steering || chase || replayProbe) || EnableCockpitStart(cockpit);
     if(cockpit && !playerCameraReady) { Log("VR starting camera: incompatible process"); return false; }

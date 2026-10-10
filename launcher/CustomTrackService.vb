@@ -139,6 +139,7 @@ Public Module CustomTrackService
     Public Function InstallAsync(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, Optional layoutIds As String() = Nothing) As Task
         Return Task.Run(Sub()
                             WithSessionLock(Sub() Install(context, offer, source, progress, cancel, layoutIds))
+                            CacheCleanup.Run(context)
                         End Sub, cancel)
     End Function
     Private Sub Install(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, layoutIds As String())

@@ -4,6 +4,7 @@
 #include "steering_animation.h"
 #include "chase_camera.h"
 #include "replay_camera.h"
+#include "replay_storage.h"
 #include <intrin.h>
 #include "gfwl_compat.h"
 #include <MinHook.h>
@@ -29,12 +30,42 @@ template<class T> T Field(const void* object, unsigned offset) {
     std::memcpy(&value, static_cast<const unsigned char*>(object)+offset, sizeof(value));
     return value;
 }
+// The native writer fans each serialized snapshot out to the full-race file
+// and the short rewind ring. Only the ring may drop samples: skipping the
+// serializer itself also drops full-replay physics history and causes judder.
+unsigned char* RewindOutput(void* recorder) {
+    __try {
+        const auto base=reinterpret_cast<unsigned>(GetModuleHandleW(nullptr));
+        auto mux=static_cast<unsigned char*>(recorder)+0xa08;
+        if(Field<unsigned>(mux,0)!=base+0xf61568)return nullptr;
+        const auto count=Field<unsigned>(mux,8);
+        auto entries=Field<unsigned char*>(mux,12);
+        if(!entries || count<1 || count>2)return nullptr;
+        auto file=Field<unsigned char*>(recorder,0x1a4);
+        unsigned char* ring=nullptr;bool full=false;
+        for(unsigned i=0;i<count;++i) {
+            auto entry=entries+i*12;auto stream=Field<void*>(entry,0);
+            if(entry[4]>1)return nullptr;
+            if(stream==static_cast<unsigned char*>(recorder)+0x998 && !ring)ring=entry+4;
+            else if(file && stream==file+0x90 && !full)full=true;
+            else return nullptr;
+        }
+        return ring;
+    } __except(EXCEPTION_EXECUTE_HANDLER) {return nullptr;}
+}
 void __fastcall Serialize(void* recorder, void*, const double* dt) {
     // Only the normal recording-state call is eligible. Preserve other serialization
     // paths and leave the simulation clock, event recording and playback untouched.
     if(sample60 && recorder==activeRecorder && _ReturnAddress()==recordingCaller &&
        !sampleClock.Record(Field<double>(recorder,0x1b8))) {
-        ++skipped; return;
+        if(auto enabled=RewindOutput(recorder);enabled && *enabled) {
+            *enabled=0;
+            __try {serialize(recorder,dt);}
+            __finally {*enabled=1;}
+            ++skipped;++recorded;return;
+        }
+        // Unknown/changed layouts retain native recording rather than risk
+        // dropping the full replay or changing an unrelated stream.
     }
     serialize(recorder, dt);
     ++recorded;
@@ -45,7 +76,7 @@ void __fastcall Update(void* root, void*, const double* dt) {
     auto previousRecorder=activeRecorder;
     activeRecorder=static_cast<unsigned char*>(root)+0x10;
     if(ReplayCamerasEnabled())BeginReplayCameraFrame();
-    update(root, dt);
+    ReplayStorageUpdate(update, root, dt);
     if(ReplayCamerasEnabled()) {
         std::lock_guard lock(playbackMutex);
         playback={Field<int>(root,0xa60),playback.frame+1,GetTickCount64(),
@@ -85,7 +116,7 @@ bool LiveDrivingCameraState() {
 bool EnableFlashback() {
     wchar_t enabled[8]{};
     sample60=GetEnvironmentVariableW(L"DIRT2VR_FLASHBACK60",enabled,8)==1 && enabled[0]==L'1';
-    if(!sample60 && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled()) return true;
+    if(!sample60 && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled() && !ReplayStorageRequested()) return true;
     if(update && (!sample60 || serialize)) return true;
     if(!SupportedHost()) return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
@@ -104,7 +135,7 @@ bool EnableFlashback() {
     if(status==MH_OK && sample60) status=MH_CreateHook(s,reinterpret_cast<void*>(Serialize),reinterpret_cast<void**>(&serialize));
     if(status==MH_OK) status=EnableRecordedHook(u);
     if(status==MH_OK && sample60) status=EnableRecordedHook(s);
-    Log("flashback: hook=%s; sample60=%d",MH_StatusToString(status),sample60);
+    Log("flashback: hook=%s; sample60=%d; sampling applies to rewind ring only",MH_StatusToString(status),sample60);
     return status==MH_OK;
 }
 }

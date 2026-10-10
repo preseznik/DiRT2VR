@@ -1,0 +1,127 @@
+Imports System.Xml.Linq
+Imports DiRT2VR.CustomTracks
+
+' Saved with the recording, never reconstructed from a new random opponent selection.
+Public Class ReplayContentRequirement
+    Public Property Version As Integer = 1
+    Public Property TrackId As String = ""
+    Public Property CustomTrackVersion As String = ""
+    Public Property Cars As New List(Of String)
+    Public Property RequiredFiles As New List(Of String)
+End Class
+
+Public Module ReplayContent
+    Private Const MaximumFiles As Integer = 8192
+
+    Public Function Capture(context As InstallContext, trackId As String, launchConfig As XDocument, Optional token As CancellationToken = Nothing) As ReplayContentRequirement
+        Dim result As New ReplayContentRequirement With {.TrackId = trackId, .Cars = RecordedCars(trackId, launchConfig)}
+        If TrackPacks.IsLayout(trackId) Then result.CustomTrackVersion = LayoutVersion(TrackPacks.ForLayout(trackId).Read(context.GameRoot, False, token), trackId)
+        Dim track = RaceCatalog.Current.Track(trackId)
+        Dim paths As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
+        For Each code In result.Cars
+            AddFiles(context.GameRoot, IO.Path.Combine(context.GameRoot, "cars", code), True, paths, token)
+        Next
+        AddFiles(context.GameRoot, IO.Path.Combine(context.GameRoot, "tracks"), False, paths, token)
+        AddFiles(context.GameRoot, track.Folder(context), True, paths, token)
+        AddFiles(context.GameRoot, IO.Path.GetDirectoryName(track.Folder(context)), False, paths, token)
+        result.RequiredFiles = paths.OrderBy(Function(p) p, StringComparer.OrdinalIgnoreCase).ToList()
+        RequireAvailable(context, result, token)
+        Return result
+    End Function
+
+    Public Function RecordedCars(trackId As String, launchConfig As XDocument) As List(Of String)
+        Dim track = RaceCatalog.Current.Track(trackId)
+        Dim entry = launchConfig?.Root?.Element("track")
+        If entry Is Nothing OrElse CStr(entry.Attribute("country")) <> track.Country OrElse
+            CStr(entry.Attribute("name")) <> track.Track OrElse CStr(entry.Attribute("route")) <> track.Route Then
+            Throw New IOException("The replay track does not match the recorded event.")
+        End If
+        Dim result As New List(Of String)
+        Dim count As Integer
+        For Each car In entry.Elements("car")
+            Dim number As Integer
+            If Not Integer.TryParse(CStr(car.Attribute("number")), number) OrElse number < 1 OrElse number > 8 Then Throw New IOException("Invalid recorded replay grid.")
+            count += number
+            Dim code = RaceCatalog.Current.Car(CStr(car.Attribute("name"))).Code
+            If Not result.Contains(code, StringComparer.Ordinal) Then result.Add(code)
+        Next
+        If count < 1 OrElse count > 8 Then Throw New IOException("Invalid recorded replay grid.")
+        Return result
+    End Function
+
+    Private Function LayoutVersion(receipt As PackReceipt, trackId As String) As String
+        Dim selected = receipt.Sessions.SingleOrDefault(Function(s) s.LayoutId = trackId)
+        If selected Is Nothing Then Throw New IOException("The replay's custom track is not installed. Install that layout before playback.")
+        Return If(selected.Version, receipt.Version)
+    End Function
+
+    Private Sub AddFiles(root As String, folder As String, recursive As Boolean, paths As HashSet(Of String), token As CancellationToken)
+        token.ThrowIfCancellationRequested()
+        Files.NoLinks(folder)
+        If Not Directory.Exists(folder) Then Throw New IOException("Replay content is missing: " & IO.Path.GetRelativePath(root, folder))
+        ' Walk explicitly so a linked subdirectory is rejected before traversal.
+        For Each file In Directory.EnumerateFiles(folder)
+            token.ThrowIfCancellationRequested()
+            Files.NoLinks(file)
+            paths.Add(IO.Path.GetRelativePath(root, file).Replace("\"c, "/"c))
+            If paths.Count > MaximumFiles Then Throw New IOException("The replay requires too many content files.")
+        Next
+        If recursive Then
+            For Each child In Directory.EnumerateDirectories(folder) : AddFiles(root, child, True, paths, token) : Next
+        End If
+    End Sub
+
+    Public Sub RequireAvailable(context As InstallContext, requirement As ReplayContentRequirement, Optional token As CancellationToken = Nothing)
+        If requirement Is Nothing OrElse requirement.Version <> 1 OrElse requirement.Cars Is Nothing OrElse
+            requirement.Cars.Count < 1 OrElse requirement.Cars.Count > 8 OrElse requirement.RequiredFiles Is Nothing OrElse
+            requirement.RequiredFiles.Count > MaximumFiles Then Throw New IOException("Unsupported replay content list.")
+        Dim track = RaceCatalog.Current.Track(requirement.TrackId)
+        Dim cars = requirement.Cars.Select(Function(code) RaceCatalog.Current.Car(code)).ToArray()
+        If cars.Select(Function(c) c.Code).Distinct(StringComparer.Ordinal).Count() <> cars.Length Then Throw New IOException("Duplicate car in replay content list.")
+        Dim trackRoot = "tracks/" & track.Country & "/" & track.Track & "/"
+        Dim routeRoot = trackRoot & track.Route & "/"
+        Dim carRoots = cars.Select(Function(c) "cars/" & c.Code & "/").ToArray()
+        Dim required As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
+        For Each relative In requirement.RequiredFiles
+            Try
+                SafeFiles.Relative(relative)
+            Catch ex As IOException
+                Throw New IOException("Invalid file path in replay content list.", ex)
+            End Try
+            If Not ((relative.StartsWith("tracks/", StringComparison.OrdinalIgnoreCase) AndAlso Not relative.Substring(7).Contains("/"c)) OrElse
+                    relative.StartsWith(routeRoot, StringComparison.OrdinalIgnoreCase) OrElse
+                    (relative.StartsWith(trackRoot, StringComparison.OrdinalIgnoreCase) AndAlso Not relative.Substring(trackRoot.Length).Contains("/"c)) OrElse
+                    carRoots.Any(Function(root) relative.StartsWith(root, StringComparison.OrdinalIgnoreCase))) OrElse Not required.Add(relative) Then
+                Throw New IOException("Invalid file path in replay content list.")
+            End If
+        Next
+        ' A truncated/old manifest cannot make empty content folders pass validation.
+        For Each car In cars
+            For Each name In {"cameras.xml", car.Code & ".ctf", car.Code & "_highLOD.pssg"}
+                required.Add("cars/" & car.Code & "/" & name)
+            Next
+        Next
+        For Each name In {"track.jpk", "route.clm", "grids.pssg", "progress_track.xml"} : required.Add(routeRoot & name) : Next
+        Dim problems As New List(Of String)
+        For Each relative In required
+            token.ThrowIfCancellationRequested()
+            Dim path = SafeFiles.Inside(context.GameRoot, relative)
+            If Not File.Exists(path) OrElse New FileInfo(path).Length = 0 Then problems.Add(relative)
+        Next
+        If problems.Count <> 0 Then
+            Throw New IOException("Cannot play this replay. Install or repair its track and cars first. Missing or empty files:" & vbCrLf &
+                String.Join(vbCrLf, problems.Take(12)) & If(problems.Count > 12, vbCrLf & "And " & (problems.Count - 12).ToString() & " more.", ""))
+        End If
+        If TrackPacks.IsLayout(requirement.TrackId) Then
+            Dim pack = TrackPacks.ForLayout(requirement.TrackId)
+            Dim receipt = pack.Read(context.GameRoot, False, token)
+            If String.IsNullOrEmpty(requirement.CustomTrackVersion) OrElse LayoutVersion(receipt, requirement.TrackId) <> requirement.CustomTrackVersion Then
+                Throw New IOException("This replay needs " & pack.Name & " version " & requirement.CustomTrackVersion & ". The installed track version differs.")
+            End If
+            pack.Verify(context.GameRoot, receipt, token)
+            CustomTrackService.RequireLauncher(receipt)
+        ElseIf requirement.CustomTrackVersion <> "" Then
+            Throw New IOException("Unexpected custom-track version in replay content list.")
+        End If
+    End Sub
+End Module

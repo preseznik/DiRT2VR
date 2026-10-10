@@ -4,9 +4,11 @@ Imports System.Threading.Tasks
 
 Public Class MainForm
     Inherits LauncherForm
+    Private ReadOnly cacheTimer As New System.Windows.Forms.Timer With {.Interval = 3600000}
     Private ReadOnly settingsTips As New ToolTip With {.InitialDelay = 450, .ReshowDelay = 150, .AutoPopDelay = 15000, .ShowAlways = True}
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
+    Private replayLibrarySelected As Boolean
     Private windowReady As Boolean
     Private lastWindowState As FormWindowState = FormWindowState.Normal
     Private ReadOnly modernInterface As New AppearanceSwitch()
@@ -14,6 +16,7 @@ Public Class MainForm
     Private replacementBinding As ControllerBinding
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
     Private ReadOnly flashback As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalFlashback", .AccessibleName = "Frame-rate-independent rewind (Experimental)", .AutoSize = True}
+    Private ReadOnly backgroundPlay As New CheckBox With {.Text = "On (Experimental)", .Name = "KeepRunningUnfocused", .AccessibleName = "Keep running when unfocused (Experimental)", .AutoSize = True}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly chaseFreeLook As New CheckBox With {.Text = "On (Experimental)", .Name = "ChaseFreeLook", .AutoSize = True}
     Private ReadOnly chaseInvert As New CheckBox With {.Text = "On", .Name = "ChaseInvertVertical", .AutoSize = True}
@@ -146,8 +149,7 @@ Public Class MainForm
                                                   keyboardCapture = -1 : controllerCapture = -1 : capturedDevice = Nothing
                                                   inputLabel.Text = "Select a binding to change it."
                                                   RefreshBindings()
-                                                  desktopButton.Visible = tabs.SelectedIndex <> 1
-                                                  launchButton.Visible = tabs.SelectedIndex <> 1
+                                                  RefreshLaunchButtons()
                                               End Sub
         Dim logs As New Button With {.Text = "Open logs", .AutoSize = True, .Name = "OpenLogs"}
         Dim commands As New LauncherFooter(desktopButton, launchButton, saveButton, recoverButton, logs)
@@ -199,9 +201,16 @@ Public Class MainForm
         inputTimer.Start() : timer.Start() : RefreshStatus()
         AddHandler Shown, Sub() FitInitialWindow()
         AddHandler Shown, Async Sub() Await CheckStartupUpdate()
+        AddHandler Shown, Async Sub()
+                              cacheTimer.Start()
+                              Await CacheCleanup.RunAsync(context)
+                          End Sub
+        AddHandler cacheTimer.Tick, Async Sub() Await CacheCleanup.RunAsync(context)
+        AddHandler FormClosed, Sub() cacheTimer.Dispose()
     End Sub
     Private Sub ConfigureTooltips()
         Tip(flashback, "Keeps more rewind history when playing at high FPS, without slowing the game." & vbCrLf & "Single-player desktop and VR only. Experimental; off by default.")
+        Tip(backgroundPlay, "Keeps races and replays running when you switch to another app. You can still pause manually. Use windowed or borderless mode for background playback. Save and relaunch.")
         Tip(renderScale, "How much detail the game draws for each eye. The green notch marks 150% recommended. Higher can be sharper," & vbCrLf &
             "but needs more GPU power and memory. A low Headset texture scale" & vbCrLf & "can still make the final picture look soft.")
         Tip(headsetScale, "Size of the finished picture sent to your headset." & vbCrLf &
@@ -378,8 +387,34 @@ Public Class MainForm
             If Not IsDisposed Then refreshServers.Enabled = Not busy
         End Try
     End Sub
+    Private Sub RefreshLaunchButtons()
+        Dim show = tabs.SelectedIndex <> 1 AndAlso Not (tabs.SelectedIndex = 0 AndAlso replayLibrarySelected)
+        desktopButton.Visible = show : launchButton.Visible = show
+    End Sub
     Private Sub BuildLaunchTab()
         Dim content = TabLayout("Launcher")
+        Dim page = DirectCast(content.Parent, TabPage)
+        page.Controls.Remove(content) : page.AutoScroll = False
+        Dim launchTabs As New ModernTabs With {.Name = "LaunchTabs", .Dock = DockStyle.Fill}
+        Dim mainPage As New TabPage("Main") With {.AutoScroll = True, .UseVisualStyleBackColor = False}
+        Dim replayPage As New TabPage("Replays") With {.AutoScroll = True, .UseVisualStyleBackColor = False}
+        Dim replayContent As New VerticalStack With {.Dock = DockStyle.Top, .Padding = content.Padding}
+        Dim replays As New ReplayPanel(context)
+        replayContent.Controls.Add(replays) : replayPage.Controls.Add(replayContent)
+        mainPage.Controls.Add(content) : launchTabs.TabPages.AddRange({mainPage, replayPage}) : page.Controls.Add(launchTabs)
+        AddHandler launchTabs.SelectedIndexChanged, Sub()
+                                                       replayLibrarySelected = launchTabs.SelectedIndex = 1
+                                                       RefreshLaunchButtons()
+                                                   End Sub
+        AddHandler replayPage.Enter, Async Sub() Await replays.ReloadAsync()
+        AddHandler replays.PlaybackRequested, Sub(id, vr)
+                                                  SaveSettings()
+                                                  If vr Then
+                                                      Spawn("--launch", "--replay", id)
+                                                  Else
+                                                      Spawn("--launch", "--desktop", "--replay", id)
+                                                  End If
+                                              End Sub
         customTracks = New CustomTrackPanel(context)
         AddHandler customTracks.VehicleSetupRequested, Sub() EditCarSetup()
         content.Controls.Add(customTracks)
@@ -528,6 +563,8 @@ Public Class MainForm
         Dim gameplay = Section(content, "Gameplay")
         flashback.Checked = settings.ExperimentalFlashback
         Field(gameplay, "Frame-rate-independent rewind", flashback)
+        backgroundPlay.Checked = settings.KeepRunningUnfocused
+        Field(gameplay, "Keep running when unfocused", backgroundPlay)
         Dim graphics = Section(content, "Graphics")
         extendedViews.Checked = settings.VrExtendedViews
         Field(graphics, "3D beyond the cockpit", extendedViews)
@@ -844,6 +881,7 @@ Public Class MainForm
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
         settings.ExperimentalFlashback = flashback.Checked
+        settings.KeepRunningUnfocused = backgroundPlay.Checked
         settings.VrExtendedViews = extendedViews.Checked
         settings.VrReplayCameras = replayCameras.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked

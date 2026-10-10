@@ -20,7 +20,7 @@ Public Module Program
             Dim context As New InstallContext(root, If(args.Contains("--worker"), Argument(args, "--owner-base", Nothing), Nothing))
             If args.Contains("--worker") Then
                 Try
-                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"), Argument(args, "--track-work", Nothing), Argument(args, "--postprocess-test", Nothing), Argument(args, "--filter-snapshot", Nothing))
+                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"), Argument(args, "--track-work", Nothing), Argument(args, "--postprocess-test", Nothing), Argument(args, "--filter-snapshot", Nothing), Argument(args, "--replay-id", Nothing))
                     Return 0
                 Catch ex As Exception
                     Dim failure = WorkerFailure.FromException(Argument(args, "--worker", ""), args.Contains("--worker-elevated"), ex)
@@ -77,7 +77,7 @@ Public Module Program
             End If
             If args.Contains("--launch") Then
                 If New WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator) Then Throw New IOException("Start DiRT2VR normally, without Run as administrator. Only the file worker needs elevation.")
-                Call (New Session(context, args.Contains("--lan-host"), Argument(args, "--lan-join", Nothing))).Run(Not args.Contains("--desktop"), args.Contains("--vr"))
+                Call (New Session(context, args.Contains("--lan-host"), Argument(args, "--lan-join", Nothing), Argument(args, "--replay", Nothing))).Run(Not args.Contains("--desktop"), args.Contains("--vr"))
             Else
                 Application.Run(New MainForm(context))
             End If

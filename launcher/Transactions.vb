@@ -88,7 +88,7 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False)
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing)
         context.RequireClosed()
         If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
@@ -98,6 +98,11 @@ Public Class AssetTransaction
         If trackId = PrototypeTrack.Id AndAlso Not configOnly Then Throw New IOException("The prototype track supports desktop preparation only.")
         If trackId IsNot Nothing Then RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
         Dim configBytes = If(trackId Is Nothing, Nothing, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context))
+        If replay IsNot Nothing Then
+            replay.Validate() : ReplayContent.RequireAvailable(context, replay.Content)
+            If replay.Content.TrackId <> trackId OrElse replay.Content.Cars(0) <> carCode Then Throw New IOException("Replay preparation does not match the recorded event.")
+            configBytes = Text.Encoding.UTF8.GetBytes(replay.EventConfig().ToString())
+        End If
         ' Version 4 journals own only a desktop practice config, with no asset entries.
         Dim journal As New AssetJournal With {.Version = If(configOnly, 4, 5), .CarCode = carCode, .SettingsJournal = If(configOnly, "", IO.Path.Combine(context.UserRoot, "graphics-pending.json"))}
         Dim targets = AssetNames(journal)

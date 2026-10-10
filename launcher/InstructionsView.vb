@@ -16,7 +16,11 @@ Direct practice and Race
 Practice is solo; Race adds 1–7 AI opponents. Mixed opponents draw from all installed classes; Same class uses your car's game-defined class. Laps apply to circuits; point-to-point stages are one run. Custom events do not award career progress.
 
 Finishing
-Use Up/Down to select choices in the pause and finish menus. Restart repeats the event. Return to menus closes the game and reopens Normal Launch in the same Desktop or VR mode. Alt+F4 quits without reopening.
+Use Up/Down to select choices in the pause and finish menus. Full Replay plays the completed run from the start, then returns to the finish menu. Use F1 to pause/resume playback. Esc (keyboard) or B (Xbox controller) opens the replay pause menu; press it again or choose Continue to resume from the same point. Full Replay starts over; Exit replay returns to the finish menu. You can watch it again until restarting or leaving the event. It is unavailable if the game could not keep a complete recording. Restart repeats the event. Return to menus closes the game and reopens Normal Launch in the same Desktop or VR mode. Alt+F4 quits without reopening.
+
+Saved replays
+Open Launcher → Replays after a completed Direct practice or Race run. Save last replay keeps it in the library. Auto-save completed runs starts off; enabling it keeps every completed attempt. Otherwise the latest unsaved run is replaced when another run finishes.
+Play or Play in VR checks all recorded cars and the track before launch. Files are compressed automatically; Open folder shows their location in this installation's local DiRT2VR user-data directory. Delete removes a selected saved replay. Auto-save has no storage limit. This experimental player only supports recordings made by this installation; Normal Launch recording and replay sharing are not supported yet.
 
 Saving settings
 Save settings, then launch a new session. Quit the game normally so temporary files are restored. The background manager keeps running if you close the launcher window.
@@ -152,6 +156,8 @@ When a test card is shown, press Enter to type a reply, then Enter again to save
 Updates
 About shows the installed version, Stable/Experimental channel, build and GitHub update controls. Include experimental releases is off by default and saved immediately; it controls both startup notices and manual checks. Enabling it includes newer experimental and normal releases. Disabling it does not replace the installed build. Experimental builds offer Return to stable…: this asks before installing the latest normal release, even if older, and disables experimental updates. Launcher settings and bindings are backed up under updates/rollback-preferences in the installation user-data folder; your career is not reset. Close the game before updating. Downloads are verified before setup opens; settings are retained. Windows may ask for administrator approval. ZIP installs become installer-managed when updated through setup.
 
+The launcher checks temporary files at most daily while idle: older installers (keeping the newest and recent downloads), abandoned track builds older than one day, and logs older than 30 days (keeping the latest 10 sessions). Settings, bindings, profiles, presets, installed tracks and recovery backups are kept. Cleanup skips active operations and never asks for administrator approval.
+
 Documentation
 The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages.",
         "3D beyond the cockpit (Experimental)
@@ -162,7 +168,10 @@ Menus, dialogs and movies still use the virtual screen. Replay 3D has its own sw
 3D chase replays (Experimental)
 Enable Advanced → Graphics → 3D chase replays, save and relaunch VR. This separate switch adds stereo depth and head tracking to replay chase views, including paused playback. Cinematic replay angles remain flat. Toggle VR returns to the flat screen.
 
-Enable Controls → General → Chase camera → Free look for replay orbit and zoom on desktop or in VR. The existing mouse/stick settings apply. Paused playback holds your angle; game menus and loss of focus suspend input. Select views with the game's replay camera next/previous controls (default F8/F7 or Xbox RB/LB), not the driving Change camera action. Start an event through Normal Launch for the game's replays; direct-launch replay availability is unchanged.
+Enable Controls → General → Chase camera → Free look for replay orbit and zoom on desktop or in VR. The existing mouse/stick settings apply. Paused playback holds your angle; game menus and loss of focus suspend input. Select views with the game's replay camera next/previous controls (default F8/F7 or Xbox RB/LB), not the driving Change camera action. Normal Launch retains the game's replays. Full Replay in the direct-launch finish menu uses the same 3D chase replays option.
+
+Background play (Experimental)
+Advanced → Gameplay → Keep running when unfocused targets automatic pauses when switching to another app, including replays. Off by default; save and relaunch. You can still pause manually. Use windowed or desktop borderless mode; exclusive fullscreen may suspend rendering when minimized. Desktop replay playback and manual pause have been checked; driving and VR background behavior still need acceptance.
 
 Experimental rewind
 Advanced → Frame-rate-independent rewind → On (Experimental) is off by default. Save settings and launch a new session to apply it. It works in single-player Normal Launch, Direct practice and Race, for desktop and VR. LAN ignores this setting. Desktop play requires DirectX 11.

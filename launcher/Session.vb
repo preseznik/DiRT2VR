@@ -31,14 +31,27 @@ Public Class Session
     Private ReadOnly postProcessTest As String = "normal"
     Private profile As ProfileSession
     Private filterSnapshot As String
-    Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing)
+    Private ReadOnly replayId As String
+    Private preparedReplay As PreparedReplay
+    Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing, Optional savedReplayId As String = Nothing)
         context = value : settings = VrSettings.Load(context)
         Dim custom = CustomTrackPreferences.Load(context)
-        If custom.Enabled Then
+        If custom.Enabled AndAlso savedReplayId Is Nothing Then
             If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM tracks off before starting LAN multiplayer.")
             customTrack = True
             custom.ApplyTo(settings)
             postProcessTest = If(custom.ForPack(custom.SelectedPackId).PostProcessTest, ButtermilkPostProcess.DefaultProfile(settings.TrackId))
+        End If
+        replayId = savedReplayId
+        If replayId IsNot Nothing Then
+            Dim library As New ReplayLibrary(context)
+            Dim replay = library.RequireOwned(library.PathFor(replayId))
+            settings.TrackId = replay.Content.TrackId : settings.CarCode = replay.Content.Cars(0)
+            settings.Opponents = replay.EventConfig().Root.Element("track").Elements("car").Sum(Function(c) CInt(c.Attribute("number"))) - 1
+            settings.LaunchMode = If(settings.Opponents = 0, "practice", "race")
+            settings.Laps = replay.Laps
+            customTrack = CustomTracks.TrackPacks.IsLayout(settings.TrackId)
+            postProcessTest = ButtermilkPostProcess.DefaultProfile(settings.TrackId)
         End If
         driving = DrivingControls.Load(context)
         If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
@@ -60,6 +73,12 @@ Public Class Session
             If Not held Then Throw New IOException("A DiRT2VR session or recovery is already running.")
             Dim graphics As New GraphicsTransaction(context)
             Try
+                If replayId IsNot Nothing Then
+                    Status("Checking", "Checking replay cars and track")
+                    Dim library As New ReplayLibrary(context)
+                    preparedReplay = library.Prepare(library.PathFor(replayId))
+                    Files.SaveJson(IO.Path.Combine(preparedReplay.Folder, "event.json"), preparedReplay.Manifest)
+                End If
                 profile = New ProfileSession(context)
                 filterSnapshot = FilterLaunch.Create(context, settings, vr AndAlso (settings.LaunchMode <> "lan" OrElse lanVr))
                 Do
@@ -111,7 +130,7 @@ Public Class Session
                         DirectRaceDifficulty.Configure(start, settings)
                         CarSetup.Configure(start, settings)
                         If settings.DirectMode Then
-                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest)
+                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId())
                             start.ArgumentList.Add("-demo")
                             start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                             start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
@@ -170,6 +189,11 @@ Public Class Session
                 Status("Failed", message, ex)
                 Throw New IOException(message, ex)
             Finally
+                If preparedReplay IsNot Nothing AndAlso Not context.GameRunning() Then
+                    Try : preparedReplay.Dispose()
+                    Catch cleanup As Exception : Console.Error.WriteLine("Replay temporary files retained: " & cleanup.Message)
+                    End Try
+                End If
                 If filterSnapshot IsNot Nothing Then
                     Try
                         File.Delete(FilterLaunch.SnapshotPath(context, filterSnapshot))
@@ -190,11 +214,13 @@ Public Class Session
         Next
         start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"
         start.Environment("DIRT2VR_CAPTURE_REQUESTS") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
+        start.Environment("DIRT2VR_TEST_MESSAGES") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
         start.Environment("DIRT2VR_WATER_REFLECTIONS") = "1"
         start.Environment("DIRT2VR_SHADOWS") = If(settings.VrShadows, "1", "0")
         start.Environment("DIRT2VR_SHADOW_DETAIL_DISTANCE") = settings.VrShadowDetailDistance.ToString(Globalization.CultureInfo.InvariantCulture)
         SteeringAnimationLaunch.Configure(start, settings)
         ChaseCameraLaunch.Configure(start, settings)
+        BackgroundPlayLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_EXTENDED_VIEWS") = If(settings.VrExtendedViews, "1", "0")
         ReplayCameraLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
@@ -215,7 +241,8 @@ Public Class Session
         FlashbackLaunch.RequireDesktopRenderer(context, settings)
         SteeringAnimationLaunch.RequireDesktopRenderer(context, settings)
         ChaseCameraLaunch.RequireDesktopRenderer(context, settings)
-        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook Then Worker.Invoke(context, "setup")
+        BackgroundPlayLaunch.RequireDesktopRenderer(context, settings)
+        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused Then Worker.Invoke(context, "setup")
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
@@ -237,7 +264,7 @@ Public Class Session
             If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice and Race require the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
             Worker.Invoke(context, "setup")
             Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
-            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest)
+            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId())
             config = New AssetTransaction(context).PracticeConfig()
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
@@ -252,9 +279,12 @@ Public Class Session
         profile.ConfirmStartup(False)
         Return returnToMenus
     End Function
+    Private Function PreparedReplayId() As String
+        Return If(settings.DirectMode AndAlso preparedReplay IsNot Nothing, IO.Path.GetFileName(preparedReplay?.Folder), Nothing)
+    End Function
     Private Sub PrepareMenus()
         If settings.DirectMode Then
-            Worker.Invoke(context, If(settings.SkipStartupMovies, "prepare-direct-menus-movies", "prepare-direct-menus"))
+            Worker.Invoke(context, If(settings.SkipStartupMovies, "prepare-direct-menus-movies", "prepare-direct-menus"), replayId:=PreparedReplayId())
         ElseIf settings.SkipStartupMovies AndAlso settings.LaunchMode <> "lan" Then
             Worker.Invoke(context, "prepare-movies")
         End If
@@ -284,10 +314,11 @@ Public Class Session
         FlashbackLaunch.Configure(start, settings)
         SteeringAnimationLaunch.Configure(start, settings)
         ChaseCameraLaunch.Configure(start, settings)
+        BackgroundPlayLaunch.Configure(start, settings)
         Dim focus As New StartupFocus(context)
         ReplayCameraLaunch.Configure(start, settings)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
-        Using returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
+        Using recording As New ReplaySession(context, settings, start, If(settings.DirectMode, preparedReplay, Nothing)), returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
             lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode)
             Using child = Process.Start(start)
                 Status("Running")
@@ -298,6 +329,10 @@ Public Class Session
                 Do
                     Application.DoEvents() : poll?.Invoke()
                     If DateTime.UtcNow >= nextProcessCheck Then
+                        recording.Poll()
+                        If recording.Warning <> "" AndAlso displayWarning <> recording.Warning Then
+                            displayWarning = recording.Warning : Status("Running")
+                        End If
                         lap.Poll()
                         resolution.Poll()
                         borderless?.Poll()
@@ -320,6 +355,8 @@ Public Class Session
                 Loop
                 If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")
             End Using
+            recording.Complete()
+            If recording.Warning <> "" Then displayWarning = recording.Warning
             If returnChannel.ProfileLoadFailed Then Throw New IOException("The career could not be loaded for this direct event, or sign-in was canceled. Use Normal Launch to sign in to your usual GFWL profile and confirm it loads. No replacement career was created.")
             Return returnChannel.Requested
         End Using

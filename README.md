@@ -6,7 +6,7 @@ Open **Assets** on the release page and choose the installer or ZIP. Choose a re
 
 A desktop and VR launcher for **DiRT 2**, with custom tracks, visual presets and experimental stereoscopic VR with head tracking. Game menus use a virtual screen in VR.
 
-Tested with **Quest 3 through SteamVR**, primarily in the Subaru Impreza STI. Xbox-compatible controller binding, launching, Toggle VR and Recenter have been tested in game. Other headsets and wheel button bindings need testing; **PSVR2, Logitech and Fanatec hardware are not yet verified**. This remains an experimental build.
+Tested with **Quest 3 through SteamVR**. Xbox-compatible controller binding, launching, Toggle VR and Recenter have been tested in game. Other headsets and wheel button bindings need testing; **PSVR2, Logitech and Fanatec hardware are not yet verified**. This remains an experimental build.
 
 This mod will remain free forever. If you'd like to support the work, you can [support me on Patreon](https://www.patreon.com/cw/bohloney).
 
@@ -63,7 +63,7 @@ Regular Launch needs no SteamVR or headset and uses your desktop graphics prefer
 1. Start SteamVR and connect your headset.
 2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Normal Launch** on **Launcher**, and select **Launch VR**.
 3. Navigate the original game on the virtual screen using your usual controls.
-4. Enter a **Subaru Impreza STI** event for the tested setup. VR launches select cockpit view automatically.
+4. Enter an event with your chosen car. VR launches select cockpit view automatically.
 5. Cockpit VR starts enabled. Sit facing forward and press **F10** (or Recenter). Recenter resets your seated position and horizontal direction without baking head tilt into the view; saved seat adjustments stay unchanged. **F9** (Toggle VR) switches between cockpit VR and the flat screen; keep the game window focused.
 6. Pause/options menus automatically use the virtual screen; resuming restores your selected cockpit VR mode. Use Toggle VR if another menu, replay or flashback looks incorrect.
 7. Quit normally. The background session manager restores temporary files when the game exits. You may close the settings window while playing.
@@ -182,9 +182,17 @@ During a guided headset test, a message card may appear below your forward view.
 
 On **Launcher**, choose **Direct practice**, an **Event** category, a **Track**, and a **Car**, then **Launch VR**. Event filters the track list by discipline; this is solo practice, not a career event. The launcher lists installed routes and cars from the supported game's catalog.
 
-Direct practice bypasses the trailer menus and loads a player-driven car. Launch VR selects the cockpit and enables VR automatically; regular Launch retains your desktop camera. At the finish, choose **Restart** or **Return to menus**. The pause menu also provides Continue, Restart and Return to menus. Use **Up/Down** to select these vertical menu choices. **Return to menus closes the game and automatically reopens Normal Launch**, keeping Desktop or VR mode; expect another loading sequence. Your saved launcher selections stay unchanged. Alt+F4 quits without reopening. Saved practice selections also work with `Start-DiRT2VR.cmd`.
+Direct practice bypasses the trailer menus and loads a player-driven car. Launch VR selects the cockpit and enables VR automatically; regular Launch retains your desktop camera. At the finish, choose **Full Replay** to watch the completed run from the start. Use **F1** to pause/resume playback. **Esc** or controller **B** opens the replay pause menu; press it again or choose **Continue** to resume from the same point. Choose **Full Replay** to start over, or **Exit replay** to return to the finish menu. Playback also returns there when it ends. You can watch again until restarting or leaving the event. Full Replay is unavailable if the game could not keep a complete recording. In VR, the existing **3D chase replays** option applies. The pause menu also provides Continue, Restart and Return to menus. Use **Up/Down** to select these vertical menu choices. **Return to menus closes the game and automatically reopens Normal Launch**, keeping Desktop or VR mode; expect another loading sequence. Your saved launcher selections stay unchanged. Alt+F4 quits without reopening. Saved practice selections also work with `Start-DiRT2VR.cmd`.
 
-Desktop steering/throttle, pause/resume and finishing have been confirmed in the Subaru at Baja. The packaged direct-practice route in VR, other cars and broader stage coverage still need testing.
+### Saved replays (Experimental)
+
+Open **Launcher → Replays** after finishing a Direct practice or Race run, including CUSTOM tracks. **Save last replay** keeps the latest completed run. Turn on **Auto-save completed runs** to keep every completed attempt; it starts off. Unfinished runs cannot be saved.
+
+Choose a recording and select **Play** or **Play in VR**. The launcher checks the recorded cars and track before starting; missing or incompatible content is reported without changing game files. Replay controls are the same as Full Replay, including Esc/Continue and chase orbit/zoom. VR chase views use **Advanced → Graphics → 3D chase replays**; cinematic angles stay on the virtual screen.
+
+Recordings are compressed automatically and unpacked temporarily for playback. **Open folder** opens this installation's `Replays` folder in your local DiRT2VR user-data directory. Tested recordings of about one minute took 43–58 MB at high frame rates; size varies with frame rate, duration and the race. Auto-save has no storage limit, so use **Delete…** to remove recordings you no longer want. When auto-save is off, each completed run replaces the unsaved last replay; recordings already saved in the library remain.
+
+This first experimental player supports recordings made by the same installation. Replay sharing/import and recordings from Normal Launch are not supported yet. Careers are unchanged.
 
 ### Race (experimental)
 
@@ -200,13 +208,13 @@ AI opponents use distinct stock driver identities; their names do not depend on 
 
 Use **Laps (circuits)** to choose 1–20 laps in either **Race** or **Direct practice**. On point-to-point stages this control is disabled and the session is one stage run; your saved circuit lap preference is retained. The three-lap HUD and continuation into lap 2 have been confirmed on desktop at Baja – Ensenada Sprint. Other counts, complete multi-lap finishes and VR still need testing.
 
-Race uses the same finish and pause choices as practice. It stops at the finish menu rather than automatically repeating. Return to menus restarts the game in Normal Launch; this return path has been confirmed on desktop, while headset validation is pending. **Alt+F4 quits.** Custom races do not award career progress or use the normal results flow; use Normal Launch for full career events. Desktop player control and seven AI opponents have been confirmed at Baja in the Subaru. Mixed opponent models also passed a desktop race check. Same-class gameplay and crowded-grid VR performance still need testing.
+Race uses the same finish and pause choices as practice. It stops at the finish menu rather than automatically repeating. Return to menus restarts the game in Normal Launch; this return path has been confirmed on desktop, while headset validation is pending. **Alt+F4 quits.** Custom races do not award career progress or use the normal results flow; use Normal Launch for full career events. Desktop player control and seven AI opponents have been confirmed at Baja. Mixed opponent models also passed a desktop race check. Same-class gameplay and crowded-grid VR performance still need testing.
 
 ### Advanced
 
 **Frame-rate-independent rewind → On (Experimental)** is off by default. It preserves more rewind history at high FPS without limiting gameplay frame rate. Save and relaunch to apply it to single-player Normal Launch, Practice or Race, on desktop or in VR; LAN ignores it. Desktop play requires DX11. Diagnostic logging is not required.
 
-The initial Subaru Group N / Croatia — Velebit Adventure desktop test retained 10 seconds of history instead of about 5 seconds at roughly 120 FPS. Other events and VR still need testing. If rewind or resuming behaves incorrectly, turn it off and relaunch. See **? → Instructions → Advanced**.
+The initial desktop test retained 10 seconds of history instead of about 5 seconds at roughly 120 FPS. Other events and VR still need testing. If rewind or resuming behaves incorrectly, turn it off and relaunch. See **? → Instructions → Advanced**.
 
 ### Graphics
 
@@ -326,7 +334,7 @@ Updates require a published [GitHub Release](https://github.com/preseznik/DiRT2V
 
 ### Restore or remove
 
-VR sessions temporarily adjust the Subaru camera (or the selected car's camera for direct practice), motion-blur asset and selected graphics settings. Direct practice and Race also temporarily adjust the game's menu definitions and create `DiRT2VR/p.xml`. Originals and recovery journals are saved before changes. Normal exits and detected game crashes trigger restoration; Return to menus restores the direct-session files before reopening the game. Unrelated graphics-settings edits are retained. An existing `DiRT2VR/p.xml` is preserved and blocks preparation.
+VR sessions temporarily adjust camera assets, motion-blur asset and selected graphics settings. Direct practice and Race also temporarily adjust the game's menu definitions and create `DiRT2VR/p.xml`. Originals and recovery journals are saved before changes. Normal exits and detected game crashes trigger restoration; Return to menus restores the direct-session files before reopening the game. Unrelated graphics-settings edits are retained. An existing `DiRT2VR/p.xml` is preserved and blocks preparation.
 
 After a power failure or forced session-manager termination, close any remaining DiRT 2 processes and choose **Restore original files**. A new launch also checks for pending recovery. Do not delete `DiRT2VR/backups` or the corresponding AppData folder while recovery is pending.
 
@@ -348,7 +356,7 @@ LAN support is included in the launcher package; no separate test kit or PowerSh
 4. On the other PC, select the host in the LAN server list and click **JOIN**, then choose **Desktop** or **VR**. Discovery refreshes automatically while this tab is open; **Refresh** starts another scan. JOIN opens LAN play and adds the selected PC to the game's network peers. Complete any startup/profile prompts, then finish joining through the game's **Multiplayer / LAN** menu. It does not enter the lobby automatically.
 5. Quit normally after playing. The background launcher restores the original `xlive.dll`, even if you closed its settings window.
 
-HOST and JOIN ask for the display mode every time. Desktop requires no headset. For VR, start SteamVR and connect your headset first; the launcher uses your saved Graphics and Controls settings. Menus use the virtual screen; races start in cockpit VR automatically. Use Recenter when seated. The Subaru STI remains the tested single-player cockpit; multiplayer headset acceptance is pending. VR graphics and asset changes are restored alongside the LAN DLL after play.
+HOST and JOIN ask for the display mode every time. Desktop requires no headset. For VR, start SteamVR and connect your headset first; the launcher uses your saved Graphics and Controls settings. Menus use the virtual screen; races start in cockpit VR automatically. Use Recenter when seated. Multiplayer headset acceptance is pending. VR graphics and asset changes are restored alongside the LAN DLL after play.
 
 The game reads and saves the same career and graphics settings in both modes. Use the game's **Save Profile** action to explicitly save changes before quitting; the launcher does not force an autosave. LAN connection settings and this PC's network identity live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\lan`; do not copy that folder between players. The launcher does not copy, move or rewrite career files.
 
@@ -368,7 +376,6 @@ Older test-kit profiles and imported copies are not listed in the Profile tab. T
 
 ## Limitations and troubleshooting
 
-- Game-menu launches prepare the Subaru STI camera. Direct practice prepares the selected car, but other interiors and broader stage coverage are not yet visually verified.
 - Scenery visibility and car-aligned headlights passed the reported tests; other lighting, mirrors and interiors need testing.
 - Road rubble is retained in both eyes in the tested Novigrad scene. Other stages and ground-cover variants still need testing.
 - VR reduces particles and motion blur. **Graphics → Main → VR rendering → Crowds (experimental)** enables spectators using the game's saved crowd quality; it starts off. Save and relaunch to apply. Crowds add rendering work and still need broader headset testing; this does not add spectators to custom tracks that omit them. **Shadows (experimental)** enables shadows; keep them off if brightness or performance looks wrong. Desktop crowd settings are unchanged, and temporary VR graphics changes are restored after play. Water stays visible and uses per-eye reflections in VR; the Ensenada Sprint puddle fix has been checked in Quest 3. Other tracks, reflected objects when looking behind, scenery pop-in and HUD placement still need testing.
@@ -389,6 +396,8 @@ Read-only game files are supported during camera, effects, menu and offline-prof
 
 **Report a problem:** enable diagnostic logging in **Settings**, save, and reproduce the issue. Then use **Open logs** and zip the whole relevant session folder, including `trace.log` and `dirt2vr-settings.json`. New sessions include the build, effective launcher settings, driving calibration and initial seat positions; VR traces record track/route loading destinations and player-camera cars. Loading records do not prove a race finished loading, and career series names are not captured, so still provide the series/event name, headset, steps to reproduce, and whether the problem affects cockpit VR or the virtual screen in a [GitHub issue](https://github.com/preseznik/DiRT2VR/issues). Turn logging off afterward. Logs live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\logs`. Do not upload game files or save profiles.
 
+The launcher checks its temporary files at most once a day while idle. It removes older downloaded installers (keeping the newest and any less than a day old), abandoned custom-track build folders older than a day, and diagnostic sessions older than 30 days (always keeping the latest 10). Settings, bindings, careers, filter presets, installed tracks and recovery backups are kept. Cleanup waits while a game, update, track build or recovery is active; it never asks for administrator approval. A small `cache-cleanup.json` report is kept in the installation’s AppData folder.
+
 See the [changelog](CHANGELOG.md).
 
 Third-party license notices are included in `DiRT2VR/licenses` in packaged builds. This product includes software developed by Jon Skeet and Marc Gravell. Contact skeet@pobox.com, or see https://jonskeet.uk).
@@ -403,6 +412,10 @@ Xbox controllers use the D-pad, **X** as the sideways modifier, **A** to save an
 
 **Graphics → VR cockpit** also has position sliders and a per-car reset. Positions are saved separately for each car and survive recentering. Enable **Use universal seat position** for one shared position across all cars. The car picker is disabled in this mode; sliders, reset and in-game adjustments edit the shared position. Turn it off to restore your saved per-car positions. Save settings and relaunch to change modes. The seat panel is the recommended way to adjust your view. All nine optional shortcuts—six movements, Panel sideways modifier, Panel save and Panel cancel—are under **Controls → Seat → Individual seat bindings (optional)**, collapsed by default in both styles. Expand it to assign them. Fixed panel keyboard shortcuts are read-only. Extreme offsets can reveal missing interior geometry. Panel movement, save/cancel, recenter retention, relaunch persistence and universal seat mode have passed headset checks. Physical wheel navigation and broader rendering checks with adjusted seats remain unverified.
 
+### Background play (Experimental)
+
+**Advanced → Gameplay → Keep running when unfocused** targets automatic pauses when switching to another app, including replay playback. It is off by default; save settings and relaunch to apply it. Manual pause remains available. Use windowed or desktop borderless mode: exclusive fullscreen can still suspend rendering when minimized. Desktop replay playback and manual pause have been checked. Driving and VR background behavior still need acceptance.
+
 ### 3D beyond the cockpit (Experimental)
 
 **Advanced → Graphics → 3D beyond the cockpit** is off by default. Save and relaunch VR, then use the game's Change camera control to try supported bonnet, bumper and chase views with stereo depth and head tracking. Toggle VR still returns to the virtual screen. Desktop play is unchanged.
@@ -415,4 +428,4 @@ Enable **Advanced → Graphics → 3D chase replays**, save and relaunch VR for 
 
 For orbit and zoom on desktop or in VR, enable **Controls → General → Chase camera → Free look**. The same mouse activation, sensitivity and invert settings apply. Orbit and zoom work during playback and while the replay is paused. Pausing playback holds the angle rather than returning behind the car; opening the game menu or switching away suspends input.
 
-Use the game's **replay camera next/previous** controls to choose a chase view or return to cinematic angles (default **F8/F7**, or Xbox **RB/LB**). These are the replay controls, not the driving Change camera action. Desktop and headset chase-replay checks passed; other replay angles remain outside this first stage. Start an event through **Normal Launch** to use the game's replays. Direct Practice/Race replay availability is unchanged.
+Use the game's **replay camera next/previous** controls to choose a chase view or return to cinematic angles (default **F8/F7**, or Xbox **RB/LB**). These are the replay controls, not the driving Change camera action. Choose **Full Replay** after finishing Direct Practice or Race, or play a saved recording from **Launcher → Replays**. Only chase replay cameras support 3D; cinematic angles remain on the flat screen.

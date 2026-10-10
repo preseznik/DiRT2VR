@@ -209,7 +209,9 @@ Public Class AboutForm
         If target.IsExperimental AndAlso Not UpdatePreferences.Load(context).IncludeExperimentalReleases Then Return
         SetWorking(True) : progress.Value = 0 : progress.Visible = True
         Dim downloading = True
+        Dim cacheLease As FileStream = Nothing
         Try
+            cacheLease = Await CacheCleanup.AcquireUpdateLeaseAsync(context, cancellation.Token)
             context.RequireClosed()
             status.Text = "Downloading update… Close this window to cancel."
             Dim reporter As New Progress(Of Integer)(Sub(value)
@@ -239,6 +241,7 @@ Public Class AboutForm
         Catch ex As Exception
             If Not IsDisposed Then status.Text = "Update could not start: " & ex.Message
         Finally
+            cacheLease?.Dispose()
             If Not IsDisposed Then
                 progress.Visible = False : SetWorking(False)
             End If

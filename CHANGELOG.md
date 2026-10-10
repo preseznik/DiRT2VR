@@ -6,6 +6,17 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Keep Full Replay motion smooth when frame-rate-independent rewind is enabled.
+
+- Add Launcher → Main / Replays, with Save last replay, optional auto-save, compressed storage and desktop/VR playback. Check the recorded cars and track before launching. This experimental library supports locally recorded direct-launch sessions; replay sharing is not supported yet.
+
+- Automatically clear old update installers, abandoned track-build files and older diagnostic logs while the launcher is idle. Keep recent downloads, the latest log sessions, user settings and recovery backups.
+
+- Remove outdated Subaru-only guidance from the setup and cockpit instructions.
+
+- Watch a completed Direct practice or Race run with Full Replay. Esc or controller B opens a replay pause menu; press again or choose Continue to resume from the same point. Full Replay starts over; Exit replay returns to the finish menu. Incomplete recordings are unavailable.
+- Add an experimental Keep running when unfocused option under Advanced → Gameplay. It is off by default and targets automatic Alt+Tab pauses; manual pause remains available. Desktop replay playback and manual pause checked; driving and VR background behavior remain unverified.
+
 ## 0.17.79 — 2026-10-09 — Experimental
 
 - Add a Vehicle setup popup for stock and CUSTOM direct launches, with the game’s five-position gear ratio, downforce, suspension, ride height, differential and brake-bias controls. Save one setup for Practice and Race on desktop or in VR, or leave the game’s setup in use.
