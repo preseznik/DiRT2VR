@@ -34,6 +34,8 @@ Public Class CustomTrackPanel
     Private ReadOnly lightingTestBox As New VerticalStack
     Private ReadOnly modeHint As New Label With {.Name = "CustomModeHint", .AutoSize = True}
     Private ReadOnly opponentHint As New Label With {.AutoSize = False}
+    Private ReadOnly rebuildNotice As New TrackStatusLabel With {.Name = "CustomTrackRebuildRequired", .AutoSize = True, .Font = New Font("Segoe UI", 12, FontStyle.Bold), .Padding = New Padding(8), .UseMnemonic = False}
+    Private ReadOnly rebuildCard As New TrackBuildStack With {.Margin = New Padding(0)}
     Private ReadOnly installButton As New Button With {.Text = "Build and install…", .Name = "BuildCustomTrack", .AutoSize = True}
     Private ReadOnly manage As New Button With {.Text = "Manage…", .Name = "ManageCustomTrack", .AutoSize = True}
     Private ReadOnly cancelButton As New Button With {.Text = "Stop build", .Name = "CancelCustomTrack", .AutoSize = True}
@@ -91,6 +93,8 @@ Public Class CustomTrackPanel
         context = value : preferences = CustomTrackPreferences.Load(context)
         verification = New CustomTrackVerificationCache(context.GameRoot)
         Name = "CustomTrackPanel" : detail = browser.Detail
+        rebuildCard.Controls.Add(rebuildNotice)
+        AddHandler Disposed, Sub() rebuildCard.Dispose()
         For Each choice In {layouts, launchMode, cars, opponentCars, raceDifficulty, browser.Picker, lightingTest}
             StyleChoice(choice, Me)
         Next
@@ -296,15 +300,33 @@ Public Class CustomTrackPanel
         If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
         If pointToPoint Then modeHint.Text = "Desktop and VR · One 10.4 km run · VR and AI races are experimental · LAN unavailable"
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
-        If installationValid AndAlso chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id) Then modeHint.Text = "This layout is not installed. Choose Manage → Rebuild from source."
         raceDifficulty.Enabled = race
         opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race
         Dim vehicle = TryCast(cars.SelectedItem, PracticeCar)
-        opponentHint.Text = If(race AndAlso installationValid AndAlso Not raceReady, "Choose Manage → Rebuild from source to update AI driving paths before racing.", If(Not race, "Solo practice. Your race settings are kept for later.", If(opponentCars.SelectedIndex = 2,
-            "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver."))))
+        opponentHint.Text = If(Not race, "Solo practice. Your race settings are kept for later.", If(opponentCars.SelectedIndex = 2,
+            "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
+        RefreshRebuildNotice()
         If Not loading Then RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
     End Sub
+    Private Sub RefreshRebuildNotice()
+        Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
+        Dim missingLayout = chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id)
+        Dim required = installationValid AndAlso Not working AndAlso chosen IsNot Nothing AndAlso
+            (missingLayout OrElse (launchMode.SelectedIndex = 1 AndAlso Not raceReady))
+        rebuildNotice.Pulse = required
+        If required Then
+            rebuildNotice.Text = "Rebuild required — " & If(missingLayout, "layout not installed", "race unavailable") & vbCrLf &
+                "Choose Manage → Rebuild from source" & If(missingLayout, " to install this layout.", " to update AI driving paths.")
+            If Not detail.Controls.Contains(rebuildCard) Then
+                detail.Controls.Add(rebuildCard)
+                detail.Controls.SetChildIndex(rebuildCard, detail.Controls.GetChildIndex(body))
+            End If
+        Else
+            detail.Controls.Remove(rebuildCard)
+        End If
+    End Sub
     Private Sub RenderState()
+        RefreshRebuildNotice()
         Dim content As Control = If(Not currentPack.Available, CType(unavailable, Control), If(installationValid, CType(setup, Control), installCard))
         If Not body.Controls.Contains(content) Then
             body.Controls.Clear() : body.Controls.Add(content)

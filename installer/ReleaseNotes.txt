@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Required custom-track rebuilds now appear above the launch settings in bold green text with a gentle pulse, making it clear why launching is unavailable.
+
 New: Save completed Direct practice and Race replays in Launcher → Replays. Play them later on desktop or in VR, or turn on Auto-save completed runs. Files are compressed, and the launcher checks that the recorded cars and track are available before starting playback. Saved replays currently work only in the installation that recorded them; sharing is not supported yet.
 
 Full Replay is now available in the finish menu. Watch from the start, pause with Esc or controller B, and resume with the same button or Continue. Chase-camera orbit and zoom remain available. VR uses the existing 3D chase replays setting; cinematic angles stay on the flat screen.
