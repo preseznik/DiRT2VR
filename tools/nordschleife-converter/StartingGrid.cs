@@ -8,19 +8,19 @@ internal static class StartingGrid
     internal const int Capacity = 8;
     internal const float ApproachMetres = 40;
 
-    internal static Matrix4x4[] Positions(Scene scene)
+    internal static Matrix4x4[] Positions(Scene scene, bool leftColumn = false)
     {
         var start = scene.Gates[0];
         var tangent = Vector3.Normalize(new Vector3(start.Tangent.X, 0, start.Tangent.Z));
         var left = new Vector3(tangent.Z, 0, -tangent.X);
         var right = -left;
-        if (scene.FullCourse && (start.Left < 1.5f || start.Right < 4.7f))
+        if (scene.FullCourse && (start.Left < (leftColumn ? 4.7f : 1.5f) || start.Right < (leftColumn ? 1.5f : 4.7f)))
             throw new InvalidDataException("The starting road is too narrow for an eight-car grid.");
         return Enumerable.Range(0, scene.FullCourse ? Capacity : 1).Select(i =>
         {
-            // Keep the accepted solo position; a parallel right-hand column stays
-            // on asphalt where the road curves behind the timing line.
-            float lateral = scene.FullCourse && i % 2 != 0 ? -3.2f : 0;
+            // Keep the accepted solo position and put the parallel column on the
+            // selected side. Verify every footprint against the original asphalt.
+            float lateral = scene.FullCourse && i % 2 != 0 ? (leftColumn ? 3.2f : -3.2f) : 0;
             var position = start.Position - tangent * (10 + i / 2 * 6) + left * lateral;
             position.Y = scene.RoadHeight(position) + .6f;
             // Verify the car footprint has original asphalt beneath it, not just its centre.
@@ -33,10 +33,10 @@ internal static class StartingGrid
         }).ToArray();
     }
 
-    internal static void Write(Scene scene, string donor, string output)
+    internal static void Write(Scene scene, string donor, string output, bool leftColumn = false)
     {
         var grid = Files.Pssg(Path.Combine(donor, "route_1/grids.pssg"));
-        var positions = Positions(scene);
+        var positions = Positions(scene, leftColumn);
         var standing = grid.Elements<PssgNode>().Where(n => n.Id.Length == 7 && n.Id.StartsWith("slot_", StringComparison.Ordinal)).ToArray();
         if (standing.Length != Capacity || Enumerable.Range(0, Capacity).Any(i => standing.All(n => n.Id != $"slot_{i:00}")))
             throw new InvalidDataException("Unsupported donor standing grid.");
@@ -51,7 +51,7 @@ internal static class StartingGrid
         Files.Save(grid, Path.Combine(output, "grids.pssg"));
         Files.Json(Path.Combine(output, "grid.json"), new
         {
-            Capacity = positions.Length, ClearanceMetres = .6f, RowSpacingMetres = 6, LaneSpacingMetres = 3.2f,
+            Capacity = positions.Length, ClearanceMetres = .6f, RowSpacingMetres = 6, LaneSpacingMetres = 3.2f, SecondColumn = leftColumn ? "left" : "right",
             Slots = positions.Select((p, i) => new { Id = $"slot_{i:00}", Position = new[] { p.M41, p.M42, p.M43 } }),
             OriginalRoadFootprintsVerified = scene.FullCourse, RuntimeValidated = false
         });

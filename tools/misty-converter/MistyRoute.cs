@@ -93,8 +93,7 @@ internal static class MistyRoute
         Files.Xml(new XDocument(new XElement("progress_track_data",new XAttribute("exporter_version","3.0.0"),new XElement("track",new XAttribute("type",scene.FullCourse?"circuit":"point_to_point"),new XAttribute("total_distance",F(scene.FullCourse?scene.Length:lineGates[^1].Distance+.01f))),
             new XElement("routes",new XAttribute("num_routes",1),splits),progress,points)),Path.Combine(output,"progress_track.xml"));
         Files.Json(Path.Combine(output,"progress.json"),new{DenseSourceLinePoints=denseLinePoints,CentreLinePoints=lineGates.Length,PointLineBudget=ProgressGates.PointLineBudget,AiGates=aiGates.Length,AiGateBudget=ProgressGates.AiGateBudget,ResetGates=scene.Gates.Length,ProgressGates=crossingGates.Length,NativeProgressGateLimit=ProgressGates.NativeLimit,ApproachMetres=leadIn,PointPaddingMetres=pointPadding,RunoutMetres=scene.FullCourse?0:routeGates[^1].Distance-scene.Length-leadIn-pointPadding,StartGate=scene.FullCourse?0:1,StartSplit="finish",DemoLapInitialization=true,FinishGate=scene.FullCourse?0:scene.Gates.Length,TimingGates=splitGates.Where(s=>s.Item2=="time").Select(s=>s.Item1),CheckpointSpacingMetres=scene.FullCourse?scene.Length/9:0,OneLapTour=false,FullCourse=scene.FullCourse,RuntimeValidated=false});
-        var solo=new Scene {Gates=scene.Gates};solo.Collision.AddRange(scene.Collision);
-        StartingGrid.Write(solo,donor,output);
+        StartingGrid.Write(scene,donor,output,leftColumn:true);
         using(var input=File.OpenRead(Path.Combine(donor,"route_1/ai_vehicle_track.xml")))
         {
             var vehicle=new XmlFile(input);foreach(System.Xml.XmlElement brake in vehicle.Document.SelectNodes("//brake_lines")!){brake.RemoveAll();brake.SetAttribute("num_brake_lines","0");}

@@ -41,7 +41,7 @@ internal static class MistyBuild
     foreach(var (path,hash) in scene.Inputs)if(Files.Hash(path)!=hash)throw new InvalidDataException("Changed source: "+path);
     Files.Json(Path.Combine(output,"inputs.json"),scene.Inputs);
     Files.Json(Path.Combine(output,"collision-materials.json"),scene.CollisionMappings);
-    Files.Json(Path.Combine(output,"segment.json"),new{Schema=1,SourceLayout="rt_misty_loch/normal",LengthMetres=scene.Length,TranslationOnly=new[]{scene.Origin.X,scene.Origin.Y,scene.Origin.Z},DrivingGates=scene.Gates.Length,SurfaceTriangles=scene.Surfaces,RuntimeValidated=false,DistributionReady=false,FullCourse=fullCourse,SupportedMode="desktop-solo",NextGate="Native desktop rendering, complete lap, timing/restart, barrier contact and off-road recovery"});
+    Files.Json(Path.Combine(output,"segment.json"),new{Schema=1,SourceLayout="rt_misty_loch/normal",LengthMetres=scene.Length,TranslationOnly=new[]{scene.Origin.X,scene.Origin.Y,scene.Origin.Z},DrivingGates=scene.Gates.Length,SurfaceTriangles=scene.Surfaces,RuntimeValidated=false,DistributionReady=false,FullCourse=fullCourse,SupportedModes=new[]{"desktop-solo","vr-solo","desktop-race","vr-race"},NextGate="Native desktop and VR rendering, complete races, timing/restart and recovery"});
     if(fullCourse)Files.Json(Path.Combine(output,"full-audit.json"),new{Passed=true,TerrainTiles=after.Length,LengthMetres=scene.Length,SingleFinishIdentity=true,RuntimeValidated=false});
     var assets=Directory.GetFiles(output,"*",SearchOption.AllDirectories).Where(p=>Path.GetExtension(p) is ".pssg" or ".xml" or ".cqtc" or ".vis" or ".jpk" or ".ens" or ".bin" or ".lng")
         .ToDictionary(p=>Path.GetRelativePath(output,p).Replace('\\','/'),Files.Hash);

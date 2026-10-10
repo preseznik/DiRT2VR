@@ -6,6 +6,7 @@ using EgoEngineLibrary.Archive.Jpk;
 using EgoEngineLibrary.Formats.TrackQuadTree;
 using EgoEngineLibrary.Formats.TrackQuadTree.Static;
 using EgoEngineLibrary.Xml;
+using EgoEngineLibrary.Graphics.Pssg.Elements;
 
 internal static class MistyAudit
 {
@@ -57,10 +58,24 @@ internal static class MistyAudit
             Files.Json(Path.Combine(output,"unsupported-road-samples.json"),unsupported);
             throw new InvalidDataException($"{unsupported.Count} samples lack asphalt; see unsupported-road-samples.json.");
         }
-        // Query actual decoded asphalt under all four corners of the single-car spawn footprint.
-        var start=source.Gates[0];var forward=Vector3.Normalize(new Vector3(start.Tangent.X,0,start.Tangent.Z));
-        var sideways=new Vector3(forward.Z,0,-forward.X);var spawn=start.Position-forward*10;
-        foreach(int x in new[]{-1,1})foreach(int z in new[]{-1,1})decoded.RoadHeight(spawn+forward*(z*2.5f)+sideways*(x*1.2f));
+        // Read the emitted grid and independently verify each car against decoded collision.
+        var grid=Files.Pssg(Path.Combine(output,"grids.pssg"));
+        var slots=grid.Elements<PssgNode>().Where(n=>n.Id.Length==7&&n.Id.StartsWith("slot_",StringComparison.Ordinal)).OrderBy(n=>n.Id).ToArray();
+        if(slots.Length!=StartingGrid.Capacity)throw new InvalidDataException("Incomplete starting grid.");
+        int footprintCorners=0;
+        for(int i=0;i<slots.Length;i++)
+        {
+            if(slots[i].Id!=$"slot_{i:00}")throw new InvalidDataException("Unexpected starting slot.");
+            var matrix=slots[i].Transform.Transform;var spawn=matrix.Translation;
+            if(MathF.Abs(spawn.Y-decoded.RoadHeight(spawn)-.6f)>.03f)throw new InvalidDataException("Incorrect starting grid clearance.");
+            var forward=new Vector3(matrix.M31,matrix.M32,matrix.M33);var sideways=new Vector3(matrix.M11,matrix.M12,matrix.M13);
+            foreach(int x in new[]{-1,1})foreach(int z in new[]{-1,1})
+            {
+                decoded.RoadHeight(spawn+forward*(z*2.5f)+sideways*(x*1.2f));footprintCorners++;
+            }
+            if(source.FullCourse)for(int j=0;j<i;j++)
+                if(Vector3.Distance(spawn,slots[j].Transform.Transform.Translation)<3)throw new InvalidDataException("Starting cars overlap.");
+        }
         XDocument Xml(string file){using var s=File.OpenRead(Path.Combine(output,file));return XDocument.Parse(new XmlFile(s).Document.OuterXml);}
         var progress=Xml("progress_track.xml");var ai=Xml("ai_track.xml");
         var gates=progress.Descendants("gate").ToDictionary(g=>(int)g.Attribute("id")!);
@@ -83,6 +98,6 @@ internal static class MistyAudit
         var recovery=new RouteRecovery(decoded.Collision);var clearance=Vector3.UnitY*6;
         int unsafeFaces=reset.Count(t=>MathF.Max(t.Position0.Y,MathF.Max(t.Position1.Y,t.Position2.Y))>recovery.Floor(t.Position0+clearance,t.Position1+clearance,t.Position2+clearance,t.Position2+clearance)+.03f);
         if(unsafeFaces!=0)throw new InvalidDataException("Recovery planes intersect original road clearance.");
-        Files.Json(Path.Combine(output,"prototype-audit.json"),new{Passed=true,DecodedSurfaceSupportSamples=samples.Count,AllCentreSamplesOnAsphalt=true,OriginalRoadEdgeSamples=sourceEdges,MaximumSplineHeightDifferenceMetres=maxHeight,SpawnFootprintCorners=4,ProgressGates=gates.Count,TimingCheckpoints=checkpoints,FinishMetres=finish,RunoutMetres=source.FullCourse?0:source.RunoutGates[^1].Distance-source.Length,UnsafeResetFaces=unsafeFaces,CollisionChunks=jpk.Entries.Count-1,FullCourse=source.FullCourse,RuntimeValidated=false,Samples=samples});
+        Files.Json(Path.Combine(output,"prototype-audit.json"),new{Passed=true,DecodedSurfaceSupportSamples=samples.Count,AllCentreSamplesOnAsphalt=true,OriginalRoadEdgeSamples=sourceEdges,MaximumSplineHeightDifferenceMetres=maxHeight,StartingSlots=slots.Length,SpawnFootprintCorners=footprintCorners,ProgressGates=gates.Count,TimingCheckpoints=checkpoints,FinishMetres=finish,RunoutMetres=source.FullCourse?0:source.RunoutGates[^1].Distance-source.Length,UnsafeResetFaces=unsafeFaces,CollisionChunks=jpk.Entries.Count-1,FullCourse=source.FullCourse,RuntimeValidated=false,Samples=samples});
     }
 }

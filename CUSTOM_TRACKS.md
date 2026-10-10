@@ -1,6 +1,6 @@
 # Custom tracks
 
-Add-on tracks available in DiRT2VR's Experimental builds, checked against **0.17.78**. For installation and launch instructions, see [Custom tracks in the README](README.md#custom-tracks-experimental).
+Add-on tracks available in DiRT2VR's Experimental builds, checked against **0.17.80**. For installation and launch instructions, see [Custom tracks in the README](README.md#custom-tracks-experimental).
 
 Build each pack from your own installed source game using **CUSTOM tracks → Build and install…** in the launcher. Conversion tools are included; original game assets are not distributed. Installed tracks work offline without the source game, but you need it again to rebuild or update them.
 
@@ -12,13 +12,13 @@ Build each pack from your own installed source game using **CUSTOM tracks → Bu
 | [Smelter](#smelter) | DiRT 3 Complete Edition | Ten circuits around an industrial and wooded setting, with Rallycross, Landrush and head-to-head layouts. | Dry and wet lighting; morning and evening variants. Duel layouts have two-car grids. |
 | [Nordschleife](#nordschleife) | Assetto Corsa — standard Nordschleife (`ks_nordschleife`) | The full 20.7 km circuit, with trackside scenery and distant landscape. | Three dry lighting presets: Daylight, Overcast and Evening. Eight timing checkpoints and a shared best practice lap across presets. |
 | [Mizu Mountain](#mizu-mountain) | GRID 2 | A full 10.4 km mountain route from start to finish. | Daylight; point-to-point rather than laps; three timing checkpoints. |
-| [Misty Loch](#misty-loch) | Assetto Corsa with the Misty Loch 1.4 add-on (`rt_misty_loch`) | A full 6.45 km lakeside road circuit. | Daylight; animated waterfall, lake waves and gently moving boats. One-lap desktop Direct practice only. |
+| [Misty Loch](#misty-loch) | Assetto Corsa with the Misty Loch 1.4 add-on (`rt_misty_loch`) | A full 6.45 km lakeside road circuit. | Daylight; animated waterfall, lake waves and gently moving boats. One-lap Direct practice and multi-lap Race, on desktop or in VR. |
 
 ## Play modes
 
-**Aspen, Smelter, Nordschleife and Mizu Mountain** offer solo **Direct practice** and experimental **Race**, on desktop or in VR, with any installed car. Race allows **1–7 AI opponents**, except the four head-to-head layouts, which allow **one AI opponent**. Circuit races support **1–20 laps**; Mizu is always one complete run. Nordschleife Direct practice is one lap.
+**All five packs** offer solo **Direct practice** and experimental **Race**, on desktop or in VR, with any installed car. Race allows **1–7 AI opponents**, except the four head-to-head layouts, which allow **one AI opponent**. Circuit races support **1–20 laps**; Mizu is always one complete run. Nordschleife and Misty Loch Direct practice run for one lap.
 
-**Misty Loch** offers one-lap desktop Direct practice with any installed car. VR and AI races are unavailable for this pack.
+Older **Misty Loch** builds need **Manage… → Rebuild from source…** before racing, to add the eight-car starting grid. Existing builds remain usable for Direct practice, including VR.
 
 **LAN is unavailable for all custom tracks.** Broader AI racing, car combinations and headset use still need player testing. Availability in the launcher does not mean every combination has been tested.
 
