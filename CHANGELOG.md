@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add a custom-track catalogue with source games, course descriptions, all Aspen and Smelter layouts, supported play modes and current limitations; link it from the README.
+
 - Keep Full Replay motion smooth when frame-rate-independent rewind is enabled.
 
 - Add Launcher → Main / Replays, with Save last replay, optional auto-save, compressed storage and desktop/VR playback. Check the recorded cars and track before launching. This experimental library supports locally recorded direct-launch sessions; replay sharing is not supported yet.
