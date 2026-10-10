@@ -71,7 +71,7 @@ public static class TrackPacks
          new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
     public static readonly TrackPack Mizu = new("mizu-mountain", "Mizu Mountain", "1.0.2", "0.17.61", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
-    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.0.0", "0.17.77", ["desktop-solo"],
+    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.0.1", "0.17.77", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
     public static readonly TrackPack[] All = [Aspen, Smelter, Nordschleife, Mizu, Misty];
     public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml", "dx11/shaderpack/shaderpack.pssg"];

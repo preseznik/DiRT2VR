@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Misty Loch now offers native VR practice and experimental desktop/VR races with 1–7 AI opponents and 1–20 laps. Rebuild an existing Misty Loch pack to add its eight-car starting grid; existing practice installs remain usable.
+
 - Add a custom-track catalogue with source games, course descriptions, all Aspen and Smelter layouts, supported play modes and current limitations; link it from the README.
 
 ## 0.17.78 — 2026-10-09 — Experimental
