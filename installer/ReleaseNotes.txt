@@ -1,49 +1,15 @@
 DiRT2VR — Experimental
 
-New: Vehicle setup… beside the car selection. Adjust gear ratio, downforce, suspension, ride height, differential and brake bias using the game’s five-position controls. Enable the setup, Apply, then save or launch. Your choice is shared across stock and custom Direct practice and Race on desktop and VR; Normal Launch and career saves are unchanged.
+New: Save completed Direct practice and Race replays in Launcher → Replays. Play them later on desktop or in VR, or turn on Auto-save completed runs. Files are compressed, and the launcher checks that the recorded cars and track are available before starting playback. Saved replays currently work only in the installation that recorded them; sharing is not supported yet.
 
-Fixed wheels and pedals missing from Driving controls → Live device input even when the binding wizard detects them. Existing bindings are unchanged.
+Full Replay is now available in the finish menu. Watch from the start, pause with Esc or controller B, and resume with the same button or Continue. Chase-camera orbit and zoom remain available. VR uses the existing 3D chase replays setting; cinematic angles stay on the flat screen.
 
-Fixed missing trackside shadows and close-range shadow pop-in in cockpit VR, checked at Baja Spillway Long. Shadows remain optional, experimental and off by default.
+Fixed jerky replay car movement when frame-rate-independent rewind is enabled.
 
-Graphics → Main now offers VR shadow quality (Game, Low, Medium or High) and a detailed-distance slider. The recommended 14-metre default retains the tested appearance. Longer distances can improve road detail but may cause rapid shadow flicker on walls and scenery; return to 14 metres if this happens. Save and relaunch to apply.
+New: Keep running when unfocused under Advanced → Gameplay. Enable it to keep playback running when switching apps; manual pause still works. Off by default. Use windowed or borderless mode.
 
-Fixed headset reply typing triggering game controls, including C changing the camera.
+New: Vehicle setup beside the car selection. Adjust gear ratio, downforce, suspension, ride height, differential and brake bias for stock and custom Direct practice and Race launches.
 
-Guided headset tests now support replies without returning to the desktop: press Enter to type, Enter again to send, or Escape to cancel. Follow-up replies remain available, and sending no longer pauses the game.
+Misty Loch now supports VR practice and experimental desktop/VR races with up to seven opponents and twenty laps. Rebuild an existing Misty Loch pack to add the starting grid.
 
-New: Optional VR crowds. Enable Graphics → Main → VR rendering → Crowds (experimental), save and relaunch to show spectators using your saved crowd quality. The default remains Off. Desktop crowd settings are unchanged; crowd rendering still needs broader headset testing.
-
-New: 3D chase replays. Enable Advanced → Graphics → 3D chase replays for stereo depth and head tracking, including paused playback. Cinematic replay angles remain on the flat screen.
-
-Chase-camera Free look and zoom now work in replays on desktop and in VR, using your existing mouse and controller settings. Select chase views with the game's replay camera buttons (default F8/F7 or Xbox RB/LB). Start an event through Normal Launch for the game's replays.
-
-More reliable launch preparation and recovery for read-only game files, including after interrupted sessions. Updates also handle read-only launcher files, and file-operation errors provide clearer details.
-
-Xbox preset now fills missing keyboard controls with the game's default keys and keeps your custom keys. If keyboard controls were left blank by an earlier preset, apply Xbox preset again and Save driving controls.
-
-VR preparation now handles read-only camera and effect files. If an older build failed on a read-only cameras.xml file, update, choose Restore original files and retry.
-
-Chase-camera Free look now hides the Windows mouse pointer over the game picture. Pause, menus, other camera views and switching apps restore it. Window borders keep their usual cursor.
-
-With chase-camera Free look enabled, scroll forward to move closer or backward to move farther away. No mouse button is needed. Changing chase views resets the distance. Desktop zoom and VR chase-replay zoom have passed player checks.
-
-Choose Hold left, Hold right or Always on for mouse look under Controls → General → Chase camera. The three mouse-icon buttons show your choice. Hold right remains the default; save settings and relaunch to apply.
-
-Hold the right stick pressed in to look behind the car while chase-camera Free look is enabled. Release it to return to the normal chase view.
-
-The launcher now remembers its window size and maximized state when you close it. No need to resize it every time.
-
-New: Controls is organized into General, VR, Driving and Seat tabs. Find cockpit animation and chase-camera settings in General, VR shortcuts in VR, driving bindings in Driving, and seat shortcuts in Seat.
-
-New: Experimental chase-camera free look. Move the mouse using your chosen activation mode, or use the right stick, to look around your car. Your angle stays while stopped and smoothly returns behind the car when driving. Adjust mouse/stick sensitivity and Invert vertical in Controls → General. Free look starts off; save and relaunch after enabling it. Desktop requires DX11. VR also needs Advanced → Graphics → 3D beyond the cockpit; VR chase-replay orbit and zoom have passed a headset check.
-
-New: Mizu Mountain in CUSTOM tracks. Build the full 10.4 km daylight route from your own GRID 2 installation, then Launch or Launch VR for Direct practice or experimental Race against up to seven opponents. Choose opponent cars and difficulty as usual. Already installed Mizu? Use Manage → Rebuild from source for the starting grid and MIZU pre-race label. Each race covers the route once; VR is experimental and LAN remains unavailable.
-
-New: Graphics → Filters lets you create and share your own visual presets.
-
-Choose separate presets for Desktop and VR, with Day and Night adjustments for colour, bloom and exposure. Original keeps the game's look. Save settings and relaunch to apply; Main retains the existing graphics controls and Bloom switches.
-
-Choosing, creating or importing a preset in the editor selects it for both Desktop and VR. You can still change the two launch selectors separately afterward.
-
-Presets can be imported and exported as DiRT2VR JSON files. Changes are restored after play. Initial desktop use is player-approved; headset rendering and differing presets in LAN remain unverified.
+The launcher now clears older temporary installers, abandoned track-build files and diagnostic logs while idle. Settings, saved replays, profiles, installed tracks and recovery backups are kept.

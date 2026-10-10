@@ -4,7 +4,7 @@ Notable changes to DiRT2VR are recorded here, newest first. Release channels ide
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
-## Unreleased
+## 0.17.82 — 2026-10-10 — Experimental
 
 - Misty Loch now offers native VR practice and experimental desktop/VR races with 1–7 AI opponents and 1–20 laps. Rebuild an existing Misty Loch pack to add its eight-car starting grid; existing practice installs remain usable.
 

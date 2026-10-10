@@ -137,7 +137,7 @@ Source is preserved in the repository; it is not a release asset or needed to pl
 License: XLLN-LGPL-2.1.txt in this directory.
 "@ | Set-Content -LiteralPath "$stage/DiRT2VR/licenses/LAN-source.txt" -Encoding utf8
 # Ship user-facing guidance only; development notes remain local.
-foreach ($name in @('README.md','CHANGELOG.md')) {
+foreach ($name in @('README.md','CHANGELOG.md','CUSTOM_TRACKS.md')) {
     $text=Get-Content -LiteralPath $name -Raw
     [IO.File]::WriteAllText((Join-Path "$stage\DiRT2VR" $name),$text)
 }
