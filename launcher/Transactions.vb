@@ -72,6 +72,7 @@ Public Class AssetJournal
     Public Property Entries As New List(Of AssetEntry)
     Public Property CarCode As String = "sti"
     Public Property PracticeConfigHash As String = ""
+    Public Property RecordingContent As ReplayContentRequirement
 End Class
 Public Class AssetTransaction
     Public Shared ReadOnly Names As String() = {"cars\sti\cameras.xml", "postprocess\effects.xml"}
@@ -88,7 +89,7 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing)
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False)
         context.RequireClosed()
         If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
@@ -105,6 +106,11 @@ Public Class AssetTransaction
         End If
         ' Version 4 journals own only a desktop practice config, with no asset entries.
         Dim journal As New AssetJournal With {.Version = If(configOnly, 4, 5), .CarCode = carCode, .SettingsJournal = If(configOnly, "", IO.Path.Combine(context.UserRoot, "graphics-pending.json"))}
+        If captureReplay AndAlso trackId IsNot Nothing AndAlso replay Is Nothing Then
+            ' Verify installed content before VR, custom-session, filter and Bloom
+            ' layers deliberately change files. Keep the actual selected AI roster.
+            journal.RecordingContent = ReplayContent.Capture(context, trackId, System.Xml.Linq.XDocument.Parse(Text.Encoding.UTF8.GetString(configBytes)))
+        End If
         Dim targets = AssetNames(journal)
         Dim replacements As New List(Of Byte())
         For i = 0 To If(configOnly, 0, Names.Length) - 1
@@ -202,6 +208,12 @@ Public Class AssetTransaction
         Files.NoLinks(filename)
         If Files.Hash(filename) <> journal.PracticeConfigHash Then Throw New IOException("Practice configuration is damaged.")
         Return relative
+    End Function
+    Public Function RecordingContent() As ReplayContentRequirement
+        PracticeConfig() ' Includes the prepared configuration's ownership/hash check.
+        Dim journal = Files.ReadJson(Of AssetJournal)(journalPath)
+        If journal.RecordingContent Is Nothing Then Throw New IOException("Replay recording details are missing. Restore original files, then launch again.")
+        Return journal.RecordingContent
     End Function
     Private Function BackupPath(journal As AssetJournal, index As Integer) As String
         Return IO.Path.Combine(folder, journal.Id & "-" & index.ToString() & ".bin")

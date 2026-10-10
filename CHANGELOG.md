@@ -4,6 +4,10 @@ Notable changes to DiRT2VR are recorded here, newest first. Release channels ide
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
+## 0.17.84 — 2026-10-10 — Experimental
+
+- Fix custom tracks incorrectly requesting another rebuild when launching with visual filters or Bloom disabled. Already rebuilt tracks can be launched without rebuilding again.
+
 ## 0.17.83 — 2026-10-10 — Experimental
 
 - Make required custom-track rebuilds stand out above the launch settings with a bold green message and a gentle pulse. Reduced-animation and high-contrast settings retain a steady message.

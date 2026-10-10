@@ -80,7 +80,7 @@ Public Module Worker
                 End If
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)))
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing)
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
@@ -99,7 +99,9 @@ Public Module Worker
             Case "prepare-movies"
                 Call (New StartupMovies(context)).Prepare()
             Case "prepare-direct-menus", "prepare-direct-menus-movies"
-                If replayId IsNot Nothing Then ReplaySession.ReadPrepared(context, replayId)
+                ' Assets were verified during event preparation; custom-session
+                ' overlays (e.g. Nordschleife progress) are already active here.
+                If replayId IsNot Nothing Then ReplaySession.ReadPrepared(context, replayId, verifyContent:=False)
                 Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies", savedReplay:=replayId IsNot Nothing)
             Case "recover"
                 Call (New BloomTransaction(context)).Recover()
@@ -137,7 +139,7 @@ Public Module Worker
             start.ArgumentList.Add(arg)
         Next
         If replayId IsNot Nothing Then
-            ReplaySession.ReadPrepared(context, replayId)
+            ReplaySession.ReadPrepared(context, replayId, verifyContent:=operation <> "prepare-direct-menus" AndAlso operation <> "prepare-direct-menus-movies")
             start.ArgumentList.Add("--replay-id") : start.ArgumentList.Add(replayId)
         End If
         If workId IsNot Nothing Then

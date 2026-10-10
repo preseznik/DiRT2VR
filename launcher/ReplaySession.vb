@@ -26,8 +26,9 @@ Public NotInheritable Class ReplaySession
             Dim xml = XDocument.Parse(Text.Encoding.UTF8.GetString(Files.ReadBytes(configPath)))
             manifest = New ReplayManifest With {
                 .Name = RaceCatalog.Current.Track(settings.TrackId).Label & " — " & RaceCatalog.Current.Car(settings.CarCode).Label,
-                .Laps = settings.SessionLaps, .LaunchConfig = xml.ToString(), .Content = ReplayContent.Capture(context, settings.TrackId, xml)}
+                .Laps = settings.SessionLaps, .LaunchConfig = xml.ToString(), .Content = New AssetTransaction(context).RecordingContent()}
             If manifest.Name.Length > 100 Then manifest.Name = manifest.Name.Substring(0, 100)
+            manifest.EventConfig()
             folder = IO.Path.Combine(context.UserRoot, "replay-recordings", Guid.NewGuid().ToString("N"))
             Files.NoLinks(folder) : Directory.CreateDirectory(folder)
             Files.SaveJson(IO.Path.Combine(folder, "event.json"), manifest)
@@ -91,14 +92,15 @@ Public NotInheritable Class ReplaySession
         Directory.Delete(folder, False)
     End Sub
 
-    Public Shared Function ReadPrepared(context As InstallContext, id As String) As ReplayManifest
+    Public Shared Function ReadPrepared(context As InstallContext, id As String, Optional verifyContent As Boolean = True) As ReplayManifest
         Dim parsed As Guid
         If Not Guid.TryParseExact(id, "N", parsed) OrElse id <> id.ToLowerInvariant() Then Throw New IOException("Invalid prepared replay ID.")
         Dim path = SafeFiles.Inside(IO.Path.Combine(context.UserRoot, "replay-playback", id), "event.json")
         Dim info As New FileInfo(path)
         If Not info.Exists OrElse info.Length > 2 * 1024 * 1024 Then Throw New IOException("Prepared replay details are missing or too large.")
         Dim result = SafeFiles.ReadJson(Of ReplayManifest)(path)
-        result.Validate() : ReplayContent.RequireAvailable(context, result.Content)
+        result.Validate()
+        If verifyContent Then ReplayContent.RequireAvailable(context, result.Content)
         Return result
     End Function
 End Class
