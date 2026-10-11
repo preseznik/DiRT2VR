@@ -190,7 +190,9 @@ Direct practice bypasses the trailer menus and loads a player-driven car. Launch
 
 ### Saved replays (Experimental)
 
-Open **Launcher → Replays** after finishing a Direct practice or Race run, including CUSTOM tracks. **Save last replay** keeps the latest completed run. Turn on **Auto-save completed runs** to keep every completed attempt; it starts off. Unfinished runs cannot be saved.
+In **Launcher → Replays**, switch **Record full replays** to **ON** before launching Direct practice or Race, including CUSTOM tracks. It starts **OFF**, including after updating. The choice saves immediately and applies on the next launch. OFF skips full-race recording and saving; instant replay, rewind and playback of existing saved replays remain available. Normal Launch retains the game's own replay behavior.
+
+With recording on, **Full Replay** is available in the finish menu and **Save last replay** keeps the latest completed run. Turn on **Auto-save completed runs** to keep every completed attempt; it starts off and is unavailable while recording is off. Unfinished runs cannot be saved.
 
 Choose a recording and select **Play** or **Play in VR**. The launcher checks the recorded cars and track before starting; missing or incompatible content is reported without changing game files. Replay controls are the same as Full Replay, including Esc/Continue and chase orbit/zoom. VR chase views use **Advanced → Graphics → 3D chase replays**; cinematic angles stay on the virtual screen.
 

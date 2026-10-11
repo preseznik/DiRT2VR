@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Full-race recording is now opt-in: use the ON/OFF slider in Launcher → Replays before launching. Off by default, including after updating. Instant replay, rewind and existing saved-replay playback remain available; Auto-save requires recording to be on.
+
 - Fix flickering black bands on Misty Loch's road at certain viewing angles while retaining its surface detail. After updating, rebuild Misty Loch from Manage to apply the fix.
 
 ## 0.17.86 — 2026-10-11 — Experimental

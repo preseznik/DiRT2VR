@@ -17,8 +17,15 @@ Public NotInheritable Class ReplaySession
 
     Public Sub New(value As InstallContext, settings As VrSettings, start As ProcessStartInfo, prepared As PreparedReplay)
         context = value
+        start.Environment.Remove("DIRT2VR_REPLAY_DIRECTORY")
+        start.Environment.Remove("DIRT2VR_REPLAY_MODE")
+        start.Environment.Remove("DIRT2VR_RECORD_FULL_REPLAY")
         If Not settings.DirectMode Then Return
         playback = prepared IsNot Nothing
+        If Not playback AndAlso Not RecordingEnabled(context) Then
+            start.Environment("DIRT2VR_RECORD_FULL_REPLAY") = "0"
+            Return
+        End If
         If playback Then
             folder = prepared.Folder
         Else
@@ -37,6 +44,12 @@ Public NotInheritable Class ReplaySession
         start.Environment("DIRT2VR_REPLAY_DIRECTORY") = folder
         start.Environment("DIRT2VR_REPLAY_MODE") = If(playback, "load", "save")
     End Sub
+    Public Shared Function RecordingEnabled(context As InstallContext) As Boolean
+        ' Use the frozen launch configuration, not a preference edited mid-launch.
+        Dim path = IO.Path.Combine(context.GameRoot, New AssetTransaction(context).PracticeConfig())
+        Dim xml = XDocument.Parse(Text.Encoding.UTF8.GetString(Files.ReadBytes(path)))
+        Return CStr(xml.Root.Attribute("skipreplays")) = "false"
+    End Function
     Public Sub Poll()
         If folder Is Nothing Then Return
         If work IsNot Nothing Then

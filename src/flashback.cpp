@@ -16,8 +16,9 @@ namespace vr {
 namespace {
 using Tick = void (__thiscall*)(void*, const double*);
 Tick update{}, serialize{};
-std::atomic<unsigned> recorded{}, skipped{};
+std::atomic<unsigned> recorded{}, skipped{}, fullSuppressed{};
 bool sample60{};
+bool disableFullRecording{};
 std::atomic<ULONGLONG> liveRecordingTick{};
 void* recordingCaller{};
 thread_local ReplaySampleClock sampleClock;
@@ -33,7 +34,7 @@ template<class T> T Field(const void* object, unsigned offset) {
 // The native writer fans each serialized snapshot out to the full-race file
 // and the short rewind ring. Only the ring may drop samples: skipping the
 // serializer itself also drops full-replay physics history and causes judder.
-unsigned char* RewindOutput(void* recorder) {
+unsigned char* RecorderOutput(void* recorder, bool fullOutput = false) {
     __try {
         const auto base=reinterpret_cast<unsigned>(GetModuleHandleW(nullptr));
         auto mux=static_cast<unsigned char*>(recorder)+0xa08;
@@ -42,33 +43,38 @@ unsigned char* RewindOutput(void* recorder) {
         auto entries=Field<unsigned char*>(mux,12);
         if(!entries || count<1 || count>2)return nullptr;
         auto file=Field<unsigned char*>(recorder,0x1a4);
-        unsigned char* ring=nullptr;bool full=false;
+        unsigned char* ring=nullptr;unsigned char* full=nullptr;
         for(unsigned i=0;i<count;++i) {
             auto entry=entries+i*12;auto stream=Field<void*>(entry,0);
             if(entry[4]>1)return nullptr;
             if(stream==static_cast<unsigned char*>(recorder)+0x998 && !ring)ring=entry+4;
-            else if(file && stream==file+0x90 && !full)full=true;
+            else if(file && stream==file+0x90 && !full)full=entry+4;
             else return nullptr;
         }
-        return ring;
+        return fullOutput?full:ring;
     } __except(EXCEPTION_EXECUTE_HANDLER) {return nullptr;}
 }
 void __fastcall Serialize(void* recorder, void*, const double* dt) {
-    // Only the normal recording-state call is eligible. Preserve other serialization
-    // paths and leave the simulation clock, event recording and playback untouched.
-    if(sample60 && recorder==activeRecorder && _ReturnAddress()==recordingCaller &&
-       !sampleClock.Record(Field<double>(recorder,0x1b8))) {
-        if(auto enabled=RewindOutput(recorder);enabled && *enabled) {
-            *enabled=0;
-            __try {serialize(recorder,dt);}
-            __finally {*enabled=1;}
-            ++skipped;++recorded;return;
+    auto full=disableFullRecording && recorder==activeRecorder ? RecorderOutput(recorder,true) : nullptr;
+    const unsigned char fullEnabled=full?*full:0;
+    if(full){*full=0;if(fullEnabled)++fullSuppressed;}
+    __try {
+        // Only the normal recording-state call is eligible. Preserve other serialization
+        // paths and leave the simulation clock, event recording and playback untouched.
+        if(sample60 && recorder==activeRecorder && _ReturnAddress()==recordingCaller &&
+           !sampleClock.Record(Field<double>(recorder,0x1b8))) {
+            if(auto enabled=RecorderOutput(recorder);enabled && *enabled) {
+                *enabled=0;
+                __try {serialize(recorder,dt);}
+                __finally {*enabled=1;}
+                ++skipped;++recorded;return;
+            }
+            // Unknown/changed layouts retain native recording rather than risk
+            // dropping the full replay or changing an unrelated stream.
         }
-        // Unknown/changed layouts retain native recording rather than risk
-        // dropping the full replay or changing an unrelated stream.
-    }
-    serialize(recorder, dt);
-    ++recorded;
+        serialize(recorder, dt);
+        ++recorded;
+    } __finally {if(full)*full=fullEnabled;}
 }
 void __fastcall Update(void* root, void*, const double* dt) {
     if(samplingOwner!=root || Field<int>(root,0xa60)!=0) sampleClock.Reset();
@@ -103,6 +109,7 @@ void __fastcall Update(void* root, void*, const double* dt) {
         Field<double>(inner,0xa28),Field<double>(inner,0xa30),
         Field<unsigned>(ring,0xc),Field<unsigned>(ring,0x10),Field<unsigned>(ring,0x14),Field<unsigned>(ring,0x18),
         Field<double>(ring,0x30),Field<double>(ring,0x38),Field<double>(ring,0x40));
+    if(disableFullRecording)Log("replay recording: off; full-stream writes suppressed=%u",fullSuppressed.load());
     last=now; lastRecorded=count; lastSkipped=dropped; ticks=0; lastState=state; lastRoot=root;
 }
 }
@@ -116,8 +123,10 @@ bool LiveDrivingCameraState() {
 bool EnableFlashback() {
     wchar_t enabled[8]{};
     sample60=GetEnvironmentVariableW(L"DIRT2VR_FLASHBACK60",enabled,8)==1 && enabled[0]==L'1';
-    if(!sample60 && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled() && !ReplayStorageRequested()) return true;
-    if(update && (!sample60 || serialize)) return true;
+    disableFullRecording=GetEnvironmentVariableW(L"DIRT2VR_RECORD_FULL_REPLAY",enabled,8)==1 && enabled[0]==L'0';
+    const bool interceptSerialization=sample60 || disableFullRecording;
+    if(!interceptSerialization && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled() && !ReplayStorageRequested()) return true;
+    if(update && (!interceptSerialization || serialize)) return true;
     if(!SupportedHost()) return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
     const unsigned char updateGuard[]={0x83,0xec,0x10,0x56,0x8b,0xf1,0x80,0xbe,0xc8,0x0a,0,0,0};
@@ -132,10 +141,10 @@ bool EnableFlashback() {
     auto status=MH_Initialize();
     if(status!=MH_OK && status!=MH_ERROR_ALREADY_INITIALIZED) return false;
     status=MH_CreateHook(u,reinterpret_cast<void*>(Update),reinterpret_cast<void**>(&update));
-    if(status==MH_OK && sample60) status=MH_CreateHook(s,reinterpret_cast<void*>(Serialize),reinterpret_cast<void**>(&serialize));
+    if(status==MH_OK && interceptSerialization) status=MH_CreateHook(s,reinterpret_cast<void*>(Serialize),reinterpret_cast<void**>(&serialize));
     if(status==MH_OK) status=EnableRecordedHook(u);
-    if(status==MH_OK && sample60) status=EnableRecordedHook(s);
-    Log("flashback: hook=%s; sample60=%d; sampling applies to rewind ring only",MH_StatusToString(status),sample60);
+    if(status==MH_OK && interceptSerialization) status=EnableRecordedHook(s);
+    Log("flashback: hook=%s; sample60=%d; full_recording=%d; sampling applies to rewind ring only",MH_StatusToString(status),sample60,!disableFullRecording);
     return status==MH_OK;
 }
 }

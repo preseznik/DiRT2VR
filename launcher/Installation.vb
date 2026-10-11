@@ -83,7 +83,7 @@ Public Module Worker
                 End If
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing)
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing, recordReplay:=ReplayPreferences.Load(context).RecordFullReplay)
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
@@ -105,7 +105,7 @@ Public Module Worker
                 ' Assets were verified during event preparation; custom-session
                 ' overlays (e.g. Nordschleife progress) are already active here.
                 If replayId IsNot Nothing Then ReplaySession.ReadPrepared(context, replayId, verifyContent:=False)
-                Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies", savedReplay:=replayId IsNot Nothing)
+                Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies", savedReplay:=replayId IsNot Nothing, recordReplay:=ReplaySession.RecordingEnabled(context))
             Case "recover"
                 Call (New LargeAddressAware(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()

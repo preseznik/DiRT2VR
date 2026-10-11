@@ -89,7 +89,7 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False)
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False, Optional recordReplay As Boolean = True)
         context.RequireClosed()
         If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
@@ -99,6 +99,11 @@ Public Class AssetTransaction
         If trackId = PrototypeTrack.Id AndAlso Not configOnly Then Throw New IOException("The prototype track supports desktop preparation only.")
         If trackId IsNot Nothing Then RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
         Dim configBytes = If(trackId Is Nothing, Nothing, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context))
+        If configBytes IsNot Nothing AndAlso replay Is Nothing AndAlso Not recordReplay Then
+            Dim config = System.Xml.Linq.XDocument.Parse(Text.Encoding.UTF8.GetString(configBytes))
+            config.Root.SetAttributeValue("skipreplays", "true")
+            configBytes = Text.Encoding.UTF8.GetBytes(config.ToString())
+        End If
         If replay IsNot Nothing Then
             replay.Validate() : ReplayContent.RequireAvailable(context, replay.Content)
             If replay.Content.TrackId <> trackId OrElse replay.Content.Cars(0) <> carCode Then Throw New IOException("Replay preparation does not match the recorded event.")
@@ -106,7 +111,7 @@ Public Class AssetTransaction
         End If
         ' Version 4 journals own only a desktop practice config, with no asset entries.
         Dim journal As New AssetJournal With {.Version = If(configOnly, 4, 5), .CarCode = carCode, .SettingsJournal = If(configOnly, "", IO.Path.Combine(context.UserRoot, "graphics-pending.json"))}
-        If captureReplay AndAlso trackId IsNot Nothing AndAlso replay Is Nothing Then
+        If captureReplay AndAlso recordReplay AndAlso trackId IsNot Nothing AndAlso replay Is Nothing Then
             ' Verify installed content before VR, custom-session, filter and Bloom
             ' layers deliberately change files. Keep the actual selected AI roster.
             journal.RecordingContent = ReplayContent.Capture(context, trackId, System.Xml.Linq.XDocument.Parse(Text.Encoding.UTF8.GetString(configBytes)))

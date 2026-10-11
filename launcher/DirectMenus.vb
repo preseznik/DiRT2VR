@@ -31,7 +31,8 @@ Public Class DirectMenus
         child.SetAttribute("id", id) : child.SetAttribute("state", state) : parent.AppendChild(child)
         Return child
     End Function
-    Public Shared Function Patch(original As Byte(), flow As Boolean, Optional skipMovies As Boolean = False, Optional savedReplay As Boolean = False) As Byte()
+    Public Shared Function Patch(original As Byte(), flow As Boolean, Optional skipMovies As Boolean = False, Optional savedReplay As Boolean = False, Optional recordReplay As Boolean = True) As Byte()
+        recordReplay = recordReplay OrElse savedReplay
         Dim expected = If(flow, FlowHash, StartupMovies.OriginalHash)
         If Convert.ToHexString(Security.Cryptography.SHA256.HashData(original)) <> expected Then Throw New IOException("Direct-session menus require the original supported system files.")
         If Not flow AndAlso skipMovies Then original = StartupMovies.Patch(original)
@@ -56,6 +57,12 @@ Public Class DirectMenus
                         Link(menu, "return_menus", leave.GetAttribute("id"))
                         If available Then Link(menu, "view_replay", If(group.Item1 = "11e", "10V", "276"))
                     Next
+                    If Not recordReplay Then
+                        finish.SetAttribute("state", "d2vr_finish_no_replay")
+                        For Each child As XmlNode In finish.ChildNodes.Cast(Of XmlNode)().ToArray() : finish.RemoveChild(child) : Next
+                        Link(finish, "restart_race", group.Item2) : Link(finish, "back", group.Item1)
+                        Link(finish, "return_menus", leave.GetAttribute("id"))
+                    End If
                     ' Keep native recording enabled, but stop at our menu before any
                     ' automatic playback. Manual viewing reuses the complete native
                     ' setup/cleanup path, including its replay interface and audio.
@@ -125,7 +132,7 @@ Public Class DirectMenus
                 Dim replayMenu = DirectCast(pause.CloneNode(True), XmlElement)
                 replayMenu.SetAttribute("id", "d2vr_replay_menu") : pause.ParentNode.AppendChild(replayMenu)
                 BuildMenu(replayMenu, True, True, True)
-                BuildMenu(pause, True) : BuildMenu(finish, False) : BuildMenu(unavailable, False, False)
+                BuildMenu(pause, True) : BuildMenu(finish, False) : BuildMenu(unavailable, False, False, recordingOff:=Not recordReplay)
                 If savedReplay Then
                     ' A library replay cannot restart its one-second initialization race.
                     For Each screen In {pause, finish, unavailable}
@@ -195,12 +202,12 @@ Public Class DirectMenus
             Link(load, outcome, If(outcome = "pcfail" OrElse outcome = "x360fail", "d2vr_control_failed", "2FG"))
         Next
     End Sub
-    Private Shared Sub BuildMenu(screen As XmlElement, paused As Boolean, Optional replayAvailable As Boolean = True, Optional replayPaused As Boolean = False)
+    Private Shared Sub BuildMenu(screen As XmlElement, paused As Boolean, Optional replayAvailable As Boolean = True, Optional replayPaused As Boolean = False, Optional recordingOff As Boolean = False)
         Dim generic = DirectCast(screen.SelectSingleNode("ScreenGeneric"), XmlElement)
         Dim template = DirectCast(generic.SelectSingleNode("Item[@id='item_0']"), XmlElement)
         Dim items As New List(Of (String, String))
         If paused Then items.Add(("lng_continue_button_title", "back"))
-        If Not paused Then items.Add((If(replayAvailable, "Full Replay", "Full Replay - recording unavailable"), "view_replay"))
+        If Not paused Then items.Add((If(replayAvailable, "Full Replay", If(recordingOff, "Full Replay - recording is off", "Full Replay - recording unavailable")), "view_replay"))
         If replayPaused Then
             items.Add(("Full Replay", "view_replay"))
             items.Add(("Exit replay", "exit_replay"))
@@ -238,11 +245,11 @@ Public Class DirectMenus
             Files.NoLinks(Target(i)) : Files.NoLinks(Backup(i))
         Next
     End Sub
-    Public Sub Prepare(Optional skipMovies As Boolean = False, Optional afterWrite As Action(Of Integer) = Nothing, Optional savedReplay As Boolean = False)
+    Public Sub Prepare(Optional skipMovies As Boolean = False, Optional afterWrite As Action(Of Integer) = Nothing, Optional savedReplay As Boolean = False, Optional recordReplay As Boolean = True)
         CheckPaths()
         If Pending OrElse New StartupMovies(context).Pending OrElse New LanTransaction(context).BlocksMenuChanges Then Throw New IOException("Restore pending files before preparing direct-session menus.")
         Dim original = Names.Select(Function(n) File.ReadAllBytes(IO.Path.Combine(context.GameRoot, "system", n))).ToArray()
-        Dim modified = {Patch(original(0), False, skipMovies, savedReplay), Patch(original(1), True, savedReplay:=savedReplay)}
+        Dim modified = {Patch(original(0), False, skipMovies, savedReplay, recordReplay), Patch(original(1), True, savedReplay:=savedReplay, recordReplay:=recordReplay)}
         Dim journal As New DirectMenuJournal With {.Version = 2, .ReadOnlyFiles = New List(Of Boolean)}
         For i = 0 To 1
             If File.Exists(Backup(i)) Then

@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Full-race recording now starts OFF. To use Full Replay or save new replays, turn ON Record full replays in Launcher → Replays before launching. Instant replay, rewind and your existing saved replays still work with it off.
+
 Fixed flickering black bands on Misty Loch's road while retaining its surface detail. After updating, select Misty Loch → Manage → Rebuild from source once to apply the fix. Existing replays for the same track version remain compatible.
 
 New: Large Address Aware under Advanced → Memory gives DiRT 2 more address space on 64-bit Windows and may help crashes when changing races. Off by default; the original executable is restored after play. This is experimental, not a confirmed fix for every crash.

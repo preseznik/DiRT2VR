@@ -120,7 +120,13 @@ End Class
 ' A real CheckBox retains Space, focus, accessibility and checked-state semantics.
 Public Class AppearanceSwitch
     Inherits CheckBox
+    Private ReadOnly onText As String
+    Private ReadOnly offText As String
     Public Sub New()
+        Me.New("On · Modern", "Off · Classic")
+    End Sub
+    Public Sub New(enabledText As String, disabledText As String)
+        onText = enabledText : offText = disabledText
         Name = "ModernInterface" : AccessibleName = "Modern interface"
         AutoSize = False : Size = New Size(220, 34)
         SetStyle(ControlStyles.UserPaint Or ControlStyles.AllPaintingInWmPaint Or ControlStyles.OptimizedDoubleBuffer Or ControlStyles.ResizeRedraw, True)
@@ -130,7 +136,7 @@ Public Class AppearanceSwitch
         UpdateText() : MyBase.OnCheckedChanged(e) : Invalidate()
     End Sub
     Private Sub UpdateText()
-        Text = If(Checked, "On · Modern", "Off · Classic")
+        Text = If(Checked, onText, offText)
     End Sub
     Public Overrides Function GetPreferredSize(proposedSize As Size) As Size
         Return New Size(Px(Me, 225), Px(Me, 34))

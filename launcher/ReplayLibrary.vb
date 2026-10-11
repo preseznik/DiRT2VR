@@ -9,6 +9,7 @@ End Class
 
 Public Class ReplayPreferences
     Public Property Version As Integer = 1
+    Public Property RecordFullReplay As Boolean = False
     Public Property AutoSave As Boolean = False
     Public Shared Function Load(context As InstallContext) As ReplayPreferences
         Dim path = PreferencesPath(context)

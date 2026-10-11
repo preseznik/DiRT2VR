@@ -10,11 +10,14 @@ Public Class ReplayPanel
     Private ReadOnly detail As New Label With {.AutoSize = True, .UseMnemonic = False, .Name = "ReplayDetails"}
     Private ReadOnly message As New Label With {.AutoSize = True, .UseMnemonic = False, .Name = "ReplayStatus"}
     Private ReadOnly autoSave As New CheckBox With {.Text = "Auto-save completed runs", .AutoSize = True, .Name = "ReplayAutoSave"}
+    Private ReadOnly recording As New AppearanceSwitch("ON", "OFF") With {.Name = "ReplayRecording", .AccessibleName = "Record full replays"}
+    Private ReadOnly preferences As ReplayPreferences
     Private ReadOnly desktop As New Button With {.Text = "Play", .AutoSize = True, .Name = "PlayReplay"}
     Private ReadOnly headset As New Button With {.Text = "Play in VR", .AutoSize = True, .Name = "PlayReplayVR"}
     Private ReadOnly keep As New Button With {.Text = "Save last replay", .AutoSize = True, .Name = "SaveLastReplay"}
     Private ReadOnly remove As New Button With {.Text = "Delete…", .AutoSize = True, .Name = "DeleteReplay"}
     Private working As Boolean
+    Private savingPreferences As Boolean
     Private Class Entry
         Public Item As ReplayLibraryItem
         Public Overrides Function ToString() As String
@@ -26,24 +29,23 @@ Public Class ReplayPanel
         context = value : library = New ReplayLibrary(context)
         Name = "ReplayLibrary" : Margin = New Padding(0)
         Controls.Add(New Label With {.Text = "Saved replays (Experimental)", .AutoSize = True, .Font = New Font("Segoe UI", 12, FontStyle.Bold)})
-        Controls.Add(New Label With {.Text = "Finish a Direct practice or Race run to keep its full replay. Saved files are compressed.", .AutoSize = True})
-        autoSave.Checked = ReplayPreferences.Load(context).AutoSave
+        Controls.Add(New Label With {.Text = "Record full replays", .AutoSize = True, .Font = New Font("Segoe UI", 10, FontStyle.Bold)})
+        preferences = ReplayPreferences.Load(context)
+        recording.Checked = preferences.RecordFullReplay
+        Controls.Add(recording)
+        Controls.Add(New Label With {.Text = "Off by default. Enable before launching Direct practice or Race to watch and save the complete run. Applies on the next launch. Instant replay and rewind are unchanged.", .AutoSize = True})
+        autoSave.Checked = preferences.AutoSave
         Controls.Add(autoSave) : Controls.Add(entries) : Controls.Add(detail)
         Dim actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True, .Margin = New Padding(0, 8, 0, 8)}
         Dim refresh As New Button With {.Text = "Refresh", .AutoSize = True, .Name = "RefreshReplays"}
         Dim folder As New Button With {.Text = "Open folder", .AutoSize = True}
         actions.Controls.AddRange({desktop, headset, keep, refresh, remove, folder}) : Controls.Add(actions)
-        Controls.Add(New Label With {.Text = "Auto-save is off by default. Otherwise only the latest completed run is kept until you save it. Replay sharing is not supported yet.", .AutoSize = True})
+        Controls.Add(New Label With {.Text = "While recording is on, only the latest completed run is kept unless you save it or enable Auto-save. Saved files are compressed. Existing saved replays can be played with recording off. Replay sharing is not supported yet.", .AutoSize = True})
         Controls.Add(message)
         AddHandler entries.SelectedIndexChanged, Sub() Details()
         AddHandler refresh.Click, Async Sub() Await ReloadAsync()
-        AddHandler autoSave.CheckedChanged, Sub()
-                                               Try
-                                                   Call (New ReplayPreferences With {.AutoSave = autoSave.Checked}).Save(context)
-                                               Catch ex As Exception
-                                                   message.Text = ex.Message
-                                               End Try
-                                           End Sub
+        AddHandler autoSave.CheckedChanged, Sub() SavePreferences()
+        AddHandler recording.CheckedChanged, Sub() SavePreferences()
         AddHandler keep.Click, Async Sub() Await ChangeAsync(Sub() library.KeepLatest(), "Replay saved.")
         AddHandler remove.Click, Async Sub()
                                      Dim item = TryCast(entries.SelectedItem, Entry)?.Item
@@ -61,6 +63,23 @@ Public Class ReplayPanel
                                          message.Text = ex.Message
                                      End Try
                                  End Sub
+        Details()
+    End Sub
+    Private Sub SavePreferences()
+        If savingPreferences Then Return
+        savingPreferences = True
+        Dim oldRecording = preferences.RecordFullReplay, oldAutoSave = preferences.AutoSave
+        preferences.RecordFullReplay = recording.Checked : preferences.AutoSave = autoSave.Checked
+        Try
+            preferences.Save(context)
+            message.Text = "Replay settings saved. Applies on the next launch."
+        Catch ex As Exception
+            preferences.RecordFullReplay = oldRecording : preferences.AutoSave = oldAutoSave
+            recording.Checked = oldRecording : autoSave.Checked = oldAutoSave
+            message.Text = ex.Message
+        Finally
+            savingPreferences = False
+        End Try
         Details()
     End Sub
     Public Async Function ReloadAsync() As Tasks.Task
@@ -133,7 +152,8 @@ Public Class ReplayPanel
         Dim item = TryCast(entries.SelectedItem, Entry)?.Item
         desktop.Enabled = Not working AndAlso item?.Manifest IsNot Nothing
         headset.Enabled = desktop.Enabled : remove.Enabled = desktop.Enabled : keep.Enabled = Not working
-        autoSave.Enabled = Not working
+        recording.Enabled = Not working
+        autoSave.Enabled = Not working AndAlso recording.Checked
         If item Is Nothing Then
             detail.Text = "Choose a replay to view its details."
         ElseIf item.Problem <> "" Then
