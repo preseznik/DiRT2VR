@@ -431,3 +431,7 @@ Enable **Advanced → Graphics → 3D chase replays**, save and relaunch VR for 
 For orbit and zoom on desktop or in VR, enable **Controls → General → Chase camera → Free look**. The same mouse activation, sensitivity and invert settings apply. Orbit and zoom work during playback and while the replay is paused. Pausing playback holds the angle rather than returning behind the car; opening the game menu or switching away suspends input.
 
 Use the game's **replay camera next/previous** controls to choose a chase view or return to cinematic angles (default **F8/F7**, or Xbox **RB/LB**). These are the replay controls, not the driving Change camera action. Choose **Full Replay** after finishing Direct Practice or Race, or play a saved recording from **Launcher → Replays**. Only chase replay cameras support 3D; cinematic angles remain on the flat screen.
+
+### Replay controls
+
+Open **Controls → Replay → Configure replay controls** to bind playback, camera changes, flashback resume and chase zoom. In chase replays, the Xbox left stick moves up to zoom in and down to zoom out; Page Up/Page Down and the mouse wheel also work. Right-stick orbit is unchanged. Enable **Controls → General → Chase camera → Free look** for orbit and zoom. Changes apply on the next launch. Custom zoom supports keyboard and Xbox inputs; native playback controls also support wheels. These zoom bindings do not affect driving.

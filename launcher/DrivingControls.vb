@@ -26,10 +26,10 @@ Public Class DrivingControls
     Public Shared ReadOnly Actions As String() = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Clutch", "Hand Brake", "Gear Up", "Gear Down", "Gear 1", "Gear 2", "Gear 3", "Gear 4", "Gear 5", "Gear 6", "Gear Reverse", "Change View", "Look Back", "Horn", "Pause", "Menu Start Button", "Menu Select", "Menu Back", "Menu Up", "Menu Down", "Menu Left", "Menu Right"}
     Public Shared ReadOnly Calibrations As String() = {"uniDirectionalPositive", "uniDirectionalNegative", "biDirectionalLower", "biDirectionalUpper"}
     Public Sub Validate()
-        If Version <> 1 OrElse Bindings Is Nothing OrElse Bindings.Count > Actions.Length * 2 Then Throw New IOException("Invalid driving-controls configuration.")
+        If Version <> 1 OrElse Bindings Is Nothing OrElse Bindings.Count > (Actions.Length + ReplayControls.ReplayActions.Length) * 2 Then Throw New IOException("Invalid driving-controls configuration.")
         Dim slots As New HashSet(Of String)
         For Each binding In Bindings
-            If binding Is Nothing OrElse Not Actions.Contains(binding.Action) OrElse Not Calibrations.Contains(binding.Calibration) OrElse
+            If binding Is Nothing OrElse Not Actions.Concat(ReplayControls.ReplayActions).Contains(binding.Action) OrElse Not Calibrations.Contains(binding.Calibration) OrElse
                 String.IsNullOrWhiteSpace(binding.Device) OrElse binding.Device.Length > 260 OrElse binding.Device.Any(Function(c) Char.IsControl(c)) OrElse
                 String.IsNullOrWhiteSpace(binding.DeviceId) OrElse binding.DeviceId.Length > 128 OrElse
                 binding.Input Is Nothing OrElse Not Regex.IsMatch(binding.Input, "\Awin_(key|con_di|con_xi)_[A-Za-z0-9]+\z") OrElse

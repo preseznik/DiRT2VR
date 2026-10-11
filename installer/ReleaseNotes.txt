@@ -1,5 +1,9 @@
 DiRT2VR — Experimental
 
+Fixed Lakeside and other Aspen night layouts being blocked at launch after rebuilding. No new track rebuild is required.
+
+New Controls → Replay settings let you bind playback and camera controls. In chase replays, move the Xbox left stick up/down to zoom; Page Up/Page Down and the mouse wheel also work. Enable chase-camera Free look under Controls → General.
+
 Fixed custom tracks asking for another rebuild after enabling visual filters or disabling Bloom. If you already rebuilt your track, you can launch it without rebuilding again.
 
 Required custom-track rebuilds now appear above the launch settings in bold green text with a gentle pulse, making it clear why launching is unavailable.

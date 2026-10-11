@@ -1,5 +1,6 @@
 #include "event_diagnostics.h"
 #include "common.h"
+#include "graphics_diagnostics.h"
 #include "gfwl_compat.h"
 #include "diagnostic_catalog.h"
 #include <MinHook.h>
@@ -45,6 +46,7 @@ void ObserveDiagnosticRoute(const char* country,const char* track,const char* ro
         std::lock_guard lock(mutex);
         lastCar[0]=0; // Never inherit the previous event's player car after a new load.
         if(!Record()) return;
+        graphics::Memory("route transition","before_load");
         if(!valid) { Log("event context: route_load identity=unknown player_car=unknown"); return; }
         const char *label="unknown",*discipline="unknown";
         for(const auto& row:diagnosticTracks) if(!strcmp(c,row.country) && !strcmp(t,row.track) && !strcmp(r,row.route)) {

@@ -716,6 +716,20 @@ Public Class MainForm
         Dim vr = ControlsPage(controlTabs, "VR")
         Dim drivingContent = ControlsPage(controlTabs, "Driving")
         Dim seat = ControlsPage(controlTabs, "Seat")
+        Dim replay = ControlsPage(controlTabs, "Replay")
+        replay.Controls.Add(New Label With {.Text = "Replay controls", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
+        replay.Controls.Add(New Label With {.Text = "Chase-camera zoom: left stick up/down, Page Up/Down, or mouse wheel. Right stick or mouse rotates the camera. Enable Free look under General. Zoom is active only in chase replays, including paused playback.", .AutoSize = True, .Margin = New Padding(0, 8, 0, 12)})
+        Dim replayBindings As New Button With {.Text = "Configure replay controls…", .AutoSize = True, .Name = "ReplayControls"}
+        AddHandler replayBindings.Click, Sub()
+                                            If busy Then Return
+                                            SafeAction(Sub()
+                                                           Using dialog As New DrivingControlsForm(context, replay:=True)
+                                                               dialog.ShowDialog(Me)
+                                                           End Using
+                                                       End Sub)
+                                        End Sub
+        replay.Controls.Add(replayBindings)
+        replay.Controls.Add(New Label With {.Text = "Bind play/pause, rewind, fast-forward, camera changes, lap jumps, replay exit, flashback resume and custom chase zoom. Unassigned native actions keep the game's controls. Flashback resume applies only where the game allows it. Native Save Replay is not supported; use Launcher → Replays for saved recordings.", .AutoSize = True, .Margin = New Padding(0, 12, 0, 8)})
         AddHandler controlTabs.SelectedIndexChanged, Sub()
                                                         CancelBindingCapture()
                                                         inputLabel.Text = "Select a binding to change it."

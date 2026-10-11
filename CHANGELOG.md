@@ -4,6 +4,12 @@ Notable changes to DiRT2VR are recorded here, newest first. Release channels ide
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
+## 0.17.85 — 2026-10-11 — Experimental
+
+- Fix Aspen night layouts being blocked at launch by an unnecessary shadow-map requirement. Existing track builds do not need rebuilding.
+- Add Controls → Replay for playback and camera bindings. Xbox left-stick up/down now zooms chase replays by default; keyboard Page Up/Page Down and mouse-wheel zoom remain available.
+- Include memory availability at track transitions in diagnostic logs to help investigate reported multi-race crashes. This does not claim to fix those crashes.
+
 ## 0.17.84 — 2026-10-10 — Experimental
 
 - Fix custom tracks incorrectly requesting another rebuild when launching with visual filters or Bloom disabled. Already rebuilt tracks can be launched without rebuilding again.

@@ -23,6 +23,7 @@ Public Class Session
     Private ReadOnly context As InstallContext
     Private ReadOnly settings As VrSettings
     Private ReadOnly driving As DrivingControls
+    Private ReadOnly replayControls As ReplayControls
     Private ReadOnly lanJoinTarget As String
     Private focusStatus As String = ""
     Private displayWarning As String = ""
@@ -53,7 +54,8 @@ Public Class Session
             customTrack = CustomTracks.TrackPacks.IsLayout(settings.TrackId)
             postProcessTest = ButtermilkPostProcess.DefaultProfile(settings.TrackId)
         End If
-        driving = DrivingControls.Load(context)
+        replayControls = ReplayControls.Load(context)
+        driving = replayControls.Combined(DrivingControls.Load(context))
         If joinTarget IsNot Nothing Then lanJoinTarget = LanBrowser.ParseEndpoint(joinTarget).ToString()
         If multiplayer OrElse joinTarget IsNot Nothing Then settings.LaunchMode = "lan"
     End Sub
@@ -317,6 +319,7 @@ Public Class Session
         BackgroundPlayLaunch.Configure(start, settings)
         Dim focus As New StartupFocus(context)
         ReplayCameraLaunch.Configure(start, settings)
+        replayControls.ConfigureZoom(start)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using recording As New ReplaySession(context, settings, start, If(settings.DirectMode, preparedReplay, Nothing)), returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
             lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode)

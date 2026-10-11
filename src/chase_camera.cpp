@@ -3,6 +3,8 @@
 #include "chase_transform.h"
 #include "chase_mouse.h"
 #include "chase_zoom.h"
+#include "replay_zoom.h"
+#include <cstdio>
 #include "chase_cursor.h"
 #include "common.h"
 #include "gfwl_compat.h"
@@ -79,6 +81,38 @@ unsigned mode{};
 float mouseSensitivity=1,stickSensitivity=1;bool invert{};
 ChaseMouseMode mouseMode=ChaseMouseMode::Right;
 unsigned selectedSlot=4;
+std::array<std::array<ReplayZoomBinding,2>,2> replayZoom;
+void LoadReplayZoom() {
+ for(unsigned direction=0;direction<2;++direction) {
+  char text[256]{};const char* name=direction==0?"DIRT2VR_REPLAY_ZOOM_0":"DIRT2VR_REPLAY_ZOOM_1";
+  const auto count=GetEnvironmentVariableA(name,text,sizeof(text));
+  if(count>=sizeof(text)){Log("replay zoom: invalid configuration size");continue;}
+  char* row=text;
+  for(unsigned i=0;i<2 && *row;++i) {
+   char* end=strchr(row,';');if(end)*end=0;
+   auto& b=replayZoom[direction][i];char extra{};
+   if(sscanf_s(row,"%d,%d,%d,%f,%f%c",&b.kind,&b.input,&b.calibration,&b.deadZone,&b.saturation,&extra,1u)==5 && b.Validate())b.valid=true;
+   else Log("replay zoom: invalid binding ignored");
+   if(!end)break;row=end+1;
+  }
+ }
+}
+float ReplayKeyboardZoom(float dt) {
+ float values[2]{};
+ for(unsigned d=0;d<2;++d)for(const auto& b:replayZoom[d])if(b.valid && b.kind==0)
+  values[d]=std::max(values[d],b.Amount((GetAsyncKeyState(b.input)&0x8000)?1.f:0.f));
+ return ReplayZoomWheel(values[0],values[1],dt);
+}
+float ReplayXboxZoom(const XINPUT_GAMEPAD& pad,float dt) {
+ const float axes[]={pad.sThumbLX/32767.f,-pad.sThumbLY/32767.f,pad.sThumbRX/32767.f,-pad.sThumbRY/32767.f,pad.bLeftTrigger/255.f,pad.bRightTrigger/255.f};
+ const WORD buttons[]={XINPUT_GAMEPAD_DPAD_UP,XINPUT_GAMEPAD_DPAD_DOWN,XINPUT_GAMEPAD_DPAD_LEFT,XINPUT_GAMEPAD_DPAD_RIGHT,
+  XINPUT_GAMEPAD_START,XINPUT_GAMEPAD_BACK,XINPUT_GAMEPAD_LEFT_THUMB,XINPUT_GAMEPAD_RIGHT_THUMB,
+  XINPUT_GAMEPAD_LEFT_SHOULDER,XINPUT_GAMEPAD_RIGHT_SHOULDER,XINPUT_GAMEPAD_A,XINPUT_GAMEPAD_B,XINPUT_GAMEPAD_X,XINPUT_GAMEPAD_Y};
+ float values[2]{};
+ for(unsigned d=0;d<2;++d)for(const auto& b:replayZoom[d])if(b.valid && b.kind==1)
+  values[d]=std::max(values[d],b.Amount(b.input<6?axes[b.input]:(pad.wButtons&buttons[b.input-6])?1.f:0.f));
+ return ReplayZoomWheel(values[0],values[1],dt);
+}
 bool EnvFlag(const char* name) {
  char value[8]{};return GetEnvironmentVariableA(name,value,sizeof(value))==1 && value[0]=='1';
 }
@@ -144,7 +178,7 @@ Inputs Poll(float dt) {
      (GetAsyncKeyState(VK_RBUTTON)&0x8000)!=0,state.lX!=0 || state.lY!=0,available);
  result.held=activation.held;result.neutral=activation.neutral;
  // Scrolling works in every activation mode without holding a mouse button.
- result.wheel=available?float(state.lZ):0;
+ result.wheel=(available?float(state.lZ):0)+(replayOrbit?ReplayKeyboardZoom(dt):0);
  if(result.wheel!=0)result.neutral=false;
  if(activation.active){result.x=-float(state.lX)*.003f*mouseSensitivity;result.y=-float(state.lY)*.003f*mouseSensitivity;}
  if(!xbox) {
@@ -157,11 +191,13 @@ Inputs Poll(float dt) {
   float x=value.Gamepad.sThumbRX/32767.f,y=value.Gamepad.sThumbRY/32767.f;
   const float length=std::sqrt(x*x+y*y);
   const bool rear=(value.Gamepad.wButtons & XINPUT_GAMEPAD_RIGHT_THUMB)!=0;
-  if(length<=.2f && !rear)continue;
+  const float replayWheel=replayOrbit?ReplayXboxZoom(value.Gamepad,dt):0;
+  if(length<=.2f && !rear && replayWheel==0)continue;
   result.neutral=false;
   if(selectedSlot==4)selectedSlot=slot;
   if(slot!=selectedSlot)continue;
   result.rearHeld=rear;
+  result.wheel+=replayWheel;
   if(length<=.2f)continue;
   const float amount=std::min((length-.2f)/.8f,1.f)/length;
   result.x-=x*amount*2.5f*dt*stickSensitivity;
@@ -432,6 +468,7 @@ bool EnableChaseCamera() {
  char value[8]{};GetEnvironmentVariableA("DIRT2VR_CHASE_PROBE",value,sizeof(value));mode=ChaseCameraDiagnostic() && value[0]=='1'?1:2;
  mouseSensitivity=Sensitivity("DIRT2VR_CHASE_MOUSE_SENSITIVITY");stickSensitivity=Sensitivity("DIRT2VR_CHASE_STICK_SENSITIVITY");
  invert=EnvFlag("DIRT2VR_CHASE_INVERT_VERTICAL");
+ LoadReplayZoom();
  char mouseValue[16]{};const auto mouseLength=GetEnvironmentVariableA("DIRT2VR_CHASE_MOUSE_MODE",mouseValue,sizeof(mouseValue));
  mouseMode=ParseChaseMouseMode(mouseLength<sizeof(mouseValue)?mouseValue:"");
  base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));

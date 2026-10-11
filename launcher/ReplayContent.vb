@@ -101,7 +101,9 @@ Public Module ReplayContent
                 required.Add("cars/" & car.Code & "/" & name)
             Next
         Next
-        For Each name In {"track.jpk", "route.clm", "grids.pssg", "progress_track.xml"} : required.Add(routeRoot & name) : Next
+        ' route.clm is an optional baked shadow map (e.g. Aspen night layouts omit it).
+        ' When present, Capture and the custom-pack receipt still require it.
+        For Each name In {"track.jpk", "grids.pssg", "progress_track.xml"} : required.Add(routeRoot & name) : Next
         Dim problems As New List(Of String)
         For Each relative In required
             token.ThrowIfCancellationRequested()
@@ -109,7 +111,7 @@ Public Module ReplayContent
             If Not File.Exists(path) OrElse New FileInfo(path).Length = 0 Then problems.Add(relative)
         Next
         If problems.Count <> 0 Then
-            Throw New IOException("Cannot play this replay. Install or repair its track and cars first. Missing or empty files:" & vbCrLf &
+            Throw New IOException("Required track or car files are missing or empty. Install or repair this content:" & vbCrLf &
                 String.Join(vbCrLf, problems.Take(12)) & If(problems.Count > 12, vbCrLf & "And " & (problems.Count - 12).ToString() & " more.", ""))
         End If
         If TrackPacks.IsLayout(requirement.TrackId) Then
