@@ -334,6 +334,12 @@ Experimental builds show **Return to stable…**. This finds the latest normal r
 
 Updates require a published [GitHub Release](https://github.com/preseznik/DiRT2VR/releases) containing the packaged installer. Source commits and GitHub's source-code ZIPs are not installable updates. If checking or downloading fails, your current installation remains available; retry later or use the Releases link.
 
+### Large Address Aware (Experimental)
+
+**Advanced → Memory → Large Address Aware (LAA)** lets DiRT 2 use up to 4 GB of address space on 64-bit Windows. It may help crashes when loading another race; it does not increase VRAM or fix every crash. It is off by default. Save settings and launch again to apply to desktop or VR.
+
+The launcher backs up the supported executable, enables LAA for the session and restores the original afterward. After an interrupted session, close the game and use **Restore original files**. An exact LAA patch installed separately is left unchanged. Compatibility with every setup is not established; turn the option off if it causes problems.
+
 ### Restore or remove
 
 VR sessions temporarily adjust camera assets, motion-blur asset and selected graphics settings. Direct practice and Race also temporarily adjust the game's menu definitions and create `DiRT2VR/p.xml`. Originals and recovery journals are saved before changes. Normal exits and detected game crashes trigger restoration; Return to menus restores the direct-session files before reopening the game. Unrelated graphics-settings edits are retained. An existing `DiRT2VR/p.xml` is preserved and blocks preparation.

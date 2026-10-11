@@ -4,6 +4,10 @@ Notable changes to DiRT2VR are recorded here, newest first. Release channels ide
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
+## Unreleased
+
+- Add an optional Large Address Aware setting under Advanced → Memory. It gives DiRT 2 more address space on 64-bit Windows and may help crashes when changing races. Off by default; the original executable is restored after each launcher session. This is experimental, not a confirmed fix for all reported crashes.
+
 ## 0.17.85 — 2026-10-11 — Experimental
 
 - Fix Aspen night layouts being blocked at launch by an unnecessary shadow-map requirement. Existing track builds do not need rebuilding.

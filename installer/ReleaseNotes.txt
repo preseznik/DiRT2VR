@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+New: Large Address Aware under Advanced → Memory gives DiRT 2 more address space on 64-bit Windows and may help crashes when changing races. Off by default; the original executable is restored after play. This is experimental, not a confirmed fix for every crash.
+
 Fixed Lakeside and other Aspen night layouts being blocked at launch after rebuilding. No new track rebuild is required.
 
 New Controls → Replay settings let you bind playback and camera controls. In chase replays, move the Xbox left stick up/down to zoom; Page Up/Page Down and the mouse wheel also work. Enable chase-camera Free look under Controls → General.

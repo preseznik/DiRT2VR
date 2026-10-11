@@ -16,6 +16,7 @@ Public Class MainForm
     Private replacementBinding As ControllerBinding
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
     Private ReadOnly flashback As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalFlashback", .AccessibleName = "Frame-rate-independent rewind (Experimental)", .AutoSize = True}
+    Private ReadOnly laa As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalLaa", .AccessibleName = "Large Address Aware (Experimental)", .AutoSize = True}
     Private ReadOnly backgroundPlay As New CheckBox With {.Text = "On (Experimental)", .Name = "KeepRunningUnfocused", .AccessibleName = "Keep running when unfocused (Experimental)", .AutoSize = True}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly chaseFreeLook As New CheckBox With {.Text = "On (Experimental)", .Name = "ChaseFreeLook", .AutoSize = True}
@@ -560,6 +561,10 @@ Public Class MainForm
     End Sub
     Private Sub BuildAdvancedTab()
         Dim content = TabLayout("Advanced")
+        Dim memory = Section(content, "Memory")
+        laa.Checked = settings.ExperimentalLaa
+        Field(memory, "Large Address Aware (LAA)", laa)
+        Tip(laa, "Lets DiRT 2 use up to 4 GB of address space on 64-bit Windows. May help crashes when loading another race; it is not a fix for every crash. Applies to desktop and VR on the next launch. The original executable is restored after play. Experimental and off by default.")
         Dim gameplay = Section(content, "Gameplay")
         flashback.Checked = settings.ExperimentalFlashback
         Field(gameplay, "Frame-rate-independent rewind", flashback)
@@ -895,6 +900,7 @@ Public Class MainForm
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
         settings.ExperimentalFlashback = flashback.Checked
+        settings.ExperimentalLaa = laa.Checked
         settings.KeepRunningUnfocused = backgroundPlay.Checked
         settings.VrExtendedViews = extendedViews.Checked
         settings.VrReplayCameras = replayCameras.Checked

@@ -323,6 +323,9 @@ Public Class Session
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using recording As New ReplaySession(context, settings, start, If(settings.DirectMode, preparedReplay, Nothing)), returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
             lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode)
+            ' Last preparation step: all asset/profile validation has succeeded.
+            ' Recovery owns this executable change just like other session files.
+            If settings.ExperimentalLaa Then Worker.Invoke(context, "prepare-laa")
             Using child = Process.Start(start)
                 Status("Running")
                 Dim seenGame As Boolean

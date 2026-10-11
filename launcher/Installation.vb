@@ -43,6 +43,7 @@ Public Class Installation
     End Sub
     Public Sub RemoveProxy()
         context.RequireClosed()
+        Call (New LargeAddressAware(context)).Recover()
         Call (New BloomTransaction(context)).Recover()
         Call (New FilterTransaction(context)).Recover()
         Call (New DirectMenus(context)).Recover()
@@ -68,6 +69,8 @@ Public Module Worker
         ButtermilkPostProcess.Validate(postProcessTest, trackId)
         context.ValidateGame() : context.RequireClosed()
         Select Case operation
+            Case "prepare-laa"
+                Call (New LargeAddressAware(context)).Prepare()
             Case "setup" : Call (New Installation(context)).Setup()
             Case "prepare", "prepare-desktop"
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
@@ -104,6 +107,7 @@ Public Module Worker
                 If replayId IsNot Nothing Then ReplaySession.ReadPrepared(context, replayId, verifyContent:=False)
                 Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies", savedReplay:=replayId IsNot Nothing)
             Case "recover"
+                Call (New LargeAddressAware(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()

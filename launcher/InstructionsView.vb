@@ -160,7 +160,12 @@ The launcher checks temporary files at most daily while idle: older installers (
 
 Documentation
 The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages.",
-        "3D beyond the cockpit (Experimental)
+        "Large Address Aware (Experimental)
+Advanced → Memory → Large Address Aware (LAA) lets DiRT 2 use up to 4 GB of address space on 64-bit Windows. It may help crashes when loading another race, but does not fix every crash or increase VRAM. Off by default. Save settings and launch again to apply to desktop or VR.
+
+The launcher backs up the supported executable and restores it after the session. After an interrupted session, close the game and use Restore original files. An exact LAA patch installed separately is left unchanged. Compatibility with every setup is not established; turn this option off if it causes problems.
+
+3D beyond the cockpit (Experimental)
 Advanced → Graphics → 3D beyond the cockpit adds headset 3D and head tracking to supported bonnet, bumper and chase cameras. Off by default; save and relaunch VR to apply. Use the game's Change camera control to switch views. Toggle VR still returns to the virtual screen. Desktop play is unchanged.
 
 Menus, dialogs and movies still use the virtual screen. Replay 3D has its own switch. Seat adjustments apply only inside the cockpit and are retained when you change cameras. Chase cameras retain the game's movement and may be less comfortable than the cockpit.

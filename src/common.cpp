@@ -73,8 +73,13 @@ bool SupportedHost() {
         BCryptCloseAlgorithmProvider(alg, 0);
         char hex[65]{};
         for (unsigned i=0; i<32; ++i) sprintf_s(hex+i*2, 3, "%02X", digest[i]);
-        const bool match = ok && std::string(hex) == "49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48";
+        // Exact one-bit PE-header variant; no general normalization or bypass.
+        const bool laa = std::string(hex) == "274A798EF4DC609C24690434616E42FFC6D381EB90982BFFA326DC336C58F6B4";
+        const bool match = ok && !file.bad() && (laa || std::string(hex) == "49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48");
         Log("host_sha256=%s supported=%d; development prototype, headset acceptance pending", hex, match);
+        SYSTEM_INFO info{}; GetSystemInfo(&info);
+        Log("host address space: laa=%d limit=%llu",laa,
+            uint64_t(reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress))+1);
         return match;
     }();
     return supported;
