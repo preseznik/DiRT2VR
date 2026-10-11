@@ -32,6 +32,8 @@ Public Class CustomTrackPreferences
     Public Property Schema As Integer = 2
     Public Property Enabled As Boolean
     Public Property SelectedPackId As String = AspenPack.Id
+    Public Property FilterSourceGames As String()
+    Public Property InstalledTracksOnly As Boolean
     Public Property Packs As New Dictionary(Of String, CustomTrackSettings)(StringComparer.Ordinal)
     Public Function ForPack(id As String) As CustomTrackSettings
         If Not Packs.ContainsKey(id) Then

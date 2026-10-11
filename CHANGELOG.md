@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Filter CUSTOM tracks by source game using a dropdown with checkmarks. Show only installed layouts, keep tracks needing repair visible, and remember the filters with Save settings. Hidden selections cannot be launched accidentally.
+
 ## 0.17.88 — 2026-10-11 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.88)

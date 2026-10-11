@@ -236,6 +236,8 @@ Build the full 10.4 km daylight route from your own GRID 2 installation: CUSTOM 
 Installed tracks work offline; keep GRID 2 available for rebuilds.
 
 Offline and original tracks
+Use the Source dropdown above CUSTOM tracks to check one or more source games, or choose All source games. Installed tracks only hides uninstalled layouts and source games with no installed packs. Converted tracks remain listed even if their source game has been removed; tracks needing repair stay visible. Filtering keeps your saved selection. If it becomes hidden, choose a visible track or Show all tracks before launching. Save settings remembers these filters for this installation.
+
 Installed tracks work offline without the source game. Keep the source installation for rebuilds and updates. Each pack keeps its own layout, car, race, difficulty and lap settings, separately from stock tracks. Race difficulty uses Easy, Casual, Serious, Savage, Extreme and Hardcore, as in DiRT 2. Use game setting keeps the saved game choice. It applies to stock and custom Race launches, without changing career or multiplayer difficulty. Turning CUSTOM tracks off restores your original event, track and car selections. Opening the list or selecting a layout does not download anything. Successful file checks are remembered while the launcher stays open; installed-file changes trigger a new check. Manage → Verify installed files always checks again.
 
 Manage and recover

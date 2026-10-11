@@ -44,6 +44,8 @@ Public Class CustomTrackPanel
     Private ReadOnly actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
     Private ReadOnly menu As New ContextMenuStrip
     Private ReadOnly packStatuses As New Dictionary(Of String, String)
+    Private ReadOnly catalogue As New List(Of CustomTrackPack)(CustomTrackCatalog.Packs)
+    Private ReadOnly catalogueInstalled As New Dictionary(Of String, HashSet(Of String))(StringComparer.Ordinal)
     Private currentPack As CustomTrackPack
     Private cancellation As CancellationTokenSource
     Private installationValid As Boolean
@@ -80,7 +82,7 @@ Public Class CustomTrackPanel
     End Property
     Public ReadOnly Property CanLaunch As Boolean
         Get
-            Return currentPack IsNot Nothing AndAlso currentPack.Available AndAlso Not working AndAlso installationValid AndAlso layouts.SelectedItem IsNot Nothing AndAlso
+            Return browser.SelectionVisible AndAlso currentPack IsNot Nothing AndAlso currentPack.Available AndAlso Not working AndAlso installationValid AndAlso layouts.SelectedItem IsNot Nothing AndAlso
                 installedLayouts.Contains(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id) AndAlso launchMode.SelectedIndex >= 0 AndAlso (launchMode.SelectedIndex <> 1 OrElse raceReady) AndAlso cars.SelectedItem IsNot Nothing AndAlso opponentCars.SelectedIndex >= 0
         End Get
     End Property
@@ -133,6 +135,7 @@ Public Class CustomTrackPanel
         currentPack = CustomTrackCatalog.Find(preferences.SelectedPackId)
         If currentPack Is Nothing Then
             currentPack = New CustomTrackPack(preferences.SelectedPackId, "Unavailable pack", "Your saved pack is not supported by this launcher.", False, Array.Empty(Of Layout)())
+            catalogue.Add(currentPack)
             browser.PackList.Items.Add(currentPack) : browser.Picker.Items.Add(currentPack)
             packStatuses(currentPack.Id) = "Unavailable"
         End If
@@ -191,6 +194,14 @@ Public Class CustomTrackPanel
                                  Next
                              End Sub
         LoadSelection()
+        browser.Filters.Restore(preferences.FilterSourceGames, preferences.InstalledTracksOnly)
+        RefreshFilterInventory()
+        AddHandler browser.Filters.Changed, Sub()
+                                                CaptureSelection()
+                                                preferences.FilterSourceGames = browser.Filters.SourceIds
+                                                preferences.InstalledTracksOnly = browser.Filters.InstalledOnly.Checked
+                                                ApplyFilters()
+                                            End Sub
         toggle.Checked = preferences.Enabled
         initialized = True
         AddHandler HandleCreated, Sub()
@@ -204,6 +215,7 @@ Public Class CustomTrackPanel
         If loading OrElse working OrElse pack Is Nothing OrElse pack Is currentPack Then Return
         CaptureSelection() : currentPack = pack : preferences.SelectedPackId = pack.Id
         LoadSelection()
+        ApplyFilters()
         If initialized AndAlso CustomEnabled Then Await RefreshInstallation()
     End Function
     Private Sub LoadSelection()
@@ -215,7 +227,7 @@ Public Class CustomTrackPanel
             layouts.AccessibleName = If(nord, "Conditions", "Layout")
             setup.Controls.Find("CustomTrackLayoutLabel", True).Single().Text = If(nord, "Conditions", "Layout")
             setup.Controls.Find("CustomTrackConditionLabel", True).Single().Text = If(nord, "Layout", "Conditions")
-            installHint.Text = "Build this pack from your own " & TrackPacks.Get(currentPack.Id).SourceName & " files. Select a detected installation or browse to its folder. Installed tracks work offline."
+            installHint.Text = If(currentPack.Available, "Build this pack from your own " & TrackPacks.Get(currentPack.Id).SourceName & " files. Select a detected installation or browse to its folder. Installed tracks work offline.", "This saved pack is unavailable.")
             installationValid = False : raceReady = False : installedReceipt = Nothing : hasReceipt = False : errorText = "" : installedLayouts.Clear()
             Dim selected = preferences.ForPack(currentPack.Id)
             circuitRaceLaps = Math.Clamp(selected.Laps, 1, 20)
@@ -262,6 +274,55 @@ Public Class CustomTrackPanel
     End Sub
     Public Sub Save()
         CaptureSelection() : preferences.Save(context)
+    End Sub
+    Private Sub RefreshFilterInventory()
+        catalogueInstalled.Clear()
+        For Each pack In catalogue.Where(Function(p) p.Available)
+            Dim definition = TrackPacks.Get(pack.Id)
+            If Not File.Exists(SafeFiles.Inside(context.GameRoot, definition.Receipt)) Then Continue For
+            Try
+                ' Read the receipt only. Filtering must not rehash gigabytes of track files.
+                catalogueInstalled(pack.Id) = definition.Read(context.GameRoot, False).Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal)
+            Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.Text.Json.JsonException
+                ' A damaged receipt is still an installation that the user can repair.
+                catalogueInstalled(pack.Id) = Nothing
+                packStatuses(pack.Id) = "Needs attention"
+            End Try
+        Next
+        browser.Filters.SetInstalledPacks(catalogueInstalled.Keys)
+        ApplyFilters()
+    End Sub
+    Private Sub ApplyFilters()
+        Dim visible = catalogue.Where(Function(p) browser.Filters.Includes(p, catalogueInstalled.ContainsKey(p.Id))).ToArray()
+        Dim selectedLayout = If(TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id, preferences.ForPack(currentPack.Id).LayoutId)
+        loading = True
+        browser.SuspendLayout()
+        Try
+            If Not browser.PackList.Items.Cast(Of CustomTrackPack).SequenceEqual(visible) Then
+                browser.PackList.BeginUpdate() : browser.PackList.Items.Clear() : browser.PackList.Items.AddRange(visible)
+                browser.PackList.EndUpdate()
+                browser.Picker.BeginUpdate() : browser.Picker.Items.Clear() : browser.Picker.Items.AddRange(visible)
+                browser.Picker.EndUpdate()
+            End If
+            browser.PackList.SelectedItem = currentPack : browser.Picker.SelectedItem = currentPack
+            browser.SelectionVisible = visible.Contains(currentPack)
+            browser.EmptyMessage.Text = If(visible.Length = 0, "No tracks match these filters.", "Your selected track is hidden. Choose a track or show all tracks.")
+            Dim installed As HashSet(Of String) = Nothing
+            catalogueInstalled.TryGetValue(currentPack.Id, installed)
+            Dim visibleLayouts = currentPack.Layouts.Where(Function(l) Not browser.Filters.InstalledOnly.Checked OrElse installed Is Nothing OrElse installed.Contains(l.Id)).ToArray()
+            If Not layouts.Items.Cast(Of LayoutItem).Select(Function(item) item.Value).SequenceEqual(visibleLayouts) Then
+                Dim lighting = lightingTest.SelectedIndex
+                layouts.BeginUpdate() : layouts.Items.Clear()
+                For Each trackLayout In visibleLayouts
+                    layouts.Items.Add(New LayoutItem(trackLayout, currentPack.Id = "nordschleife"))
+                Next
+                layouts.SelectedItem = layouts.Items.Cast(Of LayoutItem).FirstOrDefault(Function(item) item.Value.Id = selectedLayout)
+                lightingTest.SelectedIndex = lighting : layouts.EndUpdate()
+            End If
+        Finally
+            loading = False : browser.ResumeLayout(True)
+        End Try
+        RefreshRaceOptions() : RenderState()
     End Sub
     Public Sub RefreshBestTime()
         bestTime.Visible = currentPack?.Id = "nordschleife"
@@ -339,6 +400,7 @@ Public Class CustomTrackPanel
         If working AndAlso Not workActions.Controls.Contains(progressBar) Then workActions.Controls.Add(progressBar)
         If Not working Then workActions.Controls.Remove(progressBar)
         toggle.Enabled = Not working : browser.PackList.Enabled = Not working : browser.Picker.Enabled = Not working
+        browser.Filters.Enabled = Not working
         setup.Enabled = Not working : installButton.Enabled = Not working : manage.Enabled = Not working
         browser.PackList.Invalidate() : PerformLayout()
         RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
@@ -423,7 +485,7 @@ Public Class CustomTrackPanel
             SetStatus(If(installationValid, "Installed · Build failed", "Needs attention"), If(installationValid, "Build failed; your installed pack is still available. ", "This pack could not be verified or built. ") & "Check Details for the affected file and remedy.")
         Finally
             cancellation.Dispose() : cancellation = Nothing : working = False
-            If Not IsDisposed Then RenderState()
+            If Not IsDisposed Then RefreshFilterInventory()
         End Try
     End Function
     Private Sub DrawPack(sender As Object, e As DrawItemEventArgs)
@@ -449,16 +511,24 @@ End Class
 
 Public Class CustomTrackBrowser
     Inherits Panel
+    Public ReadOnly Filters As New CustomTrackFilters
+    Public ReadOnly EmptyMessage As New Label With {.AutoSize = True, .Name = "CustomTrackFilterMessage"}
+    Public SelectionVisible As Boolean = True
     Public ReadOnly PackList As New ListBox With {.Name = "CustomPackList", .DrawMode = DrawMode.OwnerDrawFixed, .IntegralHeight = False, .AccessibleName = "Track packs"}
     Public ReadOnly Picker As New ComboBox With {.Name = "CustomPack", .DropDownStyle = ComboBoxStyle.DropDownList, .AccessibleName = "Track pack"}
-    Public ReadOnly Detail As New VerticalStack
+    Public ReadOnly Detail As New TrackBuildStack
     Private ReadOnly compact As SettingRow
+    Private ReadOnly empty As New TrackBuildStack
     Private arranging As Boolean
     Public Sub New()
         Name = "CustomTrackBrowser" : Margin = New Padding(0, 12, 0, 0)
         compact = New SettingRow("Track pack", Picker)
-        Controls.AddRange({PackList, compact, Detail})
+        Dim reset As New Button With {.Text = "Show all tracks", .Name = "ResetCustomTrackFilters", .AutoSize = True}
+        empty.Controls.AddRange({EmptyMessage, reset})
+        AddHandler reset.Click, Sub() Filters.ShowAll()
+        Controls.AddRange({Filters, PackList, compact, Detail, empty})
         AddHandler Detail.SizeChanged, Sub() PerformLayout()
+        AddHandler Filters.SizeChanged, Sub() PerformLayout()
     End Sub
     Protected Overrides Sub OnLayout(e As LayoutEventArgs)
         MyBase.OnLayout(e)
@@ -466,13 +536,17 @@ Public Class CustomTrackBrowser
         arranging = True
         Try
             Dim narrow = Width < Px(Me, 800), gap = Px(Me, 22), listWidth = Px(Me, 215)
+            Filters.SetBounds(0, 0, Width, Filters.GetPreferredSize(New Size(Width, 0)).Height) : Filters.PerformLayout()
+            Dim listTop = Filters.Bottom + Px(Me, 12)
             PackList.Visible = Not narrow : compact.Visible = narrow
             PackList.ItemHeight = Px(Me, 88)
-            PackList.SetBounds(0, 0, listWidth, Math.Min(PackList.Items.Count, 5) * PackList.ItemHeight + Px(Me, 6))
-            compact.SetBounds(0, 0, Width, compact.Height) : compact.PerformLayout()
-            Dim left = If(narrow, 0, listWidth + gap), top = If(narrow, compact.Bottom + gap, 0)
+            PackList.SetBounds(0, listTop, listWidth, Math.Min(PackList.Items.Count, 5) * PackList.ItemHeight + Px(Me, 6))
+            compact.SetBounds(0, listTop, Width, compact.Height) : compact.PerformLayout()
+            Dim left = If(narrow, 0, listWidth + gap), top = If(narrow, compact.Bottom + gap, listTop)
+            Detail.Visible = SelectionVisible : empty.Visible = Not SelectionVisible
             Detail.SetBounds(left, top, Math.Max(1, Width - left), Detail.Height) : Detail.PerformLayout()
-            Height = Math.Max(Detail.Bottom, If(narrow, 0, PackList.Bottom))
+            empty.SetBounds(left, top, Math.Max(1, Width - left), empty.Height) : empty.PerformLayout()
+            Height = Math.Max(If(SelectionVisible, Detail.Bottom, empty.Bottom), If(narrow, compact.Bottom, PackList.Bottom))
         Finally
             arranging = False
         End Try

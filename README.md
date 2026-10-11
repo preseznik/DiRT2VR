@@ -78,6 +78,8 @@ See the [custom track catalogue](CUSTOM_TRACKS.md) for source games, course desc
 
 Build tracks from your own installed source games. Conversion tools are included; game assets are not distributed. No SDK or separate .NET installation is required. Once installed, custom tracks work offline without their source game; keep it available for future rebuilds.
 
+Use the **Source** dropdown above CUSTOM tracks to check one or more source games, or choose **All source games**. **Installed tracks only** hides uninstalled layouts and source games with no installed packs. It checks converted DiRT2VR tracks, not whether the original source game is still installed. Tracks needing repair remain visible. Filters keep your saved track choice; if it is hidden, select a visible track or choose **Show all tracks** before launching. **Save settings** remembers your filters for this installation.
+
 | Track pack | Required source game | Courses |
 | --- | --- | --- |
 | Mizu Mountain | GRID 2 | One 10.4 km daylight route |

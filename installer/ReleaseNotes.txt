@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Find CUSTOM tracks faster with the Source dropdown: check one or more source games, or show them all. Installed tracks only hides layouts you haven't built yet. Save settings remembers your filters; tracks needing repair remain visible.
+
 Full-race recording now starts OFF. To use Full Replay or save new replays, turn ON Record full replays in Launcher → Replays before launching. Instant replay, rewind and your existing saved replays still work with it off.
 
 Fixed flickering black bands on Misty Loch's road while retaining its surface detail. After updating, select Misty Loch → Manage → Rebuild from source once to apply the fix. Existing replays for the same track version remain compatible.
