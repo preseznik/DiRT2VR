@@ -4,6 +4,10 @@ Notable changes to DiRT2VR are recorded here, newest first. Release channels ide
 
 Version headings identify distribution builds; published packages include a GitHub release link. Earlier local-build experiments and validation observations are retained as development notes within the release that included them; later entries supersede those observations.
 
+## Unreleased
+
+- Fix flickering black bands on Misty Loch's road at certain viewing angles while retaining its surface detail. Rebuild Misty Loch from Manage to apply the updated track shaders.
+
 ## 0.17.84 — 2026-10-10 — Experimental
 
 - Fix custom tracks incorrectly requesting another rebuild when launching with visual filters or Bloom disabled. Already rebuilt tracks can be launched without rebuilding again.
