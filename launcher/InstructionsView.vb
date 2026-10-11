@@ -207,6 +207,8 @@ Controls also provides six optional seat movement bindings. These are unassigned
 Current testing
 Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
         "Custom tracks (Experimental)
+Misty Loch update: after installing this version, select Misty Loch → Manage → Rebuild from source once to fix flickering black road bands while retaining surface detail. This shader fix keeps the current track version and replays recorded with that version.
+
 Close DiRT 2. On Launcher, check CUSTOM tracks, choose a Track pack, then Build and install…. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Check the layouts you want to build, using Select all or Select none as needed. Choose Build and install to check the source files and convert only the checked layouts. Unchecked layouts already installed are kept; your choices are remembered for each location. Manage → Rebuild from source uses the same checkboxes, so you can update or add individual layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
 
 Play

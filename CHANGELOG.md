@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix flickering black bands on Misty Loch's road at certain viewing angles while retaining its surface detail. After updating, rebuild Misty Loch from Manage to apply the fix.
+
+## 0.17.86 — 2026-10-11 — Experimental
+
 - Add an optional Large Address Aware setting under Advanced → Memory. It gives DiRT 2 more address space on 64-bit Windows and may help crashes when changing races. Off by default; the original executable is restored after each launcher session. This is experimental, not a confirmed fix for all reported crashes.
 
 ## 0.17.85 — 2026-10-11 — Experimental

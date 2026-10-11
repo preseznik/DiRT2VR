@@ -83,10 +83,18 @@ float4 main(Pixel i) : SV_Target {
         float orientation=ux.x*uy.y-ux.y*uy.x>=0?1:-1;
         float3 tangent=(px*uy.y-py*ux.y)*orientation;
         float3 bitangent=(py*ux.x-px*uy.x)*orientation;
-        tangent=normalize(tangent-n*dot(n,tangent));
-        bitangent=normalize(bitangent-n*dot(n,bitangent));
+        tangent-=n*dot(n,tangent);
+        bitangent-=n*dot(n,bitangent);
+        float tangentLength2=dot(tangent,tangent),bitangentLength2=dot(bitangent,bitangent);
         float3 detail=tex2D(TMistyNormal,uv*BlendMaskUVScale).rgb*2-1;
-        n=normalize(tangent*detail.x+bitangent*detail.y+n*detail.z);
+        // Some authored road UVs collapse to a line. Normalizing their zero
+        // tangent produces NaNs and flickering black bands; retain the mesh normal.
+        // Sample before this per-pixel guard so texture derivatives remain valid.
+        if(min(tangentLength2,bitangentLength2)>0) {
+            tangent*=rsqrt(tangentLength2);
+            bitangent*=rsqrt(bitangentLength2);
+            n=normalize(tangent*detail.x+bitangent*detail.y+n*detail.z);
+        }
     }
 #endif
     float2 screen=float2(i.screen.x,i.screen.w-i.screen.y)/i.screen.w;
