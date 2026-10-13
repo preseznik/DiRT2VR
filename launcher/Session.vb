@@ -43,6 +43,10 @@ Public Class Session
             custom.ApplyTo(settings)
             postProcessTest = If(custom.ForPack(custom.SelectedPackId).PostProcessTest, ButtermilkPostProcess.DefaultProfile(settings.TrackId))
         End If
+        If savedReplayId Is Nothing AndAlso CustomCarPreferences.Load(context).Enabled Then
+            If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM cars off before starting LAN multiplayer.")
+            settings.CarCode = CustomCars.CarPack.Code
+        End If
         replayId = savedReplayId
         If replayId IsNot Nothing Then
             Dim library As New ReplayLibrary(context)
@@ -64,6 +68,10 @@ Public Class Session
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         If customTrack Then CustomTracks.TrackPacks.ForLayout(settings.TrackId).RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
+        If CustomCars.CarPack.IsCustom(settings.CarCode) Then
+            CustomCars.CarPack.RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.GridOpponents)
+            If replayId IsNot Nothing Then Throw New IOException("Custom-car replay playback is not yet supported.")
+        End If
         ButtermilkPostProcess.Validate(postProcessTest, settings.TrackId)
         Using guard As New Mutex(False, "Global\DiRT2VR.Session")
             Dim held As Boolean
@@ -270,6 +278,7 @@ Public Class Session
             config = New AssetTransaction(context).PracticeConfig()
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
+        CustomCarService.ConfigureProcess(start, settings)
         If FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation Then ConfigureLogging(start, logFolder)
         profile.Configure(start, False)
         profile.Prepare(False)

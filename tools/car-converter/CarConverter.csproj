@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings><Nullable>enable</Nullable><TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="System.Drawing.Common" Version="10.0.11" />
+    <ProjectReference Include="../custom-tracks/CustomTracks.csproj" />
+    <ProjectReference Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/EgoEngineLibrary.csproj" />
+    <EmbeddedResource Include="../../.deps/Ego-Engine-Modding/src/EgoDatabaseEditor/schema/schemaDirt2.xml" LogicalName="car-schemaDirt2.xml" />
+    <EmbeddedResource Include="f2004-ctf-schema.xml" LogicalName="f2004-ctf-schema.xml" />
+    <EmbeddedResource Include="f2004-sources.json" LogicalName="f2004-sources.json" />
+  </ItemGroup>
+</Project>

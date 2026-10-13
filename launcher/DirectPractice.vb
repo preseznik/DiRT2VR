@@ -36,6 +36,7 @@ Public Class RaceCatalog
         End Using
     End Function
     Public Function Car(code As String) As PracticeCar
+        If CustomCars.CarPack.IsCustom(code) Then Return New PracticeCar With {.Code = code, .Label = CustomCars.CarPack.Name, .ClassId = "f2004", .ClassName = "Formula 1 (approximation)"}
         Dim result = Cars.SingleOrDefault(Function(c) c.Code = code)
         If result Is Nothing Then Throw New IOException("Unknown practice car.")
         Return result
@@ -55,6 +56,7 @@ Public Class RaceCatalog
         Dim camera = IO.Path.Combine(context.GameRoot, "cars", Car(carCode).Code, "cameras.xml")
         Files.NoLinks(route) : Files.NoLinks(camera)
         If Not Directory.Exists(route) OrElse Not File.Exists(camera) Then Throw New IOException("The selected track or car is missing from this game installation.")
+        If CustomCars.CarPack.IsCustom(carCode) Then CustomCars.CarPack.Read(context.GameRoot)
         If trackId = PrototypeTrack.Id Then PrototypeTrack.Validate(route)
         If CustomTracks.TrackPacks.IsLayout(trackId) Then CustomTracks.TrackPacks.ForLayout(trackId).Read(context.GameRoot)
     End Sub
@@ -64,6 +66,7 @@ Public Class RaceCatalog
         Dim route = Track(trackId)
         If CustomTracks.TrackPacks.IsLayout(trackId) Then CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, False, If(opponents = 0, "practice", "race"), carCode, opponents, 1)
         If trackId = PrototypeTrack.Id AndAlso opponents <> 0 Then Throw New IOException("The prototype track supports solo driving only.")
+        If CustomCars.CarPack.IsCustom(carCode) Then CustomCars.CarPack.RequireMode(trackId, False, If(opponents = 0, "practice", "race"), opponents)
         Dim vehicle = Car(carCode)
         Dim entries As New List(Of XElement)
         If opponents = 0 OrElse opponentCars = "same" Then

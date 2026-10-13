@@ -1,0 +1,232 @@
+[
+  {
+    "Game": "assettocorsa",
+    "Path": "collider.kn5",
+    "Sha256": "23AF1FD016B727D9C3E6CA76AE9100EECACB6D73E20A5377F500393A2F073370"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "data.acd",
+    "Sha256": "6738C744AA67F4AC87DD9D3315C53005333A945FBE67C06715C03A21C620DE9E"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "ferrari_f2004.kn5",
+    "Sha256": "3A0A0DCB08C8ADFBC653523675C72DFE2032501AD4296DE631245C0D9EE57F7B"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "ferrari_f2004_lod_B.kn5",
+    "Sha256": "5FBF6A22C4644CA18DF82F8874F9588DDBC7B1550C0D5653E9E47D6B97EABDCC"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "ferrari_f2004_lod_C.kn5",
+    "Sha256": "BA2A23B30F83EC7EFCFFCD9F531B0844EB2ACD8E730E02874701124AEB36DF6E"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "ferrari_f2004_lod_D.kn5",
+    "Sha256": "3EBBAA50B82B6961A966E9F497AE7EEE5E2A1426BE8C0C52CBB95385834992E4"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "sfx/ks_ferrari_f2004.bank",
+    "Sha256": "4A37CCD860B4FE6BA6E1E435822589920B36A3D1AF35A0A5180818E85D528F15"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/2016_Gloves_DIFF.dds",
+    "Sha256": "66B9840050255C1A3A8530F34DBF0F20C75587BE36F7154128A8A509680B538F"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/2016_Gloves_NM.dds",
+    "Sha256": "2F783E3B1A84A33A4EF26CC709DDF3DF4BF2FD2ACBDFBE9B33EDB0A27687F40B"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/2016_Suit_DIFF.dds",
+    "Sha256": "233C4EA1B1D26861868AAEDCCEB3CB16D6DE737C65E7FC35B3360D1A5B57CD21"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/2016_Suit_NM.dds",
+    "Sha256": "427297C489A43DDD1C26B1250B77F674073239A740273C9A70B8F400362FA747"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/DRIVER_Gloves.dds",
+    "Sha256": "04535187489446F3F31B6F5689032DA6D1DFE92881C90A6658E36599E97B16B2"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/DRIVER_Gloves_NM.dds",
+    "Sha256": "F53496D47806DFE3E1CED8FA620E03F391FC7CBDC83C78E4D22A67AF78C6A0D0"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/DRIVER_Suit2.dds",
+    "Sha256": "5A20AB6C0DA8E589F512A831D7D0CCC0838FBD80068F8E8038B8AC61D70CFF70"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/DRIVER_Suit_NM.dds",
+    "Sha256": "2FC4A729EB519FCC05C6380CCEC381192DBE7248AA2F64C261C386770A0554D0"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/EXT_Drivers.dds",
+    "Sha256": "34DF0F2272AE835237572FAB47E6605CB7DB5891080A183543CBB78F9C176BC7"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/HELMET_2012.dds",
+    "Sha256": "97C434ACDEFA8DE4A705B539515E8F8F064B6E6DC46B011205EA34E0FB7EA1E9"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/MAT_white.dds",
+    "Sha256": "22E482460D5098E703D8EACF97FBCD9D9AFCF0C1524AD9C51F01E0748347938A"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/ac_crew.dds",
+    "Sha256": "4BD9395812940E7AC7F3C44E103154E88E8C4263AEFBC15418671ED90FE48E23"
+  },
+  {
+    "Game": "assettocorsa",
+    "Path": "skins/00_official/tcam_detail.dds",
+    "Sha256": "4D21775774D5CE4EAF930B72572CC193E8FA85784EDE223D279B294A53C1DD0A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "audio/cars/tstengine.ini",
+    "Sha256": "24C68A04B0B151B86337ECE2E0562F22D510F8DDC0A6E0BB2F0F5966E68BB98F"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "audio/carsetup.bin",
+    "Sha256": "81C11EF1FA267FDC5C02984C82966934111D8548B69E8099888A13A517FA3CC0"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "audio/carsetup_ai.bin",
+    "Sha256": "25960D933594655D42B25BAC9370970216FC30EF8B1F0D9ECC82E97748623388"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "audio/dictionaries.bin",
+    "Sha256": "5EFCB9C003317CE349DEF0DEE2BA64D877588E449F28AC12FC902BE7BB8EBBF3"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "audio/dictionaries/dd_mec/NESSamples.dic",
+    "Sha256": "884E77270A7C509FD1A89F46729CC6E917A4BBE14A3DA9698CB70E8F3411BA07"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/class_mappings.xml",
+    "Sha256": "A9AAF8F42AD58FB6FE2E0DEE3ABD14E0FEDB8D5DB932295BF1C929B74FC78EEA"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/cameras.xml",
+    "Sha256": "3B4FACF22047939DF656E228D7CC940FCBD17443FFEE5D07F55F5F8B9B7A2F9A"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/livery_00/textures_high/prc_tex_high_00.pssg",
+    "Sha256": "367405A29FCAFC44F28772592B97A23EE2EF081F42A25599A4F8DE8C7F5A823D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/livery_00/textures_low/prc_tex_low_00.pssg",
+    "Sha256": "D341FA42FA5C33530D480D59DFA95FBAAF418EA4F9A8AA610531013B81FD5FA0"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc.ctf",
+    "Sha256": "87419F49FFCABAEC773AC7AD7D9AB7BF15677C83CBF00D2EDEE9E5532F1C85AA"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc.nd2",
+    "Sha256": "27B9FB632C7584D52F6429599627F03AF1295A57565BB0E9283789DA3FB450E9"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc.ppts",
+    "Sha256": "ECAB04DF2B1A1DE045F134848B2734C578BFD88C7A5E65720F2891B6807C03E3"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc_A.ctf",
+    "Sha256": "C7315397FB1DA019FDD60A2D8F6914E7C62031E5E955C4E335C96D9CCE5EDE52"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc_AO.pssg",
+    "Sha256": "23397CCD77395046D1A53732E0565CEAD96EF6B8304373E64B2EAD153FCBA327"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc_B.ctf",
+    "Sha256": "D3BD178344794CAF78B692ABC7E74BB65481DC08A219C91CB37FD57FC6C88496"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc_anim_dummies.pssg",
+    "Sha256": "4802B2B38E6BBB28A362B9364F0A54B4C5DF1599ABD18144DB971F62BD36CF6E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc_highLOD.pssg",
+    "Sha256": "8DD4877474D31676B52D7C7A054C09D1B3BB44A83F45BA2312733DC51A048DD2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "cars/prc/prc_lowLOD.pssg",
+    "Sha256": "D8CFDAB6F956D7C09476374A11B82A81E720D097950A10CBFB5F536051397F88"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "database/database.bin",
+    "Sha256": "61617E83CC640D4B2D6A8A0CEA7974BD4E621AF85BF07FE1E83AB316368214B2"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "dirt2_game.exe",
+    "Sha256": "49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "interiors/prc/int_prc.pssg",
+    "Sha256": "E1E4CF8135D0A1A3A1650EC50A10BC5C10968D6B7B7B56E5B686DB3F33C31B1D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "interiors/prc/int_prc.xml",
+    "Sha256": "E5A237464A7877D4C4872EA21CE641F96995D2A6620BE92DDF7174D6E8E44461"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "interiors/prc/int_prc_anim.xml",
+    "Sha256": "4B3D98D6D5F0361A4B20C6F3BB1E72FB8054527CA2A955E08CB4373B0C748A1D"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "interiors/prc/int_prc_anims.pssg",
+    "Sha256": "1931C16C76F5E1260EE91A665D12B0CD19897D457E59A1D84A536D4F75813643"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "interiors/prc/int_prc_driver_anims.pssg",
+    "Sha256": "96412EFED240C3BAA02A3E8613E7BF038E22A2336A9422D76DB000164A105C2E"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "interiors/prc/int_prc_environmentmap.pssg",
+    "Sha256": "56E585AEA0E07C954E922F940211BD66B590EF6B7E7A1BAB69B70B4CE8EAB38D"
+  }
+]

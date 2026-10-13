@@ -25,6 +25,7 @@ Public Class CustomTrackPanel
     Private ReadOnly layouts As New ComboBox With {.Name = "CustomTrackLayout", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly condition As New Label With {.Name = "CustomTrackCondition", .AutoSize = False, .TextAlign = ContentAlignment.MiddleLeft}
     Private ReadOnly launchMode As New ComboBox With {.Name = "CustomLaunchMode", .DropDownStyle = ComboBoxStyle.DropDownList}
+    Private customCars As CustomCarSelection
     Private ReadOnly cars As New ComboBox With {.Name = "CustomCar", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly opponentCars As New ComboBox With {.Name = "CustomOpponentCars", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly raceDifficulty As New ComboBox With {.Name = "CustomRaceDifficulty", .DropDownStyle = ComboBoxStyle.DropDownList}
@@ -81,12 +82,12 @@ Public Class CustomTrackPanel
     Public ReadOnly Property CanLaunch As Boolean
         Get
             Return currentPack IsNot Nothing AndAlso currentPack.Available AndAlso Not working AndAlso installationValid AndAlso layouts.SelectedItem IsNot Nothing AndAlso
-                installedLayouts.Contains(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id) AndAlso launchMode.SelectedIndex >= 0 AndAlso (launchMode.SelectedIndex <> 1 OrElse raceReady) AndAlso cars.SelectedItem IsNot Nothing AndAlso opponentCars.SelectedIndex >= 0
+                installedLayouts.Contains(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id) AndAlso (customCars Is Nothing OrElse customCars.CanLaunch(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id, If(launchMode.SelectedIndex = 0, "practice", "race"))) AndAlso launchMode.SelectedIndex >= 0 AndAlso (launchMode.SelectedIndex <> 1 OrElse raceReady) AndAlso cars.SelectedItem IsNot Nothing AndAlso opponentCars.SelectedIndex >= 0
         End Get
     End Property
     Public ReadOnly Property CanLaunchVr As Boolean
         Get
-            Return CanLaunch AndAlso TrackPacks.Get(currentPack.Id).Modes.Any(Function(m) m.StartsWith("vr-", StringComparison.Ordinal))
+            Return CanLaunch AndAlso (customCars Is Nothing OrElse Not customCars.CustomEnabled) AndAlso TrackPacks.Get(currentPack.Id).Modes.Any(Function(m) m.StartsWith("vr-", StringComparison.Ordinal))
         End Get
     End Property
     Public Sub New(value As InstallContext)
@@ -107,10 +108,16 @@ Public Class CustomTrackPanel
         Dim columns As New ResponsiveColumns With {.WideAt = 560}
         setup.Controls.Add(columns)
         launchMode.Items.AddRange({"Direct practice", "Race"})
-        cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
+        customCars = New CustomCarSelection(context, cars, "custom/" & preferences.SelectedPackId, preferences.ForPack(preferences.SelectedPackId).CarCode)
+        AddHandler customCars.Changed, Sub()
+                                          If Not loading Then
+                                              RefreshRaceOptions() : RefreshBestTime()
+                                          End If
+                                          RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
+                                      End Sub
         opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
         raceDifficulty.Items.AddRange(DirectRaceDifficulty.Labels)
-        Field(columns.First, "Launch mode", launchMode) : Field(columns.First, "Car", cars)
+        Field(columns.First, "Launch mode", launchMode) : Field(columns.First, "Car", customCars)
         Dim vehicleSetup As New Button With {.Text = "Vehicle setup…", .Name = "CustomVehicleSetup", .AutoSize = True}
         columns.First.Controls.Add(vehicleSetup)
         AddHandler vehicleSetup.Click, Sub() RaiseEvent VehicleSetupRequested(Me, EventArgs.Empty)
@@ -227,10 +234,10 @@ Public Class CustomTrackPanel
             launchMode.Items.Clear()
             launchMode.Items.Add("Direct practice")
             If currentPack.Available AndAlso TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race") Then launchMode.Items.Add("Race")
-            cars.Items.Clear()
-            cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
+
+
             launchMode.SelectedIndex = If(selected.LaunchMode = "race" AndAlso launchMode.Items.Count = 1, -1, Array.IndexOf({"practice", "race"}, selected.LaunchMode))
-            cars.SelectedItem = cars.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = selected.CarCode)
+            customCars.SetStockSelection("custom/" & currentPack.Id, selected.CarCode)
             raceDifficulty.SelectedIndex = Math.Clamp(selected.RaceDifficulty, -1, 5) + 1
             opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, selected.OpponentCars)
             opponents.Maximum = 7 : fullGridOpponents = Math.Clamp(selected.Opponents, 1, 7)
@@ -254,7 +261,7 @@ Public Class CustomTrackPanel
         Dim selected = preferences.ForPack(currentPack.Id)
         If layouts.SelectedItem IsNot Nothing Then selected.LayoutId = DirectCast(layouts.SelectedItem, LayoutItem).Value.Id
         If launchMode.SelectedIndex >= 0 Then selected.LaunchMode = {"practice", "race"}(launchMode.SelectedIndex)
-        If cars.SelectedItem IsNot Nothing Then selected.CarCode = DirectCast(cars.SelectedItem, PracticeCar).Code
+        If cars.SelectedItem IsNot Nothing Then selected.CarCode = If(customCars.CustomEnabled, customCars.StockSelection, DirectCast(cars.SelectedItem, PracticeCar).Code)
         If opponentCars.SelectedIndex >= 0 Then selected.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         selected.RaceDifficulty = raceDifficulty.SelectedIndex - 1
         selected.Opponents = If(opponents.Maximum = 1, fullGridOpponents, opponents.Value) : selected.Laps = If(OneLapPractice, circuitRaceLaps, laps.Value)
@@ -269,7 +276,7 @@ Public Class CustomTrackPanel
         If currentPack?.Id <> "nordschleife" Then Return
         Dim layoutId = If(TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id, TrackPacks.Nordschleife.Layouts(0).Id)
         Try
-            Dim lap = BestLapStore.Best(context, layoutId, TrackPacks.Nordschleife.Version)
+            Dim lap = BestLapStore.Best(context, layoutId, TrackPacks.Nordschleife.Version, customCars IsNot Nothing AndAlso customCars.CustomEnabled)
             bestTime.Text = If(lap Is Nothing, "Best lap: no completed lap yet", "Best lap: " & BestLapStore.Display(lap))
         Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.Text.Json.JsonException
             bestTime.Text = "Best lap history unavailable; saved file kept"
@@ -300,6 +307,7 @@ Public Class CustomTrackPanel
         If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
         If pointToPoint Then modeHint.Text = "Desktop and VR · One 10.4 km run · VR and AI races are experimental · LAN unavailable"
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
+        If customCars IsNot Nothing AndAlso customCars.CustomEnabled Then modeHint.Text = "Custom cars: Desktop Direct practice · Nordschleife Daylight only · Handling and suspension remain experimental."
         raceDifficulty.Enabled = race
         opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race
         Dim vehicle = TryCast(cars.SelectedItem, PracticeCar)

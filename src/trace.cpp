@@ -1,6 +1,7 @@
 #include "graphics_diagnostics.h"
 #include "resolution_report.h"
 #include "trace.h"
+#include "f04_camera.h"
 #include "common.h"
 #include "eye_pair.h"
 #include "camera_math.h"
@@ -1683,7 +1684,8 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     const bool desktopControls=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_CONTROLS",desktop,8)==1 && desktop[0]==L'1';
     if(desktopControls || (GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1')) {
         EnableDirectPractice();
-        Log("desktop practice: no rendering hooks, VR hotkeys or OpenXR initialization");
+        if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
+        Log("desktop practice: optional custom-car camera only; no VR hotkeys or OpenXR initialization");
         return;
     }
     static bool initialized=[] { auto status=MH_Initialize(); return status==MH_OK||status==MH_ERROR_ALREADY_INITIALIZED; }();

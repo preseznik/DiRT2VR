@@ -7,7 +7,7 @@ Public Class InstructionsView
     Private ReadOnly picker As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Name = "InstructionTopicPicker", .AccessibleName = "Instruction topic"}
     Private ReadOnly article As New RichTextBox With {.ReadOnly = True, .BorderStyle = BorderStyle.None, .WordWrap = True, .ScrollBars = RichTextBoxScrollBars.Vertical, .DetectUrls = False, .Name = "InstructionArticle", .AccessibleName = "Instructions"}
     Private updating As Boolean
-    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom tracks", "Appearance", "Profiles"}
+    Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom cars", "Custom tracks", "Appearance", "Profiles"}
     Private Shared ReadOnly Pages As String() = {
         "Launch
 Launch plays on your monitor. Launch VR uses SteamVR: start SteamVR and connect your headset first. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
@@ -207,6 +207,14 @@ Controls also provides six optional seat movement bindings. These are unassigned
 
 Current testing
 Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
+        "Custom cars (Experimental)
+Check CUSTOM cars beside either Car selector to list supported conversions. It works independently of CUSTOM tracks. Ferrari F2004 is the first supported profile, built from your local Assetto Corsa car folder. Close DiRT 2, then choose Build/import. The launcher detects the source folder; Manage provides Choose source folder for another location. Conversion generates the car and V10 audio locally and preserves the source assets. Stop build cancels conversion before installation begins.
+
+Play
+Choose Direct practice and Launch for desktop play on Battersea Air or Nordschleife Daylight. Turn CUSTOM cars off to restore your previous stock-car selection. Manage provides rebuilding, installation rechecking and uninstalling. Installed assets work offline without Assetto Corsa. Ferrari best laps are separate from stock-car history.
+
+Current limitations
+Handling, suspension, cockpit motion and audio calibration remain experimental. The steering-wheel LCD shows engine RPM. Use this readout to check revs and shifts; the stock HUD RPM dial is not calibrated for the F2004. The native driver is fitted to the F2004 seat with moving steering grips; its appearance and animation remain experimental. The normal handbrake control can hold the car on the grid (Space with default keyboard controls; A with the Xbox preset). Body paint uses a matte approximation. Mirrors and the other dashboard displays are static; damage and distant detail levels use approximations. VR, AI races, LAN, career and saved full-replay playback are unavailable for this car. If an installed car file changes outside the launcher, it and recovery backups are preserved; resolve the reported conflict before rebuilding.",
         "Custom tracks (Experimental)
 Misty Loch update: after installing this version, select Misty Loch → Manage → Rebuild from source once to fix flickering black road bands while retaining surface detail. This shader fix keeps the current track version and replays recorded with that version.
 

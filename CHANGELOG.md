@@ -6,6 +6,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add **CUSTOM cars (Experimental)** beside both Car selectors. Import Ferrari F2004 from your local Assetto Corsa installation; stock cars remain available.
+- Drive the Ferrari in desktop Direct practice on Battersea Air and Nordschleife Daylight, with its body and cockpit, fitted driver, V10 audio, live cockpit RPM display and handbrake.
+- Reduce Ferrari cockpit shake while preserving physics and right-stick look. Correct suspension animation, body shading and contact shadows.
+- Add cancellable builds, source-folder selection, installation checks, rebuilding and uninstalling. Ferrari best laps are kept separately; custom-track and car changes restore together after play.
+- Ferrari handling and some visual details remain approximations. VR, AI races, LAN, career and saved full-replay playback are not supported for this car yet. Car assets are generated locally and are not included in downloads.
+
 ## 0.17.88 — 2026-10-11 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.88)

@@ -72,7 +72,14 @@ Public Module Worker
             Case "prepare-laa"
                 Call (New LargeAddressAware(context)).Prepare()
             Case "setup" : Call (New Installation(context)).Setup()
+            Case "install-car"
+                Run(context, "recover")
+                CustomCars.CarInstallation.Install(context.GameRoot, IO.Path.Combine(CustomCarService.Staging(context, workId), "conversion/install"))
+            Case "remove-car"
+                Run(context, "recover")
+                CustomCars.CarInstallation.Uninstall(context.GameRoot)
             Case "prepare", "prepare-desktop"
+                If CustomCars.CarPack.IsCustom(carCode) Then CustomCars.CarPack.RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), opponents)
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
                     CustomTracks.SessionFiles.Recover(context.GameRoot)
@@ -83,11 +90,17 @@ Public Module Worker
                 End If
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing, recordReplay:=ReplayPreferences.Load(context).RecordFullReplay)
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode))
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
-                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
+                    If CustomCars.CarPack.IsCustom(carCode) Then
+                        CustomCars.CarSession.Prepare(context.GameRoot, trackId, progressPatch)
+                    Else
+                        CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
+                    End If
+                ElseIf CustomCars.CarPack.IsCustom(carCode) Then
+                    CustomCars.CarSession.Prepare(context.GameRoot, trackId)
                 End If
                 ' Layer exposure after VR motion-blur changes; recover in the reverse order.
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
@@ -113,22 +126,26 @@ Public Module Worker
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Recover(context.GameRoot)
+                CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New DirectMenus(context)).Recover()
                 Call (New StartupMovies(context)).Recover()
                 Call (New LanTransaction(context)).Recover()
                 Call (New AssetTransaction(context)).Recover()
             Case "install-custom"
+                CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
             Case "remove-custom"
+                CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
+                CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
@@ -147,7 +164,11 @@ Public Module Worker
             start.ArgumentList.Add("--replay-id") : start.ArgumentList.Add(replayId)
         End If
         If workId IsNot Nothing Then
-            CustomTrackService.Staging(context, workId)
+            If operation = "install-car" Then
+                CustomCarService.Staging(context, workId)
+            Else
+                CustomTrackService.Staging(context, workId)
+            End If
             start.ArgumentList.Add("--track-work") : start.ArgumentList.Add(workId)
         End If
         If operation = "prepare-filter" Then
