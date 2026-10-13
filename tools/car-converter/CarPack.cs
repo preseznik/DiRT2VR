@@ -26,9 +26,7 @@ public static class CarPack
     public static bool Owns(string path) => path == EngineIni || Roots.Any(root => path.StartsWith(root + "/", StringComparison.Ordinal));
     public static void RequireMode(string track, bool vr, string mode, int opponents)
     {
-        if (vr) throw new IOException("Ferrari F2004 VR is awaiting headset validation. Use Launch for desktop play.");
         if (mode != "practice" || opponents != 0) throw new IOException("Ferrari F2004 currently supports Direct practice only. AI, LAN and career are unavailable.");
-        if (track is not ("144" or "nordschleife-daylight")) throw new IOException("Ferrari F2004 currently supports Battersea Air and Nordschleife Daylight. Further track combinations await testing.");
     }
     public static CarReceipt Read(string game, bool verify = true)
     {

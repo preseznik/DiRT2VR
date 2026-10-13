@@ -32,11 +32,11 @@ Public Module CustomCarService
     End Function
     Public Sub ConfigureProcess(start As ProcessStartInfo, settings As VrSettings)
         start.Environment.Remove("DIRT2VR_CUSTOM_CAR")
-        If Not settings.DirectMode OrElse Not CarPack.IsCustom(settings.CarCode) OrElse
-           Not start.Environment.ContainsKey("DIRT2VR_DESKTOP_PRACTICE") OrElse
-           start.Environment("DIRT2VR_DESKTOP_PRACTICE") <> "1" Then Return
+        If Not settings.DirectMode OrElse Not CarPack.IsCustom(settings.CarCode) Then Return
         start.Environment("DIRT2VR_CUSTOM_CAR") = CarPack.Code
-        start.Environment("DIRT2VR_AUTO_COCKPIT") = "1"
+        If start.Environment.ContainsKey("DIRT2VR_DESKTOP_PRACTICE") AndAlso start.Environment("DIRT2VR_DESKTOP_PRACTICE") = "1" Then
+            start.Environment("DIRT2VR_AUTO_COCKPIT") = "1"
+        End If
     End Sub
     Public Event Changed As EventHandler
     Public Property Building As Boolean

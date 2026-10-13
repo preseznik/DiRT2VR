@@ -70,6 +70,6 @@ public static class CarConversion
         var files = SafeFiles.Tree(install).Order(StringComparer.Ordinal).Select(path => new PackFile(Path.GetRelativePath(install, path).Replace('\\', '/'), new FileInfo(path).Length, SafeFiles.Hash(path, cancel))).ToArray();
         var receipt = new CarReceipt(1, CarPack.Code, CarPack.Version, files, sources); CarPack.Verify(install, receipt, cancel);
         SafeFiles.WriteJson(SafeFiles.Inside(install, CarPack.Receipt), receipt);
-        Report(100, "Ferrari F2004 built for experimental desktop solo testing");
+        Report(100, "Ferrari F2004 built for experimental desktop and VR Direct practice");
     }
 }

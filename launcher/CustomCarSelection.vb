@@ -134,7 +134,7 @@ Public Class CustomCarSelection
             ElseIf File.Exists(IO.Path.Combine(context.GameRoot, CarPack.Receipt)) Then
                 Try
                     CarPack.Read(context.GameRoot) : ready = True
-                    status.Text = "Ready for desktop testing · Direct practice · Battersea Air or Nordschleife Daylight"
+                    status.Text = "Direct practice · All compatible tracks · Desktop and VR (Experimental)"
                 Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
                     status.Text = ex.Message
                 End Try

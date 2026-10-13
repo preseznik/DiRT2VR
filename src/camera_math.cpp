@@ -50,10 +50,12 @@ XrPosef ScreenPose(const XrPosef& reference,float distance) {
     const auto offset=Rotate(q,{0,0,-distance});
     return {q,{reference.position.x+offset.x,reference.position.y+offset.y,reference.position.z+offset.z}};
 }
-bool CockpitCameraCandidate(const float* a,const float* b) {
+bool CockpitCameraCandidate(const float* a,const float* b,float nearPlane) {
     // Verified cockpit XML/live records use 0.075; trailer cameras use 0.2,
     // bumper cameras 0.1 and the sampled replay cameras approximately 0.05.
-    return std::abs(a[21]-.075f)<.00001f && std::abs(b[21]-.075f)<.00001f;
+    // The accepted F2004 cockpit uses 0.04; its launcher session selects that
+    // exact value without widening the stock-camera filter.
+    return std::abs(a[21]-nearPlane)<.00001f && std::abs(b[21]-nearPlane)<.00001f;
 }
 void ApplyEyePose(float* camera,const XrPosef& pose,float unitsPerMetre) {
     if(!std::isfinite(unitsPerMetre) || unitsPerMetre<=0 ||

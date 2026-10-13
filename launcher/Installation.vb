@@ -80,7 +80,10 @@ Public Module Worker
                 Run(context, "recover")
                 CustomCars.CarInstallation.Uninstall(context.GameRoot)
             Case "prepare", "prepare-desktop"
-                If CustomCars.CarPack.IsCustom(carCode) Then CustomCars.CarPack.RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), opponents)
+                If CustomCars.CarPack.IsCustom(carCode) Then
+                    CustomCars.CarPack.RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), opponents)
+                    Run(context, "recover")
+                End If
                 CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
                 Dim external = If(CustomTracks.TrackPacks.IsLayout(trackId), CustomTracks.TrackPacks.ForLayout(trackId).External, Nothing)
                 Dim externalCar = CustomCars.ExternalCars.Find(carCode)
@@ -97,6 +100,8 @@ Public Module Worker
                         Dim progress As Func(Of Byte(), Byte()) = Nothing
                         If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progress = AddressOf NordschleifeProgress.Patch
                         prepareCar = CustomCars.ExternalCars.Plan(context.GameRoot, externalCar, trackId, progress)
+                    ElseIf CustomCars.CarPack.IsCustom(carCode) Then
+                        prepareCar = CustomCars.CarSession.Plan(context.GameRoot, trackId)
                     End If
                     CustomTracks.ExternalSession.PrepareContent(context.GameRoot, external, trackId, externalCar)
                 ElseIf CustomTracks.ExternalSession.Pending(context.GameRoot) Then
@@ -110,6 +115,12 @@ Public Module Worker
                     CustomTrackService.RequireLauncher(receipt)
                     If opponents > 0 AndAlso Not CustomTracks.TrackPacks.ForLayout(trackId).SupportsRace(receipt, trackId) Then Throw New IOException("Rebuild " & CustomTracks.TrackPacks.ForLayout(trackId).Name & " to update its AI driving paths before starting a Race. Direct practice is still available.")
                 End If
+                If prepareCar Is Nothing AndAlso CustomCars.CarPack.IsCustom(carCode) Then
+                    Dim progress As Func(Of Byte(), Byte()) = Nothing
+                    If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progress = AddressOf NordschleifeProgress.Patch
+                    ' Verify the installed car before the VR transaction adjusts its camera.
+                    prepareCar = CustomCars.CarSession.Plan(context.GameRoot, trackId, progress)
+                End If
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode))
@@ -118,13 +129,7 @@ Public Module Worker
                 ElseIf CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
-                    If CustomCars.CarPack.IsCustom(carCode) Then
-                        CustomCars.CarSession.Prepare(context.GameRoot, trackId, progressPatch)
-                    Else
-                        CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
-                    End If
-                ElseIf CustomCars.CarPack.IsCustom(carCode) Then
-                    CustomCars.CarSession.Prepare(context.GameRoot, trackId)
+                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
                 End If
                 ' Layer exposure after VR motion-blur changes; recover in the reverse order.
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)

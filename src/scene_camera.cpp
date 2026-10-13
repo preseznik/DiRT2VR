@@ -153,7 +153,11 @@ SceneCamera IdentifySceneCamera(const float* a,const float* b,uint64_t frame) {
         return ReplayStereoEnabled() && MatchingReplayChaseCamera(a,b) ? SceneCamera::ReplayChase : SceneCamera::Unknown;
     }
     if(ExtendedViewsEnabled() && !LiveDrivingCameraState())return SceneCamera::Unknown;
-    if(CockpitCameraCandidate(a,b))return SceneCamera::Cockpit; // Preserve cockpit-only behavior when opted out.
+    static const float cockpitNear=[] {
+        wchar_t car[8]{};
+        return GetEnvironmentVariableW(L"DIRT2VR_CUSTOM_CAR",car,8)==3 && !wcscmp(car,L"f04") ? .04f : .075f;
+    }();
+    if(CockpitCameraCandidate(a,b,cockpitNear))return SceneCamera::Cockpit; // Preserve cockpit-only behavior when opted out.
     if(!ExtendedViewsEnabled())return SceneCamera::Unknown;
     std::array<Sample,16> observed;{std::lock_guard lock(mutex);observed=samples;}
     const auto now=GetTickCount64();SceneCamera identified=SceneCamera::Unknown;const char* name="unknown";bool matched=false;
