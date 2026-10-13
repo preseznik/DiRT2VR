@@ -4,6 +4,10 @@ This experimental format accepts prepared DiRT2VR packs. It does not add automat
 
 ## Installing and sharing
 
+To move an installed track or car, select it and choose **Manage → Export pack ZIP…**. Close DiRT 2 first and restore original files if recovery is pending. The export verifies every listed file and includes the receipt or manifest unchanged. Track exports contain all currently installed layouts of the selected pack. Progress and Cancel are available; a failed or cancelled export leaves any existing ZIP untouched.
+
+On the destination PC, close the game and launcher and extract the ZIP into the **DiRT 2 game folder containing `dirt2.exe`**. Keep the archive's folder structure; do not extract it into `DiRT2VR` or into an external folder manually. Open an up-to-date launcher and Refresh. Supported conversions retain their normal source categories; external packs remain External. The destination needs a compatible DiRT 2 installation, and existing mode/version/dependency checks still apply. No source-game rebuild is needed. Settings, careers, replays, source assets and unrelated packs are not exported. Only share assets you are entitled to distribute.
+
 Put one complete pack in each folder:
 
 ```text

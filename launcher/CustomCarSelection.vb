@@ -189,6 +189,10 @@ Public Class CustomCarSelection
     End Function
     Private Sub ShowManage()
         Dim menu As New ContextMenuStrip()
+        Dim export = menu.Items.Add("Export pack ZIP…", Nothing, Sub()
+            PackExportDialog.Export(Me, context, "car", CustomCarPreferences.Load(context).SelectedId, cars.Text)
+        End Sub)
+        export.Name = "ExportCustomCar" : export.Enabled = ready AndAlso Not CustomCarService.Building
         If CustomCarPreferences.Load(context).SelectedId = CarPack.Code Then
             menu.Items.Add("Rebuild from source", Nothing, Async Sub() Await BuildCar())
             menu.Items.Add("Choose source folder…", Nothing, Sub()

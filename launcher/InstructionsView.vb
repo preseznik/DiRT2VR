@@ -151,6 +151,8 @@ The launcher temporarily handles read-only game files and restores their origina
 Diagnostic logging
 Off by default. Enable it in Settings and save before troubleshooting, then turn it off afterward. Open logs shows the log folder. Failed custom-track and car builds save custom-build-error.json with the build identity and error details; the error message includes its location. Cancelled builds do not create failure reports. Recovery records remain available even when logging is off.
 
+Moving built packs: select a custom track or car, then Manage → Export pack ZIP… with DiRT 2 closed. Track ZIPs include all installed layouts. On the destination PC, close the game and launcher and extract into the DiRT 2 folder containing dirt2.exe. Open an up-to-date launcher and Refresh; no rebuilding is needed. Supported packs keep their normal categories and external packs remain External. Compatibility checks and mode limits still apply. Settings and careers are not exported.
+
 Guided headset tests
 When a test card is shown, press Enter to type a reply, then Enter again to save it locally for the tester to read. Escape cancels. Keep the game focused and the car stopped while typing; the race continues. Replies are available only in explicitly enabled test sessions.
 

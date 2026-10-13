@@ -13,13 +13,13 @@ Public Class CustomTrackPanel
     Private ReadOnly browser As New CustomTrackBrowser
     Private ReadOnly detail As VerticalStack
     Private ReadOnly title As New Label With {.AutoSize = True, .Font = New Font("Segoe UI", 12, FontStyle.Bold)}
-    Private ReadOnly description As New Label With {.AutoSize = False}
+    Private ReadOnly description As New Label With {.AutoSize = True}
     Private ReadOnly status As New TrackStatusLabel With {.Name = "CustomTrackStatus", .AutoSize = True, .Font = New Font("Segoe UI", 12, FontStyle.Bold), .Padding = New Padding(8)}
     Private ReadOnly workActions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
     Private ReadOnly setup As New VerticalStack With {.Name = "CustomTrackSetup"}
     Private ReadOnly body As New VerticalStack
-    Private ReadOnly installCard As New VerticalStack
-    Private ReadOnly installHint As New Label With {.AutoSize = False}
+    Private ReadOnly installCard As New TrackBuildStack
+    Private ReadOnly installHint As New Label With {.AutoSize = True}
     Private ReadOnly bestTime As New Label With {.Name = "CustomBestTime", .AutoSize = True}
     Private ReadOnly unavailable As New Label With {.Name = "CustomPackUnavailable", .AutoSize = False}
     Private ReadOnly layouts As New ComboBox With {.Name = "CustomTrackLayout", .DropDownStyle = ComboBoxStyle.DropDownList}
@@ -219,9 +219,13 @@ Public Class CustomTrackPanel
                                                                                    SetStatus("Not installed", currentPack.Name & " removed. Your original tracks are available with CUSTOM tracks off.")
                                                                                End Function)
                                                            End Sub
+        Dim export = menu.Items.Add("Export pack ZIP…")
+        export.Name = "ExportCustomTrack"
+        AddHandler export.Click, Sub() PackExportDialog.Export(Me, context, "track", currentPack.Id, currentPack.Name)
         AddHandler menu.Opening, Sub()
                                     rebuild.Visible = currentPack.External Is Nothing
                                     menu.Items(2).Visible = currentPack.External Is Nothing
+                                    export.Enabled = Not working AndAlso currentPack.Available AndAlso hasReceipt
                                 End Sub
         AddHandler errorDetails.Click, Sub() MessageBox.Show(Me, errorText, currentPack.Name & " — details", MessageBoxButtons.OK, MessageBoxIcon.Information)
         AddHandler Disposed, Sub()
