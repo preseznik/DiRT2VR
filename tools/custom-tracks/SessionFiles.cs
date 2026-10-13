@@ -1,5 +1,7 @@
 namespace DiRT2VR.CustomTracks;
 
+public sealed record SessionReplacement(string Path, string OriginalSha256, byte[] Bytes);
+
 // One journal covers shared custom-track files and the Nordschleife session route.
 // The fixed allowlist is compiled into the launcher, not supplied by a download.
 public static class SessionFiles
@@ -7,28 +9,58 @@ public static class SessionFiles
     const string Folder = "DiRT2VR/custom-track-session";
     sealed record Entry(string Path, string OriginalSha256, string AppliedSha256);
     sealed record Pending(int Schema, string Id, Entry[] Files);
-    public static void Prepare(string game, string layoutId, Func<byte[], byte[]>? nordschleifeProgress = null)
+    static readonly string[] CarTargets = ["database/database.bin", "cars/class_mappings.xml", "audio/carsetup.bin", "audio/carsetup_ai.bin", "audio/dictionaries.bin"];
+    public static void Prepare(string game, string? layoutId, Func<byte[], byte[]>? nordschleifeProgress = null,
+        IReadOnlyList<SessionReplacement>? carFiles = null, Func<byte[], byte[]>? carDatabase = null)
     {
         SafeFiles.RequireClosed(); Recover(game);
-        var pack = TrackPacks.ForLayout(layoutId);
-        if (pack.External is not null) throw new IOException("External packs require the external session transaction.");
-        var receipt = pack.Read(game);
-        var session = receipt.Sessions.SingleOrDefault(s => s.LayoutId == pack.GetLayout(layoutId).Id)
-            ?? throw new IOException("This layout is not installed. Use Manage > Rebuild from source to add it.");
-        var entries = session.Files.Select(f => new Entry(f.Path, f.OriginalSha256,
-            receipt.Files.Single(p => p.Path == f.InstalledPath).Sha256)).ToList();
-        var replacements = session.Files.Select(f => File.ReadAllBytes(SafeFiles.Inside(game, f.InstalledPath))).ToList();
-        if (nordschleifeProgress is not null)
+        var entries = new List<Entry>(); var replacements = new List<byte[]>();
+        if (layoutId is not null)
         {
-            if (pack != TrackPacks.Nordschleife) throw new IOException("The circuit progress correction is only for Nordschleife.");
-            string path = ProgressTarget(pack.GetLayout(layoutId));
-            var original = File.ReadAllBytes(SafeFiles.Inside(game, path));
-            string hash = receipt.Files.Single(f => f.Path == path).Sha256;
-            if (Digest(original) != hash) throw new IOException("Nordschleife progress changed during preparation; files preserved.");
-            var corrected = nordschleifeProgress(original);
-            entries.Add(new(path, hash, Digest(corrected)));
-            replacements.Add(corrected);
+            var pack = TrackPacks.ForLayout(layoutId);
+            if (pack.External is not null) throw new IOException("External packs require the external session transaction.");
+            var receipt = pack.Read(game);
+            var session = receipt.Sessions.SingleOrDefault(s => s.LayoutId == pack.GetLayout(layoutId).Id)
+                ?? throw new IOException("This layout is not installed. Use Manage > Rebuild from source to add it.");
+            entries.AddRange(session.Files.Select(f => new Entry(f.Path, f.OriginalSha256,
+                receipt.Files.Single(p => p.Path == f.InstalledPath).Sha256)));
+            replacements.AddRange(session.Files.Select(f => File.ReadAllBytes(SafeFiles.Inside(game, f.InstalledPath))));
+            if (nordschleifeProgress is not null)
+            {
+                if (pack != TrackPacks.Nordschleife) throw new IOException("The circuit progress correction is only for Nordschleife.");
+                string path = ProgressTarget(pack.GetLayout(layoutId));
+                var original = File.ReadAllBytes(SafeFiles.Inside(game, path));
+                string hash = receipt.Files.Single(f => f.Path == path).Sha256;
+                if (Digest(original) != hash) throw new IOException("Nordschleife progress changed during preparation; files preserved.");
+                var corrected = nordschleifeProgress(original);
+                entries.Add(new(path, hash, Digest(corrected)));
+                replacements.Add(corrected);
+            }
         }
+        else if (nordschleifeProgress is not null) throw new IOException("A progress correction requires its installed track.");
+        if (carFiles is not null)
+        {
+            if (carFiles.Count != CarTargets.Length || carFiles.Any(f => f is null) || carFiles.Select(f => f.Path).Distinct().Count() != CarTargets.Length ||
+                carFiles.Any(f => !CarTargets.Contains(f.Path) || !SafeFiles.Digest(f.OriginalSha256) || f.Bytes is null) || carDatabase is null)
+                throw new IOException("Invalid custom-car session replacements.");
+            foreach (var file in carFiles)
+            {
+                int existing = entries.FindIndex(e => e.Path == file.Path);
+                if (existing >= 0)
+                {
+                    if (file.Path != "database/database.bin" || entries[existing].OriginalSha256 != file.OriginalSha256)
+                        throw new IOException("Track and car source versions differ; files preserved.");
+                    // Retain the track database as input to the car transformation below.
+                    continue;
+                }
+                entries.Add(new(file.Path, file.OriginalSha256, Digest(file.Bytes))); replacements.Add(file.Bytes);
+            }
+            int database = entries.FindIndex(e => e.Path == "database/database.bin");
+            replacements[database] = carDatabase(replacements[database]);
+            entries[database] = entries[database] with { AppliedSha256 = Digest(replacements[database]) };
+        }
+        else if (carDatabase is not null) throw new IOException("A car database patch requires its verified session files.");
+        if (entries.Count == 0 || entries.Select(e => e.Path).Distinct().Count() != entries.Count) throw new IOException("Invalid custom-content session.");
         for (int i = 0; i < entries.Count; i++)
             if (Digest(replacements[i]) != entries[i].AppliedSha256) throw new IOException("Custom session file changed during preparation.");
         var id = Guid.NewGuid().ToString("N");
@@ -54,7 +86,7 @@ public static class SessionFiles
     }
     static string Digest(byte[] bytes) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
     static string ProgressTarget(Layout layout) => $"tracks/usa/{layout.Folder}/route_0/progress_track.xml";
-    static bool AllowedTarget(string path) => TrackPacks.SessionTargets.Contains(path) ||
+    static bool AllowedTarget(string path) => TrackPacks.SessionTargets.Contains(path) || CarTargets.Contains(path) ||
         TrackPacks.Nordschleife.Layouts.Any(l => path == ProgressTarget(l));
     public static void Recover(string game)
     {

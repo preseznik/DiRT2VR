@@ -95,6 +95,7 @@ Public Class MainForm
     Private buttonCapture As ControllerCapture
     Private busy As Boolean
     Private customTracks As CustomTrackPanel
+    Private customCars As CustomCarSelection
     Private filters As FilterPanel
     Private ReadOnly updateNotice As New Button With {.Text = "New version available", .Name = "UpdateAvailable", .AutoSize = True, .Visible = False, .Anchor = AnchorStyles.Right}
     Private ReadOnly updateCancellation As New CancellationTokenSource()
@@ -432,11 +433,13 @@ Public Class MainForm
         If customTracks.CustomEnabled Then content.Controls.Remove(columns)
         Dim selection = Section(columns.First, "Event selection")
         Dim race = Section(columns.Second, "Race options")
+        customCars = New CustomCarSelection(context, carChoice, "stock", settings.CarCode)
+        AddHandler customCars.Changed, Sub() RefreshOpponentHint()
         Dim labels = {"Launch mode", "Event", "Track", "Car", "Opponent cars"}
         Dim choices = {launchMode, eventChoice, trackChoice, carChoice, opponentCars}
         For i = 0 To choices.Length - 1
             StyleChoice(choices(i), Me)
-            Field(If(i = 4, race, selection), labels(i), choices(i))
+            Field(If(i = 4, race, selection), labels(i), If(i = 3, CType(customCars, Control), choices(i)))
         Next
         Dim setupButton As New Button With {.Text = "Vehicle setup…", .Name = "VehicleSetup", .AutoSize = True}
         selection.Controls.Add(setupButton)
@@ -455,7 +458,7 @@ Public Class MainForm
         AddHandler opponentCars.SelectedIndexChanged, Sub() RefreshOpponentHint()
         AddHandler carChoice.SelectedIndexChanged, Sub() RefreshOpponentHint()
         eventChoice.Items.AddRange(RaceCatalog.Current.Tracks.Where(Function(t) PrototypeTrack.Installed(t, context)).Select(Function(t) t.Event).Distinct().Order().Cast(Of Object).ToArray())
-        carChoice.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
+
         AddHandler eventChoice.SelectedIndexChanged, Sub()
                                                         Dim previous = TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id
                                                         trackChoice.Items.Clear()
@@ -499,11 +502,12 @@ Public Class MainForm
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
     End Sub
     Private Sub RefreshLaunchAvailability()
-        Dim working = busy OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
-        desktopButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
-        launchButton.Enabled = desktopButton.Enabled AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunchVr)
+        Dim working = busy OrElse CustomCarService.Building OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
+        Dim carAllowed = customCars Is Nothing OrElse (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse customCars.CanLaunch(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id, If(launchMode.SelectedIndex = 1, "practice", If(launchMode.SelectedIndex = 2, "race", "other")))
+        desktopButton.Enabled = Not working AndAlso carAllowed AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
+        launchButton.Enabled = desktopButton.Enabled AndAlso (customCars Is Nothing OrElse (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse customCars.CanLaunch(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id, If(launchMode.SelectedIndex = 1, "practice", If(launchMode.SelectedIndex = 2, "race", "other")), True)) AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunchVr)
         saveButton.Enabled = Not working : recoverButton.Enabled = Not working
-        hostButton.Enabled = Not working AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
+        hostButton.Enabled = Not working AndAlso (customCars Is Nothing OrElse Not customCars.CustomEnabled) AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
         joinButton.Enabled = hostButton.Enabled AndAlso If(SelectedHost()?.Joinable, False)
     End Sub
     Private Async Sub ShowAbout(Optional topic As String = Nothing)
@@ -936,7 +940,7 @@ Public Class MainForm
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)
             If track Is Nothing OrElse car Is Nothing Then Throw New IOException("Select an installed track and car, or use Normal Launch.")
             RaceCatalog.Current.ValidateInstalled(context, track.Id, car.Code)
-            settings.TrackId = track.Id : settings.CarCode = car.Code
+            settings.TrackId = track.Id : settings.CarCode = If(customCars.CustomEnabled, customCars.StockSelection, car.Code)
         End If
         settings.Validate()
         filters.Save(settings)

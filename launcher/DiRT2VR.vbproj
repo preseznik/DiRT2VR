@@ -34,5 +34,6 @@
     <ProjectReference Include="../tools/mizu-converter/MizuConverter.csproj" />
     <ProjectReference Include="../tools/misty-converter/MistyConverter.csproj" />
     <ProjectReference Include="../tools/profiles/Profiles.csproj" />
+    <ProjectReference Include="../tools/car-converter/CarConverter.csproj" />
   </ItemGroup>
 </Project>

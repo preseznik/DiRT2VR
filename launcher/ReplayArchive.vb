@@ -38,7 +38,7 @@ Public Class ReplayManifest
                     track.Elements().Any(Function(c) c.Name <> "car" OrElse c.HasElements OrElse c.Attributes().Count() <> 2 OrElse
                         c.Attributes().Any(Function(a) Not {"name", "number"}.Contains(a.Name.ToString()))) Then Throw New IOException("Invalid saved replay grid.")
                 If Content Is Nothing OrElse Content.Cars Is Nothing OrElse
-                    Not ReplayContent.RecordedCars(Content.TrackId, doc).SequenceEqual(Content.Cars, StringComparer.Ordinal) Then Throw New IOException("The saved replay grid does not match its content list.")
+                    Not ReplayContent.RecordedCars(Content.TrackId, doc, Content).SequenceEqual(Content.Cars, StringComparer.Ordinal) Then Throw New IOException("The saved replay grid does not match its content list.")
                 Return doc
             End Using
         Catch ex As XmlException
@@ -118,6 +118,7 @@ Public Class ReplayArchive
         Using source = OpenArchive(filename), zip As New ZipArchive(source, ZipArchiveMode.Read)
             Dim manifest = ReadManifest(zip)
             ReplayContent.RequireAvailable(context, manifest.Content, token)
+            ReplayContent.RecordedCars(manifest.Content.TrackId, manifest.EventConfig())
             context.RequireClosed()
             Dim folder = IO.Path.Combine(context.UserRoot, "replay-playback", Guid.NewGuid().ToString("N"))
             Files.NoLinks(folder)

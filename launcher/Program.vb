@@ -4,6 +4,7 @@ Imports System.Security.Principal
 Public Module Program
     <STAThread>
     Public Function Main(args As String()) As Integer
+        If args.Contains("--convert-f2004") Then Return CustomCars.CarConversion.Run(args)
         If args.Contains("--convert-aspen") Then Return Aspen.AspenConversion.Run(args)
         If args.Contains("--convert-nordschleife") Then Return Nordschleife.NordschleifeConversion.Run(args)
         If args.Contains("--convert-misty") Then Return Misty.MistyConversion.Run(args)

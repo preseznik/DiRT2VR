@@ -73,18 +73,34 @@ Public Module Worker
             Case "prepare-laa"
                 Call (New LargeAddressAware(context)).Prepare()
             Case "setup" : Call (New Installation(context)).Setup()
+            Case "install-car"
+                Run(context, "recover")
+                CustomCars.CarInstallation.Install(context.GameRoot, IO.Path.Combine(CustomCarService.Staging(context, workId), "conversion/install"))
+            Case "remove-car"
+                Run(context, "recover")
+                CustomCars.CarInstallation.Uninstall(context.GameRoot)
             Case "prepare", "prepare-desktop"
+                If CustomCars.CarPack.IsCustom(carCode) Then CustomCars.CarPack.RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), opponents)
                 CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
                 Dim external = If(CustomTracks.TrackPacks.IsLayout(trackId), CustomTracks.TrackPacks.ForLayout(trackId).External, Nothing)
-                If external IsNot Nothing Then
-                    CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
-                    If Not external.Manifest.Replay AndAlso (replayId IsNot Nothing OrElse ReplayPreferences.Load(context).RecordFullReplay) Then Throw New IOException("This external pack does not support Full Replay. Turn Record full replays off before launching.")
-                    ' Native assets exist only for the selected session. Unwind every older
-                    ' layer before applying a new external database or effect file.
+                Dim externalCar = CustomCars.ExternalCars.Find(carCode)
+                Dim prepareCar As Action = Nothing
+                If external IsNot Nothing OrElse externalCar IsNot Nothing Then
                     Run(context, "recover")
-                    CustomTracks.ExternalSession.Prepare(context.GameRoot, external, trackId)
+                    If external IsNot Nothing Then
+                        CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
+                        If Not external.Manifest.Replay AndAlso (replayId IsNot Nothing OrElse ReplayPreferences.Load(context).RecordFullReplay) Then Throw New IOException("This external pack does not support Full Replay. Turn Record full replays off before launching.")
+                        external.Verify() : external.RequireDependencies(context.GameRoot)
+                    End If
+                    If externalCar IsNot Nothing Then
+                        CustomCars.ExternalCars.RequireMode(externalCar, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), replayId IsNot Nothing OrElse ReplayPreferences.Load(context).RecordFullReplay)
+                        Dim progress As Func(Of Byte(), Byte()) = Nothing
+                        If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progress = AddressOf NordschleifeProgress.Patch
+                        prepareCar = CustomCars.ExternalCars.Plan(context.GameRoot, externalCar, trackId, progress)
+                    End If
+                    CustomTracks.ExternalSession.PrepareContent(context.GameRoot, external, trackId, externalCar)
                 ElseIf CustomTracks.ExternalSession.Pending(context.GameRoot) Then
-                    Throw New IOException("Restore original files before starting another track; external content recovery is pending.")
+                    Throw New IOException("Restore original files before launching; external content recovery is pending.")
                 End If
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
@@ -96,11 +112,19 @@ Public Module Worker
                 End If
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing, recordReplay:=ReplayPreferences.Load(context).RecordFullReplay)
-                If CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode))
+                If prepareCar IsNot Nothing Then
+                    prepareCar()
+                ElseIf CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
-                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
+                    If CustomCars.CarPack.IsCustom(carCode) Then
+                        CustomCars.CarSession.Prepare(context.GameRoot, trackId, progressPatch)
+                    Else
+                        CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
+                    End If
+                ElseIf CustomCars.CarPack.IsCustom(carCode) Then
+                    CustomCars.CarSession.Prepare(context.GameRoot, trackId)
                 End If
                 ' Layer exposure after VR motion-blur changes; recover in the reverse order.
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
@@ -126,6 +150,7 @@ Public Module Worker
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Recover(context.GameRoot)
+                CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New DirectMenus(context)).Recover()
                 Call (New StartupMovies(context)).Recover()
                 Call (New LanTransaction(context)).Recover()
@@ -133,6 +158,7 @@ Public Module Worker
                 CustomTracks.ExternalSession.Recover(context.GameRoot)
             Case "install-custom"
                 If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before installing a track; external content recovery is pending.")
+                CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
@@ -140,11 +166,13 @@ Public Module Worker
                 CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
             Case "remove-custom"
                 If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before removing a track; external content recovery is pending.")
+                CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
+                CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
@@ -163,7 +191,11 @@ Public Module Worker
             start.ArgumentList.Add("--replay-id") : start.ArgumentList.Add(replayId)
         End If
         If workId IsNot Nothing Then
-            CustomTrackService.Staging(context, workId)
+            If operation = "install-car" Then
+                CustomCarService.Staging(context, workId)
+            Else
+                CustomTrackService.Staging(context, workId)
+            End If
             start.ArgumentList.Add("--track-work") : start.ArgumentList.Add(workId)
         End If
         If operation = "prepare-filter" Then

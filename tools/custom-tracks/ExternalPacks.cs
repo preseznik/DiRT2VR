@@ -67,13 +67,20 @@ public sealed class ExternalPack
 
 public static class ExternalPacks
 {
-    public const string CarGate = "External car launching awaits the custom-car registration and acceptance checks. The pack has been kept.";
+    // Reserve stock and supported codes even when their files are absent.
+    public static readonly string[] StockCarCodes = ["350", "35t", "35x", "bmt", "bmw", "bmx", "bow", "cme", "cr4", "crt", "crx", "dej", "drt", "e9r", "e9t", "e9x", "ecl", "ect", "ecx", "hh3", "hhx", "hon", "hsb", "ick", "kin", "lan", "mer", "met", "mex", "n12", "n1t", "n1x", "pfl", "por", "prc", "sor", "sot", "sox", "sti", "stt", "stx", "tfj", "vwt"];
+    public static bool AvailableCarCode(string code) => Regex.IsMatch(code, "^[a-z0-9]{3}$") && code != "f04" && !StockCarCodes.Contains(code);
+    internal static bool CarAssetPath(string path)
+    {
+        var parts = path.Split('/');
+        return parts.Length >= 3 && parts[0] is "cars" or "interiors" && AvailableCarCode(parts[1]) && DataExtension(path);
+    }
     public static string RelativeFolder(string kind) => kind is "track" or "car"
         ? "DiRT2VR/custom-" + kind + "s/external" : throw new IOException("Unknown external content kind.");
     static readonly JsonSerializerOptions Json = new(SafeFiles.Json) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
     static bool Slug(string? id) => id is not null && Regex.IsMatch(id, "^[a-z0-9][a-z0-9-]{0,47}$");
     internal static bool AssetPath(string path) => Regex.IsMatch(path, "^tracks/usa/d2ve_[a-z0-9_]{1,48}/") && DataExtension(path);
-    static bool DataExtension(string path) => new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf", ".nfs", ".gssp", ".ctf", ".nd2", ".ini", ".dic", ".wip" }.Contains(Path.GetExtension(path));
+    static bool DataExtension(string path) => new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf", ".nfs", ".gssp", ".ctf", ".nd2", ".ini", ".dic", ".wip", ".ppts" }.Contains(Path.GetExtension(path));
     public static ExternalPack[] Discover(string game, string launcherVersion)
     {
         var results = new List<ExternalPack>();
@@ -116,8 +123,8 @@ public static class ExternalPacks
                         string asset = SafeFiles.Inside(folder, file.Path);
                         if (!File.Exists(asset) || new FileInfo(asset).Length != file.Bytes) throw new IOException("Missing or incomplete pack file: " + file.Path);
                     }
-                    if (kind == "car") problem = Directory.Exists(SafeFiles.Inside(game, "cars/" + manifest.Car!.Code))
-                        ? "This car code is already used by an installed car. The external pack cannot replace it." : CarGate;
+                    if (kind == "car" && new[] { "cars/", "interiors/" }.Any(prefix => { string target = SafeFiles.Inside(game, prefix + manifest.Car!.Code); return Directory.Exists(target) && SafeFiles.Tree(target).Any(); }))
+                        problem = "This car code is already used by an installed car. The external pack cannot replace it.";
                 }
                 catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or ArgumentException or OverflowException)
                 { problem = ex.Message; }
@@ -136,7 +143,7 @@ public static class ExternalPacks
             }
         foreach (var owners in claimed.Values.Where(v => v.Count > 1))
             foreach (var pack in owners) pack.Problem = "Another external pack claims the same track folder. Remove the conflicting copy, then Refresh.";
-        foreach (var group in results.Where(p => p.Kind == "car" && p.Problem == CarGate)
+        foreach (var group in results.Where(p => p.Kind == "car" && p.Ready)
             .GroupBy(p => p.Manifest!.Car!.Code, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
             foreach (var pack in group) pack.Problem = "Another external car pack claims the same car code. Remove the conflicting copy, then Refresh.";
         return results.ToArray();
@@ -144,7 +151,7 @@ public static class ExternalPacks
     public static void Validate(ExternalManifest m, string kind, string folderId, string launcher)
     {
         static bool Text(string? s, int maximum, bool empty = false) => s is not null && (empty || !string.IsNullOrWhiteSpace(s)) && s.Length <= maximum && !s.Any(char.IsControl);
-        if (m.Schema != 1 || m.Kind != kind || !Slug(m.Id) || m.Id != folderId || TrackPacks.BuiltIn.Any(p => p.Id == m.Id) ||
+        if (m.Schema != 1 || m.Kind != kind || !Slug(m.Id) || m.Id != folderId || m.Id == "f04" || TrackPacks.BuiltIn.Any(p => p.Id == m.Id) ||
             !Text(m.Name, 100) || !Text(m.Author, 100) || !Text(m.Description, 1000, true) || !SafeFiles.Version(m.Version) || !SafeFiles.Version(m.MinimumLauncher))
             throw new IOException("Unsupported external manifest identity or format.");
         if (System.Version.Parse(m.MinimumLauncher) > System.Version.Parse(launcher)) throw new IOException("Update DiRT2VR to " + m.MinimumLauncher + " or later for this pack.");
@@ -166,12 +173,16 @@ public static class ExternalPacks
         foreach (var dependency in m.Dependencies) SafeFiles.Relative(dependency.Path);
         if (kind == "car")
         {
-            if (m.Car is null || !Regex.IsMatch(m.Car.Code ?? "", "^[a-z0-9]{3}$") || !Regex.IsMatch(m.Car.Donor ?? "", "^[a-z0-9]{3}$") || m.Car.Code == m.Car.Donor || !Text(m.Car.ClassName, 80) || m.Layouts is null || m.Layouts.Length != 0)
+            if (m.Car is null || !AvailableCarCode(m.Car.Code ?? "") || !StockCarCodes.Contains(m.Car.Donor) || m.Car.Code == m.Car.Donor || !Text(m.Car.ClassName, 80) || m.Layouts is null || m.Layouts.Length != 0)
                 throw new IOException("Invalid external car description.");
-            string[] roots = [$"payload/cars/{m.Car.Code}/", $"payload/interiors/{m.Car.Code}/", $"payload/audio/dictionaries/d2vr_{m.Car.Code}/"];
+            string[] roots = [$"payload/cars/{m.Car.Code}/", $"payload/interiors/{m.Car.Code}/"];
             if (m.Files.Any(f => !roots.Any(root => f.Path.StartsWith(root, StringComparison.Ordinal))))
-                throw new IOException("External car payload is outside its own car, interior or audio folders.");
-            return; // Registration remains disabled until its independent acceptance gate passes.
+                throw new IOException("External car payload is outside its own car or interior folders.");
+            foreach (string required in new[] { $"cars/{m.Car.Code}/cameras.xml", $"cars/{m.Car.Code}/{m.Car.Code}.ctf", $"cars/{m.Car.Code}/{m.Car.Code}.nd2", $"cars/{m.Car.Code}/{m.Car.Code}_highLOD.pssg", $"cars/{m.Car.Code}/{m.Car.Code}_lowLOD.pssg", $"interiors/{m.Car.Code}/int_{m.Car.Code}.pssg", $"interiors/{m.Car.Code}/int_{m.Car.Code}.xml" })
+                if (!m.Files.Any(f => f.Path == "payload/" + required)) throw new IOException("Incomplete external car: " + required);
+            foreach (string required in new[] { "database/database.bin", "cars/class_mappings.xml", "audio/carsetup.bin", "audio/carsetup_ai.bin", "audio/dictionaries.bin" })
+                if (!m.Dependencies.Any(d => d.Path == required)) throw new IOException("External car needs a pinned registration dependency: " + required);
+            return;
         }
         if (m.Car is not null || m.Layouts is null || m.Layouts.Length is < 1 or > 32 || m.Layouts.Any(l => l is null) ||
             m.Layouts.Select(l => l.Id).Distinct().Count() != m.Layouts.Length || m.Layouts.Select(l => l.Folder).Distinct().Count() != m.Layouts.Length)

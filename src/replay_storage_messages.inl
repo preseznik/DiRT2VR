@@ -9,7 +9,10 @@ struct MessageStream {
   if(s->count){if(n!=4 || Read<unsigned>(p)>50)RaiseException(0xe0420120,EXCEPTION_NONCONTINUABLE,0,nullptr);s->count=false;s->remaining=Read<unsigned>(p);}
   else {
    constexpr unsigned sizes[]{80,288,28,16},tables[]{0xf28748,0xf28738,0xeeec74,0xf28250};
-   if(n!=sizes[s->type] || !s->remaining-- || Read<unsigned>(p)!=savedImageBase+tables[s->type])RaiseException(0xe0420121,EXCEPTION_NONCONTINUABLE,0,nullptr);
+   if(n!=sizes[s->type] || !s->remaining--)RaiseException(0xe0420121,EXCEPTION_NONCONTINUABLE,0,nullptr);
+   // The known vtable of this typed record provides the same relocation identity
+   // as an animation-name header when that optional name table is empty.
+   if(!AcceptSavedImageBase(Read<unsigned>(p)-tables[s->type]))RaiseException(0xe0420121,EXCEPTION_NONCONTINUABLE,0,nullptr);
    Put(p,0,reinterpret_cast<unsigned>(GetModuleHandleW(nullptr))+tables[s->type]);Put(p,4,0u);
    static unsigned seen[4]{};if(!seen[s->type]++)Log("archive message: relocated type=%u size=%u",s->type,n);
   }return 0;

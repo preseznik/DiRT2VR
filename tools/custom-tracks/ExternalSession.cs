@@ -7,27 +7,46 @@ public static class ExternalSession
     public sealed record Entry(string Path, string? Original, string Applied, FileAttributes? Attributes);
     public sealed record Journal(int Schema, string Id, Entry[] Entries);
     public static bool Pending(string game) => File.Exists(SafeFiles.Inside(game, Folder + "/pending.json"));
-    public static void Prepare(string game, ExternalPack pack, string layoutId, Action<int>? afterWrite = null)
+    public static void Prepare(string game, ExternalPack pack, string layoutId, Action<int>? afterWrite = null) => PrepareContent(game, pack, layoutId, null, afterWrite);
+    public static void PrepareContent(string game, ExternalPack? pack, string? layoutId, ExternalPack? car, Action<int>? afterWrite = null)
     {
         SafeFiles.RequireClosed();
         if (Pending(game)) throw new IOException("External content recovery is pending.");
-        pack.Verify(); pack.RequireDependencies(game);
-        var layout = pack.Layout(layoutId);
-        string trackRoot = SafeFiles.Inside(game, "tracks/usa/" + layout.Folder);
-        if (Directory.Exists(trackRoot) && SafeFiles.Tree(trackRoot).Any()) throw new IOException("External track destination contains existing files; they were preserved: " + trackRoot);
         var writes = new List<(Entry Entry, string Source)>();
-        foreach (var file in pack.Manifest!.Files.Where(f => f.Path.StartsWith("payload/tracks/usa/" + layout.Folder + "/", StringComparison.Ordinal)))
+        if (pack is not null)
         {
-            string target = file.Path["payload/".Length..];
-            if (File.Exists(SafeFiles.Inside(game, target))) throw new IOException("External track destination already exists; it was preserved: " + target);
-            writes.Add((new(target, null, file.Sha256, null), SafeFiles.Inside(pack.Root, file.Path)));
+            pack.Verify(); pack.RequireDependencies(game);
+            var layout = pack.Layout(layoutId!);
+            string trackRoot = SafeFiles.Inside(game, "tracks/usa/" + layout.Folder);
+            if (Directory.Exists(trackRoot) && SafeFiles.Tree(trackRoot).Any()) throw new IOException("External track destination contains existing files; they were preserved: " + trackRoot);
+            foreach (var file in pack.Manifest!.Files.Where(f => f.Path.StartsWith("payload/tracks/usa/" + layout.Folder + "/", StringComparison.Ordinal)))
+            {
+                string target = file.Path["payload/".Length..];
+                if (File.Exists(SafeFiles.Inside(game, target))) throw new IOException("External track destination already exists; it was preserved: " + target);
+                writes.Add((new(target, null, file.Sha256, null), SafeFiles.Inside(pack.Root, file.Path)));
+            }
+            foreach (var item in layout.Session)
+            {
+                var file = pack.Manifest.Files.Single(f => f.Path == item.File);
+                var dependency = pack.Manifest.Dependencies.Single(d => d.Path == item.Target);
+                string target = SafeFiles.Inside(game, item.Target);
+                writes.Add((new(item.Target, dependency.Sha256, file.Sha256, File.GetAttributes(target)), SafeFiles.Inside(pack.Root, file.Path)));
+            }
         }
-        foreach (var item in layout.Session)
+        if (car is not null)
         {
-            var file = pack.Manifest.Files.Single(f => f.Path == item.File);
-            var dependency = pack.Manifest.Dependencies.Single(d => d.Path == item.Target);
-            string target = SafeFiles.Inside(game, item.Target);
-            writes.Add((new(item.Target, dependency.Sha256, file.Sha256, File.GetAttributes(target)), SafeFiles.Inside(pack.Root, file.Path)));
+            car.Verify(); car.RequireDependencies(game);
+            string code = car.Manifest!.Car!.Code;
+            foreach (string prefix in new[] { "cars/", "interiors/" })
+            {
+                string target = SafeFiles.Inside(game, prefix + code);
+                if (Directory.Exists(target) && SafeFiles.Tree(target).Any()) throw new IOException("External car destination contains existing files; preserved: " + target);
+            }
+            foreach (var file in car.Manifest.Files)
+            {
+                string target = file.Path["payload/".Length..];
+                writes.Add((new(target, null, file.Sha256, null), SafeFiles.Inside(car.Root, file.Path)));
+            }
         }
         string id = Guid.NewGuid().ToString("N");
         var journal = new Journal(1, id, writes.Select(w => w.Entry).ToArray()); Validate(journal);
@@ -69,7 +88,7 @@ public static class ExternalSession
         {
             SafeFiles.Relative(e.Path);
             bool shared = TrackPacks.SessionTargets.Contains(e.Path);
-            if ((!shared && !ExternalPacks.AssetPath(e.Path)) || !SafeFiles.Digest(e.Applied) ||
+            if ((!shared && !ExternalPacks.AssetPath(e.Path) && !ExternalPacks.CarAssetPath(e.Path)) || !SafeFiles.Digest(e.Applied) ||
                 (shared ? !SafeFiles.Digest(e.Original!) || e.Attributes is null || (e.Attributes.Value & (FileAttributes.Directory | FileAttributes.ReparsePoint | FileAttributes.Device)) != 0 : e.Original is not null || e.Attributes is not null)) throw new IOException("Unsafe external recovery target; files kept.");
         }
     }

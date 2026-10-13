@@ -1,6 +1,6 @@
 # Prepared external packs (experimental)
 
-This format is being validated for a future experimental build. It does not add automatic conversion from other games. Track packs must already contain working DiRT 2 assets and registration data. External car activation is not yet available.
+This experimental format accepts prepared DiRT2VR packs. It does not add automatic conversion from other games. Track packs must already contain working DiRT 2 assets and registration data. Car packs supply prepared assets and use an installed stock donor for class and audio registration. Desktop integration has been checked with local test packs; each pack still needs its own driving, replay and VR checks before its author enables those modes.
 
 ## Installing and sharing
 
@@ -58,6 +58,16 @@ All other game destinations are blocked. Shared files are accepted only when the
 
 Bounds: 256 folders per content kind, 32 layouts per pack, 4,096 payload files, 512 dependencies, 768 MiB per payload file, 64 MiB per shared replacement and 4 GiB total payload. Manifests are limited to 2 MiB. Paths must be relative, use `/`, and cannot contain traversal, device names, links or alternate data streams. Only recognised game-data extensions are accepted; executables and scripts are rejected.
 
-## Cars: discovery only
+## Car manifest, schema 1
 
-Car folders use `Kind: "car"`, an empty `Layouts` array and `Car` with `Code`, `Donor` and `ClassName`. Codes are three lowercase letters/digits and must differ from the donor. Payloads are confined to that code's `cars`, `interiors` and `audio/dictionaries/d2vr_<code>` folders. Duplicate car codes are flagged. This is a reserved discovery format, not a working car authoring contract: registration, supported car/track combinations and second-car acceptance still need to be completed before car activation can be offered.
+Use `Kind: "car"`, an empty `Layouts` array and a `Car` object containing `Code`, `Donor` and `ClassName`. See [the car template](examples/external-car.manifest.json). Its placeholders must be replaced before use.
+
+`Code` is a unique three-character lowercase letter/digit code. Stock codes and `f04` are reserved even when not installed. `Donor` must be a supported stock car code. `ClassName` is a display label; the actual class, upgrade record structure and audio are inherited from the donor. Packs cannot supply executable registration code or replace existing cars.
+
+Files are confined to `payload/cars/<code>/` and `payload/interiors/<code>/`. Include all resources needed by the car, with internal names and references prepared for the chosen code. At minimum: `cameras.xml`, `<code>.ctf`, `<code>.nd2`, `<code>_highLOD.pssg`, `<code>_lowLOD.pssg`, `int_<code>.pssg` and `int_<code>.xml` in the appropriate folders. Include default-livery textures, animations and every handling file referenced by the donor's upgrade records. Renaming a raw car folder is not a conversion.
+
+Pin these original files in `Dependencies`: `database/database.bin`, `cars/class_mappings.xml`, `audio/carsetup.bin`, `audio/carsetup_ai.bin` and `audio/dictionaries.bin`. Include any further donor assets the prepared payload depends on. Registration adds new car records without changing existing records. It composes with the selected track database; incompatible source versions are rejected. The first format reuses donor audio and does not accept custom sound-bank registration.
+
+Enable only modes tested by the pack author. The launcher requires both the track and car to support a mode. Career and LAN are unavailable. Declaring `Replay: true` requires full-race recording/playback compatibility; saved recordings pin the car pack's identity, version and exact manifest hash. Close the game, restore interrupted sessions, then replace a pack and Refresh. Invalid and missing selections remain visible rather than silently reverting to another car.
+
+Supported Ferrari imports retain their separate accepted restrictions. An external manifest cannot bypass them or claim the Ferrari's code.

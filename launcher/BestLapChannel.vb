@@ -14,14 +14,16 @@ Public NotInheritable Class BestLapChannel
     Private ReadOnly layoutId As String
     Private ReadOnly carCode As String
     Private ReadOnly version As String
+    Private ReadOnly carVersion As String = ""
     Private ReadOnly createdUtc As DateTime = DateTime.UtcNow
     Private lastSequence As Integer
     Public ReadOnly Name As String
     Public Sub New(context As InstallContext, start As ProcessStartInfo, layoutId As String, carCode As String)
         start.Environment.Remove("DIRT2VR_LAP_CHANNEL")
-        If Not TrackPacks.Nordschleife.IsLayout(layoutId) Then Return
+        If Not TrackPacks.Nordschleife.IsLayout(layoutId) OrElse CustomCars.ExternalCars.Find(carCode) IsNot Nothing Then Return
         Me.context = context : Me.layoutId = layoutId : Me.carCode = carCode
         version = TrackPacks.Nordschleife.Read(context.GameRoot, False).Version
+        If CustomCars.CarPack.IsCustom(carCode) Then carVersion = CustomCars.CarPack.Read(context.GameRoot, False).Version
         Name = "Local\DiRT2VR.Lap." & Guid.NewGuid().ToString("N")
         mapping = MemoryMappedFile.CreateNew(Name, 32) : view = mapping.CreateViewAccessor()
         view.Write(0, &H32504C44) : view.Write(4, 1) : view.Write(8, 32)
@@ -48,7 +50,7 @@ Public NotInheritable Class BestLapChannel
             End Using
             lastSequence = result.Sequence
             BestLapStore.Record(context, New BestLapRecord With {.LayoutId = layoutId, .PackVersion = version, .CarCode = carCode,
-                .Milliseconds = result.Microseconds \ 1000, .CompletedUtc = DateTime.UtcNow})
+                .CarConversionVersion = carVersion, .Milliseconds = result.Microseconds \ 1000, .CompletedUtc = DateTime.UtcNow})
         Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.Text.Json.JsonException
             Console.Error.WriteLine("Best lap could not be saved: " & ex.Message)
         Catch ex As Exception When TypeOf ex Is ArgumentException OrElse TypeOf ex Is InvalidOperationException OrElse TypeOf ex Is ComponentModel.Win32Exception

@@ -6,9 +6,15 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Discover prepared external track packs from a separate external folder, with Refresh, an External source category and clear explanations for incomplete packs. Original files return after play; saved replays require the same pack version and contents. External car discovery is present, but car launching remains unavailable pending custom-car acceptance.
+- Discover prepared external track packs from a separate external folder, with Refresh, an External source category and clear explanations for incomplete packs. Original files return after play; saved replays require the same pack version and contents. Prepared external cars appear in CUSTOM cars and can be combined with supported tracks when their capabilities allow it. Missing or changed replay packs are reported before launching.
+- Keep intact saved replays visible when their external packs are missing, and fix a playback failure affecting recordings with empty animation-name tables.
 
 - Filter CUSTOM tracks by source game using a dropdown with checkmarks. Show only installed layouts, keep tracks needing repair visible, and remember the filters with Save settings. Hidden selections cannot be launched accidentally.
+- Add **CUSTOM cars (Experimental)** beside both Car selectors. Import Ferrari F2004 from your local Assetto Corsa installation; stock cars remain available.
+- Drive the Ferrari in desktop Direct practice on Battersea Air and Nordschleife Daylight, with its body and cockpit, fitted driver, V10 audio, live cockpit RPM display and handbrake.
+- Reduce Ferrari cockpit shake while preserving physics and right-stick look. Correct suspension animation, body shading and contact shadows.
+- Add cancellable builds, source-folder selection, installation checks, rebuilding and uninstalling. Ferrari best laps are kept separately; custom-track and car changes restore together after play.
+- Ferrari handling and some visual details remain approximations. VR, AI races, LAN, career and saved full-replay playback are not supported for this car yet. Car assets are generated locally and are not included in downloads.
 
 ## 0.17.88 — 2026-10-11 — Experimental
 

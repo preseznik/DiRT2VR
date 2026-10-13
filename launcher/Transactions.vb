@@ -194,7 +194,9 @@ Public Class AssetTransaction
     End Sub
     Private Shared Function AssetNames(journal As AssetJournal) As String()
         ' Legacy journals always refer to STI, regardless of current preferences.
-        Dim code = If(journal.Version = 1, "sti", RaceCatalog.Current.Car(journal.CarCode).Code)
+        Dim code = If(journal.Version = 1, "sti", journal.CarCode)
+        ' Recovery cannot depend on a portable pack still being installed.
+        If Not CustomTracks.ExternalPacks.AvailableCarCode(code) Then RaceCatalog.Current.Car(code)
         Return {"cars\" & code & "\cameras.xml", Names(1)}
     End Function
     Private Shared Function ConfigRelative(journal As AssetJournal) As String

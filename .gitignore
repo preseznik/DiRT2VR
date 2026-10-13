@@ -73,3 +73,6 @@ tests/launcher/obj/
 
 /tools/misty-converter/bin/
 /tools/misty-converter/obj/
+
+/tools/car-converter/bin/
+/tools/car-converter/obj/

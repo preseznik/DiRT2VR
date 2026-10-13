@@ -1,0 +1,49 @@
+{
+  "Schema": 1,
+  "Kind": "car",
+  "Id": "example-car",
+  "Name": "Example prepared car",
+  "Author": "Your name",
+  "Version": "1.0.0",
+  "MinimumLauncher": "99.0.0",
+  "Description": "Template only. Replace the version, file inventory and hashes before use.",
+  "Modes": [
+    "desktop-solo"
+  ],
+  "Replay": false,
+  "Files": [
+    {
+      "Path": "payload/cars/xyz/cameras.xml",
+      "Bytes": 1,
+      "Sha256": "REPLACE_WITH_SHA256"
+    }
+  ],
+  "Dependencies": [
+    {
+      "Path": "database/database.bin",
+      "Sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "Path": "cars/class_mappings.xml",
+      "Sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "Path": "audio/carsetup.bin",
+      "Sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "Path": "audio/carsetup_ai.bin",
+      "Sha256": "REPLACE_WITH_SHA256"
+    },
+    {
+      "Path": "audio/dictionaries.bin",
+      "Sha256": "REPLACE_WITH_SHA256"
+    }
+  ],
+  "Layouts": [],
+  "Car": {
+    "Code": "xyz",
+    "Donor": "sti",
+    "ClassName": "Rally"
+  }
+}

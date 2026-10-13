@@ -142,7 +142,7 @@ foreach ($name in @('README.md','CHANGELOG.md','CUSTOM_TRACKS.md','EXTERNAL_PACK
     [IO.File]::WriteAllText((Join-Path "$stage\DiRT2VR" $name),$text)
 }
 New-Item -ItemType Directory -Path "$stage/DiRT2VR/examples" -Force | Out-Null
-Copy-Item -LiteralPath 'examples/external-track.manifest.json' -Destination "$stage/DiRT2VR/examples/external-track.manifest.json"
+Copy-Item -LiteralPath 'examples/external-track.manifest.json','examples/external-car.manifest.json' -Destination "$stage/DiRT2VR/examples/"
 @'
 @echo off
 start "" /wait "%~dp0DiRT2VR.exe" --launch --no-ui

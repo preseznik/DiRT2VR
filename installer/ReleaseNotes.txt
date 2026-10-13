@@ -1,5 +1,11 @@
 DiRT2VR — Experimental
 
+Add prepared community tracks and cars in DiRT2VR/custom-tracks/external or DiRT2VR/custom-cars/external, then choose Refresh. Tracks appear under External; cars appear in CUSTOM cars. Missing or incompatible packs show an explanation. Original game files are restored after play. This accepts prepared DiRT2VR packs, not raw assets from other games.
+
+Import Ferrari F2004 from your local Assetto Corsa installation using CUSTOM cars → Build/import. It currently supports desktop Direct practice on Battersea Air and Nordschleife Daylight. VR, AI races, LAN, career and saved replay playback are not available for this car yet.
+
+Saved replays remember the exact external packs they need. Restore the same pack version before playback. Fix a playback failure affecting recordings with empty animation-name tables.
+
 Find CUSTOM tracks faster with the Source dropdown: check one or more source games, or show them all. Installed tracks only hides layouts you haven't built yet. Save settings remembers your filters; tracks needing repair remain visible.
 
 Full-race recording now starts OFF. To use Full Replay or save new replays, turn ON Record full replays in Launcher → Replays before launching. Instant replay, rewind and your existing saved replays still work with it off.
