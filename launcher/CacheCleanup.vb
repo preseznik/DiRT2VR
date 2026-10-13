@@ -106,7 +106,7 @@ Public NotInheritable Class CacheCleanup
         For Each folder In {context.UserRoot, SafeFiles.Inside(context.ModRoot, "backups"), SafeFiles.Inside(context.ModRoot, "lan-backups"),
             SafeFiles.Inside(context.ModRoot, "bloom-session"), SafeFiles.Inside(context.ModRoot, "filter-session"),
             SafeFiles.Inside(context.ModRoot, "buttermilk-postprocess"), SafeFiles.Inside(context.ModRoot, "custom-track-session"),
-            SafeFiles.Inside(context.ModRoot, "custom-track-install")}
+            SafeFiles.Inside(context.ModRoot, "custom-track-install"), SafeFiles.Inside(context.ModRoot, "external-session")}
             SafeFiles.NoLinks(folder)
             If Directory.Exists(folder) AndAlso Directory.EnumerateFiles(folder, "*pending*.json", SearchOption.TopDirectoryOnly).Any() Then Return True
         Next

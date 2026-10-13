@@ -1,0 +1,32 @@
+{
+  "Schema": 1,
+  "Kind": "track",
+  "Id": "example-circuit",
+  "Name": "Example Circuit",
+  "Author": "Your name",
+  "Version": "1.0.0",
+  "MinimumLauncher": "99.0.0",
+  "Description": "Template only. Replace the version, file inventory and hashes before use.",
+  "Modes": ["desktop-solo"],
+  "Replay": false,
+  "Files": [
+    { "Path": "payload/tracks/usa/d2ve_example/route_0/track.jpk", "Bytes": 1, "Sha256": "REPLACE_WITH_REAL_SHA256" },
+    { "Path": "payload/tracks/usa/d2ve_example/route_0/routesplit.pssg", "Bytes": 1, "Sha256": "REPLACE_WITH_REAL_SHA256" },
+    { "Path": "payload/tracks/usa/d2ve_example/route_0/track.vis", "Bytes": 1, "Sha256": "REPLACE_WITH_REAL_SHA256" },
+    { "Path": "payload/tracks/usa/d2ve_example/route_0/grids.pssg", "Bytes": 1, "Sha256": "REPLACE_WITH_REAL_SHA256" },
+    { "Path": "payload/tracks/usa/d2ve_example/route_0/progress_track.xml", "Bytes": 1, "Sha256": "REPLACE_WITH_REAL_SHA256" },
+    { "Path": "payload/session/database.bin", "Bytes": 1, "Sha256": "REPLACE_WITH_REAL_SHA256" }
+  ],
+  "Dependencies": [{ "Path": "database/database.bin", "Sha256": "REPLACE_WITH_ORIGINAL_GAME_SHA256" }],
+  "Layouts": [{
+    "Id": "main",
+    "Name": "Circuit",
+    "Folder": "d2ve_example",
+    "Condition": "Daylight",
+    "Discipline": "Rallycross",
+    "Circuit": true,
+    "MaximumOpponents": 0,
+    "Session": [{ "Target": "database/database.bin", "File": "payload/session/database.bin" }]
+  }],
+  "Car": null
+}

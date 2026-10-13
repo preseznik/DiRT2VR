@@ -73,14 +73,23 @@ public static class TrackPacks
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
     public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.0.1", "0.17.77", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
-    public static readonly TrackPack[] All = [Aspen, Smelter, Nordschleife, Mizu, Misty];
+    public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty];
+    static TrackPack[] external = [];
+    public static TrackPack[] All => [..BuiltIn, ..external];
+    public static ExternalPack[] External { get; private set; } = [];
+    public static void DiscoverExternal(string game, string launcherVersion)
+    {
+        var found = ExternalPacks.Discover(game, launcherVersion);
+        external = found.Where(p => p.Ready && p.Kind == "track").Select(p => p.TrackDefinition()).ToArray();
+        External = found;
+    }
     public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml", "dx11/shaderpack/shaderpack.pssg"];
     public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
     public static bool IsLayout(string? id) => All.Any(p => p.Layouts.Any(l => l.Id == id));
     public static TrackPack ForLayout(string id) => All.SingleOrDefault(p => p.IsLayout(id)) ?? throw new IOException("Unknown custom layout.");
     public static TrackPack FromStaging(string directory)
     {
-        var packs = All.Where(p => File.Exists(SafeFiles.Inside(directory, p.Receipt))).ToArray();
+        var packs = BuiltIn.Where(p => File.Exists(SafeFiles.Inside(directory, p.Receipt))).ToArray();
         if (packs.Length != 1) throw new IOException("Conversion staging must contain exactly one known pack.");
         return packs[0];
     }
@@ -89,6 +98,7 @@ public static class TrackPacks
 // Destinations and supported modes are compiled in, never supplied by a receipt.
 public sealed class TrackPack
 {
+    public ExternalPack? External { get; }
     public string Id { get; }
     public string Name { get; }
     public string Version { get; }
@@ -96,13 +106,14 @@ public sealed class TrackPack
     public string[] Modes { get; }
     public Layout[] Layouts { get; }
     public string[] RequiredTargets { get; }
-    public string Support => "DiRT2VR/custom-tracks/" + Id;
-    public string Receipt => Support + "/receipt.json";
-    public string SourceGame => Id switch { "nordschleife" or "misty-loch" => "assettocorsa", "mizu-mountain" => "grid2", _ => "dirt3" };
-    public string SourceName => Id switch { "nordschleife" or "misty-loch" => "Assetto Corsa", "mizu-mountain" => "GRID 2", _ => "DiRT 3 Complete Edition" };
+    public string Support => External?.Support ?? "DiRT2VR/custom-tracks/" + Id;
+    public string Receipt => External?.Receipt ?? Support + "/receipt.json";
+    public string SourceGame => External is not null ? "external" : Id switch { "nordschleife" or "misty-loch" => "assettocorsa", "mizu-mountain" => "grid2", _ => "dirt3" };
+    public string SourceName => External is not null ? "External" : Id switch { "nordschleife" or "misty-loch" => "Assetto Corsa", "mizu-mountain" => "GRID 2", _ => "DiRT 3 Complete Edition" };
     public string[] SharedTargets => Id == "misty-loch" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"] : Id == "smelter" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"] : AspenPack.SharedTargets;
-    internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets)
+    internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets, ExternalPack? external = null)
     {
+        External = external;
         Id = id; Name = name; Version = version; MinimumLauncher = minimumLauncher;
         Modes = modes; Layouts = layouts; RequiredTargets = requiredTargets;
     }
@@ -126,11 +137,12 @@ public sealed class TrackPack
         ? Layouts.Take(Id == AspenPack.Id ? 4 : 1).ToArray() : Layouts;
     public string[] ReceiptRoots(PackReceipt receipt) => ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
     // The four duel courses have two authored start positions, not an eight-car grid.
-    public int MaximumOpponents(string id) => GetLayout(id).Discipline == "Head-to-head" ? 1 : 7;
+    public int MaximumOpponents(string id) => External?.Layout(id).MaximumOpponents ?? (GetLayout(id).Discipline == "Head-to-head" ? 1 : 7);
     public string PracticeCar(string id) => GetLayout(id).Discipline == "Landrush" ? "kin" : "sti";
     public bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
     public bool SupportsRace(PackReceipt receipt, string? layoutId = null)
     {
+        if (External is not null) return Modes.Contains("desktop-race") && (layoutId is null || External.Layout(layoutId).MaximumOpponents > 0);
         var sessions = receipt.Sessions.Where(s => layoutId is null || s.LayoutId == layoutId).ToArray();
         return Modes.Contains("desktop-race") && sessions.Length > 0 && sessions.All(s => System.Version.Parse(s.Version ?? receipt.Version) >= new System.Version(1, 0, 1));
     }
@@ -172,6 +184,11 @@ public sealed class TrackPack
     }
     public void Validate(PackReceipt receipt)
     {
+        if (External is not null)
+        {
+            if (receipt.Id != Id || receipt.Version != Version || receipt.Sessions.Any(s => !IsLayout(s.LayoutId))) throw new IOException("External receipt does not match the selected pack.");
+            return;
+        }
         if (receipt is null || receipt.Schema is not (1 or 2) || receipt.Id != Id || !SafeFiles.Version(receipt.Version) || !SafeFiles.Version(receipt.MinimumLauncher) ||
             receipt.Files is null || receipt.Files.Length < (receipt.Schema == 1 && Id == AspenPack.Id ? 100 : 7) || receipt.Files.Length > 4096 || receipt.Files.Any(f => f is null) || receipt.Sessions is null || receipt.Sessions.Length != ReceiptLayouts(receipt).Length ||
             receipt.Sessions.Any(s => s is null || s.Files is null || s.Files.Any(f => f is null)) || receipt.Sessions.Select(s => s.LayoutId).Distinct().Count() != ReceiptLayouts(receipt).Length)
@@ -224,6 +241,7 @@ public sealed class TrackPack
     }
     public PackReceipt Read(string game, bool verify = true, CancellationToken cancel = default)
     {
+        if (External is not null) return External.ReadReceipt(verify, cancel);
         var receipt = SafeFiles.ReadJson<PackReceipt>(SafeFiles.Inside(game, Receipt));
         Validate(receipt);
         if (verify) Verify(game, receipt, cancel);
@@ -231,6 +249,7 @@ public sealed class TrackPack
     }
     public void Verify(string root, PackReceipt receipt, CancellationToken cancel = default)
     {
+        if (External is not null) { Validate(receipt); External.Verify(cancel); return; }
         Validate(receipt);
         foreach (var file in receipt.Files)
         {

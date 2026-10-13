@@ -137,10 +137,12 @@ Source is preserved in the repository; it is not a release asset or needed to pl
 License: XLLN-LGPL-2.1.txt in this directory.
 "@ | Set-Content -LiteralPath "$stage/DiRT2VR/licenses/LAN-source.txt" -Encoding utf8
 # Ship user-facing guidance only; development notes remain local.
-foreach ($name in @('README.md','CHANGELOG.md','CUSTOM_TRACKS.md')) {
+foreach ($name in @('README.md','CHANGELOG.md','CUSTOM_TRACKS.md','EXTERNAL_PACKS.md')) {
     $text=Get-Content -LiteralPath $name -Raw
     [IO.File]::WriteAllText((Join-Path "$stage\DiRT2VR" $name),$text)
 }
+New-Item -ItemType Directory -Path "$stage/DiRT2VR/examples" -Force | Out-Null
+Copy-Item -LiteralPath 'examples/external-track.manifest.json' -Destination "$stage/DiRT2VR/examples/external-track.manifest.json"
 @'
 @echo off
 start "" /wait "%~dp0DiRT2VR.exe" --launch --no-ui

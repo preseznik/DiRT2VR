@@ -52,6 +52,10 @@ Public Class RaceCatalog
     End Function
     Public Sub ValidateInstalled(context As InstallContext, trackId As String, carCode As String)
         Dim route = Track(trackId).Folder(context)
+        If CustomTracks.TrackPacks.IsLayout(trackId) Then
+            Dim external = CustomTracks.TrackPacks.ForLayout(trackId).External
+            If external IsNot Nothing Then route = CustomTracks.SafeFiles.Inside(external.Root, "payload/tracks/usa/" & external.Layout(trackId).Folder & "/route_0")
+        End If
         Dim camera = IO.Path.Combine(context.GameRoot, "cars", Car(carCode).Code, "cameras.xml")
         Files.NoLinks(route) : Files.NoLinks(camera)
         If Not Directory.Exists(route) OrElse Not File.Exists(camera) Then Throw New IOException("The selected track or car is missing from this game installation.")

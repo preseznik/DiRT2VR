@@ -35,7 +35,9 @@ Public Class Session
     Private ReadOnly replayId As String
     Private preparedReplay As PreparedReplay
     Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing, Optional savedReplayId As String = Nothing)
-        context = value : settings = VrSettings.Load(context)
+        context = value
+        CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
+        settings = VrSettings.Load(context)
         Dim custom = CustomTrackPreferences.Load(context)
         If custom.Enabled AndAlso savedReplayId Is Nothing Then
             If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM tracks off before starting LAN multiplayer.")

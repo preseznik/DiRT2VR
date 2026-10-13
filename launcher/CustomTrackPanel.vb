@@ -88,11 +88,13 @@ Public Class CustomTrackPanel
     End Property
     Public ReadOnly Property CanLaunchVr As Boolean
         Get
-            Return CanLaunch AndAlso TrackPacks.Get(currentPack.Id).Modes.Any(Function(m) m.StartsWith("vr-", StringComparison.Ordinal))
+            Return CanLaunch AndAlso TrackPacks.Get(currentPack.Id).Modes.Contains(If(launchMode.SelectedIndex = 1, "vr-race", "vr-solo"))
         End Get
     End Property
     Public Sub New(value As InstallContext)
         context = value : preferences = CustomTrackPreferences.Load(context)
+        TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
+        catalogue.Clear() : catalogue.AddRange(CustomTrackCatalog.Packs)
         verification = New CustomTrackVerificationCache(context.GameRoot)
         Name = "CustomTrackPanel" : detail = browser.Detail
         rebuildCard.Controls.Add(rebuildNotice)
@@ -101,6 +103,34 @@ Public Class CustomTrackPanel
             StyleChoice(choice, Me)
         Next
         Controls.Add(toggle)
+        Dim folders As New ContextMenuStrip
+        AddHandler folders.Items.Add("Open external tracks folder").Click, Sub() OpenExternalFolder("track")
+        AddHandler folders.Items.Add("Open external cars folder").Click, Sub() OpenExternalFolder("car")
+        AddHandler folders.Items.Add("External car pack status…").Click, Sub()
+            Dim found = TrackPacks.External.Where(Function(p) p.Kind = "car").ToArray()
+            MessageBox.Show(Me, If(found.Length = 0, "No prepared car packs found in the external cars folder.", String.Join(vbCrLf & vbCrLf, found.Select(Function(p) p.Name & ": " & p.Problem))), "External cars", MessageBoxButtons.OK, MessageBoxIcon.Information)
+        End Sub
+        AddHandler browser.Filters.Folders.Click, Sub() folders.Show(browser.Filters.Folders, New Point(0, browser.Filters.Folders.Height))
+        AddHandler Disposed, Sub() folders.Dispose()
+        AddHandler browser.Filters.RefreshList.Click, Async Sub()
+            If working Then Return
+            Try
+            CaptureSelection()
+            TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
+            For Each pack In catalogue : verification.Invalidate(pack.Id) : Next
+            catalogue.Clear() : catalogue.AddRange(CustomTrackCatalog.Packs)
+            currentPack = catalogue.FirstOrDefault(Function(p) p.Id = preferences.SelectedPackId)
+            If currentPack Is Nothing Then
+                currentPack = New CustomTrackPack(preferences.SelectedPackId, "Unavailable pack", "Your saved pack was removed. Choose another pack or restore its folder.", False, Array.Empty(Of Layout)())
+                catalogue.Add(currentPack)
+            End If
+            For Each pack In catalogue : packStatuses(pack.Id) = If(pack.External IsNot Nothing, If(pack.Available, "External · Not verified", "Needs attention"), "Not verified") : Next
+            LoadSelection() : RefreshFilterInventory()
+            If CustomEnabled AndAlso currentPack.Available Then Await RefreshInstallation(True)
+            Catch ex As Exception
+                MessageBox.Show(Me, ex.Message, "Refresh custom tracks", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+            End Try
+        End Sub
         detail.Controls.Add(title) : detail.Controls.Add(description) : detail.Controls.Add(bestTime) : detail.Controls.Add(status)
         detail.Controls.Add(workActions) : detail.Controls.Add(body)
         Dim layoutColumns As New ResponsiveColumns With {.WideAt = 560}
@@ -128,11 +158,11 @@ Public Class CustomTrackPanel
         installCard.Controls.Add(installButton)
         detail.Controls.Add(actions)
         detail.Controls.Add(New Label With {.Text = "Turn CUSTOM tracks off to restore your original track, car and race selections.", .AutoSize = False})
-        For Each pack In CustomTrackCatalog.Packs
+        For Each pack In catalogue
             browser.PackList.Items.Add(pack) : browser.Picker.Items.Add(pack)
-            packStatuses(pack.Id) = If(pack.Available, If(File.Exists(SafeFiles.Inside(context.GameRoot, TrackPacks.Get(pack.Id).Receipt)), "Installed", "Not installed"), "In development")
+            packStatuses(pack.Id) = If(pack.External IsNot Nothing, If(pack.Available, "External · Not verified", "Needs attention"), If(pack.Available, If(File.Exists(SafeFiles.Inside(context.GameRoot, TrackPacks.Get(pack.Id).Receipt)), "Installed", "Not installed"), "In development"))
         Next
-        currentPack = CustomTrackCatalog.Find(preferences.SelectedPackId)
+        currentPack = catalogue.FirstOrDefault(Function(p) p.Id = preferences.SelectedPackId)
         If currentPack Is Nothing Then
             currentPack = New CustomTrackPack(preferences.SelectedPackId, "Unavailable pack", "Your saved pack is not supported by this launcher.", False, Array.Empty(Of Layout)())
             catalogue.Add(currentPack)
@@ -172,9 +202,10 @@ Public Class CustomTrackPanel
         AddHandler cancelButton.Click, Sub() CancelOperation()
         AddHandler manage.Click, Sub() menu.Show(manage, New Point(0, manage.Height))
         AddHandler menu.Items.Add("Verify installed files").Click, Async Sub() Await RefreshInstallation(True)
-        AddHandler menu.Items.Add("Rebuild from source…").Click, Async Sub() Await InstallPack()
+        Dim rebuild = menu.Items.Add("Rebuild from source…")
+        AddHandler rebuild.Click, Async Sub() Await InstallPack()
         AddHandler menu.Items.Add("Uninstall pack…").Click, Async Sub()
-                                                               If Not currentPack.Available OrElse working Then Return
+                                                               If Not currentPack.Available OrElse working OrElse currentPack.External IsNot Nothing Then Return
                                                                If MessageBox.Show(Me, "Remove " & currentPack.Name & " and its " & currentPack.Layouts.Length & " layouts? Original tracks, saves and other packs will be kept.", "Uninstall " & currentPack.Name, MessageBoxButtons.OKCancel, MessageBoxIcon.Question) <> DialogResult.OK Then Return
                                                                Await Operation(Async Function(token, progress)
                                                                                    verification.Invalidate(currentPack.Id)
@@ -184,6 +215,10 @@ Public Class CustomTrackPanel
                                                                                    SetStatus("Not installed", currentPack.Name & " removed. Your original tracks are available with CUSTOM tracks off.")
                                                                                End Function)
                                                            End Sub
+        AddHandler menu.Opening, Sub()
+                                    rebuild.Visible = currentPack.External Is Nothing
+                                    menu.Items(2).Visible = currentPack.External Is Nothing
+                                End Sub
         AddHandler errorDetails.Click, Sub() MessageBox.Show(Me, errorText, currentPack.Name & " — details", MessageBoxButtons.OK, MessageBoxIcon.Information)
         AddHandler Disposed, Sub()
                                  cancellation?.Cancel()
@@ -210,6 +245,11 @@ Public Class CustomTrackPanel
                                                                  If CustomEnabled Then Await RefreshInstallation()
                                                              End Sub))
                                   End Sub
+    End Sub
+    Private Sub OpenExternalFolder(kind As String)
+        Dim path = SafeFiles.Inside(context.GameRoot, ExternalPacks.RelativeFolder(kind))
+        Directory.CreateDirectory(path)
+        Process.Start(New ProcessStartInfo(path) With {.UseShellExecute = True})
     End Sub
     Private Async Function SelectPack(pack As CustomTrackPack) As Task
         If loading OrElse working OrElse pack Is Nothing OrElse pack Is currentPack Then Return
@@ -248,7 +288,7 @@ Public Class CustomTrackPanel
             opponents.Maximum = 7 : fullGridOpponents = Math.Clamp(selected.Opponents, 1, 7)
             opponents.Value = fullGridOpponents : laps.Value = If(OneLapPractice AndAlso launchMode.SelectedIndex <> 1, 1, circuitRaceLaps)
             status.Text = If(currentPack.Available, "Choose Build and install to prepare this pack.", If(currentPack.Id = "smelter", "In development · Gameplay validation pending", "Unavailable in this launcher"))
-            unavailable.Text = If(currentPack.Id = "smelter", "Smelter is unavailable in this launcher.", "Choose an available pack from the list. Your saved selection has been kept.")
+            unavailable.Text = If(currentPack.External IsNot Nothing, currentPack.External.Problem, If(currentPack.Id = "smelter", "Smelter is unavailable in this launcher.", "Choose an available pack from the list. Your saved selection has been kept."))
         Finally
             loading = False
         End Try
@@ -258,7 +298,7 @@ Public Class CustomTrackPanel
         If currentPack Is Nothing OrElse Not currentPack.Available OrElse layouts.SelectedItem Is Nothing Then Return
         Dim pack = TrackPacks.Get(currentPack.Id), id = DirectCast(layouts.SelectedItem, LayoutItem).Value.Id
         If opponents.Maximum > 1 Then fullGridOpponents = opponents.Value
-        opponents.Maximum = pack.MaximumOpponents(id)
+        opponents.Maximum = Math.Max(1, pack.MaximumOpponents(id))
         opponents.Value = Math.Min(fullGridOpponents, opponents.Maximum)
     End Sub
     Private Sub CaptureSelection()
@@ -277,6 +317,9 @@ Public Class CustomTrackPanel
     End Sub
     Private Sub RefreshFilterInventory()
         catalogueInstalled.Clear()
+        For Each pack In catalogue.Where(Function(p) p.External IsNot Nothing AndAlso Not p.Available)
+            catalogueInstalled(pack.Id) = Nothing
+        Next
         For Each pack In catalogue.Where(Function(p) p.Available)
             Dim definition = TrackPacks.Get(pack.Id)
             If Not File.Exists(SafeFiles.Inside(context.GameRoot, definition.Receipt)) Then Continue For
@@ -289,7 +332,7 @@ Public Class CustomTrackPanel
                 packStatuses(pack.Id) = "Needs attention"
             End Try
         Next
-        browser.Filters.SetInstalledPacks(catalogueInstalled.Keys)
+        browser.Filters.SetInstalledSources(catalogue.Where(Function(p) catalogueInstalled.ContainsKey(p.Id)).Select(Function(p) p.SourceGame))
         ApplyFilters()
     End Sub
     Private Sub ApplyFilters()
@@ -359,7 +402,8 @@ Public Class CustomTrackPanel
         If OneLapPractice AndAlso Not loading Then laps.Value = If(race, circuitRaceLaps, 1)
         modeHint.Text = If(OneLapPractice, "Desktop and VR · " & If(race, "1–20 laps", "One lap") & " · VR and AI races are experimental", "Desktop and VR · AI races are experimental · LAN unavailable")
         If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
-        If pointToPoint Then modeHint.Text = "Desktop and VR · One 10.4 km run · VR and AI races are experimental · LAN unavailable"
+        If pointToPoint Then modeHint.Text = "One complete run · AI races and VR depend on the selected pack · LAN unavailable"
+        If currentPack.External IsNot Nothing AndAlso currentPack.Available Then modeHint.Text = "External · " & String.Join(", ", TrackPacks.Get(currentPack.Id).Modes.Select(Function(mode) mode.Replace("desktop-", "Desktop ").Replace("vr-", "VR ").Replace("solo", "Practice").Replace("race", "Race"))) & If(currentPack.External.Manifest.Replay, " · Full Replay supported by author", " · Turn full-race recording off")
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         raceDifficulty.Enabled = race
         opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race
@@ -402,6 +446,7 @@ Public Class CustomTrackPanel
         toggle.Enabled = Not working : browser.PackList.Enabled = Not working : browser.Picker.Enabled = Not working
         browser.Filters.Enabled = Not working
         setup.Enabled = Not working : installButton.Enabled = Not working : manage.Enabled = Not working
+        installButton.Visible = currentPack.External Is Nothing
         browser.PackList.Invalidate() : PerformLayout()
         RaiseEvent AvailabilityChanged(Me, EventArgs.Empty)
     End Sub
@@ -437,13 +482,14 @@ Public Class CustomTrackPanel
         hasReceipt = True : installationValid = True : installedReceipt = receipt : raceReady = TrackPacks.Get(currentPack.Id).SupportsRace(receipt, preferences.ForPack(currentPack.Id).LayoutId)
         installedLayouts = receipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal)
         SetStatus("Installed · Ready offline", receipt.Sessions.Length.ToString() & " of " & currentPack.Layouts.Length.ToString() & " layouts installed · Ready offline")
+        If currentPack.External IsNot Nothing Then status.Text &= " · External pack; author-declared modes"
         If Not raceReady AndAlso currentPack.Id = AspenPack.Id Then status.Text &= ". Rebuild from source to enable AI races."
         If layouts.SelectedItem Is Nothing Then status.Text &= ". Your saved layout is unavailable; choose a layout."
         If cars.SelectedItem Is Nothing Then status.Text &= ". Your saved car is unavailable; choose an installed car."
         RefreshRaceOptions()
     End Sub
     Private Async Function InstallPack() As Task
-        If working OrElse Not currentPack.Available Then Return
+        If working OrElse Not currentPack.Available OrElse currentPack.External IsNot Nothing Then Return
         CaptureSelection()
         Await Operation(Async Function(token, progress)
                             context.RequireClosed()
@@ -502,7 +548,8 @@ Public Class CustomTrackPanel
             TextRenderer.DrawText(e.Graphics, pack.Name, bold, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         End Using
         bounds.Y += Px(Me, 24)
-        TextRenderer.DrawText(e.Graphics, If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", If(pack.Id = "mizu-mountain", "Point-to-point · 10.4 km · Race and VR", If(pack.Id = "misty-loch", "Full circuit · 6.45 km · Race and VR", If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection")))), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
+        Dim subtitle = If(pack.External IsNot Nothing, "External · " & If(pack.Available, pack.Layouts.Length & " layouts", "Needs attention"), If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", If(pack.Id = "mizu-mountain", "Point-to-point · 10.4 km · Race and VR", If(pack.Id = "misty-loch", "Full circuit · 6.45 km · Race and VR", If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection")))))
+        TextRenderer.DrawText(e.Graphics, subtitle, Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         bounds.Y += Px(Me, 24)
         TextRenderer.DrawText(e.Graphics, packStatuses(pack.Id), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         e.DrawFocusRectangle()

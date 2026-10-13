@@ -16,7 +16,7 @@ Public Class CustomTrackSettings
     Public Property PostProcessTest As String
     Public Sub ApplyTo(settings As VrSettings)
         Dim pack = TrackPacks.ForLayout(LayoutId)
-        Dim gridOpponents = Math.Min(Opponents, pack.MaximumOpponents(LayoutId))
+        Dim gridOpponents = Math.Min(Opponents, Math.Max(1, pack.MaximumOpponents(LayoutId)))
         Dim sessionLaps = If(Not pack.GetLayout(LayoutId).Circuit OrElse ((pack.Id = "nordschleife" OrElse pack.Id = "misty-loch") AndAlso LaunchMode = "practice"), 1, Laps)
         pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), sessionLaps)
         RaceCatalog.Current.Car(CarCode)
@@ -72,7 +72,7 @@ Public Class CustomTrackPreferences
 End Class
 Public Module CustomTrackService
     Public Function RecoveryPending(context As InstallContext) As Boolean
-        Return New BloomTransaction(context).Pending OrElse New FilterTransaction(context).Pending OrElse New ButtermilkPostProcess(context).Pending OrElse File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
+        Return ExternalSession.Pending(context.GameRoot) OrElse New BloomTransaction(context).Pending OrElse New FilterTransaction(context).Pending OrElse New ButtermilkPostProcess(context).Pending OrElse File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
             File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-install/pending.json"))
     End Function
     Public Sub RequireLauncher(receipt As PackReceipt)

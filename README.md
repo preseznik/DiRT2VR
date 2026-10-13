@@ -80,6 +80,12 @@ Build tracks from your own installed source games. Conversion tools are included
 
 Use the **Source** dropdown above CUSTOM tracks to check one or more source games, or choose **All source games**. **Installed tracks only** hides uninstalled layouts and source games with no installed packs. It checks converted DiRT2VR tracks, not whether the original source game is still installed. Tracks needing repair remain visible. Filters keep your saved track choice; if it is hidden, select a visible track or choose **Show all tracks** before launching. **Save settings** remembers your filters for this installation.
 
+Prepared external track packs go in `DiRT2VR/custom-tracks/external/<pack-id>` inside the game installation. Choose **External folders… → Open external tracks folder**, copy the complete pack, then **Refresh**. They appear under **Source → External**. Incomplete or incompatible packs stay visible with an explanation. These must be prepared DiRT2VR packs; copying raw tracks from another game does not convert them. See the [external pack guide](EXTERNAL_PACKS.md).
+
+External tracks support only the Direct practice, Race, VR and replay modes declared by their pack. They do not integrate with career or LAN. The launcher checks the payload before temporarily activating it, then restores the original files after the session. Keep the pack while playing. Close the game before replacing or removing it; launcher cache cleanup leaves external packs alone. Complete supported conversions keep their usual locations, categories and verification rules.
+
+**Open external cars folder** opens `DiRT2VR/custom-cars/external`. Car manifests can be inspected through **External car pack status…**, but external car launching is not enabled yet. It awaits the separate custom-car registration and acceptance checks.
+
 | Track pack | Required source game | Courses |
 | --- | --- | --- |
 | Mizu Mountain | GRID 2 | One 10.4 km daylight route |

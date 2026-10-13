@@ -50,6 +50,7 @@ Public Class Installation
         Call (New StartupMovies(context)).Recover()
         Call (New LanTransaction(context)).Recover()
         Call (New AssetTransaction(context)).Recover()
+        CustomTracks.ExternalSession.Recover(context.GameRoot)
         Dim receiptPath = IO.Path.Combine(context.ModRoot, "installation.json")
         Dim target = IO.Path.Combine(context.GameRoot, "d3d11.dll")
         Files.NoLinks(target) : Files.NoLinks(receiptPath)
@@ -73,6 +74,18 @@ Public Module Worker
                 Call (New LargeAddressAware(context)).Prepare()
             Case "setup" : Call (New Installation(context)).Setup()
             Case "prepare", "prepare-desktop"
+                CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
+                Dim external = If(CustomTracks.TrackPacks.IsLayout(trackId), CustomTracks.TrackPacks.ForLayout(trackId).External, Nothing)
+                If external IsNot Nothing Then
+                    CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
+                    If Not external.Manifest.Replay AndAlso (replayId IsNot Nothing OrElse ReplayPreferences.Load(context).RecordFullReplay) Then Throw New IOException("This external pack does not support Full Replay. Turn Record full replays off before launching.")
+                    ' Native assets exist only for the selected session. Unwind every older
+                    ' layer before applying a new external database or effect file.
+                    Run(context, "recover")
+                    CustomTracks.ExternalSession.Prepare(context.GameRoot, external, trackId)
+                ElseIf CustomTracks.ExternalSession.Pending(context.GameRoot) Then
+                    Throw New IOException("Restore original files before starting another track; external content recovery is pending.")
+                End If
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
                     CustomTracks.SessionFiles.Recover(context.GameRoot)
@@ -84,7 +97,7 @@ Public Module Worker
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
                 transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing, recordReplay:=ReplayPreferences.Load(context).RecordFullReplay)
-                If CustomTracks.TrackPacks.IsLayout(trackId) Then
+                If CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
                     CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
@@ -117,13 +130,16 @@ Public Module Worker
                 Call (New StartupMovies(context)).Recover()
                 Call (New LanTransaction(context)).Recover()
                 Call (New AssetTransaction(context)).Recover()
+                CustomTracks.ExternalSession.Recover(context.GameRoot)
             Case "install-custom"
+                If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before installing a track; external content recovery is pending.")
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
             Case "remove-custom"
+                If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before removing a track; external content recovery is pending.")
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()

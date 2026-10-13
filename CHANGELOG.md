@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Discover prepared external track packs from a separate external folder, with Refresh, an External source category and clear explanations for incomplete packs. Original files return after play; saved replays require the same pack version and contents. External car discovery is present, but car launching remains unavailable pending custom-car acceptance.
+
 - Filter CUSTOM tracks by source game using a dropdown with checkmarks. Show only installed layouts, keep tracks needing repair visible, and remember the filters with Save settings. Hidden selections cannot be launched accidentally.
 
 ## 0.17.88 — 2026-10-11 — Experimental

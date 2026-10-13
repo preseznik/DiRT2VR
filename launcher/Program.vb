@@ -18,6 +18,7 @@ Public Module Program
             Application.EnableVisualStyles()
             Dim root = Argument(args, "--game", AppContext.BaseDirectory)
             Dim context As New InstallContext(root, If(args.Contains("--worker"), Argument(args, "--owner-base", Nothing), Nothing))
+            If Not args.Contains("--worker") AndAlso Not args.Any(Function(a) {"--setup", "--recover", "--remove-proxy", "--check-install", "--discover"}.Contains(a)) Then CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
             If args.Contains("--worker") Then
                 Try
                     Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"), Argument(args, "--track-work", Nothing), Argument(args, "--postprocess-test", Nothing), Argument(args, "--filter-snapshot", Nothing), Argument(args, "--replay-id", Nothing))

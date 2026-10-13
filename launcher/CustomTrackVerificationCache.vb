@@ -19,16 +19,18 @@ Public NotInheritable Class CustomTrackVerificationCache
             End Get
         End Property
         Public Sub New(game As String, pack As TrackPack)
+            Dim dependencies = If(pack.External Is Nothing, Array.Empty(Of String)(), pack.External.Manifest.Dependencies.Select(Function(d) SafeFiles.Inside(game, d.Path)).ToArray())
             Dim targets = pack.InstallRoots.Select(Function(p) SafeFiles.Inside(game, p)).Concat({
-                SafeFiles.Inside(game, "DiRT2VR/custom-track-install"), SafeFiles.Inside(game, "DiRT2VR/custom-track-session")}).ToArray()
+                SafeFiles.Inside(game, "DiRT2VR/custom-track-install"), SafeFiles.Inside(game, "DiRT2VR/custom-track-session")}).Concat(dependencies).ToArray()
             Dim affected As Action(Of String) = Sub(path)
                                                    If targets.Any(Function(t) path.Equals(t, StringComparison.OrdinalIgnoreCase) OrElse
                                                        path.StartsWith(t & IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase) OrElse
                                                        t.StartsWith(path & IO.Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) Then Invalidate()
                                                End Sub
             Try
-                For Each root In {IO.Path.Combine(game, "tracks"), IO.Path.Combine(game, "DiRT2VR")}
-                    Dim watcher As New FileSystemWatcher(root) With {.IncludeSubdirectories = True,
+                Dim recursiveRoots = {IO.Path.Combine(game, "tracks"), IO.Path.Combine(game, "DiRT2VR")}
+                For Each root In recursiveRoots.Concat(dependencies.Select(Function(p) IO.Path.GetDirectoryName(p))).Distinct(StringComparer.OrdinalIgnoreCase)
+                    Dim watcher As New FileSystemWatcher(root) With {.IncludeSubdirectories = recursiveRoots.Contains(root, StringComparer.OrdinalIgnoreCase),
                         .NotifyFilter = NotifyFilters.FileName Or NotifyFilters.DirectoryName Or NotifyFilters.LastWrite Or NotifyFilters.Size}
                     watchers.Add(watcher)
                     AddHandler watcher.Changed, Sub(sender, e) affected(e.FullPath)
@@ -70,6 +72,7 @@ Public NotInheritable Class CustomTrackVerificationCache
         Try
             Dim receipt = pack.Read(game, True, token)
             CustomTrackService.RequireLauncher(receipt)
+            If pack.External IsNot Nothing Then pack.External.RequireDependencies(game, token)
             token.ThrowIfCancellationRequested()
             SyncLock gate
                 If Not disposed AndAlso pending.Valid Then

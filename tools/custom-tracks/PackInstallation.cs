@@ -91,6 +91,7 @@ public static class PackInstallation
     {
         SafeFiles.RequireClosed(); Recover(game); SessionFiles.Recover(game);
         var pack = TrackPacks.Get(packId);
+        if (pack.External is not null) throw new IOException("Close the game and remove the external pack folder instead of uninstalling a supported conversion.");
         var before = Existing(game, pack);
         if (before is null) return;
         string id = Guid.NewGuid().ToString("N"), work = Work(game, id);
@@ -147,6 +148,7 @@ public static class PackInstallation
         var pending = SafeFiles.ReadJson<Pending>(journal);
         if (pending.Before is null && pending.After is null) throw new IOException("Invalid installation journal; files preserved.");
         var pack = TrackPacks.Get((pending.After ?? pending.Before)!.Id);
+        if (pack.External is not null) throw new IOException("External content cannot use a supported-conversion installation journal; files preserved.");
         if (pending.Before is not null && pending.After is not null && pending.Before.Id != pending.After.Id) throw new IOException("Mixed-pack installation journal; files preserved.");
         if (pending.Before is not null) pack.Validate(pending.Before);
         if (pending.After is not null) pack.Validate(pending.After);

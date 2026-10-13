@@ -11,6 +11,7 @@ public static class SessionFiles
     {
         SafeFiles.RequireClosed(); Recover(game);
         var pack = TrackPacks.ForLayout(layoutId);
+        if (pack.External is not null) throw new IOException("External packs require the external session transaction.");
         var receipt = pack.Read(game);
         var session = receipt.Sessions.SingleOrDefault(s => s.LayoutId == pack.GetLayout(layoutId).Id)
             ?? throw new IOException("This layout is not installed. Use Manage > Rebuild from source to add it.");

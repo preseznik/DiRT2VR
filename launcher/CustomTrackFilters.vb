@@ -8,6 +8,8 @@ Public Class CustomTrackFilters
     Public Event Changed As EventHandler
     Public ReadOnly Sources As New Button With {.Name = "CustomTrackSources", .AutoSize = True, .AccessibleName = "Filter by source game"}
     Public ReadOnly InstalledOnly As New CheckBox With {.Name = "CustomInstalledOnly", .Text = "Installed tracks only", .AutoSize = True}
+    Public ReadOnly RefreshList As New Button With {.Name = "RefreshCustomTracks", .Text = "Refresh", .AutoSize = True}
+    Public ReadOnly Folders As New Button With {.Name = "ExternalPackFolders", .Text = "External folders…", .AutoSize = True}
     Private ReadOnly choices As New ContextMenuStrip
     Private ReadOnly all As New ToolStripMenuItem("All source games")
     Private ReadOnly games As New Dictionary(Of String, ToolStripMenuItem)(StringComparer.Ordinal)
@@ -15,7 +17,7 @@ Public Class CustomTrackFilters
     Private installedSources As New HashSet(Of String)(StringComparer.Ordinal)
     Public Sub New()
         Name = "CustomTrackFilters" : AutoSize = True : WrapContents = True
-        Margin = New Padding(0) : Controls.AddRange({Sources, InstalledOnly})
+        Margin = New Padding(0) : Controls.AddRange({Sources, InstalledOnly, RefreshList, Folders})
         choices.Items.Add(all) : choices.Items.Add(New ToolStripSeparator())
         For Each source In TrackPacks.All.GroupBy(Function(p) p.SourceGame).OrderBy(Function(g) g.First().SourceName)
             Dim id = source.Key, item As New ToolStripMenuItem(source.First().SourceName)
@@ -27,6 +29,16 @@ Public Class CustomTrackFilters
                                        NotifyChange()
                                    End Sub
         Next
+        If Not games.ContainsKey("external") Then
+            Dim item As New ToolStripMenuItem("External")
+            games.Add("external", item) : choices.Items.Add(item)
+            AddHandler item.Click, Sub()
+                                       If selected Is Nothing Then selected = games.Keys.ToHashSet(StringComparer.Ordinal)
+                                       If Not selected.Remove("external") Then selected.Add("external")
+                                       If selected.SetEquals(games.Keys) Then selected = Nothing
+                                       NotifyChange()
+                                   End Sub
+        End If
         AddHandler all.Click, Sub()
                                  selected = Nothing : NotifyChange()
                              End Sub
@@ -51,10 +63,10 @@ Public Class CustomTrackFilters
     End Property
     Public Function Includes(pack As CustomTrackPack, isInstalled As Boolean) As Boolean
         Return (Not InstalledOnly.Checked OrElse isInstalled) AndAlso
-            (selected Is Nothing OrElse (pack.Available AndAlso selected.Contains(TrackPacks.Get(pack.Id).SourceGame)))
+            (selected Is Nothing OrElse selected.Contains(pack.SourceGame))
     End Function
-    Public Sub SetInstalledPacks(ids As IEnumerable(Of String))
-        installedSources = ids.Select(Function(id) TrackPacks.Get(id).SourceGame).ToHashSet(StringComparer.Ordinal)
+    Public Sub SetInstalledSources(ids As IEnumerable(Of String))
+        installedSources = ids.ToHashSet(StringComparer.Ordinal)
         UpdateChoices()
     End Sub
     Public Sub ShowAll()

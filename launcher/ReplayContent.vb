@@ -6,6 +6,7 @@ Public Class ReplayContentRequirement
     Public Property Version As Integer = 1
     Public Property TrackId As String = ""
     Public Property CustomTrackVersion As String = ""
+    Public Property ExternalManifestSha256 As String = ""
     Public Property Cars As New List(Of String)
     Public Property RequiredFiles As New List(Of String)
 End Class
@@ -16,6 +17,7 @@ Public Module ReplayContent
     Public Function Capture(context As InstallContext, trackId As String, launchConfig As XDocument, Optional token As CancellationToken = Nothing) As ReplayContentRequirement
         Dim result As New ReplayContentRequirement With {.TrackId = trackId, .Cars = RecordedCars(trackId, launchConfig)}
         If TrackPacks.IsLayout(trackId) Then result.CustomTrackVersion = LayoutVersion(TrackPacks.ForLayout(trackId).Read(context.GameRoot, False, token), trackId)
+        If TrackPacks.IsLayout(trackId) AndAlso TrackPacks.ForLayout(trackId).External IsNot Nothing Then result.ExternalManifestSha256 = TrackPacks.ForLayout(trackId).External.ManifestHash
         Dim track = RaceCatalog.Current.Track(trackId)
         Dim paths As New HashSet(Of String)(StringComparer.OrdinalIgnoreCase)
         For Each code In result.Cars
@@ -75,6 +77,12 @@ Public Module ReplayContent
         If requirement Is Nothing OrElse requirement.Version <> 1 OrElse requirement.Cars Is Nothing OrElse
             requirement.Cars.Count < 1 OrElse requirement.Cars.Count > 8 OrElse requirement.RequiredFiles Is Nothing OrElse
             requirement.RequiredFiles.Count > MaximumFiles Then Throw New IOException("Unsupported replay content list.")
+        Dim external = If(TrackPacks.IsLayout(requirement.TrackId), TrackPacks.ForLayout(requirement.TrackId).External, Nothing)
+        If external IsNot Nothing Then
+            If Not external.Manifest.Replay OrElse requirement.ExternalManifestSha256 <> external.ManifestHash Then Throw New IOException("This replay requires the same external track pack version and contents used to record it. Restore that pack, then Refresh.")
+        ElseIf requirement.ExternalManifestSha256 <> "" Then
+            Throw New IOException("This replay requires an external track pack that is missing or incompatible. Restore the original pack to the external tracks folder, then Refresh.")
+        End If
         Dim track = RaceCatalog.Current.Track(requirement.TrackId)
         Dim cars = requirement.Cars.Select(Function(code) RaceCatalog.Current.Car(code)).ToArray()
         If cars.Select(Function(c) c.Code).Distinct(StringComparer.Ordinal).Count() <> cars.Length Then Throw New IOException("Duplicate car in replay content list.")
@@ -108,6 +116,11 @@ Public Module ReplayContent
         For Each relative In required
             token.ThrowIfCancellationRequested()
             Dim path = SafeFiles.Inside(context.GameRoot, relative)
+            If external IsNot Nothing AndAlso relative.StartsWith(trackRoot, StringComparison.Ordinal) Then
+                Dim packed = external.Manifest.Files.FirstOrDefault(Function(f) f.Path = "payload/" & relative)
+                If packed Is Nothing Then Throw New IOException("External replay refers to a file outside the prepared pack: " & relative)
+                path = SafeFiles.Inside(external.Root, packed.Path)
+            End If
             If Not File.Exists(path) OrElse New FileInfo(path).Length = 0 Then problems.Add(relative)
         Next
         If problems.Count <> 0 Then
