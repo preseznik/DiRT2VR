@@ -37,10 +37,11 @@ internal static class FerrariMaterials
             using var data=new MemoryStream(bytes,false);var dds=normalMap?FerrariNormalMap.Pack(bytes):bake?DetailBake.Compose(bytes,SourceTexture(detail!),scale):new DdsFile(data);
             if(dds.header.width==0 || dds.header.height==0 || dds.header.width>8192 || dds.header.height>8192)throw new InvalidDataException("Invalid source texture size");
             bool rawRepacked;try{rawRepacked=RawTexture.Prepare(dds);}catch(InvalidDataException e){throw new InvalidDataException(name+": "+e.Message,e);}
+            bool mipMapsAdded=interior && FerrariTextureMipMaps.AddMissing(dds);
             var texture=(PssgTexture)textureTemplate.DeepClone();rib.AppendChild(texture);texture.Id=id;
             dds.ToPssgElement(texture);texture.AutoMipMap=false;
             if(texture.TexelFormat is not ("dxt1" or "dxt3" or "dxt5" or "ui8x4"))throw new InvalidDataException("Unsupported DiRT 2 texture format: "+name+" bits="+dds.header.ddspf.rGBBitCount+" fourCC="+dds.header.ddspf.fourCC+" format="+texture.TexelFormat);
-            textureIds.Add(key,id);textureReport.Add(new{Source=name,Id=id,SkinOverride=File.Exists(Path.Combine(source,"skins/00_official",name)),RawRepacked=rawRepacked,NormalPacking=normalMap?"AC red/green to DiRT alpha/green":null,DetailBaked=bake,DetailSource=detail,DetailScale=scale,DetailSha256=detail is null?null:Convert.ToHexString(SHA256.HashData(SourceTexture(detail))),Sha256=Convert.ToHexString(SHA256.HashData(bytes)),texture.TexelFormat,texture.Width,texture.Height});return id;
+            textureIds.Add(key,id);textureReport.Add(new{Source=name,Id=id,SkinOverride=File.Exists(Path.Combine(source,"skins/00_official",name)),RawRepacked=rawRepacked,MipMapsAdded=mipMapsAdded,NormalPacking=normalMap?"AC red/green to DiRT alpha/green":null,DetailBaked=bake,DetailSource=detail,DetailScale=scale,DetailSha256=detail is null?null:Convert.ToHexString(SHA256.HashData(SourceTexture(detail))),Sha256=Convert.ToHexString(SHA256.HashData(bytes)),texture.TexelFormat,texture.Width,texture.Height});return id;
         }
         var mats=new Dictionary<int,MaterialBuilder>();var materialReport=new List<object>();
         for(int i=0;i<high.Materials.Length;i++)
@@ -51,6 +52,9 @@ internal static class FerrariMaterials
                 "Carpaint" or "Carbon" or "Carbon_2"=>"Matt",
                 "Tyre"=>"Tyre Tread","Rim" or "Rim_Spokes" or "Rim_Decals"=>"Wheel",
                 "Brake_Disk"=>"Discs","Glass_Clear"=>"Window Netting",
+                // Keep exterior controls on the donor cabin render path.
+                // The body shader causes visible interference with the HR wheel.
+                "INT_Cockpit_LR"=>"Cabin",
                 "Metal" or "Allu" or "Exhaust" or "Mechanicals"=>"Suspension ",_=>"Matt"
             };
             var shader=(PssgShaderInstance)shaders[template].DeepClone();shaderLib.AppendChild(shader);shader.Id=(interior?"f04_int_material_":"f04_ext_material_")+i;
