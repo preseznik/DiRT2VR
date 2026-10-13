@@ -149,7 +149,7 @@ Read-only files
 The launcher temporarily handles read-only game files and restores their original protection afterward. If recovery reports a file in use, close the application using it and retry. Other access-denied errors identify the affected file; Windows folder permissions are not changed automatically.
 
 Diagnostic logging
-Off by default. Enable it in Settings only for troubleshooting and turn it off afterward. Open logs shows the log folder. Existing logs are not deleted automatically; recovery records remain available even when logging is off.
+Off by default. Enable it in Settings and save before troubleshooting, then turn it off afterward. Open logs shows the log folder. Failed custom-track and car builds save custom-build-error.json with the build identity and error details; the error message includes its location. Cancelled builds do not create failure reports. Recovery records remain available even when logging is off.
 
 Guided headset tests
 When a test card is shown, press Enter to type a reply, then Enter again to save it locally for the tester to read. Escape cancels. Keep the game focused and the car stopped while typing; the race continues. Replies are available only in explicitly enabled test sessions.

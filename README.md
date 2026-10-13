@@ -414,6 +414,8 @@ Older test-kit profiles and imported copies are not listed in the Profile tab. T
 
 **Unsupported executable or foreign proxy:** use the supported game build and resolve the reported conflict. Do not bypass compatibility checks or download replacement game executables from an untrusted source.
 
+**Custom track/car build failed:** enable diagnostic logging in **Settings**, save, then retry the build. On failure, **Open logs** contains a dated folder with `custom-build-error.json`; its location also appears in the error details. It records the pack, source-folder path and error details, including converter error output when available. Cancelled builds do not create failure reports.
+
 **File preparation failed:** the error includes the affected file and failure details when available. Close the game and use **Restore original files**. Include `%LOCALAPPDATA%\DiRT2VR\<installation-id>\worker-error.json` in your report; it contains the latest failed operation, including any administrator retry. This small recovery diagnostic is kept even with logging off. Keep the original backups and do not change permissions across the whole game folder.
 
 Read-only game files are supported during camera, effects, menu and offline-profile preparation. Their original protection is restored after play or interrupted-session recovery. Updates also handle read-only launcher files. If an older version failed with `cameras.xml [ReadOnly, Archive]`, update the launcher, choose **Restore original files**, then retry. If recovery reports a file in use, close the application using it first. Other access-denied errors can still require folder permission changes; the launcher reports the affected file and does not change Windows permissions.

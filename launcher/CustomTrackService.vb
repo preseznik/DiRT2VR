@@ -140,7 +140,8 @@ Public Module CustomTrackService
     End Sub
     Public Function InstallAsync(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, Optional layoutIds As String() = Nothing) As Task
         Return Task.Run(Sub()
-                            WithSessionLock(Sub() Install(context, offer, source, progress, cancel, layoutIds))
+                            BuildDiagnostics.Run(context, "track", offer.Id, source,
+                                                 Sub() WithSessionLock(Sub() Install(context, offer, source, progress, cancel, layoutIds)))
                             CacheCleanup.Run(context)
                         End Sub, cancel)
     End Function
@@ -191,7 +192,7 @@ Public Module CustomTrackService
                 child.WaitForExit()
             End Using
             cancel.ThrowIfCancellationRequested()
-            If child.ExitCode <> 0 Then Throw New IOException(pack.Name & " conversion failed: " & errors.GetAwaiter().GetResult())
+            If child.ExitCode <> 0 Then Throw New IOException(pack.Name & " conversion failed (exit code " & child.ExitCode.ToString() & "): " & errors.GetAwaiter().GetResult())
         End Using
         Dim built = IO.Path.Combine(stage, "conversion/install")
         Dim receipt = pack.Read(built, True, cancel)

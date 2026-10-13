@@ -175,7 +175,7 @@ Public NotInheritable Class CacheCleanup
             If item.Stamp >= now.ToLocalTime().AddDays(-30) Then Continue For
             Try
                 ' A timestamp-shaped directory alone is not enough to claim ownership.
-                If Not {"trace.log", "dirt2vr-settings.json", "preflight.txt"}.Any(Function(n) File.Exists(IO.Path.Combine(item.Path, n))) Then Continue For
+                If Not {"trace.log", "dirt2vr-settings.json", "preflight.txt", "custom-build-error.json"}.Any(Function(n) File.Exists(IO.Path.Combine(item.Path, n))) Then Continue For
                 RemoveOldTree(root, IO.Path.GetFileName(item.Path), now.AddDays(-30), result, watch)
             Catch ex As Exception
                 Problem(result, ex)

@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Failed custom-track and car builds now save an error report when diagnostic logging is enabled. Enable it in Settings, save, then retry the build. The error details show the report's location; you can also find it through Open logs.
+
 Add prepared community tracks and cars in DiRT2VR/custom-tracks/external or DiRT2VR/custom-cars/external, then choose Refresh. Tracks appear under External; cars appear in CUSTOM cars. Missing or incompatible packs show an explanation. Original game files are restored after play. This accepts prepared DiRT2VR packs, not raw assets from other games.
 
 Import Ferrari F2004 from your local Assetto Corsa installation using CUSTOM cars → Build/import. It currently supports desktop Direct practice on Battersea Air and Nordschleife Daylight. VR, AI races, LAN, career and saved replay playback are not available for this car yet.

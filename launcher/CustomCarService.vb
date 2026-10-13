@@ -68,7 +68,8 @@ Public Module CustomCarService
     End Function
     Public Function InstallAsync(context As InstallContext, source As String, progress As IProgress(Of CarProgress), cancel As CancellationToken) As Task
         Return Task.Run(Sub()
-                            CustomTrackService.WithSessionLock(Sub() Install(context, source, progress, cancel))
+                            BuildDiagnostics.Run(context, "car", CarPack.Code, source,
+                                                 Sub() CustomTrackService.WithSessionLock(Sub() Install(context, source, progress, cancel)))
                         End Sub, cancel)
     End Function
     Private Sub Install(context As InstallContext, source As String, progress As IProgress(Of CarProgress), cancel As CancellationToken)
@@ -103,7 +104,7 @@ Public Module CustomCarService
                     child.WaitForExit()
                 End Using
                 cancel.ThrowIfCancellationRequested()
-                If child.ExitCode <> 0 Then Throw New IOException("Ferrari conversion failed: " & errors.GetAwaiter().GetResult())
+                If child.ExitCode <> 0 Then Throw New IOException("Ferrari conversion failed (exit code " & child.ExitCode.ToString() & "): " & errors.GetAwaiter().GetResult())
             End Using
             CarPack.Read(IO.Path.Combine(stage, "conversion/install"))
             cancel.ThrowIfCancellationRequested() : context.RequireClosed()

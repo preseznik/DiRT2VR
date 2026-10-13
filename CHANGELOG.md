@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Save failed custom-track and car build reports when diagnostic logging is enabled, with the log location included in the error details.
 - Discover prepared external track packs from a separate external folder, with Refresh, an External source category and clear explanations for incomplete packs. Original files return after play; saved replays require the same pack version and contents. Prepared external cars appear in CUSTOM cars and can be combined with supported tracks when their capabilities allow it. Missing or changed replay packs are reported before launching.
 - Keep intact saved replays visible when their external packs are missing, and fix a playback failure affecting recordings with empty animation-name tables.
 
