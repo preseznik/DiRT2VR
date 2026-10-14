@@ -106,11 +106,11 @@ internal static class Visuals
         }
         var ids=new Dictionary<string,string>();var shaderMappings=new List<object>();
         var addedGroups=new HashSet<string>();var textureBytes=new Dictionary<string,byte[]>();
-        string TextureId(string name,bool opaque,bool roadShading=false,bool preserveChannels=false)
+        string TextureId(string name,bool opaque,bool roadShading=false,bool preserveChannels=false,bool roadDetail=false)
         {
             if(preserveChannels && (name is "nord_black" or "nord_white" or "nord_normal" or "nord_normal_dxt5"))return name;
             if(!scene.Textures.TryGetValue(name,out var texture))throw new InvalidDataException("Missing embedded texture: "+name);
-            string id="nord_tex_"+texture.Hash[..20]+(preserveChannels?"_native":roadShading?"_road_shading":opaque?"_opaque":"");textureBytes.TryAdd(id,texture.Dds);return id;
+            string id="nord_tex_"+texture.Hash[..20]+(preserveChannels?"_native":roadDetail?"_road_detail":roadShading?"_road_shading":opaque?"_opaque":"");textureBytes.TryAdd(id,texture.Dds);return id;
         }
         for(int i=0;i<sourceMaterials.Length;i++)
         {
@@ -134,7 +134,7 @@ internal static class Visuals
                     continue;
                 }
                 if(input is null){input=new XElement("SHADERINPUT",new XAttribute("parameterID",j));instance.Add(input);}
-                string texture=road is not null ? name.StartsWith("TDiffuseSpecMap",StringComparison.Ordinal)?TextureId(road.Detail,true):name=="TAmbientOcclusion"?TextureId(road.Shading,false,true):"nord_black" :
+                string texture=road is not null ? name.StartsWith("TDiffuseSpecMap",StringComparison.Ordinal)?TextureId(road.Detail,false,roadDetail:true):name=="TAmbientOcclusion"?TextureId(road.Shading,false,true):"nord_black" :
                     name=="TDiffuseAlphaMap"?TextureId(grass?.Detail??diffuse,IsOpaque(material)):name=="TOcclusionMap"?(grass is null?"nord_white":TextureId(grass.Shading,false)):name=="TNormalMap"?"nord_normal":"nord_black";
                 input.SetAttributeValue("type","texture");
                 input.SetAttributeValue("texture","tracksplit.pssg#"+texture);input.RemoveNodes();
@@ -156,7 +156,7 @@ internal static class Visuals
             var attributes=layouts[target].BlockInputs.SelectMany(b=>b.VertexInputs).Select(v=>v.Name).Distinct().ToArray();
             shaderMappings.Add(new { Source=material.Id,material.Name,material.Shader,Target=target,Diffuse=road?.Detail??grass?.Detail??diffuse,Grass=grass,Road=road,
                 VertexAttributes=attributes,SourceNormalsUsed=attributes.Contains("Normal"),
-                DiffuseAlpha=target=="decal_ao.fx"?"Source diffuse/specular retained; source shadow alpha repacked into target R/G, baked indirect luminance into B":material.Native is not null?"All source texture channels retained for native shader inputs":IsOpaque(material)?"Opaque coverage; source mask alpha discarded, RGB retained":"Source coverage retained",
+                DiffuseAlpha=road is not null&&material.Native is null?"Dry asphalt: zero specular alpha; source RGB and mip levels retained":target=="decal_ao.fx"?"Source diffuse/specular retained; source shadow alpha repacked into target R/G, baked indirect luminance into B":material.Native is not null?"All source texture channels retained for native shader inputs":IsOpaque(material)?"Opaque coverage; source mask alpha discarded, RGB retained":"Source coverage retained",
                 Approximation=target=="decal_ao.fx"?"Native decal alpha blending, source coverage, UV sets and shadow occlusion retained; neutral packed normal supplied. GRID 2 GIS indirect lighting is reduced to luminance":material.Native is not null?"Native terrain layers, UV sets and translated world mapping retained. Unsupported source shader inputs are listed in terrain-materials.json; colour atlas, GIS lighting, feathering and some mask math remain approximate":road is not null?"Primary asphalt detail uses source world XZ scale and phase; base shading uses original UVs. Additional mask layers, coloured shading and normal packing remain approximate":grass is null?"Diffuse, source UVs and normals retained; static cutout meshes use diffuse alpha clipping. Multilayer blending, AC specular/normal packing and animated effects are not reproduced":
                     "Primary source grass detail uses original world XZ scale and phase; source diffuse shading uses original UVs as occlusion. Remaining soil/detail mask blends and normal/specular packing are not reproduced" });
         }
@@ -176,6 +176,7 @@ internal static class Visuals
                 using var memory=new MemoryStream(payload,false);dds=new DdsFile(memory);
                 if(dds.header.width==0 || dds.header.height==0 || dds.header.width>8192 || dds.header.height>8192)throw new InvalidDataException("Invalid DDS dimensions.");
                 if(texture.Id.EndsWith("_road_shading",StringComparison.Ordinal))RoadMaterial.PackShading(dds);
+                else if(texture.Id.EndsWith("_road_detail",StringComparison.Ordinal))RoadMaterial.PackDetail(dds);
                 else if(!texture.Id.EndsWith("_native",StringComparison.Ordinal))DdsAlpha.Prepare(dds,texture.Id.EndsWith("_opaque",StringComparison.Ordinal));
             }
             else

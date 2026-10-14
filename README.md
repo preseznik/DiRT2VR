@@ -147,6 +147,8 @@ Choose **CUSTOM tracks → Source: GRID 2 → Spa-Francorchamps → Build and in
 
 ### Nordschleife
 
+After updating, use **Manage… → Rebuild from source…** to correct overly shiny asphalt in all three lighting presets. Updating the launcher alone does not regenerate installed track assets.
+
 The **Nordschleife** pack uses your installed **Assetto Corsa** standard circuit. Select **CUSTOM tracks → Nordschleife → Build and install…**, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. All three lighting presets are built together. Choose **Daylight**, **Overcast** or **Evening**, an installed car, and **Direct practice** or **Race**. Race supports **1–20 laps** and **1–7 AI opponents** on desktop or in VR, with car choices and difficulty settings. Direct practice uses one lap. Older solo packs need **Manage… → Rebuild from source…** to add the race grid; previous best laps are kept.
 
 These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. **Best lap** shows your fastest completed Direct practice time and its car across all lighting presets; Race results appear in game. The stage progress marker follows your position around the circuit. One-lap sessions show checkpoint divisions; multi-lap races show lap divisions. Existing packs need no rebuild for the progress correction.

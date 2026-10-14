@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Fix overly shiny Nordschleife asphalt in Daylight, Overcast and Evening while retaining its colour and detail. After updating, choose Nordschleife → Manage → Rebuild from source to update an existing track installation.
+
 Fix Ferrari cockpit and steering-wheel surface flicker caused by incorrect lighting textures. After updating, use CUSTOM cars → Manage → Rebuild from source to apply the correction to an existing Ferrari installation.
 
 The CUSTOM track list now grows with the launcher window and only scrolls when the available height is filled.
