@@ -430,9 +430,10 @@ bool PipelineOption(const wchar_t* name) {
     return PipelineTraceEnabled() && GetEnvironmentVariableW(name,value,8)==1 && value[0]==L'1';
 }
 thread_local MeterWindow meterWindow;
+bool HeadsetEnabled();
 bool ExposureWindowEnabled() {
     static const bool enabled=[] { wchar_t value[8]{};return GetEnvironmentVariableW(L"DIRT2VR_EXPOSURE_WINDOW_PROBE",value,8)==1 && value[0]==L'1'; }();
-    return ShadowsEnabled() || (LoggingEnabled() && enabled);
+    return HeadsetEnabled() || ShadowsEnabled() || (LoggingEnabled() && enabled);
 }
 bool PipelineLights() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_PIPELINE_LIGHTS",value,8)==1 && value[0]==L'1'; }();

@@ -24,7 +24,8 @@ Public Module XmlPatches
                 Dim chase = document.SelectSingleNode("//View[@ident='chase_close']")
                 If head Is Nothing OrElse chase Is Nothing Then Throw New IOException("This car has unsupported cockpit camera definitions.")
                 Dim replacement = DirectCast(head.CloneNode(True), XmlElement)
-                Parameter(replacement, "fov", "120.0")
+                ' Retain the native FOV for exposure metering. The render hook
+                ' supplies each headset eye's FOV and expands scenery visibility.
                 For Each item As XmlElement In replacement.SelectNodes("AccelerationBasedShake/Parameter[@type='scalar']")
                     item.SetAttribute("value", "0.0")
                 Next
