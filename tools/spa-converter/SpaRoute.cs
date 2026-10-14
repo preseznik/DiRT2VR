@@ -57,21 +57,21 @@ internal static class SpaRoute
         }
         Files.Xml(new XDocument(new XElement("progress_track_data",new XAttribute("exporter_version","3.0.0"),
             new XElement("track",new XAttribute("type","circuit"),new XAttribute("total_distance",F(scene.Length))),splits,gates,points)),Path.Combine(output,"progress_track.xml"));
-        // Retain the source racing line and closed links. Use DiRT 2's vehicle
-        // braking rules rather than importing GRID 2's vehicle-specific model.
+        // Retain the source racing line and translate its authored corner controls
+        // to DiRT 2's timed holds; an empty braking table leaves sharp turns unguided.
         var ai=Read("ai_track.xml");var track=ai.Root!.Elements("track").Single(t=>(string?)t.Attribute("name")=="default");
         foreach(var other in ai.Root.Elements("track").Where(t=>t!=track).ToArray())other.Remove();
         foreach(var position in track.Element("gates")!.Elements("gate").Elements("position"))position.Value=Vector("position",Parse(position.Value)-scene.Origin).Value;
         foreach(var gate in track.Element("gates")!.Elements("gate"))if(gate.Element("edges") is null)gate.Add(new XElement("edges",new XAttribute("num_edges",0)));
-        foreach(var name in new[]{"brake_lines","min_speed_lines","retire_lines","fork_sets"}){track.Element(name)?.Remove();track.Add(new XElement(name,new XAttribute("num_"+name,0)));}
-        track.Element("hold_lines")?.Remove();track.Element("speed_lines")?.Remove();
+        var braking=SpaAi.ConvertBrakes(track);
+        Files.Json(Path.Combine(output,"ai-braking.json"),new{Sections=braking,SourceRacingLinePreserved=true,SourceSpeedRangesPreserved=true,RuntimeValidated=false});
         Files.Xml(ai,Path.Combine(output,"ai_track.xml"));Files.Xml(ai,Path.Combine(output,"dev_ai_track.xml"));
         using(var input=File.OpenRead(Path.Combine(donor,"route_1/ai_vehicle_track.xml")))
         {
             var vehicle=new XmlFile(input);foreach(System.Xml.XmlElement brake in vehicle.Document.SelectNodes("//brake_lines")!){brake.RemoveAll();brake.SetAttribute("num_brake_lines","0");}
             using var stream=new FileStream(Path.Combine(output,"ai_vehicle_track.xml"),FileMode.CreateNew);vehicle.Write(stream);
         }
-        StartingGrid.Write(scene,donor,output);
+        SpaGrid.Write(scene,source,donor,output);
         Files.Xml(new XDocument(new XElement("route",new XElement("default",new XAttribute("track_cull_dist","20000.0"),new XAttribute("world_cull_dist","20000.0"),new XAttribute("track_lod_dist","1200.0"),new XAttribute("fade","10.0")),new XElement("Systems",new XAttribute("tree_settings","low"),new XAttribute("ornament_settings","medium")))),Path.Combine(output,"route_overrides.xml"));
         var recovery=new RouteRecovery(scene.Collision.Where(t=>scene.RoadSurfaces.Contains(t.Material)).Select(t=>t with{Material="RDT+"}));
         SpaBoundaries.Write(scene,source,output);

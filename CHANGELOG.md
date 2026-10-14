@@ -6,6 +6,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Improve VR startup centering: wait for active headset tracking and recenter once when cockpit view first begins. The VDXR headset check confirmed the correct starting height without manual recentering.
+
+- Restore the first eight original GRID 2 Spa starting-grid positions, including their staggered spacing and headings. Set spawn heights from the converted road and preserve the approved AI braking. Offline placement and road-support checks pass; the race-start driving retest is pending.
+
+- Restore Spa's 14 authored AI braking sections using DiRT 2-compatible speed holds. Preserve the racing line, scenery and collision. Offline checks pass, and the player approves the Evo X Trailblazer driving retest.
+
 - Add Quit to the custom driving and replay pause menus. It exits the game without reopening Normal Launch; the launcher restores session files afterward.
 
 - Add separate Desktop and VR anisotropic-filtering choices under Graphics → Main: Game, Off, 2×, 4×, 8× and 16×. Game remains the default; DX11 overrides apply to repeating surface textures on the next launch. In-game appearance and performance validation are pending.

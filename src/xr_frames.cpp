@@ -105,6 +105,8 @@ bool XrFrames::CreatePanel() {
     return true;
 }
 bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen,const Overlay* overlay,const Overlay* panel) {
+    const bool wasReady=canRecenter_;
+    canRecenter_=false;
     if(screen || (overlay && !overlay->draw)) overlay=nullptr;
     XrEventDataBuffer event{XR_TYPE_EVENT_DATA_BUFFER};
     XrResult eventResult{};
@@ -114,6 +116,7 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
             if(state.session!=session_) { event={XR_TYPE_EVENT_DATA_BUFFER}; continue; }
             Report("session_state=%d",state.state);
             visible_=state.state==XR_SESSION_STATE_VISIBLE || state.state==XR_SESSION_STATE_FOCUSED;
+            focused_=state.state==XR_SESSION_STATE_FOCUSED;
             if(state.state==XR_SESSION_STATE_READY) {
                 XrSessionBeginInfo begin{XR_TYPE_SESSION_BEGIN_INFO}; begin.primaryViewConfigurationType=XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO;
                 running_=Check(xrBeginSession(session_,&begin),"xrBeginSession");
@@ -149,6 +152,14 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
     bool valid=frame.shouldRender && Check(xrLocateViews(session_,&locate,&state,2,&count,views.data()),"xrLocateViews") && count==2;
     constexpr auto required=XR_VIEW_STATE_ORIENTATION_VALID_BIT|XR_VIEW_STATE_POSITION_VALID_BIT;
     valid=valid && (state.viewStateFlags&required)==required;
+    // VALID can mean an inferred/last-known pose during runtime startup. It is
+    // usable for rendering, but must not establish the player's seated origin.
+    constexpr auto tracked=XR_VIEW_STATE_ORIENTATION_TRACKED_BIT|XR_VIEW_STATE_POSITION_TRACKED_BIT;
+    canRecenter_=valid && focused_ && (state.viewStateFlags&tracked)==tracked;
+    if(trackingReports_<16 && (reportedTrackingFlags_!=state.viewStateFlags || wasReady!=canRecenter_)) {
+        Report("centering ready=%d focused=%d view_flags=0x%llx",canRecenter_,focused_,static_cast<unsigned long long>(state.viewStateFlags));
+        reportedTrackingFlags_=state.viewStateFlags; ++trackingReports_;
+    }
     if(valid && !screen && fovScale_<1.f) {
         // Crop about the optical axis in tangent space. Render and submission
         // use the same narrowed FOV, preserving scale rather than stretching.

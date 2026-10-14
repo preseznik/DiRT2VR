@@ -70,7 +70,7 @@ Regular Launch needs no SteamVR or headset and uses your desktop graphics prefer
 2. Open **DiRT2VR.exe**, choose **Normal Launch** on **Launcher**, and select **Launch VR**. On your first VR launch, choose **OpenXR — system default** or **SteamVR**. The prompt shows the detected system runtime. Check **Remember my choice** to skip the prompt next time.
 3. Navigate the original game on the virtual screen using your usual controls.
 4. Enter an event with your chosen car. VR launches select cockpit view automatically.
-5. Cockpit VR starts enabled. Sit facing forward and press **F10** (or Recenter). Recenter resets your seated position and horizontal direction without baking head tilt into the view; saved seat adjustments stay unchanged. **F9** (Toggle VR) switches between cockpit VR and the flat screen; keep the game window focused.
+5. Cockpit VR starts enabled. Sit facing forward while loading: the view centers automatically once tracking is ready and again when cockpit view first begins. Press **F10** (or Recenter) to adjust it afterward. Recenter resets your seated position and horizontal direction without baking head tilt into the view; saved seat adjustments stay unchanged. **F9** (Toggle VR) switches between cockpit VR and the flat screen; keep the game window focused.
 6. Pause/options menus automatically use the virtual screen; resuming restores your selected cockpit VR mode. Use Toggle VR if another menu, replay or flashback looks incorrect.
 7. Quit normally. The background session manager restores temporary files when the game exits. You may close the settings window while playing.
 

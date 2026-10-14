@@ -13,6 +13,7 @@ public:
     bool Active() const { return frames_!=nullptr; }
     bool Exiting() const { return frames_ && frames_->Exiting(); }
     bool Visible() const { return frames_ && frames_->Visible(); }
+    bool CanRecenter() const { return frames_ && frames_->CanRecenter(); }
     uint64_t Submitted() const { return frames_ ? frames_->Submitted() : 0; }
     std::array<uint32_t,4> EyeDimensions() const { return eyeDimensions_; }
 private:

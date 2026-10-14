@@ -688,6 +688,8 @@ bool CaptureHudDraw(ID3D11DeviceContext* context,const std::function<void()>& dr
 uint64_t xrTickFrame=~uint64_t{};
 XrPosef headsetReference{{0,0,0,1},{0,0,0}};
 bool recenterRequested=true;
+bool headsetCentered=false;
+bool initialCockpitCentered=false;
 bool AutoCockpitEnabled() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_AUTO_COCKPIT",value,8)==1 && value[0]==L'1'; }();
     return enabled;
@@ -730,11 +732,25 @@ bool CockpitShadowMode() {
     PollHeadsetKeys();
     return gameXr && gameXr->Active() && gameXr->Visible() && !ScreenMode() && !GamePaused();
 }
-void PrepareHeadsetViews(const std::array<XrView,2>& views) {
-    if(recenterRequested) {
-        headsetReference=RecenterPose(CenterPose(views),headsetReference); recenterRequested=false;
+void PrepareHeadsetViews(const std::array<XrView,2>& views,bool cockpit=false) {
+    if(cockpit && !initialCockpitCentered && gameXr->CanRecenter()) {
+        // The loading screen can appear while the player is still putting on
+        // the headset. Establish the driving origin once cockpit play begins.
+        initialCockpitCentered=true; recenterRequested=true;
+        Log("OpenXR initial cockpit recenter frame=%llu",frame.load());
+    }
+    if(!headsetCentered && !gameXr->CanRecenter()) {
+        // Keep startup/loading imagery near the provisional pose, but leave the
+        // initial recenter pending until the runtime is focused and tracking.
+        headsetReference=RecenterPose(CenterPose(views),headsetReference);
         SetTestMessageReference(headsetReference);
-        Log("OpenXR recentered position+yaw frame=%llu",frame.load());
+        return;
+    }
+    if(recenterRequested && gameXr->CanRecenter()) {
+        headsetReference=RecenterPose(CenterPose(views),headsetReference); recenterRequested=false; headsetCentered=true;
+        SetTestMessageReference(headsetReference);
+        const auto& p=headsetReference.position;
+        Log("OpenXR recentered position+yaw frame=%llu position=(%.4f,%.4f,%.4f) tracked=1 focused=1",frame.load(),p.x,p.y,p.z);
     }
 }
 void HeadsetScreen() {
@@ -946,7 +962,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             std::array<float,16> projection{}; projection[11]=-1;
             ApplyFov(projection.data(),view.fov);
         }
-        PrepareHeadsetViews(views);
+        PrepareHeadsetViews(views,cockpit);
         if(cockpit) SeatPrepare(views);
         SteeringCockpitView(cockpit && gameXr->Visible());
         static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;

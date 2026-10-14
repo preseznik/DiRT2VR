@@ -34,6 +34,7 @@ public:
     bool Exiting() const { return exiting_; }
     uint64_t Submitted() const { return submitted_; }
     bool Visible() const { return visible_; }
+    bool CanRecenter() const { return canRecenter_; }
     std::array<uint32_t,4> EyeDimensions() const { return {eyes_[0].width,eyes_[0].height,eyes_[1].width,eyes_[1].height}; }
 private:
     bool CreatePanel();
@@ -48,6 +49,9 @@ private:
     XrSpace space_{};
     std::array<Eye,4> eyes_; // stereo pair plus transparent HUD
     bool running_{},exiting_{},visible_{};
+    bool focused_{},canRecenter_{};
+    XrViewStateFlags reportedTrackingFlags_=~XrViewStateFlags{};
+    unsigned trackingReports_{};
     bool hudPlacementReported_{};
     uint64_t submitted_{};
     float fovScale_=1.f;
