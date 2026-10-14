@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.112 — 2026-10-14 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.112)
+
 - Refresh the in-app Instructions for VR startup, vehicle setup, replay bindings and recording, Quit, built-in filter presets, road sheen and anisotropic filtering. Remove outdated test-machine notes and update Misty Loch headset status.
 
 - Keep the launcher visible while VR starts, then show and raise the actual game window instead of targeting the temporary loading window. Mouse movement while loading no longer cancels the handoff. The player confirmed DiRT 2 appears in front automatically with VDXR.
