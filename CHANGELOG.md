@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Correct VR cockpit exposure that can wash out Misty Loch's Morning Fog. Retain the car's original exposure reference while using the headset's field of view, including with shadows disabled. Stereo rendering checks pass; a headset retest is pending.
+- Correct VR cockpit exposure that can wash out Misty Loch's Morning Fog. Retain the car's original exposure reference while using the headset's field of view, including with shadows disabled. Stereo rendering checks pass, and the player approved the Morning Fog headset retest.
 
 - Add Spa-Francorchamps to the custom-track catalogue and clarify the six built-in packs, custom-car mode limits and prepared community packs.
 
