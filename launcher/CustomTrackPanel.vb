@@ -187,6 +187,7 @@ Public Class CustomTrackPanel
                                                     Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
                                                     condition.Text = If(chosen Is Nothing, "Choose a layout", chosen.Discipline & " · " & chosen.Condition)
                                                     If currentPack?.Id = "nordschleife" Then condition.Text = "Standard circuit"
+                                                    If currentPack?.Id = "misty-loch" Then condition.Text = "Full circuit · 6.45 km"
                                                     If currentPack?.Id = "spa-francorchamps" Then condition.Text = "Circuit · Daylight"
                                                     RefreshBestTime()
                                                     If Not loading Then LoadLayoutSession()
@@ -272,17 +273,17 @@ Public Class CustomTrackPanel
         Try
             browser.PackList.SelectedItem = currentPack : browser.Picker.SelectedItem = currentPack
             title.Text = currentPack.Name : description.Text = currentPack.Description
-            Dim nord = currentPack.Id = "nordschleife"
-            layouts.AccessibleName = If(nord, "Conditions", "Layout")
-            setup.Controls.Find("CustomTrackLayoutLabel", True).Single().Text = If(nord, "Conditions", "Layout")
-            setup.Controls.Find("CustomTrackConditionLabel", True).Single().Text = If(nord, "Layout", "Conditions")
+            Dim conditions = currentPack.Id = "nordschleife" OrElse currentPack.Id = "misty-loch"
+            layouts.AccessibleName = If(conditions, "Conditions", "Layout")
+            setup.Controls.Find("CustomTrackLayoutLabel", True).Single().Text = If(conditions, "Conditions", "Layout")
+            setup.Controls.Find("CustomTrackConditionLabel", True).Single().Text = If(conditions, "Layout", "Conditions")
             installHint.Text = If(currentPack.Available, "Build this pack from your own " & TrackPacks.Get(currentPack.Id).SourceName & " files. Select a detected installation or browse to its folder. Installed tracks work offline.", "This saved pack is unavailable.")
             installationValid = False : raceReady = False : installedReceipt = Nothing : hasReceipt = False : errorText = "" : installedLayouts.Clear()
             Dim selected = preferences.ForPack(currentPack.Id)
             circuitRaceLaps = Math.Clamp(selected.Laps, 1, 20)
             layouts.Items.Clear()
             For Each trackLayout In currentPack.Layouts
-                layouts.Items.Add(New LayoutItem(trackLayout, nord))
+                layouts.Items.Add(New LayoutItem(trackLayout, conditions))
             Next
             layouts.SelectedItem = layouts.Items.Cast(Of LayoutItem).FirstOrDefault(Function(item) item.Value.Id = selected.LayoutId)
             launchMode.Items.Clear()
@@ -366,7 +367,7 @@ Public Class CustomTrackPanel
                 Dim lighting = lightingTest.SelectedIndex
                 layouts.BeginUpdate() : layouts.Items.Clear()
                 For Each trackLayout In visibleLayouts
-                    layouts.Items.Add(New LayoutItem(trackLayout, currentPack.Id = "nordschleife"))
+                    layouts.Items.Add(New LayoutItem(trackLayout, currentPack.Id = "nordschleife" OrElse currentPack.Id = "misty-loch"))
                 Next
                 layouts.SelectedItem = layouts.Items.Cast(Of LayoutItem).FirstOrDefault(Function(item) item.Value.Id = selectedLayout)
                 lightingTest.SelectedIndex = lighting : layouts.EndUpdate()
@@ -668,7 +669,7 @@ Public Class AspenSourceForm
         End Get
     End Property
     Public Sub New(previous As String, detected As String(), offer As ConversionProfile, Optional selectedIds As String() = Nothing, Optional installed As PackReceipt = Nothing)
-        Dim nord = offer.Id = "nordschleife"
+        Dim conditions = offer.Id = "nordschleife" OrElse offer.Id = "misty-loch"
         Dim sourceGame = TrackPacks.Get(offer.Id).SourceName
         source.Name = If(TrackPacks.Get(offer.Id).SourceGame = "assettocorsa", "AssettoCorsaSourceFolder", If(TrackPacks.Get(offer.Id).SourceGame = "grid2", "Grid2SourceFolder", "Dirt3SourceFolder"))
         Text = "Build " & offer.Name & " layouts — " & sourceGame : Font = New Font("Segoe UI", 10)
@@ -689,7 +690,7 @@ Public Class AspenSourceForm
                                  End Sub
         content.Controls.Add(browse)
         content.Controls.Add(New Label With {.Text = "Layouts to build", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
-        content.Controls.Add(New Label With {.Text = If(nord, "All three lighting presets are built together.", "Only checked layouts are built. Unchecked layouts already installed will be kept."), .AutoSize = True})
+        content.Controls.Add(New Label With {.Text = If(conditions, "All lighting presets are built together.", "Only checked layouts are built. Unchecked layouts already installed will be kept."), .AutoSize = True})
         Dim selectionButtons As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
         Dim all As New Button With {.Name = "SelectAllLayouts", .Text = "Select all", .AutoSize = True}
         Dim none As New Button With {.Name = "SelectNoLayouts", .Text = "Select none", .AutoSize = True}
@@ -699,13 +700,13 @@ Public Class AspenSourceForm
         AddHandler none.Click, Sub()
                                    For Each choice In choices : choice.Checked = False : Next
                                End Sub
-        selectionButtons.Controls.AddRange({all, none}) : selectionButtons.Visible = Not nord : content.Controls.Add(selectionButtons)
+        selectionButtons.Controls.AddRange({all, none}) : selectionButtons.Visible = Not conditions : content.Controls.Add(selectionButtons)
         For Each trackLayout In offer.Layouts
             Dim session = installed?.Sessions.FirstOrDefault(Function(s) s.LayoutId = trackLayout.Id)
             Dim status = If(session Is Nothing, "Not installed", "Installed")
             Dim choice As New CheckBox With {.Name = "BuildLayout_" & trackLayout.Id, .Tag = trackLayout.Id, .AutoSize = True,
-                .Text = If(nord, trackLayout.Condition, trackLayout.Name) & " · " & status,
-                .Checked = nord OrElse selectedIds Is Nothing OrElse selectedIds.Contains(trackLayout.Id, StringComparer.Ordinal), .Enabled = Not nord, .AccessibleName = If(nord, trackLayout.Condition, trackLayout.Name)}
+                .Text = If(conditions, trackLayout.Condition, trackLayout.Name) & " · " & status,
+                .Checked = conditions OrElse selectedIds Is Nothing OrElse selectedIds.Contains(trackLayout.Id, StringComparer.Ordinal), .Enabled = Not conditions, .AccessibleName = If(conditions, trackLayout.Condition, trackLayout.Name)}
             choices.Add(choice) : content.Controls.Add(choice)
             AddHandler choice.CheckedChanged, Sub() UpdateSelection()
         Next

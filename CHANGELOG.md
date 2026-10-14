@@ -7,6 +7,7 @@ Version headings identify distribution builds; published packages include a GitH
 ## Unreleased
 
 - Correct overly shiny Nordschleife asphalt in Daylight, Overcast and Evening while preserving its original colour and detail. Rebuild the track with the updated converter to apply the correction.
+- Add an Evening lighting option for Misty Loch alongside Daylight. Rebuild the track from Manage to add both presets; existing Daylight installs remain usable. Keep the dry road shading and black-band fix in both presets. Evening gameplay and headset acceptance remain pending.
 
 - Correct Ferrari cockpit lighting normals to fix flickering on the steering wheel and cockpit surfaces. Rebuild the car from Manage after updating.
 

@@ -76,9 +76,16 @@ public static class MistyConversion
                 if(SafeFiles.Hash(source)!=f.Value.GetString())throw new IOException("Candidate changed while preparing the pack: "+f.Name);
                 assets[f.Name.StartsWith("shared/",StringComparison.Ordinal)?f.Name[7..]:"route_0/"+f.Name]=source;
             }
+            if(layout.Condition=="Evening")
+            {
+                string lighting=Path.Combine(variant,"lighting.xml");
+                MistyLighting.WriteEvening(assets["lighting.xml"],lighting);
+                assets["lighting.xml"]=lighting;
+            }
             foreach(var (relative,source) in assets)Copy(source,"tracks/usa/"+layout.Folder+"/"+relative);
             string metadata=Path.Combine(variant,"metadata");
-            TrackMetadata.Create(d2,schema,metadata,new(layout.Folder,"mistyrt","Misty Loch", "misty","Misty Loch",donorModel),length,false);
+            string key=layout.Id=="misty-loch"?"mistyrt":"mistyev";
+            TrackMetadata.Create(d2,schema,metadata,new(layout.Folder,key,"Misty Loch", "misty","Misty Loch",donorModel),length,false);
             var session=new List<SessionFile>();
             using(var manifest=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(metadata,"metadata.json"))))
                 foreach(var entry in manifest.RootElement.GetProperty("Files").EnumerateArray())
@@ -94,12 +101,13 @@ public static class MistyConversion
                 string owned=pack.Support+"/"+layout.Id+"/"+path;Copy(source,owned);
                 session.Add(new(path,expected[Path.GetFullPath(Path.Combine(d2,path))],owned));
             }
-            sessions.Add(new(layout.Id,session.ToArray()));
+            // Daylight assets and course identity are unchanged; preserve existing replays.
+            sessions.Add(new(layout.Id,session.ToArray(),layout.Id=="misty-loch"?"1.0.1":pack.Version));
         }
         Report(95,"Verifying every installed file and original source");
         if(!sources.SequenceEqual(TrackPack.VerifySources(profile,d2,ac,null,default)))
             throw new IOException("Source files changed during conversion. Retry with the original files unchanged.");
-        var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources);
+        var receipt=new PackReceipt(2,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources);
         pack.Verify(install,receipt);SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
         Report(100,"Misty Loch is ready for Direct practice and Race on desktop and in VR");
         void Copy(string source,string relative)

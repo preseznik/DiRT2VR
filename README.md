@@ -105,11 +105,11 @@ All five packs offer **Direct practice** and experimental **Race** on desktop or
 
 ### Misty Loch
 
-**Updating an existing Misty Loch build:** after installing this update, choose **Manage… → Rebuild from source…** once to fix flickering black bands on the road. The road detail is retained. This visual fix keeps the current track version, so it does not invalidate replays recorded with that version.
+**Updating an existing Misty Loch build:** choose **Manage… → Rebuild from source…** to add **Evening** alongside **Daylight**. Both lighting presets are built together. Existing Daylight installs remain usable; the rebuilt Daylight layout retains its 1.0.1 identity for existing replays. Both presets retain the dry road shading and fix for flickering black road bands.
 
 Choose **CUSTOM tracks → Misty Loch → Build and install…** and select the Assetto Corsa folder containing `content\tracks\rt_misty_loch`. Only your installed DiRT 2 files and Misty Loch 1.4 folder are used; no other track, extra grass atlas or CSP installation is required. Original game assets are not included in DiRT2VR downloads.
 
-Choose an installed car and use **Launch** or **Launch VR**. **Direct practice** runs one complete lap; **Race** offers 1–7 AI opponents and 1–20 laps. If Misty Loch was built with an older launcher, use **Manage… → Rebuild from source…** to add the eight-car grid before racing. Existing builds still support Direct practice. VR and AI racing are experimental; custom-track LAN is unavailable. The port includes layered road/terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Assetto Corsa lighting and some effects remain approximate; the boats do not follow their original sailing routes.
+Choose **Daylight** or **Evening**, an installed car and use **Launch** or **Launch VR**. **Direct practice** runs one complete lap; **Race** offers 1–7 AI opponents and 1–20 laps. If Misty Loch was built with an older launcher, use **Manage… → Rebuild from source…** to add the eight-car grid before racing. Existing builds still support Direct practice. VR and AI racing are experimental; Evening gameplay and headset acceptance remain pending. Custom-track LAN is unavailable. The port includes layered road/terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Assetto Corsa lighting and some effects remain approximate; the boats do not follow their original sailing routes.
 
 ### Mizu Mountain
 

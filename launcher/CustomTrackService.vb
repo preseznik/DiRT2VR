@@ -154,6 +154,7 @@ Public Module CustomTrackService
         pack.Validate(offer, BuildInfo.Version)
         Dim selectedLayouts = pack.SelectLayouts(layoutIds)
         If pack.Id = "nordschleife" AndAlso selectedLayouts.Length <> pack.Layouts.Length Then Throw New IOException("Nordschleife builds all three lighting presets together.")
+        If pack.Id = "misty-loch" AndAlso selectedLayouts.Length <> pack.Layouts.Length Then Throw New IOException("Misty Loch builds Daylight and Evening together.")
         Dim id = Guid.NewGuid().ToString("N"), stage = Staging(context, id)
         Directory.CreateDirectory(stage)
         Try

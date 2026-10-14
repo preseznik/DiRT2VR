@@ -71,8 +71,9 @@ public static class TrackPacks
          new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
     public static readonly TrackPack Mizu = new("mizu-mountain", "Mizu Mountain", "1.0.2", "0.17.61", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
-    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.0.1", "0.17.77", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
-        [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
+    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.1.0", "0.17.99", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
+        [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight"),
+         new("misty-loch-evening", "Full circuit · 6.45 km", "d2vr_misty_evening", "Evening")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
     public static readonly TrackPack Spa = new("spa-francorchamps", "Spa-Francorchamps", "1.0.1", "0.17.95", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("spa-francorchamps", "GP circuit · 7 km", "d2vr_spa", "Daylight")], ["database/database.bin", "dx11/shaderpack/shaderpack.pssg"]);
     public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty, Spa];
@@ -135,7 +136,7 @@ public sealed class TrackPack
         path.StartsWith(Support + "/" + layout.Id + "/", StringComparison.Ordinal);
     public Layout[] ReceiptLayouts(PackReceipt receipt) => receipt.Schema == 2
         ? SelectLayouts(receipt.Sessions?.Select(s => s?.LayoutId ?? "") ?? [])
-        : (Id == AspenPack.Id || Id == "smelter") && System.Version.TryParse(receipt.Version, out var version) && version < new System.Version(1, 1, 0)
+        : (Id == AspenPack.Id || Id is "smelter" or "misty-loch") && System.Version.TryParse(receipt.Version, out var version) && version < new System.Version(1, 1, 0)
         ? Layouts.Take(Id == AspenPack.Id ? 4 : 1).ToArray() : Layouts;
     public string[] ReceiptRoots(PackReceipt receipt) => ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
     // The four duel courses have two authored start positions, not an eight-car grid.
@@ -209,7 +210,7 @@ public sealed class TrackPack
             bool supported = new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf" }.Contains(extension) ||
                 (Id is "nordschleife" or "mizu-mountain" or "misty-loch" or "spa-francorchamps" && extension is ".nfs" or ".gssp");
             // Misty retains its full-resolution source textures in one 517 MiB bundle.
-            long maximumFileBytes = Id == "misty-loch" && f.Path == "tracks/usa/d2vr_misty/tracksplit.pssg" ? 768L * 1024 * 1024 : 512L * 1024 * 1024;
+            long maximumFileBytes = Id == "misty-loch" && Layouts.Any(l => f.Path == $"tracks/usa/{l.Folder}/tracksplit.pssg") ? 768L * 1024 * 1024 : 512L * 1024 * 1024;
             if (!paths.Add(f.Path) || f.Path == Receipt || !allowedRoots.Any(p => f.Path.StartsWith(p + "/", StringComparison.Ordinal)) ||
                 (receipt.Schema == 2 && !ReceiptLayouts(receipt).Any(l => Owns(l, f.Path))) ||
                 !SafeFiles.Digest(f.Sha256) || f.Bytes < 0 || f.Bytes > maximumFileBytes ||
