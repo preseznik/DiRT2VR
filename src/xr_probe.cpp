@@ -76,7 +76,7 @@ int main(int argc,char** argv) {
         PFN_xrGetDisplayRefreshRateFB getRate{}; float hz{};
         if(refreshRate && XR_SUCCEEDED(xrGetInstanceProcAddr(instance,"xrGetDisplayRefreshRateFB",reinterpret_cast<PFN_xrVoidFunction*>(&getRate))) &&
            getRate && XR_SUCCEEDED(getRate(session,&hz)) && hz>0) printf("display_refresh_hz=%.2f\n",hz);
-        else puts("display_refresh_hz=unavailable (controlled by headset/SteamVR)");
+        else puts("display_refresh_hz=unavailable (controlled by headset software)");
         count=0; xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,0,&count,nullptr);
         std::vector<XrViewConfigurationView> views(count,{XR_TYPE_VIEW_CONFIGURATION_VIEW});
         xrEnumerateViewConfigurationViews(instance,system,XR_VIEW_CONFIGURATION_TYPE_PRIMARY_STEREO,count,&count,views.data());

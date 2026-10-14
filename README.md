@@ -12,9 +12,9 @@ This mod will remain free forever. If you'd like to support the work, you can [s
 
 ## Requirements
 
-- Windows x64 and a PC capable of running DiRT 2. SteamVR is required for VR play.
+- Windows x64 and a PC capable of running DiRT 2. VR requires SteamVR or a compatible 32-bit OpenXR runtime with D3D11 support. VDXR is experimental.
 - Your own working **DiRT 2 version 1.1.0.0** installation. Setup checks the exact supported executable.
-- For VR, a headset connected and ready in **SteamVR**. Desktop play needs no headset.
+- For VR, a headset connected and ready in your selected runtime: **SteamVR** or **system OpenXR** (including VDXR). Desktop play needs no headset.
 - Your usual keyboard, gamepad or steering wheel and pedals. Motion controllers are not used.
 - A packaged DiRT2VR installer or ZIP. Packages include the .NET runtime; no development tools or separate .NET installation are needed. The source repository alone is not a playable package.
 
@@ -66,8 +66,8 @@ Ferrari supports experimental **Direct practice** on any installed compatible tr
 
 Regular Launch needs no SteamVR or headset and uses your desktop graphics preferences. Desktop Direct practice and Race require DX11 and temporarily enable human control, the selected race and the direct-session menus. VR shortcuts and the VR rendering/HUD settings apply only to Launch VR.
 
-1. Start SteamVR and connect your headset.
-2. Open **DiRT2VR.exe**, check the SteamVR runtime path in **Settings**, choose **Normal Launch** on **Launcher**, and select **Launch VR**.
+1. Start your headset software and connect your headset. For VDXR, select VDXR as the OpenXR runtime in Virtual Desktop Streamer.
+2. Open **DiRT2VR.exe**, choose **Normal Launch** on **Launcher**, and select **Launch VR**. On your first VR launch, choose **OpenXR — system default** or **SteamVR**. The prompt shows the detected system runtime. Check **Remember my choice** to skip the prompt next time.
 3. Navigate the original game on the virtual screen using your usual controls.
 4. Enter an event with your chosen car. VR launches select cockpit view automatically.
 5. Cockpit VR starts enabled. Sit facing forward and press **F10** (or Recenter). Recenter resets your seated position and horizontal direction without baking head tilt into the view; saved seat adjustments stay unchanged. **F9** (Toggle VR) switches between cockpit VR and the flat screen; keep the game window focused.
@@ -113,7 +113,7 @@ Choose **Daylight**, **Evening** or **Morning Fog**, an installed car and use **
 
 ### Mizu Mountain
 
-Choose **CUSTOM tracks → Mizu Mountain → Build and install…**, select your GRID 2 game folder, then choose an installed car and **Direct practice** or **Race**. Use **Launch** for desktop or **Launch VR** with SteamVR and your headset ready. The full route is 10.4 km, with three timing checkpoints and a single run from start to finish. Race supports **1–7 AI opponents**, opponent-car choices and race difficulty.
+Choose **CUSTOM tracks → Mizu Mountain → Build and install…**, select your GRID 2 game folder, then choose an installed car and **Direct practice** or **Race**. Use **Launch** for desktop or **Launch VR** with your selected runtime and headset ready. The full route is 10.4 km, with three timing checkpoints and a single run from start to finish. Race supports **1–7 AI opponents**, opponent-car choices and race difficulty.
 
 Older Mizu packs need **Manage… → Rebuild from source…** to add the separated starting grid and the **MIZU** pre-race label. Current race packs need no rebuild to enable VR. Desktop practice and Race have passed player checks; headset rendering still needs testing. Some materials and lighting are approximations, movable props and soft vegetation do not have matching collision, and crowds and some animated effects are omitted.
 
@@ -124,7 +124,7 @@ Aspen and Smelter each add ten layouts built from your own **DiRT 3 Complete Edi
 1. Close DiRT 2. In **Launcher**, check **CUSTOM tracks (Experimental)**.
 2. Choose a **Track pack**, then **Build and install…**. Select your detected DiRT 3 folder, paste its path, or use **Browse**. Choose the DiRT 3 Complete Edition game folder, wherever it is installed.
 3. Check the **layouts to build**, using **Select all** or **Select none** as needed. Your choices are remembered for each location. Choose **Build and install** and leave the launcher open while it checks source files and converts only those layouts. Unchecked layouts already installed are kept. **Stop build**, beside the green progress message, stops checking or conversion safely and keeps installed tracks. Once final installation begins, Stop is disabled until it finishes.
-4. Select a layout, **Direct practice** or **Race**, and any installed car. Choose **Launch** for desktop play, or **Launch VR** with SteamVR and your headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
+4. Select a layout, **Direct practice** or **Race**, and any installed car. Choose **Launch** for desktop play, or **Launch VR** with your selected runtime and headset ready. Building does not start the game. Installation is performed once, before play; nothing is converted during game loading.
 
 | Layout | Default lighting |
 | --- | --- |
@@ -153,7 +153,7 @@ The **Nordschleife** pack uses your installed **Assetto Corsa** standard circuit
 
 These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. **Best lap** shows your fastest completed Direct practice time and its car across all lighting presets; Race results appear in game. The stage progress marker follows your position around the circuit. One-lap sessions show checkpoint divisions; multi-lap races show lap divisions. Existing packs need no rebuild for the progress correction.
 
-The full trackside scenery and distant landscape are included. A complete evening desktop practice lap and a short native VR session have been player-tested. Full-course headset performance and AI Race finishes still need testing; scenery detail and lighting remain in development. For VR, start SteamVR, connect your headset and choose **Launch VR**. Existing packs need no rebuild to enable VR.
+The full trackside scenery and distant landscape are included. A complete evening desktop practice lap and a short native VR session have been player-tested. Full-course headset performance and AI Race finishes still need testing; scenery detail and lighting remain in development. For VR, start your selected headset software, connect your headset and choose **Launch VR**. Existing packs need no rebuild to enable VR.
 
 If source checking fails, choose the correct installation or verify its original files in Steam. Modified or unsupported source files are reported by name. If an installed file fails verification, choose **Manage… → Rebuild from source…**. The installer preserves external edits instead of overwriting them; move your modified files aside before retrying. After an interrupted game session, close DiRT 2 and choose **Restore original files** before playing again.
 
@@ -193,7 +193,7 @@ To switch from VR to desktop, quit the game and choose **Launch** in DiRT2VR. Th
 
 The launcher matches the Windows app light/dark setting when opened. Reopen it after changing that setting. Native dark mode requires Windows 11; Windows 10 and Windows contrast themes retain the standard accessible system appearance.
 
-**Launcher** selects how to start. **Settings** contains the game location, SteamVR runtime and setup instructions. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts and graphics preferences are preserved when upgrading.
+**Launcher** selects how to start. **Settings** contains the game location, **VR runtime** and setup instructions. Choose **Ask every time**, **OpenXR (system default)** or **SteamVR** under VR runtime; changes apply on the next launch. System OpenXR uses the registered 32-bit runtime and can also resolve to SteamVR. VDXR headset rendering and gameplay validation remain pending. **Graphics** and **Controls** hold the settings below. Choose **Save settings**; changes apply to the next session, including quick launch. Existing shortcuts and graphics preferences are preserved when upgrading.
 
 The launcher remembers its window size and maximized state when closed. It adapts to your current screen and display scaling when reopened. Closing the window does not save uncommitted game-setting edits; use **Save settings** for those.
 
@@ -266,7 +266,7 @@ The following settings apply to VR:
 | Setting | Default | Effect |
 |---|---|---|
 | Render resolution | 100% | Requests 1600 × 1200 per eye at full field of view. Adjust from 50–300%, with a green notch marking the recommended 150%. The default remains 100%; 300% requests 4800 × 3600 per eye (nine times the baseline pixels). Graphics also shows the measured size from the last VR launch. |
-| Headset texture scale | 100% | Size of the finished image sent to your headset, not car/road texture quality. Lower values save memory but can blur the view. 100% uses SteamVR's recommended size; 50% halves width and height (one quarter as many pixels). It cannot add detail the game did not render. |
+| Headset texture scale | 100% | Size of the finished image sent to your headset, not car/road texture quality. Lower values save memory but can blur the view. 100% uses your VR runtime's recommended size; 50% halves width and height (one quarter as many pixels). It cannot add detail the game did not render. |
 | Anti-aliasing (MSAA) | 2× | VR-only: Off, 2×, 4× or 8×. High values cost memory and may cause crashes; the launcher warns at 4× and 8×. Desktop MSAA is restored after play. |
 | Field of view | 100% | Full view. Experimental 70–99% settings crop the periphery and reduce the scene resolution proportionally. |
 | Car mirrors | Game setting | Optionally force mirrors on or off during VR sessions. |
@@ -284,7 +284,7 @@ VR render resolution now sets the game scene dimensions even when they exceed th
 
 For vegetation and object pop-in, try **Tree detail → Ultra** and **Object detail → Ultra**, save, then relaunch VR. **Game** keeps your existing game settings. These overrides are restored after play. VR extends short terrain and trackside-object draw distances and keeps nearby opponents detailed in every direction. Distant cars still use normal detail reduction. VR also extends grass range, allows more grass to be drawn in dense areas, and keeps trees and bushes detailed farther away. VR also keeps trackside props such as tire stacks, flags and scaffolding detailed farther away, with room to draw more of them. User testing in 0.17.23 confirmed that the reported Hammada Circuit pop-in appears resolved. Performance impact has not been measured. Authored visibility and individual model transitions can still cause pop-in. Compare performance on the same section of track before keeping higher settings.
 
-Refresh rate is controlled by **SteamVR or your headset connection software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
+Refresh rate is controlled by **your headset software**. The launcher shows the rate reported at the last launch when available, clearly marked as a past reading. The desktop game's refresh setting does not set headset Hz. Lower resolution may help GPU performance, but a particular frame rate is not guaranteed.
 
 **Graphics → Main → VR rendering → Shadows (experimental)** starts off. On enables VR shadows, including the fix for missing trackside shadows in cockpit view. Choose **Game**, **Low**, **Medium** or **High** shadow quality; Game retains your saved quality, while High is sharper but costs more performance. Off removes shadows, like the game's Ultra low option. **Detailed distance (experimental)** defaults to the recommended **14 metres**. You can increase it up to 60 metres to extend detailed road shadows, but longer distances can cause rapid shadow flickering on walls and scenery. Return to 14 metres if this happens. Save and relaunch VR to apply. Desktop play is unchanged, and original graphics settings are restored after play.
 
@@ -393,7 +393,7 @@ LAN support is included in the launcher package; no separate test kit or PowerSh
 4. On the other PC, select the host in the LAN server list and click **JOIN**, then choose **Desktop** or **VR**. Discovery refreshes automatically while this tab is open; **Refresh** starts another scan. JOIN opens LAN play and adds the selected PC to the game's network peers. Complete any startup/profile prompts, then finish joining through the game's **Multiplayer / LAN** menu. It does not enter the lobby automatically.
 5. Quit normally after playing. The background launcher restores the original `xlive.dll`, even if you closed its settings window.
 
-HOST and JOIN ask for the display mode every time. Desktop requires no headset. For VR, start SteamVR and connect your headset first; the launcher uses your saved Graphics and Controls settings. Menus use the virtual screen; races start in cockpit VR automatically. Use Recenter when seated. Multiplayer headset acceptance is pending. VR graphics and asset changes are restored alongside the LAN DLL after play.
+HOST and JOIN ask for the display mode every time. Desktop requires no headset. For VR, start your selected headset software and connect your headset first; the launcher uses your saved Graphics and Controls settings. Menus use the virtual screen; races start in cockpit VR automatically. Use Recenter when seated. Multiplayer headset acceptance is pending. VR graphics and asset changes are restored alongside the LAN DLL after play.
 
 The game reads and saves the same career and graphics settings in both modes. Use the game's **Save Profile** action to explicitly save changes before quitting; the launcher does not force an autosave. LAN connection settings and this PC's network identity live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\lan`; do not copy that folder between players. The launcher does not copy, move or rewrite career files.
 
@@ -421,7 +421,7 @@ Older test-kit profiles and imported copies are not listed in the Profile tab. T
 - Headset reconnection during play is unsupported. Quit and relaunch after reconnecting.
 - Installation acceptance in protected folders and interruption scenarios is still in progress. Packages are experimental.
 
-**Runtime not found:** use **Browse…** beside SteamVR runtime and select SteamVR's `steamxr_win32.json`. This is a per-session choice; it does not change the global OpenXR runtime.
+**Runtime not found:** for SteamVR, use **Browse…** beside SteamVR runtime in Settings and select `steamxr_win32.json`. For system OpenXR, configure your headset software as the active OpenXR runtime; DiRT 2 needs its 32-bit runtime and D3D11 support. Start the headset connection before launching. You can switch back to SteamVR under **Settings → VR runtime**. DiRT2VR selects the runtime for its own processes without changing Windows' global OpenXR setting.
 
 **No VR / shortcuts do nothing:** select cockpit view, focus the game window, and use Toggle VR. Check connected-device indicators and saved bindings. Other camera views use the virtual screen unless **Advanced → Graphics → 3D beyond the cockpit** is enabled; that option supports bonnet, bumper and chase views.
 

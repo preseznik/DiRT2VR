@@ -87,6 +87,19 @@ Public Class Session
             If Not held Then Throw New IOException("A DiRT2VR session or recovery is already running.")
             Dim graphics As New GraphicsTransaction(context)
             Try
+                Dim runtime As VrRuntimeInfo = Nothing
+                If vr AndAlso (settings.LaunchMode <> "lan" OrElse lanVr) Then
+                    context.ValidateGame() : context.RequireClosed()
+                    Status("Choosing runtime")
+                    runtime = VrRuntime.Choose(context, settings)
+                    If runtime Is Nothing Then
+                        Status("Ready", "VR launch cancelled")
+                        Return
+                    End If
+                    ' Keep the effective runtime in this session's diagnostic snapshot.
+                    ' Remember() writes only the saved choice, never these temporary settings.
+                    settings.Runtime = runtime.ManifestPath : settings.RuntimeMode = runtime.Mode
+                End If
                 If replayId IsNot Nothing Then
                     Status("Checking", "Checking replay cars and track")
                     Dim library As New ReplayLibrary(context)
@@ -127,7 +140,6 @@ Public Class Session
                         Status("Ready", "Desktop session ended")
                         Return
                     End If
-                    If Not File.Exists(settings.Runtime) OrElse IO.Path.GetFileName(settings.Runtime) <> "steamxr_win32.json" Then Throw New IOException("Select SteamVR's steamxr_win32.json runtime, then start SteamVR and connect your headset.")
                     If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once to create graphics settings.")
                     Status("Restoring", "Checking for an interrupted session")
                     graphics.Recover() : Worker.Invoke(context, "recover")
@@ -135,7 +147,7 @@ Public Class Session
                     Worker.Invoke(context, "setup")
                     Status("Preparing")
                     Dim logFolder = CreateSessionLog(True)
-                    ProbeRuntime(logFolder)
+                    ProbeRuntime(logFolder, runtime)
                     Dim channel = "Local\DiRT2VR.Input." & Guid.NewGuid().ToString("N")
                     Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor(), seat As New SeatChannel(context, settings)
                         view.Write(0, &H32565244) : view.Write(4, 1) : view.Write(8, 0UI) : view.Write(12, 0UI)
@@ -406,24 +418,24 @@ Public Class Session
         Dim match = System.Text.RegularExpressions.Regex.Match(report, "(?m)^display_refresh_hz=([0-9.]+)")
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "headset.json"), New HeadsetStatus With {.RefreshHz = If(match.Success, match.Groups(1).Value, "")})
     End Sub
-    Private Sub ProbeRuntime(logFolder As String)
+    Private Sub ProbeRuntime(logFolder As String, runtime As VrRuntimeInfo)
         Dim executable = IO.Path.Combine(context.ModRoot, "payload\xr_probe.exe")
         Dim manifest = Files.ReadJson(Of PackageManifest)(IO.Path.Combine(context.ModRoot, "package.json"))
         Const relative As String = "DiRT2VR/payload/xr_probe.exe"
         If Not File.Exists(executable) OrElse Not manifest.Files.ContainsKey(relative) OrElse Files.Hash(executable) <> manifest.Files(relative) Then Throw New IOException("Headset preflight tool is missing or damaged. Extract the complete package again.")
         Dim start As New ProcessStartInfo(executable) With {.UseShellExecute = False, .CreateNoWindow = True, .RedirectStandardOutput = True, .RedirectStandardError = True}
-        start.Environment("XR_RUNTIME_JSON") = settings.Runtime
+        runtime.Configure(start)
         start.Environment("DIRT2VR_ACTIVE") = "0"
         Using probe = Process.Start(start)
             Dim stdout = probe.StandardOutput.ReadToEndAsync()
             Dim stderr = probe.StandardError.ReadToEndAsync()
             If Not probe.WaitForExit(30000) Then
                 probe.Kill() : probe.WaitForExit()
-                Throw New IOException("SteamVR preflight timed out. Start SteamVR, connect your headset, then retry.")
+                Throw New IOException(runtime.Name & " preflight timed out. Start the selected headset software, connect your headset, then retry. You can change VR runtime in Settings.")
             End If
-            Dim report = stdout.GetAwaiter().GetResult() & stderr.GetAwaiter().GetResult()
+            Dim report = "selected_runtime_mode=" & runtime.Mode & Environment.NewLine & "selected_runtime_manifest=" & IO.Path.GetFileName(runtime.ManifestPath) & Environment.NewLine & stdout.GetAwaiter().GetResult() & stderr.GetAwaiter().GetResult()
             SavePreflightReport(context, report, logFolder)
-            If probe.ExitCode <> 0 Then Throw New IOException("SteamVR could not open a headset session. Connect your headset and check SteamVR. " & If(logFolder Is Nothing, "Enable diagnostic logging in Settings and retry for details.", "Details are in " & IO.Path.Combine(logFolder, "preflight.txt")))
+            If probe.ExitCode <> 0 Then Throw New IOException(runtime.Name & " could not open a headset session. Connect your headset and check its software. Change VR runtime in Settings to try SteamVR or system OpenXR. " & If(logFolder Is Nothing, "Enable diagnostic logging in Settings and retry for details.", "Details are in " & IO.Path.Combine(logFolder, "preflight.txt")))
         End Using
     End Sub
 End Class

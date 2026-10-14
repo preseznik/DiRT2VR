@@ -107,6 +107,7 @@ Public Class VrSettings
     Public Property SkipIntroduction As Boolean = False
     Public Property SkipStartupMovies As Boolean = False
     Public Property Runtime As String = Discovery.RuntimePath()
+    Public Property RuntimeMode As String = "ask"
     Public Property ToggleKey As Integer = 120
     Public Property ToggleModifiers As Integer
     Public Property RecenterKey As Integer = 121
@@ -202,6 +203,7 @@ Public Class VrSettings
         End Get
     End Property
     Public Sub Validate()
+        If Not VrRuntime.Modes.Contains(RuntimeMode) Then Throw New IOException("Invalid VR runtime setting. Choose Ask every time, OpenXR or SteamVR.")
         If Not {"left", "right", "always"}.Contains(ChaseMouseMode) Then Throw New IOException("Choose Hold left, Hold right or Always on for chase-camera mouse look.")
         If ChaseMouseSensitivity < 25 OrElse ChaseMouseSensitivity > 300 OrElse ChaseStickSensitivity < 25 OrElse ChaseStickSensitivity > 300 Then Throw New IOException("Choose chase-camera sensitivity between 25% and 300%.")
         If Not {0, 2, 4, 8}.Contains(VrMsaa) Then Throw New IOException("Choose Off, 2×, 4× or 8× VR anti-aliasing.")

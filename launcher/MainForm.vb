@@ -16,6 +16,7 @@ Public Class MainForm
     Private ReadOnly bindingCells(SeatActions.Names.Length - 1) As ControllerBindingCell
     Private replacementBinding As ControllerBinding
     Private ReadOnly runtimeBox As New TextBox With {.Dock = DockStyle.Fill}
+    Private ReadOnly runtimeChoice As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Fill, .Name = "VrRuntimeMode"}
     Private ReadOnly flashback As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalFlashback", .AccessibleName = "Frame-rate-independent rewind (Experimental)", .AutoSize = True}
     Private ReadOnly laa As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalLaa", .AccessibleName = "Large Address Aware (Experimental)", .AutoSize = True}
     Private ReadOnly backgroundPlay As New CheckBox With {.Text = "On (Experimental)", .Name = "KeepRunningUnfocused", .AccessibleName = "Keep running when unfocused (Experimental)", .AutoSize = True}
@@ -220,7 +221,7 @@ Public Class MainForm
             "but needs more GPU power and memory. A low Headset texture scale" & vbCrLf & "can still make the final picture look soft.")
         Tip(headsetScale, "Size of the finished picture sent to your headset." & vbCrLf &
             "Lower uses less memory but can blur the view. 100% keeps the" & vbCrLf &
-            "size SteamVR recommends. This is not car or road texture quality.")
+            "size your VR runtime recommends. This is not car or road texture quality.")
         Tip(msaa, "Smooths jagged edges in VR. Higher settings use more memory" & vbCrLf & "and GPU power; 4× and 8× can cause crashes. 2× is the default.")
         Tip(desktopBloom, "Soft glow around bright areas. On keeps the game's effects;" & vbCrLf & "Off removes the glow. Save and relaunch desktop play to apply.")
         Tip(vrBloom, "Soft glow around bright areas. On keeps the game's effects;" & vbCrLf & "Off removes the glow in VR, including its virtual screen." & vbCrLf & "Save and relaunch VR to apply. This is separate from shadows.")
@@ -250,7 +251,7 @@ Public Class MainForm
         Tip(hudProgress, "Show how far through the stage you are on the VR HUD.")
         Tip(requestedResolution, "The scene size your current settings will request next launch." & vbCrLf & "The last-launch report shows what was actually used.")
         Tip(actualResolution, "Measured sizes from your last VR launch, not a live preview" & vbCrLf & "of unsaved changes. Game is the scene; headset is the sent image.")
-        Tip(refreshLabel, "How often the headset updates its picture. Change this in" & vbCrLf & "SteamVR or your headset software. This is the last reported rate.")
+        Tip(refreshLabel, "How often the headset updates its picture. Change this in" & vbCrLf & "your headset software. This is the last reported rate.")
         Tip(launchMode, "Normal Launch opens the game menus. Direct practice starts" & vbCrLf & "a solo event. Race adds computer-controlled opponents.")
         Tip(eventChoice, "Choose a driving discipline to filter the track list." & vbCrLf & "Direct launches do not start a career event.")
         Tip(trackChoice, "The course used by Direct practice or Race.")
@@ -557,6 +558,14 @@ Public Class MainForm
                                                     End Sub
         Dim paths = Section(columns.First, "Locations")
         Field(paths, "Game folder", New TextBox With {.Text = context.GameRoot, .ReadOnly = True, .Name = "GameFolder"})
+        Dim runtimes = Section(columns.First, "VR runtime")
+        runtimeChoice.Items.AddRange(VrRuntime.Labels)
+        runtimeChoice.SelectedIndex = Array.IndexOf(VrRuntime.Modes, settings.RuntimeMode)
+        Field(runtimes, "Launch with", runtimeChoice)
+        Dim detected As New Label With {.Text = VrRuntime.SystemDescription(), .AutoSize = True, .MaximumSize = New Size(460, 0), .Name = "SystemVrRuntime"}
+        runtimes.Controls.Add(detected)
+        AddHandler runtimeChoice.DropDown, Sub() detected.Text = VrRuntime.SystemDescription()
+        Tip(runtimeChoice, "Ask on each VR launch, use the system's 32-bit OpenXR runtime (including VDXR), or always use SteamVR. Changes apply to the next session.")
         Dim runtimeRow As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True}
         runtimeRow.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100)) : runtimeRow.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
         runtimeBox.Text = settings.Runtime : runtimeBox.Name = "RuntimePath"
@@ -567,7 +576,9 @@ Public Class MainForm
                                          If dialog.ShowDialog(Me) = DialogResult.OK Then runtimeBox.Text = dialog.FileName
                                      End Using
                                  End Sub
-        runtimeRow.Controls.Add(browse) : Field(paths, "SteamVR runtime", runtimeRow)
+        runtimeRow.Controls.Add(browse) : Field(runtimes, "SteamVR runtime", runtimeRow)
+        runtimeRow.Enabled = settings.RuntimeMode <> "openxr"
+        AddHandler runtimeChoice.SelectedIndexChanged, Sub() runtimeRow.Enabled = runtimeChoice.SelectedIndex <> 1
         Dim options = Section(columns.Second, "Startup & diagnostics")
         skipStartupMovies.Text = "On" : skipStartupMovies.Checked = settings.SkipStartupMovies : Field(options, "Skip logos (single player)", skipStartupMovies)
         skipIntroduction.Text = "On" : skipIntroduction.Checked = settings.SkipIntroduction : Field(options, "Skip introduction (LAN)", skipIntroduction)
@@ -722,12 +733,12 @@ Public Class MainForm
         msaaWarning.Text = If(msaa.Value >= 2, If(msaa.Value = 3, "8×: very high memory cost; may cause VR crashes.", "4×: higher memory cost; reduce if VR is unstable."), "")
     End Sub
     Private Sub RefreshDisplayRate()
-        refreshLabel.Text = "SteamVR controlled"
+        refreshLabel.Text = "Headset software controlled"
         Try
             Dim summaryPath = IO.Path.Combine(context.UserRoot, "headset.json")
             If File.Exists(summaryPath) Then
                 Dim summary = Files.ReadJson(Of HeadsetStatus)(summaryPath)
-                refreshLabel.Text = If(summary.RefreshHz <> "", $"{summary.RefreshHz} Hz (last launch)", "SteamVR controlled")
+                refreshLabel.Text = If(summary.RefreshHz <> "", $"{summary.RefreshHz} Hz (last launch)", "Headset software controlled")
                 Return
             End If
             Dim logs = IO.Path.Combine(context.UserRoot, "logs")
@@ -737,9 +748,9 @@ Public Class MainForm
             Dim report = IO.Path.Combine(latest, "preflight.txt")
             If Not File.Exists(report) Then Return
             Dim match = System.Text.RegularExpressions.Regex.Match(File.ReadAllText(report), "(?m)^display_refresh_hz=([0-9.]+)")
-            refreshLabel.Text = If(match.Success, $"{match.Groups(1).Value} Hz (last launch)", "SteamVR controlled")
+            refreshLabel.Text = If(match.Success, $"{match.Groups(1).Value} Hz (last launch)", "Headset software controlled")
         Catch ex As IOException
-            refreshLabel.Text = "Headset refresh report is unavailable. Check SteamVR or your headset connection software."
+            refreshLabel.Text = "Headset refresh report is unavailable. Check your headset software."
         Catch ex As UnauthorizedAccessException
             refreshLabel.Text = "Cannot read the previous headset report."
         End Try
@@ -929,6 +940,8 @@ Public Class MainForm
         End Try
     End Sub
     Private Sub SaveSettings()
+        RefreshRuntimePreference()
+        settings.RuntimeMode = VrRuntime.Modes(runtimeChoice.SelectedIndex)
         settings.ModernInterface = modernInterface.Checked
         settings.Runtime = runtimeBox.Text.Trim()
         settings.LoggingEnabled = logging.Checked
@@ -979,6 +992,14 @@ Public Class MainForm
         Files.SaveJson(context.PreferencesPath, settings)
         customTracks.Save()
         stateLabel.Text = "Settings saved. Changes apply to the next session."
+    End Sub
+    Private Sub RefreshRuntimePreference()
+        ' A quick-launch child can remember a choice while this form stays open.
+        ' Preserve deliberate unsaved UI changes; otherwise adopt that saved choice.
+        If runtimeChoice.SelectedIndex < 0 OrElse VrRuntime.Modes(runtimeChoice.SelectedIndex) <> settings.RuntimeMode Then Return
+        Dim saved = VrSettings.Load(context)
+        settings.RuntimeMode = saved.RuntimeMode
+        runtimeChoice.SelectedIndex = Array.IndexOf(VrRuntime.Modes, saved.RuntimeMode)
     End Sub
     Private Sub Spawn(ParamArray arguments As String())
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
@@ -1109,6 +1130,7 @@ Public Class MainForm
             Dim currentStatus = If(status Is Nothing, "", status.State & status.UpdatedUtc.ToString("O"))
             If currentStatus <> lastStatus Then
                 lastStatus = currentStatus : RefreshDisplayRate()
+                RefreshRuntimePreference()
             End If
             If busy Then
                 stateLabel.Text = status.State & If(status.Message <> "", ": " & status.Message, "")
