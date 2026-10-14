@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Refresh the in-app Instructions for VR startup, vehicle setup, replay bindings and recording, Quit, built-in filter presets, road sheen and anisotropic filtering. Remove outdated test-machine notes and update Misty Loch headset status.
+
+- Keep the launcher visible while VR starts, then show and raise the actual game window instead of targeting the temporary loading window. Mouse movement while loading no longer cancels the handoff. The player confirmed DiRT 2 appears in front automatically with VDXR.
+
 - Request focus for the initial VR game window when it starts in the background, including VDXR. Keep the startup window-replacement handoff and stop requesting focus if the player switches to another app. The player confirmed that VDXR inputs worked without clicking the game window in the candidate check.
 
 - Correct VR cockpit exposure that can wash out Misty Loch's Morning Fog. Retain the car's original exposure reference while using the headset's field of view, including with shadows disabled. Stereo rendering checks pass, and the player approved the Morning Fog headset retest.

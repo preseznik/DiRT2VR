@@ -10,13 +10,18 @@ Public Class InstructionsView
     Private Shared ReadOnly Titles As String() = {"Getting started", "Desktop graphics", "VR rendering", "VR HUD", "Controls", "Multiplayer", "Recovery & updates", "Advanced", "VR seat position", "Custom cars", "Custom tracks", "Appearance", "Profiles"}
     Private Shared ReadOnly Pages As String() = {
         "Launch
-Launch plays on your monitor. Launch VR asks for OpenXR (system default, including VDXR) or SteamVR. Check Remember my choice to skip the prompt next time; change it later under Settings → VR runtime, or select Ask every time. Start the selected headset software and connect your headset first. VDXR is experimental; headset rendering and gameplay testing remain pending. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
+Launcher opens on Main; Replays contains saved recordings and recording options. Launch plays on your monitor. Launch VR asks for OpenXR (system default, including VDXR) or SteamVR. Check Remember my choice to skip the prompt next time; change it later under Settings → VR runtime, or select Ask every time. Start the selected headset software and connect your headset first. VDXR remains experimental; startup centering, controls and desktop-window visibility have passed player checks.
+
+Leave the launcher in front while VR loads: it stays visible until the actual game window is ready to come forward. Initial centering waits for headset tracking and runs again on entering cockpit view. Sit in your normal driving position. F10 recenters manually and F9 switches to the flat virtual screen with default bindings. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
 
 Direct practice and Race
 Practice is solo; Race adds 1–7 AI opponents. Mixed opponents draw from all installed classes; Same class uses your car's game-defined class. Laps apply to circuits; point-to-point stages are one run. Custom events do not award career progress.
 
+Vehicle setup
+Vehicle setup… opens gear ratio, downforce, suspension, ride height, differential and brake bias, with the same five positions as the game. Enable Use this setup for direct launches, adjust the bars and Apply. Save settings or launch to keep it. Reset to centre restores the middle positions; unchecking the option uses the game's setup. This setup is shared across stock and custom Direct practice and Race, desktop and VR. Normal Launch, AI cars and career saves are unchanged.
+
 Finishing
-Use Up/Down to select choices in the pause and finish menus. Full Replay plays the completed run from the start, then returns to the finish menu. Use F1 to pause/resume playback. Esc (keyboard) or B (Xbox controller) opens the replay pause menu; press it again or choose Continue to resume from the same point. Full Replay starts over; Exit replay returns to the finish menu. You can watch it again until restarting or leaving the event. It is unavailable if the game could not keep a complete recording. Restart repeats the event. Return to menus closes the game and reopens Normal Launch in the same Desktop or VR mode. Alt+F4 quits without reopening.
+Use Up/Down to select choices in the pause and finish menus. Full Replay plays the completed run from the start, then returns to the finish menu. Use F1 to pause/resume playback. Esc (keyboard) or B (Xbox controller) opens the replay pause menu; press it again or choose Continue to resume from the same point. Full Replay starts over; Exit replay returns to the finish menu. You can watch it again until restarting or leaving the event. It is unavailable if recording is off or the game could not keep a complete recording. Restart repeats the event. Return to menus closes the game and reopens Normal Launch in the same Desktop or VR mode. Quit in the custom pause menu exits the game without reopening it; Alt+F4 also quits. Temporary session files are restored after exit.
 
 Saved replays
 In Launcher → Replays, switch Record full replays ON before launching Direct practice or Race. It starts OFF, including after updating; changes save immediately and apply on the next launch. OFF skips full-race recording and saving while keeping instant replay, rewind and saved-replay playback available. Normal Launch retains the game's own replays.
@@ -40,9 +45,17 @@ Adds a soft glow around bright areas. On keeps the game's existing effects; Off 
 Filters
 Graphics opens on Main; Filters contains Desktop and VR preset choices. Original keeps the track's look. Choose New or Save as, name the preset, then edit its Day and Night adjustments. Selecting a preset in the editor, creating one or importing one also selects it for both Desktop and VR. You can choose different presets with the two launch selectors afterward. Save settings and relaunch to apply; there is no live preview.
 
+Natural gives gentler colour and bloom with the image tint removed. Vivid strengthens colour, contrast and bloom; Muted reduces them. Each includes Day and Night adjustments, leaving gamma and exposure unchanged. These are starting points relative to the track's look. Original remains the default. Use Save as to customize a built-in preset.
+
 100% preserves each track's value; brightness offset 0 and tint Off preserve their original values. Reset adjustments resets the displayed Day or Night variant. Exposure controls scale native game values; their visual response still needs comparison testing. VR motion blur stays disabled. Main's Bloom Off overrides preset glow settings. Differing presets in LAN and headset appearance still need testing; use Original if problems occur.
 
-Import and Export use DiRT2VR preset JSON, not game XML or Assetto Corsa ppfilters. Presets are shared by this Windows account. Rename and Delete manage custom presets; select and save another preset before deleting one used for launching. Original cannot be changed. Changing the edited preset prompts you to save or discard unsaved adjustments.
+Import and Export use DiRT2VR preset JSON, not game XML or Assetto Corsa ppfilters. Presets are shared by this Windows account. Rename and Delete manage custom presets; select and save another preset before deleting one used for launching. Built-in presets cannot be changed; importing an exported built-in creates an editable copy. Changing the edited preset offers Save, Discard or Cancel for unsaved adjustments.
+
+Road sheen (Experimental)
+Graphics → Main has separate Desktop and VR controls. Use track default preserves the installed look. On supported Nordschleife tracks and replays, uncheck it and choose 0–100%: 0% is matte, 10–25% gives a milder highlight and 100% restores the original strong reflection. Other tracks, cars, glass and water are unchanged. Save and relaunch; no rebuild is needed. Original track files return after play. Restore defaults selects Use track default for both modes.
+
+Anisotropic filtering
+Desktop and VR have independent Game, Off, 2×, 4×, 8× and 16× choices under Graphics → Main. Game is the default and preserves native filtering. Higher levels can keep road and scenery textures clearer at shallow angles; Off uses ordinary trilinear filtering for these surfaces. Overrides require DX11 and apply to menus, driving and replays, including VR's flat screen. Save and relaunch. No track rebuild or driver-profile change is needed; compare appearance and performance on your setup.
 
 Frame rate
 Driver settings, Windows and your monitor can affect frame rate and presentation. Borderless uses the game's windowed rendering path; it does not guarantee a particular frame rate.
@@ -59,6 +72,9 @@ This is the size of the finished picture sent to your headset, not the quality o
 
 Anti-aliasing (MSAA)
 VR uses its own Off / 2× / 4× / 8× setting. Default: 2×. Higher values smooth edges but cost memory and GPU time; 4× and especially 8× may make VR unstable in this 32-bit game. Reduce MSAA first if VR crashes. Your desktop MSAA is restored after play.
+
+Texture filtering and road sheen
+Graphics → Main also provides independent VR Anisotropic filtering and Road sheen controls. Game filtering and Use track default sheen preserve the original choices. See Desktop graphics for the available values and supported tracks; changing the VR controls does not change their Desktop selections.
 
 Field of view
 100% retains the full view. Lower values crop peripheral vision and reduce render resolution proportionally, without stretching the image. Nondefault crops still need broader headset testing.
@@ -92,7 +108,12 @@ Choose gauges (speedometer, gear and revs), lap/time, race position, route map a
 Scope
 These options affect the cockpit HUD, not the centre of the view, desktop HUD, menus or virtual screen. Save and relaunch VR to apply. Alternative HUD layouts and nondefault distances still need broader headset testing.",
         "Controls tabs
-General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter. Driving opens the driving-controls editor. Seat contains Open seat adjustment and the collapsed optional bindings. Switching tabs cancels an unfinished binding capture and retains your other edits.
+General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter. Driving opens the driving-controls editor. Seat contains Open seat adjustment and the collapsed optional bindings. Replay opens replay-control bindings. Switching tabs cancels an unfinished binding capture and retains your other edits.
+
+Replay controls
+Controls → Replay → Configure replay controls binds play/pause, rewind, fast-forward, camera changes, lap jumps, replay exit, flashback resume and chase zoom. Unassigned native actions keep the game's controls. Custom zoom supports keyboard and Xbox inputs; native playback bindings also support wheels. Save and relaunch to apply. Flashback resume works only where the game allows it; save full recordings through Launcher → Replays instead of the native Save Replay action.
+
+With Free look enabled under General, Xbox left-stick up/down, Page Up/Page Down or the mouse wheel zoom in chase replays, including paused playback. The right stick or mouse orbits. Select replay views with F8/F7 or Xbox RB/LB by default, rather than the driving Change camera control. Other replay camera types do not support custom orbit or zoom.
 
 Chase camera (experimental)
 Free look hides the mouse pointer over the game picture while driving in chase view. Pause, menus, other views, window borders and switching apps restore it. The pointer is not locked to the window.
@@ -115,7 +136,7 @@ Xbox preset also fills missing keyboard bindings with the game's default keys, w
 Direct practice and Race load the existing profile's controls. Already-signed-in accounts continue straight to the event; otherwise, sign in when GFWL asks. Canceling sign-in or a career-load error ends the launch without creating a replacement save. Live device input shows axes, pressed buttons and POV hats for the selected device without changing bindings. Refresh after connecting a device. These are raw readings before calibration; resting pedals can read at either end of an axis. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
 
 Cockpit animation (experimental)
-Remove artificial steering corrections targets extra wheel/hand twitch in desktop and VR cockpit views. Off by default. Desktop requires DX11; select cockpit view yourself. Keeps the original animation range and steering filter without changing handling or force feedback. It does not match 540 or 900 degrees. Desktop testing and the PC3080 VR check confirmed that wheel judder is removed. The previously reported PC1060 VR launch crash is marked resolved after the user could no longer reproduce it in 0.17.22. Missing hands or a static wheel on other setups remain under investigation. Save and relaunch to apply.
+Remove artificial steering corrections targets extra wheel/hand twitch in desktop and VR cockpit views. Off by default. Desktop requires DX11; select cockpit view yourself. Keeps the original animation range and steering filter without changing handling or force feedback. It does not match 540 or 900 degrees. Save and relaunch to apply. If hands disappear, the wheel stops moving or a car's animation looks wrong, disable the option and report the car and launch mode.
 
 Steering comparison
 Use the same car/event for three runs: main option off; main option on with Observe only checked; then Observe only unchecked. Observe only keeps the original animation values while running the diagnostic hooks. Enable Settings → diagnostic logging to record the last two runs. Hold centre, turn slowly left/right, then drive over rough ground. Save and relaunch between runs. Diagnostics are bounded and do not enable logging by themselves.
@@ -187,8 +208,8 @@ Advanced → Frame-rate-independent rewind → On (Experimental) is off by defau
 What it does
 At high frame rates, the original game fills its rewind buffer faster. This option records up to 60 snapshots per second while the game continues at its normal frame rate. It does not cap gameplay FPS or change headset refresh rate, and it does not need diagnostic logging.
 
-Current testing
-Two desktop rewind/resume tests in the Subaru Group N on Croatia — Velebit Adventure retained 10 seconds instead of about 5 seconds at roughly 120 FPS. Duration can vary with the event. Other cars/events and VR still need testing.
+Rewind duration
+The available duration still depends on the game's buffer and event; this does not provide unlimited rewind. Full-race recording has a separate switch under Launcher → Replays. Turning that switch off does not disable instant replay or rewind.
 
 If something looks wrong
 Turn the option off, save and relaunch. Report the event, car and whether the problem happened during rewind or after resuming. The game executable on disk is unchanged.",
@@ -208,7 +229,7 @@ Separate shortcuts
 Controls also provides six optional seat movement bindings. These are unassigned by default and save automatically when movement stops. In the panel, Save keeps the preview; Cancel, leaving cockpit VR or changing cars discards it. In per-car mode, adjustment is disabled if the car cannot be identified. Universal mode does not need a car identity.
 
 Current testing
-Seat adjustment is experimental. Headset and physical-wheel checks are separate from automated tests.",
+Seat adjustment is experimental. Start with small changes and recenter from your normal seated position before adjusting further.",
         "Custom cars (Experimental)
 Check CUSTOM cars beside either Car selector to list supported conversions. It works independently of CUSTOM tracks. Ferrari F2004 is the first supported profile, built from your local Assetto Corsa car folder. Close DiRT 2, then choose Build/import. The launcher detects the source folder; Manage provides Choose source folder for another location. Conversion generates the car and V10 audio locally and preserves the source assets. Stop build cancels conversion before installation begins.
 
@@ -218,7 +239,7 @@ Choose Direct practice on any installed compatible track, then Launch for deskto
 Current limitations
 Handling, suspension, cockpit motion and audio calibration remain experimental. The steering-wheel LCD shows engine RPM. Use this readout to check revs and shifts; the stock HUD RPM dial is not calibrated for the F2004. The native driver is fitted to the F2004 seat with moving steering grips; its appearance and animation remain experimental. The normal handbrake control can hold the car on the grid (Space with default keyboard controls; A with the Xbox preset). Body paint uses a matte approximation. Mirrors and the other dashboard displays are static; damage and distant detail levels use approximations. AI races, LAN, career and saved full-replay playback are unavailable for this car. If an installed car file changes outside the launcher, it and recovery backups are preserved; resolve the reported conflict before rebuilding.",
         "Custom tracks (Experimental)
-Misty Loch: select Daylight, Evening or Morning Fog under Conditions. Manage → Rebuild from source adds all three presets and subtle road highlights with mountain occlusion. Existing Daylight and Evening installs remain usable and retain their replay identities after rebuilding. The black-band fix is preserved. Morning Fog full-lap and headset acceptance remain pending.
+Misty Loch: select Daylight, Evening or Morning Fog under Conditions. Manage → Rebuild from source adds all three presets and subtle road highlights with mountain occlusion. Existing Daylight and Evening installs remain usable and retain their replay identities after rebuilding. The black-band fix is preserved. Morning Fog's corrected cockpit appearance has passed a headset check; full-lap acceptance remains pending.
 
 Close DiRT 2. On Launcher, check CUSTOM tracks, choose a Track pack, then Build and install…. Select your detected DiRT 3 Complete Edition folder, paste its path, or use Browse. Check the layouts you want to build, using Select all or Select none as needed. Choose Build and install to check the source files and convert only the checked layouts. Unchecked layouts already installed are kept; your choices are remembered for each location. Manage → Rebuild from source uses the same checkboxes, so you can update or add individual layouts. Conversion tools are included with DiRT2VR; no extra download, SDK or separate .NET installation is needed. No game assets are distributed.
 
@@ -231,7 +252,7 @@ Buttermilk Climb and Descent use Lower exposure (default) to retain bright-snow 
 Additional Aspen layouts
 All ten Aspen layouts offer Direct practice and Race, any installed car, and desktop or VR play. Rallycross and Landrush support 1–7 AI opponents; Buttermilk Climb/Descent have two-car grids and allow one AI. Your larger-grid opponent count is kept when switching layouts. The Buttermilk courses use separate starting lanes: AI timing and finishes still need testing, and knockout Head-to-head rules are unavailable. Current installed layouts do not need rebuilding for these options. Eagle Hill uses night lighting, Brush Creek evening sun, and Buttermilk overcast snow lighting. Broader AI, car and headset checks remain pending.
 
-Smelter test
+Smelter
 All ten Smelter layouts offer Direct practice and Race with any installed car, in desktop or VR. Dredger Duel and Furnace Duel allow one AI opponent; other courses allow up to seven. Race timing on the separate-lane duel courses needs testing; knockout Head-to-head rules are unavailable. Current installations need no rebuild to unlock modes/cars. Use Manage → Rebuild from source to add missing layouts or apply conversion fixes. Conditions follow source defaults, without active rain. Expanded AI racing and headset rendering still need gameplay checks.
 
 Aspen layouts
@@ -241,7 +262,7 @@ Nordschleife
 Nordschleife uses your installed Assetto Corsa standard circuit. Select CUSTOM tracks → Nordschleife → Build and install…, then choose the Assetto Corsa folder containing `content\tracks\ks_nordschleife`. Choose Daylight, Overcast or Evening, an installed car, and Direct practice or Race. Race supports one to twenty laps on desktop or in VR, one to seven AI opponents, car choices and difficulty settings. Direct practice uses one lap. Existing solo installations need Manage… → Rebuild from source… for the separated race grid; Direct practice and previous best laps are retained. These are fixed dry lighting presets. Eight timing checkpoints divide the circuit into roughly 2.3 km sectors. Best lap shows your fastest completed Direct practice time and its car for the layout, across all lighting presets; Race results appear in game. The full trackside scenery and distant landscape are included. A complete evening practice lap has been player-tested; AI races are experimental, and lighting and visibility/LODs remain in development. For native VR, start your selected headset software, connect your headset and choose Launch VR. Nordschleife VR is experimental; full-course headset rendering and performance still need player testing. Existing packs need no rebuild to enable VR.
 
 Mizu Mountain
-Build the full 10.4 km daylight route from your own GRID 2 installation: CUSTOM tracks → Mizu Mountain → Build and install…. Select the GRID 2 game folder, then Launch or Launch VR for Direct practice or experimental Race. Race supports one to seven opponents, opponent-car choices and difficulty. Existing installations need Manage → Rebuild from source for the starting grid and the MIZU pre-race label. Each session goes from start to finish once, with three timing checkpoints. Subaru STI is the tested practice car; other installed cars can be selected. VR is experimental; LAN is unavailable. Some materials and lighting are approximations; movable props and soft vegetation are visual-only, and crowds and some dynamic effects are omitted. Stop build safely cancels conversion. Vehicle setup… opens gear ratio, downforce, suspension, ride height, differential and brake bias, with the same five positions as the game. Enable Use this setup for direct launches, adjust the bars and Apply. Save settings or launch to keep it. Reset to centre restores the middle positions; unchecking the option restores the game’s setup. This setup is shared across stock and custom Direct practice and Race, desktop and VR. Normal Launch, AI cars and career saves are unchanged.
+Build the full 10.4 km daylight route from your own GRID 2 installation: CUSTOM tracks → Mizu Mountain → Build and install…. Select the GRID 2 game folder, then Launch or Launch VR for Direct practice or experimental Race. Race supports one to seven opponents, opponent-car choices and difficulty. Existing installations need Manage → Rebuild from source for the starting grid and the MIZU pre-race label. Each session goes from start to finish once, with three timing checkpoints. Choose any installed compatible car. VR is experimental; LAN is unavailable. Some materials and lighting are approximations; movable props and soft vegetation are visual-only, and crowds and some dynamic effects are omitted. Stop build safely cancels conversion. Vehicle setup applies here too; see Getting started.
 
 Installed tracks work offline; keep GRID 2 available for rebuilds.
 
@@ -309,10 +330,12 @@ Refresh reads the latest saved data. Unreadable details show Unavailable; interm
             Dim offset = 0
             For Each paragraph In article.Text.Split({vbLf & vbLf}, StringSplitOptions.None)
                 Dim firstLine = paragraph.Split(vbLf)(0).TrimEnd(ChrW(13))
-                article.Select(offset, firstLine.Length)
-                Using heading As New Font(Font, FontStyle.Bold)
-                    article.SelectionFont = heading
-                End Using
+                If offset = 0 OrElse paragraph.Contains(vbLf) Then
+                    article.Select(offset, firstLine.Length)
+                    Using heading As New Font(Font, FontStyle.Bold)
+                        article.SelectionFont = heading
+                    End Using
+                End If
                 offset += paragraph.Length + 2
             Next
             article.Select(0, 0) : article.ScrollToCaret()

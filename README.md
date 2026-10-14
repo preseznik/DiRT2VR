@@ -68,7 +68,7 @@ Regular Launch needs no SteamVR or headset and uses your desktop graphics prefer
 
 1. Start your headset software and connect your headset. For VDXR, select VDXR as the OpenXR runtime in Virtual Desktop Streamer.
 2. Open **DiRT2VR.exe**, choose **Normal Launch** on **Launcher**, and select **Launch VR**. On your first VR launch, choose **OpenXR — system default** or **SteamVR**. The prompt shows the detected system runtime. Check **Remember my choice** to skip the prompt next time.
-3. Navigate the original game on the virtual screen using your usual controls.
+3. The launcher stays visible while VR loads, then brings the game window forward. Leave it in front during startup. Navigate the original game on the virtual screen using your usual controls.
 4. Enter an event with your chosen car. VR launches select cockpit view automatically.
 5. Cockpit VR starts enabled. Sit facing forward while loading: the view centers automatically once tracking is ready and again when cockpit view first begins. Press **F10** (or Recenter) to adjust it afterward. Recenter resets your seated position and horizontal direction without baking head tilt into the view; saved seat adjustments stay unchanged. **F9** (Toggle VR) switches between cockpit VR and the flat screen; keep the game window focused.
 6. Pause/options menus automatically use the virtual screen; resuming restores your selected cockpit VR mode. Use Toggle VR if another menu, replay or flashback looks incorrect.
@@ -109,7 +109,7 @@ All six packs offer **Direct practice** and experimental **Race** on desktop or 
 
 Choose **CUSTOM tracks → Misty Loch → Build and install…** and select the Assetto Corsa folder containing `content\tracks\rt_misty_loch`. Only your installed DiRT 2 files and Misty Loch 1.4 folder are used; no other track, extra grass atlas or CSP installation is required. Original game assets are not included in DiRT2VR downloads.
 
-Choose **Daylight**, **Evening** or **Morning Fog**, an installed car and use **Launch** or **Launch VR**. **Direct practice** runs one complete lap; **Race** offers 1–7 AI opponents and 1–20 laps. If Misty Loch was built with an older launcher, use **Manage… → Rebuild from source…** to add the eight-car grid before racing. Existing builds still support Direct practice. VR and AI racing are experimental; Morning Fog full-lap and headset acceptance remain pending. Custom-track LAN is unavailable. The port includes layered road/terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Assetto Corsa lighting and some effects remain approximate; the boats do not follow their original sailing routes.
+Choose **Daylight**, **Evening** or **Morning Fog**, an installed car and use **Launch** or **Launch VR**. **Direct practice** runs one complete lap; **Race** offers 1–7 AI opponents and 1–20 laps. If Misty Loch was built with an older launcher, use **Manage… → Rebuild from source…** to add the eight-car grid before racing. Existing builds still support Direct practice. VR and AI racing are experimental; Morning Fog's corrected cockpit appearance has passed a headset check; full-lap acceptance remains pending. Custom-track LAN is unavailable. The port includes layered road/terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Assetto Corsa lighting and some effects remain approximate; the boats do not follow their original sailing routes.
 
 ### Mizu Mountain
 

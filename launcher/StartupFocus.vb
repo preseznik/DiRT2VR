@@ -4,13 +4,15 @@
 Public Class StartupFocusPolicy
     Private ReadOnly started As Long
     Private previousInput As UInteger
+    Private previousForeground As IntPtr
     Private firstWindow As IntPtr
     Private hadForeground As Boolean
     Private ReadOnly activateInitial As Boolean
     Public Property Finished As Boolean
     Public Property Outcome As String = "Waiting for game window"
-    Public Sub New(now As Long, lastInput As UInteger, Optional activateInitial As Boolean = False)
+    Public Sub New(now As Long, lastInput As UInteger, Optional activateInitial As Boolean = False, Optional foreground As IntPtr = Nothing)
         started = now : previousInput = lastInput : Me.activateInitial = activateInitial
+        previousForeground = foreground
     End Sub
     Public Function ShouldActivate(window As IntPtr, foreground As IntPtr, lastInput As UInteger, now As Long) As Boolean
         If Finished Then Return False
@@ -18,7 +20,13 @@ Public Class StartupFocusPolicy
             Outcome = "Expired"
             Finished = True : Return False
         End If
-        If activateInitial AndAlso foreground <> window AndAlso lastInput <> previousInput Then
+        Dim inputChanged = lastInput <> previousInput
+        Dim switchedWindow = foreground <> previousForeground
+        previousForeground = foreground
+        If activateInitial Then previousInput = lastInput
+        ' Mouse movement also changes LASTINPUTINFO. It does not mean the player
+        ' switched applications while waiting for the game window to appear.
+        If activateInitial AndAlso firstWindow <> IntPtr.Zero AndAlso window = firstWindow AndAlso foreground <> window AndAlso switchedWindow AndAlso inputChanged Then
             Finished = True : Outcome = "Canceled: input switched away during VR startup" : Return False
         End If
         If window = IntPtr.Zero Then Return False
@@ -30,7 +38,7 @@ Public Class StartupFocusPolicy
             End If
         End If
         If window = firstWindow Then
-            If hadForeground AndAlso foreground <> window AndAlso lastInput <> previousInput Then
+            If Not activateInitial AndAlso hadForeground AndAlso foreground <> window AndAlso inputChanged Then
                 Finished = True : Outcome = "Canceled: input switched away from game" : Return False
             End If
             previousInput = lastInput
@@ -59,20 +67,38 @@ Public Class StartupFocus
     End Function
     <DllImport("user32.dll")> Private Shared Function SetForegroundWindow(window As IntPtr) As Boolean
     End Function
+    <DllImport("user32.dll")> Private Shared Function IsIconic(window As IntPtr) As Boolean
+    End Function
+    <DllImport("user32.dll")> Private Shared Function IsWindowVisible(window As IntPtr) As Boolean
+    End Function
+    <DllImport("user32.dll")> Private Shared Function ShowWindowAsync(window As IntPtr, command As Integer) As Boolean
+    End Function
+    <DllImport("user32.dll")> Private Shared Function SetWindowPos(window As IntPtr, after As IntPtr, x As Integer, y As Integer, width As Integer, height As Integer, flags As UInteger) As Boolean
+    End Function
+    Private Delegate Function EnumWindowCallback(window As IntPtr, data As IntPtr) As Boolean
+    <DllImport("user32.dll")> Private Shared Function EnumWindows(callback As EnumWindowCallback, data As IntPtr) As Boolean
+    End Function
+    <DllImport("user32.dll")> Private Shared Function GetWindowThreadProcessId(window As IntPtr, ByRef processId As UInteger) As UInteger
+    End Function
+    <DllImport("user32.dll", CharSet:=CharSet.Unicode)> Private Shared Function GetClassName(window As IntPtr, name As Text.StringBuilder, length As Integer) As Integer
+    End Function
     <DllImport("user32.dll")> Private Shared Function GetLastInputInfo(ByRef value As LastInput) As Boolean
     End Function
     Private ReadOnly policy As StartupFocusPolicy
     Private ReadOnly executable As String
+    Private ReadOnly vrLaunch As Boolean
+    Private activationHistory As String = ""
     Public ReadOnly Property Outcome As String
         Get
-            Return policy.Outcome
+            Return activationHistory & policy.Outcome
         End Get
     End Property
     Public Sub New(context As InstallContext, Optional vr As Boolean = False)
         executable = IO.Path.Combine(context.GameRoot, "dirt2_game.exe")
+        vrLaunch = vr
         Dim value As New LastInput With {.Size = CUInt(Marshal.SizeOf(Of LastInput)())}
         policy = New StartupFocusPolicy(Environment.TickCount64, 0) With {.Finished = True}
-        If GetLastInputInfo(value) Then policy = New StartupFocusPolicy(Environment.TickCount64, value.Tick, vr)
+        If GetLastInputInfo(value) Then policy = New StartupFocusPolicy(Environment.TickCount64, value.Tick, vr, GetForegroundWindow())
     End Sub
     Public Sub Poll()
         If policy.Finished Then Return
@@ -84,14 +110,48 @@ Public Class StartupFocus
         For Each game In Process.GetProcessesByName("dirt2_game")
             Using game
                 Try
-                    If String.Equals(game.MainModule.FileName, executable, StringComparison.OrdinalIgnoreCase) Then window = game.MainWindowHandle
+                    If String.Equals(game.MainModule.FileName, executable, StringComparison.OrdinalIgnoreCase) Then
+                        window = If(vrLaunch, FindGameWindow(CUInt(game.Id)), game.MainWindowHandle)
+                    End If
                 Catch ex As Exception When TypeOf ex Is ComponentModel.Win32Exception OrElse TypeOf ex Is InvalidOperationException
                     ' Process can exit during startup or recovery.
                 End Try
             End Using
         Next
         If policy.ShouldActivate(window, GetForegroundWindow(), input.Tick, Environment.TickCount64) Then
-            policy.ActivationResult(SetForegroundWindow(window))
+            Dim request = policy.Outcome
+            policy.ActivationResult(If(vrLaunch, ActivateWindow(window), SetForegroundWindow(window)))
+            ' At most the initial window and its replacement. Retain the result
+            ' even if later input cancels startup monitoring.
+            activationHistory &= request & ": " & policy.Outcome & $" (HWND={window.ToInt64():X}, visible={IsWindowVisible(window)}, minimized={IsIconic(window)}); "
         End If
     End Sub
+    Private Shared Function FindGameWindow(processId As UInteger) As IntPtr
+        Dim result As IntPtr
+        EnumWindows(Function(window, data)
+                        Dim owner As UInteger
+                        GetWindowThreadProcessId(window, owner)
+                        If owner = processId AndAlso IsWindowVisible(window) Then
+                            Dim name As New Text.StringBuilder(256)
+                            GetClassName(window, name, name.Capacity)
+                            ' InitialLoading and offline-provider windows can precede
+                            ' the real EGO renderer and briefly own foreground focus.
+                            If name.ToString().StartsWith("NeonClass_", StringComparison.Ordinal) Then
+                                result = window : Return False
+                            End If
+                        End If
+                        Return True
+                    End Function, IntPtr.Zero)
+        Return result
+    End Function
+    ' Production calls only after verifying the game executable and startup policy.
+    ' Also exercised with owned test windows, including minimized/maximized ones.
+    Public Shared Function ActivateWindow(window As IntPtr) As Boolean
+        If window = IntPtr.Zero Then Return False
+        If IsIconic(window) Then ShowWindowAsync(window, 9) ' SW_RESTORE
+        ' Raise once without resizing or making it permanently topmost. Async
+        ' dispatch avoids blocking on the game thread during graphics startup.
+        SetWindowPos(window, IntPtr.Zero, 0, 0, 0, 0, &H4000UI Or &H40UI Or &H10UI Or &H2UI Or &H1UI)
+        Return SetForegroundWindow(window)
+    End Function
 End Class
