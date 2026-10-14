@@ -49,6 +49,8 @@ Public Class MainForm
     Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
     Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
+    Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
+    Private ReadOnly vrAnisotropy As New ValueSlider("VrAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
     Private ReadOnly desktopRoadSheen As New RoadSheenControl("Desktop")
     Private ReadOnly vrRoadSheen As New RoadSheenControl("Vr")
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
@@ -223,6 +225,9 @@ Public Class MainForm
             "Lower uses less memory but can blur the view. 100% keeps the" & vbCrLf &
             "size your VR runtime recommends. This is not car or road texture quality.")
         Tip(msaa, "Smooths jagged edges in VR. Higher settings use more memory" & vbCrLf & "and GPU power; 4× and 8× can cause crashes. 2× is the default.")
+        For Each filtering In {desktopAnisotropy, vrAnisotropy}
+            Tip(filtering, "Keeps repeating surface textures clearer at shallow angles. Game preserves native filtering;" & vbCrLf & "Off disables anisotropy on those textures. Higher levels may use more GPU time." & vbCrLf & "Applies next launch; overrides require DX11. Point, shadow-comparison and clamped samplers stay unchanged.")
+        Next
         Tip(desktopBloom, "Soft glow around bright areas. On keeps the game's effects;" & vbCrLf & "Off removes the glow. Save and relaunch desktop play to apply.")
         Tip(vrBloom, "Soft glow around bright areas. On keeps the game's effects;" & vbCrLf & "Off removes the glow in VR, including its virtual screen." & vbCrLf & "Save and relaunch VR to apply. This is separate from shadows.")
         Tip(fieldOfView, "Lower values trim the edges of your VR view to reduce rendering" & vbCrLf & "work. 100% keeps the full view; objects keep their normal scale.")
@@ -618,6 +623,8 @@ Public Class MainForm
         borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen", borderless)
         desktopVSync.Checked = settings.DesktopVSync : Field(desktop, "VSync", desktopVSync)
         desktopBloom.Checked = settings.DesktopBloom : Field(desktop, "Bloom", desktopBloom)
+        desktopAnisotropy.Value = Array.IndexOf(AnisotropicFiltering.Levels, settings.DesktopAnisotropy)
+        Field(desktop, "Anisotropic filtering", desktopAnisotropy)
         desktopRoadSheen.UseTrackDefault = settings.DesktopRoadSheenDefault : desktopRoadSheen.Percent = settings.DesktopRoadSheen
         Field(desktop, "Road sheen (Experimental)", desktopRoadSheen)
         Dim render = Section(columns.First, "VR rendering")
@@ -628,6 +635,8 @@ Public Class MainForm
         Field(render, "Render resolution", renderScale) : Field(render, "Headset texture scale", headsetScale)
         msaa.Value = Array.IndexOf({0, 2, 4, 8}, settings.VrMsaa)
         Field(render, "Anti-aliasing (MSAA)", msaa)
+        vrAnisotropy.Value = Array.IndexOf(AnisotropicFiltering.Levels, settings.VrAnisotropy)
+        Field(render, "Anisotropic filtering", vrAnisotropy)
         AddHandler msaa.ValueChanged, Sub() RefreshMsaaWarning()
         RefreshMsaaWarning()
         Field(render, "Field of view", fieldOfView) : Field(render, "Car mirrors", mirrors)
@@ -675,6 +684,7 @@ Public Class MainForm
         AddHandler defaults.Click, Sub()
                                        borderless.Checked = False : desktopVSync.Checked = True
                                        desktopBloom.Checked = True : vrBloom.Checked = True
+                                       desktopAnisotropy.Value = 0 : vrAnisotropy.Value = 0
                                        desktopRoadSheen.UseTrackDefault = True : vrRoadSheen.UseTrackDefault = True
                                        desktopRoadSheen.Percent = 25 : vrRoadSheen.Percent = 25
                                        filters.ResetSelections()
@@ -961,6 +971,8 @@ Public Class MainForm
         settings.BorderlessDesktop = borderless.Checked
         settings.DesktopVSync = desktopVSync.Checked
         settings.DesktopBloom = desktopBloom.Checked : settings.VrBloom = vrBloom.Checked
+        settings.DesktopAnisotropy = AnisotropicFiltering.Levels(desktopAnisotropy.Value)
+        settings.VrAnisotropy = AnisotropicFiltering.Levels(vrAnisotropy.Value)
         settings.DesktopRoadSheenDefault = desktopRoadSheen.UseTrackDefault : settings.DesktopRoadSheen = desktopRoadSheen.Percent
         settings.VrRoadSheenDefault = vrRoadSheen.UseTrackDefault : settings.VrRoadSheen = vrRoadSheen.Percent
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)

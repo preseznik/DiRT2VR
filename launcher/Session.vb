@@ -264,11 +264,12 @@ Public Class Session
         Return start
     End Function
     Private Function RunDesktop() As Boolean
+        AnisotropicFiltering.RequireDesktopRenderer(context, settings)
         FlashbackLaunch.RequireDesktopRenderer(context, settings)
         SteeringAnimationLaunch.RequireDesktopRenderer(context, settings)
         ChaseCameraLaunch.RequireDesktopRenderer(context, settings)
         BackgroundPlayLaunch.RequireDesktopRenderer(context, settings)
-        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused Then Worker.Invoke(context, "setup")
+        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 Then Worker.Invoke(context, "setup")
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
@@ -343,6 +344,7 @@ Public Class Session
         ChaseCameraLaunch.Configure(start, settings)
         BackgroundPlayLaunch.Configure(start, settings)
         Dim focus As New StartupFocus(context)
+        AnisotropicFiltering.Configure(start, settings)
         ReplayCameraLaunch.Configure(start, settings)
         replayControls.ConfigureZoom(start)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)

@@ -1,4 +1,5 @@
 #include "graphics_diagnostics.h"
+#include "anisotropic_filter.h"
 #include "resolution_report.h"
 #include "trace.h"
 #include "f04_camera.h"
@@ -1680,12 +1681,13 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     wchar_t direct[8]{};
     const bool directSession=GetEnvironmentVariableW(L"DIRT2VR_DIRECT_PRACTICE",direct,8)==1 && direct[0]==L'1';
     if(!EnableStartupHooks(HeadsetEnabled(),AutoCockpitEnabled(),directSession)) ExitProcess(ERROR_BAD_EXE_FORMAT);
+    if(!EnableAnisotropicFiltering(device)) { Log("anisotropic filtering: initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
     wchar_t desktop[8]{};
     const bool desktopControls=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_CONTROLS",desktop,8)==1 && desktop[0]==L'1';
     if(desktopControls || (GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1')) {
         EnableDirectPractice();
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
-        Log("desktop practice: optional custom-car camera only; no VR hotkeys or OpenXR initialization");
+        Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
         return;
     }
     static bool initialized=[] { auto status=MH_Initialize(); return status==MH_OK||status==MH_ERROR_ALREADY_INITIALIZED; }();

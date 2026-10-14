@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add separate Desktop and VR anisotropic-filtering choices under Graphics → Main: Game, Off, 2×, 4×, 8× and 16×. Game remains the default; DX11 overrides apply to repeating surface textures on the next launch. In-game appearance and performance validation are pending.
+
 - Fix launches getting stuck on recovery without an error when a background file worker hangs while initializing the Windows colour theme.
 
 - Choose OpenXR (system default, including VDXR) or SteamVR on the first VR launch, optionally remember the choice, and change it later under Settings → VR runtime. Desktop launches need no runtime choice. VDXR is experimental; headset rendering and gameplay validation remain pending.
