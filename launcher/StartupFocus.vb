@@ -1,14 +1,16 @@
 ' DiRT 2 replaces its initial foreground window during graphics startup.
-' Only repair that transition, never continually enforce foreground focus.
+' VR also needs an initial handoff when the runtime leaves its window behind.
+' Only repair startup, never continually enforce foreground focus.
 Public Class StartupFocusPolicy
     Private ReadOnly started As Long
     Private previousInput As UInteger
     Private firstWindow As IntPtr
     Private hadForeground As Boolean
+    Private ReadOnly activateInitial As Boolean
     Public Property Finished As Boolean
     Public Property Outcome As String = "Waiting for game window"
-    Public Sub New(now As Long, lastInput As UInteger)
-        started = now : previousInput = lastInput
+    Public Sub New(now As Long, lastInput As UInteger, Optional activateInitial As Boolean = False)
+        started = now : previousInput = lastInput : Me.activateInitial = activateInitial
     End Sub
     Public Function ShouldActivate(window As IntPtr, foreground As IntPtr, lastInput As UInteger, now As Long) As Boolean
         If Finished Then Return False
@@ -16,9 +18,16 @@ Public Class StartupFocusPolicy
             Outcome = "Expired"
             Finished = True : Return False
         End If
+        If activateInitial AndAlso foreground <> window AndAlso lastInput <> previousInput Then
+            Finished = True : Outcome = "Canceled: input switched away during VR startup" : Return False
+        End If
         If window = IntPtr.Zero Then Return False
         If firstWindow = IntPtr.Zero Then
             firstWindow = window : Outcome = "Initial game window detected"
+            If activateInitial AndAlso foreground <> window Then
+                Outcome = "Requesting initial VR game focus"
+                Return True
+            End If
         End If
         If window = firstWindow Then
             If hadForeground AndAlso foreground <> window AndAlso lastInput <> previousInput Then
@@ -33,6 +42,10 @@ Public Class StartupFocusPolicy
         Outcome = If(Not hadForeground, "Skipped: initial window never held focus", If(foreground = window, "Replacement already focused", "Requesting replacement focus"))
         Return hadForeground AndAlso foreground <> window
     End Function
+    Public Sub ActivationResult(activated As Boolean)
+        hadForeground = hadForeground OrElse activated
+        Outcome = If(activated, "Game window activated", "Windows declined activation")
+    End Sub
 End Class
 
 Public Class StartupFocus
@@ -55,11 +68,11 @@ Public Class StartupFocus
             Return policy.Outcome
         End Get
     End Property
-    Public Sub New(context As InstallContext)
+    Public Sub New(context As InstallContext, Optional vr As Boolean = False)
         executable = IO.Path.Combine(context.GameRoot, "dirt2_game.exe")
         Dim value As New LastInput With {.Size = CUInt(Marshal.SizeOf(Of LastInput)())}
         policy = New StartupFocusPolicy(Environment.TickCount64, 0) With {.Finished = True}
-        If GetLastInputInfo(value) Then policy = New StartupFocusPolicy(Environment.TickCount64, value.Tick)
+        If GetLastInputInfo(value) Then policy = New StartupFocusPolicy(Environment.TickCount64, value.Tick, vr)
     End Sub
     Public Sub Poll()
         If policy.Finished Then Return
@@ -78,7 +91,7 @@ Public Class StartupFocus
             End Using
         Next
         If policy.ShouldActivate(window, GetForegroundWindow(), input.Tick, Environment.TickCount64) Then
-            policy.Outcome = If(SetForegroundWindow(window), "Replacement activated", "Windows declined activation")
+            policy.ActivationResult(SetForegroundWindow(window))
         End If
     End Sub
 End Class

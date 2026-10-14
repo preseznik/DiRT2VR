@@ -343,7 +343,6 @@ Public Class Session
         SteeringAnimationLaunch.Configure(start, settings)
         ChaseCameraLaunch.Configure(start, settings)
         BackgroundPlayLaunch.Configure(start, settings)
-        Dim focus As New StartupFocus(context)
         AnisotropicFiltering.Configure(start, settings)
         ReplayCameraLaunch.Configure(start, settings)
         replayControls.ConfigureZoom(start)
@@ -358,6 +357,7 @@ Public Class Session
                 Worker.Invoke(context, "prepare-road-sheen", trackId:=settings.TrackId, roadSheen:=If(vr, settings.VrRoadSheen, settings.DesktopRoadSheen))
             End If
             If settings.ExperimentalLaa Then Worker.Invoke(context, "prepare-laa")
+            Dim focus As New StartupFocus(context, vr)
             Using child = Process.Start(start)
                 Status("Running")
                 Dim seenGame As Boolean

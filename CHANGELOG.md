@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Request focus for the initial VR game window when it starts in the background, including VDXR. Keep the startup window-replacement handoff and stop requesting focus if the player switches to another app. The player confirmed that VDXR inputs worked without clicking the game window in the candidate check.
+
 - Correct VR cockpit exposure that can wash out Misty Loch's Morning Fog. Retain the car's original exposure reference while using the headset's field of view, including with shadows disabled. Stereo rendering checks pass, and the player approved the Morning Fog headset retest.
 
 - Add Spa-Francorchamps to the custom-track catalogue and clarify the six built-in packs, custom-car mode limits and prepared community packs.
