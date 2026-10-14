@@ -101,7 +101,7 @@ External tracks support only the Direct practice, Race, VR and replay modes decl
 | Aspen | DiRT 3 Complete Edition | Ten layouts |
 | Smelter | DiRT 3 Complete Edition | Ten layouts |
 
-All five packs offer **Direct practice** and experimental **Race** on desktop or in VR. Custom-track LAN is unavailable.
+All six packs offer **Direct practice** and experimental **Race** on desktop or in VR with stock cars. Custom cars follow their own mode limits. Custom-track LAN is unavailable.
 
 ### Misty Loch
 

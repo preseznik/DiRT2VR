@@ -6,6 +6,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Spa-Francorchamps to the custom-track catalogue and clarify the six built-in packs, custom-car mode limits and prepared community packs.
+
+## 0.17.109 — 2026-10-14 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.109)
+
 - Improve VR startup centering: wait for active headset tracking and recenter once when cockpit view first begins. The VDXR headset check confirmed the correct starting height without manual recentering.
 
 - Restore the first eight original GRID 2 Spa starting-grid positions, including their staggered spacing and headings. Set spawn heights from the converted road and preserve the approved AI braking. Offline placement and road-support checks pass; the race-start driving retest is pending.

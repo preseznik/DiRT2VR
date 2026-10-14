@@ -1,6 +1,6 @@
 # Custom tracks
 
-Add-on tracks available in DiRT2VR's Experimental builds, checked against **0.17.80**. For installation and launch instructions, see [Custom tracks in the README](README.md#custom-tracks-experimental).
+Add-on tracks available in DiRT2VR's Experimental builds, checked against **0.17.109**. For installation and launch instructions, see [Custom tracks in the README](README.md#custom-tracks-experimental).
 
 Build each pack from your own installed source game using **CUSTOM tracks → Build and install…** in the launcher. Conversion tools are included; original game assets are not distributed. Installed tracks work offline without the source game, but you need it again to rebuild or update them.
 
@@ -12,11 +12,14 @@ Build each pack from your own installed source game using **CUSTOM tracks → Bu
 | [Smelter](#smelter) | DiRT 3 Complete Edition | Ten circuits around an industrial and wooded setting, with Rallycross, Landrush and head-to-head layouts. | Dry and wet lighting; morning and evening variants. Duel layouts have two-car grids. |
 | [Nordschleife](#nordschleife) | Assetto Corsa — standard Nordschleife (`ks_nordschleife`) | The full 20.7 km circuit, with trackside scenery and distant landscape. | Three dry lighting presets: Daylight, Overcast and Evening. Eight timing checkpoints and a shared best practice lap across presets. |
 | [Mizu Mountain](#mizu-mountain) | GRID 2 | A full 10.4 km mountain route from start to finish. | Daylight; point-to-point rather than laps; three timing checkpoints. |
+| [Spa-Francorchamps](#spa-francorchamps) | GRID 2 with Spa-Francorchamps DLC | The full 7 km Grand Prix circuit. | Three timing sectors, replay cameras and the original eight starting-grid positions. Direct practice and Race on desktop or in VR. |
 | [Misty Loch](#misty-loch) | Assetto Corsa with the Misty Loch 1.4 add-on (`rt_misty_loch`) | A full 6.45 km lakeside road circuit. | Daylight, Evening and Morning Fog; animated waterfall, lake waves and gently moving boats. One-lap Direct practice and multi-lap Race, on desktop or in VR. |
 
 ## Play modes
 
-**All five packs** offer solo **Direct practice** and experimental **Race**, on desktop or in VR, with any installed car. Race allows **1–7 AI opponents**, except the four head-to-head layouts, which allow **one AI opponent**. Circuit races support **1–20 laps**; Mizu is always one complete run. Nordschleife and Misty Loch Direct practice run for one lap.
+**All six packs** offer solo **Direct practice** and experimental **Race**, on desktop or in VR, with installed stock cars. Race allows **1–7 AI opponents**, except the four head-to-head layouts, which allow **one AI opponent**. Circuit races support **1–20 laps**; Mizu is always one complete run. Nordschleife and Misty Loch Direct practice run for one lap.
+
+Custom cars follow their own mode limits: Ferrari F2004 currently supports solo Direct practice only. Prepared community tracks appear under **Source → External** in the launcher; their available modes depend on the pack.
 
 Older **Misty Loch** builds need **Manage… → Rebuild from source…** before racing, to add the eight-car starting grid. Existing builds remain usable for Direct practice, including VR.
 
@@ -73,6 +76,12 @@ A complete Evening desktop practice lap and a short VR session have been player-
 Source: **GRID 2**. Desktop practice and Race have passed player checks; headset rendering still needs testing.
 
 Some materials and lighting are approximations. Movable props and soft vegetation do not have matching collision; crowds and some animated effects are omitted.
+
+## Spa-Francorchamps
+
+Source: **GRID 2 with Spa-Francorchamps DLC installed**. The full GP circuit includes three timing sectors, replay cameras and desktop/VR Direct practice and Race. Race supports 1–7 AI opponents and 1–20 laps.
+
+Use **Manage → Rebuild from source** after updating to apply the original GRID 2 starting-grid positions and improved AI corner braking. The reported Evo X Trailblazer cornering issue passed a player retest. The restored race start, other car combinations and full VR races still need wider testing.
 
 ## Misty Loch
 
