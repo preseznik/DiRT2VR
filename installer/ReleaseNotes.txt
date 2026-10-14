@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Fix Ferrari cockpit and steering-wheel surface flicker caused by incorrect lighting textures. After updating, use CUSTOM cars → Manage → Rebuild from source to apply the correction to an existing Ferrari installation.
+
 The CUSTOM track list now grows with the launcher window and only scrolls when the available height is filled.
 
 Spa-Francorchamps is now available under CUSTOM tracks → GRID 2. Build the full GP circuit from your installed GRID 2 Spa DLC, then choose Direct practice or Race on desktop or in VR. Race supports 1–7 opponents and 1–20 laps. Existing Spa packs need Manage → Rebuild from source once for the race grid; VR practice needs no rebuild. VR and AI races are experimental.

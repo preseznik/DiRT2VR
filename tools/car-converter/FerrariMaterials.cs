@@ -34,14 +34,14 @@ internal static class FerrariMaterials
             id=(interior?"f04_int_source_":"f04_ext_source_")+textureIds.Count;
             var detail=bake?material!.Textures["txDetail"]:null;
             float scale=bake?material!.Properties["detailUVMultiplier"][0]:0;
-            using var data=new MemoryStream(bytes,false);var dds=normalMap?FerrariNormalMap.Pack(bytes):bake?DetailBake.Compose(bytes,SourceTexture(detail!),scale):new DdsFile(data);
+            using var data=new MemoryStream(bytes,false);var dds=normalMap?FerrariNormalMap.Pack(bytes,interior):bake?DetailBake.Compose(bytes,SourceTexture(detail!),scale):new DdsFile(data);
             if(dds.header.width==0 || dds.header.height==0 || dds.header.width>8192 || dds.header.height>8192)throw new InvalidDataException("Invalid source texture size");
             bool rawRepacked;try{rawRepacked=RawTexture.Prepare(dds);}catch(InvalidDataException e){throw new InvalidDataException(name+": "+e.Message,e);}
             bool mipMapsAdded=interior && FerrariTextureMipMaps.AddMissing(dds);
             var texture=(PssgTexture)textureTemplate.DeepClone();rib.AppendChild(texture);texture.Id=id;
             dds.ToPssgElement(texture);texture.AutoMipMap=false;
             if(texture.TexelFormat is not ("dxt1" or "dxt3" or "dxt5" or "ui8x4"))throw new InvalidDataException("Unsupported DiRT 2 texture format: "+name+" bits="+dds.header.ddspf.rGBBitCount+" fourCC="+dds.header.ddspf.fourCC+" format="+texture.TexelFormat);
-            textureIds.Add(key,id);textureReport.Add(new{Source=name,Id=id,SkinOverride=File.Exists(Path.Combine(source,"skins/00_official",name)),RawRepacked=rawRepacked,MipMapsAdded=mipMapsAdded,NormalPacking=normalMap?"AC red/green to DiRT alpha/green":null,DetailBaked=bake,DetailSource=detail,DetailScale=scale,DetailSha256=detail is null?null:Convert.ToHexString(SHA256.HashData(SourceTexture(detail))),Sha256=Convert.ToHexString(SHA256.HashData(bytes)),texture.TexelFormat,texture.Width,texture.Height});return id;
+            textureIds.Add(key,id);textureReport.Add(new{Source=name,Id=id,SkinOverride=File.Exists(Path.Combine(source,"skins/00_official",name)),RawRepacked=rawRepacked,MipMapsAdded=mipMapsAdded,NormalPacking=normalMap?(interior?"AC red/green to DiRT interior RGB":"AC red/green to DiRT alpha/green"):null,DetailBaked=bake,DetailSource=detail,DetailScale=scale,DetailSha256=detail is null?null:Convert.ToHexString(SHA256.HashData(SourceTexture(detail))),Sha256=Convert.ToHexString(SHA256.HashData(bytes)),texture.TexelFormat,texture.Width,texture.Height});return id;
         }
         var mats=new Dictionary<int,MaterialBuilder>();var materialReport=new List<object>();
         for(int i=0;i<high.Materials.Length;i++)
