@@ -57,7 +57,7 @@ internal static class SpaBuild
         Files.Json(Path.Combine(output,"inputs.json"),scene.Inputs);
         Files.Json(Path.Combine(output,"collision-materials.json"),scene.CollisionMappings);
         Files.Json(Path.Combine(output,"segment.json"),new{Schema=1,SourceLayout="GRID 2 Spa-Francorchamps GP Circuit route_0",LengthMetres=scene.Length,
-            TranslationOnly=new[]{scene.Origin.X,scene.Origin.Y,scene.Origin.Z},FullCourse=true,Circuit=true,SupportedMode="desktop-solo",Daylight=true,RuntimeValidated=false,DistributionReady=false});
+            TranslationOnly=new[]{scene.Origin.X,scene.Origin.Y,scene.Origin.Z},FullCourse=true,Circuit=true,SupportedModes=new[]{"desktop-solo","vr-solo","desktop-race","vr-race"},Daylight=true,RuntimeValidated=false});
         string[] extensions=[".pssg",".xml",".cqtc",".vis",".jpk",".ens",".bin",".clm"];
         var files=Directory.GetFiles(output,"*",SearchOption.AllDirectories).Where(p=>extensions.Contains(Path.GetExtension(p)) && !Path.GetFileName(p).StartsWith("added-",StringComparison.Ordinal))
             .ToDictionary(p=>Path.GetRelativePath(output,p).Replace('\\','/'),Files.Hash);

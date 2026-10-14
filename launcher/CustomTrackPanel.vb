@@ -418,7 +418,7 @@ Public Class CustomTrackPanel
         If currentPack.External IsNot Nothing AndAlso currentPack.Available Then modeHint.Text = "External · " & String.Join(", ", TrackPacks.Get(currentPack.Id).Modes.Select(Function(mode) mode.Replace("desktop-", "Desktop ").Replace("vr-", "VR ").Replace("solo", "Practice").Replace("race", "Race"))) & If(currentPack.External.Manifest.Replay, " · Full Replay supported by author", " · Turn full-race recording off")
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If customCars IsNot Nothing AndAlso customCars.CustomEnabled Then modeHint.Text = "Custom cars: Desktop Direct practice · Nordschleife Daylight only · Handling and suspension remain experimental."
-        If currentPack?.Id = "spa-francorchamps" Then modeHint.Text = "Desktop Direct practice · 1–20 laps · AI races and VR unavailable"
+        If currentPack?.Id = "spa-francorchamps" Then modeHint.Text = "Desktop and VR · 1–20 laps · VR and AI races are experimental"
         raceDifficulty.Enabled = race
         opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race
         Dim vehicle = TryCast(cars.SelectedItem, PracticeCar)
@@ -563,7 +563,7 @@ Public Class CustomTrackPanel
         End Using
         bounds.Y += Px(Me, 24)
         Dim subtitle = If(pack.External IsNot Nothing, "External · " & If(pack.Available, pack.Layouts.Length & " layouts", "Needs attention"), If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", If(pack.Id = "mizu-mountain", "Point-to-point · 10.4 km · Race and VR", If(pack.Id = "misty-loch", "Full circuit · 6.45 km · Race and VR", If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection")))))
-        If pack.Id = "spa-francorchamps" Then subtitle = "GP circuit · 7 km · Desktop Direct practice"
+        If pack.Id = "spa-francorchamps" Then subtitle = "GP circuit · 7 km · Race and VR"
         TextRenderer.DrawText(e.Graphics, subtitle, Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         bounds.Y += Px(Me, 24)
         TextRenderer.DrawText(e.Graphics, packStatuses(pack.Id), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)

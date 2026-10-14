@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Add Spa-Francorchamps under CUSTOM tracks → GRID 2. Build the full GP circuit from your installed Spa DLC for desktop Direct practice, including timing sectors and replay cameras. AI races and VR are not enabled for this pack.
+- Add Spa-Francorchamps under CUSTOM tracks → GRID 2. Build the full GP circuit from your installed Spa DLC for Direct practice and Race on desktop or in VR, including timing sectors and replay cameras. Race supports 1–7 opponents and 1–20 laps; rebuild existing Spa packs once for the separated starting grid. VR and AI driving acceptance remain pending.
 
 - Fix Ferrari steering-wheel surface shimmer and improve cockpit texture filtering. Rebuild the car from Manage after updating.
 

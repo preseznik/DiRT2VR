@@ -96,7 +96,7 @@ External tracks support only the Direct practice, Race, VR and replay modes decl
 | --- | --- | --- |
 | Mizu Mountain | GRID 2 | One 10.4 km daylight route |
 | Nordschleife | Assetto Corsa, standard Nordschleife circuit | Full circuit in Daylight, Overcast and Evening |
-| Spa-Francorchamps | GRID 2 with Spa-Francorchamps DLC | Full 7 km GP circuit, desktop Direct practice |
+| Spa-Francorchamps | GRID 2 with Spa-Francorchamps DLC | Full 7 km GP circuit, Direct practice and Race on desktop or in VR |
 | Misty Loch | Assetto Corsa with Misty Loch 1.4 (`rt_misty_loch`) | Full 6.45 km circuit, Direct practice and Race on desktop or in VR |
 | Aspen | DiRT 3 Complete Edition | Ten layouts |
 | Smelter | DiRT 3 Complete Edition | Ten layouts |
@@ -143,7 +143,7 @@ Each pack keeps its own layout, car, race and lap selections, separately from st
 
 ### Spa-Francorchamps
 
-Choose **CUSTOM tracks → Source: GRID 2 → Spa-Francorchamps → Build and install…**, then select your GRID 2 installation with the Spa-Francorchamps DLC installed. The full GP circuit supports **desktop Direct practice**, with 1–20 laps, three timing sectors and replay cameras. AI races and VR are not available for this pack. Track assets are built locally from your games and are not included in the installer.
+Choose **CUSTOM tracks → Source: GRID 2 → Spa-Francorchamps → Build and install…**, then select your GRID 2 installation with the Spa-Francorchamps DLC installed. The full GP circuit supports **Direct practice and Race** on desktop or in VR, with 1–20 laps, three timing sectors and replay cameras. Race supports 1–7 opponents, car choices and difficulty settings. Existing Spa packs need **Manage → Rebuild from source** once to add the separated starting grid for Race; VR practice needs no rebuild. VR and AI races are experimental and awaiting driving/headset acceptance. Track assets are built locally from your games and are not included in the installer.
 
 ### Nordschleife
 

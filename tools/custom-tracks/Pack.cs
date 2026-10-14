@@ -73,7 +73,7 @@ public static class TrackPacks
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
     public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.0.1", "0.17.77", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
-    public static readonly TrackPack Spa = new("spa-francorchamps", "Spa-Francorchamps", "1.0.0", "0.17.94", ["desktop-solo"],
+    public static readonly TrackPack Spa = new("spa-francorchamps", "Spa-Francorchamps", "1.0.1", "0.17.95", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("spa-francorchamps", "GP circuit · 7 km", "d2vr_spa", "Daylight")], ["database/database.bin", "dx11/shaderpack/shaderpack.pssg"]);
     public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty, Spa];
     static TrackPack[] external = [];

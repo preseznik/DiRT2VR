@@ -107,7 +107,7 @@ public static class SpaConversion
             throw new IOException("Source files changed during conversion. Retry with the original files unchanged.");
         var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources);
         pack.Verify(install,receipt);SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
-        Report(100,"Spa-Francorchamps is ready for desktop Direct practice");
+        Report(100,"Spa-Francorchamps is ready for Direct practice and experimental Race, on desktop or in VR");
         void Copy(string source,string relative)
         {
             string target=SafeFiles.Inside(install,relative);Directory.CreateDirectory(Path.GetDirectoryName(target)!);
