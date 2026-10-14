@@ -27,7 +27,7 @@ Public Module CustomTrackCatalog
         New CustomTrackPack("smelter", "Smelter", "Ten layouts · Direct practice and Race · Desktop and VR", True, TrackPacks.Smelter.Layouts),
         New CustomTrackPack("nordschleife", "Nordschleife", "Standard circuit · Desktop and VR · Daylight, overcast and evening", True, TrackPacks.Nordschleife.Layouts),
         New CustomTrackPack("mizu-mountain", "Mizu Mountain", "10.4 km point-to-point · Desktop and VR · Direct practice and Race", True, TrackPacks.Mizu.Layouts),
-        New CustomTrackPack("misty-loch", "Misty Loch", "6.45 km circuit · Daylight and evening · Direct practice and Race · Desktop and VR", True, TrackPacks.Misty.Layouts),
+        New CustomTrackPack("misty-loch", "Misty Loch", "6.45 km circuit · Daylight, Evening and Morning Fog · Direct practice and Race · Desktop and VR", True, TrackPacks.Misty.Layouts),
         New CustomTrackPack("spa-francorchamps", "Spa-Francorchamps", "7 km GP circuit · Direct practice and Race · Desktop and VR", True, TrackPacks.Spa.Layouts)}
     Public ReadOnly Property Packs As CustomTrackPack()
         Get

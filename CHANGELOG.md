@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Morning Fog to Misty Loch alongside Daylight and Evening. Rebuild from source for all three presets and subtle road highlights with static mountain occlusion. Preserve the black-band fix and existing course/replay identities. Full-lap and headset acceptance of Morning Fog remain pending.
+
 - Add experimental Road sheen controls under Graphics → Main, with separate Desktop and VR strengths for Nordschleife. Keep the installed track default, or choose 0–100% for the next launch without rebuilding. Other surfaces remain unchanged.
 
 - Correct overly shiny Nordschleife asphalt in Daylight, Overcast and Evening while preserving its original colour and detail. Rebuild the track with the updated converter to apply the correction.

@@ -95,6 +95,7 @@ internal static class MistyScene
                 scene.SourceMeshes.Add(new {File=file,mesh.SourceNode,mesh.Name,mesh.Active,mesh.Visible,mesh.Physical,Helper=helper,SourceTriangles=mesh.Indices.Length/3,VisualTriangles=selected.Count/3,CollisionTriangles=collision});
             },includeInactive:true);
         }
+        MistySunOcclusion.Build(scene,output);
         MistyGrass.Add(scene,acRoot,game,output);
         // Consolidate compatible static meshes before spatial tiling, preserving all selected faces and attributes.
         var batches=VisualBatches.Combine(scene.Visuals).ToArray(); scene.Visuals.Clear(); scene.Visuals.AddRange(batches);

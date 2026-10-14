@@ -105,11 +105,11 @@ All five packs offer **Direct practice** and experimental **Race** on desktop or
 
 ### Misty Loch
 
-**Updating an existing Misty Loch build:** choose **Manage… → Rebuild from source…** to add **Evening** alongside **Daylight**. Both lighting presets are built together. Existing Daylight installs remain usable; the rebuilt Daylight layout retains its 1.0.1 identity for existing replays. Both presets retain the dry road shading and fix for flickering black road bands.
+**Updating an existing Misty Loch build:** choose **Manage… → Rebuild from source…** for **Daylight**, **Evening** and **Morning Fog**, plus subtle asphalt highlights with mountain occlusion. All three presets are built together. Existing Daylight and Evening installs remain usable and keep their course/replay identities after rebuilding. The fix for flickering black road bands is preserved.
 
 Choose **CUSTOM tracks → Misty Loch → Build and install…** and select the Assetto Corsa folder containing `content\tracks\rt_misty_loch`. Only your installed DiRT 2 files and Misty Loch 1.4 folder are used; no other track, extra grass atlas or CSP installation is required. Original game assets are not included in DiRT2VR downloads.
 
-Choose **Daylight** or **Evening**, an installed car and use **Launch** or **Launch VR**. **Direct practice** runs one complete lap; **Race** offers 1–7 AI opponents and 1–20 laps. If Misty Loch was built with an older launcher, use **Manage… → Rebuild from source…** to add the eight-car grid before racing. Existing builds still support Direct practice. VR and AI racing are experimental; Evening gameplay and headset acceptance remain pending. Custom-track LAN is unavailable. The port includes layered road/terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Assetto Corsa lighting and some effects remain approximate; the boats do not follow their original sailing routes.
+Choose **Daylight**, **Evening** or **Morning Fog**, an installed car and use **Launch** or **Launch VR**. **Direct practice** runs one complete lap; **Race** offers 1–7 AI opponents and 1–20 laps. If Misty Loch was built with an older launcher, use **Manage… → Rebuild from source…** to add the eight-car grid before racing. Existing builds still support Direct practice. VR and AI racing are experimental; Morning Fog full-lap and headset acceptance remain pending. Custom-track LAN is unavailable. The port includes layered road/terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Assetto Corsa lighting and some effects remain approximate; the boats do not follow their original sailing routes.
 
 ### Mizu Mountain
 

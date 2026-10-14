@@ -71,9 +71,10 @@ public static class TrackPacks
          new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
     public static readonly TrackPack Mizu = new("mizu-mountain", "Mizu Mountain", "1.0.2", "0.17.61", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
-    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.1.0", "0.17.99", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
+    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.2.0", "0.17.103", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight"),
-         new("misty-loch-evening", "Full circuit · 6.45 km", "d2vr_misty_evening", "Evening")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
+         new("misty-loch-evening", "Full circuit · 6.45 km", "d2vr_misty_evening", "Evening"),
+         new("misty-loch-morning-fog", "Full circuit · 6.45 km", "d2vr_misty_morning", "Morning Fog")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
     public static readonly TrackPack Spa = new("spa-francorchamps", "Spa-Francorchamps", "1.0.1", "0.17.95", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("spa-francorchamps", "GP circuit · 7 km", "d2vr_spa", "Daylight")], ["database/database.bin", "dx11/shaderpack/shaderpack.pssg"]);
     public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty, Spa];
@@ -286,3 +287,4 @@ public sealed class TrackPack
         source.Sha256 == "BEAC14E6B3910B404640ADEC1FBE8E687F3505DF4479B8D3924DF42D03A0FD6D" &&
         hash == "7C54720E9C0921E5C1CAC46FD1C8B22DF27E80DE177FAEDACB6282AD4B06BF99";
 }
+

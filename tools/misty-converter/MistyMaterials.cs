@@ -27,7 +27,7 @@ internal sealed class MistyMaterials(Scene scene,string game)
         {
             if(source.Shader!="ksMultilayer_fresnel_nm"||source.Blend!=0||source.AlphaTest)throw new InvalidDataException("Unexpected multilayer profile: "+source.Id);
             result=native.Detail(source);
-            note="Source RGBA mask sum, all four original detail textures/scales, magicMult and broad RGB modulation. Source detail normal uses its vector tiling and a derivative UV frame. Native shadow/SSAO/fog; explicitly dry with no specular term. Exact AC/CSP lighting remains approximate.";
+            note="Source RGBA mask sum, all four original detail textures/scales, magicMult and broad RGB modulation. Source detail normal uses its vector tiling and a guarded derivative UV frame. Native shadow/SSAO/fog; road-only subtle specular with static mountain occlusion. Exact AC/CSP lighting remains approximate.";
         }
         if(source.Name=="lake1")
             note="Original lake geometry is exported separately to the native non-interactive water manager, with source normal texture and native timed waves/reflections. CSP caustics and exact source shading remain unsupported.";

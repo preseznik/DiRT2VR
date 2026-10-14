@@ -17,7 +17,8 @@ internal sealed class MistyNativeMaterials(Scene scene,string game)
         var group=xml.Element("SHADERGROUP")!;var instance=xml.Element("SHADERINSTANCE")!;
         string name=(grass?MistyDetailShader.Grass:MistyDetailShader.Ground)+".fx";
         group.SetAttributeValue("id",name);instance.SetAttributeValue("shaderGroup","#"+name);instance.Elements("SHADERINPUT").Remove();
-        foreach(string texture in new[]{"TMistyDetail","TMistyDetailA","TMistyNormal"})group.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",texture),new XAttribute("type","texture")));
+        foreach(string constant in new[]{"MistyRoadSpecular","MistySunTransform"})group.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
+        foreach(string texture in new[]{"TMistyDetail","TMistyDetailA","TMistyNormal","TMistySunMask"})group.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",texture),new XAttribute("type","texture")));
         group.SetAttributeValue("parameterCount",group.Elements("SHADERINPUTDEFINITION").Count());
         instance.SetAttributeValue("parameterCount",group.Elements("SHADERINPUTDEFINITION").Count());
         var textures=new Dictionary<string,string>(source.Textures);
@@ -28,6 +29,8 @@ internal sealed class MistyNativeMaterials(Scene scene,string game)
         }
         var constants=grass?new Dictionary<string,string>{["Map2UVScaleAndOffset"]="105 0 0 0"}:new(){["Map1UVScaleAndOffset"]=Map("A"),["Map2UVScaleAndOffset"]=Map("R"),["Map3UVScaleAndOffset"]=Map("G"),["Map4UVScaleAndOffset"]=Map("B"),["DetailBlendScale"]=source.Properties["magicMult"][0].ToString("R",CultureInfo.InvariantCulture)};
         if(!grass)constants["BlendMaskUVScale"]=string.Join(" ",source.Properties["detailNMMult"].Skip(1).Take(2).Concat(new[]{0f,0f}).Select(v=>v.ToString("R",CultureInfo.InvariantCulture)));
+        constants["MistyRoadSpecular"]=source.Name=="road_asphalt"&&!grass?"0.065 24 0 0":"0 24 0 0";
+        constants["MistySunTransform"]="0 0 0 0"; // Road world-to-mask transform is set after reading the scene.
         var definitions=group.Elements("SHADERINPUTDEFINITION").ToArray();
         for(int i=0;i<definitions.Length;i++)
         {
@@ -39,6 +42,7 @@ internal sealed class MistyNativeMaterials(Scene scene,string game)
                     "TMistyDetail"=>source.Textures["txDetailB"],"TBlendMap2"=>source.Textures["txMask"],
                     "TMistyDetailA"=>source.Textures["txDetailA"],
                     "TMistyNormal"=>source.Textures["txDetailNM"],
+                    "TMistySunMask"=>source.Name=="road_asphalt"?MistySunOcclusion.TextureName:"nord_black",
                     "TAmbientOcclusion"=>source.Textures["txDiffuse"],_=>"nord_black"};
                 instance.Add(new XElement("SHADERINPUT",new XAttribute("parameterID",i),new XAttribute("type","texture"),new XAttribute("texture",textures[key])));
             }

@@ -1,6 +1,6 @@
 DiRT2VR — Experimental
 
-Choose Daylight or Evening for Misty Loch under CUSTOM tracks → Conditions. Use Manage → Rebuild from source once to add Evening; existing Daylight installs and replays remain usable. Both presets retain the dry-road and black-band fixes.
+Choose Daylight, Evening or Morning Fog for Misty Loch under CUSTOM tracks → Conditions. Use Manage → Rebuild from source for all three presets and subtle road highlights with mountain occlusion. Existing Daylight and Evening installs and replays remain usable. The black-band fix is preserved. Morning Fog full-lap and headset checks remain pending.
 
 Adjust Nordschleife road sheen under Graphics → Main, independently for Desktop and VR. Keep Use track default enabled, or choose 0–100% for the next launch. No track rebuild is needed for this setting; other surfaces are unchanged.
 

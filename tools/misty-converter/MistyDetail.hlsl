@@ -16,6 +16,8 @@ float EdgeSCurveShift;
 float EdgeBlendMaskUScale;
 float EdgeBlendMaskVScale;
 float terrainXFade;
+float4 MistyRoadSpecular;
+float4 MistySunTransform;
 cbuffer PerFrameConstantBuffer : register(b1) {
     float4 sunDirection, sunColour, skylightColour, ambientOcclusionScales;
     float4 backlightColour, specularScales, specularDirection, specularColour;
@@ -40,6 +42,7 @@ sampler2D TAmbientOcclusion : register(s5);
 sampler2D TMistyDetail : register(s6);
 sampler2D TMistyDetailA : register(s7);
 sampler2D TMistyNormal : register(s8);
+sampler2D TMistySunMask : register(s9);
 struct Pixel {
     float4 position : SV_Position;
     float4 screen : TEXCOORD0;
@@ -112,6 +115,27 @@ float4 main(Pixel i) : SV_Target {
     illumination+=backlightColour.rgb*saturate((.3-facing)/1.3)+ambientColour.rgb;
     illumination=max(illumination+bounce,0);
     float3 lit=albedo*illumination*ao;
-    // Explicitly dry: no diffuse-alpha specular term, including hidden-sun views.
+#ifndef MISTY_GRASS
+    // Only road materials opt in. The three static masks keep distant mountains
+    // occluding the sun after native screen-space shadows have faded away.
+    if(MistyRoadSpecular.x>0) {
+        float3 light=normalize(sunDirection.xyz);
+        float3 preset=float3(dot(light,float3(.92718385,.37460659,0)),
+                             dot(light,float3(.97814760,.20791169,0)),
+                             dot(light,float3(-.98480775,.17364818,0)));
+        float3 selected=step(.9999,preset); // Unknown/changed sun directions fail closed.
+        float2 maskUV=p.xz*MistySunTransform.xy+MistySunTransform.zw;
+        float3 terrain=tex2D(TMistySunMask,maskUV).rgb;
+        float visible=dot(terrain,selected)*saturate(shadow.x);
+        visible*=all(maskUV>0)&&all(maskUV<1)?1:0;
+        float3 viewDirection=(eyePositionWS.xyz-p)*rsqrt(max(dot(eyePositionWS.xyz-p,eyePositionWS.xyz-p),1e-8));
+        float3 halfVector=light+viewDirection;
+        halfVector*=rsqrt(max(dot(halfVector,halfVector),1e-8));
+        float highlight=pow(saturate(dot(n,halfVector)),MistyRoadSpecular.y);
+        // Broad rough-asphalt response, no wet-look grazing boost or alpha reuse.
+        float strength=MistyRoadSpecular.x*(1-.75*selected.z);
+        lit+=min(max(sunColour.rgb,0),2)*strength*highlight*saturate(facing)*visible*ao;
+    }
+#endif
     return float4(max(lit*i.fog.w+i.fog.rgb,0),1);
 }

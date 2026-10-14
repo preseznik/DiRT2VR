@@ -17,7 +17,7 @@ public static class MistyConversion
         if(sources.Any(f=>f.Game=="assettocorsa"&&!f.Path.StartsWith("content/tracks/rt_misty_loch/",StringComparison.Ordinal)))
             throw new IOException("Misty Loch conversion may only use DiRT 2 and the Misty Loch source folder.");
         var pack=TrackPacks.Misty;
-        return new(pack.Id,pack.Name,pack.Version,pack.MinimumLauncher,8L<<30,2L<<30,pack.Modes.ToArray(),pack.Layouts.ToArray(),sources);
+        return new(pack.Id,pack.Name,pack.Version,pack.MinimumLauncher,8L<<30,3L<<30,pack.Modes.ToArray(),pack.Layouts.ToArray(),sources);
     }
     public static int Run(string[] args)
     {
@@ -76,15 +76,15 @@ public static class MistyConversion
                 if(SafeFiles.Hash(source)!=f.Value.GetString())throw new IOException("Candidate changed while preparing the pack: "+f.Name);
                 assets[f.Name.StartsWith("shared/",StringComparison.Ordinal)?f.Name[7..]:"route_0/"+f.Name]=source;
             }
-            if(layout.Condition=="Evening")
+            if(layout.Condition!="Daylight")
             {
                 string lighting=Path.Combine(variant,"lighting.xml");
-                MistyLighting.WriteEvening(assets["lighting.xml"],lighting);
+                MistyLighting.WriteVariant(assets["lighting.xml"],lighting,layout.Condition);
                 assets["lighting.xml"]=lighting;
             }
             foreach(var (relative,source) in assets)Copy(source,"tracks/usa/"+layout.Folder+"/"+relative);
             string metadata=Path.Combine(variant,"metadata");
-            string key=layout.Id=="misty-loch"?"mistyrt":"mistyev";
+            string key=layout.Id switch {"misty-loch"=>"mistyrt","misty-loch-evening"=>"mistyev",_=>"mistymf"};
             TrackMetadata.Create(d2,schema,metadata,new(layout.Folder,key,"Misty Loch", "misty","Misty Loch",donorModel),length,false);
             var session=new List<SessionFile>();
             using(var manifest=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(metadata,"metadata.json"))))
@@ -101,8 +101,8 @@ public static class MistyConversion
                 string owned=pack.Support+"/"+layout.Id+"/"+path;Copy(source,owned);
                 session.Add(new(path,expected[Path.GetFullPath(Path.Combine(d2,path))],owned));
             }
-            // Daylight assets and course identity are unchanged; preserve existing replays.
-            sessions.Add(new(layout.Id,session.ToArray(),layout.Id=="misty-loch"?"1.0.1":pack.Version));
+            // Visual-only changes retain the existing course/replay identities.
+            sessions.Add(new(layout.Id,session.ToArray(),layout.Id switch {"misty-loch"=>"1.0.1","misty-loch-evening"=>"1.1.0",_=>pack.Version}));
         }
         Report(95,"Verifying every installed file and original source");
         if(!sources.SequenceEqual(TrackPack.VerifySources(profile,d2,ac,null,default)))

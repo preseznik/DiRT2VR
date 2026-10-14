@@ -12,7 +12,7 @@ Build each pack from your own installed source game using **CUSTOM tracks → Bu
 | [Smelter](#smelter) | DiRT 3 Complete Edition | Ten circuits around an industrial and wooded setting, with Rallycross, Landrush and head-to-head layouts. | Dry and wet lighting; morning and evening variants. Duel layouts have two-car grids. |
 | [Nordschleife](#nordschleife) | Assetto Corsa — standard Nordschleife (`ks_nordschleife`) | The full 20.7 km circuit, with trackside scenery and distant landscape. | Three dry lighting presets: Daylight, Overcast and Evening. Eight timing checkpoints and a shared best practice lap across presets. |
 | [Mizu Mountain](#mizu-mountain) | GRID 2 | A full 10.4 km mountain route from start to finish. | Daylight; point-to-point rather than laps; three timing checkpoints. |
-| [Misty Loch](#misty-loch) | Assetto Corsa with the Misty Loch 1.4 add-on (`rt_misty_loch`) | A full 6.45 km lakeside road circuit. | Daylight and Evening; animated waterfall, lake waves and gently moving boats. One-lap Direct practice and multi-lap Race, on desktop or in VR. |
+| [Misty Loch](#misty-loch) | Assetto Corsa with the Misty Loch 1.4 add-on (`rt_misty_loch`) | A full 6.45 km lakeside road circuit. | Daylight, Evening and Morning Fog; animated waterfall, lake waves and gently moving boats. One-lap Direct practice and multi-lap Race, on desktop or in VR. |
 
 ## Play modes
 
@@ -78,7 +78,7 @@ Some materials and lighting are approximations. Movable props and soft vegetatio
 
 Source: **Assetto Corsa with Misty Loch 1.4 installed** in `content/tracks/rt_misty_loch`. No other track, extra grass texture pack or CSP installation is needed.
 
-Choose **Daylight** or **Evening** under Conditions. Use **Manage… → Rebuild from source…** to add Evening to an existing installation; both presets are built together. Existing Daylight remains usable before rebuilding. Evening gameplay and headset acceptance remain pending.
+Choose **Daylight**, **Evening** or **Morning Fog** under Conditions. Use **Manage… → Rebuild from source…** to add all three presets and subtle road highlights with mountain occlusion. Existing Daylight and Evening remain usable before rebuilding. Morning Fog full-lap and headset acceptance remain pending.
 
 The port includes layered road and terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Lighting and some source effects remain approximate; boats do not follow their original sailing routes.
 
