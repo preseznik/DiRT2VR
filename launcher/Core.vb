@@ -117,6 +117,10 @@ Public Class VrSettings
     Public Property DesktopVSync As Boolean = True
     Public Property DesktopBloom As Boolean = True
     Public Property VrBloom As Boolean = True
+    Public Property DesktopRoadSheenDefault As Boolean = True
+    Public Property VrRoadSheenDefault As Boolean = True
+    Public Property DesktopRoadSheen As Integer = 25
+    Public Property VrRoadSheen As Integer = 25
     Public Property DesktopFilterId As String = "original"
     Public Property VrFilterId As String = "original"
     Public Property RenderScale As Integer = 100
@@ -202,6 +206,7 @@ Public Class VrSettings
         If ChaseMouseSensitivity < 25 OrElse ChaseMouseSensitivity > 300 OrElse ChaseStickSensitivity < 25 OrElse ChaseStickSensitivity > 300 Then Throw New IOException("Choose chase-camera sensitivity between 25% and 300%.")
         If Not {0, 2, 4, 8}.Contains(VrMsaa) Then Throw New IOException("Choose Off, 2×, 4× or 8× VR anti-aliasing.")
         If VrShadowDetailDistance < 14 OrElse VrShadowDetailDistance > 60 Then Throw New IOException("Choose a detailed shadow distance between 14 and 60 metres.")
+        If DesktopRoadSheen < 0 OrElse DesktopRoadSheen > 100 OrElse VrRoadSheen < 0 OrElse VrRoadSheen > 100 Then Throw New IOException("Choose road sheen between 0 and 100 percent.")
         If VrShadowQuality < 0 OrElse VrShadowQuality > 3 Then Throw New IOException("Choose Game, Low, Medium or High shadow quality.")
         HudDistance = Math.Round(Math.Clamp(HudDistance, 1D, 20D) * 2D, MidpointRounding.AwayFromZero) / 2D
         If Version <> 3 Then Throw New IOException("Unsupported settings version.")

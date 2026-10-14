@@ -274,6 +274,8 @@ The following settings apply to VR:
 | Distance (VR HUD) | 1 m | Move the cockpit HUD between 1–20 metres in 0.5 m steps. Its apparent size stays constant. Applies to fixed and follow-view modes. |
 | Show HUD areas | Gauges off; others on | Show or hide gauges, lap/time, race position, route map and stage progress in the cockpit HUD. |
 
+**Road sheen (Experimental)** under **Graphics → Main** has separate Desktop and VR controls. Leave **Use track default** checked to preserve the installed track look. For Nordschleife, uncheck it and choose 0–100%: 0% is matte, 10–25% gives a milder highlight, and 100% restores the original strong reflection. Save settings and relaunch; no rebuild is needed. The selected track or replay must support this control. Other tracks, cars, glass and water are unchanged. Original track files are restored after play; Graphics → Restore defaults also returns both controls to Use track default.
+
 Numeric settings use sliders with the current value beside them, including AI opponents and circuit laps. Drag a slider or use the arrow keys for one-step adjustments. These percentages scale width and height, not total pixels: 80% render resolution uses approximately 64% of the baseline pixels. **Restore defaults** restores the VR baseline, turns both Bloom toggles and desktop VSync on and borderless off; save afterward.
 
 VR render resolution now sets the game scene dimensions even when they exceed the desktop size. At full field of view, 100% is 1600 × 1200, 150% is 2400 × 1800 and 200% is 3200 × 2400 per eye. Check the measured game resolution in Graphics after a VR launch. Headset texture scale is a separate output limit: a low value can still reduce visible detail. Higher scene resolutions also increase GPU and memory use.

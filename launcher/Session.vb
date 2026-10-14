@@ -338,6 +338,11 @@ Public Class Session
             lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode)
             ' Last preparation step: all asset/profile validation has succeeded.
             ' Recovery owns this executable change just like other session files.
+            Dim vr = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
+            If settings.DirectMode AndAlso Nordschleife.RoadSheen.Supports(settings.TrackId) AndAlso Not If(vr, settings.VrRoadSheenDefault, settings.DesktopRoadSheenDefault) Then
+                Status("Preparing", "Adjusting road sheen")
+                Worker.Invoke(context, "prepare-road-sheen", trackId:=settings.TrackId, roadSheen:=If(vr, settings.VrRoadSheen, settings.DesktopRoadSheen))
+            End If
             If settings.ExperimentalLaa Then Worker.Invoke(context, "prepare-laa")
             Using child = Process.Start(start)
                 Status("Running")
