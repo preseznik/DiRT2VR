@@ -245,6 +245,9 @@ Build the full 10.4 km daylight route from your own GRID 2 installation: CUSTOM 
 
 Installed tracks work offline; keep GRID 2 available for rebuilds.
 
+Spa-Francorchamps
+Choose CUSTOM tracks → Source: GRID 2 → Spa-Francorchamps → Build and install…, then select your GRID 2 installation with the Spa-Francorchamps DLC installed. The full 7 km GP circuit supports desktop Direct practice, with one to twenty laps, three timing sectors and replay cameras. AI races and VR are not available for this pack. Track assets are built locally from your games and are not included in the installer.
+
 Offline and original tracks
 Use the Source dropdown above CUSTOM tracks to check one or more source games, or choose All source games. Installed tracks only hides uninstalled layouts and source games with no installed packs. Converted tracks remain listed even if their source game has been removed; tracks needing repair stay visible. Filtering keeps your saved selection. If it becomes hidden, choose a visible track or Show all tracks before launching. Save settings remembers these filters for this installation.
 

@@ -4,6 +4,7 @@ $ErrorActionPreference='Stop'
 Get-ChildItem -LiteralPath tools/aspen-converter/licenses -File | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $LicenseDirectory }
 Copy-Item -LiteralPath .deps/Ego-Engine-Modding/LICENSE -Destination (Join-Path $LicenseDirectory 'EGO-MIT.txt')
 Copy-Item -LiteralPath licenses/MiscUtil.txt -Destination (Join-Path $LicenseDirectory 'MiscUtil.txt')
+Copy-Item -LiteralPath licenses/NeFS-MIT.txt -Destination (Join-Path $LicenseDirectory 'NeFS-MIT.txt')
 $assets=Get-Content launcher/obj/project.assets.json -Raw | ConvertFrom-Json
 $attributions=@()
 foreach($entry in $assets.libraries.PSObject.Properties | Where-Object {$_.Value.type -eq 'package' -and $_.Name -notlike 'Microsoft.NET.ILLink.Tasks/*'}) {

@@ -73,7 +73,9 @@ public static class TrackPacks
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
     public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.0.1", "0.17.77", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
-    public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty];
+    public static readonly TrackPack Spa = new("spa-francorchamps", "Spa-Francorchamps", "1.0.0", "0.17.94", ["desktop-solo"],
+        [new("spa-francorchamps", "GP circuit · 7 km", "d2vr_spa", "Daylight")], ["database/database.bin", "dx11/shaderpack/shaderpack.pssg"]);
+    public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty, Spa];
     static TrackPack[] external = [];
     public static TrackPack[] All => [..BuiltIn, ..external];
     public static ExternalPack[] External { get; private set; } = [];
@@ -108,9 +110,9 @@ public sealed class TrackPack
     public string[] RequiredTargets { get; }
     public string Support => External?.Support ?? "DiRT2VR/custom-tracks/" + Id;
     public string Receipt => External?.Receipt ?? Support + "/receipt.json";
-    public string SourceGame => External is not null ? "external" : Id switch { "nordschleife" or "misty-loch" => "assettocorsa", "mizu-mountain" => "grid2", _ => "dirt3" };
-    public string SourceName => External is not null ? "External" : Id switch { "nordschleife" or "misty-loch" => "Assetto Corsa", "mizu-mountain" => "GRID 2", _ => "DiRT 3 Complete Edition" };
-    public string[] SharedTargets => Id == "misty-loch" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"] : Id == "smelter" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"] : AspenPack.SharedTargets;
+    public string SourceGame => External is not null ? "external" : Id switch { "nordschleife" or "misty-loch" => "assettocorsa", "mizu-mountain" or "spa-francorchamps" => "grid2", _ => "dirt3" };
+    public string SourceName => External is not null ? "External" : Id switch { "nordschleife" or "misty-loch" => "Assetto Corsa", "mizu-mountain" or "spa-francorchamps" => "GRID 2", _ => "DiRT 3 Complete Edition" };
+    public string[] SharedTargets => Id == "spa-francorchamps" ? [..AspenPack.SharedTargets, "dx11/shaderpack/shaderpack.pssg"] : Id == "misty-loch" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"] : Id == "smelter" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"] : AspenPack.SharedTargets;
     internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets, ExternalPack? external = null)
     {
         External = external;
@@ -205,7 +207,7 @@ public sealed class TrackPack
             SafeFiles.Relative(f.Path);
             string extension = Path.GetExtension(f.Path);
             bool supported = new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf" }.Contains(extension) ||
-                (Id is "nordschleife" or "mizu-mountain" or "misty-loch" && extension is ".nfs" or ".gssp");
+                (Id is "nordschleife" or "mizu-mountain" or "misty-loch" or "spa-francorchamps" && extension is ".nfs" or ".gssp");
             // Misty retains its full-resolution source textures in one 517 MiB bundle.
             long maximumFileBytes = Id == "misty-loch" && f.Path == "tracks/usa/d2vr_misty/tracksplit.pssg" ? 768L * 1024 * 1024 : 512L * 1024 * 1024;
             if (!paths.Add(f.Path) || f.Path == Receipt || !allowedRoots.Any(p => f.Path.StartsWith(p + "/", StringComparison.Ordinal)) ||
@@ -278,7 +280,7 @@ public sealed class TrackPack
     }
     // Inspected XML-form PSSG: these two files are byte-identical after CRLF/LF normalization.
     static bool KnownSourceVariant(string pack, Fingerprint source, string hash) =>
-        (pack is "nordschleife" or "mizu-mountain" or "misty-loch") && source.Game == "dirt2" &&
+        (pack is "nordschleife" or "mizu-mountain" or "misty-loch" or "spa-francorchamps") && source.Game == "dirt2" &&
         source.Path == "tracks/london/battersea/track_light_anims.pssg" &&
         source.Sha256 == "BEAC14E6B3910B404640ADEC1FBE8E687F3505DF4479B8D3924DF42D03A0FD6D" &&
         hash == "7C54720E9C0921E5C1CAC46FD1C8B22DF27E80DE177FAEDACB6282AD4B06BF99";

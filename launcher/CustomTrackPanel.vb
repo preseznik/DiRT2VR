@@ -187,6 +187,7 @@ Public Class CustomTrackPanel
                                                     Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
                                                     condition.Text = If(chosen Is Nothing, "Choose a layout", chosen.Discipline & " · " & chosen.Condition)
                                                     If currentPack?.Id = "nordschleife" Then condition.Text = "Standard circuit"
+                                                    If currentPack?.Id = "spa-francorchamps" Then condition.Text = "Circuit · Daylight"
                                                     RefreshBestTime()
                                                     If Not loading Then LoadLayoutSession()
                                                     RefreshRaceOptions()
@@ -403,7 +404,9 @@ Public Class CustomTrackPanel
         Else
             setup.Controls.Remove(lightingTestBox)
         End If
-        launchMode.Enabled = True
+        Dim soloOnly = currentPack IsNot Nothing AndAlso currentPack.Available AndAlso Not TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race")
+        If soloOnly AndAlso launchMode.SelectedIndex <> 0 Then launchMode.SelectedIndex = 0
+        launchMode.Enabled = Not soloOnly
         Dim race = launchMode.SelectedIndex = 1
         Dim pointToPoint = chosen IsNot Nothing AndAlso Not chosen.Circuit
         laps.Enabled = Not pointToPoint AndAlso (Not OneLapPractice OrElse race)
@@ -415,6 +418,7 @@ Public Class CustomTrackPanel
         If currentPack.External IsNot Nothing AndAlso currentPack.Available Then modeHint.Text = "External · " & String.Join(", ", TrackPacks.Get(currentPack.Id).Modes.Select(Function(mode) mode.Replace("desktop-", "Desktop ").Replace("vr-", "VR ").Replace("solo", "Practice").Replace("race", "Race"))) & If(currentPack.External.Manifest.Replay, " · Full Replay supported by author", " · Turn full-race recording off")
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If customCars IsNot Nothing AndAlso customCars.CustomEnabled Then modeHint.Text = "Custom cars: Desktop Direct practice · Nordschleife Daylight only · Handling and suspension remain experimental."
+        If currentPack?.Id = "spa-francorchamps" Then modeHint.Text = "Desktop Direct practice · 1–20 laps · AI races and VR unavailable"
         raceDifficulty.Enabled = race
         opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race
         Dim vehicle = TryCast(cars.SelectedItem, PracticeCar)
@@ -559,6 +563,7 @@ Public Class CustomTrackPanel
         End Using
         bounds.Y += Px(Me, 24)
         Dim subtitle = If(pack.External IsNot Nothing, "External · " & If(pack.Available, pack.Layouts.Length & " layouts", "Needs attention"), If(pack.Id = "nordschleife", "Standard circuit · 20.7 km", If(pack.Id = "mizu-mountain", "Point-to-point · 10.4 km · Race and VR", If(pack.Id = "misty-loch", "Full circuit · 6.45 km · Race and VR", If(pack.Available, pack.Layouts.Length & " layouts · Race and VR", "Saved selection")))))
+        If pack.Id = "spa-francorchamps" Then subtitle = "GP circuit · 7 km · Desktop Direct practice"
         TextRenderer.DrawText(e.Graphics, subtitle, Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
         bounds.Y += Px(Me, 24)
         TextRenderer.DrawText(e.Graphics, packStatuses(pack.Id), Font, bounds, foreground, TextFormatFlags.Top Or TextFormatFlags.EndEllipsis Or TextFormatFlags.NoPrefix)
@@ -636,7 +641,7 @@ Public Class AspenSourceForm
     Public Sub New(previous As String, detected As String(), offer As ConversionProfile, Optional selectedIds As String() = Nothing, Optional installed As PackReceipt = Nothing)
         Dim nord = offer.Id = "nordschleife"
         Dim sourceGame = TrackPacks.Get(offer.Id).SourceName
-        source.Name = If(TrackPacks.Get(offer.Id).SourceGame = "assettocorsa", "AssettoCorsaSourceFolder", If(offer.Id = "mizu-mountain", "Grid2SourceFolder", "Dirt3SourceFolder"))
+        source.Name = If(TrackPacks.Get(offer.Id).SourceGame = "assettocorsa", "AssettoCorsaSourceFolder", If(TrackPacks.Get(offer.Id).SourceGame = "grid2", "Grid2SourceFolder", "Dirt3SourceFolder"))
         Text = "Build " & offer.Name & " layouts — " & sourceGame : Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi : StartPosition = FormStartPosition.CenterParent
         StyleChoice(source, Me)

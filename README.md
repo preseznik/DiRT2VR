@@ -96,6 +96,7 @@ External tracks support only the Direct practice, Race, VR and replay modes decl
 | --- | --- | --- |
 | Mizu Mountain | GRID 2 | One 10.4 km daylight route |
 | Nordschleife | Assetto Corsa, standard Nordschleife circuit | Full circuit in Daylight, Overcast and Evening |
+| Spa-Francorchamps | GRID 2 with Spa-Francorchamps DLC | Full 7 km GP circuit, desktop Direct practice |
 | Misty Loch | Assetto Corsa with Misty Loch 1.4 (`rt_misty_loch`) | Full 6.45 km circuit, Direct practice and Race on desktop or in VR |
 | Aspen | DiRT 3 Complete Edition | Ten layouts |
 | Smelter | DiRT 3 Complete Edition | Ten layouts |
@@ -139,6 +140,10 @@ All twenty Aspen and Smelter layouts offer experimental **desktop and VR** play 
 Snowmass Sprint omits the decorative beams on the ski hillside where they flickered with viewing angle or distance. The towers, bright lamp faces and ground lighting remain, along with the other beams around the course. The other three layouts are unchanged by this workaround.
 
 Each pack keeps its own layout, car, race and lap selections, separately from stock tracks. Turn **CUSTOM tracks** off to restore your original track, car and event selections. Installed custom layouts work **offline**, without their source game. Keep the source installation available if you want to rebuild or update a pack. Successful file checks are remembered while the launcher stays open, so switching locations does not repeat the scan. Installed-file changes trigger a new check. Use **Manage… → Verify installed files** to check again at any time. The **Manage…** menu also offers rebuilding and removal. Rebuild uses the same layout checkboxes: select just the courses you want to update or add. Choose Select all to update the whole location. The list shows which layouts are already installed, and the launcher reports the installed count. Conversion-tool updates arrive with DiRT2VR updates.
+
+### Spa-Francorchamps
+
+Choose **CUSTOM tracks → Source: GRID 2 → Spa-Francorchamps → Build and install…**, then select your GRID 2 installation with the Spa-Francorchamps DLC installed. The full GP circuit supports **desktop Direct practice**, with 1–20 laps, three timing sectors and replay cameras. AI races and VR are not available for this pack. Track assets are built locally from your games and are not included in the installer.
 
 ### Nordschleife
 

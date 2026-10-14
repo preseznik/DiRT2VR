@@ -8,6 +8,7 @@ Public Module Program
         If args.Contains("--convert-aspen") Then Return Aspen.AspenConversion.Run(args)
         If args.Contains("--convert-nordschleife") Then Return Nordschleife.NordschleifeConversion.Run(args)
         If args.Contains("--convert-misty") Then Return Misty.MistyConversion.Run(args)
+        If args.Contains("--convert-spa") Then Return Spa.SpaConversion.Run(args)
         If args.Contains("--convert-mizu") Then Return Mizu.MizuConversion.Run(args)
         If args.Contains("--convert-smelter") Then Return Aspen.SmelterConversion.Run(args)
         Try

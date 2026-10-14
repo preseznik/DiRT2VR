@@ -8,7 +8,7 @@
     <OptionStrict>On</OptionStrict>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <AssemblyName>DiRT2VR</AssemblyName>
-    <Version>0.17.93</Version>
+    <Version>0.17.94</Version>
     <ReleaseChannel Condition="'$(ReleaseChannel)' == ''">Stable</ReleaseChannel>
     <BuildUtc Condition="'$(BuildUtc)' == ''">Development build</BuildUtc>
     <ApplicationManifest>app.manifest</ApplicationManifest>
@@ -33,6 +33,7 @@
     <ProjectReference Include="../tools/custom-tracks/CustomTracks.csproj" />
     <ProjectReference Include="../tools/mizu-converter/MizuConverter.csproj" />
     <ProjectReference Include="../tools/misty-converter/MistyConverter.csproj" />
+    <ProjectReference Include="../tools/spa-converter/SpaConverter.csproj" />
     <ProjectReference Include="../tools/profiles/Profiles.csproj" />
     <ProjectReference Include="../tools/car-converter/CarConverter.csproj" />
   </ItemGroup>

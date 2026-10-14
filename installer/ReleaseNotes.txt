@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Spa-Francorchamps is now available under CUSTOM tracks → GRID 2. Build the full GP circuit from your installed GRID 2 Spa DLC, then drive in desktop Direct practice with timing sectors and replay cameras. AI races and VR are not enabled for this pack.
+
 Custom-track descriptions and build instructions now wrap correctly when an error appears, including in narrow windows and with larger text.
 
 Move built tracks and cars between PCs: choose Manage → Export pack ZIP…, then extract the ZIP into the other PC's DiRT 2 game folder with the game and launcher closed. Open an up-to-date launcher and Refresh. No rebuilding is needed; existing compatibility checks still apply.
