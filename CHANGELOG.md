@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Natural, Vivid and Muted starter presets under Graphics → Filters, with Day and Night adjustments for Desktop or VR. Use Save as to customize them; Original and existing selections remain unchanged. In-game visual tuning is pending.
+
 - Add experimental Road sheen controls under Graphics → Main, with separate Desktop and VR strengths for Nordschleife. Keep the installed track default, or choose 0–100% for the next launch without rebuilding. Other surfaces remain unchanged.
 
 - Correct overly shiny Nordschleife asphalt in Daylight, Overcast and Evening while preserving its original colour and detail. Rebuild the track with the updated converter to apply the correction.

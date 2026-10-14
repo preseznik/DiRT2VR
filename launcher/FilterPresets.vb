@@ -76,6 +76,39 @@ Public Class FilterPreset
         Return Name
     End Function
 End Class
+Public Module BuiltInFilters
+    ' Stable version-1 IDs also let older launchers import an exported copy.
+    Public Const NaturalId As String = "d13ae77fa56349b29ef353ab91f3cdd1"
+    Public Const VividId As String = "6975740db105430db03793a22af4ae26"
+    Public Const MutedId As String = "15372440dbcb44f3bb352e46ce0b42d3"
+    Public Function Contains(id As String) As Boolean
+        Return id = "original" OrElse id = NaturalId OrElse id = VividId OrElse id = MutedId
+    End Function
+    Public Function Create(id As String) As FilterPreset
+        Select Case id
+            Case "original" : Return New FilterPreset()
+            Case NaturalId : Return New FilterPreset With {.Id = id, .Name = "Natural", .Day = CreateVariant(90, 95, 60, True), .Night = CreateVariant(90, 100, 70, True)}
+            Case VividId : Return New FilterPreset With {.Id = id, .Name = "Vivid", .Day = CreateVariant(135, 115, 115), .Night = CreateVariant(120, 110, 105)}
+            Case MutedId : Return New FilterPreset With {.Id = id, .Name = "Muted", .Day = CreateVariant(70, 85, 65), .Night = CreateVariant(75, 90, 65)}
+            Case Else : Throw New IOException("Unknown built-in filter.")
+        End Select
+    End Function
+    Private Function CreateVariant(saturation As Integer, contrast As Integer, bloom As Integer, Optional removeTint As Boolean = False) As FilterVariant
+        Return New FilterVariant With {.Values = New Dictionary(Of String, Integer)(StringComparer.Ordinal) From {{"saturation", saturation}, {"contrast", contrast}, {"bloom", bloom}}, .TintEnabled = removeTint, .TintStrength = 0}
+    End Function
+    Public Function All() As List(Of FilterPreset)
+        Return {"original", NaturalId, VividId, MutedId}.Select(Function(id) Create(id)).ToList()
+    End Function
+    Public Function Description(id As String) As String
+        Select Case id
+            Case "original" : Return "Preserves the track's original look."
+            Case NaturalId : Return "Gentler colour and bloom, slightly softer daytime contrast, and no image tint."
+            Case VividId : Return "Stronger colour, contrast and bloom; a milder boost at night."
+            Case MutedId : Return "Reduced colour, contrast and bloom for a subdued look."
+            Case Else : Return ""
+        End Select
+    End Function
+End Module
 Public Class FilterStore
     Public Shared ReadOnly Json As New JsonSerializerOptions With {.WriteIndented = True, .MaxDepth = 12, .UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow}
     Private ReadOnly folder As String
@@ -84,7 +117,7 @@ Public Class FilterStore
     End Sub
     Private Function Filename(id As String) As String
         FilterPreset.ValidateId(id)
-        If id = "original" Then Throw New IOException("Original is built in and cannot be overwritten or deleted.")
+        If BuiltInFilters.Contains(id) Then Throw New IOException("Built-in filters cannot be overwritten or deleted. Use Save as to make an editable copy.")
         Return SafeFiles.Inside(folder, id & ".d2vrfilter.json")
     End Function
     Public Shared Function ReadPreset(path As String) As FilterPreset
@@ -108,7 +141,7 @@ Public Class FilterStore
     End Function
     Public Function Load(id As String) As FilterPreset
         FilterPreset.ValidateId(id)
-        If id = "original" Then Return New FilterPreset()
+        If BuiltInFilters.Contains(id) Then Return BuiltInFilters.Create(id)
         Dim path = Filename(id)
         If Not File.Exists(path) Then Throw New IOException("The selected filter is missing. Choose Original or another preset in Graphics → Filters.")
         Dim preset = ReadPreset(path)
@@ -116,21 +149,23 @@ Public Class FilterStore
         Return preset
     End Function
     Public Function List(ByRef warnings As String) As List(Of FilterPreset)
-        Dim presets As New List(Of FilterPreset) From {New FilterPreset()}, errors As New List(Of String)
+        Dim presets As New List(Of FilterPreset), errors As New List(Of String)
         SafeFiles.NoLinks(folder)
         If Directory.Exists(folder) Then
             Dim paths = Directory.GetFiles(folder, "*.d2vrfilter.json")
             If paths.Length > 256 Then Throw New IOException("Too many filter presets. Keep at most 256 in the filter library.")
             For Each path In paths
                 Try
-                    presets.Add(Load(IO.Path.GetFileName(path).Replace(".d2vrfilter.json", "")))
+                    Dim id = IO.Path.GetFileName(path).Replace(".d2vrfilter.json", "")
+                    If BuiltInFilters.Contains(id) Then Throw New IOException("This ID is reserved for a built-in filter. Import the file to create an editable copy.")
+                    presets.Add(Load(id))
                 Catch ex As IOException
                     errors.Add(IO.Path.GetFileName(path) & ": " & ex.Message)
                 End Try
             Next
         End If
         warnings = String.Join(Environment.NewLine, errors)
-        Return presets.Take(1).Concat(presets.Skip(1).OrderBy(Function(p) p.Name, StringComparer.CurrentCultureIgnoreCase)).ToList()
+        Return BuiltInFilters.All().Concat(presets.OrderBy(Function(p) p.Name, StringComparer.CurrentCultureIgnoreCase)).ToList()
     End Function
     Public Sub Save(preset As FilterPreset)
         preset.Validate()
@@ -143,7 +178,7 @@ Public Class FilterStore
     End Sub
     Public Function Import(path As String) As FilterPreset
         Dim preset = ReadPreset(path)
-        If preset.Id = "original" Then preset.Name = "Original copy"
+        If BuiltInFilters.Contains(preset.Id) Then preset.Name &= " copy"
         preset.Id = Guid.NewGuid().ToString("N") : Save(preset) : Return preset
     End Function
     Public Shared Sub Export(path As String, preset As FilterPreset)

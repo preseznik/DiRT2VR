@@ -28,7 +28,7 @@ Public Class FilterPanel
             StyleChoice(box, Me)
         Next
         Field(selection, "Desktop preset", desktop) : Field(selection, "VR preset", headset)
-        selection.Controls.Add(New Label With {.Text = "Editor choices select both modes. Save settings and relaunch to apply.", .AutoSize = True})
+        AddWrappedNote(selection, New Label With {.Text = "Editor choices select both modes. Save settings and relaunch to apply.", .AutoSize = True})
         Dim editing = Section(content, "Preset editor")
         Field(editing, "Edit preset", editor)
         Dim actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
@@ -47,7 +47,7 @@ Public Class FilterPanel
                                                                   End Sub))
         AddButton(actions, "Import…", AddressOf ImportPreset)
         AddButton(actions, "Export…", AddressOf ExportPreset)
-        editing.Controls.Add(note)
+        AddWrappedNote(editing, note)
         lighting.Items.AddRange({"Day", "Night"}) : lighting.SelectedIndex = 0
         Field(editing, "Lighting", lighting)
         Dim columns As New ResponsiveColumns() : content.Controls.Add(columns)
@@ -86,6 +86,11 @@ Public Class FilterPanel
                                      End Sub
         ReloadLibrary(settings.DesktopFilterId, settings.DesktopFilterId, settings.VrFilterId)
     End Sub
+    Private Shared Sub AddWrappedNote(parent As Control, label As Label)
+        Dim fit As Action = Sub() label.MaximumSize = New Size(Math.Max(1, parent.ClientSize.Width - parent.Padding.Horizontal - label.Margin.Horizontal), 0)
+        AddHandler parent.SizeChanged, Sub() fit()
+        parent.Controls.Add(label) : fit()
+    End Sub
     Private ReadOnly Property CurrentVariant As FilterVariant
         Get
             Return If(lighting.SelectedIndex = 1, draft.Night, draft.Day)
@@ -119,7 +124,7 @@ Public Class FilterPanel
             Try
                 presets = store.List(warning)
             Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
-                warning = ex.Message : presets = New List(Of FilterPreset) From {New FilterPreset()}
+                warning = ex.Message : presets = BuiltInFilters.All()
             End Try
             For Each box In {desktop, headset, editor}
                 Dim id = If(box Is desktop, desktopId, If(box Is headset, vrId, editId))
@@ -177,10 +182,10 @@ Public Class FilterPanel
         dirty = True : UpdateNote()
     End Sub
     Private Sub UpdateNote()
-        note.Text = If(draft.Id = "original", "Original is read-only. Choose New or Save as to adjust it.", If(dirty, "Unsaved adjustments — use Save settings to keep them.", "Shared preset. Save settings keeps your adjustments and launch selections."))
+        note.Text = If(BuiltInFilters.Contains(draft.Id), BuiltInFilters.Description(draft.Id) & " Built-in preset; use Save as to adjust it.", If(dirty, "Unsaved adjustments — use Save settings to keep them.", "Shared preset. Save settings keeps your adjustments and launch selections."))
     End Sub
     Private Sub TintState()
-        tintColour.Enabled = draft.Id <> "original" AndAlso tint.Checked
+        tintColour.Enabled = Not BuiltInFilters.Contains(draft.Id) AndAlso tint.Checked
         tintStrength.Enabled = tintColour.Enabled
     End Sub
     Private Sub ShowVariant()
@@ -188,12 +193,12 @@ Public Class FilterPanel
         Try
             For Each parameter In FilterParameters.All
                 sliders(parameter.Key).Value = CurrentVariant.Value(parameter)
-                sliders(parameter.Key).Enabled = draft.Id <> "original"
+                sliders(parameter.Key).Enabled = Not BuiltInFilters.Contains(draft.Id)
             Next
-            tint.Checked = CurrentVariant.TintEnabled : tint.Enabled = draft.Id <> "original"
+            tint.Checked = CurrentVariant.TintEnabled : tint.Enabled = Not BuiltInFilters.Contains(draft.Id)
             tintColour.Text = "#" & CurrentVariant.TintRgb : tintStrength.Value = CurrentVariant.TintStrength : TintState()
             For Each button In editableButtons
-                button.Enabled = draft.Id <> "original"
+                button.Enabled = Not BuiltInFilters.Contains(draft.Id)
             Next
         Finally
             loading = wasLoading
