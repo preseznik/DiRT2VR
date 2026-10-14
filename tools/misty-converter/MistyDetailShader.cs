@@ -31,7 +31,8 @@ internal static class MistyDetailShader
                 throw new InvalidDataException("Unbound compiled texture resource.");
             code.SetAttributeValue("parameterCount",code.Elements("SHADERINPUTDEFINITION").Count());
             var nextGroup=new XElement(group);nextGroup.SetAttributeValue("id",name);
-            foreach(string constant in new[]{"MistyRoadSpecular","MistySunTransform"})nextGroup.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
+            // Native loading requires all input definitions before the first pass.
+            foreach(string constant in new[]{"MistyRoadSpecular","MistySunTransform"})nextGroup.Elements("SHADERINPUTDEFINITION").Last().AddAfterSelf(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
             foreach(string texture in new[]{"TMistyDetail","TMistyDetailA","TMistyNormal","TMistySunMask"})nextGroup.Elements("SHADERINPUTDEFINITION").Last().AddAfterSelf(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",texture),new XAttribute("type","texture")));
             nextGroup.SetAttributeValue("parameterCount",nextGroup.Elements("SHADERINPUTDEFINITION").Count());
             foreach(var pass in nextGroup.Elements("SHADERGROUPPASS").ToArray())
