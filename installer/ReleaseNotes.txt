@@ -1,5 +1,9 @@
 DiRT2VR — Experimental
 
+Choose Quit from the custom driving or replay pause menu to exit the game without reopening Normal Launch. Session files are restored afterward.
+
+Choose anisotropic filtering independently for Desktop and VR under Graphics → Main: Game, Off, 2×, 4×, 8× or 16×. Game preserves existing filtering. Save and relaunch to apply; overrides require DX11.
+
 Choose Daylight, Evening or Morning Fog for Misty Loch under CUSTOM tracks → Conditions. Use Manage → Rebuild from source for all three presets and subtle road highlights with mountain occlusion. Existing Daylight and Evening installs and replays remain usable. The black-band fix is preserved. Morning Fog full-lap and headset checks remain pending.
 
 Try Natural, Vivid or Muted under Graphics → Filters. Each includes Day and Night settings for Desktop or VR. Original remains the default; use Save as to customize a built-in preset, then Save settings and relaunch. Visual tuning is experimental.

@@ -44,6 +44,8 @@ Public Class DirectMenus
                 ' The native hook identifies this dedicated shutdown state. The session
                 ' manager restores files before starting a fresh Normal Launch process.
                 Dim leave = Node(root, "d2vr_leave", "d2vr_return")
+                ' Ordinary native shutdown must not signal a Return to menus relaunch.
+                Dim quit = Node(root, "d2vr_quit", "exit_game")
                 For Each group In {("11e", "11l", "1e1", "1c6"), ("27q", "27w", "2lc", "2ih")}
                     Dim finish = One(document, "//node[@id='" & group.Item1 & "']")
                     ' Stop before career/result advancement. The unmodified graph is
@@ -89,6 +91,7 @@ Public Class DirectMenus
                     Link(replayResume, "next", replayPlay)
                     Link(replayMenu, "view_replay", If(first, "10V", "276"))
                     Link(replayMenu, "exit_replay", replayExit)
+                    Link(replayMenu, "quit_game", quit.GetAttribute("id"))
                     ' Replay exit resumes its native playback clock, even when the
                     ' pause-decorated finish menu is visible. Pause that clock after
                     ' render cleanup; replay_begin resets it when watching again.
@@ -101,6 +104,10 @@ Public Class DirectMenus
                     Dim endRace = Node(pause.ParentNode.ParentNode, "d2vr_end_" & group.Item1, "end_race")
                     Link(pause, "return_menus", unpause.GetAttribute("id"))
                     Link(unpause, "next", endRace.GetAttribute("id")) : Link(endRace, "next", leave.GetAttribute("id"))
+                    Dim quitUnpause = Node(pause.ParentNode, "d2vr_quit_unpause_" & group.Item1, "send_unpause_msg")
+                    Dim quitRace = Node(pause.ParentNode.ParentNode, "d2vr_quit_end_" & group.Item1, "end_race")
+                    Link(pause, "quit_game", quitUnpause.GetAttribute("id"))
+                    Link(quitUnpause, "next", quitRace.GetAttribute("id")) : Link(quitRace, "next", quit.GetAttribute("id"))
                 Next
                 ' This runs only at a fresh attempt, never while resuming flashback
                 ' or watching the same recording again.
@@ -215,6 +222,7 @@ Public Class DirectMenus
             items.Add(("lng_restart_button_title", "restart_race"))
             items.Add(("Return to menus", "return_menus"))
         End If
+        If paused Then items.Add(("Quit", "quit_game"))
         generic.RemoveChild(template)
         For i = 0 To items.Count - 1
             Dim item = DirectCast(template.CloneNode(True), XmlElement)

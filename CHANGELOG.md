@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Quit to the custom driving and replay pause menus. It exits the game without reopening Normal Launch; the launcher restores session files afterward.
+
 - Add separate Desktop and VR anisotropic-filtering choices under Graphics → Main: Game, Off, 2×, 4×, 8× and 16×. Game remains the default; DX11 overrides apply to repeating surface textures on the next launch. In-game appearance and performance validation are pending.
 
 - Fix launches getting stuck on recovery without an error when a background file worker hangs while initializing the Windows colour theme.
