@@ -582,6 +582,7 @@ Public Class CustomTrackBrowser
     Private ReadOnly compact As SettingRow
     Private ReadOnly empty As New TrackBuildStack
     Private arranging As Boolean
+    Private viewport As ScrollableControl
     Public Sub New()
         Name = "CustomTrackBrowser" : Margin = New Padding(0, 12, 0, 0)
         compact = New SettingRow("Track pack", Picker)
@@ -591,6 +592,33 @@ Public Class CustomTrackBrowser
         Controls.AddRange({Filters, PackList, compact, Detail, empty})
         AddHandler Detail.SizeChanged, Sub() PerformLayout()
         AddHandler Filters.SizeChanged, Sub() PerformLayout()
+    End Sub
+    Private Sub ViewportResized(sender As Object, e As EventArgs)
+        PerformLayout()
+    End Sub
+    Private Function AvailableListHeight(listTop As Integer, contentHeight As Integer) As Integer
+        Dim ancestor = Parent
+        While ancestor IsNot Nothing AndAlso Not (TypeOf ancestor Is ScrollableControl AndAlso DirectCast(ancestor, ScrollableControl).AutoScroll)
+            ancestor = ancestor.Parent
+        End While
+        Dim current = TryCast(ancestor, ScrollableControl)
+        If current IsNot viewport Then
+            If viewport IsNot Nothing Then RemoveHandler viewport.ClientSizeChanged, AddressOf ViewportResized
+            viewport = current
+            If viewport IsNot Nothing Then AddHandler viewport.ClientSizeChanged, AddressOf ViewportResized
+        End If
+        If viewport Is Nothing Then Return contentHeight
+        Dim offset = listTop, child As Control = Me
+        While child IsNot viewport
+            offset += child.Top : child = child.Parent
+        End While
+        ' Use the unscrolled position so scrolling the page cannot grow the list.
+        offset -= viewport.AutoScrollPosition.Y
+        Return Math.Min(contentHeight, Math.Max(PackList.ItemHeight + Px(Me, 6), viewport.ClientSize.Height - viewport.Padding.Bottom - offset))
+    End Function
+    Protected Overrides Sub Dispose(disposing As Boolean)
+        If disposing AndAlso viewport IsNot Nothing Then RemoveHandler viewport.ClientSizeChanged, AddressOf ViewportResized
+        MyBase.Dispose(disposing)
     End Sub
     Protected Overrides Sub OnLayout(e As LayoutEventArgs)
         MyBase.OnLayout(e)
@@ -602,7 +630,8 @@ Public Class CustomTrackBrowser
             Dim listTop = Filters.Bottom + Px(Me, 12)
             PackList.Visible = Not narrow : compact.Visible = narrow
             PackList.ItemHeight = Px(Me, 88)
-            PackList.SetBounds(0, listTop, listWidth, Math.Min(PackList.Items.Count, 5) * PackList.ItemHeight + Px(Me, 6))
+            Dim listHeight = AvailableListHeight(listTop, PackList.Items.Count * PackList.ItemHeight + Px(Me, 6))
+            PackList.SetBounds(0, listTop, listWidth, listHeight)
             compact.SetBounds(0, listTop, Width, compact.Height) : compact.PerformLayout()
             Dim left = If(narrow, 0, listWidth + gap), top = If(narrow, compact.Bottom + gap, listTop)
             Detail.Visible = SelectionVisible : empty.Visible = Not SelectionVisible
