@@ -4,6 +4,12 @@ Imports System.Windows.Forms
 Public Class ReplayPanel
     Inherits VerticalStack
     Public Event PlaybackRequested(id As String, vr As Boolean)
+    Public Event SelectionChanged As EventHandler
+    Public ReadOnly Property SelectedTrackId As String
+        Get
+            Return TryCast(entries.SelectedItem, Entry)?.Item.Manifest?.Content?.TrackId
+        End Get
+    End Property
     Private ReadOnly context As InstallContext
     Private ReadOnly library As ReplayLibrary
     Private ReadOnly entries As New ListBox With {.Name = "SavedReplays", .AccessibleName = "Saved replays", .IntegralHeight = False, .Height = 220}
@@ -149,6 +155,7 @@ Public Class ReplayPanel
         End Try
     End Function
     Private Sub Details()
+        RaiseEvent SelectionChanged(Me, EventArgs.Empty)
         Dim item = TryCast(entries.SelectedItem, Entry)?.Item
         desktop.Enabled = Not working AndAlso item?.Manifest IsNot Nothing
         headset.Enabled = desktop.Enabled : remove.Enabled = desktop.Enabled : keep.Enabled = Not working

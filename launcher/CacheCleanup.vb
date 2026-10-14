@@ -104,7 +104,7 @@ Public NotInheritable Class CacheCleanup
     Private Shared Function RecoveryPending(context As InstallContext) As Boolean
         ' Include journals outside AppData; a stale Ready session.json proves nothing.
         For Each folder In {context.UserRoot, SafeFiles.Inside(context.ModRoot, "backups"), SafeFiles.Inside(context.ModRoot, "lan-backups"),
-            SafeFiles.Inside(context.ModRoot, "bloom-session"), SafeFiles.Inside(context.ModRoot, "filter-session"),
+            SafeFiles.Inside(context.ModRoot, "bloom-session"), SafeFiles.Inside(context.ModRoot, "filter-session"), SafeFiles.Inside(context.ModRoot, "road-sheen-session"),
             SafeFiles.Inside(context.ModRoot, "buttermilk-postprocess"), SafeFiles.Inside(context.ModRoot, "custom-track-session"),
             SafeFiles.Inside(context.ModRoot, "custom-track-install"), SafeFiles.Inside(context.ModRoot, "external-session"), SafeFiles.Inside(context.ModRoot, "custom-car-install")}
             SafeFiles.NoLinks(folder)

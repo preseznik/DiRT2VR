@@ -81,6 +81,11 @@ Public Class CustomTrackPanel
             Return working
         End Get
     End Property
+    Public ReadOnly Property SelectedLayoutId As String
+        Get
+            Return TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id
+        End Get
+    End Property
     Public ReadOnly Property CanLaunch As Boolean
         Get
             Return browser.SelectionVisible AndAlso currentPack IsNot Nothing AndAlso currentPack.Available AndAlso Not working AndAlso installationValid AndAlso layouts.SelectedItem IsNot Nothing AndAlso

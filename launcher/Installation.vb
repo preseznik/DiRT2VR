@@ -46,6 +46,7 @@ Public Class Installation
         Call (New LargeAddressAware(context)).Recover()
         Call (New BloomTransaction(context)).Recover()
         Call (New FilterTransaction(context)).Recover()
+        Call (New RoadSheenTransaction(context)).Recover()
         Call (New DirectMenus(context)).Recover()
         Call (New StartupMovies(context)).Recover()
         Call (New LanTransaction(context)).Recover()
@@ -65,7 +66,7 @@ Public Class Installation
 End Class
 
 Public Module Worker
-    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing)
+    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1)
         postProcessTest = If(postProcessTest, If(operation = "prepare" OrElse operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
         ButtermilkPostProcess.Validate(postProcessTest, trackId)
         context.ValidateGame() : context.RequireClosed()
@@ -135,6 +136,8 @@ Public Module Worker
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
             Case "prepare-lan"
                 Call (New LanTransaction(context)).Prepare()
+            Case "prepare-road-sheen"
+                Call (New RoadSheenTransaction(context)).Prepare(trackId, roadSheen)
             Case "prepare-bloom"
                 Call (New BloomTransaction(context)).Prepare()
             Case "prepare-filter"
@@ -152,6 +155,7 @@ Public Module Worker
                 Call (New LargeAddressAware(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
+                Call (New RoadSheenTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Recover(context.GameRoot)
@@ -166,6 +170,7 @@ Public Module Worker
                 CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
+                Call (New RoadSheenTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
@@ -174,19 +179,21 @@ Public Module Worker
                 CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
+                Call (New RoadSheenTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
                 CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
+                Call (New RoadSheenTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
                 CustomTracks.SessionFiles.Recover(context.GameRoot)
                 Call (New Installation(context)).RemoveProxy()
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing)
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1)
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
@@ -202,6 +209,11 @@ Public Module Worker
                 CustomTrackService.Staging(context, workId)
             End If
             start.ArgumentList.Add("--track-work") : start.ArgumentList.Add(workId)
+        End If
+        If operation = "prepare-road-sheen" Then
+            If Not Nordschleife.RoadSheen.Supports(trackId) OrElse roadSheen < 0 OrElse roadSheen > 100 Then Throw New ArgumentException("Invalid road sheen request.")
+            start.ArgumentList.Add("--track") : start.ArgumentList.Add(trackId)
+            start.ArgumentList.Add("--road-sheen") : start.ArgumentList.Add(roadSheen.ToString(Globalization.CultureInfo.InvariantCulture))
         End If
         If operation = "prepare-filter" Then
             FilterLaunch.SnapshotPath(context, filterSnapshot)

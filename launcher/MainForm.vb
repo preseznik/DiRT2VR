@@ -9,6 +9,7 @@ Public Class MainForm
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
     Private replayLibrarySelected As Boolean
+    Private replays As ReplayPanel
     Private windowReady As Boolean
     Private lastWindowState As FormWindowState = FormWindowState.Normal
     Private ReadOnly modernInterface As New AppearanceSwitch()
@@ -47,6 +48,8 @@ Public Class MainForm
     Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
     Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
+    Private ReadOnly desktopRoadSheen As New RoadSheenControl("Desktop")
+    Private ReadOnly vrRoadSheen As New RoadSheenControl("Vr")
     Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
     Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 100, "%")
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
@@ -229,6 +232,11 @@ Public Class MainForm
         Tip(vrShadowQuality, "Choose the game's Low, Medium or High shadow detail. High looks sharper but costs more performance." & vbCrLf & "Game keeps your saved game quality. Original settings return after play.")
         Tip(vrShadowDetailDistance, "14 m is the recommended, tested range." & vbCrLf & "Longer ranges keep road shadows detailed farther away, but can cause fast flickering on walls and scenery." & vbCrLf & "Save and relaunch VR to apply.")
         Tip(vrCrowds, "Show spectators in VR using the game's saved crowd quality." & vbCrLf & "Experimental: crowds add rendering work and may have visual issues." & vbCrLf & "Save and relaunch VR to apply. Desktop play is unchanged.")
+        For Each editor In {desktopRoadSheen, vrRoadSheen}
+            For Each child As Control In editor.Controls
+                Tip(child, "Road sheen (Experimental): 0% is matte; 100% restores full-strength road reflections." & vbCrLf & "Use track default preserves the installed track's look. Nordschleife only; cars and other surfaces are unchanged." & vbCrLf & "Save settings and relaunch. No rebuild is needed.")
+            Next
+        Next
         Tip(treeDetail, "Higher keeps detailed vegetation visible farther away, but" & vbCrLf & "costs performance. Game keeps your usual setting.")
         Tip(objectDetail, "Higher keeps detailed buildings and trackside objects farther" & vbCrLf & "away, but costs performance. Game keeps your usual setting.")
         Tip(borderless, "Fill the main monitor without window borders during desktop" & vbCrLf & "play. Alt+Tab still works. This does not affect VR or its mirror.")
@@ -401,11 +409,13 @@ Public Class MainForm
         Dim mainPage As New TabPage("Main") With {.AutoScroll = True, .UseVisualStyleBackColor = False}
         Dim replayPage As New TabPage("Replays") With {.AutoScroll = True, .UseVisualStyleBackColor = False}
         Dim replayContent As New VerticalStack With {.Dock = DockStyle.Top, .Padding = content.Padding}
-        Dim replays As New ReplayPanel(context)
+        replays = New ReplayPanel(context)
+        AddHandler replays.SelectionChanged, Sub() RefreshRoadSheenSupport()
         replayContent.Controls.Add(replays) : replayPage.Controls.Add(replayContent)
         mainPage.Controls.Add(content) : launchTabs.TabPages.AddRange({mainPage, replayPage}) : page.Controls.Add(launchTabs)
         AddHandler launchTabs.SelectedIndexChanged, Sub()
                                                        replayLibrarySelected = launchTabs.SelectedIndex = 1
+                                                       RefreshRoadSheenSupport()
                                                        RefreshLaunchButtons()
                                                    End Sub
         AddHandler replayPage.Enter, Async Sub() Await replays.ReloadAsync()
@@ -502,6 +512,7 @@ Public Class MainForm
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
     End Sub
     Private Sub RefreshLaunchAvailability()
+        RefreshRoadSheenSupport()
         Dim working = busy OrElse CustomCarService.Building OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
         Dim carAllowed = customCars Is Nothing OrElse (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse customCars.CanLaunch(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id, If(launchMode.SelectedIndex = 1, "practice", If(launchMode.SelectedIndex = 2, "race", "other")))
         desktopButton.Enabled = Not working AndAlso carAllowed AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
@@ -596,6 +607,8 @@ Public Class MainForm
         borderless.Text = "On" : borderless.Checked = settings.BorderlessDesktop : Field(desktop, "Borderless fullscreen", borderless)
         desktopVSync.Checked = settings.DesktopVSync : Field(desktop, "VSync", desktopVSync)
         desktopBloom.Checked = settings.DesktopBloom : Field(desktop, "Bloom", desktopBloom)
+        desktopRoadSheen.UseTrackDefault = settings.DesktopRoadSheenDefault : desktopRoadSheen.Percent = settings.DesktopRoadSheen
+        Field(desktop, "Road sheen (Experimental)", desktopRoadSheen)
         Dim render = Section(columns.First, "VR rendering")
         renderScale.Value = settings.RenderScale : headsetScale.Value = settings.HeadsetScale : fieldOfView.Value = settings.FieldOfView
         mirrors.Items.AddRange({"Game setting", "On", "Off"})
@@ -626,6 +639,8 @@ Public Class MainForm
         updateShadowControls()
         vrCrowds.Checked = settings.VrCrowds : Field(render, "Crowds (experimental)", vrCrowds)
         vrBloom.Checked = settings.VrBloom : Field(render, "Bloom", vrBloom)
+        vrRoadSheen.UseTrackDefault = settings.VrRoadSheenDefault : vrRoadSheen.Percent = settings.VrRoadSheen
+        Field(render, "Road sheen (Experimental)", vrRoadSheen)
         treeDetail.Value = settings.TreeDetail : objectDetail.Value = settings.ObjectDetail
         Field(render, "Tree detail", treeDetail) : Field(render, "Object detail", objectDetail)
         Field(render, "Headset refresh rate", refreshLabel)
@@ -649,6 +664,8 @@ Public Class MainForm
         AddHandler defaults.Click, Sub()
                                        borderless.Checked = False : desktopVSync.Checked = True
                                        desktopBloom.Checked = True : vrBloom.Checked = True
+                                       desktopRoadSheen.UseTrackDefault = True : vrRoadSheen.UseTrackDefault = True
+                                       desktopRoadSheen.Percent = 25 : vrRoadSheen.Percent = 25
                                        filters.ResetSelections()
                                        msaa.Value = 1 : vrShadows.Checked = False : vrShadowQuality.SelectedIndex = 0 : vrShadowDetailDistance.Value = 14 : vrCrowds.Checked = False
                                        renderScale.Value = 100 : headsetScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
@@ -667,6 +684,18 @@ Public Class MainForm
         AddHandler fieldOfView.ValueChanged, Sub() RefreshGraphicsSummary()
         RefreshGraphicsSummary()
         RefreshResolutionReport()
+        RefreshRoadSheenSupport()
+    End Sub
+    Private Sub RefreshRoadSheenSupport()
+        Dim layout As String = Nothing
+        If replayLibrarySelected Then
+            layout = replays?.SelectedTrackId
+        ElseIf customTracks IsNot Nothing AndAlso customTracks.CustomEnabled Then
+            layout = customTracks.SelectedLayoutId
+        ElseIf launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2 Then
+            layout = TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id
+        End If
+        desktopRoadSheen.SetTrack(layout) : vrRoadSheen.SetTrack(layout)
     End Sub
     Private Sub RefreshGraphicsSummary()
         Dim preview As New VrSettings With {.RenderScale = CInt(renderScale.Value), .FieldOfView = CInt(fieldOfView.Value)}
@@ -919,6 +948,8 @@ Public Class MainForm
         settings.BorderlessDesktop = borderless.Checked
         settings.DesktopVSync = desktopVSync.Checked
         settings.DesktopBloom = desktopBloom.Checked : settings.VrBloom = vrBloom.Checked
+        settings.DesktopRoadSheenDefault = desktopRoadSheen.UseTrackDefault : settings.DesktopRoadSheen = desktopRoadSheen.Percent
+        settings.VrRoadSheenDefault = vrRoadSheen.UseTrackDefault : settings.VrRoadSheen = vrRoadSheen.Percent
         settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
         settings.VrMsaa = {0, 2, 4, 8}(msaa.Value) : settings.VrShadows = vrShadows.Checked
         settings.VrShadowDetailDistance = vrShadowDetailDistance.Value

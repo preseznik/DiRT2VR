@@ -23,7 +23,7 @@ Public Module Program
             If Not args.Contains("--worker") AndAlso Not args.Any(Function(a) {"--setup", "--recover", "--remove-proxy", "--check-install", "--discover"}.Contains(a)) Then CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
             If args.Contains("--worker") Then
                 Try
-                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"), Argument(args, "--track-work", Nothing), Argument(args, "--postprocess-test", Nothing), Argument(args, "--filter-snapshot", Nothing), Argument(args, "--replay-id", Nothing))
+                    Worker.Run(context, Argument(args, "--worker", ""), Argument(args, "--car", "sti"), Argument(args, "--track", Nothing), Integer.Parse(Argument(args, "--opponents", "0"), Globalization.CultureInfo.InvariantCulture), Argument(args, "--opponent-cars", "same"), Argument(args, "--track-work", Nothing), Argument(args, "--postprocess-test", Nothing), Argument(args, "--filter-snapshot", Nothing), Argument(args, "--replay-id", Nothing), Integer.Parse(Argument(args, "--road-sheen", "-1"), Globalization.CultureInfo.InvariantCulture))
                     Return 0
                 Catch ex As Exception
                     Dim failure = WorkerFailure.FromException(Argument(args, "--worker", ""), args.Contains("--worker-elevated"), ex)

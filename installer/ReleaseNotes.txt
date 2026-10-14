@@ -2,6 +2,8 @@ DiRT2VR — Experimental
 
 Choose Daylight or Evening for Misty Loch under CUSTOM tracks → Conditions. Use Manage → Rebuild from source once to add Evening; existing Daylight installs and replays remain usable. Both presets retain the dry-road and black-band fixes.
 
+Adjust Nordschleife road sheen under Graphics → Main, independently for Desktop and VR. Keep Use track default enabled, or choose 0–100% for the next launch. No track rebuild is needed for this setting; other surfaces are unchanged.
+
 Fix overly shiny Nordschleife asphalt in Daylight, Overcast and Evening while retaining its colour and detail. After updating, choose Nordschleife → Manage → Rebuild from source to update an existing track installation.
 
 Fix Ferrari cockpit and steering-wheel surface flicker caused by incorrect lighting textures. After updating, use CUSTOM cars → Manage → Rebuild from source to apply the correction to an existing Ferrari installation.
