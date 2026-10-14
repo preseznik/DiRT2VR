@@ -12,12 +12,15 @@ Public Module Program
         If args.Contains("--convert-mizu") Then Return Mizu.MizuConversion.Run(args)
         If args.Contains("--convert-smelter") Then Return Aspen.SmelterConversion.Run(args)
         Try
-            ' Theme initialization can create a hidden HWND. Set text rendering first,
-            ' including in background session/worker processes launched by the UI.
-            Application.SetCompatibleTextRenderingDefault(False)
-            Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)
-            Application.SetColorMode(SystemColorMode.System)
-            Application.EnableVisualStyles()
+            ' File workers have no UI/message loop. SetColorMode can spin waiting
+            ' for system colour events before the worker can even report errors.
+            If Not args.Contains("--worker") Then
+                ' Theme initialization can create a hidden HWND; set text rendering first.
+                Application.SetCompatibleTextRenderingDefault(False)
+                Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)
+                Application.SetColorMode(SystemColorMode.System)
+                Application.EnableVisualStyles()
+            End If
             Dim root = Argument(args, "--game", AppContext.BaseDirectory)
             Dim context As New InstallContext(root, If(args.Contains("--worker"), Argument(args, "--owner-base", Nothing), Nothing))
             If Not args.Contains("--worker") AndAlso Not args.Any(Function(a) {"--setup", "--recover", "--remove-proxy", "--check-install", "--discover"}.Contains(a)) Then CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)

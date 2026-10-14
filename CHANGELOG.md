@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix launches getting stuck on recovery without an error when a background file worker hangs while initializing the Windows colour theme.
+
 - Choose OpenXR (system default, including VDXR) or SteamVR on the first VR launch, optionally remember the choice, and change it later under Settings → VR runtime. Desktop launches need no runtime choice. VDXR is experimental; headset rendering and gameplay validation remain pending.
 
 - Add Morning Fog to Misty Loch alongside Daylight and Evening. Rebuild from source for all three presets and subtle road highlights with static mountain occlusion. Preserve the black-band fix and existing course/replay identities. Full-lap and headset acceptance of Morning Fog remain pending.
