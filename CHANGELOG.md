@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Require DiRT2VR 0.17.113 or later for Misty Loch high quality packs, matching the first supporting Experimental release.
+
 - Make Ferrari F2004 gamepad steering more progressive, with quicker centering relative to turn-in and a lower high-speed steering range. Widen its tyre slip window to make grip loss less abrupt. Full low-speed steering lock, peak grip and engine power are unchanged. Rebuild an existing F2004 import after updating to apply the new tuning.
 
 - Set rebuilt Misty Loch's default road sheen to the same response as the 10% slider setting in Daylight, Evening and Morning Fog, retaining mountain sun occlusion.

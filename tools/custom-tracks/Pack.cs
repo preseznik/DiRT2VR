@@ -53,7 +53,7 @@ public static class AspenPack
 
 public static class TrackPacks
 {
-    public const string MistyHighQualityLauncher = "0.21.0";
+    public const string MistyHighQualityLauncher = "0.17.113";
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
     public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.4", "0.17.30", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
