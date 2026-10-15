@@ -85,14 +85,28 @@ void MultiplyMatrices(const float* a,const float* b,float* result) {
         for(unsigned k=0;k<4;++k) product[4*r+c]+=a[4*r+k]*b[4*k+c];
     for(unsigned i=0;i<16;++i) result[i]=product[i];
 }
-bool VisibilityBox(const float* a,const float* b,float* matrix) {
+bool VisibilityBox(const float* a,const float* b,float* matrix,const float* originalFrustum) {
     for(const float* camera:{a,b}) {
         for(unsigned i:{16u,17u,18u,22u}) if(!std::isfinite(camera[i])) return false;
         if(camera[22]<25 || camera[22]>5000) return false;
     }
     // Include either original camera and head/eye translation margin. Keep the
     // engine's distance/LOD logic; this replaces only the directional frustum.
-    const float range=std::max(a[22],b[22])+8.f;
+    float range=std::max(a[22],b[22]);
+    if(originalFrustum) {
+        // Native volumes contain six float4 planes, then eight padded XYZ corners.
+        // Track overrides can extend them beyond the camera record's default far
+        // value. Enclose their radius so turning the head cannot cut that scenery.
+        for(unsigned at=24;at<56;at+=4) {
+            std::array<double,3> delta;
+            for(unsigned axis=0;axis<3;++axis)
+                delta[axis]=double(originalFrustum[at+axis])-(double(a[16+axis])+b[16+axis])*.5;
+            const double radius=std::hypot(delta[0],delta[1],delta[2]);
+            if(!std::isfinite(radius) || radius>100000.) return false;
+            range=std::max(range,float(radius));
+        }
+    }
+    range+=8.f;
     std::array<float,16> result{};
     for(unsigned axis=0;axis<3;++axis) {
         const float center=(a[16+axis]+b[16+axis])*.5f;

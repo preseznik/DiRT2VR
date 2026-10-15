@@ -15,6 +15,6 @@ void ApplyEyePose(float* camera,const XrPosef& pose,float unitsPerMetre);
 // Preserve this engine's depth convention; replace its angular projection.
 void ApplyFov(float* projection,const XrFovf& fov);
 void MultiplyMatrices(const float* a,const float* b,float* result);
-// World-to-clip box for a bounded all-directions CPU visibility diagnostic.
-bool VisibilityBox(const float* cameraA,const float* cameraB,float* matrix);
+// World-to-clip box preserving the native scenery extent for every head direction.
+bool VisibilityBox(const float* cameraA,const float* cameraB,float* matrix,const float* originalFrustum=nullptr);
 }

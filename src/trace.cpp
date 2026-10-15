@@ -547,7 +547,7 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
         if(ExtendedViewsEnabled() || ReplayStereoEnabled()) {
             preparedCameraRenderer=renderer;preparedCameraFrame=frame.load();preparedCameraKind=kind;
         }
-        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),GamePaused(),true,ReplayStereoEnabled()) && VisibilityBox(a,b,matrix.data())) {
+        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),GamePaused(),true,ReplayStereoEnabled()) && VisibilityBox(a,b,matrix.data(),static_cast<const float*>(source))) {
             buildFrustum(volume.data(),matrix.data());
             bool finite=true; for(float v:volume) finite &= std::isfinite(v);
             if(finite) {
