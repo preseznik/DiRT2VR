@@ -10,6 +10,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Preserve the native distant-scenery visibility range in VR, preventing mountain sections from disappearing on Mizu Mountain. The player approved the 0.17.115 headset retest.
 
+- Correct Ferrari F2004 engine pitch through gear shifts and throttle changes. Rebuild an existing F2004 import after updating to apply the audio fix.
+
 - Add an opt-in Nordschleife high quality conversion with source ambient shading when a supported local CSP patch is available, authored material lighting, RGB normal maps, layered ground surfaces and scenery shadows. Standard builds and course identities remain available. Desktop rendering checks pass for all three lighting presets, and the player approved the 0.17.114 HQ test build.
 
 ## 0.17.113 — 2026-10-15 — Experimental

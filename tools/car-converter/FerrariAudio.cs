@@ -8,16 +8,19 @@ namespace DiRT2VR.CustomCars;
 internal static class FerrariAudio
 {
     sealed record Sample(string Name, int Rate, int Channels, int Frames, byte[] Pcm);
-    sealed record Band(double Centre, string Name);
+    sealed record Band(double Centre, string Name, double CycleHz);
     sealed record NativeSample(string Name, int Rate, byte[] Pcm);
     const int Rate = 32000, Frames = Rate * 10;
     const double Minimum = 4000.0 / 18800;
+    // Blend positions are not the pitch at which the source was recorded.
+    // Calibrate each pinned recording's engine-cycle frequency separately. A
+    // four-stroke cycle is two crank revolutions; the target is RPM / 120.
     static readonly Dictionary<string, Band[]> Recipes = new()
     {
-        ["up_en"] = [new(Minimum,"F2004_in_idle"),new(.25,"F2004_in_on_low"),new(.50,"F2004_in_on_mid"),new(.75,"F2004_in_on_high_mix"),new(1,"F2004_in_on_veryhigh_mix")],
-        ["up_ex"] = [new(Minimum,"F2004_ex_idle"),new(.25,"F2004_ex_on_low_backg"),new(.50,"F2004_ex_on_mid_exh"),new(.75,"F2004_ex_on_high_exh"),new(1,"F2004_ex_on_veryhigh_exh")],
-        ["dn_en"] = [new(Minimum,"F2004_in_idle"),new(.30,"F2004_in_off_low"),new(.65,"F2004_in_off_midhigh_mix"),new(1,"F2004_in_off_high")],
-        ["dn_ex"] = [new(Minimum,"F2004_ex_idle"),new(.30,"F2004_ex_off_low"),new(.65,"F2004_ex_off_mid"),new(1,"F2004_ex_off_high")]
+        ["up_en"] = [new(Minimum,"F2004_in_idle",29.1),new(.25,"F2004_in_on_low",65.8),new(.50,"F2004_in_on_mid",96.1),new(.75,"F2004_in_on_high_mix",135.1),new(1,"F2004_in_on_veryhigh_mix",151.8)],
+        ["up_ex"] = [new(Minimum,"F2004_ex_idle",26.5),new(.25,"F2004_ex_on_low_backg",28.6),new(.50,"F2004_ex_on_mid_exh",108.6),new(.75,"F2004_ex_on_high_exh",105.7),new(1,"F2004_ex_on_veryhigh_exh",105.2)],
+        ["dn_en"] = [new(Minimum,"F2004_in_idle",29.1),new(.30,"F2004_in_off_low",69.1),new(.65,"F2004_in_off_midhigh_mix",116.6),new(1,"F2004_in_off_high",125.4)],
+        ["dn_ex"] = [new(Minimum,"F2004_ex_idle",26.5),new(.30,"F2004_ex_off_low",73.4),new(.65,"F2004_ex_off_mid",111.6),new(1,"F2004_ex_off_high",111.6)]
     };
     static Dictionary<string, Sample> ReadBank(string path)
     {
@@ -90,7 +93,7 @@ internal static class FerrariAudio
                 double blend = high == low ? 0 : Math.Clamp((rev - bands[low].Centre) / (bands[high].Centre - bands[low].Centre), 0, 1); blend = blend * blend * (3 - 2 * blend);
                 double Value(int j) { var data = samples[j]; double p = positions[j] % data.Length; int a = (int)p; double f = p - a; return data[a] * (1 - f) + data[(a + 1) % data.Length] * f; }
                 result[i] = low == high ? Value(low) : Value(low) * (1 - blend) + Value(high) * blend;
-                for (int j = 0; j < bands.Length; j++) positions[j] += rev / bands[j].Centre;
+                for (int j = 0; j < bands.Length; j++) positions[j] += rev * (18800.0 / 120) / bands[j].CycleHz;
             }
             return Pcm(result);
         }
