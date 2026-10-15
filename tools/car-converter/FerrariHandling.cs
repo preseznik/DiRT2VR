@@ -70,7 +70,20 @@ internal static class FerrariHandling
             // Keep the accepted spring/ARB, inertia and camera tuning unchanged.
             Set("visual_acc_scale_roll",0f);
             Set("visual_acc_scale_pitch",0f);
-            Set("max_steering_lock",Number(car["CONTROLS/STEER_LOCK"])/Number(car["CONTROLS/STEER_RATIO"]));
+            float steeringLock=Number(car["CONTROLS/STEER_LOCK"])/Number(car["CONTROLS/STEER_RATIO"]);
+            Set("max_steering_lock",steeringLock);
+            // Native pad steering reduces lock with speed, clamped to this floor.
+            // Limit high-speed corrections while retaining full low-speed lock
+            // and the speed threshold (4.2 degrees for the supported source).
+            Set("pad_min_lock",steeringLock*0.35f);
+            // Retain the stock STI curve selected in the previous gamepad tune.
+            Set("pad_linearity",1f);
+            // Native pad filtering limits wheel-axis change per second. The PRC's
+            // 2/4 rates reach this car's small steering range almost immediately.
+            // Build steering progressively, with quicker return toward centre.
+            Set("low_speed_steering_rate",0.75f);
+            Set("high_speed_steering_rate",0.5f);
+            Set("steering_rate_to_centre_mult",2f);
             // Stock limits are sine-like visual wheel-axis caps, independently of physical steering lock.
             Set("visual_wheel_xv_limit",MathF.Sin(Number(car["CONTROLS/STEER_LOCK"])/Number(car["CONTROLS/STEER_RATIO"])*MathF.PI/180));
             Set("front_radius",Number(tyres["FRONT/RADIUS"]));Set("rear_radius",Number(tyres["REAR/RADIUS"]));
@@ -87,7 +100,10 @@ internal static class FerrariHandling
             foreach(var (nativeAxle,sourceAxle) in new[]{("front","FRONT"),("rear","REAR")})
             {
                 Set("grip_"+nativeAxle,(Number(Tyre(sourceAxle,"DX_REF"))+Number(Tyre(sourceAxle,"DY_REF")))*.5f);
-                Set(nativeAxle+"_peak_slip",Number(Tyre(sourceAxle,"FRICTION_LIMIT_ANGLE")));
+                // Broaden the source slip window for native calibration after
+                // reported abrupt breakaway. Scale both axles equally while
+                // retaining peak grip.
+                Set(nativeAxle+"_peak_slip",Number(Tyre(sourceAxle,"FRICTION_LIMIT_ANGLE"))*1.5f);
                 Set("wheel_inertia_"+nativeAxle,Number(Tyre(sourceAxle,"ANGULAR_INERTIA")));
                 Set("anti_roll_"+nativeAxle,Number(suspension["ARB/"+sourceAxle]));
                 Set("suspension_strength_"+nativeAxle,Number(suspension[sourceAxle+"/SPRING_RATE"]));

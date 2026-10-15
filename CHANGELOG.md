@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Make Ferrari F2004 gamepad steering more progressive, with quicker centering relative to turn-in and a lower high-speed steering range. Widen its tyre slip window to make grip loss less abrupt. Full low-speed steering lock, peak grip and engine power are unchanged. Rebuild an existing F2004 import after updating to apply the new tuning.
+
 - Set rebuilt Misty Loch's default road sheen to the same response as the 10% slider setting in Daylight, Evening and Morning Fog, retaining mountain sun occlusion.
 
 - Correct Misty Loch's camera-distance mountain lighting, overly bright grass in shade and blocky road-sheen gaps. Rebuilt tracks retain static sun occlusion, grass receives local ambient shading, and the road visibility mask keeps the same shape at every viewing distance. Standard/HQ desktop checks, a full lap and paired-eye checks pass; the player accepted the visual result. Final HQ headset and repeated in-game restart checks remain pending.

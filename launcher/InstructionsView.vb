@@ -236,6 +236,8 @@ Check CUSTOM cars beside either Car selector to list supported conversions. It w
 Play
 Choose Direct practice on any installed compatible track, then Launch for desktop or Launch VR for headset play. Custom tracks must support the selected mode. VR and the expanded track combinations are experimental; headset acceptance is pending. Turn CUSTOM cars off to restore your previous stock-car selection. Manage provides rebuilding, installation rechecking and uninstalling. Installed assets work offline without Assetto Corsa. Ferrari best laps are separate from stock-car history.
 
+After updating the launcher, use Manage → Rebuild from source beside the car selector to apply the revised steering and tyre tuning. Updating the launcher alone does not regenerate an installed car.
+
 Current limitations
 Handling, suspension, cockpit motion and audio calibration remain experimental. The steering-wheel LCD shows engine RPM. Use this readout to check revs and shifts; the stock HUD RPM dial is not calibrated for the F2004. The native driver is fitted to the F2004 seat with moving steering grips; its appearance and animation remain experimental. The normal handbrake control can hold the car on the grid (Space with default keyboard controls; A with the Xbox preset). Body paint uses a matte approximation. Mirrors and the other dashboard displays are static; damage and distant detail levels use approximations. AI races, LAN, career and saved full-replay playback are unavailable for this car. If an installed car file changes outside the launcher, it and recovery backups are preserved; resolve the reported conflict before rebuilding.",
         "Custom tracks (Experimental)
