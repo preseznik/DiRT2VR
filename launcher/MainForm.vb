@@ -1022,7 +1022,10 @@ Public Class MainForm
         Using child = Process.Start(start)
             If arguments.Contains("--launch") Then
                 StartupFocus.AllowSetForegroundWindow(CUInt(child.Id))
-                WindowState = FormWindowState.Minimized
+                ' Keep the foreground parent available for the VR startup handoff.
+                ' Minimizing now activates another app, which can revoke Windows'
+                ' foreground permission before the game renderer exists.
+                If arguments.Contains("--desktop") Then WindowState = FormWindowState.Minimized
             End If
         End Using
     End Sub
