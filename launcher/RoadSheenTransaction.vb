@@ -13,6 +13,7 @@ Public Class RoadSheenTransaction
         Public Property OriginalHash As String
         Public Property AppliedHash As String
         Public Property ReadOnlyFile As Boolean
+        Public Property HighQualityAssets As Boolean
     End Class
     Public Sub New(value As InstallContext)
         context = value
@@ -29,12 +30,13 @@ Public Class RoadSheenTransaction
     End Function
     Public Sub Prepare(layout As String, percent As Integer, Optional afterWrite As Action = Nothing)
         context.RequireClosed() : Recover()
-        Dim target = SafeFiles.Inside(context.GameRoot, Nordschleife.RoadSheen.Target(layout))
+        Dim highQuality = TrackPacks.Nordschleife.IsLayout(layout) AndAlso TrackPacks.Nordschleife.Read(context.GameRoot, False).HighQualityAssets
+        Dim target = SafeFiles.Inside(context.GameRoot, Nordschleife.RoadSheen.Target(layout, highQuality))
         Dim originalHash = SafeFiles.Hash(target)
         Dim modified = Nordschleife.RoadSheen.Patch(context.GameRoot, layout, percent)
         Dim appliedHash = Convert.ToHexString(Security.Cryptography.SHA256.HashData(modified))
         If originalHash = appliedHash Then Return
-        Dim journal As New Journal With {.Id = Guid.NewGuid().ToString("N"), .Layout = layout, .OriginalHash = originalHash,
+        Dim journal As New Journal With {.Version = If(highQuality, 2, 1), .HighQualityAssets = highQuality, .Id = Guid.NewGuid().ToString("N"), .Layout = layout, .OriginalHash = originalHash,
             .AppliedHash = appliedHash, .ReadOnlyFile = (File.GetAttributes(target) And FileAttributes.ReadOnly) <> 0}
         If SafeFiles.Hash(target) <> originalHash Then Throw New IOException("Road textures changed during preparation; files preserved.")
         SafeFiles.Atomic(Backup(journal), File.ReadAllBytes(target))
@@ -49,12 +51,13 @@ Public Class RoadSheenTransaction
         context.RequireClosed()
         If Not Pending Then Return
         Dim journal = SafeFiles.ReadJson(Of Journal)(journalPath), id As Guid
-        If journal Is Nothing OrElse journal.Version <> 1 OrElse Not Guid.TryParseExact(journal.Id, "N", id) OrElse
+        If journal Is Nothing OrElse journal.Version <> If(journal.HighQualityAssets, 2, 1) OrElse (journal.HighQualityAssets AndAlso Not TrackPacks.Nordschleife.IsLayout(journal.Layout)) OrElse Not Guid.TryParseExact(journal.Id, "N", id) OrElse
             Not Nordschleife.RoadSheen.Supports(journal.Layout) OrElse Not SafeFiles.Digest(journal.OriginalHash) OrElse Not SafeFiles.Digest(journal.AppliedHash) Then
             Throw New IOException("Invalid road sheen recovery journal; files preserved.")
         End If
-        Dim original = Backup(journal), target = SafeFiles.Inside(context.GameRoot, Nordschleife.RoadSheen.Target(journal.Layout))
-        If New FileInfo(original).Length > Nordschleife.RoadSheen.MaxTextureBytes OrElse SafeFiles.Hash(original) <> journal.OriginalHash Then Throw New IOException("Road sheen backup changed; files preserved.")
+        Dim original = Backup(journal), target = SafeFiles.Inside(context.GameRoot, Nordschleife.RoadSheen.Target(journal.Layout, journal.HighQualityAssets))
+        Dim maximumBytes = If(journal.HighQualityAssets, Nordschleife.RoadSheen.MaxMaterialBytes, Nordschleife.RoadSheen.MaxTextureBytes)
+        If New FileInfo(original).Length > maximumBytes OrElse SafeFiles.Hash(original) <> journal.OriginalHash Then Throw New IOException("Road sheen backup changed; files preserved.")
         Dim current = If(File.Exists(target), SafeFiles.Hash(target), "")
         If current = journal.AppliedHash OrElse current = "" Then
             SafeFiles.Atomic(target, File.ReadAllBytes(original))

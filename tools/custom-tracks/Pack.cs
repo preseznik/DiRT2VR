@@ -54,6 +54,7 @@ public static class AspenPack
 public static class TrackPacks
 {
     public const string MistyHighQualityLauncher = "0.17.113";
+    public const string NordHighQualityLauncher = "0.17.114";
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
     public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.4", "0.17.30", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
@@ -116,7 +117,7 @@ public sealed class TrackPack
     public string Receipt => External?.Receipt ?? Support + "/receipt.json";
     public string SourceGame => External is not null ? "external" : Id switch { "nordschleife" or "misty-loch" => "assettocorsa", "mizu-mountain" or "spa-francorchamps" => "grid2", _ => "dirt3" };
     public string SourceName => External is not null ? "External" : Id switch { "nordschleife" or "misty-loch" => "Assetto Corsa", "mizu-mountain" or "spa-francorchamps" => "GRID 2", _ => "DiRT 3 Complete Edition" };
-    public string[] SharedTargets => Id == "spa-francorchamps" ? [..AspenPack.SharedTargets, "dx11/shaderpack/shaderpack.pssg"] : Id == "misty-loch" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"] : Id == "smelter" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"] : AspenPack.SharedTargets;
+    public string[] SharedTargets => Id is "nordschleife" or "spa-francorchamps" ? [..AspenPack.SharedTargets, "dx11/shaderpack/shaderpack.pssg"] : Id == "misty-loch" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"] : Id == "smelter" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"] : AspenPack.SharedTargets;
     internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets, ExternalPack? external = null)
     {
         External = external;
@@ -202,9 +203,9 @@ public sealed class TrackPack
         if (receipt.Schema == 2 && (System.Version.Parse(receipt.MinimumLauncher) < System.Version.Parse(SelectiveBuildLauncher) ||
             receipt.Sessions.Any(s => !SafeFiles.Version(s.Version!)))) throw new IOException("Invalid selective-build receipt.");
         if (receipt.Schema == 1 && receipt.Sessions.Any(s => s.Version is not null)) throw new IOException("Invalid legacy layout version.");
-        if (receipt.HighQualityAssets && (Id != "misty-loch" || receipt.Schema != 2 || receipt.Sessions.Length != Layouts.Length ||
-            System.Version.Parse(receipt.MinimumLauncher) < System.Version.Parse(TrackPacks.MistyHighQualityLauncher)))
-            throw new IOException("High quality Misty Loch assets require all three lighting presets and a supporting launcher. Rebuild the complete pack.");
+        if (receipt.HighQualityAssets && (Id is not ("misty-loch" or "nordschleife") || receipt.Schema != 2 || receipt.Sessions.Length != Layouts.Length ||
+            System.Version.Parse(receipt.MinimumLauncher) < System.Version.Parse(Id == "nordschleife" ? TrackPacks.NordHighQualityLauncher : TrackPacks.MistyHighQualityLauncher)))
+            throw new IOException("High quality assets require all three lighting presets and a supporting launcher. Rebuild the complete pack.");
         ValidateSources(receipt.Sources, SourceGame);
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var allowedRoots = ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
@@ -246,6 +247,8 @@ public sealed class TrackPack
                 throw new IOException("Missing Smelter scenery session definition. Rebuild from source.");
             foreach (var required in RequiredTargets)
                 if (!targets.Contains(required)) throw new IOException("Incomplete session inventory.");
+            if (Id == "nordschleife" && receipt.HighQualityAssets && !targets.Contains("dx11/shaderpack/shaderpack.pssg"))
+                throw new IOException("Missing Nordschleife visual shaders. Rebuild the complete pack.");
         }
     }
     public PackReceipt Read(string game, bool verify = true, CancellationToken cancel = default)

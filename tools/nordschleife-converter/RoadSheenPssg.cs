@@ -23,12 +23,12 @@ internal static class RoadSheenPssg
         }
         internal IEnumerable<Node> All(string name) => Children.SelectMany(c => c.All(name)).Concat(Name == name ? new[] { this } : []);
     }
-    internal static Node Read(string path)
+    internal static Node Read(string path,long maximumBytes=RoadSheen.MaxTextureBytes)
     {
         SafeFiles.NoLinks(path);
         using var stream = File.OpenRead(path);
         using var reader = new BinaryReader(stream);
-        if (stream.Length < 16 || stream.Length > RoadSheen.MaxTextureBytes || Encoding.ASCII.GetString(reader.ReadBytes(4)) != "PSSG") throw new IOException("Unsupported road PSSG.");
+        if (stream.Length < 16 || stream.Length > maximumBytes || Encoding.ASCII.GetString(reader.ReadBytes(4)) != "PSSG") throw new IOException("Unsupported road PSSG.");
         int Int() { Span<byte> bytes = stackalloc byte[4]; stream.ReadExactly(bytes); return BinaryPrimitives.ReadInt32BigEndian(bytes); }
         string Text()
         {

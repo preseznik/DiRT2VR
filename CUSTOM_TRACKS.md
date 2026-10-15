@@ -69,6 +69,8 @@ The Aspen Buttermilk and Smelter Duel layouts run as lap races on separate lanes
 
 Source: **Assetto Corsa**, the standard circuit in `content/tracks/ks_nordschleife`. Other Assetto Corsa Nordschleife configurations are not included. All three lighting presets are built together.
 
+**Build with high quality assets** is off by default. It adds source material lighting, RGB normal maps on supported materials, layered ground detail and scenery shadows while retaining the authored vegetation density. If a supported local CSP ambient patch is installed, its baked ambient shading is imported too; CSP is optional. Higher GPU and memory use is expected. Uncheck the option and rebuild to return to Standard. Course identities and lap records are retained. This development prototype passes short desktop rendering checks in all three lighting presets; full-lap and headset validation remain pending.
+
 A complete Evening desktop practice lap and a short VR session have been player-tested. Full-course headset performance and AI Race finishes still need testing. Scenery detail and lighting remain in development.
 
 ## Mizu Mountain

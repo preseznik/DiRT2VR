@@ -33,10 +33,17 @@ internal sealed class Scene
         .Any(prefix=>name.StartsWith(prefix,StringComparison.Ordinal));
     internal static Cell Tile(Vector3 p) => new((int)MathF.Floor(p.X / TileSize), (int)MathF.Floor(p.Z / TileSize));
 
-    internal static Scene Read(string acRoot, float requestedLength,bool fullCourse=false)
+    internal static Scene Read(string acRoot, float requestedLength,bool fullCourse=false,VisualBuildOptions? visualOptions=null)
     {
         if (!fullCourse && (!float.IsFinite(requestedLength) || requestedLength is < 500 or > 1000)) throw new ArgumentException("The segment lab gate supports 500–1000 metres.");
         var scene = new Scene { FullCourse=fullCourse };
+        var materialAdapter=visualOptions is null?null:new NordMaterials(scene,visualOptions.Game);
+        VertexAmbient? ambient=null;
+        if(visualOptions is not null)
+        {
+            string patch=Files.Inside(acRoot,"extension/vao-patches/ks_nordschleife.vao-patch");
+            if(File.Exists(patch)){scene.Inputs[patch]=Files.Hash(patch);ambient=new VertexAmbient(patch);}
+        }
         string root = Files.Inside(acRoot, "content/tracks/ks_nordschleife");
         string Input(string relative)
         {
@@ -112,7 +119,12 @@ internal sealed class Scene
                     // Numeric source meshes can supply both collision and visible asphalt/kerbs.
                     if(mesh.Visible&&!gameMarker&&(fullCourse || InCorridor(CorridorRadius)))selected.AddRange([mesh.Indices[i],mesh.Indices[i+1],mesh.Indices[i+2]]);
                 }
-                if (selected.Count>0) scene.Visuals.Add(Compact(mesh,selected));
+                if (selected.Count>0)
+                {
+                    var visual=materialAdapter is null?mesh:mesh with{Material=materialAdapter.ConvertMaterial(mesh)};
+                    if(ambient is not null)visual=ambient.Apply(visual);
+                    scene.Visuals.Add(Compact(visual,selected));
+                }
                 if(fullCourse)scene.SourceMeshes.Add(new{File=values["FILE"],mesh.SourceNode,mesh.Name,mesh.Active,mesh.Visible,mesh.Physical,mesh.LodIn,mesh.LodOut,GameMarker=gameMarker,SourceTriangles=mesh.Indices.Length/3,VisualTriangles=selected.Count/3,CollisionTriangles=mesh.Active&&mesh.Physical?mesh.Indices.Length/3:0});
             },includeInactive:fullCourse);
         }
@@ -131,6 +143,12 @@ internal sealed class Scene
                 if(mesh.Visible)scene.Visuals.Add(mesh);
                 scene.SourceMeshes.Add(new{File=values["FILE"],mesh.SourceNode,mesh.Name,mesh.Visible,mesh.Physical,mesh.LodIn,mesh.LodOut,SourceTriangles=mesh.Indices.Length/3,VisualTriangles=mesh.Visible?mesh.Indices.Length/3:0,CollisionTriangles=0,Placement="Static desktop sky proxy",Position=new[]{centre.X+offset.X,centre.Y+offset.Y,centre.Z+offset.Z}});
             });
+        }
+        if(visualOptions is not null)
+        {
+            ambient?.WriteAudit(visualOptions.Output);
+            Files.Json(Path.Combine(visualOptions.Output,"visual-materials.json"),new{HighQualityAssets=true,SourceVertexAmbient=ambient is not null,
+                NeutralAmbientFallback=ambient is null,AuthoredVegetationDensity=true,Materials=materialAdapter!.Report,RuntimeValidated=false});
         }
         if (scene.Visuals.Count==0 || scene.Collision.Count==0) throw new InvalidDataException("No source geometry selected.");
         return scene;

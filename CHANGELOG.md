@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add an opt-in Nordschleife high quality conversion with source ambient shading when a supported local CSP patch is available, authored material lighting, RGB normal maps, layered ground surfaces and scenery shadows. Standard builds and course identities remain available. Short desktop rendering checks pass for all three lighting presets; full-lap and headset validation remain pending.
+
 ## 0.17.113 — 2026-10-15 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.113)

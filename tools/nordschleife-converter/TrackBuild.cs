@@ -36,12 +36,12 @@ internal static class TrackBuild
         Files.Json(Path.Combine(output,"route-rebuild.json"),new{Base=source,GeometryAndTexturesRetained=true,RuntimeValidated=false});
         Console.WriteLine("Full route rebuilt; native validation remains pending: "+output);
     }
-    internal static void Run(string acRoot,string dirt2,string output,float length,bool visibilityProbe=false,bool fullCourse=false)
+    internal static void Run(string acRoot,string dirt2,string output,float length,bool visibilityProbe=false,bool fullCourse=false,bool highQualityAssets=false)
     {
         string exe=Files.Inside(dirt2,"dirt2_game.exe");
         if(Files.Hash(exe)!="49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48")throw new InvalidDataException("Unsupported DiRT 2 executable.");
         Files.NewOutput(output,acRoot,dirt2);
-        var scene=Scene.Read(acRoot,length,fullCourse);string donor=Files.Inside(dirt2,"tracks/london/battersea");
+        var scene=Scene.Read(acRoot,length,fullCourse,highQualityAssets?new(dirt2,output):null);string donor=Files.Inside(dirt2,"tracks/london/battersea");
         foreach(var relative in new[]{"objects.pssg","trees.pssg","tracksplit.pssg","route_1/routesplit.pssg","route_1/track.vis","route_1/grids.pssg","route_1/ai_vehicle_track.xml"})
         {
             var path=Files.Inside(donor,relative);scene.Inputs[path]=Files.Hash(path);
@@ -65,6 +65,7 @@ internal static class TrackBuild
         DonorScenery.Write(scene,donor,output);
         Lighting.Write(scene,donor,output);
         Verify(scene,output);
+        if(highQualityAssets)NordShaders.Write(scene,dirt2,output);
         foreach(var (path,hash) in scene.Inputs)if(Files.Hash(path)!=hash)throw new InvalidDataException("Source changed while converting: "+path);
         Files.Json(Path.Combine(output,"inputs.json"),scene.Inputs);
         Files.Json(Path.Combine(output,"collision-materials.json"),scene.CollisionMappings);

@@ -13,5 +13,9 @@
     <ProjectReference Include="../custom-tracks/CustomTracks.csproj" />
     <ProjectReference Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/EgoEngineLibrary.csproj" />
     <EmbeddedResource Include="nordschleife-sources.json" LogicalName="nordschleife-sources.json" />
+    <EmbeddedResource Include="nordschleife-visual-sources.json" LogicalName="nordschleife-visual-sources.json" />
+    <EmbeddedResource Include="NordObject.hlsl" LogicalName="NordObject.hlsl" />
+    <EmbeddedResource Include="NordObjectVertex.hlsl" LogicalName="NordObjectVertex.hlsl" />
+    <EmbeddedResource Include="NordGround.hlsl" LogicalName="NordGround.hlsl" />
   </ItemGroup>
 </Project>

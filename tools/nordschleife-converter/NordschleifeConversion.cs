@@ -9,32 +9,40 @@ namespace DiRT2VR.Nordschleife;
 
 public static class NordschleifeConversion
 {
-    public static ConversionProfile GetProfile()
+    public static ConversionProfile GetProfile(bool highQualityAssets=false,string? acRoot=null)
     {
         using var stream=typeof(NordschleifeConversion).Assembly.GetManifestResourceStream("nordschleife-sources.json")!;
         var sources=JsonSerializer.Deserialize<Fingerprint[]>(stream)!;
+        if(highQualityAssets)
+        {
+            using var extra=typeof(NordschleifeConversion).Assembly.GetManifestResourceStream("nordschleife-visual-sources.json")!;
+            sources=[..sources,..JsonSerializer.Deserialize<Fingerprint[]>(extra)!];
+            const string vao="extension/vao-patches/ks_nordschleife.vao-patch";
+            if(acRoot is not null&&File.Exists(SafeFiles.Inside(acRoot,vao)))
+                sources=[..sources,new("assettocorsa",vao,"F449D09BB03444023630FF05FF8FE510AF6B13E06B028681792CD67462AE1571")];
+        }
         TrackPack.ValidateSources(sources,"assettocorsa");
         var pack=TrackPacks.Nordschleife;
-        return new(pack.Id,pack.Name,pack.Version,pack.MinimumLauncher,12L<<30,3L<<30,pack.Modes.ToArray(),pack.Layouts.ToArray(),sources);
+        return new(pack.Id,pack.Name,pack.Version,highQualityAssets?TrackPacks.NordHighQualityLauncher:pack.MinimumLauncher,12L<<30,3L<<30,pack.Modes.ToArray(),pack.Layouts.ToArray(),sources);
     }
     public static int Run(string[] args)
     {
         try
         {
-            if(args.Length!=4||args[0]!="--convert-nordschleife"||args.Skip(1).Any(string.IsNullOrWhiteSpace))
-                throw new IOException("Usage: DiRT2VR.exe --convert-nordschleife <Assetto Corsa folder> <DiRT 2 folder> <new output folder>");
+            if(args.Length is not (4 or 5)||args[0]!="--convert-nordschleife"||args.Skip(1).Take(3).Any(string.IsNullOrWhiteSpace)||(args.Length==5&&args[4]!="--high-quality-assets"))
+                throw new IOException("Usage: DiRT2VR.exe --convert-nordschleife <Assetto Corsa folder> <DiRT 2 folder> <new output folder> [--high-quality-assets]");
             if(OperatingSystem.IsWindows()&&new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
                 throw new IOException("Start the track converter normally, without Run as administrator.");
-            Build(args[1],args[2],args[3],p=>{Console.WriteLine(JsonSerializer.Serialize(p));Console.Out.Flush();});
+            Build(args[1],args[2],args[3],p=>{Console.WriteLine(JsonSerializer.Serialize(p));Console.Out.Flush();},args.Length==5);
             return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e.Message);return 1;}
     }
-    public static void Build(string ac,string d2,string output,Action<TrackProgress>? progress)
+    public static void Build(string ac,string d2,string output,Action<TrackProgress>? progress,bool highQualityAssets=false)
     {
         SafeFiles.RequireClosed();ac=Path.GetFullPath(ac);d2=Path.GetFullPath(d2);output=Path.GetFullPath(output);
         Files.NewOutput(output,ac,d2);
-        var profile=GetProfile();var pack=TrackPacks.Nordschleife;
+        var profile=GetProfile(highQualityAssets,ac);var pack=TrackPacks.Nordschleife;
         void Report(int percent,string message)=>progress?.Invoke(new(percent,message));
         Report(0,"Checking your Assetto Corsa and DiRT 2 source files");
         var sources=TrackPack.VerifySources(profile,d2,ac,null,default);
@@ -46,7 +54,7 @@ public static class NordschleifeConversion
         int donorModel=(int)database.Tables["track_model"]!.Rows.Cast<System.Data.DataRow>().Single(r=>(string)r["file_string"]=="battersea"&&(string)r["route_string"]=="route_1")["id"];
         string candidate=Path.Combine(output,"build");
         Report(10,"Converting the full circuit, original collision and all scenery");
-        TrackBuild.Run(ac,d2,candidate,0,fullCourse:true);
+        TrackBuild.Run(ac,d2,candidate,0,fullCourse:true,highQualityAssets:highQualityAssets);
         foreach(var (path,hash) in SafeFiles.ReadJson<Dictionary<string,string>>(Path.Combine(candidate,"inputs.json")))
             if(!expected.TryGetValue(Path.GetFullPath(path),out var pin)||pin!=hash)throw new IOException("Conversion used an unsupported source file: "+path);
         using var validation=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(candidate,"validation.json")));
@@ -70,6 +78,7 @@ public static class NordschleifeConversion
             }
             foreach(var f in validation.RootElement.GetProperty("Files").EnumerateObject())
             {
+                if(f.Name.StartsWith("support/",StringComparison.Ordinal))continue;
                 string source=SafeFiles.Inside(candidate,f.Name);
                 if(SafeFiles.Hash(source)!=f.Value.GetString())throw new IOException("Candidate changed while preparing the pack: "+f.Name);
                 assets[f.Name.StartsWith("shared/",StringComparison.Ordinal)?f.Name[7..]:"route_0/"+f.Name]=source;
@@ -92,12 +101,20 @@ public static class NordschleifeConversion
                     Copy(SafeFiles.Inside(metadata,path),owned);
                     session.Add(new(path,expected[Path.GetFullPath(Path.Combine(d2,path))],owned));
                 }
-            sessions.Add(new(layout.Id,session.ToArray()));
+            if(highQualityAssets)
+            {
+                const string path="dx11/shaderpack/shaderpack.pssg";
+                string source=SafeFiles.Inside(candidate,"support/shaderpack.pssg");
+                if(SafeFiles.Hash(source)!=validation.RootElement.GetProperty("Files").GetProperty("support/shaderpack.pssg").GetString())throw new IOException("Visual shaders changed after validation.");
+                string owned=pack.Support+"/"+layout.Id+"/"+path;Copy(source,owned);
+                session.Add(new(path,expected[Path.GetFullPath(Path.Combine(d2,path))],owned));
+            }
+            sessions.Add(new(layout.Id,session.ToArray(),highQualityAssets?pack.Version:null));
         }
         Report(95,"Verifying every installed file and original source");
         if(!sources.SequenceEqual(TrackPack.VerifySources(profile,d2,ac,null,default)))
             throw new IOException("Source files changed during conversion. Retry with the original files unchanged.");
-        var receipt=new PackReceipt(1,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources);
+        var receipt=new PackReceipt(highQualityAssets?2:1,pack.Id,pack.Version,profile.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources,highQualityAssets);
         pack.Verify(install,receipt);SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
         Report(100,"Nordschleife is ready for desktop and experimental VR practice and Race");
         void Copy(string source,string relative)

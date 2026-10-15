@@ -1,0 +1,12 @@
+[
+  {
+    "Game": "dirt2",
+    "Path": "dx11/shaderpack/shaderpack.pssg",
+    "Sha256": "B3B9A5414B38EC4F1A105234C01B0F63387242F497BD4902B0ED5F8A28BF5203"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/baja/baja_iron/objects.pssg",
+    "Sha256": "A7AF9EBF2C5CFF4971D0C8F159EEE9C0EBE8E9EE26BD89029D597263309699AC"
+  }
+]

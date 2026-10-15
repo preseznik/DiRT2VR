@@ -502,7 +502,7 @@ Public Class CustomTrackPanel
         hasReceipt = True : installationValid = True : installedReceipt = receipt : raceReady = TrackPacks.Get(currentPack.Id).SupportsRace(receipt, preferences.ForPack(currentPack.Id).LayoutId)
         installedLayouts = receipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal)
         SetStatus("Installed · Ready offline", receipt.Sessions.Length.ToString() & " of " & currentPack.Layouts.Length.ToString() & " layouts installed · Ready offline")
-        If currentPack.Id = "misty-loch" Then status.Text &= " · " & If(receipt.HighQualityAssets, "High quality assets", "Standard assets")
+        If currentPack.Id = "misty-loch" OrElse currentPack.Id = "nordschleife" Then status.Text &= " · " & If(receipt.HighQualityAssets, "High quality assets", "Standard assets")
         If currentPack.External IsNot Nothing Then status.Text &= " · External pack; author-declared modes"
         If Not raceReady AndAlso currentPack.Id = AspenPack.Id Then status.Text &= ". Rebuild from source to enable AI races."
         If layouts.SelectedItem Is Nothing Then status.Text &= ". Your saved layout is unavailable; choose a layout."
@@ -527,7 +527,7 @@ Public Class CustomTrackPanel
                             installationValid = True : hasReceipt = True
                             installedLayouts = installedReceipt.Sessions.Select(Function(s) s.LayoutId).ToHashSet(StringComparer.Ordinal) : RefreshRaceOptions()
                             SetStatus("Installed · Ready offline", selected.BuildLayoutIds.Length.ToString() & " layouts built · " & installedLayouts.Count.ToString() & " of " & offer.Layouts.Length.ToString() & " installed. Choose a layout, then Launch.")
-                            If currentPack.Id = "misty-loch" Then status.Text &= " · " & If(installedReceipt.HighQualityAssets, "High quality assets", "Standard assets")
+                            If currentPack.Id = "misty-loch" OrElse currentPack.Id = "nordschleife" Then status.Text &= " · " & If(installedReceipt.HighQualityAssets, "High quality assets", "Standard assets")
                         End Function)
     End Function
     Private Async Function Operation(action As Func(Of CancellationToken, IProgress(Of TrackProgress), Task)) As Task
@@ -723,11 +723,11 @@ Public Class AspenSourceForm
             choices.Add(choice) : content.Controls.Add(choice)
             AddHandler choice.CheckedChanged, Sub() UpdateSelection()
         Next
-        If offer.Id = "misty-loch" Then
+        If offer.Id = "misty-loch" OrElse offer.Id = "nordschleife" Then
             content.Controls.Add(New Label With {.Name = "InstalledAssetQuality", .Text = "Installed assets: " & If(installed Is Nothing, "Not installed", If(installed.HighQualityAssets, "High quality", "Standard")), .AutoSize = True})
             quality.Checked = highQualityAssets
             content.Controls.Add(quality)
-            content.Controls.Add(New Label With {.Text = "More faithful materials and denser grass. Higher GPU and memory use; requires rebuilding.", .AutoSize = True})
+            content.Controls.Add(New Label With {.Text = If(offer.Id = "nordschleife", "Source ambient shading, materials and scenery shadows. Uses the local CSP ambient patch when available; higher GPU and memory use. Requires rebuilding.", "More faithful materials and denser grass. Higher GPU and memory use; requires rebuilding."), .AutoSize = True})
         End If
         content.Controls.Add(New Label With {.Text = $"Conversion runs locally. Allow up to {Math.Ceiling(offer.StagingBytes / 1073741824.0)} GB of working space. Your original games stay unchanged.", .AutoSize = True})
         UpdateSelection()

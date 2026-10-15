@@ -1,5 +1,7 @@
 DiRT2VR — Experimental
 
+Nordschleife now offers an optional high quality build with source ambient shading, authored material lighting, RGB normal maps, layered ground detail and scenery shadows. Choose CUSTOM tracks → Nordschleife → Manage → Rebuild from source and enable Build with high quality assets. A supported local CSP ambient patch is optional. Rebuild all three lighting presets together; track identities and best laps are retained. Short desktop rendering checks pass. Full-lap and headset validation remain pending.
+
 Choose Quit from the custom driving or replay pause menu to exit the game without reopening Normal Launch. Session files are restored afterward.
 
 Choose anisotropic filtering independently for Desktop and VR under Graphics → Main: Game, Off, 2×, 4×, 8× or 16×. Game preserves existing filtering. Save and relaunch to apply; overrides require DX11.

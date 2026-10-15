@@ -72,8 +72,8 @@ public static class PackInstallation
         var selected = pack.ReceiptLayouts(built);
         var retained = before.Sessions.Where(s => !selected.Any(l => l.Id == s.LayoutId)).ToArray();
         if (retained.Length == 0) return built;
-        if (pack.Id == "misty-loch" && before.HighQualityAssets != built.HighQualityAssets)
-            throw new IOException("Changing Misty Loch asset quality requires rebuilding all three lighting presets together.");
+        if (pack.Id is "misty-loch" or "nordschleife" && before.HighQualityAssets != built.HighQualityAssets)
+            throw new IOException("Changing asset quality requires rebuilding all three lighting presets together.");
         var retainedLayouts = retained.Select(s => pack.GetLayout(s.LayoutId)).ToArray();
         var sources = before.Sources.Concat(built.Sources).GroupBy(s => s.Game + "/" + s.Path, StringComparer.OrdinalIgnoreCase).ToArray();
         if (sources.Any(g => g.Select(s => s.Sha256).Distinct(StringComparer.OrdinalIgnoreCase).Count() != 1))
