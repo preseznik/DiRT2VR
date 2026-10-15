@@ -5,14 +5,14 @@ using EgoEngineLibrary.Xml;
 namespace DiRT2VR.Misty;
 internal static class MistyBuild
 {
- internal static void Run(string ac,string d2,string output,Action<int,string>? progress)
+ internal static void Run(string ac,string d2,string output,Action<int,string>? progress,bool highQualityAssets=false)
  {
     bool fullCourse=true;
     string exe=Files.Inside(d2,"dirt2_game.exe");
     if(Files.Hash(exe)!="49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48")throw new InvalidDataException("Unsupported DiRT 2 executable.");
     Files.NewOutput(output,ac,d2);
     progress?.Invoke(10,"Reading Misty Loch geometry, materials and plant textures");
-    var scene=MistyScene.Read(ac,d2,output,1000,fullCourse);string donor=Files.Inside(d2,"tracks/london/battersea");
+    var scene=MistyScene.Read(ac,d2,output,1000,fullCourse,highQualityAssets);string donor=Files.Inside(d2,"tracks/london/battersea");
     foreach(string file in Directory.EnumerateFiles(donor,"*",SearchOption.AllDirectories))scene.Inputs[file]=Files.Hash(file);
     scene.Inputs[exe]=Files.Hash(exe);
     string surfaces=Files.Inside(d2,"surface_materials.xml");scene.Inputs[surfaces]=Files.Hash(surfaces);
@@ -33,11 +33,12 @@ internal static class MistyBuild
     MistyRoute.Write(scene,donor,output);
     DonorScenery.Write(scene,donor,output);MistyLighting.Write(scene,donor,output);
     water.Write(output);
-    MistyFlowShader.Write(scene,d2,output);
+    MistyFlowShader.Write(scene,d2,output,highQualityAssets);
     MistyPresentation.Write(d2,output,scene.Gates[0].Position,scene.Gates[0].Tangent);
     progress?.Invoke(65,"Checking track geometry, progress and materials");
     TrackBuild.Verify(scene,output);
     MistyAudit.Run(scene,output);
+    MistySceneryShadows.Write(Path.Combine(output,"routesplit.pssg"),Path.Combine(output,"support/shaderpack.pssg"),output);
     foreach(var (path,hash) in scene.Inputs)if(Files.Hash(path)!=hash)throw new InvalidDataException("Changed source: "+path);
     Files.Json(Path.Combine(output,"inputs.json"),scene.Inputs);
     Files.Json(Path.Combine(output,"collision-materials.json"),scene.CollisionMappings);

@@ -7,7 +7,7 @@ internal sealed class MistyMeshAttributes
     {
         if(mesh.Material.Native is null||mesh.Material.Name=="road_asphalt")return mesh;
         float alpha=MistyMaterials.Opacity(mesh.Material);
-        var colors=Enumerable.Repeat(new Vector4(1,1,1,alpha),mesh.Positions.Length).ToArray();
+        var colors=mesh.Colors?.Select(c=>new Vector4(c.X,c.Y,c.Z,alpha)).ToArray()??Enumerable.Repeat(new Vector4(1,1,1,alpha),mesh.Positions.Length).ToArray();
         var result=mesh with{Colors=colors};
         if(mesh.Material.Shader=="ksPerPixelNM_UVMult"&&mesh.Material.Name!="lake1")
         {

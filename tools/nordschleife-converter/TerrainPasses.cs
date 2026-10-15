@@ -39,6 +39,13 @@ internal static class TerrainPasses
     {
         var material=draw.GetShaderInstance();
         if(material.ShaderGroup.StartsWith("#terrain_",StringComparison.Ordinal))return true;
+        if(material.ShaderGroup=="#misty_object_rgb.fx")
+        {
+            var inputs=material.GetShaderGroup().InputDefinitions.ToArray();
+            int parameter=Array.FindIndex(inputs,d=>d.InputName=="MistyLighting");
+            var value=material.Inputs.SingleOrDefault(i=>i.ParameterId==parameter)?.Value;
+            return value?.Length==16&&System.Buffers.Binary.BinaryPrimitives.ReadSingleBigEndian(value.AsSpan(8,4))==1;
+        }
         if(material.ShaderGroup!="#object_simple.fx")return false;
         var definitions=material.GetShaderGroup().InputDefinitions.ToArray();
         int diffuse=Array.FindIndex(definitions,d=>d.InputName=="TDiffuseAlphaMap");

@@ -4,5 +4,7 @@
     <ProjectReference Include="../nordschleife-converter/NordschleifeConverter.csproj" />
     <EmbeddedResource Include="misty-sources.json" LogicalName="misty-sources.json" />
     <EmbeddedResource Include="MistyDetail.hlsl" LogicalName="MistyDetail.hlsl" />
+    <EmbeddedResource Include="MistyObject.hlsl" LogicalName="MistyObject.hlsl" />
+    <EmbeddedResource Include="MistyObjectVertex.hlsl" LogicalName="MistyObjectVertex.hlsl" />
   </ItemGroup>
 </Project>

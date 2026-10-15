@@ -5,7 +5,7 @@ using BCnEncoder.Shared;
 using DiRT2VR.Nordschleife;
 using EgoEngineLibrary.Graphics.Dds;
 
-internal sealed class MistyTexturePacking(Scene scene)
+internal sealed class MistyTexturePacking(Scene scene,bool highQualityAssets=false)
 {
     readonly Dictionary<string,string> packed=new(StringComparer.Ordinal);
     internal string Convert(string name,string operation)
@@ -53,7 +53,7 @@ internal sealed class MistyTexturePacking(Scene scene)
         var levels=new BcDecoder().DecodeAllMipMaps(BCnEncoder.Shared.ImageFiles.DdsFile.Load(decoderInput));
         using var bytes=new MemoryStream();
         var encoder=new BcEncoder();encoder.OutputOptions.Format=CompressionFormat.Bc3;
-        encoder.OutputOptions.GenerateMipMaps=false;encoder.OutputOptions.Quality=CompressionQuality.Balanced;
+        encoder.OutputOptions.GenerateMipMaps=false;encoder.OutputOptions.Quality=highQualityAssets?CompressionQuality.BestQuality:CompressionQuality.Balanced;
         int width=(int)dds.header.width,height=(int)dds.header.height;
         foreach(var level in levels)
         {

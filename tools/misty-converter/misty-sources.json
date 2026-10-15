@@ -41,6 +41,11 @@
   },
   {
     "Game": "assettocorsa",
+    "Path": "content/tracks/rt_misty_loch/rt_misty_loch.vao-patch",
+    "Sha256": "AD8ED057B4A2B68B776B64897B30741AF075B3260D146797D46D9260F9D96282"
+  },
+  {
+    "Game": "assettocorsa",
     "Path": "content/tracks/rt_misty_loch/rt_misty_loch_audio.kn5",
     "Sha256": "17C28DCCFEB4055DB8815E6664A21832F8C2779D648DD906C04522E44040B5E9"
   },

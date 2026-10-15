@@ -9,7 +9,7 @@ namespace DiRT2VR.Misty;
 
 public static class MistyConversion
 {
-    public static ConversionProfile GetProfile()
+    public static ConversionProfile GetProfile(bool highQualityAssets=false)
     {
         using var stream=typeof(MistyConversion).Assembly.GetManifestResourceStream("misty-sources.json")!;
         var sources=JsonSerializer.Deserialize<Fingerprint[]>(stream)!;
@@ -17,26 +17,26 @@ public static class MistyConversion
         if(sources.Any(f=>f.Game=="assettocorsa"&&!f.Path.StartsWith("content/tracks/rt_misty_loch/",StringComparison.Ordinal)))
             throw new IOException("Misty Loch conversion may only use DiRT 2 and the Misty Loch source folder.");
         var pack=TrackPacks.Misty;
-        return new(pack.Id,pack.Name,pack.Version,pack.MinimumLauncher,8L<<30,3L<<30,pack.Modes.ToArray(),pack.Layouts.ToArray(),sources);
+        return new(pack.Id,pack.Name,pack.Version,highQualityAssets?TrackPacks.MistyHighQualityLauncher:pack.MinimumLauncher,8L<<30,3L<<30,pack.Modes.ToArray(),pack.Layouts.ToArray(),sources);
     }
     public static int Run(string[] args)
     {
         try
         {
-            if(args.Length!=4||args[0]!="--convert-misty"||args.Skip(1).Any(string.IsNullOrWhiteSpace))
-                throw new IOException("Usage: DiRT2VR.exe --convert-misty <Assetto Corsa with Misty Loch folder> <DiRT 2 folder> <new output folder>");
+            if(args.Length is not (4 or 5)||args[0]!="--convert-misty"||args.Skip(1).Take(3).Any(string.IsNullOrWhiteSpace)||(args.Length==5&&args[4]!="--high-quality-assets"))
+                throw new IOException("Usage: DiRT2VR.exe --convert-misty <Assetto Corsa with Misty Loch folder> <DiRT 2 folder> <new output folder> [--high-quality-assets]");
             if(OperatingSystem.IsWindows()&&new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
                 throw new IOException("Start the track converter normally, without Run as administrator.");
-            Build(args[1],args[2],args[3],p=>{Console.WriteLine(JsonSerializer.Serialize(p));Console.Out.Flush();});
+            Build(args[1],args[2],args[3],p=>{Console.WriteLine(JsonSerializer.Serialize(p));Console.Out.Flush();},args.Length==5);
             return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e.Message);return 1;}
     }
-    public static void Build(string ac,string d2,string output,Action<TrackProgress>? progress)
+    public static void Build(string ac,string d2,string output,Action<TrackProgress>? progress,bool highQualityAssets=false)
     {
         SafeFiles.RequireClosed();ac=Path.GetFullPath(ac);d2=Path.GetFullPath(d2);output=Path.GetFullPath(output);
         Files.NewOutput(output,ac,d2);
-        var profile=GetProfile();var pack=TrackPacks.Misty;
+        var profile=GetProfile(highQualityAssets);var pack=TrackPacks.Misty;
         void Report(int percent,string message)=>progress?.Invoke(new(percent,message));
         Report(0,"Checking your Assetto Corsa with Misty Loch and DiRT 2 source files");
         var sources=TrackPack.VerifySources(profile,d2,ac,null,default);
@@ -47,7 +47,7 @@ public static class MistyConversion
         var database=new DatabaseFile(Path.Combine(d2,"database/database.bin"),schema);
         int donorModel=(int)database.Tables["track_model"]!.Rows.Cast<System.Data.DataRow>().Single(r=>(string)r["file_string"]=="battersea"&&(string)r["route_string"]=="route_1")["id"];
         string candidate=Path.Combine(output,"build");
-        MistyBuild.Run(ac,d2,candidate,Report);
+        MistyBuild.Run(ac,d2,candidate,Report,highQualityAssets);
         foreach(var (path,hash) in SafeFiles.ReadJson<Dictionary<string,string>>(Path.Combine(candidate,"inputs.json")))
             if(!expected.TryGetValue(Path.GetFullPath(path),out var pin)||pin!=hash)throw new IOException("Conversion used an unsupported source file: "+path);
         using var validation=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(candidate,"validation.json")));
@@ -102,12 +102,12 @@ public static class MistyConversion
                 session.Add(new(path,expected[Path.GetFullPath(Path.Combine(d2,path))],owned));
             }
             // Visual-only changes retain the existing course/replay identities.
-            sessions.Add(new(layout.Id,session.ToArray(),layout.Id switch {"misty-loch"=>"1.0.1","misty-loch-evening"=>"1.1.0",_=>pack.Version}));
+            sessions.Add(new(layout.Id,session.ToArray(),layout.Id switch {"misty-loch"=>"1.0.1","misty-loch-evening"=>"1.1.0",_=>"1.2.0"}));
         }
         Report(95,"Verifying every installed file and original source");
         if(!sources.SequenceEqual(TrackPack.VerifySources(profile,d2,ac,null,default)))
             throw new IOException("Source files changed during conversion. Retry with the original files unchanged.");
-        var receipt=new PackReceipt(2,pack.Id,pack.Version,pack.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources);
+        var receipt=new PackReceipt(2,pack.Id,pack.Version,profile.MinimumLauncher,files.ToArray(),sessions.ToArray(),sources,highQualityAssets);
         pack.Verify(install,receipt);SafeFiles.WriteJson(SafeFiles.Inside(install,pack.Receipt),receipt);
         Report(100,"Misty Loch is ready for Direct practice and Race on desktop and in VR");
         void Copy(string source,string relative)

@@ -17,6 +17,7 @@ internal sealed record Mesh(string Name, Material Material, bool Physical, Vecto
     internal bool Active { get; init; } = true;
     internal bool Renderable { get; init; } = true;
     internal int SourceNode { get; init; }
+    internal Vector3 SourceFirstPosition { get; init; }
     internal float LodIn { get; init; }
     internal float LodOut { get; init; }
     internal Vector4[]? Colors { get; init; }
@@ -94,9 +95,11 @@ internal static class Kn5
                 var positions = new Vector3[nv]; var normals = new Vector3[nv]; var uv = new Vector2[nv]; var tangents = new Vector3[nv];
                 if (!Matrix4x4.Invert(world, out var inverse)) throw new InvalidDataException("Singular mesh transform.");
                 var normalMatrix = Matrix4x4.Transpose(inverse);
+                Vector3 firstPosition=default;
                 for (int i = 0; i < nv; i++)
                 {
-                    positions[i] = Vector3.Transform(V3(), world);
+                    var position=V3();if(i==0)firstPosition=position;
+                    positions[i] = Vector3.Transform(position, world);
                     var normal = Vector3.TransformNormal(V3(), normalMatrix);
                     if (!Finite(normal)) throw new InvalidDataException("Nonfinite normal: " + name);
                     normals[i] = normal.LengthSquared() > 1e-10f ? Vector3.Normalize(normal) : Vector3.UnitY;
@@ -115,7 +118,7 @@ internal static class Kn5
                 {
                     if (world.GetDeterminant() < 0) for (int i = 0; i < ni; i += 3) (indices[i+1], indices[i+2]) = (indices[i+2], indices[i+1]);
                     consume(new(name, materials[material], physical, positions, normals, uv, tangents, indices)
-                    {Visible=enabled&&visible&&renderable,Active=enabled,Renderable=renderable,SourceNode=sourceNode,LodIn=lodIn,LodOut=lodOut});
+                    {Visible=enabled&&visible&&renderable,Active=enabled,Renderable=renderable,SourceNode=sourceNode,SourceFirstPosition=firstPosition,LodIn=lodIn,LodOut=lodOut});
                 }
             }
             else throw new InvalidDataException("Unsupported KN5 node class: " + kind);
