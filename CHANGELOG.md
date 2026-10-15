@@ -6,6 +6,16 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Set rebuilt Misty Loch's default road sheen to the same response as the 10% slider setting in Daylight, Evening and Morning Fog, retaining mountain sun occlusion.
+
+- Correct Misty Loch's camera-distance mountain lighting, overly bright grass in shade and blocky road-sheen gaps. Rebuilt tracks retain static sun occlusion, grass receives local ambient shading, and the road visibility mask keeps the same shape at every viewing distance. Standard/HQ desktop checks, a full lap and paired-eye checks pass; the player accepted the visual result. Final HQ headset and repeated in-game restart checks remain pending.
+
+- Import Misty Loch's source baked ambient shading and authored material lighting strengths in HQ builds. Extend the existing Desktop/VR road-sheen control to rebuilt Misty Loch layouts, using the Nordschleife reflection response while retaining mountain sun occlusion. Matched desktop views, a two-lap AI race and paired-eye checks pass; final HQ headset checks remain pending. No distribution has been released.
+
+- Restore missing Misty Loch scenery shadows in Standard and high quality builds, including buildings, alpha-cutout trees and fences. Desktop and paired-eye rendering checks pass across all three lighting presets; real-headset acceptance remains pending.
+
+- Add an optional Misty Loch high quality asset build with original RGB normal maps, restored material channels and denser roadside vegetation. One selection applies to Daylight, Evening and Morning Fog; the launcher distinguishes installed quality from the next build selection. Standard remains the default. Desktop appearance is accepted; final HQ headset and repeated in-game restart checks remain pending. No HQ distribution has been released.
+
 ## 0.17.112 — 2026-10-14 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.112)

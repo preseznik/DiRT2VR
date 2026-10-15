@@ -7,7 +7,7 @@ internal static class MistyDetailShader
 {
     internal const string Ground="terrain_misty_ground",Grass="misty_grass";
     internal const string GroundProgram=Ground+".fp",GrassProgram=Grass+".fp";
-    internal static void Add(XDocument document,string sourceFile,string output)
+    internal static void Add(XDocument document,string sourceFile,string output,bool highQualityAssets=false)
     {
         var original=new XDocument(document);
         var group=document.Descendants("SHADERGROUP").Single(g=>(string?)g.Attribute("id")=="terrain_infield");
@@ -15,13 +15,13 @@ internal static class MistyDetailShader
         string hlsl=File.ReadAllText(sourceFile);
         foreach(string name in new[]{Ground,Grass})
         {
-            byte[] bytes=MistyShaderCompiler.Compile((name==Grass?"#define MISTY_GRASS\n":"")+hlsl,name);
+            byte[] bytes=MistyShaderCompiler.Compile((name==Grass?"#define MISTY_GRASS\n"+(highQualityAssets?"#define MISTY_HQ\n":""):"")+hlsl,name);
             var nextProgram=new XElement(program);nextProgram.SetAttributeValue("id",name+".fp");
             var code=nextProgram.Element("SHADERPROGRAMCODE")!;
             code.SetAttributeValue("codeSize",bytes.Length);
             // PSSG's byte XML parser consumes space-separated byte tokens.
             code.Element("SHADERPROGRAMCODEBLOCK")!.Value=string.Join(" ",bytes.Select(b=>b.ToString("X2")));
-            foreach(string constant in new[]{"MistyRoadSpecular","MistySunTransform"})code.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
+            foreach(string constant in new[]{"MistyRoadSheen","MistySunTransform","MistyLighting"})code.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
             foreach(string texture in new[]{"TMistyDetail","TMistyDetailA","TMistyNormal","TMistySunMask"})code.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",texture),new XAttribute("type","texture")));
             var resources=TextureBindings(bytes);
             // EGO dereferences every declared program binding, including unused
@@ -32,7 +32,7 @@ internal static class MistyDetailShader
             code.SetAttributeValue("parameterCount",code.Elements("SHADERINPUTDEFINITION").Count());
             var nextGroup=new XElement(group);nextGroup.SetAttributeValue("id",name);
             // Native loading requires all input definitions before the first pass.
-            foreach(string constant in new[]{"MistyRoadSpecular","MistySunTransform"})nextGroup.Elements("SHADERINPUTDEFINITION").Last().AddAfterSelf(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
+            foreach(string constant in new[]{"MistyRoadSheen","MistySunTransform","MistyLighting"})nextGroup.Elements("SHADERINPUTDEFINITION").Last().AddAfterSelf(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
             foreach(string texture in new[]{"TMistyDetail","TMistyDetailA","TMistyNormal","TMistySunMask"})nextGroup.Elements("SHADERINPUTDEFINITION").Last().AddAfterSelf(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",texture),new XAttribute("type","texture")));
             nextGroup.SetAttributeValue("parameterCount",nextGroup.Elements("SHADERINPUTDEFINITION").Count());
             foreach(var pass in nextGroup.Elements("SHADERGROUPPASS").ToArray())
@@ -43,13 +43,21 @@ internal static class MistyDetailShader
                 if(name==Grass)pass.SetAttributeValue("cullFaceType","NONE");
             }
             nextGroup.SetAttributeValue("passCount",nextGroup.Elements("SHADERGROUPPASS").Count());
+            foreach(var pass in nextGroup.Elements("SHADERGROUPPASS").Where(p=>(string?)p.Attribute("fragmentProgram")=="#"+name+".fp"))
+            {
+                string vertex=pass.Attribute("vertexProgram")!.Value.TrimStart('#');
+                var block=document.Descendants("SHADERPROGRAM").Single(p=>(string?)p.Attribute("id")==vertex).Descendants("SHADERPROGRAMCODEBLOCK").Single();
+                byte[] vertexBytes=Convert.FromHexString(string.Concat(block.Value.Where(c=>!char.IsWhiteSpace(c))));
+                MistyShaderCompiler.ValidateLinkage(vertexBytes,bytes,name);
+                MistyShaderCompiler.ValidateStreams(nextGroup,vertexBytes);
+            }
             group.Parent!.Add(nextGroup);program.Parent!.Add(nextProgram);
             File.WriteAllBytes(Path.Combine(output,name+".dxbc"),bytes);
         }
         var check=new XDocument(document);
         foreach(var item in check.Descendants().Where(e=>(string?)e.Attribute("id") is Ground or Grass or GroundProgram or GrassProgram).ToArray())item.Remove();
         if(!XNode.DeepEquals(check,original))throw new InvalidDataException("Detail shader modified existing shader programs.");
-        Files.Json(Path.Combine(output,"detail-shader-audit.json"),new{Passed=true,AddedGroups=new[]{Ground,Grass},OtherStockShadersAndStatesUnchanged=true,NativeVertexProgramsRetained=true,RoadSpecular="Low strength, native shadows multiplied by static sun occlusion; no diffuse-alpha strength",GrassFadeMetres=new[]{70,105},LabOnly=true});
+        Files.Json(Path.Combine(output,"detail-shader-audit.json"),new{Passed=true,AddedGroups=new[]{Ground,Grass},OtherStockShadersAndStatesUnchanged=true,NativeVertexProgramsRetained=true,RoadSpecular="Low strength, native shadows multiplied by static sun occlusion; no diffuse-alpha strength",GrassFadeMetres=highQualityAssets?new[]{120,180}:new[]{70,105},LabOnly=true});
     }
     static HashSet<string> TextureBindings(byte[] bytes)
     {

@@ -1,9 +1,9 @@
 using DiRT2VR.Nordschleife;
 
-internal sealed class MistyMaterials(Scene scene,string game)
+internal sealed class MistyMaterials(Scene scene,string game,bool highQualityAssets=false)
 {
     readonly MistyDecals decals=new(scene,game);
-    readonly MistyNativeMaterials native=new(scene,game);
+    readonly MistyNativeMaterials native=new(scene,game,highQualityAssets);
     readonly Dictionary<string,Material> converted=new(StringComparer.Ordinal);
     internal readonly List<object> Report=[];
     internal static float Opacity(Material material)
@@ -35,6 +35,12 @@ internal sealed class MistyMaterials(Scene scene,string game)
         {
             result=native.Normal(source);
             note="Source tangent normal repacked RGB to native DXT5nm AG, all authored mip levels retained. Original diffuse and cutout coverage; specular map semantics remain pending.";
+            if(highQualityAssets)note="Original RGB normal and mipmaps retained. Verified AC multi-map RGB and detail-alpha semantics, with conservative static sun visibility and native shadow/fog lighting.";
+        }
+        if(highQualityAssets&&source.Blend==0&&source.Shader is "ksPerPixel" or "ksPerPixelAT" or "ksTree" or "ksGrass")
+        {
+            result=native.Normal(source);
+            note="Original diffuse/cutout with neutral tangent normal; source ambient/diffuse strengths and matched baked vertex ambient lighting.";
         }
         if(source.Name is "waterfall" or "waterfall2" or "beachwaves")
         {
@@ -45,6 +51,7 @@ internal sealed class MistyMaterials(Scene scene,string game)
         {
             result=native.Boat(source);
             note="Native 10 cm rigid floating motion shared by hull, chrome and sail. Authored ten-minute sailing paths are not reproduced.";
+            if(highQualityAssets)note+=" Original RGB normal and multi-map channels restored; native vertex animation and geometry retained.";
         }
         if(source.Name is "b3road_patches" or "skidmarks1" or "bridge_dirt" or "helipad" or "tyremarks3" or "tyremarks2" or "groove")
         {

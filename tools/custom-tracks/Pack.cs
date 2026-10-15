@@ -8,7 +8,8 @@ public sealed record SessionFile(string Path, string OriginalSha256, string Inst
 public sealed record LayoutSession(string LayoutId, SessionFile[] Files,
     [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Version = null);
 public sealed record PackReceipt(int Schema, string Id, string Version, string MinimumLauncher,
-    PackFile[] Files, LayoutSession[] Sessions, Fingerprint[] Sources);
+    PackFile[] Files, LayoutSession[] Sessions, Fingerprint[] Sources,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] bool HighQualityAssets = false);
 public sealed record ConversionProfile(string Id, string Name, string Version, string MinimumLauncher,
     long StagingBytes, long InstalledBytes,
     string[] Modes, Layout[] Layouts, Fingerprint[] Sources);
@@ -52,6 +53,7 @@ public static class AspenPack
 
 public static class TrackPacks
 {
+    public const string MistyHighQualityLauncher = "0.21.0";
     public static readonly TrackPack Aspen = new(AspenPack.Id, "Aspen", AspenPack.Version, AspenPack.MinimumLauncher, AspenPack.Modes, AspenPack.Layouts,
         ["surface_materials.xml", "database/database.bin", "effects/pfx_kickup_data_set.xml", "effects/pfx_pssg_dataset.xml"]);
     public static readonly TrackPack Smelter = new("smelter", "Smelter", "1.1.4", "0.17.30", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
@@ -200,6 +202,9 @@ public sealed class TrackPack
         if (receipt.Schema == 2 && (System.Version.Parse(receipt.MinimumLauncher) < System.Version.Parse(SelectiveBuildLauncher) ||
             receipt.Sessions.Any(s => !SafeFiles.Version(s.Version!)))) throw new IOException("Invalid selective-build receipt.");
         if (receipt.Schema == 1 && receipt.Sessions.Any(s => s.Version is not null)) throw new IOException("Invalid legacy layout version.");
+        if (receipt.HighQualityAssets && (Id != "misty-loch" || receipt.Schema != 2 || receipt.Sessions.Length != Layouts.Length ||
+            System.Version.Parse(receipt.MinimumLauncher) < System.Version.Parse(TrackPacks.MistyHighQualityLauncher)))
+            throw new IOException("High quality Misty Loch assets require all three lighting presets and a supporting launcher. Rebuild the complete pack.");
         ValidateSources(receipt.Sources, SourceGame);
         var paths = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
         var allowedRoots = ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();

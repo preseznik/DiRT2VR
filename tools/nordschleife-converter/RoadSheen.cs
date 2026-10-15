@@ -2,20 +2,21 @@ using DiRT2VR.CustomTracks;
 
 namespace DiRT2VR.Nordschleife;
 
-// Restricted to the converted Nordschleife road shader. Other terrain shaders
-// may use diffuse alpha for unrelated purposes.
+// Only explicitly supported road materials; other shaders can use alpha for coverage.
 public static class RoadSheen
 {
     public const long MaxTextureBytes = 384L * 1024 * 1024;
-    public static bool Supports(string? layout) => TrackPacks.Nordschleife.IsLayout(layout!);
+    public static bool Supports(string? layout) => TrackPacks.Nordschleife.IsLayout(layout!) || TrackPacks.Misty.IsLayout(layout!);
     public static string Target(string layout)
     {
         if (!Supports(layout)) throw new IOException("Road sheen is not supported on this track.");
+        if (TrackPacks.Misty.IsLayout(layout)) return "tracks/usa/" + TrackPacks.Misty.GetLayout(layout).Folder + "/route_0/routesplit.pssg";
         return "tracks/usa/" + TrackPacks.Nordschleife.Layouts.Single(l => l.Id == layout).Folder + "/tracksplit.pssg";
     }
     public static byte[] Patch(string game, string layout, int percent)
     {
         if (percent is < 0 or > 100) throw new ArgumentOutOfRangeException(nameof(percent));
+        if (TrackPacks.Misty.IsLayout(layout)) return MistyRoadSheen.Patch(game, layout, percent);
         string relative = Target(layout), target = SafeFiles.Inside(game, relative);
         string routePath = SafeFiles.Inside(game, relative.Replace("/tracksplit.pssg", "/route_0/routesplit.pssg", StringComparison.Ordinal));
         if (new FileInfo(target).Length > MaxTextureBytes || new FileInfo(routePath).Length > MaxTextureBytes)

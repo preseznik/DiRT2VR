@@ -4,10 +4,10 @@ using DiRT2VR.Nordschleife;
 using EgoEngineLibrary.Formats.Pssg;
 using EgoEngineLibrary.Graphics.Pssg.Elements;
 
-internal sealed class MistyNativeMaterials(Scene scene,string game)
+internal sealed class MistyNativeMaterials(Scene scene,string game,bool highQualityAssets=false)
 {
     readonly Dictionary<string,(XElement Group,XElement Instance,ShaderInputInfo Layout)> templates=[];
-    readonly MistyTexturePacking packing=new(scene);
+    readonly MistyTexturePacking packing=new(scene,highQualityAssets);
     internal Material Detail(Material source,bool grass=false)
     {
         const string shader="terrain_infield.fx";
@@ -17,7 +17,7 @@ internal sealed class MistyNativeMaterials(Scene scene,string game)
         var group=xml.Element("SHADERGROUP")!;var instance=xml.Element("SHADERINSTANCE")!;
         string name=(grass?MistyDetailShader.Grass:MistyDetailShader.Ground)+".fx";
         group.SetAttributeValue("id",name);instance.SetAttributeValue("shaderGroup","#"+name);instance.Elements("SHADERINPUT").Remove();
-        foreach(string constant in new[]{"MistyRoadSpecular","MistySunTransform"})group.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
+        foreach(string constant in new[]{"MistyRoadSheen","MistySunTransform","MistyLighting"})group.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",constant),new XAttribute("type","constant"),new XAttribute("format","float4")));
         foreach(string texture in new[]{"TMistyDetail","TMistyDetailA","TMistyNormal","TMistySunMask"})group.Add(new XElement("SHADERINPUTDEFINITION",new XAttribute("name",texture),new XAttribute("type","texture")));
         group.SetAttributeValue("parameterCount",group.Elements("SHADERINPUTDEFINITION").Count());
         instance.SetAttributeValue("parameterCount",group.Elements("SHADERINPUTDEFINITION").Count());
@@ -27,9 +27,10 @@ internal sealed class MistyNativeMaterials(Scene scene,string game)
             var values=source.Properties["mult"+channel];float x=channel=="A"?values[1]:values[0],y=channel=="A"?values[2]:values[0];
             return string.Join(" ",new[]{x,y,scene.Origin.X*x,scene.Origin.Z*y}.Select(v=>v.ToString("R",CultureInfo.InvariantCulture)));
         }
-        var constants=grass?new Dictionary<string,string>{["Map2UVScaleAndOffset"]="105 0 0 0"}:new(){["Map1UVScaleAndOffset"]=Map("A"),["Map2UVScaleAndOffset"]=Map("R"),["Map3UVScaleAndOffset"]=Map("G"),["Map4UVScaleAndOffset"]=Map("B"),["DetailBlendScale"]=source.Properties["magicMult"][0].ToString("R",CultureInfo.InvariantCulture)};
+        var constants=grass?new Dictionary<string,string>{["Map2UVScaleAndOffset"]=highQualityAssets?"180 0 0 0":"105 0 0 0"}:new(){["Map1UVScaleAndOffset"]=Map("A"),["Map2UVScaleAndOffset"]=Map("R"),["Map3UVScaleAndOffset"]=Map("G"),["Map4UVScaleAndOffset"]=Map("B"),["DetailBlendScale"]=source.Properties["magicMult"][0].ToString("R",CultureInfo.InvariantCulture)};
         if(!grass)constants["BlendMaskUVScale"]=string.Join(" ",source.Properties["detailNMMult"].Skip(1).Take(2).Concat(new[]{0f,0f}).Select(v=>v.ToString("R",CultureInfo.InvariantCulture)));
-        constants["MistyRoadSpecular"]=source.Name=="road_asphalt"&&!grass?"0.065 24 0 0":"0 24 0 0";
+        constants["MistyRoadSheen"]=source.Name=="road_asphalt"&&!grass?"0.1 24 1 1":"0 24 0 0"; // Track default matches the 10% slider response.
+        constants["MistyLighting"]=highQualityAssets&&!grass?string.Join(" ",new[]{source.Properties["ksAmbient"][0]/.3f,source.Properties["ksDiffuse"][0]/.3f,0,0}.Select(v=>v.ToString("R",CultureInfo.InvariantCulture))):"1 1 0 0";
         constants["MistySunTransform"]="0 0 0 0"; // Road world-to-mask transform is set after reading the scene.
         var definitions=group.Elements("SHADERINPUTDEFINITION").ToArray();
         for(int i=0;i<definitions.Length;i++)
@@ -110,8 +111,53 @@ internal sealed class MistyNativeMaterials(Scene scene,string game)
     internal Material Normal(Material source)
     {
         string diffuse=source.Textures["txDiffuse"];
-        if(!source.AlphaTest&&source.Blend==0)diffuse=packing.Convert(diffuse,"opaque");
+        bool flat=!source.Textures.ContainsKey("txNormal");
+        if(flat?Visuals.IsOpaque(source):!source.AlphaTest&&source.Blend==0)diffuse=packing.Convert(diffuse,"opaque");
+        if(highQualityAssets)
+        {
+            var result=Make(source,"object_simple_dxt5nm.fx",new(){["TDiffuseAlphaMap"]=diffuse,["TNormalMap"]=source.Textures.GetValueOrDefault("txNormal","nord_normal"),["TSpecularMap"]="nord_black"},opaque:flat&&Visuals.IsOpaque(source));
+            return HighQuality(source,result,diffuse,MistyObjectShader.Name+".fx");
+        }
         return Make(source,"object_simple_dxt5nm.fx",new(){["TDiffuseAlphaMap"]=diffuse,["TNormalMap"]=packing.Convert(source.Textures["txNormal"],"normal"),["TSpecularMap"]="nord_black"});
+    }
+    Material HighQuality(Material source,Material result,string diffuse,string shader)
+    {
+        float P(string key,float fallback=0)=>source.Properties.TryGetValue(key,out var p)?p[0]:fallback;
+        if(P("nmObjectSpace")!=0)throw new InvalidDataException("HQ materials require source tangent-space normals: "+source.Id);
+        bool multi=source.Shader is "ksPerPixelMultiMap" or "ksPerPixelMultiMap_AT";
+        var native=result.Native!;var group=new XElement(native.Group);var instance=new XElement(native.Instance);
+        group.SetAttributeValue("id",shader);instance.SetAttributeValue("shaderGroup","#"+shader);
+        var maps=new Dictionary<string,string>(result.Textures);
+        maps["TSpecularMap"]=multi?source.Textures["txMaps"]:"nord_white";
+        int spec=Array.FindIndex(group.Elements("SHADERINPUTDEFINITION").ToArray(),d=>(string?)d.Attribute("name")=="TSpecularMap");
+        instance.Elements("SHADERINPUT").Single(i=>(int?)i.Attribute("parameterID")==spec).SetAttributeValue("texture",maps["TSpecularMap"]);
+        void Add(string name,string type,string value)
+        {
+            int index=group.Elements("SHADERINPUTDEFINITION").Count();
+            var definition=new XElement("SHADERINPUTDEFINITION",new XAttribute("name",name),new XAttribute("type",type));
+            var input=new XElement("SHADERINPUT",new XAttribute("parameterID",index),new XAttribute("type",type));
+            if(type=="texture"){input.SetAttributeValue("texture",value);maps[name]=value;}
+            else {definition.SetAttributeValue("format","float4");input.SetAttributeValue("format","float4");input.Value=value;}
+            group.Add(definition);instance.Add(input);
+        }
+        string V(params float[] p)=>string.Join(" ",p.Select(v=>v.ToString("R",CultureInfo.InvariantCulture)));
+        if(!group.Elements("SHADERINPUTDEFINITION").Any(d=>(string?)d.Attribute("name")=="TNormalMap"))Add("TNormalMap","texture",source.Textures.GetValueOrDefault("txNormal","nord_normal"));
+        Add("TMistySourceDiffuse","texture",multi&&P("useDetail")!=0?source.Textures["txDiffuse"]:diffuse);
+        Add("TMistyObjectDetail","texture",multi?source.Textures["txDetail"]:"nord_white");
+        Add("MistyMaterial","constant",V(P("ksSpecular"),P("ksSpecularEXP",1),multi?P("useDetail"):0,P("detailUVMultiplier")));
+        Add("MistyFresnel","constant",V(multi?P("fresnelC"):0,P("fresnelEXP",1),multi?P("fresnelMaxLevel"):0,P("isAdditive")));
+        Add("MistySurface","constant",V(multi?1:0,source.AlphaTest?1:0,P("sunSpecular"),P("sunSpecularEXP",1)));
+        Add("MistyVisibility","constant","0 0 0 0"); // Fail closed until the static scene has been checked.
+        // AC and EGO use different light units. Preserve authored material ratios
+        // around Misty's common 0.3 reference instead of darkening everything 70%.
+        Add("MistyLighting","constant",V(P("ksAmbient",.3f)/.3f,P("ksDiffuse",.3f)/.3f,native.Opaque?1:0,0));
+        group.SetAttributeValue("parameterCount",group.Elements("SHADERINPUTDEFINITION").Count());
+        instance.SetAttributeValue("parameterCount",group.Elements("SHADERINPUTDEFINITION").Count());
+        instance.SetAttributeValue("parameterSavedCount",instance.Elements("SHADERINPUT").Count());
+        var layout=shader==MistyObjectShader.Name+".fx"?new ShaderInputInfo(shader,[new ShaderBlockInputInfo([
+            new("Vertex","float3",0,60),new("ST","float2",12,60),new("ST","float2",20,60),
+            new("Normal","float3",28,60),new("Tangent","half4",40,60),new("Binormal","half4",48,60),new("Color","uint_color_argb",56,60)])]):new(shader,native.Layout.BlockInputs);
+        return result with{Textures=maps,Native=new(group,instance,layout,native.Opaque)};
     }
     internal Material Flow(Material source)
     {
@@ -124,10 +170,14 @@ internal sealed class MistyNativeMaterials(Scene scene,string game)
         string name=MistyFlowShader.Name+".fx";group.SetAttributeValue("id",name);instance.SetAttributeValue("shaderGroup","#"+name);
         return material with{Native=new(group,instance,new ShaderInputInfo(name,native.Layout.BlockInputs),false)};
     }
-    internal Material Boat(Material source)=>Make(source,"object_animated_ripple.fx",
+    internal Material Boat(Material source)
+    {
+        var result=Make(source,"object_animated_ripple.fx",
         new(){["TDiffuseAlphaMap"]=packing.Convert(source.Textures["txDiffuse"],"opaque"),["TSpecularMap"]="nord_black",["TEmissiveMap"]="nord_black"},
         // Frequency zero makes every vertex share one displacement: a rigid float,
         // not the bending ripple used for native flags. Native time controls playback.
         new(){["Amplitude"]="0.10",["Frequency"]="0",["EnvironmentColour"]="0 0 0"});
+        return highQualityAssets?HighQuality(source,result,result.Textures["TDiffuseAlphaMap"],"object_animated_ripple.fx"):result;
+    }
 
 }

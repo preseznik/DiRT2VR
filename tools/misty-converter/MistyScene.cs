@@ -3,7 +3,7 @@ using DiRT2VR.Nordschleife;
 
 internal static class MistyScene
 {
-    internal static Scene Read(string acRoot, string game, string output, float length, bool fullCourse=false)
+    internal static Scene Read(string acRoot, string game, string output, float length, bool fullCourse=false,bool highQualityAssets=false)
     {
         if (!float.IsFinite(length) || length is < 500 or > 1000) throw new ArgumentException("Desktop prototype length must be 500–1000 m.");
         var scene = new Scene { FullCourse=fullCourse };
@@ -64,8 +64,9 @@ internal static class MistyScene
                         if ((p.X-q.X)*(p.X-q.X)+(p.Z-q.Z)*(p.Z-q.Z) <= radius*radius && MathF.Abs(p.Y-q.Y)<180) return true;
             return false;
         }
-        var adapter = new MistyMaterials(scene,game);
+        var adapter = new MistyMaterials(scene,game,highQualityAssets);
         var attributes = new MistyMeshAttributes();
+        var ambient = highQualityAssets ? new MistyAmbient(Input("rt_misty_loch.vao-patch")) : null;
         foreach (var (section, values) in models.Where(x => x.Key.StartsWith("MODEL_", StringComparison.Ordinal)))
         {
             if (values["POSITION"] != "0,0,0" || values["ROTATION"] != "0,0,0") throw new InvalidDataException("Source placement changed: " + section);
@@ -89,14 +90,16 @@ internal static class MistyScene
                 if (selected.Count > 0)
                 {
                     var adapted=mesh with { Material=adapter.Convert(mesh.Material) };
+                    if(ambient is not null)adapted=ambient.Apply(adapted);
                     adapted=attributes.Apply(adapted);
                     scene.Visuals.Add(Scene.Compact(adapted,selected));
                 }
                 scene.SourceMeshes.Add(new {File=file,mesh.SourceNode,mesh.Name,mesh.Active,mesh.Visible,mesh.Physical,Helper=helper,SourceTriangles=mesh.Indices.Length/3,VisualTriangles=selected.Count/3,CollisionTriangles=collision});
             },includeInactive:true);
         }
-        MistySunOcclusion.Build(scene,output);
-        MistyGrass.Add(scene,acRoot,game,output);
+        ambient?.WriteAudit(output);
+        var sunOccluders=MistySunOcclusion.Build(scene,output,highQualityAssets);
+        MistyGrass.Add(scene,acRoot,game,output,sunOccluders,highQualityAssets);
         // Consolidate compatible static meshes before spatial tiling, preserving all selected faces and attributes.
         var batches=VisualBatches.Combine(scene.Visuals).ToArray(); scene.Visuals.Clear(); scene.Visuals.AddRange(batches);
         if (scene.Visuals.Count==0 || scene.Collision.Count==0) throw new InvalidDataException("Empty prototype.");

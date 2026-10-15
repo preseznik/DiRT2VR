@@ -38,6 +38,6 @@ Public Class RoadSheenControl
         supported = Nordschleife.RoadSheen.Supports(layout)
         strength.Enabled = supported AndAlso Not trackDefault.Checked
         support.Text = If(supported, "Selected track supports road sheen. Applies next launch.",
-            If(layout Is Nothing, "Select a track or replay. Nordschleife is supported.", "Selected track has no road sheen control. Nordschleife is supported."))
+            If(layout Is Nothing, "Select a track or replay. Nordschleife and Misty Loch are supported.", "Selected track has no road sheen control. Nordschleife and Misty Loch are supported."))
     End Sub
 End Class

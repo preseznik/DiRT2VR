@@ -4,9 +4,9 @@ using DiRT2VR.Nordschleife;
 internal static class MistyFlowShader
 {
     // The native time updater recognizes this identity; a new group name renders
-    // the bytecode but leaves scrolling frozen. This patch is isolated to the lab.
+    // the bytecode but leaves scrolling frozen. The session restores the stock pack.
     internal const string Name="flag_scrolling";
-    internal static void Write(Scene scene,string game,string output)
+    internal static void Write(Scene scene,string game,string output,bool highQualityAssets=false)
     {
         string source=Files.Inside(game,"dx11/shaderpack/shaderpack.pssg");scene.Inputs[source]=Files.Hash(source);
         var original=Files.Document(Files.Pssg(source));var candidate=new XDocument(original);
@@ -29,22 +29,29 @@ internal static class MistyFlowShader
         string shaderSource=Path.Combine(output,"MistyDetail.hlsl");
         using(var input=typeof(MistyFlowShader).Assembly.GetManifestResourceStream("MistyDetail.hlsl")!)
         using(var stream=File.Create(shaderSource))input.CopyTo(stream);
-        MistyDetailShader.Add(candidate,shaderSource,output);
+        MistyDetailShader.Add(candidate,shaderSource,output,highQualityAssets);
+        if(highQualityAssets)MistyObjectShader.Add(candidate,output);
         Directory.CreateDirectory(Path.Combine(output,"support"));string path=Path.Combine(output,"support/shaderpack.pssg");
         Files.Save(Files.FromDocument(candidate),path);
         var saved=Files.Document(Files.Pssg(path));
-        foreach(string name in new[]{MistyDetailShader.Ground,MistyDetailShader.Grass})
+        foreach(string name in new[]{MistyDetailShader.Ground+".fp",MistyDetailShader.Grass+".fp"}.Concat(highQualityAssets?MistyObjectShader.Ids.Skip(1):[]))
         {
-            var code=saved.Descendants("SHADERPROGRAM").Single(p=>(string?)p.Attribute("id")==name+".fp").Element("SHADERPROGRAMCODE")!;
+            var code=saved.Descendants("SHADERPROGRAM").Single(p=>(string?)p.Attribute("id")==name).Element("SHADERPROGRAMCODE")!;
             var actual=Convert.FromHexString(string.Concat(code.Element("SHADERPROGRAMCODEBLOCK")!.Value.Where(c=>!char.IsWhiteSpace(c))));
-            if(!actual.AsSpan().SequenceEqual(File.ReadAllBytes(Path.Combine(output,name+".dxbc")))||(int)code.Attribute("codeSize")! != actual.Length)
+            string file=MistyObjectShader.Ids.Contains(name)?name:name[..^3];
+            if(!actual.AsSpan().SequenceEqual(File.ReadAllBytes(Path.Combine(output,file+".dxbc")))||(int)code.Attribute("codeSize")! != actual.Length)
                 throw new InvalidDataException("Saved detail shader bytecode differs from its compiled program.");
         }
         var savedFlow=saved.Descendants("SHADERGROUP").Single(g=>(string?)g.Attribute("id")==Name);
         if(!XNode.DeepEquals(flow,savedFlow))throw new InvalidDataException("Flow shader state changed in serialization");
         savedFlow.ReplaceWith(originalGroup);
+        if(highQualityAssets)
+        {
+            foreach(var item in saved.Descendants().Where(e=>MistyObjectShader.Ids.Contains((string?)e.Attribute("id"))).ToArray())item.Remove();
+            saved.Descendants("SHADERGROUP").Single(g=>(string?)g.Attribute("id")=="object_animated_ripple").ReplaceWith(new XElement(original.Descendants("SHADERGROUP").Single(g=>(string?)g.Attribute("id")=="object_animated_ripple")));
+        }
         foreach(var item in saved.Descendants().Where(e=>(string?)e.Attribute("id") is MistyDetailShader.Ground or MistyDetailShader.Grass or MistyDetailShader.GroundProgram or MistyDetailShader.GrassProgram).ToArray())item.Remove();
         if(!XNode.DeepEquals(original,saved))throw new InvalidDataException("Stock shader programs or states changed");
-        Files.Json(Path.Combine(output,"flow-shader-audit.json"),new{Passed=true,ModifiedGroup=Name,OriginalHash=Files.Hash(source),OtherStockShadersAndStatesUnchanged=true,OriginalBytecodeRetained=true,SoftSourceAlpha=true,NoDepthOrShadowPass=true,NativeClockIdentityRetained=true,LabOnly=true,RuntimeValidated=false});
+        Files.Json(Path.Combine(output,"flow-shader-audit.json"),new{Passed=true,ModifiedGroups=highQualityAssets?new[]{Name,"object_animated_ripple"}:new[]{Name},OriginalHash=Files.Hash(source),OtherStockShadersAndStatesUnchanged=true,OriginalBytecodeRetained=true,SoftSourceAlpha=true,NoDepthOrShadowPass=true,NativeClockIdentityRetained=true,RuntimeValidated=false});
     }
 }

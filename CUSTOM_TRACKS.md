@@ -87,8 +87,14 @@ Use **Manage → Rebuild from source** after updating to apply the original GRID
 
 Source: **Assetto Corsa with Misty Loch 1.4 installed** in `content/tracks/rt_misty_loch`. No other track, extra grass texture pack or CSP installation is needed.
 
-Choose **Daylight**, **Evening** or **Morning Fog** under Conditions. Use **Manage… → Rebuild from source…** to add all three presets and subtle road highlights with mountain occlusion. Existing Daylight and Evening remain usable before rebuilding. Morning Fog full-lap and headset acceptance remain pending.
+Choose **Daylight**, **Evening** or **Morning Fog** under Conditions. Use **Manage… → Rebuild from source…** to add all three presets and subtle road highlights with mountain occlusion. Existing Daylight and Evening remain usable before rebuilding. The VR cockpit fog exposure fix has passed a player retest.
 
 The port includes layered road and terrain textures, roadside grass and flowers, moving waterfall water, lake waves and gentle boat motion. Lighting and some source effects remain approximate; boats do not follow their original sailing routes.
+
+Misty Loch's build dialog offers **Build with high quality assets**, off by default. It keeps the source texture resolutions and adds original RGB normal maps, material channels, baked ambient shading and authored material lighting strengths, plus denser grass with a longer draw distance. The same selection applies to all three lighting presets. This requires rebuilding and can increase GPU and memory use, particularly in VR. The installed quality is shown separately; uncheck the option and rebuild to return to Standard. Course identities, lap records and replay compatibility are retained.
+
+Both quality levels support **Road sheen (Experimental)** under **Graphics → Main**, with separate Desktop and VR settings. Rebuilt Misty Loch tracks use **10%** sheen by default in all three lighting conditions. Leave **Use track default** checked for that setting, or select 0–100%; both use the same reflection response as Nordschleife. Older builds need a rebuild to receive the new default. Mountain sun occlusion remains active at every setting. Slider changes apply on the next launch and the original files are restored after play.
+
+Both quality levels use only DiRT 2 and Misty Loch assets. HQ is not an upscaled texture pack. DiRT 2's 32-bit process memory remains a limit; the option does not change your graphics settings or Large Address Aware preference. Desktop appearance is accepted; final HQ headset and repeated in-game restart checks remain pending.
 
 For current setup advice and known limitations, see the [README](README.md#custom-tracks-experimental). Report track problems through [GitHub issues](https://github.com/preseznik/DiRT2VR/issues), including the layout, car, play mode and whether you used desktop or VR.

@@ -240,7 +240,7 @@ Public Class MainForm
         Tip(vrCrowds, "Show spectators in VR using the game's saved crowd quality." & vbCrLf & "Experimental: crowds add rendering work and may have visual issues." & vbCrLf & "Save and relaunch VR to apply. Desktop play is unchanged.")
         For Each editor In {desktopRoadSheen, vrRoadSheen}
             For Each child As Control In editor.Controls
-                Tip(child, "Road sheen (Experimental): 0% is matte; 100% restores full-strength road reflections." & vbCrLf & "Use track default preserves the installed track's look. Nordschleife only; cars and other surfaces are unchanged." & vbCrLf & "Save settings and relaunch. No rebuild is needed.")
+                Tip(child, "Road sheen (Experimental): 0% is matte; 100% uses full-strength road reflections." & vbCrLf & "Use track default preserves the installed track's look. Supports Nordschleife and Misty Loch; cars and other surfaces are unchanged." & vbCrLf & "Save settings and relaunch. Older Misty Loch builds need a one-time rebuild.")
             Next
         Next
         Tip(treeDetail, "Higher keeps detailed vegetation visible farther away, but" & vbCrLf & "costs performance. Game keeps your usual setting.")

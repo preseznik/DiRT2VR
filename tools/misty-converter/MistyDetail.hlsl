@@ -16,8 +16,9 @@ float EdgeSCurveShift;
 float EdgeBlendMaskUScale;
 float EdgeBlendMaskVScale;
 float terrainXFade;
-float4 MistyRoadSpecular;
+float4 MistyRoadSheen; // Strength, rough lobe exponent, native Nordschleife response, road marker
 float4 MistySunTransform;
+float4 MistyLighting; // Source ambient/diffuse strength; neutral for Standard/grass
 cbuffer PerFrameConstantBuffer : register(b1) {
     float4 sunDirection, sunColour, skylightColour, ambientOcclusionScales;
     float4 backlightColour, specularScales, specularDirection, specularColour;
@@ -64,11 +65,15 @@ float4 main(Pixel i) : SV_Target {
 #ifdef MISTY_GRASS
     float4 texel=tex2D(TDiffuseSpecMap2,uv);
     clip(texel.a-.38);
+#ifdef MISTY_HQ
+    float distanceFade=saturate((Map2UVScaleAndOffset.x-length(p-eyePositionWS.xyz))/60);
+#else
     float distanceFade=saturate((Map2UVScaleAndOffset.x-length(p-eyePositionWS.xyz))/35);
+#endif
     // Stable screen-door fade avoids alpha-sort errors between crossing cards.
     float noise=frac(52.9829189*frac(dot(floor(i.position.xy),float2(.06711056,.00583715))));
     clip(distanceFade-noise);
-    albedo=texel.rgb*i.colour.rgb;
+    albedo=texel.rgb*i.colour.yxw; // EGO packed colour is G,R,A,B, including grass.
 #else
     float4 weights=tex2D(TBlendMap2,uv);
     float3 first=tex2D(TDiffuseSpecMap2,detailUV(p,Map2UVScaleAndOffset,uv)).rgb;
@@ -107,34 +112,66 @@ float4 main(Pixel i) : SV_Target {
     float shadowFade=saturate(cameraDistance*cameraDistance*shadowBlend.x+shadowBlend.y);
     float lightVisibility=lerp(shadow.x,1,shadowFade);
     float sunVisibility=lerp(1,lightVisibility,sunColour.w);
+    float3 light=normalize(sunDirection.xyz);
+    float3 preset=float3(dot(light,float3(.92718385,.37460659,0)),
+                         dot(light,float3(.97814760,.20791169,0)),
+                         dot(light,float3(-.98480775,.17364818,0)));
+    float3 selected=step(.9999,preset);
+    float staticSun=1;
+#ifdef MISTY_GRASS
+    // Each card has one packed lighting byte; interpolation cannot mix bits.
+    float bits=round(i.colour.z*255);
+    staticSun=dot(fmod(floor(bits/float3(1,2,4)),2),selected);
+#else
+    if(MistyRoadSheen.w>.5) {
+        float2 maskUV=p.xz*MistySunTransform.xy+MistySunTransform.zw;
+        // Visibility is a world-space field, not surface detail. Selecting coarser
+        // minimum mips makes its shadows grow and step as the camera moves.
+        staticSun=dot(tex2Dlod(TMistySunMask,float4(maskUV,0,0)).rgb,selected);
+        staticSun*=all(maskUV>0)&&all(maskUV<1)?1:0;
+    }
+#endif
+    sunVisibility=min(sunVisibility,staticSun);
     float3 baked=shadow.yzw*maskParams.w;
     float3 bounce=maskParams.w==0 ? (shadow.yzw*2-1)*(lightVisibility*.5+.5) : 0;
     float facing=dot(n,sunDirection.xyz);
-    float3 illumination=sunColour.rgb*saturate(facing)*sunVisibility+baked;
-    illumination+=skylightColour.rgb*saturate((n.y+.3)/1.3);
-    illumination+=backlightColour.rgb*saturate((.3-facing)/1.3)+ambientColour.rgb;
+    float3 illumination=sunColour.rgb*saturate(facing)*sunVisibility*MistyLighting.y+baked;
+    float3 ambient=skylightColour.rgb*saturate((n.y+.3)/1.3)+backlightColour.rgb*saturate((.3-facing)/1.3)+ambientColour.rgb;
+#ifdef MISTY_GRASS
+    // Upper five alpha bits carry static sky/ambient visibility. Direct sunlight
+    // remains in the lower three bits, so shade never disables ambient entirely.
+    ambient*=floor(bits/8)/31;
+#else
+    // Native packed colour arrives as G,R,A,B; preserve the authored RGB AO.
+    ambient*=saturate(i.colour.yxw); // White in Standard; HQ retains source ambient shading.
+#endif
+    illumination+=ambient*MistyLighting.x;
     illumination=max(illumination+bounce,0);
     float3 lit=albedo*illumination*ao;
 #ifndef MISTY_GRASS
     // Only road materials opt in. The three static masks keep distant mountains
     // occluding the sun after native screen-space shadows have faded away.
-    if(MistyRoadSpecular.x>0) {
-        float3 light=normalize(sunDirection.xyz);
-        float3 preset=float3(dot(light,float3(.92718385,.37460659,0)),
-                             dot(light,float3(.97814760,.20791169,0)),
-                             dot(light,float3(-.98480775,.17364818,0)));
-        float3 selected=step(.9999,preset); // Unknown/changed sun directions fail closed.
-        float2 maskUV=p.xz*MistySunTransform.xy+MistySunTransform.zw;
-        float3 terrain=tex2D(TMistySunMask,maskUV).rgb;
-        float visible=dot(terrain,selected)*saturate(shadow.x);
-        visible*=all(maskUV>0)&&all(maskUV<1)?1:0;
+    if(MistyRoadSheen.x>0) {
+        float visible=staticSun*saturate(shadow.x);
         float3 viewDirection=(eyePositionWS.xyz-p)*rsqrt(max(dot(eyePositionWS.xyz-p,eyePositionWS.xyz-p),1e-8));
         float3 halfVector=light+viewDirection;
         halfVector*=rsqrt(max(dot(halfVector,halfVector),1e-8));
-        float highlight=pow(saturate(dot(n,halfVector)),MistyRoadSpecular.y);
+        float highlight=pow(saturate(dot(n,halfVector)),MistyRoadSheen.y);
         // Broad rough-asphalt response, no wet-look grazing boost or alpha reuse.
-        float strength=MistyRoadSpecular.x*(1-.75*selected.z);
-        lit+=min(max(sunColour.rgb,0),2)*strength*highlight*saturate(facing)*visible*ao;
+        float strength=MistyRoadSheen.x*(1-.75*selected.z);
+        float3 sheen=min(max(sunColour.rgb,0),2)*strength*highlight*saturate(facing);
+        if(MistyRoadSheen.z>.5) {
+            // Same reflection-vector lobe and Fresnel response as Nordschleife's
+            // native terrain_infield shader. The slider supplies strength, never
+            // source texture alpha. Keep the unfaded terrain/native shadow mask.
+            float fresnel=pow(saturate(1-dot(viewDirection,n)),TrackFresnelParameters.z);
+            float response=lerp(TrackFresnelParameters.x,TrackFresnelParameters.y,fresnel)*TrackSpecularParameters.x;
+            float spec=pow(saturate(dot(reflect(-viewDirection,n),normalize(specularDirection.xyz))),max(1,TrackSpecularParameters.y));
+            // A mismatched specular sun must not bypass the baked mask.
+            float aligned=step(.9999,dot(normalize(specularDirection.xyz),light));
+            sheen=max(specularColour.rgb,0)*spec*response*MistyRoadSheen.x*aligned;
+        }
+        lit+=sheen*visible*ao;
     }
 #endif
     return float4(max(lit*i.fog.w+i.fog.rgb,0),1);
