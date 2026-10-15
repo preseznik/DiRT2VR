@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix the CUSTOM car Manage menu throwing a disposed-object error when selecting Rebuild from source or another action.
+
 - Show a concise latest-release summary at the top of the installer, followed by clearly separated older highlights grouped by version.
 
 - Preserve the native distant-scenery visibility range in VR, preventing mountain sections from disappearing on Mizu Mountain. The player approved the 0.17.115 headset retest.

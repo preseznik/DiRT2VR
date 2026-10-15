@@ -11,6 +11,7 @@ Public Class CustomCarSelection
     Private ReadOnly actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
     Private ReadOnly build As New Button With {.Text = "Build/import…", .AutoSize = True}
     Private ReadOnly manage As New Button With {.Text = "Manage…", .AutoSize = True}
+    Private ReadOnly menu As New ContextMenuStrip()
     Private ReadOnly stopBuild As New Button With {.Text = "Stop build", .AutoSize = True, .Visible = False}
     Private ReadOnly bar As New ProgressBar With {.Minimum = 0, .Maximum = 100, .Width = 180, .Visible = False}
     Private key As String
@@ -87,6 +88,7 @@ Public Class CustomCarSelection
         AddHandler Disposed, Sub()
                                  RemoveHandler CustomCarService.Changed, AddressOf ExternalChanged
                                  cancellation?.Cancel()
+                                 menu.Dispose()
                              End Sub
         SetStockSelection(key, selectedStock)
     End Sub
@@ -188,7 +190,11 @@ Public Class CustomCarSelection
         End Try
     End Function
     Private Sub ShowManage()
-        Dim menu As New ContextMenuStrip()
+        ' Keep the dropdown alive while WinForms finishes closing an item click.
+        ' Recreate its choices only on the next opening, when selection may differ.
+        For Each item In menu.Items.Cast(Of ToolStripItem)().ToArray()
+            item.Dispose()
+        Next
         Dim export = menu.Items.Add("Export pack ZIP…", Nothing, Sub()
             PackExportDialog.Export(Me, context, "car", CustomCarPreferences.Load(context).SelectedId, cars.Text)
         End Sub)
@@ -231,7 +237,6 @@ Public Class CustomCarSelection
                 MessageBox.Show(Me, ex.Message, "External cars", MessageBoxButtons.OK, MessageBoxIcon.Error)
             End Try
         End Sub)
-        AddHandler menu.Closed, Sub() menu.Dispose()
         menu.Show(manage, New Drawing.Point(0, manage.Height))
     End Sub
 End Class
