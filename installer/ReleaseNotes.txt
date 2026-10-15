@@ -5,6 +5,7 @@ LATEST CHANGES (since 0.17.113)
 - Better-looking Nordschleife: optional high quality assets add more natural lighting, more detailed surfaces and trackside scenery shadows in Daylight, Overcast and Evening.
 - Mizu Mountain VR fix: distant mountain sections no longer disappear as you look around. No track rebuild is needed for this fix.
 - Ferrari F2004 audio: corrected engine pitch through gear shifts and throttle changes. After updating, choose CUSTOM cars → Manage → Rebuild from source to apply the fix.
+- Fixed an error when choosing Rebuild from source or another action in the CUSTOM car Manage menu.
 
 To try Nordschleife's improved visuals, choose CUSTOM tracks → Nordschleife → Manage → Rebuild from source and enable Build with high quality assets. Standard remains the default, and your best laps are retained. High quality can use more GPU power and memory.
 
