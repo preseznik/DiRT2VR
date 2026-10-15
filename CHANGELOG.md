@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Show a concise latest-release summary at the top of the installer, followed by clearly separated older highlights grouped by version.
+
 - Preserve the native distant-scenery visibility range in VR, preventing mountain sections from disappearing on Mizu Mountain. The player approved the 0.17.115 headset retest.
 
 - Add an opt-in Nordschleife high quality conversion with source ambient shading when a supported local CSP patch is available, authored material lighting, RGB normal maps, layered ground surfaces and scenery shadows. Standard builds and course identities remain available. Desktop rendering checks pass for all three lighting presets, and the player approved the 0.17.114 HQ test build.

@@ -1,63 +1,41 @@
 DiRT2VR — Experimental
 
-Nordschleife now offers an optional high quality build with source ambient shading, authored material lighting, RGB normal maps, layered ground detail and scenery shadows. Choose CUSTOM tracks → Nordschleife → Manage → Rebuild from source and enable Build with high quality assets. A supported local CSP ambient patch is optional. Rebuild all three lighting presets together; track identities and best laps are retained. Short desktop rendering checks pass. Full-lap and headset validation remain pending.
+LATEST CHANGES (since 0.17.113)
 
-Choose Quit from the custom driving or replay pause menu to exit the game without reopening Normal Launch. Session files are restored afterward.
+- Better-looking Nordschleife: optional high quality assets add more natural lighting, more detailed surfaces and trackside scenery shadows in Daylight, Overcast and Evening.
+- Mizu Mountain VR fix: distant mountain sections no longer disappear as you look around. No track rebuild is needed for this fix.
 
-Choose anisotropic filtering independently for Desktop and VR under Graphics → Main: Game, Off, 2×, 4×, 8× or 16×. Game preserves existing filtering. Save and relaunch to apply; overrides require DX11.
+To try Nordschleife's improved visuals, choose CUSTOM tracks → Nordschleife → Manage → Rebuild from source and enable Build with high quality assets. Standard remains the default, and your best laps are retained. High quality can use more GPU power and memory.
 
-Choose Daylight, Evening or Morning Fog for Misty Loch under CUSTOM tracks → Conditions. Use Manage → Rebuild from source for all three presets and subtle road highlights with mountain occlusion. Existing Daylight and Evening installs and replays remain usable. The black-band fix is preserved. Morning Fog full-lap and headset checks remain pending.
+============================================================
+EARLIER RELEASES
+Highlights only; the latest changes are listed above.
+============================================================
 
-Try Natural, Vivid or Muted under Graphics → Filters. Each includes Day and Night settings for Desktop or VR. Original remains the default; use Save as to customize a built-in preset, then Save settings and relaunch. Visual tuning is experimental.
+0.17.113 — Experimental
+- Optional high quality Misty Loch assets, improved lighting and shadows, and fixes for overly bright grass and changing mountain lighting.
+- Separate Desktop and VR controls for Misty Loch road shine.
+- Smoother Ferrari F2004 gamepad steering and less abrupt grip loss. Handling remains experimental.
+- Rebuild Misty Loch and the Ferrari from Manage to apply these asset changes.
 
-Adjust Nordschleife road sheen under Graphics → Main, independently for Desktop and VR. Keep Use track default enabled, or choose 0–100% for the next launch. No track rebuild is needed for this setting; other surfaces are unchanged.
+0.17.112 — Experimental
+- Fixed washed-out VR cockpit brightness, especially in Misty Loch's Morning Fog.
+- Bring the game window forward during VR startup, including with VDXR.
+- Updated launcher help. No track rebuild needed for these fixes.
 
-Fix overly shiny Nordschleife asphalt in Daylight, Overcast and Evening while retaining its colour and detail. After updating, choose Nordschleife → Manage → Rebuild from source to update an existing track installation.
+0.17.109 — Experimental
+- Ferrari F2004 solo practice from your Assetto Corsa installation, on desktop or in VR. AI races, LAN, career and saved-replay playback remain unavailable for this car.
+- Spa-Francorchamps practice and AI races from your GRID 2 Spa DLC.
+- Evening and Morning Fog for Misty Loch; export custom track/car packs and load prepared community packs.
+- Choose SteamVR or your system OpenXR runtime, including VDXR; improved startup centering.
+- More graphics controls: filter presets, Nordschleife road shine and Desktop/VR texture filtering.
+- Fixes for Nordschleife road shine, Ferrari cockpit flicker, custom-track selection and saved-replay playback.
 
-Fix Ferrari cockpit and steering-wheel surface flicker caused by incorrect lighting textures. After updating, use CUSTOM cars → Manage → Rebuild from source to apply the correction to an existing Ferrari installation.
+0.17.88 — Experimental
+- Watch and save complete Direct practice/Race replays. Enable Record full replays in Launcher → Replays before driving; recording starts off.
+- Replay controls and chase-camera orbit/zoom, plus vehicle setup before direct launches.
+- Misty Loch VR practice and AI races; fixes for its road flicker and unnecessary custom-track rebuild requests.
+- Optional Large Address Aware memory support and Keep running when unfocused; both start off.
+- Automatic cleanup of older temporary downloads, build files and logs.
 
-The CUSTOM track list now grows with the launcher window and only scrolls when the available height is filled.
-
-Spa-Francorchamps is now available under CUSTOM tracks → GRID 2. Build the full GP circuit from your installed GRID 2 Spa DLC, then choose Direct practice or Race on desktop or in VR. Race supports 1–7 opponents and 1–20 laps. Existing Spa packs need Manage → Rebuild from source once for the race grid; VR practice needs no rebuild. VR and AI races are experimental.
-
-Custom-track descriptions and build instructions now wrap correctly when an error appears, including in narrow windows and with larger text.
-
-Move built tracks and cars between PCs: choose Manage → Export pack ZIP…, then extract the ZIP into the other PC's DiRT 2 game folder with the game and launcher closed. Open an up-to-date launcher and Refresh. No rebuilding is needed; existing compatibility checks still apply.
-
-Failed custom-track and car builds now save an error report when diagnostic logging is enabled. Enable it in Settings, save, then retry the build. The error details show the report's location; you can also find it through Open logs.
-
-Add prepared community tracks and cars in DiRT2VR/custom-tracks/external or DiRT2VR/custom-cars/external, then choose Refresh. Tracks appear under External; cars appear in CUSTOM cars. Missing or incompatible packs show an explanation. Original game files are restored after play. This accepts prepared DiRT2VR packs, not raw assets from other games.
-
-Import Ferrari F2004 from your local Assetto Corsa installation using CUSTOM cars → Build/import. Use experimental Direct practice on any compatible installed track, in desktop or VR. Headset acceptance is pending. AI races, LAN, career and saved replay playback are not available for this car yet.
-
-Saved replays remember the exact external packs they need. Restore the same pack version before playback. Fix a playback failure affecting recordings with empty animation-name tables.
-
-Find CUSTOM tracks faster with the Source dropdown: check one or more source games, or show them all. Installed tracks only hides layouts you haven't built yet. Save settings remembers your filters; tracks needing repair remain visible.
-
-Full-race recording now starts OFF. To use Full Replay or save new replays, turn ON Record full replays in Launcher → Replays before launching. Instant replay, rewind and your existing saved replays still work with it off.
-
-Fixed flickering black bands on Misty Loch's road while retaining its surface detail. After updating, select Misty Loch → Manage → Rebuild from source once to apply the fix. Existing replays for the same track version remain compatible.
-
-New: Large Address Aware under Advanced → Memory gives DiRT 2 more address space on 64-bit Windows and may help crashes when changing races. Off by default; the original executable is restored after play. This is experimental, not a confirmed fix for every crash.
-
-Fixed Lakeside and other Aspen night layouts being blocked at launch after rebuilding. No new track rebuild is required.
-
-New Controls → Replay settings let you bind playback and camera controls. In chase replays, move the Xbox left stick up/down to zoom; Page Up/Page Down and the mouse wheel also work. Enable chase-camera Free look under Controls → General.
-
-Fixed custom tracks asking for another rebuild after enabling visual filters or disabling Bloom. If you already rebuilt your track, you can launch it without rebuilding again.
-
-Required custom-track rebuilds now appear above the launch settings in bold green text with a gentle pulse, making it clear why launching is unavailable.
-
-New: Save completed Direct practice and Race replays in Launcher → Replays. Play them later on desktop or in VR, or turn on Auto-save completed runs. Files are compressed, and the launcher checks that the recorded cars and track are available before starting playback. Saved replays currently work only in the installation that recorded them; sharing is not supported yet.
-
-Full Replay is now available in the finish menu. Watch from the start, pause with Esc or controller B, and resume with the same button or Continue. Chase-camera orbit and zoom remain available. VR uses the existing 3D chase replays setting; cinematic angles stay on the flat screen.
-
-Fixed jerky replay car movement when frame-rate-independent rewind is enabled.
-
-New: Keep running when unfocused under Advanced → Gameplay. Enable it to keep playback running when switching apps; manual pause still works. Off by default. Use windowed or borderless mode.
-
-New: Vehicle setup beside the car selection. Adjust gear ratio, downforce, suspension, ride height, differential and brake bias for stock and custom Direct practice and Race launches.
-
-Misty Loch now supports VR practice and experimental desktop/VR races with up to seven opponents and twenty laps. Rebuild an existing Misty Loch pack to add the starting grid.
-
-The launcher now clears older temporary installers, abandoned track-build files and diagnostic logs while idle. Settings, saved replays, profiles, installed tracks and recovery backups are kept.
+See the launcher's Instructions and README for current setup steps and limitations.
