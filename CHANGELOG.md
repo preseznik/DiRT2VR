@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.118 — 2026-10-16 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.118)
+
 - Fix the CUSTOM car Manage menu throwing a disposed-object error when selecting Rebuild from source or another action.
 
 - Show a concise latest-release summary at the top of the installer, followed by clearly separated older highlights grouped by version.
