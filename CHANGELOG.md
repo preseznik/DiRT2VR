@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Add an opt-in Nordschleife high quality conversion with source ambient shading when a supported local CSP patch is available, authored material lighting, RGB normal maps, layered ground surfaces and scenery shadows. Standard builds and course identities remain available. Short desktop rendering checks pass for all three lighting presets; full-lap and headset validation remain pending.
+- Add an opt-in Nordschleife high quality conversion with source ambient shading when a supported local CSP patch is available, authored material lighting, RGB normal maps, layered ground surfaces and scenery shadows. Standard builds and course identities remain available. Desktop rendering checks pass for all three lighting presets, and the player approved the 0.17.114 HQ test build.
 
 ## 0.17.113 — 2026-10-15 — Experimental
 
