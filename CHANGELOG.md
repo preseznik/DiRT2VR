@@ -6,10 +6,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.120 — 2026-10-16 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.120)
+
 - Add Race start choices: Automatic uses native staggered starts on stock Rally and Trailblazer stages; Grid race keeps the simultaneous start available. Custom tracks retain grid starts. The desktop Spillway Short countdown, timing, finish menu, Full Replay and Restart passed a player check; other stages and VR need acceptance.
 - Preserve particle effects when loading newly saved replays in a fresh game process. Older recordings that lack the required effect data stop with an error instead of crashing; those runs must be recorded again.
-
-## 0.17.119 — 2026-10-16 — Experimental
 
 - Add Quit to the direct-launch finish menu, including when Full Replay recording is off or unavailable. It exits the game without reopening the menus.
 
