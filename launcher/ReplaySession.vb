@@ -33,7 +33,7 @@ Public NotInheritable Class ReplaySession
             Dim xml = XDocument.Parse(Text.Encoding.UTF8.GetString(Files.ReadBytes(configPath)))
             manifest = New ReplayManifest With {
                 .Name = RaceCatalog.Current.Track(settings.TrackId).Label & " — " & RaceCatalog.Current.Car(settings.CarCode).Label,
-                .Laps = settings.SessionLaps, .LaunchConfig = xml.ToString(), .Content = New AssetTransaction(context).RecordingContent()}
+                .Laps = settings.SessionLaps, .RaceStart = DirectRaceStart.Resolve(settings), .LaunchConfig = xml.ToString(), .Content = New AssetTransaction(context).RecordingContent()}
             If manifest.Name.Length > 100 Then manifest.Name = manifest.Name.Substring(0, 100)
             manifest.EventConfig()
             folder = IO.Path.Combine(context.UserRoot, "replay-recordings", Guid.NewGuid().ToString("N"))

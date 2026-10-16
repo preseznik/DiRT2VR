@@ -14,6 +14,17 @@ struct MessageStream {
    // as an animation-name header when that optional name table is empty.
    if(!AcceptSavedImageBase(Read<unsigned>(p)-tables[s->type]))RaiseException(0xe0420121,EXCEPTION_NONCONTINUABLE,0,nullptr);
    Put(p,0,reinterpret_cast<unsigned>(GetModuleHandleW(nullptr))+tables[s->type]);Put(p,4,0u);
+   if(s->type==0){
+    const auto old=Read<unsigned>(p,0x40);
+    if(old){
+     auto effect=restoredScrapeEffects.find(old);
+     if(effect==restoredScrapeEffects.end()){
+      Log("saved replay: unresolved particle-scrape definition %08x; recording needs material effect identities",old);
+      RaiseException(0xe0420132,EXCEPTION_NONCONTINUABLE,0,nullptr);
+     }
+     Put(p,0x40,effect->second);
+    }
+   }
    static unsigned seen[4]{};if(!seen[s->type]++)Log("archive message: relocated type=%u size=%u",s->type,n);
   }return 0;
  }

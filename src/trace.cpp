@@ -66,7 +66,26 @@ std::unordered_map<void*,uint64_t> shaderNames;
 using LapDescriptorCopyFn = void* (__thiscall*)(void*,const unsigned*);
 LapDescriptorCopyFn realLapDescriptorCopy{};
 unsigned directLaps=1;
+unsigned directStaggeredDiscipline{};
 void* directLapCaller{};
+const void* StaggeredDiscipline(unsigned database) {
+    using GetTable=void* (__thiscall*)(void*,const char*);
+    using GetRow=const void* (__thiscall*)(void*,unsigned);
+    using GetInteger=int (__thiscall*)(void*,int*,const void*,const char*);
+    auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+    auto table=reinterpret_cast<GetTable>(base+0x72fca0)(reinterpret_cast<void*>(database),"discipline");
+    if(!table) return nullptr;
+    const auto count=*reinterpret_cast<const unsigned*>(static_cast<const unsigned char*>(table)+0x30);
+    if(count>64) return nullptr;
+    for(unsigned index=0;index<count;++index) {
+        const auto row=reinterpret_cast<GetRow>(base+0x6ecc40)(table,index);
+        if(!row) return nullptr;
+        int id=-1;
+        if(reinterpret_cast<GetInteger>(base+0x719260)(table,&id,row,"id")==0 &&
+           id==static_cast<int>(directStaggeredDiscipline)) return row;
+    }
+    return nullptr;
+}
 void* __fastcall LapDescriptorCopy(void* target,void*,const unsigned* source) {
     // Only the demo route constructor; all other descriptor copies are untouched.
     if(_ReturnAddress()!=directLapCaller) return realLapDescriptorCopy(target,source);
@@ -77,12 +96,41 @@ void* __fastcall LapDescriptorCopy(void* target,void*,const unsigned* source) {
         ExitProcess(ERROR_BAD_EXE_FORMAT);
     }
     descriptor[5]=directLaps;
+    if(directStaggeredDiscipline) {
+        const auto discipline=StaggeredDiscipline(descriptor[1]);
+        if(descriptor[2]!=0 || directLaps!=1 || !discipline) {
+            Log("direct start: staggered route validation failed; stopping launch");
+            ExitProcess(ERROR_BAD_EXE_FORMAT);
+        }
+        // Native race-type enum 2 is staggered (database race_type ID 4).
+        // The demo otherwise uses standard racing and the first discipline (Raid).
+        descriptor[2]=2;
+        descriptor[4]=reinterpret_cast<unsigned>(discipline);
+    }
     auto result=realLapDescriptorCopy(target,descriptor);
     Log("direct start: demo route laps=%u copied=%u",directLaps,static_cast<unsigned*>(target)[5]);
+    if(directStaggeredDiscipline)
+        Log("direct start: staggered race type=%u discipline=%u",static_cast<unsigned*>(target)[2],directStaggeredDiscipline);
     return result;
 }
 bool EnableDirectLaps(unsigned char* base,unsigned laps) {
-    if(laps==1) return true;
+    wchar_t mode[16]{};
+    const auto modeLength=GetEnvironmentVariableW(L"DIRT2VR_STAGGERED_DISCIPLINE",mode,16);
+    unsigned discipline=0;
+    if(modeLength) {
+        if(modeLength>=16) return false;
+        if(!wcscmp(mode,L"rally")) discipline=30;
+        else if(!wcscmp(mode,L"trailblazer")) discipline=28;
+        else return false;
+        if(laps!=1) return false;
+        constexpr unsigned char tableStart[]{0x51,0x56,0x57,0x8b,0xf1};
+        constexpr unsigned char integerStart[]{0x51,0x8b,0x44,0x24,0x10,0x8b,0x54,0x24,0x0c};
+        constexpr unsigned char rowStart[]{0x8b,0x54,0x24,0x04,0x33,0xc0,0x3b,0x51,0x30};
+        if(memcmp(base+0x72fca0,tableStart,sizeof(tableStart)) ||
+           memcmp(base+0x719260,integerStart,sizeof(integerStart)) ||
+           memcmp(base+0x6ecc40,rowStart,sizeof(rowStart))) return false;
+    }
+    if(laps==1 && !discipline) return true;
     const unsigned char copyPrologue[]={0x8b,0xc1,0x8b,0x4c,0x24,0x04,0x8b,0x11};
     const unsigned char callSite[]={0x89,0x94,0x24,0xa4,0x00,0x00,0x00,0xe8,0xfb,0x56,0x02,0x00};
     if(memcmp(base+0x36a3d0,copyPrologue,sizeof(copyPrologue))!=0 ||
@@ -90,6 +138,7 @@ bool EnableDirectLaps(unsigned char* base,unsigned laps) {
     auto status=MH_Initialize();
     if(status!=MH_OK && status!=MH_ERROR_ALREADY_INITIALIZED) return false;
     directLaps=laps;
+    directStaggeredDiscipline=discipline;
     directLapCaller=base+0x344cd5;
     status=MH_CreateHook(base+0x36a3d0,reinterpret_cast<void*>(LapDescriptorCopy),reinterpret_cast<void**>(&realLapDescriptorCopy));
     if(status==MH_OK) status=EnableRecordedHook(base+0x36a3d0);
@@ -161,16 +210,21 @@ void EnableDirectPractice() {
             }
             wchar_t text[16]{};
             const auto length=GetEnvironmentVariableW(L"DIRT2VR_LAPS",text,16);
+            unsigned laps=1;
             if(length) {
                 if(length>=16) ExitProcess(ERROR_INVALID_PARAMETER);
                 wchar_t* end{};
-                const auto laps=wcstoul(text,&end,10);
-                if(end==text || *end || laps<1 || laps>20 || !EnableDirectLaps(base,static_cast<unsigned>(laps))) {
+                laps=wcstoul(text,&end,10);
+                if(end==text || *end || laps<1 || laps>20) {
                     Log("direct start: lap override validation failed");
                     ExitProcess(ERROR_BAD_EXE_FORMAT);
                 }
-                Log("direct start: requested laps=%lu (memory only)",laps);
             }
+            if(!EnableDirectLaps(base,laps)) {
+                Log("direct start: route override validation failed");
+                ExitProcess(ERROR_BAD_EXE_FORMAT);
+            }
+            Log("direct start: requested laps=%u (memory only)",laps);
             if(!EnableRaceDifficulty()) {
                 Log("direct race: difficulty validation failed; stopping launch");
                 ExitProcess(ERROR_BAD_EXE_FORMAT);

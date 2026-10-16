@@ -16,6 +16,7 @@ Public Class CustomTrackSettings
     Public Property RaceDifficulty As Integer = -1
     Public Property PostProcessTest As String
     Public Sub ApplyTo(settings As VrSettings)
+        settings.RaceStart = "grid" ' Custom packs have no staggered-placement capability yet.
         Dim pack = TrackPacks.ForLayout(LayoutId)
         Dim gridOpponents = Math.Min(Opponents, Math.Max(1, pack.MaximumOpponents(LayoutId)))
         Dim sessionLaps = If(Not pack.GetLayout(LayoutId).Circuit OrElse ((pack.Id = "nordschleife" OrElse pack.Id = "misty-loch") AndAlso LaunchMode = "practice"), 1, Laps)

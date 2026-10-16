@@ -223,6 +223,8 @@ Recordings are compressed automatically and unpacked temporarily for playback. *
 
 This first experimental player supports recordings made by the same installation. Replay sharing/import and recordings from Normal Launch are not supported yet. Careers are unchanged.
 
+Some older recordings lack data needed to restore particle effects in a new game process. If playback reports an unsupported native record and closes, record a new run with the updated launcher; the missing information cannot be recovered from that recording.
+
 ### Race (experimental)
 
 Choose **Race**, an event, track and car, then set **AI opponents** from 1 to 7. Use **Launch** for desktop or **Launch VR** for headset play. Choose **Opponent cars**:
@@ -230,6 +232,8 @@ Choose **Race**, an event, track and car, then set **AI opponents** from 1 to 7.
 - **Same as driver:** all opponents use your model.
 - **Mixed:** other models from all installed classes, regardless of event.
 - **Same class:** other models in your car's game-defined class.
+
+**Race start** defaults to **Automatic**: stock Rally and Trailblazer stages use **Rally (staggered)**, with separate starts and elapsed-time standings. Other tracks use **Grid race**, starting all cars together. Select **Grid race** to keep simultaneous racing on a rally stage. An explicit staggered choice blocks incompatible tracks; choose Automatic or Grid race to continue. CUSTOM tracks currently retain grid starts. Saved replays remember their original start format. The desktop Spillway Short start, timing, finish menu, Full Replay and Restart passed a player check; other stages and VR still need acceptance.
 
 Mixed/class grids are randomized each launch, repeating models if the available pool is small. If no other eligible model is installed, they use your model. Direct practice remains solo regardless of saved opponent settings. Start with Landrush or Rallycross. Other disciplines and track/car combinations need testing.
 

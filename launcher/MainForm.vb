@@ -40,6 +40,7 @@ Public Class MainForm
     Private ReadOnly bindingLists As ListBox() = Enumerable.Range(0, SeatActions.Names.Length).Select(Function(i) New ListBox()).ToArray()
     Private ReadOnly tabs As New ModernTabs With {.Dock = DockStyle.Fill, .Name = "LauncherTabs"}
     Private ReadOnly launchMode As ComboBox = Choice("LaunchMode")
+    Private ReadOnly raceStart As ComboBox = Choice("RaceStart")
     Private ReadOnly eventChoice As ComboBox = Choice("PracticeEvent")
     Private ReadOnly trackChoice As ComboBox = Choice("PracticeTrack")
     Private ReadOnly carChoice As ComboBox = Choice("PracticeCar")
@@ -463,6 +464,12 @@ Public Class MainForm
         selection.Controls.Add(setupButton)
         AddHandler setupButton.Click, Sub() EditCarSetup()
         StyleChoice(raceDifficulty, Me)
+        StyleChoice(raceStart, Me)
+        raceStart.Items.AddRange(DirectRaceStart.Labels)
+        raceStart.SelectedIndex = Array.IndexOf(DirectRaceStart.Values, settings.RaceStart)
+        Field(race, "Race start", raceStart)
+        Tip(raceStart, "Automatic uses staggered starts on stock Rally and Trailblazer stages, and Grid race elsewhere." & vbCrLf & "Staggered races compare elapsed times. Grid races start all cars together. CUSTOM tracks currently use Grid race.")
+        AddHandler raceStart.SelectedIndexChanged, Sub() RefreshOpponentHint()
         raceDifficulty.Items.AddRange(DirectRaceDifficulty.Labels)
         raceDifficulty.SelectedIndex = settings.RaceDifficulty + 1
         Field(race, "Race difficulty", raceDifficulty)
@@ -496,6 +503,7 @@ Public Class MainForm
                                                         Next
                                                         setupButton.Enabled = launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2
                                                         raceDifficulty.Enabled = launchMode.SelectedIndex = 2
+                                                        raceStart.Enabled = launchMode.SelectedIndex = 2
                                                         opponents.Enabled = launchMode.SelectedIndex = 2
                                                         opponentCars.Enabled = launchMode.SelectedIndex = 2
                                                         RefreshOpponentHint()
@@ -518,12 +526,16 @@ Public Class MainForm
         End If
         Dim vehicle = TryCast(carChoice.SelectedItem, PracticeCar)
         opponentHint.Text = If(launchMode.SelectedIndex <> 2, "", If(opponentCars.SelectedIndex = 2, "Opponent class: " & If(vehicle?.ClassName, "Select a car"), If(opponentCars.SelectedIndex = 1, "Mixed: all installed classes.", "All opponents use the same car as the driver.")))
+        If launchMode.SelectedIndex = 2 AndAlso raceStart.SelectedIndex = 1 AndAlso Not DirectRaceStart.SupportsStaggered(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id) Then
+            opponentHint.Text = "Staggered starts need a stock Rally or Trailblazer stage. Choose Automatic or Grid race for this track."
+        End If
     End Sub
     Private Sub RefreshLaunchAvailability()
         RefreshRoadSheenSupport()
         Dim working = busy OrElse CustomCarService.Building OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
         Dim carAllowed = customCars Is Nothing OrElse (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse customCars.CanLaunch(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id, If(launchMode.SelectedIndex = 1, "practice", If(launchMode.SelectedIndex = 2, "race", "other")))
-        desktopButton.Enabled = Not working AndAlso carAllowed AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
+        Dim startAllowed = (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse launchMode.SelectedIndex <> 2 OrElse raceStart.SelectedIndex <> 1 OrElse DirectRaceStart.SupportsStaggered(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id)
+        desktopButton.Enabled = Not working AndAlso carAllowed AndAlso startAllowed AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
         launchButton.Enabled = desktopButton.Enabled AndAlso (customCars Is Nothing OrElse (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse customCars.CanLaunch(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id, If(launchMode.SelectedIndex = 1, "practice", If(launchMode.SelectedIndex = 2, "race", "other")), True)) AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunchVr)
         saveButton.Enabled = Not working : recoverButton.Enabled = Not working
         hostButton.Enabled = Not working AndAlso (customCars Is Nothing OrElse Not customCars.CustomEnabled) AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
@@ -549,6 +561,11 @@ Public Class MainForm
     Private Sub RefreshLaps()
         Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
         laps.Enabled = (launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2) AndAlso track IsNot Nothing AndAlso track.Circuit
+        If raceStart.Items.Count > 0 Then
+            Dim label = "Automatic — " & If(DirectRaceStart.SupportsStaggered(track?.Id), "Rally (staggered)", "Grid race")
+            If CStr(raceStart.Items(0)) <> label Then raceStart.Items(0) = label
+        End If
+        RefreshOpponentHint()
     End Sub
     Private Sub BuildSettingsTab()
         Dim content = TabLayout("Settings")
@@ -996,6 +1013,7 @@ Public Class MainForm
         settings.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         settings.Laps = CInt(laps.Value)
         settings.RaceDifficulty = raceDifficulty.SelectedIndex - 1
+        settings.RaceStart = DirectRaceStart.Values(raceStart.SelectedIndex)
         If settings.DirectMode AndAlso Not customTracks.CustomEnabled Then
             Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)

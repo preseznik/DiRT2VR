@@ -37,8 +37,8 @@ using Io=unsigned(__thiscall*)(void*,void*,unsigned);
 using ReadIo=unsigned(__thiscall*)(void*,void*,unsigned,unsigned);
 #include "replay_storage_audio.inl"
 #include "replay_storage_animation.inl"
-#include "replay_storage_messages.inl"
 #include "replay_storage_surfaces.inl"
+#include "replay_storage_messages.inl"
 #pragma pack(push,1)
 struct Header {char magic[8];unsigned version,types,snapshot,bytes;double start,end;unsigned startOffset,metadata,audio;};
 #pragma pack(pop)
@@ -78,7 +78,7 @@ void TransferRecording(unsigned char* inner,bool load,const wchar_t* path) {
  auto begin=Read<unsigned*>(inner,0x1cc),end=Read<unsigned*>(inner,0x1d0);
  if(!begin||end<begin||end-begin>128)throw std::runtime_error("serializer list");
  std::vector<unsigned> types;for(auto i=begin;i!=end;++i){auto table=Read<unsigned>(*reinterpret_cast<void**>(i));if(table<reinterpret_cast<unsigned>(base)||table>=reinterpret_cast<unsigned>(base)+0x1100000)throw std::runtime_error("serializer type");types.push_back(table-reinterpret_cast<unsigned>(base));}
- Header h{{'D','2','V','R','L','A','B',0},4,static_cast<unsigned>(types.size()),Read<unsigned>(snapshot,0x10),Read<unsigned>(inner,0x288),Read<double>(inner,0x260),Read<double>(inner,0x280),Read<unsigned>(inner,0x268),0,0};
+ Header h{{'D','2','V','R','L','A','B',0},5,static_cast<unsigned>(types.size()),Read<unsigned>(snapshot,0x10),Read<unsigned>(inner,0x288),Read<double>(inner,0x260),Read<double>(inner,0x280),Read<unsigned>(inner,0x268),0,0};
  Log("saved replay: %s snapshot=%u capacity=%u types=%u bytes=%u stream_table=%x",load?"load":"save",h.snapshot,Read<unsigned>(snapshot,8),h.types,h.bytes,Read<unsigned>(stream)-reinterpret_cast<unsigned>(base));
  for(unsigned i=0;i<h.types;++i)Log("saved replay: serializer[%u]=%x",i,types[i]);
  std::vector<AudioIdentity> audio;
@@ -89,13 +89,13 @@ void TransferRecording(unsigned char* inner,bool load,const wchar_t* path) {
  File file(path,!load);
  if(load){
   file.Transfer(&h,sizeof h,false);
-  if(std::memcmp(h.magic,"D2VRLAB",8)||h.version!=4||h.audio>4096||h.types!=types.size()||h.snapshot>8*1024*1024||!h.snapshot||h.snapshot>Read<unsigned>(snapshot,8)||!h.bytes||h.bytes>=Read<unsigned>(inner+0x20,0xc)||!std::isfinite(h.start)||h.start<0||h.start>=0.1||!std::isfinite(h.end)||h.end<=h.start||h.end>86400||h.startOffset>=h.bytes||h.metadata>32*1024*1024||h.metadata<h.types*4)throw std::runtime_error("archive metadata");
+  if(std::memcmp(h.magic,"D2VRLAB",8)||(h.version!=4 && h.version!=5)||h.audio>4096||h.types!=types.size()||h.snapshot>8*1024*1024||!h.snapshot||h.snapshot>Read<unsigned>(snapshot,8)||!h.bytes||h.bytes>=Read<unsigned>(inner+0x20,0xc)||!std::isfinite(h.start)||h.start<0||h.start>=0.1||!std::isfinite(h.end)||h.end<=h.start||h.end>86400||h.startOffset>=h.bytes||h.metadata>32*1024*1024||h.metadata<h.types*4)throw std::runtime_error("archive metadata");
   LARGE_INTEGER length{};if(!GetFileSizeEx(file.handle,&length)||static_cast<unsigned long long>(length.QuadPart)!=sizeof h+4ull*h.types+h.metadata+h.snapshot+h.bytes+static_cast<unsigned long long>(h.audio)*sizeof(AudioIdentity))throw std::runtime_error("archive length");
   std::vector<unsigned> saved(h.types);file.Transfer(saved.data(),h.types*4,false);if(saved!=types)throw std::runtime_error("serializer mismatch");
  }else{if(!h.snapshot||h.snapshot>Read<unsigned>(snapshot,8)||h.snapshot>8*1024*1024)throw std::runtime_error("snapshot length");file.Transfer(&h,sizeof h,true);file.Transfer(types.data(),h.types*4,true);}
  if(load){audio.resize(h.audio);if(h.audio)file.Transfer(audio.data(),h.audio*sizeof(AudioIdentity),false);for(auto& key:audio)if(!std::memchr(key.name,0,32)||!std::memchr(key.bank,0,16))throw std::runtime_error("audio name");ResolveAudio(audio);}
  else if(h.audio)file.Transfer(audio.data(),h.audio*sizeof(AudioIdentity),true);
- if(load){metadata.data.resize(h.metadata);file.Transfer(metadata.data.data(),h.metadata,false);const auto nativeBytes=ReadSavedImageBase(metadata.data,h.types);ResolveSurfaces(metadata.data,nativeBytes);metadata.data.resize(nativeBytes);}else file.Transfer(metadata.data.data(),h.metadata,true);
+ if(load){metadata.data.resize(h.metadata);file.Transfer(metadata.data.data(),h.metadata,false);const auto nativeBytes=ReadSavedImageBase(metadata.data,h.types);ResolveSurfaces(metadata.data,nativeBytes,h.version);metadata.data.resize(nativeBytes);}else file.Transfer(metadata.data.data(),h.metadata,true);
  std::vector<unsigned char> snap(h.snapshot);
  if(load)file.Transfer(snap.data(),h.snapshot,false);else{std::memcpy(snap.data(),Read<void*>(snapshot,4),h.snapshot);file.Transfer(snap.data(),h.snapshot,true);}
  Log("saved replay: header and snapshot read bytes=%u metadata=%u",h.bytes,h.metadata);
@@ -190,7 +190,7 @@ bool ReplayStorageComplete(unsigned char* inner) {
 }
 void ReplayStorageBegin() {
  if(!configured)return;
- {std::lock_guard lock(surfaceLock);savedSurfaces={};restoredSurfaces.clear();surfaceCaptureInvalid=false;surfaceOwner=nullptr;}
+ {std::lock_guard lock(surfaceLock);savedSurfaces={};restoredSurfaces.clear();restoredScrapeEffects.clear();surfaceCaptureInvalid=false;surfaceOwner=nullptr;}
  std::lock_guard<std::mutex> lock(audioLock);
  recordedAudio.clear();restoredAudio.clear();audioCaptureInvalid=false;
  archivePlayback=false;loaded=false;lastInner=nullptr;lastBytes=0;lastEnd=0;

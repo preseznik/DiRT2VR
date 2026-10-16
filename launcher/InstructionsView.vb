@@ -17,6 +17,8 @@ Leave the launcher in front while VR loads: it stays visible until the actual ga
 Direct practice and Race
 Practice is solo; Race adds 1–7 AI opponents. Mixed opponents draw from all installed classes; Same class uses your car's game-defined class. Laps apply to circuits; point-to-point stages are one run. Custom events do not award career progress.
 
+Race start defaults to Automatic: stock Rally and Trailblazer stages use Rally (staggered), with separate starts and elapsed-time standings. Grid race starts everyone together and remains available on rally stages. Other tracks, including CUSTOM tracks, use grid starts. An explicit staggered choice requires a compatible stock stage. Saved replays retain the format they were recorded with. Spillway Short passed a desktop start, timing, finish, replay and Restart check; broader stage and VR acceptance is pending.
+
 Vehicle setup
 Vehicle setup… opens gear ratio, downforce, suspension, ride height, differential and brake bias, with the same five positions as the game. Enable Use this setup for direct launches, adjust the bars and Apply. Save settings or launch to keep it. Reset to centre restores the middle positions; unchecking the option uses the game's setup. This setup is shared across stock and custom Direct practice and Race, desktop and VR. Normal Launch, AI cars and career saves are unchanged.
 
@@ -27,6 +29,7 @@ Saved replays
 In Launcher → Replays, switch Record full replays ON before launching Direct practice or Race. It starts OFF, including after updating; changes save immediately and apply on the next launch. OFF skips full-race recording and saving while keeping instant replay, rewind and saved-replay playback available. Normal Launch retains the game's own replays.
 With recording on, Full Replay is available in the finish menu and Save last replay keeps the completed run in the library. Auto-save completed runs starts off; enabling it keeps every completed attempt. Otherwise the latest unsaved run is replaced when another run finishes. Auto-save is unavailable while recording is off.
 Play or Play in VR checks all recorded cars and the track before launch. Files are compressed automatically; Open folder shows their location in this installation's local DiRT2VR user-data directory. Delete removes a selected saved replay. Auto-save has no storage limit. This experimental player only supports recordings made by this installation; Normal Launch recording and replay sharing are not supported yet.
+Some older recordings lack portable particle-effect data. If playback reports an unsupported native record and closes, record a new run with the updated launcher.
 
 Saving settings
 Save settings, then launch a new session. Quit the game normally so temporary files are restored. The background manager keeps running if you close the launcher window.

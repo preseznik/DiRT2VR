@@ -5,6 +5,7 @@ struct SurfaceTable {unsigned begin{},stride{};std::vector<unsigned> keys;};
 std::mutex surfaceLock;
 SurfaceTable liveSurfaces, savedSurfaces;
 std::map<unsigned,unsigned> restoredSurfaces;
+std::map<unsigned,unsigned> restoredScrapeEffects;
 bool surfaceCaptureInvalid{};
 using SurfaceLookup=void*(__thiscall*)(void*,void*);
 SurfaceLookup originalSurfaceLookup{};
@@ -84,18 +85,47 @@ std::vector<unsigned> SurfaceMetadata() {
  std::lock_guard lock(surfaceLock);
  if(surfaceCaptureInvalid || savedSurfaces.keys.empty())throw std::runtime_error("surface capture incomplete");
  std::vector<unsigned> result{0x46525553,savedSurfaces.begin,savedSurfaces.stride,static_cast<unsigned>(savedSurfaces.keys.size())};
- result.insert(result.end(),savedSurfaces.keys.begin(),savedSurfaces.keys.end());return result;
+ result.insert(result.end(),savedSurfaces.keys.begin(),savedSurfaces.keys.end());
+ // BroadcastTriggerParticleScrape stores a material-effect definition at +0x40.
+ // Resolve definitions through the same native material lookup used by contacts.
+ // Keep their source identities in metadata; never scan or rewrite frame bytes.
+ auto owner=surfaceOwner.load();if(!owner)throw std::runtime_error("surface owner unavailable");
+ std::map<unsigned,unsigned> effects;
+ for(unsigned i=0;i<liveSurfaces.keys.size();++i) {
+  auto effect=originalSurfaceLookup(owner,reinterpret_cast<void*>(liveSurfaces.begin+i*liveSurfaces.stride));
+  if(effect)effects.emplace(reinterpret_cast<unsigned>(effect),liveSurfaces.keys[i]);
+ }
+ result.push_back(0x58454653);result.push_back(static_cast<unsigned>(effects.size()));
+ for(const auto& [pointer,key]:effects){result.push_back(pointer);result.push_back(key);}
+ Log("saved replay: captured %u material effect identities",static_cast<unsigned>(effects.size()));
+ return result;
 }
-void ResolveSurfaces(const std::vector<unsigned char>& bytes,unsigned cursor) {
+void ResolveSurfaces(const std::vector<unsigned char>& bytes,unsigned cursor,unsigned version) {
  if(cursor>bytes.size() || bytes.size()-cursor<16 || Read<unsigned>(bytes.data()+cursor)!=0x46525553)throw std::runtime_error("surface metadata missing");
  auto data=bytes.data()+cursor;SurfaceTable source;
  source.begin=Read<unsigned>(data,4);source.stride=Read<unsigned>(data,8);const auto count=Read<unsigned>(data,12);
- if(!source.begin || source.stride!=0x1a0 || !count || count>4096 || source.begin>0xffffffffu-count*source.stride || bytes.size()-cursor!=16+count*4)throw std::runtime_error("surface metadata bounds");
- std::lock_guard lock(surfaceLock);restoredSurfaces.clear();
+ if(!source.begin || source.stride!=0x1a0 || !count || count>4096 || source.begin>0xffffffffu-count*source.stride || bytes.size()-cursor<16+count*4)throw std::runtime_error("surface metadata bounds");
+ std::lock_guard lock(surfaceLock);restoredSurfaces.clear();restoredScrapeEffects.clear();
  if(liveSurfaces.keys.empty())throw std::runtime_error("current surface table unavailable");
  for(unsigned i=0;i<count;++i){const auto key=Read<unsigned>(data,16+i*4);source.keys.push_back(key);
   auto found=std::find(liveSurfaces.keys.begin(),liveSurfaces.keys.end(),key);
   if(found==liveSurfaces.keys.end() || !restoredSurfaces.emplace(key,liveSurfaces.begin+static_cast<unsigned>(found-liveSurfaces.keys.begin())*liveSurfaces.stride).second)throw std::runtime_error("surface identity mismatch");
+ }
+ cursor+=16+count*4;
+ if(version==4){if(cursor!=bytes.size())throw std::runtime_error("surface metadata trailing data");}
+ else {
+  if(bytes.size()-cursor<8 || Read<unsigned>(bytes.data()+cursor)!=0x58454653)throw std::runtime_error("material effect metadata missing");
+  const auto effects=Read<unsigned>(bytes.data()+cursor,4);cursor+=8;
+  if(effects>4096 || bytes.size()-cursor!=effects*8)throw std::runtime_error("material effect metadata bounds");
+  auto owner=surfaceOwner.load();if(!owner)throw std::runtime_error("surface owner unavailable");
+  for(unsigned i=0;i<effects;++i){
+   const auto pointer=Read<unsigned>(bytes.data()+cursor+i*8),key=Read<unsigned>(bytes.data()+cursor+i*8,4);
+   auto surface=restoredSurfaces.find(key);
+   if(!pointer || surface==restoredSurfaces.end())throw std::runtime_error("material effect identity missing");
+   auto effect=originalSurfaceLookup(owner,reinterpret_cast<void*>(surface->second));
+   if(!effect || !restoredScrapeEffects.emplace(pointer,reinterpret_cast<unsigned>(effect)).second)throw std::runtime_error("material effect identity mismatch");
+  }
+  Log("saved replay: resolved %u material effect identities",effects);
  }
  savedSurfaces=std::move(source);Log("saved replay: resolved %u named surfaces",count);
 }

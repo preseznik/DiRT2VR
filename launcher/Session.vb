@@ -57,6 +57,7 @@ Public Class Session
             settings.Opponents = replay.EventConfig().Root.Element("track").Elements("car").Sum(Function(c) CInt(c.Attribute("number"))) - 1
             settings.LaunchMode = If(settings.Opponents = 0, "practice", "race")
             settings.Laps = replay.Laps
+            settings.RaceStart = replay.RaceStart
             customTrack = CustomTracks.TrackPacks.IsLayout(settings.TrackId)
             postProcessTest = ButtermilkPostProcess.DefaultProfile(settings.TrackId)
         End If
@@ -69,6 +70,7 @@ Public Class Session
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message & If(displayWarning = "", "", " " & displayWarning), .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus, .DisplayWarning = displayWarning, .ErrorDetails = If(settings.LoggingEnabled AndAlso failure IsNot Nothing, failure.ToString(), "")})
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
+        DirectRaceStart.Resolve(settings) ' Reject unsupported explicit choices before preparing any files.
         If customTrack Then CustomTracks.TrackPacks.ForLayout(settings.TrackId).RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
         If CustomCars.CarPack.IsCustom(settings.CarCode) Then
             CustomCars.CarPack.RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.GridOpponents)
@@ -154,6 +156,7 @@ Public Class Session
                         Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
                         start.Environment("DIRT2VR_SEAT_CHANNEL") = seat.Name
                         DirectRaceDifficulty.Configure(start, settings)
+                        DirectRaceStart.Configure(start, settings)
                         CarSetup.Configure(start, settings)
                         If settings.DirectMode Then
                             Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId())
@@ -303,6 +306,7 @@ Public Class Session
         PrepareMenus()
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
         DirectRaceDifficulty.Configure(start, settings)
+        DirectRaceStart.Configure(start, settings)
         CarSetup.Configure(start, settings)
         Dim returnToMenus = WaitForGame(start)
         profile.ConfirmStartup(False)

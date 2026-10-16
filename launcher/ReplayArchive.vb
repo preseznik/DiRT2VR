@@ -11,19 +11,25 @@ Imports DiRT2VR.CustomTracks
 Public Class ReplayManifest
     Public Property Format As String = "DiRT2VR.Replay"
     Public Property Version As Integer = 1
-    Public Property NativeCodec As String = "experimental-native-4"
+    Public Property NativeCodec As String = "experimental-native-5"
     Public Property ExecutableSha256 As String = InstallContext.SupportedHash
     Public Property Id As String = Guid.NewGuid().ToString("N")
     Public Property Name As String = ""
     Public Property RecordedUtc As DateTimeOffset = DateTimeOffset.UtcNow
     Public Property DurationSeconds As Double
     Public Property Laps As Integer = 1
+    ' Older recordings were always grid races. Never reinterpret them as Automatic.
+    Public Property RaceStart As String = "grid"
     Public Property LaunchConfig As String = ""
     Public Property Content As ReplayContentRequirement
     Public Property RecordingBytes As Long
     Public Property RecordingSha256 As String = ""
 
     Public Function EventConfig() As XDocument
+        If Not {"grid", "staggered"}.Contains(RaceStart) OrElse
+            (RaceStart = "staggered" AndAlso (Content Is Nothing OrElse Not DirectRaceStart.SupportsStaggered(Content.TrackId) OrElse Laps <> 1)) Then
+            Throw New IOException("Invalid saved replay race start format.")
+        End If
         If String.IsNullOrEmpty(LaunchConfig) OrElse LaunchConfig.Length > 65536 Then Throw New IOException("Invalid saved replay event.")
         Try
             Using input As New StringReader(LaunchConfig), reader = XmlReader.Create(input, New XmlReaderSettings With {
@@ -48,7 +54,7 @@ Public Class ReplayManifest
 
     Public Sub Validate()
         Dim parsed As Guid
-        If Format <> "DiRT2VR.Replay" OrElse Version <> 1 OrElse NativeCodec <> "experimental-native-4" OrElse
+        If Format <> "DiRT2VR.Replay" OrElse Version <> 1 OrElse Not {"experimental-native-4", "experimental-native-5"}.Contains(NativeCodec) OrElse
             ExecutableSha256 <> InstallContext.SupportedHash Then Throw New IOException("This replay was saved with an unsupported replay format or game version.")
         If Not Guid.TryParseExact(Id, "N", parsed) OrElse Id <> Id.ToLowerInvariant() OrElse
             String.IsNullOrWhiteSpace(Name) OrElse Name.Length > 100 OrElse Name.Any(Function(c) Char.IsControl(c)) OrElse
@@ -77,7 +83,9 @@ Public Class ReplayArchive
         Try
             Using source As New FileStream(recording, FileMode.Open, FileAccess.Read, FileShare.Read)
                 manifest.RecordingBytes = source.Length
-                manifest.DurationSeconds = NativeDuration(source, source.Length)
+                Dim nativeVersion As UInteger
+                manifest.DurationSeconds = NativeDuration(source, source.Length, nativeVersion)
+                manifest.NativeCodec = "experimental-native-" & nativeVersion.ToString(Globalization.CultureInfo.InvariantCulture)
                 source.Position = 0
                 ' Validate before creating any output. The digest is filled while compressing.
                 manifest.RecordingSha256 = New String("0"c, 64) : manifest.Validate()
@@ -132,7 +140,9 @@ Public Class ReplayArchive
                     Dim hash = CopyRecording(input, output, manifest.RecordingBytes, token)
                     If Not hash.Equals(manifest.RecordingSha256, StringComparison.OrdinalIgnoreCase) Then Throw New IOException("This replay is damaged: its recording checksum does not match.")
                     output.Position = 0
-                    If Math.Abs(NativeDuration(output, output.Length) - manifest.DurationSeconds) > 0.000001 Then Throw New IOException("This replay's duration does not match its recording.")
+                    Dim nativeVersion As UInteger
+                    If Math.Abs(NativeDuration(output, output.Length, nativeVersion) - manifest.DurationSeconds) > 0.000001 Then Throw New IOException("This replay's duration does not match its recording.")
+                    If manifest.NativeCodec <> "experimental-native-" & nativeVersion.ToString(Globalization.CultureInfo.InvariantCulture) Then Throw New IOException("This replay's format does not match its recording.")
                     output.Flush(True)
                 End Using
                 Return prepared
@@ -196,10 +206,12 @@ Public Class ReplayArchive
     End Function
 
     ' Envelope bounds only. Native typed records still require codec validation.
-    Private Shared Function NativeDuration(stream As Stream, length As Long) As Double
+    Private Shared Function NativeDuration(stream As Stream, length As Long, ByRef nativeVersion As UInteger) As Double
         If length < 52 OrElse length > MaximumRecordingBytes Then Throw New IOException("Invalid native replay size.")
         Using reader As New BinaryReader(stream, Text.Encoding.UTF8, True)
-            If Not reader.ReadBytes(8).SequenceEqual(New Byte() {68, 50, 86, 82, 76, 65, 66, 0}) OrElse reader.ReadUInt32() <> 4 Then Throw New IOException("Unsupported native replay recording.")
+            If Not reader.ReadBytes(8).SequenceEqual(New Byte() {68, 50, 86, 82, 76, 65, 66, 0}) Then Throw New IOException("Unsupported native replay recording.")
+            nativeVersion = reader.ReadUInt32()
+            If nativeVersion <> 4 AndAlso nativeVersion <> 5 Then Throw New IOException("Unsupported native replay recording.")
             Dim types = CLng(reader.ReadUInt32()), snapshot = CLng(reader.ReadUInt32()), frames = CLng(reader.ReadUInt32())
             Dim first = reader.ReadDouble(), last = reader.ReadDouble()
             Dim offset = CLng(reader.ReadUInt32()), metadata = CLng(reader.ReadUInt32()), audio = CLng(reader.ReadUInt32())

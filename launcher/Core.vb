@@ -174,6 +174,7 @@ Public Class VrSettings
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
     Public Property RaceDifficulty As Integer = -1
+    Public Property RaceStart As String = "auto"
     Public Property DirectCarSetup As New CarSetup()
     <Serialization.JsonIgnore>
     Public ReadOnly Property DirectMode As Boolean
@@ -220,6 +221,7 @@ Public Class VrSettings
         If Opponents < 1 OrElse Opponents > 7 Then Throw New IOException("Choose between one and seven race opponents.")
         If Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Unknown opponent car selection.")
         DirectRaceDifficulty.Validate(RaceDifficulty)
+        DirectRaceStart.Validate(RaceStart)
         If DirectCarSetup Is Nothing Then Throw New IOException("Vehicle setup is missing. Reset it before launching.")
         DirectCarSetup.Validate()
         If Laps < 1 OrElse Laps > 20 Then Throw New IOException("Choose between one and twenty laps.")
