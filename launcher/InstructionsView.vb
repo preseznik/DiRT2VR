@@ -12,7 +12,7 @@ Public Class InstructionsView
         "Launch
 Launcher opens on Main; Replays contains saved recordings and recording options. Launch plays on your monitor. Launch VR asks for OpenXR (system default, including VDXR) or SteamVR. Check Remember my choice to skip the prompt next time; change it later under Settings → VR runtime, or select Ask every time. Start the selected headset software and connect your headset first. VDXR remains experimental; startup centering, controls and desktop-window visibility have passed player checks.
 
-Leave the launcher in front while VR loads: it stays visible until the actual game window is ready to come forward. Initial centering waits for headset tracking and runs again on entering cockpit view. Sit in your normal driving position. F10 recenters manually and F9 switches to the flat virtual screen with default bindings. VR enters races in cockpit view automatically; menus and pause screens use the virtual screen.
+Leave the launcher in front while VR loads: it stays visible until the actual game window is ready to come forward. Initial centering waits for headset tracking and runs again on entering cockpit view. Sit in your normal driving position. F10 recenters manually and F9 switches to the flat virtual screen with default bindings. VR enters races in cockpit view automatically. Menus use the virtual screen by default; Advanced → Graphics has an optional 3D menus switch. Pause screens remain flat.
 
 Direct practice and Race
 Practice is solo; Race adds 1–7 AI opponents. Mixed opponents draw from all installed classes; Same class uses your car's game-defined class. Laps apply to circuits; point-to-point stages are one run. Custom events do not award career progress.
@@ -192,7 +192,10 @@ The launcher backs up the supported executable and restores it after the session
 3D beyond the cockpit (Experimental)
 Advanced → Graphics → 3D beyond the cockpit adds headset 3D and head tracking to supported bonnet, bumper and chase cameras. Off by default; save and relaunch VR to apply. Use the game's Change camera control to switch views. Toggle VR still returns to the virtual screen. Desktop play is unchanged.
 
-Menus, dialogs and movies still use the virtual screen. Replay 3D has its own switch. Seat adjustments apply only inside the cockpit and are retained when you change cameras. Chase cameras retain the game's movement and may be less comfortable than the cockpit.
+Trailer menus and replay 3D have their own switches. Loading screens, dialogs and movies stay on the virtual screen. Seat adjustments apply only inside the cockpit and are retained when you change cameras. Chase cameras retain the game's movement and may be less comfortable than the cockpit.
+
+3D menus (Experimental)
+Advanced → Graphics → 3D menus adds stereo depth and head tracking to the interactive trailer interior and exterior. It is off by default and independent of the driving and replay 3D options. Save and relaunch VR to apply. Use the usual game controls to navigate; Toggle VR (F9 by default) returns to the flat screen. Loading screens, movies, pause screens and unsupported views stay flat. Seat positions and racing HUD masks do not affect the trailer. Menu camera animations still move the view; turn this option off if uncomfortable. Interior and exterior menus, text readability and window reflections have been checked in VDXR. Returning from a race still needs acceptance.
 
 3D chase replays (Experimental)
 Enable Advanced → Graphics → 3D chase replays, save and relaunch VR. This separate switch adds stereo depth and head tracking to replay chase views, including paused playback. Cinematic replay angles remain flat. Toggle VR returns to the flat screen.

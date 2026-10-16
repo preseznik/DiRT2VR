@@ -8,7 +8,7 @@
 // executing game UI logic again, and restore all altered graphics state.
 class HudCapture {
 public:
-    bool Begin(ID3D11Texture2D* back,uint64_t frame,unsigned hidden=0);
+    bool Begin(ID3D11Texture2D* back,uint64_t frame,unsigned hidden=0,bool screenSpaceOnly=false);
     bool Draw(ID3D11DeviceContext* context,const std::function<void()>& draw,bool capture=true);
     void End(bool cockpit);
     ID3D11Texture2D* Current(uint64_t frame) const;
@@ -24,5 +24,5 @@ private:
     D3D11_DEPTH_STENCIL_DESC depthDesc_{};
     uint64_t frame_{};
     unsigned width_{},height_{},draws_{},hidden_{};
-    bool active_{},ready_{};
+    bool active_{},ready_{},screenSpaceOnly_{};
 };

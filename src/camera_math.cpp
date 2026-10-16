@@ -50,6 +50,11 @@ XrPosef ScreenPose(const XrPosef& reference,float distance) {
     const auto offset=Rotate(q,{0,0,-distance});
     return {q,{reference.position.x+offset.x,reference.position.y+offset.y,reference.position.z+offset.z}};
 }
+XrPosef OffsetPose(const XrPosef& pose,XrVector3f localOffset) {
+    const auto q=Normalize(pose.orientation);
+    const auto offset=Rotate(q,localOffset);
+    return {q,{pose.position.x+offset.x,pose.position.y+offset.y,pose.position.z+offset.z}};
+}
 bool CockpitCameraCandidate(const float* a,const float* b,float nearPlane) {
     // Verified cockpit XML/live records use 0.075; trailer cameras use 0.2,
     // bumper cameras 0.1 and the sampled replay cameras approximately 0.05.

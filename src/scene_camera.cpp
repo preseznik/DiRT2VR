@@ -110,6 +110,27 @@ bool ExtendedViewsEnabled() {
     static const bool enabled=[] {wchar_t value[8]{};return GetEnvironmentVariableW(L"DIRT2VR_EXTENDED_VIEWS",value,8)==1 && value[0]==L'1';}();
     return enabled;
 }
+bool TrailerMenusEnabled() {
+    static const bool enabled=[] {wchar_t value[8]{};return GetEnvironmentVariableW(L"DIRT2VR_TRAILER_MENUS",value,8)==1 && value[0]==L'1';}();
+    return enabled;
+}
+namespace {
+bool MatchingTrailerCamera(const float* a,const float* b) {
+    if(!TrailerMenusEnabled() || !SupportedHost())return false;
+    const auto base=reinterpret_cast<const unsigned char*>(GetModuleHandleW(nullptr));
+    const unsigned char* owner{};
+    std::array<unsigned char,0xa4> state{};
+    std::array<float,28> camera{};
+    if(!Read(base+0x11151f8,&owner,sizeof(owner)) || !Read(owner,state.data(),state.size()))return false;
+    const void* table{};std::memcpy(&table,state.data(),sizeof(table));
+    // Frontend resource owner: +94 loads both RV scenes, +96 is the paused-world overlay,
+    // +a1 is loading/race-transition UI. Require the actual RV camera too:
+    // these resources can coexist briefly while changing scenes.
+    if(table!=base+0xeffda4 || state[0x94]!=1 || state[0x96]!=0 || state[0xa1]!=0)return false;
+    return Read(base+0x11ce9b0,camera.data(),sizeof(camera)) &&
+        MatchingSceneCamera(a,camera.data()) && MatchingSceneCamera(b,camera.data());
+}
+}
 SceneCamera ObservedSceneCamera(void* manager) {
     std::lock_guard lock(mutex);
     const auto now=GetTickCount64();
@@ -149,6 +170,7 @@ bool EnableSceneCameraObserver(bool required) {
 }
 SceneCamera IdentifySceneCamera(const float* a,const float* b,uint64_t frame) {
     if(!a || !b)return SceneCamera::Unknown;
+    if(MatchingTrailerCamera(a,b))return SceneCamera::Frontend;
     if(ReplayCamerasEnabled() && ObservedReplayPlayback().Available(GetTickCount64())) {
         return ReplayStereoEnabled() && MatchingReplayChaseCamera(a,b) ? SceneCamera::ReplayChase : SceneCamera::Unknown;
     }

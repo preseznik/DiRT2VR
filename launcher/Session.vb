@@ -248,6 +248,7 @@ Public Class Session
         ChaseCameraLaunch.Configure(start, settings)
         BackgroundPlayLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_EXTENDED_VIEWS") = If(settings.VrExtendedViews, "1", "0")
+        start.Environment("DIRT2VR_TRAILER_MENUS") = If(settings.VrTrailerMenus, "1", "0")
         ReplayCameraLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
         start.Environment("DIRT2VR_WORLD_SCALE") = "1"

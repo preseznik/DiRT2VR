@@ -58,6 +58,7 @@ Public Class MainForm
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
     Private ReadOnly extendedViews As New CheckBox With {.Text = "On (Experimental)", .Name = "VrExtendedViews", .AccessibleName = "3D beyond the cockpit (Experimental)", .AutoSize = True}
     Private ReadOnly replayCameras As New CheckBox With {.Text = "On (Experimental)", .Name = "VrReplayCameras", .AccessibleName = "3D chase replays (Experimental)", .AutoSize = True}
+    Private ReadOnly trailerMenus As New CheckBox With {.Text = "On (Experimental)", .Name = "VrTrailerMenus", .AccessibleName = "3D menus (Experimental)", .AutoSize = True}
     Private ReadOnly vrShadows As New CheckBox With {.Text = "On", .Name = "VrShadows", .AutoSize = True}
     Private ReadOnly vrShadowQuality As ComboBox = Choice("VrShadowQuality")
     Private ReadOnly vrShadowDetailDistance As New ValueSlider("VrShadowDetailDistance", 14, 60, 14, " m")
@@ -232,8 +233,9 @@ Public Class MainForm
         Tip(vrBloom, "Soft glow around bright areas. On keeps the game's effects;" & vbCrLf & "Off removes the glow in VR, including its virtual screen." & vbCrLf & "Save and relaunch VR to apply. This is separate from shadows.")
         Tip(fieldOfView, "Lower values trim the edges of your VR view to reduce rendering" & vbCrLf & "work. 100% keeps the full view; objects keep their normal scale.")
         Tip(mirrors, "Turn the car's rear-view mirrors on or off in VR." & vbCrLf & "Off can improve performance. Game setting keeps your usual choice.")
-        Tip(extendedViews, "Use headset 3D and head tracking in bonnet, bumper and chase views while driving. Replay 3D has its own switch below. Menus stay on the virtual screen. Save and relaunch VR to apply.")
+        Tip(extendedViews, "Use headset 3D and head tracking in bonnet, bumper and chase views while driving. Replay 3D and trailer-menu 3D have separate switches below. Save and relaunch VR to apply.")
         Tip(replayCameras, "Watch chase-camera replays in 3D, with head tracking, even while playback is paused. Cinematic angles stay on the flat screen. For orbit and zoom, enable Controls → General → Chase camera → Free look. Save and relaunch VR to apply.")
+        Tip(trailerMenus, "Use headset 3D and head tracking in the interactive trailer menus. Loading screens, movies and unsupported menu views stay on the virtual screen. F9 (default) returns to the flat screen. Off by default; save and relaunch VR to apply.")
         Tip(vrShadows, "Enable experimental shadows in VR. Off removes shadows, like the game's Ultra low option." & vbCrLf & "Applies on next VR launch; desktop play is unchanged.")
         Tip(vrShadowQuality, "Choose the game's Low, Medium or High shadow detail. High looks sharper but costs more performance." & vbCrLf & "Game keeps your saved game quality. Original settings return after play.")
         Tip(vrShadowDetailDistance, "14 m is the recommended, tested range." & vbCrLf & "Longer ranges keep road shadows detailed farther away, but can cause fast flickering on walls and scenery." & vbCrLf & "Save and relaunch VR to apply.")
@@ -606,6 +608,8 @@ Public Class MainForm
         Field(graphics, "3D beyond the cockpit", extendedViews)
         replayCameras.Checked = settings.VrReplayCameras
         Field(graphics, "3D chase replays", replayCameras)
+        trailerMenus.Checked = settings.VrTrailerMenus
+        Field(graphics, "3D menus", trailerMenus)
         content.Controls.Add(HelpLink(Sub() ShowAbout("Advanced")))
     End Sub
     Private Sub BuildGraphicsTab()
@@ -960,6 +964,7 @@ Public Class MainForm
         settings.KeepRunningUnfocused = backgroundPlay.Checked
         settings.VrExtendedViews = extendedViews.Checked
         settings.VrReplayCameras = replayCameras.Checked
+        settings.VrTrailerMenus = trailerMenus.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked
         settings.SteeringObserveOnly = steeringObserve.Checked
         settings.ChaseFreeLook = chaseFreeLook.Checked

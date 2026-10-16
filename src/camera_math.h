@@ -8,6 +8,8 @@ XrPosef CenterPose(const std::array<XrView,2>& views);
 XrPosef RecenterPose(const XrPosef& center,const XrPosef& previous);
 XrPosef RelativePose(const XrPosef& reference,const XrPosef& eye);
 XrPosef ScreenPose(const XrPosef& reference,float distance);
+// Translate in the pose's local axes (e.g. a simulated eye on a turned head).
+XrPosef OffsetPose(const XrPosef& pose,XrVector3f localOffset);
 // Conservative prototype filter, not a complete game-state/camera-type API.
 bool CockpitCameraCandidate(const float* cameraA,const float* cameraB,float nearPlane=.075f);
 // Only the verified XYZ basis/position fields in the 0x70-byte record change.

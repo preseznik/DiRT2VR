@@ -25,6 +25,7 @@
 #include "scene_depth.h"
 #include "shadow_coverage.h"
 #include "exposure_window.h"
+#include "trailer_background.h"
 #include "direct_menus.h"
 #include "gfwl_compat.h"
 #include "driving_controls.h"
@@ -420,6 +421,46 @@ thread_local float projectionShift{};
 thread_local const XrFovf* eyeFov{};
 thread_local unsigned eyeProjectionUploads{};
 thread_local unsigned lightingEye{}; // 0 = original scene, 1/2 = headset eyes.
+bool HeadsetEnabled();
+bool& ScreenMode();
+float TrailerTrackingScale(SceneCamera);
+float TrailerSourceScale();
+extern uint64_t requestedCaptureFrame;
+bool TrailerBackgroundEnabled() {
+    // Keep an internal opt-out for paired diagnostics. The player-facing gate
+    // is the existing experimental trailer option, which remains off by default.
+    static const bool enabled=[] {wchar_t value[8]{};return !(GetEnvironmentVariableW(L"DIRT2VR_TRAILER_BACKGROUND_REPROJECT",value,8)==1 && value[0]==L'0');}();
+    return TrailerMenusEnabled() && enabled;
+}
+// The source pass precedes xrWaitFrame. Use the last tracked centre with a
+// generous angular margin; the displayed eyes still use this frame's poses.
+thread_local XrPosef trailerTrackedPose{{0,0,0,1},{0,0,0}};
+thread_local uint64_t trailerTrackedFrame=~uint64_t{};
+struct TrailerSource {
+    void* renderer{};
+    uint64_t frame=~uint64_t{};
+    XrPosef pose{{0,0,0,1},{0,0,0}};
+    alignas(16) std::array<unsigned char,0x1a0> camera{};
+    bool ready{};
+};
+thread_local TrailerSource trailerSource;
+thread_local bool trailerSourceSetup{},trailerDisplaySetup{};
+const XrFovf trailerSourceFov{-1.309f,1.309f,1.309f,-1.309f}; // 150 degrees, both axes.
+thread_local const unsigned char* trailerNativeCamera{};
+thread_local TrailerBackgroundRays trailerBackgroundRays;
+struct ScopedTrailerBackground {
+    const unsigned char* previous=trailerNativeCamera;
+    ScopedTrailerBackground(bool trailer,void* renderer) {
+        trailerNativeCamera=trailer && TrailerBackgroundEnabled() && trailerSource.ready &&
+            trailerSource.renderer==renderer && trailerSource.frame==frame.load()?trailerSource.camera.data():nullptr;
+        trailerBackgroundRays={};
+        if(trailerNativeCamera && (frame.load()==3000 || requestedCaptureFrame==frame.load())) {
+            auto out=TraceFile(Output()/("trailer-background-source-"+std::to_string(frame.load())+".bin"),std::ios::binary);
+            out.write(reinterpret_cast<const char*>(trailerNativeCamera),trailerSource.camera.size());
+        }
+    }
+    ~ScopedTrailerBackground(){trailerNativeCamera=previous;trailerBackgroundRays={};}
+};
 thread_local GroundCoverPair groundCoverPair;
 bool LightingTrace() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_TRACE_LIGHTS",value,8)>0 && wcscmp(value,L"1")==0; }();
@@ -511,7 +552,7 @@ thread_local void* preparedCameraRenderer{};
 thread_local uint64_t preparedCameraFrame=~uint64_t{};
 thread_local SceneCamera preparedCameraKind=SceneCamera::Unknown;
 SceneCamera RenderSceneCamera(void* renderer,const float* a,const float* b,uint64_t f) {
-    if((ExtendedViewsEnabled() || ReplayStereoEnabled()) && renderer==classifiedRenderer)return classifiedCamera;
+    if((ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled()) && renderer==classifiedRenderer)return classifiedCamera;
     return IdentifySceneCamera(a,b,f);
 }
 using FrustumCopyFn = void* (__thiscall*)(void*,const void*);
@@ -544,10 +585,10 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
             TraceShadowPresets(frame.load());
             if(before!=shadowCoverage.Active())Log("cockpit shadow preparation frame=%llu extended=%d",frame.load(),shadowCoverage.Active());
         }
-        if(ExtendedViewsEnabled() || ReplayStereoEnabled()) {
+        if(ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled()) {
             preparedCameraRenderer=renderer;preparedCameraFrame=frame.load();preparedCameraKind=kind;
         }
-        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),GamePaused(),true,ReplayStereoEnabled()) && VisibilityBox(a,b,matrix.data(),static_cast<const float*>(source))) {
+        if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),GamePaused(),true,ReplayStereoEnabled(),TrailerMenusEnabled()) && VisibilityBox(a,b,matrix.data(),static_cast<const float*>(source))) {
             buildFrustum(volume.data(),matrix.data());
             bool finite=true; for(float v:volume) finite &= std::isfinite(v);
             if(finite) {
@@ -571,13 +612,54 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
 void __fastcall CameraSetup(void* self,void*,void* context,void* camera,float nearPlane,bool upload) {
     const bool previous=eyeCameraSetup;
     auto bytes=static_cast<unsigned char*>(self);
+    const auto caller=reinterpret_cast<uintptr_t>(_ReturnAddress())-reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+    const bool source=TrailerBackgroundEnabled() && !GamePaused() && (!HeadsetEnabled() || !ScreenMode()) &&
+        caller==0x288c23 && *reinterpret_cast<const unsigned*>(bytes+0x960)==2 &&
+        IdentifySceneCamera(reinterpret_cast<const float*>(bytes+0x5e0),reinterpret_cast<const float*>(bytes+0x650),frame.load())==SceneCamera::Frontend;
+    std::array<float,28> original{};
+    const auto previousFov=eyeFov;
+    const bool previousSource=trailerSourceSetup,previousDisplay=trailerDisplaySetup;
+    if(source) {
+        trailerSource={};trailerSource.renderer=self;trailerSource.frame=frame.load();
+        if(HeadsetEnabled()) {
+            if(trailerTrackedFrame<=frame.load() && frame.load()-trailerTrackedFrame<=2)trailerSource.pose=trailerTrackedPose;
+        } else if(PipelineOption(L"DIRT2VR_PIPELINE_POSE"))
+            trailerSource.pose={{-.08418598f,.25783416f,.02255757f,.96225019f},{.10f,.05f,-.10f}};
+        memcpy(original.data(),camera,112);
+        ApplyEyePose(static_cast<float*>(camera),trailerSource.pose,TrailerSourceScale());
+        eyeFov=&trailerSourceFov;trailerSourceSetup=true;
+    }
+    trailerDisplaySetup=trailerNativeCamera && (camera==bytes+0x5e0 || camera==bytes+0x650);
     eyeCameraSetup=(self==eyeRenderer && (camera==bytes+0x5e0 || camera==bytes+0x650)) ||
-        (self==waterEyeRenderer && camera==*reinterpret_cast<void**>(bytes+0x940));
+        (self==waterEyeRenderer && camera==*reinterpret_cast<void**>(bytes+0x940)) || source;
     if(PipelineTraceEnabled() && frame.load()==3000 && eyeCameraSetup && !waterEyeRenderer)
         Log("PIPELINE CameraSetup eye=%u near=%f upload=%d camera=%p",scenePass,nearPlane,upload,camera);
     realCameraSetup(self,context,camera,nearPlane,upload);
+    if(source) {
+        memcpy(camera,original.data(),112);
+        eyeFov=previousFov;
+    }
+    // The frontend prepares its scene through a different path from racing.
+    // Widen only the RV's visibility volume before its scene jobs are queued;
+    // keep the original projection and all loading/transition cameras intact.
+    if(TrailerMenusEnabled() && WideVisibility() && caller==0x288c23 && buildFrustum && realFrustumCopy && !eyeRenderer) {
+        const auto a=reinterpret_cast<const float*>(bytes+0x5e0);
+        const auto b=reinterpret_cast<const float*>(bytes+0x650);
+        if(IdentifySceneCamera(a,b,frame.load())==SceneCamera::Frontend) {
+            alignas(16) std::array<float,16> matrix{};
+            alignas(16) std::array<float,56> volume{};
+            if(VisibilityBox(a,b,matrix.data())) {
+                buildFrustum(volume.data(),matrix.data());
+                if(std::all_of(volume.begin(),volume.end(),[](float v){return std::isfinite(v);})) {
+                    realFrustumCopy(bytes+0x340,volume.data());
+                    if(frame.load()%120==0)Log("trailer visibility all-directions frame=%llu",frame.load());
+                }
+            }
+        }
+    }
     if(eyeCameraSetup && !waterEyeRenderer && lightingEye && upload) RefreshLights(context);
     eyeCameraSetup=previous;
+    trailerSourceSetup=previousSource;trailerDisplaySetup=previousDisplay;
 }
 void __fastcall CameraUpload(void* self,void*,void* context) {
     if(eyeCameraSetup && (projectionShift!=0 || eyeFov)) {
@@ -599,6 +681,16 @@ void __fastcall CameraUpload(void* self,void*,void* context) {
     }
     if(eyeCameraSetup && !waterEyeRenderer && ShadowsEnabled())
         shadowRays=ShadowViewRays(reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x120));
+    if(trailerSourceSetup && eyeCameraSetup && !waterEyeRenderer) {
+        memcpy(trailerSource.camera.data(),context,trailerSource.camera.size());trailerSource.ready=true;
+    }
+    if((eyeCameraSetup || trailerDisplaySetup) && !waterEyeRenderer && trailerNativeCamera) {
+        trailerBackgroundRays=TrailerBackgroundTransform(reinterpret_cast<const float*>(trailerNativeCamera+0x160),
+            reinterpret_cast<const float*>(trailerNativeCamera+0x120),
+            reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x160),
+            reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x120));
+        if(frame.load()%120==0)Log("Trailer background coverage frame=%llu eye=%u full=%d source_frame=%llu",frame.load(),lightingEye,TrailerBackgroundCoversView(trailerBackgroundRays),trailerSource.frame);
+    }
     if(!waterEyeRenderer && ShadowSequenceFrame(frame.load()))
         TraceShadowCamera(frame.load(),lightingEye,reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x120),reinterpret_cast<const float*>(static_cast<unsigned char*>(context)+0x160));
     realCameraUpload(self,context);
@@ -678,6 +770,9 @@ bool HudShader(ID3D11DeviceContext* context) {
     case 0xbef999561247f2d5ull: case 0x9d4dd795ddf7c656ull:
     case 0x47b5203eae84ab0full: case 0xedfda3c33aa2b9fcull:
     case 0xce4f6cb0ec7d5697ull: return true;
+    // Scaled UI image variant used by trailer popup backing panels. Keep this
+    // extension scoped to menus; racing HUD classification stays unchanged.
+    case 0x2444a05c829f7ffbull: return classifiedCamera==SceneCamera::Frontend;
     default: return false;
     }
 }
@@ -701,6 +796,17 @@ float GraphicsScale(const wchar_t* name,float fallback,float minimum,float maxim
     if(!length || length>=32) return fallback;
     wchar_t* end{}; const float scale=wcstof(value,&end);
     return end!=value && !*end && std::isfinite(scale) && scale>=minimum && scale<=maximum ? scale : fallback;
+}
+float TrailerTrackingScale(SceneCamera camera) {
+    // Internal comparison; the original 1:1 scale has headset acceptance.
+    // Scale BOTH tracked movement and eye spacing; never change projection or
+    // the player's cockpit world-scale setting. Ordinary launches retain 1:1.
+    static const float scale=GraphicsScale(L"DIRT2VR_TRAILER_TRACKING_SCALE",1.f,.25f,1.f);
+    return camera==SceneCamera::Frontend ? scale : 1.f;
+}
+float TrailerSourceScale() {
+    static const float worldScale=GraphicsScale(L"DIRT2VR_WORLD_SCALE",1.f,.25f,4.f);
+    return TrailerTrackingScale(SceneCamera::Frontend)*(HeadsetEnabled()?worldScale:1.f);
 }
 bool EnsureGameXr() {
     static bool attempted=false;
@@ -871,14 +977,14 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     const bool cockpit=camera==SceneCamera::Cockpit;
     static int previousCandidate=-1;
     if(previousCandidate!=static_cast<int>(camera)) {
-        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f",cockpit?"cockpit":camera==SceneCamera::External?"external":camera==SceneCamera::ReplayChase?"replay-chase":"screen",f,
-            static_cast<const float*>(cameraA)[21],static_cast<const float*>(cameraB)[21]);
+        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f trailer_tracking_scale=%.3f",cockpit?"cockpit":camera==SceneCamera::External?"external":camera==SceneCamera::ReplayChase?"replay-chase":camera==SceneCamera::Frontend?"trailer":"screen",f,
+            static_cast<const float*>(cameraA)[21],static_cast<const float*>(cameraB)[21],TrailerTrackingScale(camera));
         previousCandidate=static_cast<int>(camera);
     }
     // A paused cockpit retains its near plane. Render the original complete
     // frame (including modal dialogs) on the screen instead of replaying it.
     // Preserve the requested mode so resuming returns to cockpit VR.
-    if(!StereoCameraAllowed(camera,ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady,ReplayStereoEnabled())) return false;
+    if(!StereoCameraAllowed(camera,ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady,ReplayStereoEnabled(),TrailerMenusEnabled())) return false;
     if(!cockpit) SeatInactive();
     if(!preparedLights.Snapshot(f,context,eyeLights)) {
         Log("lighting replay capacity exceeded; using virtual screen frame=%llu",f);
@@ -917,12 +1023,15 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     // shared light materials can be restored after both eyes, including failure.
     alignas(16) std::array<unsigned char,0x1a0> originalLightContext;
     memcpy(originalLightContext.data(),context,originalLightContext.size());
+    ScopedTrailerBackground background(camera==SceneCamera::Frontend,self);
     groundCoverPair.Begin();
     XrFrames::Overlay hud;
-    const bool captureHud=hudCapture.Begin(back.Get(),f,HiddenHudElements());
+    const bool trailer=camera==SceneCamera::Frontend;
+    const bool captureHud=hudCapture.Begin(back.Get(),f,trailer?0:HiddenHudElements(),trailer);
     static const float hudDistance=GraphicsScale(L"DIRT2VR_HUD_DISTANCE",1.f,1.f,20.f);
+    const float panelDistance=trailer?2.f:hudDistance;
     // Preserve the angular size of the existing 4 m wide, 4 m distant panel.
-    hud.size={hudDistance,hudDistance/hudCapture.Aspect()};
+    hud.size={panelDistance,panelDistance/hudCapture.Aspect()};
     hud.draw=[&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
         hudCapture.End(true);
         if(auto image=hudCapture.Current(f)) {
@@ -940,7 +1049,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         {
             auto relative=RelativePose(headsetReference,view.pose);
             if(cockpit) relative=SeatEyePose(relative);
-            ScopedEyePose pose(cameraA,cameraB,relative,scale);
+            ScopedEyePose pose(cameraA,cameraB,relative,scale*TrailerTrackingScale(camera));
             ScopedSceneDepth depthRange(static_cast<unsigned char*>(self)+0x40);
             shadowRays={}; meterWindow={};
             eyeRenderer=self; eyeFov=&view.fov; lightingEye=eye+1; lightsRefreshed=false;
@@ -964,10 +1073,14 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             ApplyFov(projection.data(),view.fov);
         }
         PrepareHeadsetViews(views,cockpit);
+        if(trailer) {
+            trailerTrackedPose=RelativePose(headsetReference,CenterPose(views));
+            trailerTrackedFrame=f;
+        }
         if(cockpit) SeatPrepare(views);
         SteeringCockpitView(cockpit && gameXr->Visible());
         static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;
-        hud.pose=ScreenPose(follow ? CenterPose(views) : headsetReference,hudDistance);
+        hud.pose=ScreenPose(follow && !trailer ? CenterPose(views) : headsetReference,panelDistance);
         if(!follow && cockpit) hud.pose=SeatHudPose(hud.pose,headsetReference);
     },nullptr,captureHud ? &hud : nullptr,cockpit ? SeatOverlay() : nullptr);
     steeringFrame.Complete(cockpit && submitted && gameXr->Visible());
@@ -1026,8 +1139,8 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
     static const bool shadowProbe=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_SHADOW_PROBE",value,8)==1 && value[0]==L'1'; }();
     // Keep the first paired shadow comparison on the existing detailed-capture
     // frame. This desktop diagnostic never changes the headset render path.
-    if((ExtendedViewsEnabled() || ReplayStereoEnabled()) && (f<1200 || !StereoCameraAllowed(
-        RenderSceneCamera(self,static_cast<float*>(cameraA),static_cast<float*>(cameraB),f),true,GamePaused(),true,ReplayStereoEnabled())))return false;
+    if((ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled()) && (f<1200 || !StereoCameraAllowed(
+        RenderSceneCamera(self,static_cast<float*>(cameraA),static_cast<float*>(cameraB),f),true,GamePaused(),true,ReplayStereoEnabled(),TrailerMenusEnabled())))return false;
     if(!continuousMain || disabled || f<(shadowProbe && !PipelineOption(L"DIRT2VR_PIPELINE_SETTLE") ? 3000u : 300u) || !gameSwapchain) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) {
@@ -1057,8 +1170,12 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         memcpy(originalLightContext.data(),context,originalLightContext.size());
         if(f==3000) Log("PIPELINE light snapshot frame=%llu calls=%zu",f,eyeLights.size());
     }
+    const bool requestedTrailerCapture=TrailerMenusEnabled() && RequestedCapturesEnabled() && TakeCaptureRequest(f,true);
+    if(classifiedCamera==SceneCamera::Frontend)memcpy(originalLightContext.data(),context,originalLightContext.size());
+    ScopedTrailerBackground background(classifiedCamera==SceneCamera::Frontend,self);
     const bool sampled=f==3000;
-    const bool pipelineHud=PipelineOption(L"DIRT2VR_PIPELINE_HUD") && hudCapture.Begin(back.Get(),f,0);
+    const bool pipelineHud=PipelineOption(L"DIRT2VR_PIPELINE_HUD") && hudCapture.Begin(back.Get(),f,0,
+        RenderSceneCamera(self,static_cast<float*>(cameraA),static_cast<float*>(cameraB),f)==SceneCamera::Frontend);
     std::array<uint64_t,2> eyeDraws{};
     LARGE_INTEGER start{},end{},frequency{}; QueryPerformanceFrequency(&frequency); QueryPerformanceCounter(&start);
     bool restored=true;
@@ -1075,8 +1192,8 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
                 // Fixed 30 degree yaw, -10 degree pitch and a seated lean.
                 pipelinePose={{-.08418598f,.25783416f,.02255757f,.96225019f},{.10f,.05f,-.10f}};
             }
-            if(PipelineOption(L"DIRT2VR_PIPELINE_STEREO"))pipelinePose.position.x+=(eye==0?-.032f:.032f);
-            ScopedEyePose pipelineEye(cameraA,cameraB,pipelinePose,1.f);
+            if(PipelineOption(L"DIRT2VR_PIPELINE_STEREO"))pipelinePose=OffsetPose(pipelinePose,{eye==0?-.032f:.032f,0,0});
+            ScopedEyePose pipelineEye(cameraA,cameraB,pipelinePose,TrailerTrackingScale(classifiedCamera));
             auto clip=reinterpret_cast<float*>(static_cast<unsigned char*>(self)+0x40);
             ScopedSceneDepth depthRange(clip);
             if(ShadowSequenceFrame(f))Log("shadow sequence clip before frame=%llu eye=%u near=%.8f far=%.8f",f,eye+1,clip[0],clip[1]);
@@ -1128,6 +1245,13 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         ScreenshotTexture(eyes.Texture(0),900001+2*(f-3000));
         ScreenshotTexture(eyes.Texture(1),900002+2*(f-3000));
     }
+    if(requestedTrailerCapture) {
+        const unsigned id=920000+requestedCaptureCount*2;
+        if(ready) {ScreenshotTexture(eyes.Texture(0),id);ScreenshotTexture(eyes.Texture(1),id+1);}
+        if(pipelineHud)if(auto image=hudCapture.Current(f))ScreenshotTexture(image,930000+requestedCaptureCount,true);
+        Log("requested desktop trailer capture frame=%llu ready=%d images=%u/%u ui_draws=%u",f,ready,id,id+1,pipelineHud?hudCapture.Draws():0);
+        requestedCaptureFrame=~uint64_t{};
+    }
     if(!ready || !matched) {
         if(WaterReflectionsEnabled()) for(unsigned eye=0;eye<2;++eye) {
             auto diagnostic=TraceFile(Output()/("water-probe-failed-eye-"+std::to_string(eye+1)+".txt"));
@@ -1136,10 +1260,23 @@ bool ContinuousScene(void* self,void* lists,void* cameraA,void* cameraB,void* co
         Log("CONTINUOUS disabled after failed pair; inspect stereo-frames.csv"); disabled=true;
     }
     if(WaterReflectionsEnabled() && (disabled || f>=(PipelineTraceEnabled()?3120u:6000u))) { DXGI_SWAP_CHAIN_DESC desc{}; if(SUCCEEDED(gameSwapchain->GetDesc(&desc))) PostMessageW(desc.OutputWindow,WM_CLOSE,0,0); }
+    // Diagnostic eyes intentionally omit captured UI. Restore a complete
+    // native desktop image after saving them so manual navigation stays legible.
+    if(pipelineHud)realInner(self,lists,cameraA,cameraB,context,scene,flags);
     return true;
 }
 
 void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,void* context,void* scene,void* flags) {
+    if(TrailerBackgroundEnabled() && trailerSource.renderer==self && trailerSource.frame==frame.load() &&
+       *reinterpret_cast<const unsigned*>(static_cast<unsigned char*>(self)+0x960)==2 &&
+       cameraA==static_cast<unsigned char*>(self)+0x5e0 && cameraB==static_cast<unsigned char*>(self)+0x650) {
+        ScopedEyePose pose(cameraA,cameraB,trailerSource.pose,TrailerSourceScale());
+        const auto previousRenderer=eyeRenderer;const auto previousFov=eyeFov;const bool previousSource=trailerSourceSetup;
+        eyeRenderer=self;eyeFov=&trailerSourceFov;trailerSourceSetup=true;
+        realInner(self,lists,cameraA,cameraB,context,scene,flags);
+        eyeRenderer=previousRenderer;eyeFov=previousFov;trailerSourceSetup=previousSource;
+        return;
+    }
     if(WaterReflectionsEnabled() && self==waterRenderer && !waterEyeRenderer) {
         memcpy(waterLists.data(),lists,waterLists.size());
         waterListsFrame=frame.load();
@@ -1152,11 +1289,16 @@ void __fastcall Inner(void* self,void*,void* lists,void* cameraA,void* cameraB,v
             if(cameraA==renderer+0x5e0 && cameraB==renderer+0x650) {
                 const bool cockpit=!ScreenMode() && StereoCameraAllowed(
                     RenderSceneCamera(self,static_cast<const float*>(cameraA),static_cast<const float*>(cameraB),frame.load()),
-                    ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady,ReplayStereoEnabled());
+                    ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady,ReplayStereoEnabled(),TrailerMenusEnabled());
                 TakeCaptureRequest(frame.load(),cockpit);
             }
         }
-        if(!HeadsetScene(self,lists,cameraA,cameraB,context,scene,flags)) realInner(self,lists,cameraA,cameraB,context,scene,flags);
+        if(!HeadsetScene(self,lists,cameraA,cameraB,context,scene,flags)) {
+            // F9 or an unavailable XR frame can select the flat view after the
+            // wide source was already rendered. Map it back for that view too.
+            ScopedTrailerBackground background(classifiedCamera==SceneCamera::Frontend,self);
+            realInner(self,lists,cameraA,cameraB,context,scene,flags);
+        }
         return;
     }
     if(HudProbe()) {
@@ -1207,6 +1349,26 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     const auto f=frame.load();
     const auto caller=reinterpret_cast<uintptr_t>(_ReturnAddress())-reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
     const bool mainView=caller==0x2889c0;
+    static const bool trailerProbe=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_TRAILER_PROBE",value,8)==1 && value[0]==L'1'; }();
+    if(mainView && trailerProbe && f%120==0) {
+        const auto ca=static_cast<const float*>(a),cb=static_cast<const float*>(b);
+        Log("trailer camera frame=%llu renderer=%p args=%p/%p/%p/%p/%p near=%.6f/%.6f fov=%.6f/%.6f p=%.4f,%.4f,%.4f paused=%d",f,self,a,b,c,d,e,ca[21],cb[21],ca[20],cb[20],ca[16],ca[17],ca[18],GamePaused());
+        unsigned mode{},owner{},root{}; unsigned char state[0x30]{}; SIZE_T read{};
+        const auto bytes=static_cast<const unsigned char*>(self);
+        ReadProcessMemory(GetCurrentProcess(),bytes+0x960,&mode,4,&read);
+        ReadProcessMemory(GetCurrentProcess(),bytes+0x5d4,&root,4,&read);
+        ReadProcessMemory(GetCurrentProcess(),reinterpret_cast<void*>(root+0x98),&owner,4,&read);
+        ReadProcessMemory(GetCurrentProcess(),reinterpret_cast<void*>(owner+0x80),state,sizeof(state),&read);
+        Log("trailer state mode=%u owner=%x flags90=%02x,%02x,%02x,%02x,%02x,%02x,%02x,%02x a0=%02x,%02x,%02x,%02x",mode,owner,state[16],state[17],state[18],state[19],state[20],state[21],state[22],state[23],state[32],state[33],state[34],state[35]);
+        if(f==1200 || f==3000) {
+            std::array<char,0x200> snapshot{};
+            if(ReadProcessMemory(GetCurrentProcess(),reinterpret_cast<void*>(owner),snapshot.data(),snapshot.size(),&read)) {
+                auto out=TraceFile(Output()/("trailer-owner-"+std::to_string(f)+".bin"),std::ios::binary);out.write(snapshot.data(),snapshot.size());
+            }
+        }
+        static bool sampled=false;
+        if(!sampled && f>300) { sampled=true; Stack("TrailerScene"); }
+    }
     if(WaterReflectionsEnabled() && caller==0x2d1daf && !waterEyeRenderer) { waterRenderer=self; waterRendererFrame=f; }
     const bool sample=DetailedTrace() && (f==300 || f==1200 || f==3000);
     if(sample) {
@@ -1233,9 +1395,18 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     classifiedRenderer=mainView ? self : nullptr;
     classifiedCamera=SceneCamera::Unknown;
     if(mainView)ObserveReplayRenderCamera(a,b);
-    if(mainView && (ExtendedViewsEnabled() || ReplayStereoEnabled())) {
+    if(mainView && (ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled())) {
         classifiedCamera=(preparedCameraRenderer==self && preparedCameraFrame==f) ? preparedCameraKind :
             IdentifySceneCamera(static_cast<float*>(a),static_cast<float*>(b),f);
+        if(classifiedCamera==SceneCamera::Frontend) {
+            unsigned mode=~0u;SIZE_T read{};
+            const bool display=ReadProcessMemory(GetCurrentProcess(),static_cast<unsigned char*>(self)+0x960,&mode,sizeof(mode),&read) &&
+                read==sizeof(mode) && TrailerDisplayPass(mode);
+            // The intermediate source is rendered once with wider coverage.
+            // It must not consume the XR frame before the displayed composition.
+            if(!display) {continuousMain=false;sampleInner=false;}
+            if(trailerProbe && f%120==0)Log("trailer display pass frame=%llu mode=%u display=%d",f,mode,display);
+        }
         if(f%120==0)Log("extended main frame=%llu kind=%u prepared=%d",f,unsigned(classifiedCamera),preparedCameraRenderer==self && preparedCameraFrame==f);
     }
     realScene(self,a,b,c,d,e);
@@ -1413,7 +1584,7 @@ bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT in
     context->PSGetShader(&ps,nullptr,nullptr); context->VSGetShader(&vs,nullptr,nullptr);
     uint64_t ph{},vh{};
     { std::lock_guard lock(shaderMutex); ph=shaderNames[ps.Get()]; vh=shaderNames[vs.Get()]; }
-    TracePipelineDraw(context,frame.load(),lightingEye,waterEyeRenderer!=nullptr,kind,count,instances,vh,ph);
+    TracePipelineDraw(context,frame.load(),lightingEye,waterEyeRenderer!=nullptr,kind,count,instances,vh,ph,false,requestedCaptureFrame==frame.load());
     if(ShadowSequenceFrame(frame.load()) && !waterEyeRenderer)
         TraceShadowInputs(context,ph,frame.load(),lightingEye,true);
     if(scenePass==1) {
@@ -1600,23 +1771,28 @@ void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) {
         const auto found=shaderNames.find(ps.Get());
         if(found!=shaderNames.end())captureShader=found->second;
     }
-    if(n==4 && lightingEye && !waterEyeRenderer && (ShadowsEnabled() || ExposureWindowEnabled())) {
+    if(n==4 && (lightingEye || trailerNativeCamera) && !waterEyeRenderer && (ShadowsEnabled() || ExposureWindowEnabled() || trailerNativeCamera)) {
         ComPtr<ID3D11VertexShader> vs;ComPtr<ID3D11PixelShader> ps;
         c->VSGetShader(&vs,nullptr,nullptr);c->PSGetShader(&ps,nullptr,nullptr);
         uint64_t vertex{},pixel{};
         {std::lock_guard lock(shaderMutex);vertex=shaderNames[vs.Get()];pixel=shaderNames[ps.Get()];}
+        static TrailerBackground trailerBackground;
+        if(trailerNativeCamera && trailerBackground.Draw(c,vertex,pixel,trailerBackgroundRays,[&] {realDraw(c,n,start);})) {
+            if(frame.load()%120==0)Log("Trailer background reprojected frame=%llu eye=%u",frame.load(),lightingEye);
+            return;
+        }
         static ExposureWindow exposureWindow;
-        if(ExposureWindowEnabled() && exposureWindow.Draw(c,vertex,pixel,meterWindow,[&] {realDraw(c,n,start);})) {
+        if(lightingEye && ExposureWindowEnabled() && exposureWindow.Draw(c,vertex,pixel,meterWindow,[&] {realDraw(c,n,start);})) {
             if(frame.load()%120==0)Log("Exposure window applied frame=%llu eye=%u region=%.4f,%.4f,%.4f,%.4f",frame.load(),lightingEye,meterWindow.bounds[0],meterWindow.bounds[1],meterWindow.bounds[2],meterWindow.bounds[3]);
             return;
         }
         static ShadowMaskPass shadowMask;
-        if(ShadowsEnabled() && shadowMask.Draw(c,vertex,pixel,shadowRays,[&] {
+        if(lightingEye && ShadowsEnabled() && shadowMask.Draw(c,vertex,pixel,shadowRays,[&] {
             TraceShadowRays(frame.load(),lightingEye,pixel,shadowRays.values.data(),requestedCaptureFrame==frame.load());
             if(PipelineTraceEnabled() && frame.load()==3000) {
                 ComPtr<ID3D11VertexShader> applied;c->VSGetShader(&applied,nullptr,nullptr);uint64_t actual{};
                 {std::lock_guard lock(shaderMutex);actual=shaderNames[applied.Get()];}
-                TracePipelineDraw(c,frame.load(),lightingEye,false,"draw",n,1,actual,pixel,true);
+                TracePipelineDraw(c,frame.load(),lightingEye,false,"draw",n,1,actual,pixel,true,requestedCaptureFrame==frame.load());
             }
             realDraw(c,n,start);
             if(captureShader)TraceLightingStage(c,captureShader,frame.load(),lightingEye,true);

@@ -296,7 +296,7 @@ The cockpit HUD is a transparent panel showing the game's race information. **VR
 
 Under **Follow view**, uncheck the HUD areas you want hidden. These controls mask areas of the standard race HUD, so another overlay in the same area is hidden too. They do not change menus, the virtual screen, desktop play or the centre of the HUD. Save and relaunch to apply. Restore defaults hides the speedometer/gear/revs area and shows the other areas. Existing saved choices are preserved on upgrade. Alternative HUD layouts and headset use still need validation.
 
-Field-of-view cropping keeps a narrower cockpit view rather than stretching the full image. Menus remain on their normal virtual screen, although reducing render resolution also lowers their image detail. Cropping and nondefault graphics values have automated coverage but still await an in-headset check. Keep the defaults for the established setup.
+Field-of-view cropping keeps a narrower cockpit view rather than stretching the full image. Menus use the virtual screen by default, although reducing render resolution also lowers their image detail. Cropping and nondefault graphics values have automated coverage but still await an in-headset check. Keep the defaults for the established setup.
 
 ### Controls
 
@@ -397,7 +397,7 @@ LAN support is included in the launcher package; no separate test kit or PowerSh
 4. On the other PC, select the host in the LAN server list and click **JOIN**, then choose **Desktop** or **VR**. Discovery refreshes automatically while this tab is open; **Refresh** starts another scan. JOIN opens LAN play and adds the selected PC to the game's network peers. Complete any startup/profile prompts, then finish joining through the game's **Multiplayer / LAN** menu. It does not enter the lobby automatically.
 5. Quit normally after playing. The background launcher restores the original `xlive.dll`, even if you closed its settings window.
 
-HOST and JOIN ask for the display mode every time. Desktop requires no headset. For VR, start your selected headset software and connect your headset first; the launcher uses your saved Graphics and Controls settings. Menus use the virtual screen; races start in cockpit VR automatically. Use Recenter when seated. Multiplayer headset acceptance is pending. VR graphics and asset changes are restored alongside the LAN DLL after play.
+HOST and JOIN ask for the display mode every time. Desktop requires no headset. For VR, start your selected headset software and connect your headset first; the launcher uses your saved Graphics and Controls settings. Menus use the virtual screen unless 3D menus is enabled; races start in cockpit VR automatically. Use Recenter when seated. Multiplayer headset acceptance is pending. VR graphics and asset changes are restored alongside the LAN DLL after play.
 
 The game reads and saves the same career and graphics settings in both modes. Use the game's **Save Profile** action to explicitly save changes before quitting; the launcher does not force an autosave. LAN connection settings and this PC's network identity live under `%LOCALAPPDATA%\DiRT2VR\<installation-id>\lan`; do not copy that folder between players. The launcher does not copy, move or rewrite career files.
 
@@ -465,7 +465,13 @@ Xbox controllers use the D-pad, **X** as the sideways modifier, **A** to save an
 
 **Advanced → Graphics → 3D beyond the cockpit** is off by default. Save and relaunch VR, then use the game's Change camera control to try supported bonnet, bumper and chase views with stereo depth and head tracking. Toggle VR still returns to the virtual screen. Desktop play is unchanged.
 
-Menus, dialogs and movies stay on the virtual screen. Replay 3D has its own switch below. Seat adjustments apply only in the cockpit and are retained when switching cameras. Chase views retain the game's camera movement and may be less comfortable. Leaning can expose geometry omitted from the original fixed-camera view. The external views passed the user headset check. Some camera switches briefly return to the virtual screen while the game blends between views; this remains a known limitation.
+Trailer menus and replay 3D have separate switches below. Loading screens, dialogs and movies stay on the virtual screen. Seat adjustments apply only in the cockpit and are retained when switching cameras. Chase views retain the game's camera movement and may be less comfortable. Leaning can expose geometry omitted from the original fixed-camera view. The external views passed the user headset check. Some camera switches briefly return to the virtual screen while the game blends between views; this remains a known limitation.
+
+### 3D menus (Experimental)
+
+Enable **Advanced → Graphics → 3D menus**, save and relaunch VR for stereo depth and head tracking in the interactive trailer interior and exterior. It starts **off**, independently of the driving and replay 3D options. Navigate with the usual game controls; **Toggle VR** (F9 by default) returns to the flat virtual screen. Loading screens, movies, pause screens and unsupported views remain flat. Seat adjustments and racing HUD masks do not affect the trailer.
+
+The game's menu camera animations still move the view; disable this option if uncomfortable. Interior and exterior menus, text readability and window reflections have been checked in VDXR. Returning from a race still needs acceptance.
 
 ### Chase replays (Experimental)
 

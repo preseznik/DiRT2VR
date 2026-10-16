@@ -5,7 +5,7 @@
 #include <cstring>
 using Microsoft::WRL::ComPtr;
 
-bool HudCapture::Begin(ID3D11Texture2D* back,uint64_t frame,unsigned hidden) {
+bool HudCapture::Begin(ID3D11Texture2D* back,uint64_t frame,unsigned hidden,bool screenSpaceOnly) {
     active_=ready_=false; draws_=0;
     if(!back) return false;
     D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
@@ -23,7 +23,7 @@ bool HudCapture::Begin(ID3D11Texture2D* back,uint64_t frame,unsigned hidden) {
     ComPtr<ID3D11DeviceContext> context; device->GetImmediateContext(&context);
     const float clear[4]{}; context->ClearRenderTargetView(target_.Get(),clear);
     if(!context1_) context.As(&context1_);
-    hidden_=hidden; frame_=frame; active_=true; return true;
+    hidden_=hidden; frame_=frame; screenSpaceOnly_=screenSpaceOnly; active_=true; return true;
 }
 void HudCapture::End(bool cockpit) {
     ready_=active_ && cockpit && draws_!=0;
@@ -55,6 +55,9 @@ bool HudCapture::Draw(ID3D11DeviceContext* context,const std::function<void()>& 
     D3D11_DEPTH_STENCIL_DESC depth{};
     if(originalDepth) originalDepth->GetDesc(&depth);
     else { depth.DepthEnable=TRUE; depth.DepthWriteMask=D3D11_DEPTH_WRITE_MASK_ALL; depth.DepthFunc=D3D11_COMPARISON_LESS; }
+    // Trailer labels that participate in scene depth remain in the world.
+    // Only screen-space UI belongs on the readable menu panel.
+    if(screenSpaceOnly_ && dsv && depth.DepthEnable)return false;
     // Without a depth target the game's default depth state has no effect.
     if(dsv && depth.DepthEnable && depth.DepthWriteMask!=D3D11_DEPTH_WRITE_MASK_ZERO) return false;
     depth.DepthWriteMask=D3D11_DEPTH_WRITE_MASK_ZERO; depth.StencilWriteMask=0;

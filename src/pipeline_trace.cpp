@@ -19,7 +19,7 @@ struct Capture {
     std::unordered_map<UINT,ComPtr<ID3D11Buffer>> staging;
     std::unordered_set<std::string> written;
     std::unordered_map<void*,unsigned> resources;
-    uint64_t bytes{};unsigned draws{};
+    uint64_t bytes{},frame{};unsigned draws{},frames{};
     std::string Blob(const char* type,const void* data,size_t count) {
         std::string name=std::string(type)+"-"+Hex(Hash(data,count));
         if(!written.contains(name)) {
@@ -61,15 +61,21 @@ bool PipelineTraceEnabled() {
     return enabled && LoggingEnabled();
 }
 void TracePipelineDraw(ID3D11DeviceContext* c,uint64_t frame,unsigned eye,bool reflection,const char* kind,
-    UINT count,UINT instances,uint64_t vertex,uint64_t pixel,bool patched) {
-    if(!PipelineTraceEnabled() || frame!=3000 || eye>2 || c->GetType()!=D3D11_DEVICE_CONTEXT_IMMEDIATE)return;
+    UINT count,UINT instances,uint64_t vertex,uint64_t pixel,bool patched,bool requested) {
+    if(!PipelineTraceEnabled() || (frame!=3000 && !requested) || eye>2 || c->GetType()!=D3D11_DEVICE_CONTEXT_IMMEDIATE)return;
     static Capture capture;
     ComPtr<ID3D11Device> device;c->GetDevice(&device);
     if(capture.device && device.Get()!=capture.device.Get())return;
     capture.device=device;
+    // One automatic frame plus the existing four on-demand captures. Retain
+    // the total blob budget and bound draw records separately for each frame.
+    if(capture.frame!=frame) {
+        if(capture.frames>=5)return;
+        capture.frame=frame;++capture.frames;capture.draws=0;
+    }
     if(capture.draws>=4096)return;
     auto out=TraceFile(Output()/"pipeline-draws.jsonl",std::ios::app);
-    out<<"{\"draw\":"<<capture.draws++<<",\"eye\":"<<eye<<",\"reflection\":"<<reflection<<",\"patched\":"<<patched
+    out<<"{\"frame\":"<<frame<<",\"draw\":"<<capture.draws++<<",\"eye\":"<<eye<<",\"reflection\":"<<reflection<<",\"patched\":"<<patched
         <<",\"kind\":\""<<kind<<"\",\"count\":"<<count<<",\"instances\":"<<instances
         <<",\"vs\":\""<<Hex(vertex)<<"\",\"ps\":\""<<Hex(pixel)<<"\"";
     D3D11_PRIMITIVE_TOPOLOGY topology{};c->IAGetPrimitiveTopology(&topology);out<<",\"topology\":"<<topology;

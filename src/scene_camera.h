@@ -32,10 +32,15 @@ inline bool MatchingSceneCamera(const float* a,const float* b) {
         if(!std::isfinite(a[i]) || !std::isfinite(b[i]) || std::abs(a[i]-b[i])>.005f)return false;
     return true;
 }
-inline bool StereoCameraAllowed(SceneCamera camera,bool extended,bool paused,bool ready,bool replay=false) {
+inline bool StereoCameraAllowed(SceneCamera camera,bool extended,bool paused,bool ready,bool replay=false,bool trailer=false) {
     return !paused && ready && (camera==SceneCamera::Cockpit ||
-        (extended && camera==SceneCamera::External) || (replay && camera==SceneCamera::ReplayChase));
+        (extended && camera==SceneCamera::External) || (replay && camera==SceneCamera::ReplayChase) ||
+        (trailer && camera==SceneCamera::Frontend));
 }
+bool TrailerMenusEnabled();
+// The RV first renders its intermediate texture (2), then the displayed
+// composition (1). Exterior menus use the direct display path (0).
+inline bool TrailerDisplayPass(unsigned mode) { return mode==0 || mode==1; }
 bool LiveDrivingCameraState();
 bool ExtendedViewsEnabled();
 bool EnableSceneCameraObserver(bool required=false);
