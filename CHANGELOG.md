@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-## 0.21.0 — 2026-10-16 — Experimental
+## 0.17.119 — 2026-10-16 — Experimental
 
 - Add Quit to the direct-launch finish menu, including when Full Replay recording is off or unavailable. It exits the game without reopening the menus.
 
