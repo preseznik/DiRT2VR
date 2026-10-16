@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Quit to the direct-launch finish menu, including when Full Replay recording is off or unavailable. It exits the game without reopening the menus.
+
 - Add Advanced → Graphics → 3D menus (Experimental), off by default. The interactive trailer uses stereo depth and head tracking, with its window imagery following the scene correctly. Loading screens and unsupported views stay flat. Save and relaunch VR to apply. Interior, exterior, menu navigation and the window-reflection correction passed a VDXR headset check; returning from a race still needs acceptance.
 
 ## 0.17.118 — 2026-10-16 — Experimental

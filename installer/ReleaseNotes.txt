@@ -1,6 +1,16 @@
 DiRT2VR — Experimental
 
-LATEST CHANGES (since 0.17.113)
+LATEST CHANGES (since 0.17.118)
+
+- Optional 3D trailer menus with head tracking. Enable Advanced → Graphics → 3D menus, then save and relaunch VR. Loading screens remain flat; this experimental option starts off.
+- Quit is now available at the end of Direct practice and Race, including when Full Replay recording is off or unavailable. It exits the game without reopening the menus.
+
+============================================================
+EARLIER RELEASES
+Highlights only; the latest changes are listed above.
+============================================================
+
+0.17.118 — Experimental (changes since 0.17.113)
 
 - Better-looking Nordschleife: optional high quality assets add more natural lighting, more detailed surfaces and trackside scenery shadows in Daylight, Overcast and Evening.
 - Mizu Mountain VR fix: distant mountain sections no longer disappear as you look around. No track rebuild is needed for this fix.
@@ -8,11 +18,6 @@ LATEST CHANGES (since 0.17.113)
 - Fixed an error when choosing Rebuild from source or another action in the CUSTOM car Manage menu.
 
 To try Nordschleife's improved visuals, choose CUSTOM tracks → Nordschleife → Manage → Rebuild from source and enable Build with high quality assets. Standard remains the default, and your best laps are retained. High quality can use more GPU power and memory.
-
-============================================================
-EARLIER RELEASES
-Highlights only; the latest changes are listed above.
-============================================================
 
 0.17.113 — Experimental
 - Optional high quality Misty Loch assets, improved lighting and shadows, and fixes for overly bright grass and changing mountain lighting.

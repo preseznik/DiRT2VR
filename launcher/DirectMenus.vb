@@ -57,6 +57,7 @@ Public Class DirectMenus
                         Link(finish, If(available, "enabled", "disabled"), menu.GetAttribute("id"))
                         Link(menu, "restart_race", group.Item2) : Link(menu, "back", group.Item1)
                         Link(menu, "return_menus", leave.GetAttribute("id"))
+                        Link(menu, "quit_game", quit.GetAttribute("id"))
                         If available Then Link(menu, "view_replay", If(group.Item1 = "11e", "10V", "276"))
                     Next
                     If Not recordReplay Then
@@ -64,6 +65,7 @@ Public Class DirectMenus
                         For Each child As XmlNode In finish.ChildNodes.Cast(Of XmlNode)().ToArray() : finish.RemoveChild(child) : Next
                         Link(finish, "restart_race", group.Item2) : Link(finish, "back", group.Item1)
                         Link(finish, "return_menus", leave.GetAttribute("id"))
+                        Link(finish, "quit_game", quit.GetAttribute("id"))
                     End If
                     ' Keep native recording enabled, but stop at our menu before any
                     ' automatic playback. Manual viewing reuses the complete native
@@ -222,7 +224,7 @@ Public Class DirectMenus
             items.Add(("lng_restart_button_title", "restart_race"))
             items.Add(("Return to menus", "return_menus"))
         End If
-        If paused Then items.Add(("Quit", "quit_game"))
+        items.Add(("Quit", "quit_game"))
         generic.RemoveChild(template)
         For i = 0 To items.Count - 1
             Dim item = DirectCast(template.CloneNode(True), XmlElement)
