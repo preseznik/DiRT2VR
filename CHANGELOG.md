@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Correct a further source of VR sun drift as the car moves, exposed by Nordschleife Evening. Sun-disc stability and terrain occlusion passed a headset check with bloom off.
+
 - Correct HQ Nordschleife road graffiti, painted lines and tyre marks using glass reflections instead of terrain decal lighting. Rebuild the HQ track after updating. Evening in-game appearance still needs a retest.
 
 - Fix the VR sky sun following the driving camera. Sun movement, terrain occlusion and glare alignment passed Novigrad Raid headset checks with bloom off and on.
