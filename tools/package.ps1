@@ -1,6 +1,8 @@
 [CmdletBinding()]
 param([string]$InnoCompiler="$env:LOCALAPPDATA\Programs\Inno Setup 7\ISCC.exe",[switch]$SkipNativeBuild,[ValidateSet('Patch','Minor','Major')][string]$VersionBump='Patch',[ValidateSet('Stable','Experimental')][string]$Channel='Stable',
-    [string]$FinalizeReservedVersion,[string]$ReservedPackageDirectory)
+    [string]$FinalizeReservedVersion,[string]$ReservedPackageDirectory,
+    # Only supply this after the user explicitly approves this exact version.
+    [ValidatePattern('^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$')][string]$ApprovedVersion)
 $ErrorActionPreference='Stop'
 $root=Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $root
@@ -36,6 +38,17 @@ if ($VersionBump -eq 'Patch') {
     $known=@($known | Where-Object { $_.Major -eq $series.Major -and $_.Minor -eq $series.Minor })
 }
 $base=($known | Sort-Object -Descending | Select-Object -First 1).ToString()
+$version=if ($FinalizeReservedVersion) { $FinalizeReservedVersion } else {
+    & (Join-Path $PSScriptRoot 'next-version.ps1') -Current $base -Bump $VersionBump
+}
+# Stay on 0.17.x until the user confirms stable status and approves a transition.
+# Check before finalization lookups, version reservation or any build work.
+if ($ApprovedVersion -and $ApprovedVersion -cne $version) {
+    throw "Approved version $ApprovedVersion does not match selected version $version. No version was reserved."
+}
+if ($version -notmatch '^0\.17\.(0|[1-9][0-9]*)$' -and $ApprovedVersion -cne $version) {
+    throw "Packaging is locked to 0.17.x until stable status. Selected version $version requires explicit user approval; only then pass -ApprovedVersion $version. No version was reserved."
+}
 if ($FinalizeReservedVersion) {
     # Explicitly authorized finalization of an unpublished reservation; ordinary
     # packages still reserve a fresh number. Never alter an existing release/tag.
@@ -52,9 +65,6 @@ if ($FinalizeReservedVersion) {
     if ($LASTEXITCODE) { throw 'Cannot verify GitHub release absence; reservation was preserved.' }
     $releasePages=$remoteText | ConvertFrom-Json
     foreach ($page in $releasePages) { foreach ($release in $page) { if ($release.tag_name -eq "v$current") { throw 'This version already has a GitHub release or draft. It cannot be finalized again.' } } }
-    $version=$FinalizeReservedVersion
-} else {
-    $version=& (Join-Path $PSScriptRoot 'next-version.ps1') -Current $base -Bump $VersionBump
 }
 # Reserve the version before building. Failed attempts keep their number; retries advance it.
 [IO.File]::WriteAllText($projectPath,$projectText.Replace('<Version>'+$current+'</Version>','<Version>'+$version+'</Version>'))
