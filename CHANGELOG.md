@@ -7,6 +7,7 @@ Version headings identify distribution builds; published packages include a GitH
 ## Unreleased
 
 - Keep distribution packaging on the 0.17.x version line unless the user explicitly approves the exact version outside that line. Reject unapproved changes before reserving a version or starting a build.
+- Select Rookie, Pro or All-Star beside the stock-car picker in Direct practice and Race, applying the grade to the whole grid on desktop or in VR. Custom cars retain their own specification. Saved replays retain the selected grade and new best-lap records show it; existing settings default to Rookie. Broader gameplay and headset acceptance remain pending.
 
 - Allow Ferrari F2004 in experimental grid races on compatible tracks, retaining each track's opponent and AI-path limits. Disabled Launch, Launch VR and LAN buttons explain their restrictions on hover. AI opponents currently retain donor engine audio.
 - Retain RPM on the F2004 steering-wheel LCD and add gear and speed in the game's selected units. Replace the player's recorded engine sweeps with steady, source-derived tones, restore RPM-based playback and prevent samples restarting from their beginning. Shorten the inherited buggy clutch timing so shifts produce the expected RPM drop or rise. Rebuild an existing F2004 import to apply these changes. Desktop shift audio passed a player check.

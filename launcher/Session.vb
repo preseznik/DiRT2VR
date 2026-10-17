@@ -58,6 +58,7 @@ Public Class Session
             settings.LaunchMode = If(settings.Opponents = 0, "practice", "race")
             settings.Laps = replay.Laps
             settings.RaceStart = replay.RaceStart
+            settings.CarGrade = replay.CarGrade
             customTrack = CustomTracks.TrackPacks.IsLayout(settings.TrackId)
             postProcessTest = ButtermilkPostProcess.DefaultProfile(settings.TrackId)
         End If
@@ -158,8 +159,9 @@ Public Class Session
                         DirectRaceDifficulty.Configure(start, settings)
                         DirectRaceStart.Configure(start, settings)
                         CarSetup.Configure(start, settings)
+                        CarGrades.Configure(start, settings)
                         If settings.DirectMode Then
-                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId())
+                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade)
                             start.ArgumentList.Add("-demo")
                             start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                             start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
@@ -295,7 +297,7 @@ Public Class Session
             If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice and Race require the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
             Worker.Invoke(context, "setup")
             Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
-            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId())
+            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade)
             config = New AssetTransaction(context).PracticeConfig()
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
@@ -308,6 +310,7 @@ Public Class Session
         DirectRaceDifficulty.Configure(start, settings)
         DirectRaceStart.Configure(start, settings)
         CarSetup.Configure(start, settings)
+        CarGrades.Configure(start, settings)
         Dim returnToMenus = WaitForGame(start)
         profile.ConfirmStartup(False)
         Return returnToMenus
@@ -353,7 +356,7 @@ Public Class Session
         replayControls.ConfigureZoom(start)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using recording As New ReplaySession(context, settings, start, If(settings.DirectMode, preparedReplay, Nothing)), returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
-            lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode)
+            lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode, CarGrades.Effective(settings))
             ' Last preparation step: all asset/profile validation has succeeded.
             ' Recovery owns this executable change just like other session files.
             Dim vr = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"

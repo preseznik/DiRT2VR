@@ -19,6 +19,9 @@ Practice is solo; Race adds 1–7 AI opponents. Mixed opponents draw from all in
 
 Race start defaults to Automatic: stock Rally and Trailblazer stages use Rally (staggered), with separate starts and elapsed-time standings. Grid race starts everyone together and remains available on rally stages. Other tracks, including CUSTOM tracks, use grid starts. An explicit staggered choice requires a compatible stock stage. Saved replays retain the format they were recorded with. Spillway Short passed a desktop start, timing, finish, replay and Restart check; broader stage and VR acceptance is pending.
 
+Car grade
+Choose Rookie, Pro or All-Star beside the stock-car picker. The grade applies to you and all AI opponents in Direct practice and Race, including staggered rally and CUSTOM tracks, on desktop or in VR. Rookie is the default. CUSTOM cars keep their own specification. Save settings or launch to keep your choice. Saved replays retain their recorded grade. Normal Launch, LAN and career upgrades use the game's own selections.
+
 Vehicle setup
 Vehicle setup… opens gear ratio, downforce, suspension, ride height, differential and brake bias, with the same five positions as the game. Enable Use this setup for direct launches, adjust the bars and Apply. Save settings or launch to keep it. Reset to centre restores the middle positions; unchecking the option uses the game's setup. This setup is shared across stock and custom Direct practice and Race, desktop and VR. Normal Launch, AI cars and career saves are unchanged.
 

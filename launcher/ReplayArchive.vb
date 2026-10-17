@@ -20,12 +20,14 @@ Public Class ReplayManifest
     Public Property Laps As Integer = 1
     ' Older recordings were always grid races. Never reinterpret them as Automatic.
     Public Property RaceStart As String = "grid"
+    Public Property CarGrade As String = "rookie"
     Public Property LaunchConfig As String = ""
     Public Property Content As ReplayContentRequirement
     Public Property RecordingBytes As Long
     Public Property RecordingSha256 As String = ""
 
     Public Function EventConfig() As XDocument
+        CarGrades.Validate(CarGrade)
         If Not {"grid", "staggered"}.Contains(RaceStart) OrElse
             (RaceStart = "staggered" AndAlso (Content Is Nothing OrElse Not DirectRaceStart.SupportsStaggered(Content.TrackId) OrElse Laps <> 1)) Then
             Throw New IOException("Invalid saved replay race start format.")

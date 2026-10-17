@@ -90,7 +90,7 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False, Optional recordReplay As Boolean = True)
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False, Optional recordReplay As Boolean = True, Optional carGrade As String = "rookie", Optional preparedConfig As Byte() = Nothing)
         context.RequireClosed()
         If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
@@ -99,7 +99,8 @@ Public Class AssetTransaction
         If configOnly AndAlso trackId Is Nothing Then Throw New IOException("Desktop practice requires a track selection.")
         If trackId = PrototypeTrack.Id AndAlso Not configOnly Then Throw New IOException("The prototype track supports desktop preparation only.")
         If trackId IsNot Nothing Then RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
-        Dim configBytes = If(trackId Is Nothing, Nothing, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context))
+        CarGrades.Validate(carGrade)
+        Dim configBytes = If(trackId Is Nothing OrElse replay IsNot Nothing, Nothing, If(preparedConfig, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context, carGrade)))
         If configBytes IsNot Nothing AndAlso replay Is Nothing AndAlso Not recordReplay Then
             Dim config = System.Xml.Linq.XDocument.Parse(Text.Encoding.UTF8.GetString(configBytes))
             config.Root.SetAttributeValue("skipreplays", "true")
@@ -108,6 +109,7 @@ Public Class AssetTransaction
         If replay IsNot Nothing Then
             replay.Validate() : ReplayContent.RequireAvailable(context, replay.Content)
             If replay.Content.TrackId <> trackId OrElse replay.Content.Cars(0) <> carCode Then Throw New IOException("Replay preparation does not match the recorded event.")
+            CarGrades.ValidateGrid(context, replay.EventConfig(), carCode, replay.CarGrade)
             configBytes = Text.Encoding.UTF8.GetBytes(replay.EventConfig().ToString())
         End If
         ' Version 4 journals own only a desktop practice config, with no asset entries.

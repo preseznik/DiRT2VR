@@ -13,15 +13,16 @@ Public NotInheritable Class BestLapChannel
     Private ReadOnly context As InstallContext
     Private ReadOnly layoutId As String
     Private ReadOnly carCode As String
+    Private ReadOnly carGrade As String
     Private ReadOnly version As String
     Private ReadOnly carVersion As String = ""
     Private ReadOnly createdUtc As DateTime = DateTime.UtcNow
     Private lastSequence As Integer
     Public ReadOnly Name As String
-    Public Sub New(context As InstallContext, start As ProcessStartInfo, layoutId As String, carCode As String)
+    Public Sub New(context As InstallContext, start As ProcessStartInfo, layoutId As String, carCode As String, Optional carGrade As String = Nothing)
         start.Environment.Remove("DIRT2VR_LAP_CHANNEL")
         If Not TrackPacks.Nordschleife.IsLayout(layoutId) OrElse CustomCars.ExternalCars.Find(carCode) IsNot Nothing Then Return
-        Me.context = context : Me.layoutId = layoutId : Me.carCode = carCode
+        Me.context = context : Me.layoutId = layoutId : Me.carCode = carCode : Me.carGrade = If(carGrade, "")
         version = TrackPacks.Nordschleife.Read(context.GameRoot, False).Version
         If CustomCars.CarPack.IsCustom(carCode) Then carVersion = CustomCars.CarPack.Read(context.GameRoot, False).Version
         Name = "Local\DiRT2VR.Lap." & Guid.NewGuid().ToString("N")
@@ -49,7 +50,7 @@ Public NotInheritable Class BestLapChannel
                     Not String.Equals(game.MainModule.FileName, IO.Path.Combine(context.GameRoot, "dirt2_game.exe"), StringComparison.OrdinalIgnoreCase) Then Return
             End Using
             lastSequence = result.Sequence
-            BestLapStore.Record(context, New BestLapRecord With {.LayoutId = layoutId, .PackVersion = version, .CarCode = carCode,
+            BestLapStore.Record(context, New BestLapRecord With {.LayoutId = layoutId, .PackVersion = version, .CarCode = carCode, .CarGrade = carGrade,
                 .CarConversionVersion = carVersion, .Milliseconds = result.Microseconds \ 1000, .CompletedUtc = DateTime.UtcNow})
         Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.Text.Json.JsonException
             Console.Error.WriteLine("Best lap could not be saved: " & ex.Message)

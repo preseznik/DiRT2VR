@@ -21,6 +21,7 @@ Public Class CustomCarSelection
     Private unavailableReason As String = ""
     Private lastMessage As String = ""
     Private cancellation As CancellationTokenSource
+    Public ReadOnly Grades As New CarGradePicker
     Public Event Changed As EventHandler
 
     Public ReadOnly Property CustomEnabled As Boolean
@@ -61,10 +62,12 @@ Public Class CustomCarSelection
         Me.context = context : Me.cars = cars : Me.key = key
         Name = "CustomCarSelection" & If(key = "stock", "Stock", "Track") : toggle.Name = Name & "Toggle"
         build.Name = Name & "Build" : manage.Name = Name & "Manage" : stopBuild.Name = Name & "Cancel" : status.Name = Name & "Status"
-        Dim row As New ResponsiveColumns With {.WideAt = 650}
-        row.First.Controls.Add(cars) : row.Second.Controls.Add(toggle)
+        Dim row As New ResponsiveColumns With {.WideAt = 560}
+        Grades.Name = Name & "Grade"
+        row.First.Controls.Add(cars) : row.Second.Controls.Add(Grades)
+        AddHandler cars.EnabledChanged, Sub() Grades.Enabled = cars.Enabled
         AddHandler SizeChanged, Sub() status.MaximumSize = New Drawing.Size(Math.Max(1, ClientSize.Width - status.Margin.Horizontal), 0)
-        Controls.Add(row) : Controls.Add(status) : actions.Controls.AddRange({build, manage, stopBuild, bar}) : Controls.Add(actions)
+        Controls.Add(row) : Controls.Add(toggle) : Controls.Add(status) : actions.Controls.AddRange({build, manage, stopBuild, bar}) : Controls.Add(actions)
         AddHandler toggle.CheckedChanged, Sub()
                                             If loading Then Return
                                             Dim preferences = CustomCarPreferences.Load(context)
@@ -93,7 +96,7 @@ Public Class CustomCarSelection
         AddHandler Disposed, Sub()
                                  RemoveHandler CustomCarService.Changed, AddressOf ExternalChanged
                                  cancellation?.Cancel()
-                                 menu.Dispose()
+                                 menu.Dispose() : status.Dispose() : actions.Dispose()
                              End Sub
         SetStockSelection(key, selectedStock)
     End Sub
@@ -149,7 +152,12 @@ Public Class CustomCarSelection
                 status.Text = "Ferrari F2004 · Not imported"
             End If
             unavailableReason = If(ready, "", status.Text)
+            Grades.SetStock(Not CustomEnabled)
             status.Visible = CustomEnabled : actions.Visible = CustomEnabled
+            For Each extra As Control In New Control() {status, actions}
+                If CustomEnabled AndAlso Not Controls.Contains(extra) Then Controls.Add(extra)
+                If Not CustomEnabled AndAlso Controls.Contains(extra) Then Controls.Remove(extra)
+            Next
             toggle.Enabled = Not CustomCarService.Building : cars.Enabled = Not CustomCarService.Building
             build.Visible = preferences.SelectedId = CarPack.Code
             build.Enabled = Not CustomCarService.Building : manage.Enabled = Not CustomCarService.Building

@@ -322,6 +322,7 @@ Public Class CustomTrackPanel
 
             launchMode.SelectedIndex = If(selected.LaunchMode = "race" AndAlso launchMode.Items.Count = 1, -1, Array.IndexOf({"practice", "race"}, selected.LaunchMode))
             customCars.SetStockSelection("custom/" & currentPack.Id, selected.CarCode)
+            customCars.Grades.Value = selected.CarGrade
             raceDifficulty.SelectedIndex = Math.Clamp(selected.RaceDifficulty, -1, 5) + 1
             opponentCars.SelectedIndex = Array.IndexOf({"same", "mixed", "class"}, selected.OpponentCars)
             opponents.Maximum = 7 : fullGridOpponents = Math.Clamp(selected.Opponents, 1, 7)
@@ -346,6 +347,7 @@ Public Class CustomTrackPanel
         If layouts.SelectedItem IsNot Nothing Then selected.LayoutId = DirectCast(layouts.SelectedItem, LayoutItem).Value.Id
         If launchMode.SelectedIndex >= 0 Then selected.LaunchMode = {"practice", "race"}(launchMode.SelectedIndex)
         If cars.SelectedItem IsNot Nothing Then selected.CarCode = If(customCars.CustomEnabled, customCars.StockSelection, DirectCast(cars.SelectedItem, PracticeCar).Code)
+        selected.CarGrade = customCars.Grades.Value
         If opponentCars.SelectedIndex >= 0 Then selected.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
         selected.RaceDifficulty = raceDifficulty.SelectedIndex - 1
         selected.Opponents = If(opponents.Maximum = 1, fullGridOpponents, opponents.Value) : selected.Laps = If(OneLapPractice, circuitRaceLaps, laps.Value)

@@ -5,6 +5,7 @@ Public Class BestLapRecord
     Public Property LayoutId As String = ""
     Public Property PackVersion As String = ""
     Public Property CarCode As String = ""
+    Public Property CarGrade As String = ""
     Public Property CarConversionVersion As String = ""
     Public Property Milliseconds As Long
     Public Property CompletedUtc As DateTime
@@ -28,7 +29,7 @@ Public Module BestLapStore
         Return history
     End Function
     Public Function Valid(record As BestLapRecord, Optional customCar As Boolean = False) As Boolean
-        Return record IsNot Nothing AndAlso TrackPacks.Nordschleife.IsLayout(record.LayoutId) AndAlso SafeFiles.Version(record.PackVersion) AndAlso
+        Return record IsNot Nothing AndAlso (record.CarGrade = "" OrElse CarGrades.Values.Contains(record.CarGrade)) AndAlso TrackPacks.Nordschleife.IsLayout(record.LayoutId) AndAlso SafeFiles.Version(record.PackVersion) AndAlso
             If(customCar, CustomCars.CarPack.IsCustom(record.CarCode) AndAlso SafeFiles.Version(record.CarConversionVersion),
                 record.CarConversionVersion = "" AndAlso RaceCatalog.Current.Cars.Any(Function(c) c.Code = record.CarCode)) AndAlso record.Milliseconds >= 1000 AndAlso record.Milliseconds <= 7200000 AndAlso
             record.CompletedUtc.Kind = DateTimeKind.Utc AndAlso record.CompletedUtc >= New DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)
@@ -63,6 +64,6 @@ Public Module BestLapStore
     End Function
     Public Function Display(lap As BestLapRecord) As String
         Dim seconds = lap.Milliseconds \ 1000, hundredths = (lap.Milliseconds Mod 1000) \ 10
-        Return (seconds \ 60).ToString() & ":" & (seconds Mod 60).ToString("00") & "." & hundredths.ToString("00") & " · " & RaceCatalog.Current.Car(lap.CarCode).Label
+        Return (seconds \ 60).ToString() & ":" & (seconds Mod 60).ToString("00") & "." & hundredths.ToString("00") & " · " & RaceCatalog.Current.Car(lap.CarCode).Label & If(CustomCars.CarPack.IsCustom(lap.CarCode), "", " · " & If(lap.CarGrade = "", "Grade unspecified", CarGrades.GradeLabel(lap.CarGrade)))
     End Function
 End Module

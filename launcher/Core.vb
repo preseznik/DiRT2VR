@@ -170,6 +170,7 @@ Public Class VrSettings
     Public Property LaunchMode As String = "menus"
     Public Property TrackId As String = "127"
     Public Property CarCode As String = "sti"
+    Public Property CarGrade As String = "rookie"
     Public Property Opponents As Integer = 7
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
@@ -220,6 +221,7 @@ Public Class VrSettings
         If Not {"menus", "practice", "race", "lan"}.Contains(LaunchMode) Then Throw New IOException("Unknown launch mode.")
         If Opponents < 1 OrElse Opponents > 7 Then Throw New IOException("Choose between one and seven race opponents.")
         If Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Unknown opponent car selection.")
+        CarGrades.Validate(CarGrade)
         DirectRaceDifficulty.Validate(RaceDifficulty)
         DirectRaceStart.Validate(RaceStart)
         If DirectCarSetup Is Nothing Then Throw New IOException("Vehicle setup is missing. Reset it before launching.")

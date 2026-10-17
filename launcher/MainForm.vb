@@ -456,6 +456,7 @@ Public Class MainForm
         Dim selection = Section(columns.First, "Event selection")
         Dim race = Section(columns.Second, "Race options")
         customCars = New CustomCarSelection(context, carChoice, "stock", settings.CarCode)
+        customCars.Grades.Value = settings.CarGrade
         AddHandler customCars.Changed, Sub() RefreshOpponentHint()
         Dim labels = {"Launch mode", "Event", "Track", "Car", "Opponent cars"}
         Dim choices = {launchMode, eventChoice, trackChoice, carChoice, opponentCars}
@@ -1036,6 +1037,7 @@ Public Class MainForm
         settings.Laps = CInt(laps.Value)
         settings.RaceDifficulty = raceDifficulty.SelectedIndex - 1
         settings.RaceStart = DirectRaceStart.Values(raceStart.SelectedIndex)
+        settings.CarGrade = customCars.Grades.Value
         If settings.DirectMode AndAlso Not customTracks.CustomEnabled Then
             Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
             Dim car = TryCast(carChoice.SelectedItem, PracticeCar)

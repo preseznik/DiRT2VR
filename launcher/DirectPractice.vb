@@ -72,7 +72,8 @@ Public Class RaceCatalog
         If trackId = PrototypeTrack.Id Then PrototypeTrack.Validate(route)
         If CustomTracks.TrackPacks.IsLayout(trackId) Then CustomTracks.TrackPacks.ForLayout(trackId).Read(context.GameRoot)
     End Sub
-    Public Function Config(trackId As String, carCode As String, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional context As InstallContext = Nothing) As Byte()
+    Public Function Config(trackId As String, carCode As String, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional context As InstallContext = Nothing, Optional carGrade As String = "rookie") As Byte()
+        CarGrades.Validate(carGrade)
         If opponents < 0 OrElse opponents > 7 Then Throw New IOException("Choose between zero and seven opponents.")
         If Not {"same", "mixed", "class"}.Contains(opponentCars) Then Throw New IOException("Unknown opponent car selection.")
         Dim route = Track(trackId)
@@ -106,6 +107,7 @@ Public Class RaceCatalog
         Dim document As New XDocument(New XElement("config", New XAttribute("skipreplays", "false"),
             New XElement("track", New XAttribute("country", route.Country), New XAttribute("name", route.Track), New XAttribute("route", route.Route),
                 entries)))
+        If context IsNot Nothing Then CarGrades.ValidateGrid(context, document, carCode, carGrade)
         Return Text.Encoding.UTF8.GetBytes(document.ToString())
     End Function
 End Class

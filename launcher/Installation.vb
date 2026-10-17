@@ -66,7 +66,7 @@ Public Class Installation
 End Class
 
 Public Module Worker
-    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1)
+    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1, Optional carGrade As String = "rookie")
         postProcessTest = If(postProcessTest, If(operation = "prepare" OrElse operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
         ButtermilkPostProcess.Validate(postProcessTest, trackId)
         context.ValidateGame() : context.RequireClosed()
@@ -86,6 +86,19 @@ Public Module Worker
                     Run(context, "recover")
                 End If
                 CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
+                CarGrades.Validate(carGrade)
+                Dim preparedConfig As Byte() = Nothing
+                If trackId IsNot Nothing AndAlso CarGrades.IsStock(carCode) Then
+                    If replayId Is Nothing Then
+                        preparedConfig = RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context, carGrade)
+                    Else
+                        Dim savedReplay = ReplaySession.ReadPrepared(context, replayId)
+                        carGrade = savedReplay.CarGrade
+                        Dim document = savedReplay.EventConfig()
+                        CarGrades.ValidateGrid(context, document, carCode, carGrade)
+                        preparedConfig = Text.Encoding.UTF8.GetBytes(document.ToString())
+                    End If
+                End If
                 Dim external = If(CustomTracks.TrackPacks.IsLayout(trackId), CustomTracks.TrackPacks.ForLayout(trackId).External, Nothing)
                 Dim externalCar = CustomCars.ExternalCars.Find(carCode)
                 Dim prepareCar As Action = Nothing
@@ -124,7 +137,7 @@ Public Module Worker
                 End If
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode))
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode), carGrade:=carGrade, preparedConfig:=preparedConfig)
                 If prepareCar IsNot Nothing Then
                     prepareCar()
                 ElseIf CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
@@ -193,7 +206,7 @@ Public Module Worker
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1)
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1, Optional carGrade As String = "rookie")
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
@@ -223,6 +236,8 @@ Public Module Worker
             postProcessTest = If(postProcessTest, If(operation = "prepare" OrElse operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
             ButtermilkPostProcess.Validate(postProcessTest, trackId)
             start.ArgumentList.Add("--postprocess-test") : start.ArgumentList.Add(postProcessTest)
+            CarGrades.Validate(carGrade)
+            start.ArgumentList.Add("--car-grade") : start.ArgumentList.Add(carGrade)
             start.ArgumentList.Add("--opponent-cars") : start.ArgumentList.Add(opponentCars)
             start.ArgumentList.Add("--opponents") : start.ArgumentList.Add(opponents.ToString(Globalization.CultureInfo.InvariantCulture))
             start.ArgumentList.Add("--car") : start.ArgumentList.Add(carCode)

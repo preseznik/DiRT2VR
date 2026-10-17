@@ -10,6 +10,7 @@ Public Class CustomTrackSettings
     Public Property HighQualityAssets As Boolean
     Public Property LaunchMode As String = "practice"
     Public Property CarCode As String = "sti"
+    Public Property CarGrade As String = "rookie"
     Public Property Opponents As Integer = 3
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
@@ -23,6 +24,8 @@ Public Class CustomTrackSettings
         pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), sessionLaps)
         RaceCatalog.Current.Car(CarCode)
         If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
+        CarGrades.Validate(CarGrade)
+        settings.CarGrade = CarGrade
         DirectRaceDifficulty.Validate(RaceDifficulty)
         settings.RaceDifficulty = RaceDifficulty
         settings.TrackId = LayoutId : settings.LaunchMode = LaunchMode : settings.CarCode = CarCode
