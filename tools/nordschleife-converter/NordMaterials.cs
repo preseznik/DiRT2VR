@@ -13,6 +13,7 @@ internal sealed class NordMaterials(Scene scene, string game)
     readonly Dictionary<(string,bool),Material> converted=[];
     readonly Dictionary<string,string> opaque=[];
     readonly Dictionary<string,string> nativeTextures=[];
+    NordDecals? decals;
     internal readonly List<object> Report=[];
     static string V(params float[] values)=>string.Join(" ",values.Select(v=>v.ToString("R",CultureInfo.InvariantCulture)));
     static float P(Material material,string key,float fallback=0)=>material.Properties.TryGetValue(key,out var p)?p[0]:fallback;
@@ -63,7 +64,15 @@ internal sealed class NordMaterials(Scene scene, string game)
     {
         var source=mesh.Material;var key=(source.Id,mesh.CastShadows);
         if(converted.TryGetValue(key,out var existing))return existing;
-        // Blended markings/glass and object-projected multilayers retain their
+        if(NordDecals.Matches(source))
+        {
+            var decal=(decals??=new(scene,game)).Convert(source);
+            converted.Add(key,decal);
+            Report.Add(new{Source=source.Id,Target="decal_ao.fx",SourceShader=source.Shader,
+                NativeTerrainDecal=true,SourceCoverageRetained=true,SpecularAndFresnel=false});
+            return decal;
+        }
+        // Other blended surfaces and object-projected multilayers retain their
         // accepted shaders until their distinct UV/blend contracts are adapted.
         if(source.Blend!=0||source.Shader=="ksPerPixelAlpha"||source.Shader=="ksMultilayer_objsp")return source;
         bool ground=source.Shader=="ksMultilayer_fresnel_nm";

@@ -8,5 +8,10 @@
     "Game": "dirt2",
     "Path": "tracks/baja/baja_iron/objects.pssg",
     "Sha256": "A7AF9EBF2C5CFF4971D0C8F159EEE9C0EBE8E9EE26BD89029D597263309699AC"
+  },
+  {
+    "Game": "dirt2",
+    "Path": "tracks/croatia/croatia_raid/tracksplit.pssg",
+    "Sha256": "8C6EE9B5B51990A60AEE3A2A88660BCB790243E8426CAFD6DF262DEEBE1575C0"
   }
 ]

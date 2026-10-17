@@ -122,6 +122,7 @@ internal sealed class Scene
                 if (selected.Count>0)
                 {
                     var visual=materialAdapter is null?mesh:mesh with{Material=materialAdapter.ConvertMaterial(mesh)};
+                    if(visual.Material.Native?.Layout.ShaderGroupId=="decal_ao.fx")visual=NordDecals.Attributes(visual);
                     if(ambient is not null)visual=ambient.Apply(visual);
                     scene.Visuals.Add(Compact(visual,selected));
                 }
