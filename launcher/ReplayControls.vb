@@ -59,7 +59,7 @@ Public Class ReplayControls
     End Sub
     Public Function Combined(driving As DrivingControls) As DrivingControls
         Validate() : driving.Validate()
-        Dim result As New DrivingControls
+        Dim result As New DrivingControls With {.CombinedManualGears = driving.CombinedManualGears}
         If driving.Enabled Then result.Bindings.AddRange(driving.Bindings)
         If Enabled Then result.Bindings.AddRange(Bindings.Where(Function(b) NativeActions.Contains(b.Action)))
         result.Enabled = result.Bindings.Count > 0

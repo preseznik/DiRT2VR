@@ -91,6 +91,12 @@ internal static class FerrariHandling
             Set("brake_torque_total",Number(brakes["DATA/MAX_TORQUE"]));Set("brake_bias",Number(brakes["DATA/FRONT_SHARE"]));
             // Retain the native donor handbrake for grid holds and the player binding.
             // Zeroing its strength makes both paths ineffective in the converted car.
+            // The buggy's long clutch opening lets the low-inertia V10 flare
+            // during a shift. Use the slower source shift time for this native
+            // approximation; the native default delay is half the clutch time.
+            float shiftTime=MathF.Max(Number(gears["GEARBOX/CHANGE_UP_TIME"]),Number(gears["GEARBOX/CHANGE_DN_TIME"]))/1000;
+            Set("clutch_gear_time",shiftTime);
+            Set("auto_clutch_gear_delay",shiftTime/2);
             Set("gear_change_throttle_off_time",Number(gears["GEARBOX/AUTO_CUTOFF_TIME"])/1000);
             Set("gear_change_throttle_on_time",Number(gears["GEARBOX/CHANGE_UP_TIME"])/1000);
             // These are a supported-profile approximation, not an equivalence of

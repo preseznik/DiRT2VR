@@ -18,6 +18,7 @@ Public Class CustomCarSelection
     Private stockCode As String = "sti"
     Private loading As Boolean
     Private ready As Boolean
+    Private unavailableReason As String = ""
     Private lastMessage As String = ""
     Private cancellation As CancellationTokenSource
     Public Event Changed As EventHandler
@@ -37,19 +38,23 @@ Public Class CustomCarSelection
             Return Not CustomEnabled OrElse (ready AndAlso Not CustomCarService.Building)
         End Get
     End Property
-    Public Function CanLaunch(track As String, mode As String, Optional vr As Boolean = False) As Boolean
-        If Not CustomEnabled Then Return True
-        If Not ReadyForDesktop Then Return False
+    Public Function CanLaunch(track As String, mode As String, Optional vr As Boolean = False, Optional opponents As Integer = -1) As Boolean
+        Return LaunchBlockReason(track, mode, vr, opponents) = ""
+    End Function
+    Public Function LaunchBlockReason(track As String, mode As String, Optional vr As Boolean = False, Optional opponents As Integer = -1) As String
+        If Not CustomEnabled Then Return ""
+        If CustomCarService.Building Then Return "Wait for the custom car build to finish, or cancel it."
+        If Not ready Then Return "Build/import or repair the selected custom car before launching. " & unavailableReason
         Try
             Dim code = CustomCarService.SelectedCode(context)
             If code = CarPack.Code Then
-                CarPack.RequireMode(track, vr, mode, If(mode = "race", 1, 0))
+                CarPack.RequireMode(track, vr, mode, If(opponents < 0, If(mode = "race", 1, 0), opponents))
             Else
                 ExternalCars.RequireMode(ExternalCars.Require(code), vr, mode)
             End If
-            Return True
+            Return ""
         Catch ex As IOException
-            Return False
+            Return ex.Message
         End Try
     End Function
     Public Sub New(context As InstallContext, cars As ComboBox, key As String, selectedStock As String)
@@ -136,13 +141,14 @@ Public Class CustomCarSelection
             ElseIf File.Exists(IO.Path.Combine(context.GameRoot, CarPack.Receipt)) Then
                 Try
                     CarPack.Read(context.GameRoot) : ready = True
-                    status.Text = "Direct practice · All compatible tracks · Desktop and VR (Experimental)"
+                    status.Text = "Direct practice and Race · All compatible tracks · Desktop and VR (Experimental)"
                 Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
                     status.Text = ex.Message
                 End Try
             Else
                 status.Text = "Ferrari F2004 · Not imported"
             End If
+            unavailableReason = If(ready, "", status.Text)
             status.Visible = CustomEnabled : actions.Visible = CustomEnabled
             toggle.Enabled = Not CustomCarService.Building : cars.Enabled = Not CustomCarService.Building
             build.Visible = preferences.SelectedId = CarPack.Code

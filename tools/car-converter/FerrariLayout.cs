@@ -45,7 +45,7 @@ internal static class FerrariLayout
         // The native readout is added independently of source UI graphics and mirrors.
         var config=new XDocument(new XElement("interior_config",new XElement("active_nodes",
             new[]{"fl","fr","bl","br"}.SelectMany(side=>new[]{"wheel","tyre","hub_caliper","disc","wishbone","suspension","suspension2","suspension3"}.Select(part=>"x0_"+part+"_"+side)).Select(n=>new XElement("node",new XAttribute("name",n))))));
-        config.Root!.Add(new XElement("displays",new XAttribute("type","digital"),new XElement("display",new XAttribute("value","tach"),new XAttribute("node",FerrariDashboard.RpmNode),new XAttribute("font","int_digi_speed"),new XAttribute("num_chars","5"),new XAttribute("factor",FerrariDashboard.RpmFactor))));
+        config.Root!.Add(FerrariDashboard.Configuration());
         config.Save(Path.Combine(output,"int_f04.xml"));
     }
 }

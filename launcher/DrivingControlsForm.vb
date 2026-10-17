@@ -9,6 +9,7 @@ Public Class DrivingControlsForm
     Private ReadOnly replayMode As Boolean
     Private ReadOnly actions As String()
     Private ReadOnly enabledBox As New CheckBox With {.Text = "Use launcher driving bindings (all launcher modes, DX11)", .AutoSize = True}
+    Private ReadOnly combinedGearsBox As New CheckBox With {.Text = "Use sequential and H-pattern shifts together (manual transmission, experimental)", .AutoSize = True}
     Private ReadOnly list As New ListView With {.Name = "DrivingBindings", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .ShowItemToolTips = True, .Dock = DockStyle.Fill}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(820, 0)}
     Public Sub New(value As InstallContext, Optional replay As Boolean = False)
@@ -25,7 +26,14 @@ Public Class DrivingControlsForm
         For Each sizing As SizeType In {SizeType.AutoSize, SizeType.AutoSize, SizeType.Percent, SizeType.AutoSize, SizeType.AutoSize, SizeType.AutoSize}
             layout.RowStyles.Add(New RowStyle(sizing, If(sizing = SizeType.Percent, 100, 0)))
         Next
-        enabledBox.Checked = settings.Enabled : layout.Controls.Add(enabledBox)
+        enabledBox.Checked = settings.Enabled
+        Dim options As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill, .FlowDirection = FlowDirection.TopDown, .WrapContents = False}
+        options.Controls.Add(enabledBox)
+        If Not replay Then
+            combinedGearsBox.Checked = settings.CombinedManualGears
+            options.Controls.Add(combinedGearsBox)
+        End If
+        layout.Controls.Add(options)
         layout.Controls.Add(New Label With {.Text = If(replay, "Select a replay action, bind a key or device input, then save. Unassigned native actions keep the game's bindings; clearing zoom leaves the mouse wheel available. Avoid using the same input for different replay actions.", "Assigned controls apply in every launcher mode; unassigned actions keep the game's bindings. Use the wizard or select an action, then save."), .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
         list.Columns.Add("Action", 125) : list.Columns.Add("Keyboard", 100) : list.Columns.Add("Controller / wheel / pedals", 190)
         list.Columns.Add("Dead zone", 110) : list.Columns.Add("Saturation", 110)
@@ -59,6 +67,7 @@ Public Class DrivingControlsForm
                                                               If replayMode Then
                                                                   DirectCast(settings, ReplayControls).Save(context)
                                                               Else
+                                                                  settings.CombinedManualGears = combinedGearsBox.Checked
                                                                   settings.Save(context)
                                                               End If
                                                               DialogResult = DialogResult.OK : Close()
@@ -68,7 +77,7 @@ Public Class DrivingControlsForm
                                                       End Sub)
         AddButton(buttons, "Cancel", Sub() Close())
         layout.Controls.Add(buttons) : layout.Controls.Add(status) : Controls.Add(layout)
-        status.Text = If(replay, "Zoom: left stick up/down or Page Up/Down by default; keyboard/Xbox bindings supported. Other actions also support wheels. Free look must be enabled. Changes apply on next launch.", "Choose transmission and assists in-game for clutch and H-pattern gears. Save to apply on the next launch.")
+        status.Text = If(replay, "Zoom: left stick up/down or Page Up/Down by default; keyboard/Xbox bindings supported. Other actions also support wheels. Free look must be enabled. Changes apply on next launch.", "Ferrari F2004 uses sequential shifting for its session. Other cars retain the game's transmission setting. Combined shifts use the most recently moved shifter or shift button; select manual transmission in-game for stock cars. Save to apply next launch.")
         RefreshRows()
         If settings.Problems().Count > 0 Then status.Text = String.Join(" ", settings.Problems())
     End Sub

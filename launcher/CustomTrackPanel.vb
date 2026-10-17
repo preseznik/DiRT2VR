@@ -88,15 +88,39 @@ Public Class CustomTrackPanel
     End Property
     Public ReadOnly Property CanLaunch As Boolean
         Get
-            Return browser.SelectionVisible AndAlso currentPack IsNot Nothing AndAlso currentPack.Available AndAlso Not working AndAlso installationValid AndAlso layouts.SelectedItem IsNot Nothing AndAlso
-                installedLayouts.Contains(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id) AndAlso (customCars Is Nothing OrElse customCars.CanLaunch(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id, If(launchMode.SelectedIndex = 0, "practice", "race"))) AndAlso launchMode.SelectedIndex >= 0 AndAlso (launchMode.SelectedIndex <> 1 OrElse raceReady) AndAlso cars.SelectedItem IsNot Nothing AndAlso opponentCars.SelectedIndex >= 0
+            Return LaunchBlockReason() = ""
         End Get
     End Property
     Public ReadOnly Property CanLaunchVr As Boolean
         Get
-            Return CanLaunch AndAlso (customCars Is Nothing OrElse customCars.CanLaunch(DirectCast(layouts.SelectedItem, LayoutItem).Value.Id, If(launchMode.SelectedIndex = 1, "race", "practice"), True)) AndAlso TrackPacks.Get(currentPack.Id).Modes.Contains(If(launchMode.SelectedIndex = 1, "vr-race", "vr-solo"))
+            Return LaunchBlockReason(True) = ""
         End Get
     End Property
+    Public Function LaunchBlockReason(Optional vr As Boolean = False) As String
+        If Not browser.SelectionVisible Then Return "Choose a visible custom track, or change the track filters."
+        If currentPack Is Nothing Then Return "Choose a custom track."
+        If Not currentPack.Available Then Return If(currentPack.External IsNot Nothing, currentPack.External.Problem, "This custom track is unavailable in this launcher.")
+        If working Then Return "Wait for the custom track build to finish, or cancel it."
+        If Not installationValid Then Return "Build/install or repair the selected custom track before launching."
+        Dim layout = TryCast(layouts.SelectedItem, LayoutItem)?.Value
+        If layout Is Nothing Then Return "Choose an installed track layout."
+        If Not installedLayouts.Contains(layout.Id) Then Return "This layout is not installed. Choose Manage → Rebuild from source."
+        If launchMode.SelectedIndex < 0 Then Return "Choose an available launch mode for this track."
+        If cars.SelectedItem Is Nothing Then Return "Choose an installed car."
+        If opponentCars.SelectedIndex < 0 Then Return "Choose which cars the opponents should use."
+        Dim race = launchMode.SelectedIndex = 1, mode = If(race, "race", "practice"), count = If(race, opponents.Value, 0)
+        If race AndAlso Not raceReady Then Return "This layout needs updated AI driving paths. Choose Manage → Rebuild from source before racing."
+        If customCars IsNot Nothing Then
+            Dim reason = customCars.LaunchBlockReason(layout.Id, mode, vr, count)
+            If reason <> "" Then Return reason
+        End If
+        Try
+            TrackPacks.Get(currentPack.Id).RequireMode(layout.Id, vr, mode, DirectCast(cars.SelectedItem, PracticeCar).Code, count, laps.Value)
+            Return ""
+        Catch ex As IOException
+            Return ex.Message
+        End Try
+    End Function
     Public Sub New(value As InstallContext)
         context = value : preferences = CustomTrackPreferences.Load(context)
         TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
@@ -423,7 +447,7 @@ Public Class CustomTrackPanel
         If pointToPoint Then modeHint.Text = "One complete run · AI races and VR depend on the selected pack · LAN unavailable"
         If currentPack.External IsNot Nothing AndAlso currentPack.Available Then modeHint.Text = "External · " & String.Join(", ", TrackPacks.Get(currentPack.Id).Modes.Select(Function(mode) mode.Replace("desktop-", "Desktop ").Replace("vr-", "VR ").Replace("solo", "Practice").Replace("race", "Race"))) & If(currentPack.External.Manifest.Replay, " · Full Replay supported by author", " · Turn full-race recording off")
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
-        If customCars IsNot Nothing AndAlso customCars.CustomEnabled Then modeHint.Text = "Custom cars: Desktop Direct practice · Nordschleife Daylight only · Handling and suspension remain experimental."
+        If customCars IsNot Nothing AndAlso customCars.CustomEnabled AndAlso CustomCarPreferences.Load(context).SelectedId = Global.DiRT2VR.CustomCars.CarPack.Code Then modeHint.Text = "Ferrari F2004: Direct practice and Race on compatible tracks · Desktop and VR · AI handling is experimental."
         If currentPack?.Id = "spa-francorchamps" Then modeHint.Text = "Desktop and VR · 1–20 laps · VR and AI races are experimental"
         raceDifficulty.Enabled = race
         opponents.Enabled = race AndAlso opponents.Maximum > 1 : opponentCars.Enabled = race

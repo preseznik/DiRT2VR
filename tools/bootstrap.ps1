@@ -31,7 +31,17 @@ if (!(Test-Path -LiteralPath $source)) {
     if ($LASTEXITCODE -ne 0) { throw 'Pinned EGO checkout failed' }
 }
 if ((& git -c "safe.directory=$safeSource" -C $source rev-parse HEAD) -ne $revision) { throw 'Unexpected EGO revision; existing source preserved' }
-Write-Host "Ego-Engine-Modding: verified $revision"
+# The pinned reader otherwise retains temporary database schemas until GC,
+# which can make custom-car session preparation fail during verified cleanup.
+$schemaPatch = Join-Path $PSScriptRoot 'ego-schema-disposal.patch'
+& git -c "safe.directory=$safeSource" -C $source apply --reverse --check $schemaPatch 2>$null
+if ($LASTEXITCODE) {
+    & git -c "safe.directory=$safeSource" -C $source apply --check $schemaPatch
+    if ($LASTEXITCODE) { throw 'EGO schema reader differs from expected disposal patch; existing source preserved' }
+    & git -c "safe.directory=$safeSource" -C $source apply $schemaPatch
+    if ($LASTEXITCODE) { throw 'EGO schema disposal patch failed' }
+}
+Write-Host "Ego-Engine-Modding: verified $revision with schema disposal patch"
 
 # LAN runtime, including the pinned integration patch.
 $upstream=Join-Path $root '.deps/xlivelessness'

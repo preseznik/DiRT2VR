@@ -26,7 +26,10 @@ public static class CarPack
     public static bool Owns(string path) => path == EngineIni || Roots.Any(root => path.StartsWith(root + "/", StringComparison.Ordinal));
     public static void RequireMode(string track, bool vr, string mode, int opponents)
     {
-        if (mode != "practice" || opponents != 0) throw new IOException("Ferrari F2004 currently supports Direct practice only. AI, LAN and career are unavailable.");
+        if (mode is not ("practice" or "race"))
+            throw new IOException("Ferrari F2004 supports Direct practice and Race. Game menus, LAN and career are unavailable.");
+        if (mode == "practice" ? opponents != 0 : opponents is < 1 or > 7)
+            throw new IOException("Choose solo Direct practice or Race with one to seven opponents for Ferrari F2004.");
     }
     public static CarReceipt Read(string game, bool verify = true)
     {

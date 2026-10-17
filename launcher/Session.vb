@@ -273,7 +273,7 @@ Public Class Session
         SteeringAnimationLaunch.RequireDesktopRenderer(context, settings)
         ChaseCameraLaunch.RequireDesktopRenderer(context, settings)
         BackgroundPlayLaunch.RequireDesktopRenderer(context, settings)
-        If (driving.Enabled AndAlso driving.Bindings.Count > 0) OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 Then Worker.Invoke(context, "setup")
+        If driving.RequiresNativeHooks OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 Then Worker.Invoke(context, "setup")
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)

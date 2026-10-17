@@ -22,7 +22,14 @@ End Class
 Public Class DrivingControls
     Public Property Version As Integer = 1
     Public Property Enabled As Boolean
+    Public Property CombinedManualGears As Boolean
     Public Property Bindings As New List(Of DrivingBinding)
+    <System.Text.Json.Serialization.JsonIgnore>
+    Public ReadOnly Property RequiresNativeHooks As Boolean
+        Get
+            Return CombinedManualGears OrElse (Enabled AndAlso Bindings.Count > 0)
+        End Get
+    End Property
     Public Shared ReadOnly Actions As String() = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Clutch", "Hand Brake", "Gear Up", "Gear Down", "Gear 1", "Gear 2", "Gear 3", "Gear 4", "Gear 5", "Gear 6", "Gear Reverse", "Change View", "Look Back", "Horn", "Pause", "Menu Start Button", "Menu Select", "Menu Back", "Menu Up", "Menu Down", "Menu Left", "Menu Right"}
     Public Shared ReadOnly Calibrations As String() = {"uniDirectionalPositive", "uniDirectionalNegative", "biDirectionalLower", "biDirectionalUpper"}
     Public Sub Validate()
@@ -112,19 +119,24 @@ Public Class DrivingControls
     End Function
     Public Sub ConfigureProcess(context As InstallContext, start As ProcessStartInfo, vr As Boolean)
         start.Environment.Remove("DIRT2VR_DRIVING_CONTROLS")
-        If Not Enabled OrElse Bindings.Count = 0 Then Return
+        start.Environment.Remove("DIRT2VR_COMBINED_MANUAL_GEARS")
+        Dim overrideBindings = Enabled AndAlso Bindings.Count > 0
+        If Not RequiresNativeHooks Then Return
         Validate()
-        If Problems().Count > 0 Then Throw New IOException(String.Join(Environment.NewLine, Problems()) & Environment.NewLine & "Open Controls → Configure driving controls to fix these bindings.")
+        If overrideBindings AndAlso Problems().Count > 0 Then Throw New IOException(String.Join(Environment.NewLine, Problems()) & Environment.NewLine & "Open Controls → Configure driving controls to fix these bindings.")
         If Not vr Then
-            If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before using launcher driving bindings.")
+            If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before using launcher driving controls.")
             Dim doc = XmlPatches.Read(File.ReadAllBytes(context.GraphicsPath))
-            If doc.SelectSingleNode("/hardware_settings_config/graphics_card/directx/@forcedx9")?.Value <> "false" Then Throw New IOException("Launcher driving bindings require DiRT 2's DX11 renderer. Disable launcher bindings to use the game's saved controls in DX9.")
+            If doc.SelectSingleNode("/hardware_settings_config/graphics_card/directx/@forcedx9")?.Value <> "false" Then Throw New IOException("Launcher driving bindings and combined shifts require DiRT 2's DX11 renderer. Disable both options to use the game's saved controls in DX9.")
             start.Environment("DIRT2VR_ACTIVE") = "1"
             start.Environment("DIRT2VR_DESKTOP_CONTROLS") = "1"
         End If
-        Dim path = IO.Path.Combine(context.UserRoot, "driving-controls.xml")
-        Files.AtomicWrite(path, ToXml())
-        start.Environment("DIRT2VR_DRIVING_CONTROLS") = path
+        If CombinedManualGears Then start.Environment("DIRT2VR_COMBINED_MANUAL_GEARS") = "1"
+        If overrideBindings Then
+            Dim path = IO.Path.Combine(context.UserRoot, "driving-controls.xml")
+            Files.AtomicWrite(path, ToXml())
+            start.Environment("DIRT2VR_DRIVING_CONTROLS") = path
+        End If
     End Sub
     Public Shared Function KeyInput(key As Keys) As String
         If key >= Keys.A AndAlso key <= Keys.Z Then Return "win_key_" & key.ToString().ToLowerInvariant()

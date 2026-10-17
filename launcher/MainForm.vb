@@ -6,6 +6,7 @@ Public Class MainForm
     Inherits LauncherForm
     Private ReadOnly cacheTimer As New System.Windows.Forms.Timer With {.Interval = 3600000}
     Private ReadOnly settingsTips As New ToolTip With {.InitialDelay = 450, .ReshowDelay = 150, .AutoPopDelay = 15000, .ShowAlways = True}
+    Private launchTips As LaunchButtonTips
     Private ReadOnly context As InstallContext
     Private settings As VrSettings
     Private replayLibrarySelected As Boolean
@@ -181,6 +182,7 @@ Public Class MainForm
         layout.Controls.Add(commands)
         Controls.Add(layout)
         ConfigureTooltips()
+        launchTips = New LaunchButtonTips(Me, settingsTips)
         AddHandler Disposed, Sub() settingsTips.Dispose()
         AddHandler SizeChanged, Sub() stateLabel.MaximumSize = New Size(Math.Max(1, ClientSize.Width - layout.Padding.Horizontal), 0)
         AddHandler Resize, Sub()
@@ -191,6 +193,7 @@ Public Class MainForm
         AddHandler inputTimer.Tick, Sub() input.Poll()
         AddHandler timer.Tick, Sub()
                                   RefreshStatus()
+                                  launchTips.Poll()
                                   If tabs.SelectedIndex = 1 AndAlso Not busy AndAlso Not scanning AndAlso DateTime.UtcNow >= nextScan Then RefreshServerList()
                               End Sub
         AddHandler FormClosed, Sub()
@@ -533,14 +536,33 @@ Public Class MainForm
     Private Sub RefreshLaunchAvailability()
         RefreshRoadSheenSupport()
         Dim working = busy OrElse CustomCarService.Building OrElse (customTracks IsNot Nothing AndAlso customTracks.IsWorking)
-        Dim carAllowed = customCars Is Nothing OrElse (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse customCars.CanLaunch(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id, If(launchMode.SelectedIndex = 1, "practice", If(launchMode.SelectedIndex = 2, "race", "other")))
-        Dim startAllowed = (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse launchMode.SelectedIndex <> 2 OrElse raceStart.SelectedIndex <> 1 OrElse DirectRaceStart.SupportsStaggered(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id)
-        desktopButton.Enabled = Not working AndAlso carAllowed AndAlso startAllowed AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunch)
-        launchButton.Enabled = desktopButton.Enabled AndAlso (customCars Is Nothing OrElse (customTracks IsNot Nothing AndAlso customTracks.CustomEnabled) OrElse customCars.CanLaunch(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id, If(launchMode.SelectedIndex = 1, "practice", If(launchMode.SelectedIndex = 2, "race", "other")), True)) AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled OrElse customTracks.CanLaunchVr)
+        Dim desktopReason = LaunchBlockReason(False), vrReason = LaunchBlockReason(True)
+        desktopButton.Enabled = desktopReason = "" : launchButton.Enabled = vrReason = ""
+        launchTips?.SetReason(desktopButton, desktopReason) : launchTips?.SetReason(launchButton, vrReason)
         saveButton.Enabled = Not working : recoverButton.Enabled = Not working
         hostButton.Enabled = Not working AndAlso (customCars Is Nothing OrElse Not customCars.CustomEnabled) AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
         joinButton.Enabled = hostButton.Enabled AndAlso If(SelectedHost()?.Joinable, False)
+        Dim lanReason = If(working, "Finish the current session or build before starting LAN multiplayer.", If(Not hostButton.Enabled, "Turn CUSTOM cars and CUSTOM tracks off before starting LAN multiplayer.", ""))
+        launchTips?.SetReason(hostButton, lanReason)
+        launchTips?.SetReason(joinButton, If(lanReason <> "", lanReason, If(Not joinButton.Enabled, "Select a joinable LAN host. Refresh the server list if necessary.", "")))
     End Sub
+    Private Function LaunchBlockReason(vr As Boolean) As String
+        If busy Then Return "A game session or recovery is already running. Wait for it to finish."
+        If CustomCarService.Building Then Return "Wait for the custom car build to finish, or cancel it."
+        If customTracks IsNot Nothing AndAlso customTracks.IsWorking Then Return "Wait for the custom track build to finish, or cancel it."
+        If customTracks IsNot Nothing AndAlso customTracks.CustomEnabled Then Return customTracks.LaunchBlockReason(vr)
+        Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
+        Dim mode = If(launchMode.SelectedIndex = 1, "practice", If(launchMode.SelectedIndex = 2, "race", "menus"))
+        If customCars IsNot Nothing Then
+            Dim reason = customCars.LaunchBlockReason(track?.Id, mode, vr, If(mode = "race", opponents.Value, 0))
+            If reason <> "" Then Return reason
+        End If
+        If mode <> "menus" AndAlso (track Is Nothing OrElse carChoice.SelectedItem Is Nothing) Then Return "Choose an installed track and car."
+        If mode = "race" AndAlso raceStart.SelectedIndex = 1 AndAlso Not DirectRaceStart.SupportsStaggered(track?.Id) Then
+            Return "Staggered starts need a stock Rally or Trailblazer stage. Choose Automatic or Grid race for this track."
+        End If
+        Return ""
+    End Function
     Private Async Sub ShowAbout(Optional topic As String = Nothing)
         Dim changed As Boolean
         Using dialog As New AboutForm(context, availableUpdate)

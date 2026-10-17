@@ -12,9 +12,17 @@ internal static class FerrariAudio
     sealed record NativeSample(string Name, int Rate, byte[] Pcm);
     const int Rate = 32000, Frames = Rate * 10;
     const double Minimum = 4000.0 / 18800;
-    // Blend positions are not the pitch at which the source was recorded.
-    // Calibrate each pinned recording's engine-cycle frequency separately. A
-    // four-stroke cycle is two crank revolutions; the target is RPM / 120.
+    // Reserve a steady tail, like the native donor. Seeking to the exact end
+    // leaves no PCM to play and the backend recreates that voice at frame zero.
+    const double RampEnd = .8;
+    static double Reference(double position, bool descending)
+    {
+        double ramp = Math.Min(1, position / RampEnd);
+        return Minimum + (1 - Minimum) * (descending ? 1 - ramp : ramp);
+    }
+    // Centre retains the source band provenance in audio-build.json; the
+    // stationary role tone combines all bands. Calibrate each recording's
+    // cycle frequency separately: a four-stroke cycle targets RPM / 120.
     static readonly Dictionary<string, Band[]> Recipes = new()
     {
         ["up_en"] = [new(Minimum,"F2004_in_idle",29.1),new(.25,"F2004_in_on_low",65.8),new(.50,"F2004_in_on_mid",96.1),new(.75,"F2004_in_on_high_mix",135.1),new(1,"F2004_in_on_veryhigh_mix",151.8)],
@@ -82,18 +90,23 @@ internal static class FerrariAudio
             using var output = new MemoryStream(); using var writer = new BinaryWriter(output);
             foreach (double value in values) writer.Write((short)Math.Clamp(Math.Round(value), short.MinValue, short.MaxValue)); return output.ToArray();
         }
-        byte[] Sweep(string role)
+        byte[] EngineRamp(string role)
         {
-            var bands = Recipes[role]; var samples = bands.Select(b => Mono(b.Name, Rate)).ToArray(); var positions = new double[bands.Length]; var result = new double[Frames];
+            var bands = Recipes[role];
+            var cycles = bands.Select(b => FerrariEngineTone.FromRecording(Mono(b.Name, Rate), Rate, b.CycleHz, cancel)).ToArray();
+            // A stationary tone per load/view role. Varying its envelope or
+            // timbre along the native ramp would replay that movement at a
+            // held RPM even after the controller corrected its pitch.
+            var tone = Enumerable.Range(0, FerrariEngineTone.CycleSamples)
+                .Select(i => cycles.Average(c => c[i])).ToArray();
+            double phase = 0; var result = new double[Frames];
             for (int i = 0; i < Frames; i++)
             {
                 if ((i & 4095) == 0) cancel.ThrowIfCancellationRequested();
-                double t = (double)i / (Frames - 1), rev = Minimum + (1 - Minimum) * (role.StartsWith("dn", StringComparison.Ordinal) ? 1 - t : t);
-                int high = Array.FindIndex(bands, b => b.Centre >= rev); if (high < 0) high = bands.Length - 1; int low = Math.Max(0, high - 1);
-                double blend = high == low ? 0 : Math.Clamp((rev - bands[low].Centre) / (bands[high].Centre - bands[low].Centre), 0, 1); blend = blend * blend * (3 - 2 * blend);
-                double Value(int j) { var data = samples[j]; double p = positions[j] % data.Length; int a = (int)p; double f = p - a; return data[a] * (1 - f) + data[(a + 1) % data.Length] * f; }
-                result[i] = low == high ? Value(low) : Value(low) * (1 - blend) + Value(high) * blend;
-                for (int j = 0; j < bands.Length; j++) positions[j] += rev * (18800.0 / 120) / bands[j].CycleHz;
+                double rev = Reference((double)i / (Frames - 1), role.StartsWith("dn", StringComparison.Ordinal));
+                int a = (int)phase; double fraction = phase - a;
+                result[i] = tone[a] * (1 - fraction) + tone[(a + 1) % tone.Length] * fraction;
+                phase = (phase + rev * (18800.0 / 120) * FerrariEngineTone.CycleSamples / Rate) % FerrariEngineTone.CycleSamples;
             }
             return Pcm(result);
         }
@@ -109,7 +122,7 @@ internal static class FerrariAudio
             }
             tw.Write("WIP\0"u8); File.WriteAllBytes(Path.Combine(folder, name + ".WIP"), data.ToArray()); packages.Add((name, samples, table.ToArray()));
         }
-        Package("eng_f04", new[] { "dn_en", "dn_ex", "up_en", "up_ex" }.Select(role => new NativeSample(role, Rate, Sweep(role))).ToArray());
+        Package("eng_f04", new[] { "dn_en", "dn_ex", "up_en", "up_ex" }.Select(role => new NativeSample(role, Rate, EngineRamp(role))).ToArray());
         Package("mec_f04_shift", new[] { ("mec_gearchang01", "gearup"), ("mec_gearchang02", "gearupEXT"), ("mec_gearchang03", "geardnEXT") }.Select(p => new NativeSample(p.Item1, 48000, Pcm(Mono(p.Item2, 48000)))).ToArray());
         byte[] stock = File.ReadAllBytes(SafeFiles.Inside(donor, "audio/dictionaries/dd_mec/NESSamples.dic"));
         var exhaust = new List<string>(); int stockCount = BitConverter.ToInt32(stock, 12);
@@ -143,7 +156,7 @@ internal static class FerrariAudio
             if (previous != data.Length) throw new IOException("Native audio payload not fully consumed.");
         }
         WriteEngine(SafeFiles.Inside(donor, "audio/cars/tstengine.ini"), SafeFiles.Inside(output, CarPack.EngineIni));
-        SafeFiles.WriteJson(SafeFiles.Inside(output, CarPack.Support + "/audio-build.json"), new { Recipes, SourceBankSha256 = SafeFiles.Hash(SafeFiles.Inside(source, "sfx/ks_ferrari_f2004.bank")), Samples = used.Order().Select(name => new { Name = name, bank[name].Rate, bank[name].Channels, PcmSha256 = Convert.ToHexString(SHA256.HashData(bank[name].Pcm)) }), PlaybackCalibrationAccepted = false });
+        SafeFiles.WriteJson(SafeFiles.Inside(output, CarPack.Support + "/audio-build.json"), new { EngineTone = "stationary-orders-v2", RampEnd, Recipes, SourceBankSha256 = SafeFiles.Hash(SafeFiles.Inside(source, "sfx/ks_ferrari_f2004.bank")), Samples = used.Order().Select(name => new { Name = name, bank[name].Rate, bank[name].Channels, PcmSha256 = Convert.ToHexString(SHA256.HashData(bank[name].Pcm)) }), PlaybackCalibrationAccepted = false });
     }
     static byte[] FixedName(string name) { byte[] result = new byte[16]; if (Encoding.ASCII.GetBytes(name, result) > 15) throw new IOException("Native audio name too long."); return result; }
     static void WriteEngine(string source, string output)
@@ -157,8 +170,8 @@ internal static class FerrariAudio
             {
                 bool descending = section == "Idle";
                 if (line.StartsWith("Length=", StringComparison.Ordinal)) line = "Length=" + Frames;
-                else if (line.StartsWith("RevsFromTime=", StringComparison.Ordinal)) line = "RevsFromTime=" + string.Join(',', Enumerable.Range(0, 1024).Select(i => (Minimum + (1 - Minimum) * (descending ? 1 - i / 1023.0 : i / 1023.0)).ToString("F4", CultureInfo.InvariantCulture)));
-                else if (line.StartsWith("TimeFromRevs=", StringComparison.Ordinal)) line = "TimeFromRevs=" + string.Join(',', Enumerable.Range(0, 1024).Select(i => { double value = Math.Clamp((i / 1023.0 - Minimum) / (1 - Minimum), 0, 1); return (descending ? 1 - value : value).ToString("F4", CultureInfo.InvariantCulture); }));
+                else if (line.StartsWith("RevsFromTime=", StringComparison.Ordinal)) line = "RevsFromTime=" + string.Join(',', Enumerable.Range(0, 1024).Select(i => Reference(i / 1023.0, descending).ToString("F4", CultureInfo.InvariantCulture)));
+                else if (line.StartsWith("TimeFromRevs=", StringComparison.Ordinal)) line = "TimeFromRevs=" + string.Join(',', Enumerable.Range(0, 1024).Select(i => { double value = Math.Clamp((i / 1023.0 - Minimum) / (1 - Minimum), 0, 1); return (RampEnd * (descending ? 1 - value : value)).ToString("F4", CultureInfo.InvariantCulture); }));
             }
             if ((line.StartsWith("TimeFromRevs=", StringComparison.Ordinal) || line.StartsWith("RevsFromTime=", StringComparison.Ordinal)) && line.Length > 7180) throw new IOException("Engine lookup exceeds native line dimensions.");
             lines.Add(line);

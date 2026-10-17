@@ -1,0 +1,12 @@
+diff --git a/src/EgoEngineLibrary/Data/DatabaseFile.cs b/src/EgoEngineLibrary/Data/DatabaseFile.cs
+--- a/src/EgoEngineLibrary/Data/DatabaseFile.cs
++++ b/src/EgoEngineLibrary/Data/DatabaseFile.cs
+@@ -226,6 +226,7 @@ namespace EgoEngineLibrary.Data
+                 Exception exception;
+                 Dictionary<DataColumn, string[]> dR = new Dictionary<DataColumn, string[]>();
+                 XmlDocument SXML = new XmlDocument();
+-                SXML.Load(File.Open(schemaPath, FileMode.Open, FileAccess.Read, FileShare.Read));
++                using (var schema = File.Open(schemaPath, FileMode.Open, FileAccess.Read, FileShare.Read))
++                    SXML.Load(schema);
+                 if (SXML.DocumentElement is null)
+                     throw new InvalidDataException("The schema root xml element does not exist.");
