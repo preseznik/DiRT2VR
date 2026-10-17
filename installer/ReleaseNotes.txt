@@ -1,16 +1,20 @@
 DiRT2VR — Experimental
 
-LATEST CHANGES (since 0.17.118)
+LATEST CHANGES (since 0.17.120)
 
-- Race start defaults to native staggered starts on stock Rally and Trailblazer stages. Choose Grid race to start everyone together. CUSTOM tracks retain grid starts. Spillway Short passed desktop acceptance; VR still needs testing.
-- Newly saved replays restore particle effects correctly when reopened. Older recordings missing that data stop with an error instead of crashing and must be recorded again.
-- Optional 3D trailer menus with head tracking. Enable Advanced → Graphics → 3D menus, then save and relaunch VR. Loading screens remain flat; this experimental option starts off.
-- Quit is now available at the end of Direct practice and Race, including when Full Replay recording is off or unavailable. It exits the game without reopening the menus.
+- Fixed the VR sun following the driving camera. Sun movement, terrain occlusion and glare alignment passed Novigrad Raid headset checks with bloom off and on.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.17.120 — Experimental (changes since 0.17.118)
+
+- Race start defaults to native staggered starts on stock Rally and Trailblazer stages. Choose Grid race to start everyone together. CUSTOM tracks retain grid starts. Spillway Short passed desktop acceptance; VR still needs testing.
+- Newly saved replays restore particle effects correctly when reopened. Older recordings missing that data stop with an error instead of crashing and must be recorded again.
+- Optional 3D trailer menus with head tracking. Enable Advanced → Graphics → 3D menus, then save and relaunch VR. Loading screens remain flat; this experimental option starts off.
+- Quit is now available at the end of Direct practice and Race, including when Full Replay recording is off or unavailable. It exits the game without reopening the menus.
 
 0.17.118 — Experimental (changes since 0.17.113)
 
