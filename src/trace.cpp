@@ -26,6 +26,7 @@
 #include "shadow_coverage.h"
 #include "exposure_window.h"
 #include "trailer_background.h"
+#include "sky_sun.h"
 #include "direct_menus.h"
 #include "gfwl_compat.h"
 #include "driving_controls.h"
@@ -1812,7 +1813,31 @@ void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT 
         std::lock_guard lock(shaderMutex);const auto found=shaderNames.find(ps.Get());
         if(found!=shaderNames.end())captureShader=found->second;
     }
-    ++draws;realDrawIndexed(c,n,start,base);
+    ++draws;
+    // Only the main headset eyes own this correction. Native desktop/screen
+    // rendering and per-eye water reflections keep their original sky pass.
+    if(lightingEye && !waterEyeRenderer) {
+        ComPtr<ID3D11PixelShader> ps;c->PSGetShader(&ps,nullptr,nullptr);
+        uint64_t vertex{},pixel{};
+        {
+            std::lock_guard lock(shaderMutex);
+            const auto p=shaderNames.find(ps.Get());
+            if(p!=shaderNames.end())pixel=p->second;
+        }
+        if(pixel==0xa0291237968fd075ull) {
+            ComPtr<ID3D11VertexShader> vs;c->VSGetShader(&vs,nullptr,nullptr);
+            {
+                std::lock_guard lock(shaderMutex);const auto v=shaderNames.find(vs.Get());
+                if(v!=shaderNames.end())vertex=v->second;
+            }
+            static SkySunPass sun;
+            if(sun.Draw(c,vertex,pixel,[&] {
+                TracePipelineDraw(c,frame.load(),lightingEye,false,"indexed",n,1,vertex,pixel,true,requestedCaptureFrame==frame.load());
+                realDrawIndexed(c,n,start,base);
+            }))return;
+        }
+    }
+    realDrawIndexed(c,n,start,base);
     if(captureShader)TraceLightingStage(c,captureShader,frame.load(),lightingEye,true);
 }
 void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) {

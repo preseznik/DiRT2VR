@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix the VR sky sun following the driving camera. Sun movement, terrain occlusion and glare alignment passed Novigrad Raid headset checks with bloom off and on.
+
 ## 0.17.120 — 2026-10-16 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.120)

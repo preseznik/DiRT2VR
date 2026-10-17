@@ -35,6 +35,8 @@ target_sources(d3d11 PRIVATE src/replay_storage.cpp)
 target_sources(d3d11 PRIVATE src/chase_camera.cpp src/chase_cursor.cpp src/game_pause.cpp src/background_play.cpp)
 target_sources(d3d11 PRIVATE src/anisotropic_filter.cpp)
 target_sources(d3d11 PRIVATE src/trailer_background.cpp)
+
+target_sources(d3d11 PRIVATE src/sky_sun.cpp)
 target_include_directories(d3d11 PRIVATE "${CMAKE_BINARY_DIR}" src)
 target_link_libraries(d3d11 PRIVATE minhook d3dcompiler dxguid psapi bcrypt gdiplus dinput8 openxr_loader)
 target_compile_definitions(d3d11 PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX XR_USE_PLATFORM_WIN32 XR_USE_GRAPHICS_API_D3D11)
