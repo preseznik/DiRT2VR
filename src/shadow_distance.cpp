@@ -8,6 +8,7 @@ namespace vr {
 namespace {
 void* prepareOriginal{};
 unsigned requested{},reported{};
+const char* mode="desktop";
 void __cdecl PrepareRange(void* self) {
     auto* object=static_cast<unsigned char*>(self);
     auto* base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
@@ -27,7 +28,7 @@ void __cdecl PrepareRange(void* self) {
         auto& farRange=*reinterpret_cast<float*>(settings+0x74);
         const auto before=farRange;
         if(ExtendOuterShadowRange(nearRange,farRange,requested) && reported++<12)
-            Log("desktop shadows: preset=%u near=%.3f outer=%.3f -> %.3f",preset,nearRange,before,farRange);
+            Log("%s shadows: preset=%u near=%.3f outer=%.3f -> %.3f",mode,preset,nearRange,before,farRange);
     } __except(EXCEPTION_EXECUTE_HANDLER) { /* Retain native behavior. */ }
 }
 // Before native projection/visibility construction: caster bounds, matrices
@@ -54,11 +55,16 @@ void __declspec(naked) Prepare() {
 }
 void EnableDesktopShadowDistance() {
     if(prepareOriginal)return;
+    wchar_t flag[8]{};
+    const bool headset=GetEnvironmentVariableW(L"DIRT2VR_HEADSET",flag,8)==1 && flag[0]==L'1';
+    mode=headset ? "VR" : "desktop";
+    if(headset) {
+        // The opt-in never enables VR shadows or accepts an inherited desktop override.
+        if(GetEnvironmentVariableW(L"DIRT2VR_SHADOWS",flag,8)!=1 || flag[0]!=L'1')return;
+    }
     wchar_t value[16]{};
-    const auto size=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_SHADOW_DISTANCE",value,16);
+    const auto size=GetEnvironmentVariableW(headset ? L"DIRT2VR_VR_SHADOW_DISTANCE" : L"DIRT2VR_DESKTOP_SHADOW_DISTANCE",value,16);
     if(!size)return;
-    wchar_t headset[8]{};
-    if(GetEnvironmentVariableW(L"DIRT2VR_HEADSET",headset,8)==1 && headset[0]==L'1')return;
     unsigned distance{};
     bool valid=size<16;
     if(valid)for(const auto* p=value;*p;++p) {
@@ -66,22 +72,22 @@ void EnableDesktopShadowDistance() {
         distance=distance*10+unsigned(*p-L'0');
     }
     if(!valid || !ValidDesktopShadowDistance(distance)) {
-        Log("desktop shadows: invalid distance; native shadows retained");return;
+        Log("%s shadows: invalid distance; native shadows retained",mode);return;
     }
     if(!distance)return;
-    if(!SupportedHost()) {Log("desktop shadows: unsupported executable; native shadows retained");return;}
+    if(!SupportedHost()) {Log("%s shadows: unsupported executable; native shadows retained",mode);return;}
     auto* base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
     const unsigned char prefix[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x54,0x0b,0,0,0x53,0x56,0x57,0x8b,0xf9,0x8b,0x47,0x2c,0x69,0xc0,0x94,0,0,0};
     if(memcmp(base+0x28cb60,prefix,sizeof(prefix))) {
-        Log("desktop shadows: preparation guard rejected; native shadows retained");return;
+        Log("%s shadows: preparation guard rejected; native shadows retained",mode);return;
     }
-    if(!EnableGfwlCompatibility()) {Log("desktop shadows: compatibility unavailable; native shadows retained");return;}
+    if(!EnableGfwlCompatibility()) {Log("%s shadows: compatibility unavailable; native shadows retained",mode);return;}
     auto status=MH_Initialize();
     if(status!=MH_OK && status!=MH_ERROR_ALREADY_INITIALIZED)return;
     requested=distance;
     status=MH_CreateHook(base+0x28cb60,reinterpret_cast<void*>(Prepare),&prepareOriginal);
     if(status==MH_OK)status=EnableRecordedHook(base+0x28cb60);
-    Log("desktop shadows: requested=%um preparation hook=%s",requested,MH_StatusToString(status));
+    Log("%s shadows: requested=%um preparation hook=%s",mode,requested,MH_StatusToString(status));
     if(status!=MH_OK)prepareOriginal=nullptr;
 }
 }

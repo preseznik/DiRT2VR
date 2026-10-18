@@ -120,6 +120,7 @@ Public Class VrSettings
     Public Property VrBloom As Boolean = True
     Public Property DesktopAnisotropy As Integer = 0
     Public Property DesktopShadowDistance As Integer = 0
+    Public Property DesktopShadowDistanceInVr As Boolean = False
     Public Property VrAnisotropy As Integer = 0
     Public Property DesktopRoadSheenDefault As Boolean = True
     Public Property VrRoadSheenDefault As Boolean = True

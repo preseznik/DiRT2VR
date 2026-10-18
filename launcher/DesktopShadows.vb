@@ -10,10 +10,16 @@ Public NotInheritable Class DesktopShadows
     End Sub
     Public Shared Sub Configure(start As ProcessStartInfo, settings As VrSettings)
         start.Environment.Remove("DIRT2VR_DESKTOP_SHADOW_DISTANCE")
-        If start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1" Then Return
+        start.Environment.Remove("DIRT2VR_VR_SHADOW_DISTANCE")
         Dim distance = settings.DesktopShadowDistance
         If Not Distances.Contains(distance) Then Throw New IOException("Choose Game or a listed shadow distance up to 640 m.")
         If distance = 0 Then Return
+        If start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1" Then
+            If settings.DesktopShadowDistanceInVr AndAlso settings.VrShadows Then
+                start.Environment("DIRT2VR_VR_SHADOW_DISTANCE") = distance.ToString(Globalization.CultureInfo.InvariantCulture)
+            End If
+            Return
+        End If
         start.Environment("DIRT2VR_DESKTOP_SHADOW_DISTANCE") = distance.ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_ACTIVE") = "1"
         start.Environment("DIRT2VR_DESKTOP_CONTROLS") = "1"
