@@ -25,6 +25,20 @@ using GrassIndicesFn=void(__thiscall*)(void*);
 GrassIndicesFn originalGrassIndices{};
 TreeReadFn originalTreeAttributes{},originalTreeSettings{},originalOrnamentAttributes{},originalOrnamentSettings{};
 unsigned char* host{};
+constexpr unsigned grassItems=50000,grassIndexCount=grassItems*6,grassCells=512;
+struct GrassCellAllocation {void* system{};void* view{};unsigned original{};};
+GrassCellAllocation grassCellAllocation;
+void BoundGrassCells(void* self,void* view) {
+    if(grassCellAllocation.system!=self || grassCellAllocation.view!=view) return;
+    auto& capacity=Field<unsigned>(view,0x1c);
+    const auto shared=Field<unsigned>(self,0x74c);
+    // A view may be created before track loading. If the loaded cache is
+    // smaller, narrow our allocation's usable capacity; never grow a live one.
+    if(capacity==grassCells && shared>0 && shared<grassCells) {
+        capacity=std::min(grassCellAllocation.original,shared);
+        Log("VR vegetation smaller grass cache=%u; main-view cells=%u",shared,capacity);
+    }
+}
 
 bool ExtendRoute(void* self) {
     // RVA 8d2a20 resolves defaults/progress blocks into these fields, then
@@ -68,8 +82,10 @@ bool ExtendGrass(void* self) {
     if(!std::isfinite(distance) || distance<=0 || items<=0 || items>50000 || zones<=0 || zones>300) return false;
     const float before=distance; const int oldItems=items,oldZones=zones;
     distance=std::max(distance,250.f);
-    // Stay within the stock reader's explicit 50,000-item / 300-zone limits.
-    items=50000; zones=300;
+    // The loader doubles maxitems. Native allocator 9651e0 stores each block's
+    // length in a ushort: 100,000 wraps to 34,464; 65,534 fits without wrapping.
+    // This shared cache is separate from the 50,000-clump main-view budget.
+    items=32767; zones=300;
     if(distance!=before || items!=oldItems || zones!=oldZones)
         Log("VR vegetation grass range=%.1f->%.1f items=%d->%d zones=%d->%d",before,distance,oldItems,items,oldZones,zones);
     return true;
@@ -78,7 +94,6 @@ bool __fastcall GrassLoad(void* self,void*) {
     ExtendGrass(self);
     return originalGrass(self);
 }
-constexpr unsigned grassItems=50000,grassIndexCount=grassItems*6;
 template<class Index> void FillGrassIndices(Index* output,unsigned quads) {
     for(unsigned i=0;i<quads;++i) {
         const unsigned v=i*4;
@@ -132,20 +147,35 @@ bool ExtendGrassViewBudget(void* self,void* settings) {
     // vertex buffers are allocated. The shared cache's maxitems is separate.
     if(!settings || Field<void*>(self,0x6f0) || !GrassIndicesReady(self)) return false;
     auto& items=Field<int>(settings,4);
-    if(items<=0 || items>=50000) return false;
+    if(items<=0 || items>50000) return false;
+    bool changed=items<50000;
     items=50000;
-    return true;
+    auto& cells=Field<unsigned>(settings,12);
+    const auto shared=Field<unsigned>(self,0x74c);
+    // Zero is the pre-load state; the normal extended cache later holds 600
+    // cells. Dense sections need more than the stock 300 to cover 250 metres.
+    if(cells==300 && (shared==0 || shared>=grassCells)) {
+        cells=grassCells;changed=true;
+    }
+    return changed;
 }
 void* __fastcall GrassCreateView(void* self,void*,void* settings) {
+    // Retire ownership when a new main view is created, including failed or
+    // unsupported creations. Mirror creation must not discard the main view.
+    if(!Field<void*>(self,0x6f0)) grassCellAllocation={};
     if(!settings) return originalGrassCreateView(self,settings);
     std::array<unsigned char,16> local{};
     memcpy(local.data(),settings,local.size());
     const bool changed=ExtendGrassViewBudget(self,local.data());
     // Do not mutate the caller's settings or resize any live buffer.
     auto view=originalGrassCreateView(self,changed ? local.data() : settings);
-    if(changed && view && Field<void*>(self,0x6f0)==view)
-        Log("VR vegetation main-view grass budget=%d->%d selected_capacity=%d vertices=%d",
-            Field<int>(settings,4),Field<int>(view,0x14),Field<int>(view,0x28),Field<int>(view,0x2c));
+    if(changed && view && Field<void*>(self,0x6f0)==view) {
+        if(Field<unsigned>(settings,12)==300 && Field<unsigned>(local.data(),12)==grassCells &&
+           Field<unsigned>(view,0x1c)==grassCells) grassCellAllocation={self,view,300};
+        Log("VR vegetation main-view grass budget=%d->%d cells=%u->%u selected_capacity=%d vertices=%d",
+            Field<int>(settings,4),Field<int>(view,0x14),Field<unsigned>(settings,12),Field<unsigned>(view,0x1c),
+            Field<int>(view,0x28),Field<int>(view,0x2c));
+    }
     return view;
 }
 bool ExtendGrassView(void* self,void* view) {
@@ -153,6 +183,7 @@ bool ExtendGrassView(void* self,void* view) {
     // for cell selection and forwards it to the grass-generation workers.
     // Slot 0 is the main scene; slot 1 is the separate rear-view mirror.
     if(!view || Field<void*>(self,0x6f0)!=view) return false;
+    BoundGrassCells(self,view);
     auto& distance=Field<float>(view,4);
     if(!std::isfinite(distance) || distance<=0) return false;
     const float before=distance;
