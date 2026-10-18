@@ -41,8 +41,14 @@ internal static class FerrariWheelLayout
         }
         var suspension=(XmlElement)(xml.Document.SelectSingleNode("/DAMAGE/SUSPENSION")??throw new InvalidDataException("Missing native suspension graph"));
         if(suspension.GetAttribute("m_componentsPerWheel")!="10")throw new InvalidDataException("Unsupported native component graph");
-        // Preserve the tested native connection graph. The source arm bind axes
-        // are converted in FerrariSuspension; do not guess component semantics.
+        // Native component order is rear-left, rear-right, front-left, front-right.
+        // The donor's rotating rear driveshafts are F2004 upper wishbones here.
+        // Disable wheel-angle spin, retaining their existing linkage animation.
+        foreach(var component in new[]{1,11}) {
+            var name="rStyle"+component;
+            if(suspension.GetAttribute(name)!="1")throw new InvalidDataException("Unsupported native rear driveshaft animation: "+name);
+            Set(suspension,name,0);
+        }
         var target=Path.Combine(output,"f04.nd2");using(var stream=File.Create(target))xml.Write(stream,xml.Type);
         using(var stream=File.OpenRead(target)){var readback=new XmlFile(stream);if(xml.Document.DocumentElement!.OuterXml!=readback.Document.DocumentElement!.OuterXml)throw new InvalidDataException("Wheel definition readback changed");}
         xml.Document.Save(Path.Combine(output,"f04-nd2-readable.xml"));

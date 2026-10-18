@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Stop F2004 rear upper suspension arms spinning with the wheels. Rebuild the car from source to apply the correction.
+
 - Restore F2004 RPM-following engine audio and sequential shifting in VR Direct practice and Race by passing its car identity to the renderer.
 
 - Correct remaining VR sun drift on Misty Loch by using the world sunlight direction. Misty Loch Daylight passed a player headset check with bloom off.
