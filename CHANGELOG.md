@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.135 — 2026-10-18 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.135)
+
 - Stop F2004 rear upper suspension arms spinning with the wheels. Rebuild the car from source to apply the correction.
 
 - Restore F2004 RPM-following engine audio and sequential shifting in VR Direct practice and Race by passing its car identity to the renderer.
