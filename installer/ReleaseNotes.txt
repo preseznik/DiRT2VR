@@ -2,19 +2,17 @@ DiRT2VR — Experimental
 
 LATEST CHANGES (since 0.17.120)
 
-- Choose Rookie, Pro or All-Star beside the stock-car picker for Direct practice and Race. The whole grid uses the selected grade on desktop or in VR, including stock cars on CUSTOM tracks. Custom cars retain their own specification. New saved replays retain the grade and new best-lap records display it. Broader driving and headset checks remain pending.
+- Ferrari F2004 improvements: experimental grid races on compatible tracks, steadier V10 sound through throttle changes and shifts, and a steering-wheel display showing RPM, gear and speed.
+- Choose stock-car upgrades: select Rookie, Pro or All-Star for the whole Direct practice or Race grid. New saved replays and best-lap records remember the grade.
+- Longer shadow range: optional 160–640 m distances for desktop, plus Also apply in VR when VR shadows are enabled. VR’s nearby Detailed distance remains separate. Save and relaunch to apply.
+- VR scenery fixes: correct the sun drifting with the camera and reduce grass popping in dense scenery.
+- Nordschleife HQ road markings: corrected lighting on graffiti, painted lines and tyre marks.
+- More flexible shifting: F2004 sessions use sequential shifting without changing your saved game setting. An experimental option lets manual cars use sequential and H-pattern inputs together.
+- Fix intermittent custom-car preparation failures. Disabled launch buttons now explain their restrictions when you hover over them.
 
-- Ferrari F2004: steadier V10 sound follows RPM through throttle changes and shifts, and the steering-wheel LCD now shows RPM, gear and speed. After updating, choose CUSTOM cars -> Manage -> Rebuild from source to apply the asset changes.
+After updating: use Manage → Rebuild from source for the Ferrari and high-quality Nordschleife to apply their asset changes.
 
-- F2004 can join experimental grid races on compatible tracks. AI opponents still use donor engine sound. Disabled launch buttons explain their restrictions on hover.
-
-- F2004 sessions select sequential shifting automatically. Driving controls also offers an experimental option combining sequential and H-pattern shifting for manual cars; physical H-shifter testing is still pending.
-
-- Fixed intermittent custom-car preparation failures during database cleanup.
-
-- Corrected HQ Nordschleife road graffiti, painted lines and tyre marks using glass reflections instead of terrain decal lighting. After updating, rebuild Nordschleife with high quality assets enabled. Evening appearance is awaiting a gameplay retest.
-
-- Fixed the VR sun following the driving camera. Sun movement, terrain occlusion and glare alignment passed Novigrad Raid headset checks with bloom off and on; the further Nordschleife sun correction passed a headset check with bloom off.
+F2004 races, car grades and combined shifters still need wider driving and headset testing. AI opponents in F2004 races still use DiRT 2 engine sounds. The extended VR shadow range awaits headset testing; longer ranges can reduce sharpness and performance. Nordschleife Evening also awaits a visual retest.
 
 ============================================================
 EARLIER RELEASES
