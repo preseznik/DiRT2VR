@@ -119,6 +119,7 @@ Public Class VrSettings
     Public Property DesktopBloom As Boolean = True
     Public Property VrBloom As Boolean = True
     Public Property DesktopAnisotropy As Integer = 0
+    Public Property DesktopShadowDistance As Integer = 0
     Public Property VrAnisotropy As Integer = 0
     Public Property DesktopRoadSheenDefault As Boolean = True
     Public Property VrRoadSheenDefault As Boolean = True
@@ -213,6 +214,7 @@ Public Class VrSettings
         If ChaseMouseSensitivity < 25 OrElse ChaseMouseSensitivity > 300 OrElse ChaseStickSensitivity < 25 OrElse ChaseStickSensitivity > 300 Then Throw New IOException("Choose chase-camera sensitivity between 25% and 300%.")
         If Not {0, 2, 4, 8}.Contains(VrMsaa) Then Throw New IOException("Choose Off, 2×, 4× or 8× VR anti-aliasing.")
         If Not AnisotropicFiltering.Levels.Contains(DesktopAnisotropy) OrElse Not AnisotropicFiltering.Levels.Contains(VrAnisotropy) Then Throw New IOException("Choose Game, Off, 2×, 4×, 8× or 16× anisotropic filtering.")
+        If Not DesktopShadows.Distances.Contains(DesktopShadowDistance) Then Throw New IOException("Choose Game, 160 m, 240 m or 320 m shadow distance.")
         If VrShadowDetailDistance < 14 OrElse VrShadowDetailDistance > 60 Then Throw New IOException("Choose a detailed shadow distance between 14 and 60 metres.")
         If DesktopRoadSheen < 0 OrElse DesktopRoadSheen > 100 OrElse VrRoadSheen < 0 OrElse VrRoadSheen > 100 Then Throw New IOException("Choose road sheen between 0 and 100 percent.")
         If VrShadowQuality < 0 OrElse VrShadowQuality > 3 Then Throw New IOException("Choose Game, Low, Medium or High shadow quality.")

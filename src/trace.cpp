@@ -24,6 +24,7 @@
 #include "shadow_mask.h"
 #include "scene_depth.h"
 #include "shadow_coverage.h"
+#include "shadow_distance.h"
 #include "exposure_window.h"
 #include "trailer_background.h"
 #include "sky_sun.h"
@@ -1959,6 +1960,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     const bool directSession=GetEnvironmentVariableW(L"DIRT2VR_DIRECT_PRACTICE",direct,8)==1 && direct[0]==L'1';
     if(!EnableStartupHooks(HeadsetEnabled(),AutoCockpitEnabled(),directSession)) ExitProcess(ERROR_BAD_EXE_FORMAT);
     if(!EnableAnisotropicFiltering(device)) { Log("anisotropic filtering: initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
+    EnableDesktopShadowDistance();
     wchar_t desktop[8]{};
     const bool desktopControls=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_CONTROLS",desktop,8)==1 && desktop[0]==L'1';
     if(desktopControls || (GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1')) {

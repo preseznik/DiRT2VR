@@ -52,6 +52,7 @@ Public Class MainForm
     Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
+    Private ReadOnly desktopShadowDistance As New ValueSlider("DesktopShadowDistance", 0, 3, 0, valueLabels:={"Game", "160 m", "240 m", "320 m"})
     Private ReadOnly vrAnisotropy As New ValueSlider("VrAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
     Private ReadOnly desktopRoadSheen As New RoadSheenControl("Desktop")
     Private ReadOnly vrRoadSheen As New RoadSheenControl("Vr")
@@ -669,6 +670,9 @@ Public Class MainForm
         desktopBloom.Checked = settings.DesktopBloom : Field(desktop, "Bloom", desktopBloom)
         desktopAnisotropy.Value = Array.IndexOf(AnisotropicFiltering.Levels, settings.DesktopAnisotropy)
         Field(desktop, "Anisotropic filtering", desktopAnisotropy)
+        desktopShadowDistance.Value = Array.IndexOf(DesktopShadows.Distances, settings.DesktopShadowDistance)
+        Field(desktop, "Shadow distance", desktopShadowDistance)
+        Tip(desktopShadowDistance, "Game preserves native shadow distance. Longer ranges extend distant shadows without changing nearby detail." & vbCrLf & "May reduce distant sharpness and performance. Requires DX11; shadows must be enabled in the game." & vbCrLf & "Save and relaunch desktop play to apply. VR settings are independent.")
         desktopRoadSheen.UseTrackDefault = settings.DesktopRoadSheenDefault : desktopRoadSheen.Percent = settings.DesktopRoadSheen
         Field(desktop, "Road sheen (Experimental)", desktopRoadSheen)
         Dim render = Section(columns.First, "VR rendering")
@@ -729,6 +733,7 @@ Public Class MainForm
                                        borderless.Checked = False : desktopVSync.Checked = True
                                        desktopBloom.Checked = True : vrBloom.Checked = True
                                        desktopAnisotropy.Value = 0 : vrAnisotropy.Value = 0
+                                       desktopShadowDistance.Value = 0
                                        desktopRoadSheen.UseTrackDefault = True : vrRoadSheen.UseTrackDefault = True
                                        desktopRoadSheen.Percent = 25 : vrRoadSheen.Percent = 25
                                        filters.ResetSelections()
@@ -1017,6 +1022,7 @@ Public Class MainForm
         settings.DesktopVSync = desktopVSync.Checked
         settings.DesktopBloom = desktopBloom.Checked : settings.VrBloom = vrBloom.Checked
         settings.DesktopAnisotropy = AnisotropicFiltering.Levels(desktopAnisotropy.Value)
+        settings.DesktopShadowDistance = DesktopShadows.Distances(desktopShadowDistance.Value)
         settings.VrAnisotropy = AnisotropicFiltering.Levels(vrAnisotropy.Value)
         settings.DesktopRoadSheenDefault = desktopRoadSheen.UseTrackDefault : settings.DesktopRoadSheen = desktopRoadSheen.Percent
         settings.VrRoadSheenDefault = vrRoadSheen.UseTrackDefault : settings.VrRoadSheen = vrRoadSheen.Percent

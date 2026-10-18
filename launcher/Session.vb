@@ -249,6 +249,7 @@ Public Class Session
         start.Environment("DIRT2VR_WATER_REFLECTIONS") = "1"
         start.Environment("DIRT2VR_SHADOWS") = If(settings.VrShadows, "1", "0")
         start.Environment("DIRT2VR_SHADOW_DETAIL_DISTANCE") = settings.VrShadowDetailDistance.ToString(Globalization.CultureInfo.InvariantCulture)
+        start.Environment.Remove("DIRT2VR_DESKTOP_SHADOW_DISTANCE")
         SteeringAnimationLaunch.Configure(start, settings)
         ChaseCameraLaunch.Configure(start, settings)
         BackgroundPlayLaunch.Configure(start, settings)
@@ -271,11 +272,12 @@ Public Class Session
     End Function
     Private Function RunDesktop() As Boolean
         AnisotropicFiltering.RequireDesktopRenderer(context, settings)
+        DesktopShadows.RequireDesktopRenderer(context, settings)
         FlashbackLaunch.RequireDesktopRenderer(context, settings)
         SteeringAnimationLaunch.RequireDesktopRenderer(context, settings)
         ChaseCameraLaunch.RequireDesktopRenderer(context, settings)
         BackgroundPlayLaunch.RequireDesktopRenderer(context, settings)
-        If driving.RequiresNativeHooks OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 Then Worker.Invoke(context, "setup")
+        If driving.RequiresNativeHooks OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 OrElse settings.DesktopShadowDistance <> 0 Then Worker.Invoke(context, "setup")
         If settings.LaunchMode = "lan" Then
             Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
@@ -352,6 +354,7 @@ Public Class Session
         ChaseCameraLaunch.Configure(start, settings)
         BackgroundPlayLaunch.Configure(start, settings)
         AnisotropicFiltering.Configure(start, settings)
+        DesktopShadows.Configure(start, settings)
         ReplayCameraLaunch.Configure(start, settings)
         replayControls.ConfigureZoom(start)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
