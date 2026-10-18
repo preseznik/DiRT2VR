@@ -10,9 +10,9 @@ internal sealed class RouteRecovery
     const float Clearance=6;
     readonly Dictionary<Cell,List<QuadTreeDataTriangle>> road=[];
     static Cell Tile(Vector3 p)=>new((int)MathF.Floor(p.X/64),(int)MathF.Floor(p.Z/64));
-    internal RouteRecovery(IEnumerable<QuadTreeDataTriangle> collision)
+    internal RouteRecovery(IEnumerable<QuadTreeDataTriangle> collision,ISet<string>? roadSurfaces=null)
     {
-        foreach(var t in collision.Where(t=>t.Material=="RDT+"))
+        foreach(var t in collision.Where(t=>roadSurfaces?.Contains(t.Material)??t.Material=="RDT+"))
         {
             var min=Tile(Vector3.Min(t.Position0,Vector3.Min(t.Position1,t.Position2)));
             var max=Tile(Vector3.Max(t.Position0,Vector3.Max(t.Position1,t.Position2)));

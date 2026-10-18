@@ -111,7 +111,7 @@ All six packs offer **Direct practice** and experimental **Race** on desktop or 
 
 ### Misty Loch
 
-**Updating an existing Misty Loch build:** choose **Manage… → Rebuild from source…** for **Daylight**, **Evening** and **Morning Fog**, plus subtle asphalt highlights with mountain occlusion. All three presets are built together. Existing Daylight and Evening installs remain usable and keep their course/replay identities after rebuilding. The fix for flickering black road bands is preserved.
+**Updating an existing Misty Loch build:** choose **Manage… → Rebuild from source…** to apply smooth dry asphalt physics and reduce excessive road shaking. Daylight, Evening and Morning Fog are built together. Existing tracks remain usable until you rebuild. Older saved replays need their original track build because the road physics changed. The fix for flickering black road bands is preserved.
 
 Choose **CUSTOM tracks → Misty Loch → Build and install…** and select the Assetto Corsa folder containing `content\tracks\rt_misty_loch`. Only your installed DiRT 2 files and Misty Loch 1.4 folder are used; no other track, extra grass atlas or CSP installation is required. Original game assets are not included in DiRT2VR downloads.
 

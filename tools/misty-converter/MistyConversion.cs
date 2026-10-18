@@ -101,8 +101,8 @@ public static class MistyConversion
                 string owned=pack.Support+"/"+layout.Id+"/"+path;Copy(source,owned);
                 session.Add(new(path,expected[Path.GetFullPath(Path.Combine(d2,path))],owned));
             }
-            // Visual-only changes retain the existing course/replay identities.
-            sessions.Add(new(layout.Id,session.ToArray(),layout.Id switch {"misty-loch"=>"1.0.1","misty-loch-evening"=>"1.1.0",_=>"1.2.0"}));
+            // Asphalt physics changed; older recordings require their original track assets.
+            sessions.Add(new(layout.Id,session.ToArray(),pack.Version));
         }
         Report(95,"Verifying every installed file and original source");
         if(!sources.SequenceEqual(TrackPack.VerifySources(profile,d2,ac,null,default)))

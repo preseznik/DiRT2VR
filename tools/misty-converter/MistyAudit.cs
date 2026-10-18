@@ -13,7 +13,8 @@ internal static class MistyAudit
     internal static void Run(Scene source,string output)
     {
         using var input=File.OpenRead(Path.Combine(output,"track.jpk"));var jpk=new JpkFile();jpk.Read(input);
-        var decoded=new Scene();decoded.Collision.AddRange(TrackGround.Load(jpk).TraverseGrid().SelectMany(c=>c.QuadTree.GetTriangles()));
+        var decoded=new Scene();decoded.RoadSurfaces.Clear();decoded.RoadSurfaces.UnionWith(source.RoadSurfaces);
+        decoded.Collision.AddRange(TrackGround.Load(jpk).TraverseGrid().SelectMany(c=>c.QuadTree.GetTriangles()));
         var samples=new List<object>();var unsupported=new List<object>();var sourceEdges=new List<object>();float maxHeight=0;
         foreach(var gate in source.Gates.Concat(source.RunoutGates))
         {
@@ -23,12 +24,12 @@ internal static class MistyAudit
                 float available=side>0?gate.Left:gate.Right;
                 float offset=side*MathF.Min(2,MathF.Max(0,available-.25f));
                 var position=gate.Position+left*offset;
-                float height;string sampledSurface="RDT+";
+                float height;string sampledSurface=MistyScene.Asphalt;
                 try { height=decoded.RoadHeight(position); }
                 catch(InvalidDataException)
                 {
                     var alternatives=new Dictionary<string,float>();
-                    foreach(string surface in source.Surfaces.Keys.Where(k=>k!="RDT+"))
+                    foreach(string surface in source.Surfaces.Keys.Where(k=>!source.RoadSurfaces.Contains(k)))
                     {
                         var other=new Scene();other.RoadSurfaces.Clear();other.RoadSurfaces.Add(surface);other.Collision.AddRange(decoded.Collision.Where(t=>t.Material==surface));
                         try{alternatives[surface]=other.RoadHeight(position);}catch(InvalidDataException){}
@@ -95,7 +96,7 @@ internal static class MistyAudit
             if((int)links[i].Attribute("from_gate")! != i||(int)links[i].Attribute("to_gate")! != (i+1)%aiCount)throw new InvalidDataException("Broken AI sequence or closing link.");
         if(source.FullCourse&&Vector3.Distance(source.Gates[^1].Position,source.Gates[0].Position)>12)throw new InvalidDataException("Source circuit does not close.");
         var reset=new CQuadTreeFile(File.ReadAllBytes(Path.Combine(output,"resetlines.cqtc"))).GetTriangles().ToArray();
-        var recovery=new RouteRecovery(decoded.Collision);var clearance=Vector3.UnitY*6;
+        var recovery=new RouteRecovery(decoded.Collision,decoded.RoadSurfaces);var clearance=Vector3.UnitY*6;
         int unsafeFaces=reset.Count(t=>MathF.Max(t.Position0.Y,MathF.Max(t.Position1.Y,t.Position2.Y))>recovery.Floor(t.Position0+clearance,t.Position1+clearance,t.Position2+clearance,t.Position2+clearance)+.03f);
         if(unsafeFaces!=0)throw new InvalidDataException("Recovery planes intersect original road clearance.");
         Files.Json(Path.Combine(output,"prototype-audit.json"),new{Passed=true,DecodedSurfaceSupportSamples=samples.Count,AllCentreSamplesOnAsphalt=true,OriginalRoadEdgeSamples=sourceEdges,MaximumSplineHeightDifferenceMetres=maxHeight,StartingSlots=slots.Length,SpawnFootprintCorners=footprintCorners,ProgressGates=gates.Count,TimingCheckpoints=checkpoints,FinishMetres=finish,RunoutMetres=source.FullCourse?0:source.RunoutGates[^1].Distance-source.Length,UnsafeResetFaces=unsafeFaces,CollisionChunks=jpk.Entries.Count-1,FullCourse=source.FullCourse,RuntimeValidated=false,Samples=samples});

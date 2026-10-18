@@ -3,10 +3,12 @@ using DiRT2VR.Nordschleife;
 
 internal static class MistyScene
 {
+    internal const string Asphalt = "SDT+";
     internal static Scene Read(string acRoot, string game, string output, float length, bool fullCourse=false,bool highQualityAssets=false)
     {
         if (!float.IsFinite(length) || length is < 500 or > 1000) throw new ArgumentException("Desktop prototype length must be 500–1000 m.");
         var scene = new Scene { FullCourse=fullCourse };
+        scene.RoadSurfaces.Clear();scene.RoadSurfaces.Add(Asphalt);
         string root = Files.Inside(acRoot, "content/tracks/rt_misty_loch");
         string Input(string relative)
         {
@@ -111,7 +113,8 @@ internal static class MistyScene
     {
         string key=name.TrimStart("0123456789".ToCharArray()).ToUpperInvariant();
         if(key.StartsWith("KERB",StringComparison.Ordinal))return "CON+";
-        if(key.StartsWith("PIT",StringComparison.Ordinal))return "RDT+";
-        return Scene.Surface(name);
+        if(key.StartsWith("PIT",StringComparison.Ordinal))return Asphalt;
+        string surface=Scene.Surface(name);
+        return surface=="RDT+"?Asphalt:surface;
     }
 }

@@ -74,7 +74,7 @@ public static class TrackPacks
          new("nordschleife-evening", "Standard circuit", "d2vr_nord_evening", "Evening")], ["database/database.bin"]);
     public static readonly TrackPack Mizu = new("mizu-mountain", "Mizu Mountain", "1.0.2", "0.17.61", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("mizu-mountain", "Full route · 10.4 km", "d2vr_mizu", "Daylight", "Point-to-point", Circuit: false)], ["database/database.bin"]);
-    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.2.0", "0.17.104", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
+    public static readonly TrackPack Misty = new("misty-loch", "Misty Loch", "1.2.1", "0.17.104", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("misty-loch", "Full circuit · 6.45 km", "d2vr_misty", "Daylight"),
          new("misty-loch-evening", "Full circuit · 6.45 km", "d2vr_misty_evening", "Evening"),
          new("misty-loch-morning-fog", "Full circuit · 6.45 km", "d2vr_misty_morning", "Morning Fog")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);

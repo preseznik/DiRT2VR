@@ -34,7 +34,7 @@ internal static class MistyGrass
         var mask=new Image(scene.Textures[grounds[0].Material.Textures["txMask"]]);
         var gates=scene.Gates.GroupBy(g=>Cell(g.Position)).ToDictionary(g=>g.Key,g=>g.ToArray());
         var cover=new Dictionary<(int,int),List<(Vector3 A,Vector3 B,Vector3 C)>>();
-        foreach(var tri in scene.Collision.Where(t=>t.Material is "RDT+" or "CON+"))
+        foreach(var tri in scene.Collision.Where(t=>scene.RoadSurfaces.Contains(t.Material)||t.Material=="CON+"))
         {
             var a=tri.Position0;var b=tri.Position1;var c=tri.Position2;
             if(MathF.Abs((b.X-a.X)*(c.Z-a.Z)-(b.Z-a.Z)*(c.X-a.X))<.001f)continue;

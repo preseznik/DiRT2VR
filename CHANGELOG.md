@@ -8,6 +8,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Correct remaining VR sun drift on Misty Loch by using the world sunlight direction. Misty Loch Daylight passed a player headset check with bloom off.
 
+- Fix excessive road shaking on Misty Loch by using smooth dry asphalt physics for its roads and pit areas. Rebuild the track from source to apply it; older saved replays need their original track build. Original road geometry is unchanged.
+
 ## 0.17.131 — 2026-10-18 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.131)

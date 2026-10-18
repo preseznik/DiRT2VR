@@ -100,7 +100,7 @@ internal static class MistyRoute
             using var stream=new FileStream(Path.Combine(output,"ai_vehicle_track.xml"),FileMode.CreateNew);vehicle.Write(stream);
         }
         Files.Xml(new XDocument(new XElement("route",new XElement("default",new XAttribute("track_cull_dist",scene.FullCourse?"20000.0":"1600.0"),new XAttribute("world_cull_dist",scene.FullCourse?"20000.0":"2000.0"),new XAttribute("track_lod_dist","1200.0"),new XAttribute("fade","10.0")),new XElement("Systems",new XAttribute("tree_settings","low"),new XAttribute("ornament_settings","medium")))),Path.Combine(output,"route_overrides.xml"));
-        var recovery=new RouteRecovery(scene.Collision);
+        var recovery=new RouteRecovery(scene.Collision,scene.RoadSurfaces);
         foreach(var (name,material) in new[]{("boundarylines.cqtc","FBND"),("resetlines.cqtc","RESE"),("cameralines.cqtc","RESD")})
         {
             var planes=new QuadTreeMeshDataBuilder(CQuadTreeTypeInfo.Get(CQuadTreeType.Dirt));
