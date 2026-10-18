@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Restore F2004 RPM-following engine audio and sequential shifting in VR Direct practice and Race by passing its car identity to the renderer.
+
 - Correct remaining VR sun drift on Misty Loch by using the world sunlight direction. Misty Loch Daylight passed a player headset check with bloom off.
 
 - Fix excessive road shaking on Misty Loch by using smooth dry asphalt physics for its roads and pit areas. Rebuild the track from source to apply it; older saved replays need their original track build. Original road geometry is unchanged.

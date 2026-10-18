@@ -240,6 +240,7 @@ Public Class Session
     Public Shared Function VrStartInfo(context As InstallContext, settings As VrSettings, channel As String, logFolder As String, Optional joinTarget As String = Nothing) As ProcessStartInfo
         ' Both factories clear inherited experiments before setting their explicit launch flags.
         Dim start = If(settings.LaunchMode = "lan", LanSession.StartInfo(context, settings.SkipIntroduction, joinTarget), DesktopStartInfo(context, Nothing, Nothing))
+        CustomCarService.ConfigureProcess(start, settings)
         For Each name In {"ACTIVE", "REPLAY_PROBE", "INNER_REPLAY", "CONTINUOUS_REPLAY", "HEADSET", "INTERACTIVE", "WIDE_VISIBILITY", "AUTO_COCKPIT"}
             start.Environment("DIRT2VR_" & name) = "1"
         Next
