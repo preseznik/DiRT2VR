@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.131 — 2026-10-18 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.131)
+
 - Fix distant grass popping in early in dense VR sections by correcting its cache and visibility budgets. The Novigrad crest and chase-camera zoom retest passed a player headset check. Performance impact has not been measured.
 
 - Add an optional Also apply in VR checkbox beside Desktop Shadow distance. Share the selected 160–640 m outer range with VR while keeping Detailed distance separate. Defaults off, requires VR Shadows to be on, and applies after saving and relaunching. Higher ranges can reduce sharpness and performance; headset appearance and performance still need player testing.
