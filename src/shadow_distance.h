@@ -2,7 +2,7 @@
 #include <cmath>
 namespace vr {
 inline bool ValidDesktopShadowDistance(unsigned distance) {
-    return distance==0 || distance==160 || distance==240 || distance==320;
+    return distance==0 || (distance>=160 && distance<=640 && distance%80==0);
 }
 // Never shorten an authored native range or alter the near cascade.
 inline bool ExtendOuterShadowRange(float nearRange,float& farRange,unsigned distance) {

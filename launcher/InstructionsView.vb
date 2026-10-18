@@ -49,7 +49,7 @@ Bloom
 Adds a soft glow around bright areas. On keeps the game's existing effects; Off removes the glow without disabling colour grading, exposure adjustment or shadows. Desktop and VR have separate choices, both On by default. Save and relaunch to apply. Works with Normal Launch, Practice, Race, custom tracks and HOST/JOIN. Original effect files are restored after play; use Restore original files if recovery is interrupted. Separate custom-track lighting choices are retained.
 
 Desktop shadow distance
-Game preserves the native range. Choose 160 m, 240 m or 320 m to extend distant desktop shadows while retaining nearby detail. Requires DX11 and shadows enabled in the game. Longer ranges can reduce distant sharpness and performance. Save and relaunch to apply; VR controls are independent.
+Game preserves the native range. Choose 160–640 m in 80 m steps to extend distant desktop shadows while retaining nearby detail. Requires DX11 and shadows enabled in the game. Longer ranges can reduce distant sharpness and performance. Save and relaunch to apply; VR controls are independent.
 
 Filters
 Graphics opens on Main; Filters contains Desktop and VR preset choices. Original keeps the track's look. Choose New or Save as, name the preset, then edit its Day and Night adjustments. Selecting a preset in the editor, creating one or importing one also selects it for both Desktop and VR. You can choose different presets with the two launch selectors afterward. Save settings and relaunch to apply; there is no live preview.

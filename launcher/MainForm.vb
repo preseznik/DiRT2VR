@@ -52,7 +52,7 @@ Public Class MainForm
     Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
-    Private ReadOnly desktopShadowDistance As New ValueSlider("DesktopShadowDistance", 0, 3, 0, valueLabels:={"Game", "160 m", "240 m", "320 m"})
+    Private ReadOnly desktopShadowDistance As New ValueSlider("DesktopShadowDistance", 0, 7, 0, valueLabels:={"Game", "160 m", "240 m", "320 m", "400 m", "480 m", "560 m", "640 m"})
     Private ReadOnly vrAnisotropy As New ValueSlider("VrAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
     Private ReadOnly desktopRoadSheen As New RoadSheenControl("Desktop")
     Private ReadOnly vrRoadSheen As New RoadSheenControl("Vr")
@@ -672,7 +672,7 @@ Public Class MainForm
         Field(desktop, "Anisotropic filtering", desktopAnisotropy)
         desktopShadowDistance.Value = Array.IndexOf(DesktopShadows.Distances, settings.DesktopShadowDistance)
         Field(desktop, "Shadow distance", desktopShadowDistance)
-        Tip(desktopShadowDistance, "Game preserves native shadow distance. Longer ranges extend distant shadows without changing nearby detail." & vbCrLf & "May reduce distant sharpness and performance. Requires DX11; shadows must be enabled in the game." & vbCrLf & "Save and relaunch desktop play to apply. VR settings are independent.")
+        Tip(desktopShadowDistance, "Draws shadows farther ahead. Higher values may reduce performance and sharpness." & vbCrLf & "Requires DX11 and enabled shadows. Save and relaunch to apply.")
         desktopRoadSheen.UseTrackDefault = settings.DesktopRoadSheenDefault : desktopRoadSheen.Percent = settings.DesktopRoadSheen
         Field(desktop, "Road sheen (Experimental)", desktopRoadSheen)
         Dim render = Section(columns.First, "VR rendering")

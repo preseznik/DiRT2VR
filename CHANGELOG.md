@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Extend the desktop Shadow distance slider to 640 m, keeping the existing choices and adding 400, 480, 560 and 640 m. Hover over the setting for a short description and the performance/sharpness tradeoff. Save and relaunch to apply; Game remains the default.
 - Add an optional desktop shadow distance: Game (default), 160 m, 240 m or 320 m, extending tree shadows farther along the road. Requires DX11 and enabled game shadows; save and relaunch to apply. VR settings remain independent. Short desktop checks confirm extended shadows; broader driving, restart and performance acceptance remain pending. Longer ranges can cost performance and reduce distant sharpness.
 - Keep distribution packaging on the 0.17.x version line unless the user explicitly approves the exact version outside that line. Reject unapproved changes before reserving a version or starting a build.
 - Select Rookie, Pro or All-Star beside the stock-car picker in Direct practice and Race, applying the grade to the whole grid on desktop or in VR. Custom cars retain their own specification. Saved replays retain the selected grade and new best-lap records show it; existing settings default to Rookie. Broader gameplay and headset acceptance remain pending.

@@ -62,7 +62,7 @@ void EnableDesktopShadowDistance() {
     unsigned distance{};
     bool valid=size<16;
     if(valid)for(const auto* p=value;*p;++p) {
-        if(*p<L'0' || *p>L'9' || distance>320) {valid=false;break;}
+        if(*p<L'0' || *p>L'9' || distance>640) {valid=false;break;}
         distance=distance*10+unsigned(*p-L'0');
     }
     if(!valid || !ValidDesktopShadowDistance(distance)) {

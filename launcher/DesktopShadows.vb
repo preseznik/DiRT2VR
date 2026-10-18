@@ -1,5 +1,5 @@
 Public NotInheritable Class DesktopShadows
-    Public Shared ReadOnly Distances As Integer() = {0, 160, 240, 320}
+    Public Shared ReadOnly Distances As Integer() = {0, 160, 240, 320, 400, 480, 560, 640}
     Public Shared Sub RequireDesktopRenderer(context As InstallContext, settings As VrSettings)
         If settings.DesktopShadowDistance = 0 Then Return
         If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before overriding shadow distance.")
@@ -12,7 +12,7 @@ Public NotInheritable Class DesktopShadows
         start.Environment.Remove("DIRT2VR_DESKTOP_SHADOW_DISTANCE")
         If start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1" Then Return
         Dim distance = settings.DesktopShadowDistance
-        If Not Distances.Contains(distance) Then Throw New IOException("Choose Game, 160 m, 240 m or 320 m shadow distance.")
+        If Not Distances.Contains(distance) Then Throw New IOException("Choose Game or a listed shadow distance up to 640 m.")
         If distance = 0 Then Return
         start.Environment("DIRT2VR_DESKTOP_SHADOW_DISTANCE") = distance.ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_ACTIVE") = "1"
