@@ -6,15 +6,15 @@ using Microsoft::WRL::ComPtr;
 namespace vr {
 namespace {
 // Native sky PS a0291237968fd075, with only the sun direction changed:
-// skyParams3.xyz is adjusted for the driving camera; skyParams4.xyz retains
-// the world sunlight direction. Keep the main pass's sharpness, not the
+// Both skyParams3.xyz and skyParams4.xyz can follow the driving camera.
+// PerFrame.sunDirection retains the world direction. Keep main sharpness, not the
 // reflection variant's skyParams3.w, and preserve its sky/haze colour math.
 constexpr char source[]=R"(
 cbuffer Globals:register(b0) { float4 skyParams,skyParams2,skyParams3,skyParams4; }
 cbuffer PerFrame:register(b1) { float4 frame[17]; }
 Texture2D<float4> skyTexture:register(t0);SamplerState skySampler:register(s0);
 float4 main(float4 position:SV_Position,centroid float2 uv:TEXCOORD0,centroid float3 ray:TEXCOORD1):SV_Target {
-    float alignment=saturate(dot(normalize(ray),skyParams4.xyz));
+    float alignment=saturate(dot(normalize(ray),frame[0].xyz));
     float sun=exp2(log2(alignment)*skyParams.z);
     float haze=exp2(log2(alignment)*frame[11].w);
     float3 sky=exp2(log2(skyTexture.Sample(skySampler,uv).rgb*skyParams.x)*skyParams.y);
@@ -70,8 +70,8 @@ bool SkySunPass::Draw(ID3D11DeviceContext* context,uint64_t vertex,uint64_t pixe
         if(SUCCEEDED(hr))hr=D3DCompile(vertexSource,std::strlen(vertexSource),nullptr,nullptr,nullptr,"main","vs_5_0",
             D3DCOMPILE_ENABLE_STRICTNESS|D3DCOMPILE_OPTIMIZATION_LEVEL3,0,&code,&error);
         if(SUCCEEDED(hr))hr=device->CreateVertexShader(code->GetBufferPointer(),code->GetBufferSize(),nullptr,&vertex_);
-        if(FAILED(hr)){shader_.Reset();vertex_.Reset();Log("VR sun direction and ray correction unavailable hr=%08x",unsigned(hr));}
-        else Log("VR sun direction and ray correction initialized");
+        if(FAILED(hr)){shader_.Reset();vertex_.Reset();Log("VR world sun direction and ray correction unavailable hr=%08x",unsigned(hr));}
+        else Log("VR world sun direction and ray correction initialized");
     }
     if(!shader_ || !vertex_)return false;
     struct Restore {

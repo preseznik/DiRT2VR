@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Correct remaining VR sun drift on Misty Loch by using the world sunlight direction. Misty Loch Daylight passed a player headset check with bloom off.
+
 ## 0.17.131 — 2026-10-18 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.131)
