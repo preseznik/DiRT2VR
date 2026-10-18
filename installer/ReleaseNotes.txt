@@ -3,8 +3,9 @@ DiRT2VR — Experimental
 LATEST CHANGES (since 0.17.131)
 
 - Correct remaining sun movement in VR on Misty Loch.
+- Reduce excessive Misty Loch road shaking with smooth dry asphalt physics.
 
-No track rebuild is needed.
+Rebuild Misty Loch from Manage to apply the road-physics correction. Older saved replays need their original track build. The sun correction needs no track rebuild.
 
 ============================================================
 EARLIER RELEASES
