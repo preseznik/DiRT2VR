@@ -14,7 +14,7 @@ inline ChaseVector ChaseRotate(ChaseQuaternion q,ChaseVector v) {
 inline bool OrbitChasePose(std::array<float,8>& pose,ChaseVector pivot,float yaw,float pitch,float distanceScale=1) {
     for(float value:pose)if(!std::isfinite(value))return false;
     if(!std::isfinite(pivot.x)||!std::isfinite(pivot.y)||!std::isfinite(pivot.z)||!std::isfinite(yaw)||!std::isfinite(pitch)||
-       !std::isfinite(distanceScale)||distanceScale<.6f||distanceScale>5.f)return false;
+       !std::isfinite(distanceScale)||distanceScale<.6f||distanceScale>10.f)return false;
     ChaseQuaternion q{pose[0],pose[1],pose[2],pose[3]};
     const float norm=q.x*q.x+q.y*q.y+q.z*q.z+q.w*q.w;
     if(std::abs(norm-1.f)>.01f)return false;

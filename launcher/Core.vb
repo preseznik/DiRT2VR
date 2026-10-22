@@ -214,7 +214,7 @@ Public Class VrSettings
         If Not VrRuntime.Modes.Contains(RuntimeMode) Then Throw New IOException("Invalid VR runtime setting. Choose Ask every time, OpenXR or SteamVR.")
         If Not {"left", "right", "always"}.Contains(ChaseMouseMode) Then Throw New IOException("Choose Hold left, Hold right or Always on for chase-camera mouse look.")
         If ChaseMouseSensitivity < 25 OrElse ChaseMouseSensitivity > 300 OrElse ChaseStickSensitivity < 25 OrElse ChaseStickSensitivity > 300 Then Throw New IOException("Choose chase-camera sensitivity between 25% and 300%.")
-        If ChaseMaxZoomOut < 180 OrElse ChaseMaxZoomOut > 500 OrElse ChaseMaxZoomOut Mod 10 <> 0 Then Throw New IOException("Choose maximum chase zoom out between 180% and 500%, in 10% steps.")
+        If ChaseMaxZoomOut < 180 OrElse ChaseMaxZoomOut > 1000 OrElse ChaseMaxZoomOut Mod 10 <> 0 Then Throw New IOException("Choose maximum chase zoom out between 180% and 1000%, in 10% steps.")
         If Not {0, 2, 4, 8}.Contains(VrMsaa) Then Throw New IOException("Choose Off, 2×, 4× or 8× VR anti-aliasing.")
         If Not AnisotropicFiltering.Levels.Contains(DesktopAnisotropy) OrElse Not AnisotropicFiltering.Levels.Contains(VrAnisotropy) Then Throw New IOException("Choose Game, Off, 2×, 4×, 8× or 16× anisotropic filtering.")
         If Not DesktopShadows.Distances.Contains(DesktopShadowDistance) Then Throw New IOException("Choose Game or a listed shadow distance up to 640 m.")

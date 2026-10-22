@@ -131,7 +131,7 @@ With Free look enabled under General, Xbox left-stick up/down, Page Up/Page Down
 Chase camera (experimental)
 Free look hides the mouse pointer over the game picture while driving in chase view. Pause, menus, other views, window borders and switching apps restore it. The pointer is not locked to the window.
 
-Scroll forward to zoom in, backward to zoom out. No mouse button is needed. Free look must be enabled. General → Chase camera → Maximum zoom out sets the farthest distance from 180% to 500% of normal, in 10% steps. The default is 180%; try 250% or 350% for a wider view. The closest distance stays at 60%. Replay stick/key zoom shares this limit. Save settings and relaunch to apply. Field of view stays unchanged; the game still checks for obstructions. Changing chase views or starting another session resets the distance. The extended range still needs player testing.
+Scroll forward to zoom in, backward to zoom out. No mouse button is needed. Free look must be enabled. General → Chase camera → Maximum zoom out sets the farthest distance from 180% to 1000% of normal, in 10% steps. The default is 180%; try 500% or 750% for a wider view. The closest distance stays at 60%. Replay stick/key zoom shares this limit. Save settings and relaunch to apply. Field of view stays unchanged; the game still checks for obstructions. Changing chase views or starting another session resets the distance. The range above 500% still needs player testing.
 
 Hold the right stick pressed in (R3) to look behind the car with Free look enabled. Release it to return to the normal chase angle, even while stopped. This temporarily takes priority over mouse and stick orbit movement.
 

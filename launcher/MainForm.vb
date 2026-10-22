@@ -27,7 +27,7 @@ Public Class MainForm
     Private ReadOnly chaseMouse As New ValueSlider("ChaseMouseSensitivity", 25, 300, 100, "%")
     Private ReadOnly chaseMouseMode As New MouseLookPicker()
     Private ReadOnly chaseStick As New ValueSlider("ChaseStickSensitivity", 25, 300, 100, "%")
-    Private ReadOnly chaseMaxZoomOut As New ValueSlider("ChaseMaxZoomOut", 18, 50, 18, valueLabels:=Enumerable.Range(18, 33).Select(Function(value) (value * 10).ToString() & "%").ToArray())
+    Private ReadOnly chaseMaxZoomOut As New ValueSlider("ChaseMaxZoomOut", 18, 100, 18, valueLabels:=Enumerable.Range(18, 83).Select(Function(value) (value * 10).ToString() & "%").ToArray())
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
     Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (single-player launches)", .Name = "SkipStartupMovies", .AutoSize = True}
     Private ReadOnly serverList As New LanServerList With {.Name = "LanServers", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Top, .Height = 300, .ShowItemToolTips = True}
@@ -983,7 +983,7 @@ Public Class MainForm
         Next
         Tip(chaseMouse, "How quickly the chase camera moves when you move the mouse.")
         Tip(chaseStick, "How quickly the chase camera moves with the controller's right stick.")
-        Tip(chaseMaxZoomOut, "Farthest allowed chase-camera distance, as a percentage of the normal view. 180% keeps the original limit; try 250% or 350% for a wider view, up to 500%. The mouse wheel and replay zoom stick/keys share this limit. Field of view is unchanged; obstructions can keep the camera closer. Save settings and relaunch to apply.")
+        Tip(chaseMaxZoomOut, "Farthest allowed chase-camera distance, as a percentage of the normal view. 180% keeps the original limit; try 500% or 750% for a wider view, up to 1000%. The mouse wheel and replay zoom stick/keys share this limit. Field of view is unchanged; obstructions can keep the camera closer. Save settings and relaunch to apply.")
         Tip(chaseInvert, "Reverse up and down for both mouse and right-stick camera movement.")
         Field(content, "Free look", chaseFreeLook)
         Field(content, "Mouse look", chaseMouseMode)

@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Add Maximum zoom out under Controls → General → Chase camera: 180–500% of normal distance in 10% steps, defaulting to the original 180%. Mouse-wheel and replay stick/key zoom share the limit. Save and relaunch to apply; the extended range still needs player testing.
+- Add Maximum zoom out under Controls → General → Chase camera: 180–1000% of normal distance in 10% steps, defaulting to the original 180%. Mouse-wheel and replay stick/key zoom share the limit. Save and relaunch to apply; the range above 500% still needs player testing.
 
 - Add a Class filter to both stock-car pickers, with All and all seven stock classes. Keep the selected grade when filtering; CUSTOM cars retain their separate list.
 
