@@ -680,6 +680,55 @@
       "Label": "Subaru Impreza WRX STI - Rally",
       "ClassId": "rally",
       "ClassName": "Rally"
+    },
+    {
+      "Code": "6r4",
+      "Event": "Rallycross",
+      "Label": "MG Metro 6R4 - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
+    },
+    {
+      "Code": "dal",
+      "Event": "Trailblazer",
+      "Label": "Dallenbach Special - Trailblazer",
+      "ClassId": "trailblazer",
+      "ClassName": "Trailblazer"
+    },
+    {
+      "Code": "rs2",
+      "Event": "Rallycross",
+      "Label": "Ford RS200 Evolution - Rallycross",
+      "ClassId": "rally_cross",
+      "ClassName": "Rallycross"
+    },
+    {
+      "Code": "p92",
+      "Event": "Raid",
+      "Label": "Mitsubishi Pajero Dakar 1993 - Raid T1",
+      "ClassId": "raid_t1",
+      "ClassName": "Raid T1"
+    },
+    {
+      "Code": "iro",
+      "Event": "Landrush",
+      "Label": "Toyota Stadium Truck - Trophy Trucks",
+      "ClassId": "trophy_trucks",
+      "ClassName": "Trophy Trucks"
+    },
+    {
+      "Code": "555",
+      "Event": "Rally",
+      "Label": "1995 Subaru Impreza WRX STI - Rally",
+      "ClassId": "rally",
+      "ClassName": "Rally"
+    },
+    {
+      "Code": "drb",
+      "Event": "Raid",
+      "Label": "Dodge Power Wagon - Stock Baja",
+      "ClassId": "stock_baja",
+      "ClassName": "Stock Baja"
     }
   ]
 }

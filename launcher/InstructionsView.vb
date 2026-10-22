@@ -21,6 +21,7 @@ Race start defaults to Automatic: stock Rally and Trailblazer stages use Rally (
 
 Car grade
 Choose Rookie, Pro or All-Star beside the stock-car picker. The grade applies to you and all AI opponents in Direct practice and Race, including staggered rally and CUSTOM tracks, on desktop or in VR. Rookie is the default. CUSTOM cars keep their own specification. Save settings or launch to keep your choice. Saved replays retain their recorded grade. Normal Launch, LAN and career upgrades use the game's own selections.
+The stock list includes the prize cars: MG Metro 6R4, Dallenbach Special, Ford RS200 Evolution, Mitsubishi Pajero Dakar 1993, Toyota Stadium Truck, 1995 Subaru Impreza WRX STI and Dodge Power Wagon. Their installed assets are available to Direct practice and Race independently of career unlocks. They also have individual VR seat settings. Career progress and garage ownership are unchanged.
 
 Vehicle setup
 Vehicle setup… opens gear ratio, downforce, suspension, ride height, differential and brake bias, with the same five positions as the game. Enable Use this setup for direct launches, adjust the bars and Apply. Save settings or launch to keep it. Reset to centre restores the middle positions; unchecking the option uses the game's setup. This setup is shared across stock and custom Direct practice and Race, desktop and VR. Normal Launch, AI cars and career saves are unchanged.

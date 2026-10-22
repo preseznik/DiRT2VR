@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Include all seven previously omitted stock prize cars in both car pickers, opponent selection and per-car VR seat settings. Direct launches retain Rookie, Pro and All-Star selection without changing career unlocks. MG Metro seat movement, saving and relaunch passed a headset check; the other added cars still need headset acceptance.
+
+- Fix seat adjustment becoming unavailable during VR startup when OpenXR creates an additional graphics device.
+
 ## 0.17.135 — 2026-10-18 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.135)

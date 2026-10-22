@@ -166,6 +166,9 @@ public:
 PanelImage panelImage;
 }
 bool EnableSeatAdjustment() {
+    // OpenXR can create another D3D device after the game device. Keep the
+    // existing channel and hooks rather than checking our patched prologue again.
+    if(channel) return inputReady;
     wchar_t name[128]{};
     if(!GetEnvironmentVariableW(L"DIRT2VR_SEAT_CHANNEL",name,128)) return true;
     HANDLE mapping=OpenFileMappingW(FILE_MAP_ALL_ACCESS,FALSE,name); if(!mapping) return false;
