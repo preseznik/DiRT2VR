@@ -10,7 +10,7 @@ struct ChaseOrbit {
     bool returning{}, rearView{};
     static constexpr float pi=3.14159265358979323846f;
     void Reset() { *this={}; }
-    bool Step(float dt,float speedKmh,float horizontal,float vertical,bool inputHeld,bool rearHeld=false) {
+    bool Step(float dt,float speedKmh,float horizontal,float vertical,bool inputHeld,bool rearHeld=false,bool keepAngle=false) {
         if(!std::isfinite(dt) || dt<=0 || dt>.25f || !std::isfinite(speedKmh) ||
            !std::isfinite(horizontal) || !std::isfinite(vertical)) return false;
         // Look back takes priority over orbit input. Release always returns to
@@ -27,7 +27,7 @@ struct ChaseOrbit {
         } else {
             const float previous=idle;
             idle=std::min(idle+dt,1.f);
-            if(returning && idle>.75f) {
+            if(!keepAngle && returning && idle>.75f) {
                 const float active=previous>=.75f ? dt : idle-.75f;
                 const float decay=std::exp(-6.f*active);
                 yaw*=decay; pitch*=decay;

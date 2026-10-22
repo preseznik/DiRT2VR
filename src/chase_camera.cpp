@@ -78,7 +78,7 @@ IDirectInput8W* input{};IDirectInputDevice8W* mouse{};HWND mouseWindow{};
 using XboxFn=DWORD (WINAPI*)(DWORD,XINPUT_STATE*);
 XboxFn xbox{};
 unsigned mode{};
-float mouseSensitivity=1,stickSensitivity=1;bool invert{};
+float mouseSensitivity=1,stickSensitivity=1;bool invert{},keepAngle{};
 float maxZoomOut=1.8f;
 ChaseMouseMode mouseMode=ChaseMouseMode::Right;
 unsigned selectedSlot=4;
@@ -246,7 +246,7 @@ void PrepareOrbit(void* camera,const float* timing,void* record,bool playbackPat
   if(ready) {
    const auto inputs=Poll(dt);
    if(!armed){if(inputs.neutral)armed=true;}
-   else if(orbit.Step(dt,speed,inputs.x,inputs.y,inputs.held,inputs.rearHeld) && zoom.Step(dt,inputs.wheel,maxZoomOut))usingOrbit=true;
+   else if(orbit.Step(dt,speed,inputs.x,inputs.y,inputs.held,inputs.rearHeld,keepAngle) && zoom.Step(dt,inputs.wheel,maxZoomOut))usingOrbit=true;
   } else if(!repeat) {armed=false;orbit.Reset();}
   // Feed the game's native look direction. It computes yaw and distance using
   // its ordinary chase solver, then runs the original obstruction pass.
@@ -469,6 +469,7 @@ bool EnableChaseCamera() {
  char value[8]{};GetEnvironmentVariableA("DIRT2VR_CHASE_PROBE",value,sizeof(value));mode=ChaseCameraDiagnostic() && value[0]=='1'?1:2;
  mouseSensitivity=Sensitivity("DIRT2VR_CHASE_MOUSE_SENSITIVITY");stickSensitivity=Sensitivity("DIRT2VR_CHASE_STICK_SENSITIVITY");
  invert=EnvFlag("DIRT2VR_CHASE_INVERT_VERTICAL");
+ keepAngle=EnvFlag("DIRT2VR_CHASE_KEEP_ANGLE");
  char zoomValue[16]{};const auto zoomLength=GetEnvironmentVariableA("DIRT2VR_CHASE_MAX_ZOOM_OUT",zoomValue,sizeof(zoomValue));
  maxZoomOut=ParseChaseMaxZoomOut(zoomLength<sizeof(zoomValue)?zoomValue:"");
  LoadReplayZoom();
@@ -522,7 +523,7 @@ bool EnableChaseCamera() {
   for(unsigned i=0;i<count;++i){MH_DisableHook(base+created[i]);MH_RemoveHook(base+created[i]);}
   update=nullptr;obstruction=nullptr;target=nullptr;look=nullptr;replayUpdate=nullptr;finalizePose=nullptr;storePose=nullptr;exportCamera=nullptr;replayScene=nullptr;
  }
- Log("chase camera: hooks=%s mode=%u mouse=%.2f stick=%.2f invert=%d max_zoom_out=%.2f",MH_StatusToString(status),mode,mouseSensitivity,stickSensitivity,invert,maxZoomOut);
+ Log("chase camera: hooks=%s mode=%u mouse=%.2f stick=%.2f invert=%d max_zoom_out=%.2f keep_angle=%d",MH_StatusToString(status),mode,mouseSensitivity,stickSensitivity,invert,maxZoomOut,keepAngle);
  return status==MH_OK;
 }
 }

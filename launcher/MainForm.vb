@@ -22,7 +22,8 @@ Public Class MainForm
     Private ReadOnly laa As New CheckBox With {.Text = "On (Experimental)", .Name = "ExperimentalLaa", .AccessibleName = "Large Address Aware (Experimental)", .AutoSize = True}
     Private ReadOnly backgroundPlay As New CheckBox With {.Text = "On (Experimental)", .Name = "KeepRunningUnfocused", .AccessibleName = "Keep running when unfocused (Experimental)", .AutoSize = True}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
-    Private ReadOnly chaseFreeLook As New CheckBox With {.Text = "On (Experimental)", .Name = "ChaseFreeLook", .AutoSize = True}
+    Private ReadOnly chaseFreeLook As New CheckBox With {.Text = "On (Experimental)", .Name = "ChaseFreeLook", .AccessibleName = "Free look", .AutoSize = True}
+    Private ReadOnly chaseKeepAngle As New CheckBox With {.Text = "Keep camera angle", .Name = "ChaseKeepAngle", .AutoSize = True}
     Private ReadOnly chaseInvert As New CheckBox With {.Text = "On", .Name = "ChaseInvertVertical", .AutoSize = True}
     Private ReadOnly chaseMouse As New ValueSlider("ChaseMouseSensitivity", 25, 300, 100, "%")
     Private ReadOnly chaseMouseMode As New MouseLookPicker()
@@ -972,11 +973,13 @@ Public Class MainForm
     Private Sub BuildChaseControls(content As VerticalStack)
         content.Controls.Add(New Label With {.Text = "Chase camera", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
         chaseFreeLook.Checked = settings.ChaseFreeLook
+        chaseKeepAngle.Checked = settings.ChaseKeepAngle
         chaseMouse.Value = settings.ChaseMouseSensitivity : chaseStick.Value = settings.ChaseStickSensitivity
         chaseMaxZoomOut.Value = settings.ChaseMaxZoomOut \ 10
         chaseMouseMode.SelectedMode = settings.ChaseMouseMode
         chaseInvert.Checked = settings.ChaseInvertVertical
-        Tip(chaseFreeLook, "Use the mouse or right stick to look around your car. Choose a mouse button below, or Always on. Hold the right stick pressed in to look behind; release to return to normal chase view. Holds orbit angles while stopped; returns behind you when driving. VR driving needs 3D beyond the cockpit; replay 3D has its own switch under Advanced → Graphics. Also works in paused or playing chase replays. Save and relaunch.")
+        Tip(chaseFreeLook, "Use the mouse or right stick to look around your car. Choose a mouse button below, or Always on. Hold the right stick pressed in to look behind; release to return to normal chase view. Holds orbit angles while stopped; returns behind you when driving unless Keep camera angle is enabled. VR driving needs 3D beyond the cockpit; replay 3D has its own switch under Advanced → Graphics. Also works in paused or playing chase replays. Save and relaunch.")
+        Tip(chaseKeepAngle, "Keep your chosen angle relative to the car after you stop moving the mouse or right stick, including while driving and in chase replays. Off by default. Right-stick look back still returns to the normal chase angle when released. Save settings and relaunch to apply.")
         Tip(chaseMouseMode, "Choose which mouse button to hold, or Always on to look around without clicking. Only active in chase view while driving; menus and pause keep normal mouse behavior.")
         For Each choice As RadioButton In chaseMouseMode.Controls
             Tip(choice, choice.AccessibleDescription & " Applies to chase-camera Free look. Save settings and relaunch.")
@@ -985,7 +988,9 @@ Public Class MainForm
         Tip(chaseStick, "How quickly the chase camera moves with the controller's right stick.")
         Tip(chaseMaxZoomOut, "Farthest allowed chase-camera distance, as a percentage of the normal view. 180% keeps the original limit; try 500% or 750% for a wider view, up to 1000%. The mouse wheel and replay zoom stick/keys share this limit. Field of view is unchanged; obstructions can keep the camera closer. Save settings and relaunch to apply.")
         Tip(chaseInvert, "Reverse up and down for both mouse and right-stick camera movement.")
-        Field(content, "Free look", chaseFreeLook)
+        Dim freeLookOptions As New FlowLayoutPanel With {.Name = "ChaseFreeLookOptions", .WrapContents = True}
+        freeLookOptions.Controls.AddRange({chaseFreeLook, chaseKeepAngle})
+        Field(content, "Free look", freeLookOptions)
         Field(content, "Mouse look", chaseMouseMode)
         content.Controls.Add(New Label With {.Text = "Scroll to zoom in / out — no mouse button needed.", .AutoSize = True, .Margin = New Padding(0, 0, 0, 8)})
         Field(content, "Maximum zoom out", chaseMaxZoomOut)
@@ -993,6 +998,7 @@ Public Class MainForm
         Field(content, "Right-stick sensitivity", chaseStick)
         Field(content, "Invert vertical", chaseInvert)
         Dim refresh As Action = Sub()
+                                    chaseKeepAngle.Enabled = chaseFreeLook.Checked
                                     chaseMouse.Enabled = chaseFreeLook.Checked
                                     chaseMouseMode.Enabled = chaseFreeLook.Checked
                                     chaseStick.Enabled = chaseFreeLook.Checked
@@ -1024,6 +1030,7 @@ Public Class MainForm
         settings.VrSteeringAnimation = steeringAnimation.Checked
         settings.SteeringObserveOnly = steeringObserve.Checked
         settings.ChaseFreeLook = chaseFreeLook.Checked
+        settings.ChaseKeepAngle = chaseKeepAngle.Checked
         settings.ChaseMouseSensitivity = chaseMouse.Value : settings.ChaseStickSensitivity = chaseStick.Value
         settings.ChaseMaxZoomOut = chaseMaxZoomOut.Value * 10
         settings.ChaseMouseMode = chaseMouseMode.SelectedMode

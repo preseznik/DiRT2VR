@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add an optional Keep camera angle checkbox beside Free look under Controls → General. Retain the chosen angle relative to the car while driving and in chase replays; automatic return remains the default. Save and relaunch to apply.
+
 - Add Maximum zoom out under Controls → General → Chase camera: 180–1000% of normal distance in 10% steps, defaulting to the original 180%. Mouse-wheel and replay stick/key zoom share the limit. Save and relaunch to apply; the range above 500% still needs player testing.
 
 - Add a Class filter to both stock-car pickers, with All and all seven stock classes. Keep the selected grade when filtering; CUSTOM cars retain their separate list.
