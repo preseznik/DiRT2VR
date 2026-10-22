@@ -6,6 +6,7 @@ Public Class CustomCarSelection
     Inherits VerticalStack
     Private ReadOnly context As InstallContext
     Private ReadOnly cars As ComboBox
+    Private ReadOnly carClass As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .AccessibleName = "Car class filter"}
     Private ReadOnly toggle As New CheckBox With {.Text = "CUSTOM cars (Experimental)", .AutoSize = True}
     Private ReadOnly status As New TrackStatusLabel With {.AutoSize = True, .UseMnemonic = False}
     Private ReadOnly actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
@@ -62,10 +63,19 @@ Public Class CustomCarSelection
         Me.context = context : Me.cars = cars : Me.key = key
         Name = "CustomCarSelection" & If(key = "stock", "Stock", "Track") : toggle.Name = Name & "Toggle"
         build.Name = Name & "Build" : manage.Name = Name & "Manage" : stopBuild.Name = Name & "Cancel" : status.Name = Name & "Status"
+        carClass.Name = Name & "Class"
+        StyleChoice(carClass, Me)
+        carClass.Items.Add("All")
+        carClass.Items.AddRange(RaceCatalog.Current.Cars.Select(Function(c) c.ClassName).Distinct().Order().Cast(Of Object).ToArray())
+        carClass.SelectedIndex = 0
+        Field(Me, "Class", carClass)
         Dim row As New ResponsiveColumns With {.WideAt = 560}
         Grades.Name = Name & "Grade"
         row.First.Controls.Add(cars) : row.Second.Controls.Add(Grades)
-        AddHandler cars.EnabledChanged, Sub() Grades.Enabled = cars.Enabled
+        AddHandler cars.EnabledChanged, Sub()
+                                            Grades.Enabled = cars.Enabled
+                                            carClass.Enabled = cars.Enabled AndAlso Not CustomEnabled
+                                        End Sub
         AddHandler SizeChanged, Sub() status.MaximumSize = New Drawing.Size(Math.Max(1, ClientSize.Width - status.Margin.Horizontal), 0)
         Controls.Add(row) : Controls.Add(toggle) : Controls.Add(status) : actions.Controls.AddRange({build, manage, stopBuild, bar}) : Controls.Add(actions)
         AddHandler toggle.CheckedChanged, Sub()
@@ -74,6 +84,12 @@ Public Class CustomCarSelection
                                             preferences.Enabled = toggle.Checked : preferences.Save(context)
                                             CustomCarService.Notify(context)
                                         End Sub
+        AddHandler carClass.SelectedIndexChanged, Sub()
+                                                     If loading OrElse CustomEnabled Then Return
+                                                     Dim choices = StockChoices()
+                                                     If choices.Length > 0 AndAlso Not choices.Any(Function(c) c.Code = stockCode) Then SaveStockSelection(choices(0).Code)
+                                                     RefreshChoices()
+                                                 End Sub
         AddHandler cars.SelectedIndexChanged, Sub()
                                                  If loading Then Return
                                                  If CustomEnabled Then
@@ -85,9 +101,7 @@ Public Class CustomCarSelection
                                                  End If
                                                  Dim selected = TryCast(cars.SelectedItem, PracticeCar)
                                                  If selected Is Nothing OrElse CarPack.IsCustom(selected.Code) Then Return
-                                                 stockCode = selected.Code
-                                                 Dim preferences = CustomCarPreferences.Load(context)
-                                                 preferences.StockCars(key) = stockCode : preferences.Save(context)
+                                                 SaveStockSelection(selected.Code)
                                              End Sub
         AddHandler build.Click, Async Sub() Await BuildCar()
         AddHandler stopBuild.Click, Sub() cancellation?.Cancel()
@@ -105,8 +119,25 @@ Public Class CustomCarSelection
         If RaceCatalog.Current.Cars.Any(Function(c) c.Code = preferred) Then stockCode = preferred
         Dim preferences = CustomCarPreferences.Load(context)
         If preferences.StockCars.ContainsKey(key) Then stockCode = preferences.StockCars(key)
+        If carClass.SelectedIndex > 0 AndAlso RaceCatalog.Current.Car(stockCode).ClassName <> CStr(carClass.SelectedItem) Then
+            loading = True
+            Try
+                carClass.SelectedIndex = 0
+            Finally
+                loading = False
+            End Try
+        End If
         RefreshChoices()
     End Sub
+    Private Sub SaveStockSelection(code As String)
+        stockCode = code
+        Dim preferences = CustomCarPreferences.Load(context)
+        preferences.StockCars(key) = stockCode : preferences.Save(context)
+    End Sub
+    Private Function StockChoices() As PracticeCar()
+        Return RaceCatalog.Current.Cars.Where(Function(c) (carClass.SelectedIndex <= 0 OrElse c.ClassName = CStr(carClass.SelectedItem)) AndAlso
+            File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).ToArray()
+    End Function
     Private Sub ExternalChanged(sender As Object, e As EventArgs)
         If IsDisposed OrElse DirectCast(sender, InstallContext).Id <> context.Id Then Return
         If InvokeRequired Then
@@ -133,7 +164,7 @@ Public Class CustomCarSelection
                     cars.Items.Add(missing) : cars.SelectedItem = missing
                 End If
             Else
-                cars.Items.AddRange(RaceCatalog.Current.Cars.Where(Function(c) File.Exists(IO.Path.Combine(context.GameRoot, "cars", c.Code, "cameras.xml"))).OrderBy(Function(c) If(c.Code = "sti", "", c.Label)).Cast(Of Object).ToArray())
+                cars.Items.AddRange(StockChoices().Cast(Of Object).ToArray())
                 cars.SelectedItem = cars.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = stockCode)
             End If
             ready = False
@@ -159,6 +190,7 @@ Public Class CustomCarSelection
                 If Not CustomEnabled AndAlso Controls.Contains(extra) Then Controls.Remove(extra)
             Next
             toggle.Enabled = Not CustomCarService.Building : cars.Enabled = Not CustomCarService.Building
+            carClass.Enabled = cars.Enabled AndAlso Not CustomEnabled
             build.Visible = preferences.SelectedId = CarPack.Code
             build.Enabled = Not CustomCarService.Building : manage.Enabled = Not CustomCarService.Building
             If CustomCarService.Building Then status.Text = "Building Ferrari F2004…"

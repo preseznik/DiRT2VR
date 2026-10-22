@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add a Class filter to both stock-car pickers, with All and all seven stock classes. Keep the selected grade when filtering; CUSTOM cars retain their separate list.
+
 - Include all seven previously omitted stock prize cars in both car pickers, opponent selection and per-car VR seat settings. Direct launches retain Rookie, Pro and All-Star selection without changing career unlocks. MG Metro seat movement, saving and relaunch passed a headset check; the other added cars still need headset acceptance.
 
 - Fix seat adjustment becoming unavailable during VR startup when OpenXR creates an additional graphics device.

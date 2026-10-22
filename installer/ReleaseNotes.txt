@@ -2,6 +2,7 @@ DiRT2VR — Experimental
 
 LATEST CHANGES (since 0.17.135)
 
+- Filter the stock-car list by class in both car pickers. Choose All or one of the seven stock classes; Rookie, Pro and All-Star selection stays unchanged. CUSTOM cars keep their separate list.
 - Added the seven missing stock prize cars: MG Metro 6R4, Dallenbach Special, Ford RS200 Evolution, Mitsubishi Pajero Dakar 1993, Toyota Stadium Truck, 1995 Subaru Impreza WRX STI and Dodge Power Wagon. Direct practice and Race can use their installed assets regardless of career unlocks. They also have individual VR seat settings.
 - Fixed seat adjustment becoming unavailable during VR startup. Metro seat movement, saving and relaunch passed a Quest 3/VDXR headset check; the other added cars still need headset acceptance.
 
