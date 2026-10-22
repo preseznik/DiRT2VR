@@ -27,6 +27,7 @@ Public Class MainForm
     Private ReadOnly chaseMouse As New ValueSlider("ChaseMouseSensitivity", 25, 300, 100, "%")
     Private ReadOnly chaseMouseMode As New MouseLookPicker()
     Private ReadOnly chaseStick As New ValueSlider("ChaseStickSensitivity", 25, 300, 100, "%")
+    Private ReadOnly chaseMaxZoomOut As New ValueSlider("ChaseMaxZoomOut", 18, 50, 18, valueLabels:=Enumerable.Range(18, 33).Select(Function(value) (value * 10).ToString() & "%").ToArray())
     Private ReadOnly skipIntroduction As New CheckBox With {.Text = "Skip introduction for LAN multiplayer", .Name = "SkipIntroduction", .AutoSize = True}
     Private ReadOnly skipStartupMovies As New CheckBox With {.Text = "Skip startup logo movies (single-player launches)", .Name = "SkipStartupMovies", .AutoSize = True}
     Private ReadOnly serverList As New LanServerList With {.Name = "LanServers", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .Dock = DockStyle.Top, .Height = 300, .ShowItemToolTips = True}
@@ -972,6 +973,7 @@ Public Class MainForm
         content.Controls.Add(New Label With {.Text = "Chase camera", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
         chaseFreeLook.Checked = settings.ChaseFreeLook
         chaseMouse.Value = settings.ChaseMouseSensitivity : chaseStick.Value = settings.ChaseStickSensitivity
+        chaseMaxZoomOut.Value = settings.ChaseMaxZoomOut \ 10
         chaseMouseMode.SelectedMode = settings.ChaseMouseMode
         chaseInvert.Checked = settings.ChaseInvertVertical
         Tip(chaseFreeLook, "Use the mouse or right stick to look around your car. Choose a mouse button below, or Always on. Hold the right stick pressed in to look behind; release to return to normal chase view. Holds orbit angles while stopped; returns behind you when driving. VR driving needs 3D beyond the cockpit; replay 3D has its own switch under Advanced → Graphics. Also works in paused or playing chase replays. Save and relaunch.")
@@ -981,10 +983,12 @@ Public Class MainForm
         Next
         Tip(chaseMouse, "How quickly the chase camera moves when you move the mouse.")
         Tip(chaseStick, "How quickly the chase camera moves with the controller's right stick.")
+        Tip(chaseMaxZoomOut, "Farthest allowed chase-camera distance, as a percentage of the normal view. 180% keeps the original limit; try 250% or 350% for a wider view, up to 500%. The mouse wheel and replay zoom stick/keys share this limit. Field of view is unchanged; obstructions can keep the camera closer. Save settings and relaunch to apply.")
         Tip(chaseInvert, "Reverse up and down for both mouse and right-stick camera movement.")
         Field(content, "Free look", chaseFreeLook)
         Field(content, "Mouse look", chaseMouseMode)
         content.Controls.Add(New Label With {.Text = "Scroll to zoom in / out — no mouse button needed.", .AutoSize = True, .Margin = New Padding(0, 0, 0, 8)})
+        Field(content, "Maximum zoom out", chaseMaxZoomOut)
         Field(content, "Mouse sensitivity", chaseMouse)
         Field(content, "Right-stick sensitivity", chaseStick)
         Field(content, "Invert vertical", chaseInvert)
@@ -992,6 +996,7 @@ Public Class MainForm
                                     chaseMouse.Enabled = chaseFreeLook.Checked
                                     chaseMouseMode.Enabled = chaseFreeLook.Checked
                                     chaseStick.Enabled = chaseFreeLook.Checked
+                                    chaseMaxZoomOut.Enabled = chaseFreeLook.Checked
                                     chaseInvert.Enabled = chaseFreeLook.Checked
                                 End Sub
         AddHandler chaseFreeLook.CheckedChanged, Sub() refresh()
@@ -1020,6 +1025,7 @@ Public Class MainForm
         settings.SteeringObserveOnly = steeringObserve.Checked
         settings.ChaseFreeLook = chaseFreeLook.Checked
         settings.ChaseMouseSensitivity = chaseMouse.Value : settings.ChaseStickSensitivity = chaseStick.Value
+        settings.ChaseMaxZoomOut = chaseMaxZoomOut.Value * 10
         settings.ChaseMouseMode = chaseMouseMode.SelectedMode
         settings.ChaseInvertVertical = chaseInvert.Checked
         settings.SkipIntroduction = skipIntroduction.Checked

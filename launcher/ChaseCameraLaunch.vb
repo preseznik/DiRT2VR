@@ -9,7 +9,7 @@ Public NotInheritable Class ChaseCameraLaunch
     End Sub
 
     Public Shared Sub Configure(start As ProcessStartInfo, settings As VrSettings)
-        For Each key In {"DIRT2VR_CHASE_FREE_LOOK", "DIRT2VR_CHASE_MOUSE_MODE", "DIRT2VR_CHASE_MOUSE_SENSITIVITY", "DIRT2VR_CHASE_STICK_SENSITIVITY", "DIRT2VR_CHASE_INVERT_VERTICAL", "DIRT2VR_CHASE_PROBE"}
+        For Each key In {"DIRT2VR_CHASE_FREE_LOOK", "DIRT2VR_CHASE_MOUSE_MODE", "DIRT2VR_CHASE_MOUSE_SENSITIVITY", "DIRT2VR_CHASE_STICK_SENSITIVITY", "DIRT2VR_CHASE_MAX_ZOOM_OUT", "DIRT2VR_CHASE_INVERT_VERTICAL", "DIRT2VR_CHASE_PROBE"}
             start.Environment.Remove(key)
         Next
         Dim headset = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
@@ -18,6 +18,7 @@ Public NotInheritable Class ChaseCameraLaunch
         start.Environment("DIRT2VR_CHASE_MOUSE_MODE") = settings.ChaseMouseMode
         start.Environment("DIRT2VR_CHASE_MOUSE_SENSITIVITY") = settings.ChaseMouseSensitivity.ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_CHASE_STICK_SENSITIVITY") = settings.ChaseStickSensitivity.ToString(Globalization.CultureInfo.InvariantCulture)
+        start.Environment("DIRT2VR_CHASE_MAX_ZOOM_OUT") = settings.ChaseMaxZoomOut.ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_CHASE_INVERT_VERTICAL") = If(settings.ChaseInvertVertical, "1", "0")
         start.Environment("DIRT2VR_ACTIVE") = "1"
         If Not headset Then start.Environment("DIRT2VR_DESKTOP_CONTROLS") = "1"

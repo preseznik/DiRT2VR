@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add Maximum zoom out under Controls → General → Chase camera: 180–500% of normal distance in 10% steps, defaulting to the original 180%. Mouse-wheel and replay stick/key zoom share the limit. Save and relaunch to apply; the extended range still needs player testing.
+
 - Add a Class filter to both stock-car pickers, with All and all seven stock classes. Keep the selected grade when filtering; CUSTOM cars retain their separate list.
 
 - Include all seven previously omitted stock prize cars in both car pickers, opponent selection and per-car VR seat settings. Direct launches retain Rookie, Pro and All-Star selection without changing career unlocks. MG Metro seat movement, saving and relaunch passed a headset check; the other added cars still need headset acceptance.

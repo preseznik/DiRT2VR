@@ -332,7 +332,7 @@ Controls has **General**, **VR**, **Driving** and **Seat** subtabs. General cont
 
 - Move the **right stick** to orbit around your car, or use the mouse. Choose **Hold left**, **Hold right** (default) or **Always on** with the mouse-icon buttons.
 - Hold the **right stick pressed in (R3)** to look behind. Release it to return to the normal chase angle, even while stopped.
-- Scroll the **mouse wheel forward** to move closer or **backward** to move farther away. No mouse button is needed. Zoom is limited to 60–180% of the normal distance and resets when changing chase views or starting a new session.
+- Scroll the **mouse wheel forward** to move closer or **backward** to move farther away. No mouse button is needed. **Controls → General → Chase camera → Maximum zoom out** sets the farthest distance from 180% to 500% of normal, in 10% steps. The default is the original 180%; try 250% or 350% for a wider view. The closest distance stays at 60%. The same limit applies to replay stick/key zoom. Save and relaunch to apply. Zoom resets when changing chase views or starting a new session; field of view stays unchanged and obstructions can keep the camera closer.
 - Adjust mouse/stick sensitivity and **Invert vertical** to suit your controls.
 
 Your angle stays while stopped. When moving, the camera smoothly returns behind the car after you stop looking around. Pause, menus and switching apps stop mouse look. The Windows pointer is hidden over the game picture while free look is active and returns for menus, other camera views and window borders.
