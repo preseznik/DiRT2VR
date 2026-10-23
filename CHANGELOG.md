@@ -8,6 +8,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.143 — 2026-10-23 — Experimental
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.143)
+
 - Enable Full Replay recording, finish-menu playback and saved replays for Pikes Peak pack 1.0.7, with cameras positioned for the course. Report unsupported external-pack replay settings before preparing game files.
 
 - Add desktop support for prepared Pikes Peak tarmac and gravel packs in the normal game folder, with Direct practice, Rally (up to three AI) and Grid race (up to seven AI). Retain the approved scenery, lighting, collisions and summit introductions. Track assets are installed separately; uneven crowd lighting remains a known issue.
