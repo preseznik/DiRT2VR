@@ -6,7 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- Enable native VR practice, Rally and Grid race on all four prepared Pikes Peak layouts with pack 1.0.8. Headset validation is pending.
+- Enable native VR practice, Rally and Grid race on all four prepared Pikes Peak layouts with pack 1.0.8.
 
 ## 0.17.143 — 2026-10-23 — Experimental
 
