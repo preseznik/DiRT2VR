@@ -108,14 +108,14 @@ Public Class CustomTrackPanel
         If launchMode.SelectedIndex < 0 Then Return "Choose an available launch mode for this track."
         If cars.SelectedItem Is Nothing Then Return "Choose an installed car."
         If opponentCars.SelectedIndex < 0 Then Return "Choose which cars the opponents should use."
-        Dim race = launchMode.SelectedIndex = 1, mode = If(race, "race", "practice"), count = If(race, opponents.Value, 0)
+        Dim race = launchMode.SelectedIndex > 0, mode = If(race, "race", "practice"), count = If(race, opponents.Value, 0)
         If race AndAlso Not raceReady Then Return "This layout needs updated AI driving paths. Choose Manage → Rebuild from source before racing."
         If customCars IsNot Nothing Then
             Dim reason = customCars.LaunchBlockReason(layout.Id, mode, vr, count)
             If reason <> "" Then Return reason
         End If
         Try
-            TrackPacks.Get(currentPack.Id).RequireMode(layout.Id, vr, mode, DirectCast(cars.SelectedItem, PracticeCar).Code, count, laps.Value)
+            TrackPacks.Get(currentPack.Id).RequireMode(layout.Id, vr, mode, DirectCast(cars.SelectedItem, PracticeCar).Code, count, laps.Value, SelectedRaceStart)
             Return ""
         Catch ex As IOException
             Return ex.Message
@@ -318,9 +318,10 @@ Public Class CustomTrackPanel
             launchMode.Items.Clear()
             launchMode.Items.Add("Direct practice")
             If currentPack.Available AndAlso TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race") Then launchMode.Items.Add("Grid race")
-
-
-            launchMode.SelectedIndex = If(selected.LaunchMode = "race" AndAlso launchMode.Items.Count = 1, -1, Array.IndexOf({"practice", "race"}, selected.LaunchMode))
+            Dim dualStart = currentPack.Available AndAlso layouts.SelectedItem IsNot Nothing AndAlso
+                TrackPacks.Get(currentPack.Id).SupportsStaggered(selected.LayoutId) AndAlso TrackPacks.Get(currentPack.Id).SupportsGridRace(selected.LayoutId)
+            If dualStart Then launchMode.Items.Add("Grid race")
+            launchMode.SelectedIndex = If(selected.LaunchMode = "race", If(launchMode.Items.Count = 1, -1, If(dualStart AndAlso selected.RaceStart = "grid", 2, 1)), 0)
             customCars.SetStockSelection("custom/" & currentPack.Id, selected.CarCode)
             customCars.Grades.Value = selected.CarGrade
             raceDifficulty.SelectedIndex = Math.Clamp(selected.RaceDifficulty, -1, 5) + 1
@@ -338,14 +339,15 @@ Public Class CustomTrackPanel
         If currentPack Is Nothing OrElse Not currentPack.Available OrElse layouts.SelectedItem Is Nothing Then Return
         Dim pack = TrackPacks.Get(currentPack.Id), id = DirectCast(layouts.SelectedItem, LayoutItem).Value.Id
         If opponents.Maximum > 1 Then fullGridOpponents = opponents.Value
-        opponents.Maximum = Math.Max(1, pack.MaximumOpponents(id))
+        opponents.Maximum = Math.Max(1, pack.MaximumOpponents(id, SelectedRaceStart))
         opponents.Value = Math.Min(fullGridOpponents, opponents.Maximum)
     End Sub
     Private Sub CaptureSelection()
         If currentPack Is Nothing OrElse Not currentPack.Available Then Return
         Dim selected = preferences.ForPack(currentPack.Id)
         If layouts.SelectedItem IsNot Nothing Then selected.LayoutId = DirectCast(layouts.SelectedItem, LayoutItem).Value.Id
-        If launchMode.SelectedIndex >= 0 Then selected.LaunchMode = {"practice", "race"}(launchMode.SelectedIndex)
+        If launchMode.SelectedIndex >= 0 Then selected.LaunchMode = If(launchMode.SelectedIndex = 0, "practice", "race")
+        If launchMode.SelectedIndex > 0 Then selected.RaceStart = SelectedRaceStart
         If cars.SelectedItem IsNot Nothing Then selected.CarCode = If(customCars.CustomEnabled, customCars.StockSelection, DirectCast(cars.SelectedItem, PracticeCar).Code)
         selected.CarGrade = customCars.Grades.Value
         If opponentCars.SelectedIndex >= 0 Then selected.OpponentCars = {"same", "mixed", "class"}(opponentCars.SelectedIndex)
@@ -426,8 +428,33 @@ Public Class CustomTrackPanel
             Return currentPack?.Id = "nordschleife" OrElse currentPack?.Id = "misty-loch"
         End Get
     End Property
+    Private ReadOnly Property SelectedRaceStart As String
+        Get
+            If launchMode.SelectedIndex = 2 Then Return "grid"
+            Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
+            If chosen IsNot Nothing AndAlso currentPack IsNot Nothing AndAlso currentPack.Available AndAlso TrackPacks.Get(currentPack.Id).SupportsStaggered(chosen.Id) Then Return "staggered"
+            Return "grid"
+        End Get
+    End Property
     Private Sub RefreshRaceOptions()
+        If loading Then Return
         Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
+        Dim staggered = chosen IsNot Nothing AndAlso currentPack IsNot Nothing AndAlso currentPack.Available AndAlso TrackPacks.Get(currentPack.Id).SupportsStaggered(chosen.Id)
+        Dim dualStart = staggered AndAlso TrackPacks.Get(currentPack.Id).SupportsGridRace(chosen.Id)
+        loading = True
+        Try
+            If dualStart AndAlso launchMode.Items.Count = 2 Then launchMode.Items.Add("Grid race")
+            If Not dualStart AndAlso launchMode.Items.Count = 3 Then
+                If launchMode.SelectedIndex = 2 Then launchMode.SelectedIndex = 1
+                launchMode.Items.RemoveAt(2)
+            End If
+        Finally
+            loading = False
+        End Try
+        If launchMode.Items.Count > 1 Then
+            Dim label = If(staggered, "Rally (staggered)", "Grid race")
+            If CStr(launchMode.Items(1)) <> label Then launchMode.Items(1) = label
+        End If
         raceReady = installedReceipt IsNot Nothing AndAlso currentPack IsNot Nothing AndAlso TrackPacks.Get(currentPack.Id).SupportsRace(installedReceipt, chosen?.Id)
         If ButtermilkPostProcess.Supports(chosen?.Id) Then
             If Not setup.Controls.Contains(lightingTestBox) Then
@@ -439,7 +466,8 @@ Public Class CustomTrackPanel
         Dim soloOnly = currentPack IsNot Nothing AndAlso currentPack.Available AndAlso Not TrackPacks.Get(currentPack.Id).Modes.Contains("desktop-race")
         If soloOnly AndAlso launchMode.SelectedIndex <> 0 Then launchMode.SelectedIndex = 0
         launchMode.Enabled = Not soloOnly
-        Dim race = launchMode.SelectedIndex = 1
+        LoadLayoutSession()
+        Dim race = launchMode.SelectedIndex > 0
         Dim pointToPoint = chosen IsNot Nothing AndAlso Not chosen.Circuit
         laps.Enabled = Not pointToPoint AndAlso (Not OneLapPractice OrElse race)
         If pointToPoint Then laps.Value = 1
@@ -448,6 +476,8 @@ Public Class CustomTrackPanel
         If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
         If pointToPoint Then modeHint.Text = "One complete run · AI races and VR depend on the selected pack · LAN unavailable"
         If currentPack.External IsNot Nothing AndAlso currentPack.Available Then modeHint.Text = "External · " & String.Join(", ", TrackPacks.Get(currentPack.Id).Modes.Select(Function(mode) mode.Replace("desktop-", "Desktop ").Replace("vr-", "VR ").Replace("solo", "Practice").Replace("race", "Race"))) & If(currentPack.External.Manifest.Replay, " · Full Replay supported by author", " · Turn full-race recording off")
+        If race AndAlso SelectedRaceStart = "staggered" Then modeHint.Text &= " · Staggered starts with individual stage times"
+        If race AndAlso SelectedRaceStart = "grid" Then modeHint.Text &= " · Simultaneous grid start"
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If customCars IsNot Nothing AndAlso customCars.CustomEnabled AndAlso CustomCarPreferences.Load(context).SelectedId = Global.DiRT2VR.CustomCars.CarPack.Code Then modeHint.Text = "Ferrari F2004: Direct practice and Race on compatible tracks · Desktop and VR · AI handling is experimental."
         If currentPack?.Id = "spa-francorchamps" Then modeHint.Text = "Desktop and VR · 1–20 laps · VR and AI races are experimental"
@@ -463,7 +493,7 @@ Public Class CustomTrackPanel
         Dim chosen = TryCast(layouts.SelectedItem, LayoutItem)?.Value
         Dim missingLayout = chosen IsNot Nothing AndAlso Not installedLayouts.Contains(chosen.Id)
         Dim required = installationValid AndAlso Not working AndAlso chosen IsNot Nothing AndAlso
-            (missingLayout OrElse (launchMode.SelectedIndex = 1 AndAlso Not raceReady))
+            (missingLayout OrElse (launchMode.SelectedIndex > 0 AndAlso Not raceReady))
         rebuildNotice.Pulse = required
         If required Then
             rebuildNotice.Text = "Rebuild required — " & If(missingLayout, "layout not installed", "race unavailable") & vbCrLf &

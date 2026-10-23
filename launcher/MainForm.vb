@@ -52,6 +52,7 @@ Public Class MainForm
     Private ReadOnly borderless As New CheckBox With {.Text = "Borderless fullscreen (desktop only)", .Name = "BorderlessDesktop", .AutoSize = True}
     Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
     Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
+    Private ReadOnly trackDepthOfField As New CheckBox With {.Text = "On", .Name = "TrackDepthOfField", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
     Private ReadOnly desktopShadowDistance As New ValueSlider("DesktopShadowDistance", 0, 7, 0, valueLabels:={"Game", "160 m", "240 m", "320 m", "400 m", "480 m", "560 m", "640 m"})
@@ -682,6 +683,10 @@ Public Class MainForm
         Tip(desktopShadowDistanceInVr, "Use this shadow distance in VR too. Requires VR Shadows to be on. Detailed distance stays separate. Save and relaunch to apply.")
         desktopRoadSheen.UseTrackDefault = settings.DesktopRoadSheenDefault : desktopRoadSheen.Percent = settings.DesktopRoadSheen
         Field(desktop, "Road sheen (Experimental)", desktopRoadSheen)
+        Dim trackEffects = Section(columns.First, "Supported track effects")
+        trackDepthOfField.Checked = settings.TrackDepthOfField
+        Field(trackEffects, "Depth of field", trackDepthOfField)
+        Tip(trackDepthOfField, "Enable distance blur on supported tracks (currently Pikes Peak)." & vbCrLf & "Applies to every car. Other tracks keep their original effects. Save and relaunch to apply.")
         Dim render = Section(columns.First, "VR rendering")
         renderScale.Value = settings.RenderScale : headsetScale.Value = settings.HeadsetScale : fieldOfView.Value = settings.FieldOfView
         mirrors.Items.AddRange({"Game setting", "On", "Off"})
@@ -739,6 +744,7 @@ Public Class MainForm
         AddHandler defaults.Click, Sub()
                                        borderless.Checked = False : desktopVSync.Checked = True
                                        desktopBloom.Checked = True : vrBloom.Checked = True
+                                       trackDepthOfField.Checked = True
                                        desktopAnisotropy.Value = 0 : vrAnisotropy.Value = 0
                                        desktopShadowDistance.Value = 0
                                        desktopShadowDistanceInVr.Checked = False
@@ -1040,6 +1046,7 @@ Public Class MainForm
         settings.BorderlessDesktop = borderless.Checked
         settings.DesktopVSync = desktopVSync.Checked
         settings.DesktopBloom = desktopBloom.Checked : settings.VrBloom = vrBloom.Checked
+        settings.TrackDepthOfField = trackDepthOfField.Checked
         settings.DesktopAnisotropy = AnisotropicFiltering.Levels(desktopAnisotropy.Value)
         settings.DesktopShadowDistance = DesktopShadows.Distances(desktopShadowDistance.Value)
         settings.DesktopShadowDistanceInVr = desktopShadowDistanceInVr.Checked

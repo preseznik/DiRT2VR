@@ -51,3 +51,6 @@ target_compile_definitions(xr_probe PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX XR_USE_
 if(EXISTS "${CMAKE_SOURCE_DIR}/tests/NativeTests.cmake")
   include("${CMAKE_SOURCE_DIR}/tests/NativeTests.cmake")
 endif()
+
+target_sources(d3d11 PRIVATE src/pikes_scope.cpp src/terrain_registry.cpp src/pikes_cockpit.cpp)
+target_link_libraries(d3d11 PRIVATE shell32)

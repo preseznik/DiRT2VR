@@ -4,6 +4,8 @@
 #include "trace.h"
 #include "f04_camera.h"
 #include "common.h"
+#include "terrain_registry.h"
+#include "pikes_scope.h"
 #include "eye_pair.h"
 #include "camera_math.h"
 #include "scene_camera.h"
@@ -1737,6 +1739,14 @@ bool ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
     return saved;
 }
 
+HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
+    const auto f=frame.fetch_add(1);
+    if(TakeCaptureRequest(f,false)) {
+        Screenshot(swapchain,f);
+        requestedCaptureFrame=~uint64_t{};
+    }
+    return realPresent(swapchain,interval,flags);
+}
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
     if(HeadsetEnabled()) {
@@ -1955,6 +1965,7 @@ template<class F> void Hook(void* object,unsigned index,void* replacement,F& ori
 }
 void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChain* swapchain) {
     std::lock_guard lock(attachMutex);
+    if(!EnablePikesTerrain()) { Log("Pikes terrain initialization failed; stopping launch"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
     if(LoggingEnabled()) graphics::logger.store(+[](const char* message) { Log("%s",message); });
     wchar_t direct[8]{};
     const bool directSession=GetEnvironmentVariableW(L"DIRT2VR_DIRECT_PRACTICE",direct,8)==1 && direct[0]==L'1';
@@ -1965,8 +1976,11 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     const bool desktopControls=GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_CONTROLS",desktop,8)==1 && desktop[0]==L'1';
     if(desktopControls || (GetEnvironmentVariableW(L"DIRT2VR_DESKTOP_PRACTICE",desktop,8)==1 && desktop[0]==L'1')) {
         EnableDirectPractice();
+        EnablePikesCockpit();
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
+        if(RequestedCapturesEnabled() && swapchain && PikesScope())
+            Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;
     }
     static bool initialized=[] { auto status=MH_Initialize(); return status==MH_OK||status==MH_ERROR_ALREADY_INITIALIZED; }();

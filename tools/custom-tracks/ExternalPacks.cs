@@ -8,7 +8,9 @@ public sealed record ExternalFile(string Path, long Bytes, string Sha256);
 public sealed record ExternalDependency(string Path, string Sha256);
 public sealed record ExternalReplacement(string Target, string File);
 public sealed record ExternalLayout(string Id, string Name, string Folder, string Condition,
-    string Discipline, bool Circuit, int MaximumOpponents, ExternalReplacement[] Session);
+    string Discipline, bool Circuit, int MaximumOpponents, ExternalReplacement[] Session,
+    string RaceStart = "grid", ExternalReplacement[]? RaceSession = null,
+    int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null);
 public sealed record ExternalCar(string Code, string Donor, string ClassName);
 public sealed record ExternalManifest(int Schema, string Kind, string Id, string Name, string Author,
     string Version, string MinimumLauncher, string Description, string[] Modes, bool Replay,
@@ -160,8 +162,8 @@ public static class ExternalPacks
         if (m.Modes.Any(mode => mode.StartsWith("vr-", StringComparison.Ordinal) && !m.Modes.Contains("desktop-" + mode[3..])))
             throw new IOException("A VR mode also requires its corresponding desktop mode.");
         if (!m.Modes.Contains("desktop-solo")) throw new IOException("External packs must support desktop Direct practice before enabling other modes.");
-        if (m.Files is null || m.Files.Length is < 1 or > 4096 || m.Files.Any(f => f is null || !SafeFiles.Digest(f.Sha256) || f.Bytes is < 1 or > 805306368) ||
-            m.Files.Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).Count() != m.Files.Length || m.Files.Sum(f => f.Bytes) > 4L * 1024 * 1024 * 1024)
+        if (m.Files is null || m.Files.Length is < 1 or > 4096 || m.Files.Any(f => f is null || !SafeFiles.Digest(f.Sha256) || (f.Bytes < 1 || f.Bytes > (m.Id == "pikes-peak-lab" ? 1610612736L : 805306368L))) ||
+            m.Files.Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase).Count() != m.Files.Length || m.Files.Sum(f => f.Bytes) > (m.Id == "pikes-peak-lab" ? 12L : 4L) * 1024 * 1024 * 1024)
             throw new IOException("Invalid external file inventory.");
         foreach (var file in m.Files)
         {
@@ -197,6 +199,48 @@ public static class ExternalPacks
             foreach (var f in m.Files.Where(f => f.Path.StartsWith(prefix, StringComparison.Ordinal))) used.Add(f.Path);
             foreach (string required in new[] { "track.jpk", "routesplit.pssg", "track.vis", "grids.pssg", "progress_track.xml" })
                 if (!used.Contains(prefix + "route_0/" + required)) throw new IOException("Incomplete external route: " + required);
+            if (layout.RaceStart is not ("grid" or "staggered"))
+                throw new IOException("Unsupported external race start.");
+            if (layout.RaceStart == "staggered")
+            {
+                if (layout.Circuit || layout.Discipline is not ("Rally" or "Trailblazer") || !m.Modes.Contains("desktop-race"))
+                    throw new IOException("Staggered starts require a point-to-point Rally or Trailblazer race layout.");
+                foreach (string required in new[] { "ai_track.xml", "dev_ai_track.xml", "ai_vehicle_track.xml" })
+                    if (!used.Contains(prefix + "route_0/" + required)) throw new IOException("Staggered route is missing AI guidance: " + required);
+                // Practice retains its original timing and placement data. Race uses
+                // an explicitly authored start split and separated queue positions.
+                var targets = new[] { "grids.pssg", "progress_track.xml", "ai_track.xml", "dev_ai_track.xml" }.Select(n => $"tracks/usa/{layout.Folder}/route_0/{n}").ToArray();
+                if (layout.RaceSession is null || layout.RaceSession.Length != targets.Length ||
+                    layout.RaceSession.Any(s => s is null) ||
+                    !layout.RaceSession.Select(s => s.Target).Order().SequenceEqual(targets.Order()))
+                    throw new IOException("Staggered routes need separate race placement, timing and queue guidance data.");
+                foreach (var item in layout.RaceSession)
+                {
+                    if (!item.File.StartsWith($"payload/session/{layout.Id}/race/", StringComparison.Ordinal) ||
+                        !m.Files.Any(f => f.Path == item.File && f.Bytes <= 64 * 1024 * 1024))
+                        throw new IOException("Staggered race data is outside its own layout payload.");
+                    used.Add(item.File);
+                }
+            }
+            else if (layout.RaceSession is { Length: > 0 })
+                throw new IOException("Separate race data requires a declared staggered start.");
+            if (layout.GridMaximumOpponents != 0 || layout.GridRaceSession is not null)
+            {
+                if (layout.RaceStart != "staggered" || layout.GridMaximumOpponents is < 1 or > 7)
+                    throw new IOException("An additional grid race requires a staggered layout and one to seven grid opponents.");
+                var targets = new[] { "grids.pssg", "progress_track.xml", "ai_track.xml", "dev_ai_track.xml" }.Select(n => $"tracks/usa/{layout.Folder}/route_0/{n}").ToArray();
+                if (layout.GridRaceSession is null || layout.GridRaceSession.Length != targets.Length ||
+                    layout.GridRaceSession.Any(s => s is null) ||
+                    !layout.GridRaceSession.Select(s => s.Target).Order().SequenceEqual(targets.Order()))
+                    throw new IOException("Grid races need separate placement, timing and start guidance data.");
+                foreach (var item in layout.GridRaceSession)
+                {
+                    if (!item.File.StartsWith($"payload/session/{layout.Id}/grid-race/", StringComparison.Ordinal) ||
+                        !m.Files.Any(f => f.Path == item.File && f.Bytes <= 64 * 1024 * 1024))
+                        throw new IOException("Grid race data is outside its own layout payload.");
+                    used.Add(item.File);
+                }
+            }
             if (layout.Session is null || layout.Session.Length is < 1 or > 32 || layout.Session.Any(s => s is null) || layout.Session.Select(s => s.Target).Distinct().Count() != layout.Session.Length)
                 throw new IOException("Invalid external session replacements.");
             foreach (var replace in layout.Session)

@@ -8,7 +8,7 @@ public static class ExternalSession
     public sealed record Journal(int Schema, string Id, Entry[] Entries);
     public static bool Pending(string game) => File.Exists(SafeFiles.Inside(game, Folder + "/pending.json"));
     public static void Prepare(string game, ExternalPack pack, string layoutId, Action<int>? afterWrite = null) => PrepareContent(game, pack, layoutId, null, afterWrite);
-    public static void PrepareContent(string game, ExternalPack? pack, string? layoutId, ExternalPack? car, Action<int>? afterWrite = null)
+    public static void PrepareContent(string game, ExternalPack? pack, string? layoutId, ExternalPack? car, Action<int>? afterWrite = null, bool race = false, string raceStart = "auto")
     {
         SafeFiles.RequireClosed();
         if (Pending(game)) throw new IOException("External content recovery is pending.");
@@ -17,13 +17,22 @@ public static class ExternalSession
         {
             pack.Verify(); pack.RequireDependencies(game);
             var layout = pack.Layout(layoutId!);
+            if (race && (!pack.Manifest!.Modes.Contains("desktop-race") || layout.MaximumOpponents < 1))
+                throw new IOException("This external layout does not support racing.");
+            if (raceStart is not ("auto" or "grid" or "staggered") ||
+                (race && raceStart == "staggered" && layout.RaceStart != "staggered") ||
+                (race && raceStart == "grid" && layout.RaceStart == "staggered" && layout.GridMaximumOpponents == 0))
+                throw new IOException("This external layout does not support the selected race start.");
+            var raceSession = raceStart == "grid" && layout.RaceStart == "staggered" ? layout.GridRaceSession : layout.RaceSession;
             string trackRoot = SafeFiles.Inside(game, "tracks/usa/" + layout.Folder);
             if (Directory.Exists(trackRoot) && SafeFiles.Tree(trackRoot).Any()) throw new IOException("External track destination contains existing files; they were preserved: " + trackRoot);
             foreach (var file in pack.Manifest!.Files.Where(f => f.Path.StartsWith("payload/tracks/usa/" + layout.Folder + "/", StringComparison.Ordinal)))
             {
                 string target = file.Path["payload/".Length..];
                 if (File.Exists(SafeFiles.Inside(game, target))) throw new IOException("External track destination already exists; it was preserved: " + target);
-                writes.Add((new(target, null, file.Sha256, null), SafeFiles.Inside(pack.Root, file.Path)));
+                var replacement = race ? raceSession?.SingleOrDefault(s => s.Target == target) : null;
+                var applied = replacement is null ? file : pack.Manifest.Files.Single(f => f.Path == replacement.File);
+                writes.Add((new(target, null, applied.Sha256, null), SafeFiles.Inside(pack.Root, applied.Path)));
             }
             foreach (var item in layout.Session)
             {

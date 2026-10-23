@@ -64,7 +64,8 @@ Public Class InstallContext
     Public Sub ValidateGame()
         Files.NoLinks(GameRoot)
         Dim executable = IO.Path.Combine(GameRoot, "dirt2_game.exe")
-        If Not File.Exists(executable) OrElse Not LargeAddressAware.Supported(Files.Hash(executable)) Then Throw New IOException("Unsupported DiRT 2 executable. Select the supported version 1.1.0.0 game folder.")
+        Dim hash = If(File.Exists(executable), Files.Hash(executable), "")
+        If Not LargeAddressAware.Supported(hash) AndAlso Not PikesCollisionTransaction.SupportedPending(Me, hash) Then Throw New IOException("Unsupported DiRT 2 executable. Select the supported version 1.1.0.0 game folder.")
         If Not File.Exists(IO.Path.Combine(GameRoot, "dirt2.exe")) Then Throw New IOException("dirt2.exe is missing.")
     End Sub
     Public Function GameRunning() As Boolean
@@ -117,6 +118,7 @@ Public Class VrSettings
     Public Property BorderlessDesktop As Boolean = False
     Public Property DesktopVSync As Boolean = True
     Public Property DesktopBloom As Boolean = True
+    Public Property TrackDepthOfField As Boolean = True
     Public Property VrBloom As Boolean = True
     Public Property DesktopAnisotropy As Integer = 0
     Public Property DesktopShadowDistance As Integer = 0

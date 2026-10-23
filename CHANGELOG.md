@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Add desktop support for prepared Pikes Peak tarmac and gravel packs in the normal game folder, with Direct practice, Rally (up to three AI) and Grid race (up to seven AI). Retain the approved scenery, lighting, collisions and summit introductions. Track assets are installed separately; uneven crowd lighting remains a known issue.
+- Add a Depth of field checkbox under Graphics → Main → Supported track effects for Pikes Peak. Its camera effects and graphics changes are restored after each session. Other tracks keep their existing effects.
+
 - Add an optional Keep camera angle checkbox beside Free look under Controls → General. Retain the chosen angle relative to the car while driving and in chase replays; automatic return remains the default. Save and relaunch to apply.
 
 - Add Maximum zoom out under Controls → General → Chase camera: 180–1000% of normal distance in 10% steps, defaulting to the original 180%. Mouse-wheel and replay stick/key zoom share the limit. Save and relaunch to apply; the range above 500% still needs player testing.

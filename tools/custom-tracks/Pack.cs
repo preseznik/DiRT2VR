@@ -90,7 +90,7 @@ public static class TrackPacks
         external = found.Where(p => p.Ready && p.Kind == "track").Select(p => p.TrackDefinition()).ToArray();
         External = found;
     }
-    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml", "dx11/shaderpack/shaderpack.pssg"];
+    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml", "dx11/shaderpack/shaderpack.pssg", "dx11/shaderpack/postprocess.pssg", "postprocess/effects.xml"];
     public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
     public static bool IsLayout(string? id) => All.Any(p => p.Layouts.Any(l => l.Id == id));
     public static TrackPack ForLayout(string id) => All.SingleOrDefault(p => p.IsLayout(id)) ?? throw new IOException("Unknown custom layout.");
@@ -144,16 +144,22 @@ public sealed class TrackPack
         ? Layouts.Take(Id == AspenPack.Id ? 4 : 1).ToArray() : Layouts;
     public string[] ReceiptRoots(PackReceipt receipt) => ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
     // The four duel courses have two authored start positions, not an eight-car grid.
-    public int MaximumOpponents(string id) => External?.Layout(id).MaximumOpponents ?? (GetLayout(id).Discipline == "Head-to-head" ? 1 : 7);
+    public int MaximumOpponents(string id, string raceStart = "auto") =>
+        raceStart == "grid" && SupportsStaggered(id) ? External!.Layout(id).GridMaximumOpponents :
+        External?.Layout(id).MaximumOpponents ?? (GetLayout(id).Discipline == "Head-to-head" ? 1 : 7);
     public string PracticeCar(string id) => GetLayout(id).Discipline == "Landrush" ? "kin" : "sti";
     public bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
+    public bool SupportsStaggered(string id) => External is not null && Modes.Contains("desktop-race") &&
+        External.Layout(id).RaceStart == "staggered";
+    public bool SupportsGridRace(string id) => Modes.Contains("desktop-race") &&
+        (!SupportsStaggered(id) || External!.Layout(id).GridMaximumOpponents > 0);
     public bool SupportsRace(PackReceipt receipt, string? layoutId = null)
     {
         if (External is not null) return Modes.Contains("desktop-race") && (layoutId is null || External.Layout(layoutId).MaximumOpponents > 0);
         var sessions = receipt.Sessions.Where(s => layoutId is null || s.LayoutId == layoutId).ToArray();
         return Modes.Contains("desktop-race") && sessions.Length > 0 && sessions.All(s => System.Version.Parse(s.Version ?? receipt.Version) >= new System.Version(1, 0, 1));
     }
-    public void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps)
+    public void RequireMode(string id, bool vr, string mode, string car, int opponents, int laps, string raceStart = "auto")
     {
         var layout = GetLayout(id);
         if (!layout.Circuit && laps != 1)
@@ -162,8 +168,11 @@ public sealed class TrackPack
             throw new IOException(Name + " Direct practice supports one complete lap per session.");
         if (!Modes.Contains((vr ? "vr-" : "desktop-") + (mode == "race" ? "race" : "solo")))
             throw new IOException("This custom-track launch mode is unavailable.");
-        if (mode == "race" && opponents > MaximumOpponents(id))
-            throw new IOException(layout.Name + " supports at most " + MaximumOpponents(id) + " AI opponent(s), matching its starting grid.");
+        if (raceStart is not ("auto" or "grid" or "staggered") ||
+            (mode == "race" && ((raceStart == "grid" && !SupportsGridRace(id)) || (raceStart == "staggered" && !SupportsStaggered(id)))))
+            throw new IOException("This custom-track race start is unavailable.");
+        if (mode == "race" && opponents > MaximumOpponents(id, raceStart))
+            throw new IOException(layout.Name + " supports at most " + MaximumOpponents(id, raceStart) + " AI opponent(s), matching the selected starting grid.");
         if (mode is not ("practice" or "race") || string.IsNullOrWhiteSpace(car) || laps is < 1 or > 20 ||
             (mode == "practice" ? opponents != 0 : opponents is < 1 or > 7))
             throw new IOException("Choose Direct practice or Race, an installed car, and one to twenty laps. Race supports one to seven opponents. LAN is unavailable.");

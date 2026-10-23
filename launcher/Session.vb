@@ -72,7 +72,7 @@ Public Class Session
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         DirectRaceStart.Resolve(settings) ' Reject unsupported explicit choices before preparing any files.
-        If customTrack Then CustomTracks.TrackPacks.ForLayout(settings.TrackId).RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps)
+        If customTrack Then CustomTracks.TrackPacks.ForLayout(settings.TrackId).RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps, DirectRaceStart.Resolve(settings))
         If CustomCars.CarPack.IsCustom(settings.CarCode) Then
             CustomCars.CarPack.RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.GridOpponents)
             If replayId IsNot Nothing Then Throw New IOException("Custom-car replay playback is not yet supported.")
@@ -161,7 +161,7 @@ Public Class Session
                         CarSetup.Configure(start, settings)
                         CarGrades.Configure(start, settings)
                         If settings.DirectMode Then
-                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade)
+                            Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade, raceStart:=DirectRaceStart.Resolve(settings))
                             start.ArgumentList.Add("-demo")
                             start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                             start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
@@ -300,7 +300,7 @@ Public Class Session
             If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice and Race require the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
             Worker.Invoke(context, "setup")
             Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
-            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade)
+            Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade, raceStart:=DirectRaceStart.Resolve(settings))
             config = New AssetTransaction(context).PracticeConfig()
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
@@ -312,6 +312,7 @@ Public Class Session
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
         DirectRaceDifficulty.Configure(start, settings)
         DirectRaceStart.Configure(start, settings)
+        If settings.LaunchMode = "race" AndAlso DirectRaceStart.Resolve(settings) = "grid" AndAlso settings.TrackId.StartsWith("external-track-pikes-peak-lab/", StringComparison.Ordinal) Then start.Environment("DIRT2VR_PIKES_GRID_RACE") = "1"
         CarSetup.Configure(start, settings)
         CarGrades.Configure(start, settings)
         Dim returnToMenus = WaitForGame(start)
@@ -340,6 +341,9 @@ Public Class Session
             start.Environment("DIRT2VR_DESKTOP_PRACTICE") = "1"
             start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
             start.Environment("DIRT2VR_CAPTURE_DIAGNOSTICS") = "0"
+            start.Environment("DIRT2VR_CAPTURE_REQUESTS") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-capture"), "1", "0")
+            start.Environment("DIRT2VR_AUTO_COCKPIT") = If(Environment.GetCommandLineArgs().Contains("--diagnostic-cockpit"), "1", "0")
+            start.Environment.Remove("DIRT2VR_PIKES_GRID_RACE")
             ConfigureLogging(start, logFolder)
         End If
         Return start
@@ -348,6 +352,9 @@ Public Class Session
         ' Last effect layer for every launch path, including LAN and return to menus.
         If filterSnapshot IsNot Nothing Then Worker.Invoke(context, "prepare-filter", filterSnapshot:=filterSnapshot)
         If Not BloomTransaction.Enabled(settings, start) Then Worker.Invoke(context, "prepare-bloom")
+        If settings.DirectMode AndAlso DepthOfFieldTransaction.Supports(settings.TrackId) Then
+            Worker.Invoke(context, "prepare-dof", carCode:=settings.CarCode, trackId:=settings.TrackId)
+        End If
         NordschleifeProgress.Configure(start, settings)
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         FlashbackLaunch.Configure(start, settings)
@@ -369,6 +376,7 @@ Public Class Session
                 Worker.Invoke(context, "prepare-road-sheen", trackId:=settings.TrackId, roadSheen:=If(vr, settings.VrRoadSheen, settings.DesktopRoadSheen))
             End If
             If settings.ExperimentalLaa Then Worker.Invoke(context, "prepare-laa")
+            If settings.DirectMode AndAlso DepthOfFieldTransaction.Supports(settings.TrackId) Then Worker.Invoke(context, "prepare-pikes", trackId:=settings.TrackId)
             Dim focus As New StartupFocus(context, vr)
             Using child = Process.Start(start)
                 Status("Running")

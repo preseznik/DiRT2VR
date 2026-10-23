@@ -46,6 +46,10 @@ The launcher ID is `external-track-<Id>/<layout-id>`. Saved selections retain th
 
 Each layout supplies `Id`, `Name`, `Folder`, `Condition`, `Discipline`, `Circuit`, `MaximumOpponents` and `Session`. Its destination is `tracks/usa/<Folder>/route_0`; `Folder` must begin `d2ve_`, followed by lowercase letters, digits or underscores. Every folder must be unique across all external packs. The prepared database must register that exact folder. Country is currently `usa` and route is `route_0`.
 
+Optional `RaceStart` defaults to `grid`. Use `staggered` for a point-to-point Rally or Trailblazer layout with `desktop-race` support and authored individual starts. Supply `ai_track.xml`, `dev_ai_track.xml` and `ai_vehicle_track.xml` in the route. Its `RaceSession` must contain exactly four replacements for its own route: `grids.pssg`, `progress_track.xml`, `ai_track.xml` and `dev_ai_track.xml`, each backed by an inventoried file under `payload/session/<layout-id>/race/`. These replacements apply only in Race; Direct practice uses the normal route files. The launcher labels this mode **Rally (staggered)**.
+
+A staggered layout can additionally offer **Grid race** by supplying `GridMaximumOpponents` (1–7) and `GridRaceSession`. The latter contains the same four route targets, with separate inventoried files under `payload/session/<layout-id>/grid-race/`. Grid race starts everyone together and uses this separate placement, timing and guidance. `MaximumOpponents` remains the Rally limit. Existing saved races retain the default format; Direct practice retains its original route files.
+
 Disciplines are `Rally`, `Rallycross`, `Landrush`, `Trailblazer`, `Head-to-head` or `Point-to-point`. This label does not create native rules or AI paths. Point-to-point layouts use one complete run. A Race-capable pack must provide a working starting grid and AI route, with 1–7 opponents declared per layout. A Practice-only layout may declare zero opponents. LAN and career are outside this format.
 
 Payload files for a layout live under `payload/tracks/usa/<Folder>/`. At minimum its `route_0` contains `track.jpk`, `routesplit.pssg`, `track.vis`, `grids.pssg` and `progress_track.xml`. Include every other resource the prepared track needs; these five files alone do not establish playability. `route_0.clm` is optional when the track does not use a baked shadow map.
@@ -56,11 +60,13 @@ Each `Session` entry pairs a game `Target` with a prepared `File` under `payload
 - `language/language_eng.lng`, `language/language_fre.lng`, `language/language_ger.lng`, `language/language_ita.lng`, `language/language_jpn.lng`, `language/language_pol.lng`, `language/language_rus.lng`, `language/language_spa.lng`, `language/language_use.lng`
 - `effects/pfx_kickup_data_set.xml`, `effects/pfx_pssg_dataset.xml`
 - `tracks/light_definitions.xml`, `tracks/waterdefs.xml`, `tracks/ornament_system_settings.xml`
-- `dx11/shaderpack/shaderpack.pssg`
+- `dx11/shaderpack/shaderpack.pssg`, `dx11/shaderpack/postprocess.pssg`, `postprocess/effects.xml`
 
 All other game destinations are blocked. Shared files are accepted only when their original hashes match. Existing files in an external track's destination are never overwritten. Two packs claiming the same folder are both blocked.
 
 Bounds: 256 folders per content kind, 32 layouts per pack, 4,096 payload files, 512 dependencies, 768 MiB per payload file, 64 MiB per shared replacement and 4 GiB total payload. Manifests are limited to 2 MiB. Paths must be relative, use `/`, and cannot contain traversal, device names, links or alternate data streams. Only recognised game-data extensions are accepted; executables and scripts are rejected.
+
+The prepared `pikes-peak-lab` pack retains its existing identity and has larger scenery limits: 1.5 GiB per payload file and 12 GiB total. Its four supported layouts are desktop-only; the launcher supports their authored practice, staggered and grid starts. The pack is installed separately from the DiRT2VR installer. Its collision archive must match a supported Pikes build. Uneven crowd lighting remains a known issue.
 
 ## Car manifest, schema 1
 

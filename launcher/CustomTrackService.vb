@@ -9,6 +9,7 @@ Public Class CustomTrackSettings
     Public Property BuildLayoutIds As String()
     Public Property HighQualityAssets As Boolean
     Public Property LaunchMode As String = "practice"
+    Public Property RaceStart As String = "auto"
     Public Property CarCode As String = "sti"
     Public Property CarGrade As String = "rookie"
     Public Property Opponents As Integer = 3
@@ -17,11 +18,12 @@ Public Class CustomTrackSettings
     Public Property RaceDifficulty As Integer = -1
     Public Property PostProcessTest As String
     Public Sub ApplyTo(settings As VrSettings)
-        settings.RaceStart = "grid" ' Custom packs have no staggered-placement capability yet.
         Dim pack = TrackPacks.ForLayout(LayoutId)
-        Dim gridOpponents = Math.Min(Opponents, Math.Max(1, pack.MaximumOpponents(LayoutId)))
+        DirectRaceStart.Validate(RaceStart)
+        settings.RaceStart = If(RaceStart = "auto", If(pack.SupportsStaggered(LayoutId), "staggered", "grid"), RaceStart)
+        Dim gridOpponents = Math.Min(Opponents, Math.Max(1, pack.MaximumOpponents(LayoutId, settings.RaceStart)))
         Dim sessionLaps = If(Not pack.GetLayout(LayoutId).Circuit OrElse ((pack.Id = "nordschleife" OrElse pack.Id = "misty-loch") AndAlso LaunchMode = "practice"), 1, Laps)
-        pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), sessionLaps)
+        pack.RequireMode(LayoutId, False, LaunchMode, CarCode, If(LaunchMode = "race", gridOpponents, 0), sessionLaps, settings.RaceStart)
         RaceCatalog.Current.Car(CarCode)
         If Opponents < 1 OrElse Opponents > 7 OrElse Not {"same", "mixed", "class"}.Contains(OpponentCars) Then Throw New IOException("Choose valid custom-track race opponents.")
         CarGrades.Validate(CarGrade)
@@ -77,7 +79,7 @@ Public Class CustomTrackPreferences
 End Class
 Public Module CustomTrackService
     Public Function RecoveryPending(context As InstallContext) As Boolean
-        Return ExternalSession.Pending(context.GameRoot) OrElse File.Exists(IO.Path.Combine(context.GameRoot, CustomCars.CarInstallation.Journal)) OrElse New BloomTransaction(context).Pending OrElse New FilterTransaction(context).Pending OrElse New RoadSheenTransaction(context).Pending OrElse New ButtermilkPostProcess(context).Pending OrElse File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
+        Return New PikesCollisionTransaction(context).Pending OrElse ExternalSession.Pending(context.GameRoot) OrElse File.Exists(IO.Path.Combine(context.GameRoot, CustomCars.CarInstallation.Journal)) OrElse New DepthOfFieldTransaction(context).Pending OrElse New BloomTransaction(context).Pending OrElse New FilterTransaction(context).Pending OrElse New RoadSheenTransaction(context).Pending OrElse New ButtermilkPostProcess(context).Pending OrElse File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-session/pending.json")) OrElse
             File.Exists(IO.Path.Combine(context.ModRoot, "custom-track-install/pending.json"))
     End Function
     Public Sub RequireLauncher(receipt As PackReceipt)

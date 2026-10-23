@@ -1,4 +1,5 @@
 #include "common.h"
+#include "pikes_scope.h"
 #include <bcrypt.h>
 #include <array>
 #include <cstdarg>
@@ -75,10 +76,12 @@ bool SupportedHost() {
         for (unsigned i=0; i<32; ++i) sprintf_s(hex+i*2, 3, "%02X", digest[i]);
         // Exact one-bit PE-header variant; no general normalization or bypass.
         const bool laa = std::string(hex) == "274A798EF4DC609C24690434616E42FFC6D381EB90982BFFA326DC336C58F6B4";
-        const bool match = ok && !file.bad() && (laa || std::string(hex) == "49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48");
+        const bool pikes = std::string(hex) == "D8E69AF5BF50B06A770A0724BF3B9E1540DCA22B2FB71ABCB695552C5967A13D" ||
+            std::string(hex) == "9BC4DF74BFF66AC7244BC433580ADC7ED28DDCCEEF145BF87F335E8C00E8A39D";
+        const bool match = ok && !file.bad() && (laa || std::string(hex) == "49B1E00EA1D4BD02E633CEED63390B5CAE07601333F673C4EFD8D2F0EB54FE48" || (pikes && PikesScope()));
         Log("host_sha256=%s supported=%d; development prototype, headset acceptance pending", hex, match);
         SYSTEM_INFO info{}; GetSystemInfo(&info);
-        Log("host address space: laa=%d limit=%llu",laa,
+        Log("host address space: laa=%d limit=%llu",laa || (pikes && std::string(hex) == "9BC4DF74BFF66AC7244BC433580ADC7ED28DDCCEEF145BF87F335E8C00E8A39D"),
             uint64_t(reinterpret_cast<uintptr_t>(info.lpMaximumApplicationAddress))+1);
         return match;
     }();

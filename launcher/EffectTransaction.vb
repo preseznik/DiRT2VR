@@ -3,7 +3,7 @@ Imports System.Xml
 Imports DiRT2VR.CustomTracks
 Imports EgoEngineLibrary.Xml
 
-' Shared journal for the ordered filter and bloom effect layers.
+' Shared journal for the ordered filter, bloom and depth-of-field effect layers.
 Public Class EffectTransaction
     Private Const MaxFiles As Integer = 2048
     Private ReadOnly context As InstallContext
@@ -22,8 +22,8 @@ Public Class EffectTransaction
         Public Property Entries As Entry()
     End Class
     Public Sub New(value As InstallContext, layer As String)
-        If layer <> "bloom" AndAlso layer <> "filter" Then Throw New ArgumentException("Unknown effect layer.")
-        label = If(layer = "bloom", "Bloom", "Filter")
+        If Not {"bloom", "filter", "dof"}.Contains(layer) Then Throw New ArgumentException("Unknown effect layer.")
+        label = If(layer = "dof", "Depth of field", If(layer = "bloom", "Bloom", "Filter"))
         context = value
         folder = SafeFiles.Inside(context.ModRoot, layer & "-session")
         journalPath = SafeFiles.Inside(folder, "pending.json")
@@ -33,14 +33,15 @@ Public Class EffectTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Private Shared Function Allowed(relative As String) As Boolean
+    Private Function Allowed(relative As String) As Boolean
         If String.IsNullOrWhiteSpace(relative) OrElse relative.Contains("\"c) Then Return False
         Dim parts = relative.Split("/"c)
         If parts.Any(Function(p) p = "" OrElse p = "." OrElse p = ".." OrElse p.IndexOfAny(IO.Path.GetInvalidFileNameChars()) >= 0) Then Return False
+        If label = "Depth of field" AndAlso parts.Length = 3 AndAlso parts(0) = "cars" AndAlso parts(2) = "cameras.xml" AndAlso Text.RegularExpressions.Regex.IsMatch(parts(1), "^[a-z0-9]{3}$") Then Return True
         Return relative = "frontend/persistentdatarender.xml" OrElse relative = "postprocess/effects.xml" OrElse
             (parts.Length >= 2 AndAlso parts.Length <= 10 AndAlso parts(0) = "tracks" AndAlso {"effects.xml", "night_effects.xml"}.Contains(parts.Last()))
     End Function
-    Public Function Targets() As String()
+    Public Overridable Function Targets() As String()
         Dim result As New List(Of String) From {"frontend/persistentdatarender.xml", "postprocess/effects.xml"}
         Dim folders As New Queue(Of String)
         folders.Enqueue("tracks")

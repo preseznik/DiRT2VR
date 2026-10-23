@@ -90,7 +90,7 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False, Optional recordReplay As Boolean = True, Optional carGrade As String = "rookie", Optional preparedConfig As Byte() = Nothing)
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False, Optional recordReplay As Boolean = True, Optional carGrade As String = "rookie", Optional preparedConfig As Byte() = Nothing, Optional raceStart As String = "auto")
         context.RequireClosed()
         If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
@@ -100,7 +100,7 @@ Public Class AssetTransaction
         If trackId = PrototypeTrack.Id AndAlso Not configOnly Then Throw New IOException("The prototype track supports desktop preparation only.")
         If trackId IsNot Nothing Then RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
         CarGrades.Validate(carGrade)
-        Dim configBytes = If(trackId Is Nothing OrElse replay IsNot Nothing, Nothing, If(preparedConfig, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context, carGrade)))
+        Dim configBytes = If(trackId Is Nothing OrElse replay IsNot Nothing, Nothing, If(preparedConfig, RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context, carGrade, raceStart)))
         If configBytes IsNot Nothing AndAlso replay Is Nothing AndAlso Not recordReplay Then
             Dim config = System.Xml.Linq.XDocument.Parse(Text.Encoding.UTF8.GetString(configBytes))
             config.Root.SetAttributeValue("skipreplays", "true")

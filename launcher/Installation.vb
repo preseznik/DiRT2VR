@@ -43,7 +43,9 @@ Public Class Installation
     End Sub
     Public Sub RemoveProxy()
         context.RequireClosed()
+        Call (New PikesCollisionTransaction(context)).Recover()
         Call (New LargeAddressAware(context)).Recover()
+        Call (New DepthOfFieldTransaction(context)).Recover()
         Call (New BloomTransaction(context)).Recover()
         Call (New FilterTransaction(context)).Recover()
         Call (New RoadSheenTransaction(context)).Recover()
@@ -66,7 +68,8 @@ Public Class Installation
 End Class
 
 Public Module Worker
-    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1, Optional carGrade As String = "rookie")
+    Public Sub Run(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1, Optional carGrade As String = "rookie", Optional raceStart As String = "auto")
+        DirectRaceStart.Validate(raceStart)
         postProcessTest = If(postProcessTest, If(operation = "prepare" OrElse operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
         ButtermilkPostProcess.Validate(postProcessTest, trackId)
         context.ValidateGame() : context.RequireClosed()
@@ -90,7 +93,7 @@ Public Module Worker
                 Dim preparedConfig As Byte() = Nothing
                 If trackId IsNot Nothing AndAlso CarGrades.IsStock(carCode) Then
                     If replayId Is Nothing Then
-                        preparedConfig = RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context, carGrade)
+                        preparedConfig = RaceCatalog.Current.Config(trackId, carCode, opponents, opponentCars, context, carGrade, raceStart)
                     Else
                         Dim savedReplay = ReplaySession.ReadPrepared(context, replayId)
                         carGrade = savedReplay.CarGrade
@@ -105,7 +108,7 @@ Public Module Worker
                 If external IsNot Nothing OrElse externalCar IsNot Nothing Then
                     Run(context, "recover")
                     If external IsNot Nothing Then
-                        CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
+                        CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1, raceStart)
                         If Not external.Manifest.Replay AndAlso (replayId IsNot Nothing OrElse ReplayPreferences.Load(context).RecordFullReplay) Then Throw New IOException("This external pack does not support Full Replay. Turn Record full replays off before launching.")
                         external.Verify() : external.RequireDependencies(context.GameRoot)
                     End If
@@ -117,12 +120,12 @@ Public Module Worker
                     ElseIf CustomCars.CarPack.IsCustom(carCode) Then
                         prepareCar = CustomCars.CarSession.Plan(context.GameRoot, trackId)
                     End If
-                    CustomTracks.ExternalSession.PrepareContent(context.GameRoot, external, trackId, externalCar)
+                    CustomTracks.ExternalSession.PrepareContent(context.GameRoot, external, trackId, externalCar, race:=opponents > 0, raceStart:=raceStart)
                 ElseIf CustomTracks.ExternalSession.Pending(context.GameRoot) Then
                     Throw New IOException("Restore original files before launching; external content recovery is pending.")
                 End If
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
-                    CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1)
+                    CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1, raceStart)
                     CustomTracks.SessionFiles.Recover(context.GameRoot)
                     RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
                     Dim receipt = CustomTracks.TrackPacks.ForLayout(trackId).Read(context.GameRoot, False)
@@ -137,7 +140,7 @@ Public Module Worker
                 End If
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode), carGrade:=carGrade, preparedConfig:=preparedConfig)
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode), carGrade:=carGrade, preparedConfig:=preparedConfig, raceStart:=raceStart)
                 If prepareCar IsNot Nothing Then
                     prepareCar()
                 ElseIf CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
@@ -151,6 +154,10 @@ Public Module Worker
                 Call (New LanTransaction(context)).Prepare()
             Case "prepare-road-sheen"
                 Call (New RoadSheenTransaction(context)).Prepare(trackId, roadSheen)
+            Case "prepare-pikes"
+                Call (New PikesCollisionTransaction(context)).Prepare(trackId)
+            Case "prepare-dof"
+                Call (New DepthOfFieldTransaction(context)).PrepareForCar(trackId, carCode, VrSettings.Load(context).TrackDepthOfField)
             Case "prepare-bloom"
                 Call (New BloomTransaction(context)).Prepare()
             Case "prepare-filter"
@@ -165,7 +172,9 @@ Public Module Worker
                 If replayId IsNot Nothing Then ReplaySession.ReadPrepared(context, replayId, verifyContent:=False)
                 Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies", savedReplay:=replayId IsNot Nothing, recordReplay:=ReplaySession.RecordingEnabled(context))
             Case "recover"
+                Call (New PikesCollisionTransaction(context)).Recover()
                 Call (New LargeAddressAware(context)).Recover()
+                Call (New DepthOfFieldTransaction(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New RoadSheenTransaction(context)).Recover()
@@ -181,6 +190,7 @@ Public Module Worker
             Case "install-custom"
                 If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before installing a track; external content recovery is pending.")
                 CustomCars.CarInstallation.Recover(context.GameRoot)
+                Call (New DepthOfFieldTransaction(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New RoadSheenTransaction(context)).Recover()
@@ -190,6 +200,7 @@ Public Module Worker
             Case "remove-custom"
                 If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before removing a track; external content recovery is pending.")
                 CustomCars.CarInstallation.Recover(context.GameRoot)
+                Call (New DepthOfFieldTransaction(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New RoadSheenTransaction(context)).Recover()
@@ -197,6 +208,7 @@ Public Module Worker
                 CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
                 CustomCars.CarInstallation.Recover(context.GameRoot)
+                Call (New DepthOfFieldTransaction(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
                 Call (New RoadSheenTransaction(context)).Recover()
@@ -206,7 +218,7 @@ Public Module Worker
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
     End Sub
-    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1, Optional carGrade As String = "rookie")
+    Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1, Optional carGrade As String = "rookie", Optional raceStart As String = "auto")
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In {"--worker", operation, "--game", context.GameRoot, "--owner-base", IO.Path.GetDirectoryName(context.UserRoot)}
             start.ArgumentList.Add(arg)
@@ -232,7 +244,16 @@ Public Module Worker
             FilterLaunch.SnapshotPath(context, filterSnapshot)
             start.ArgumentList.Add("--filter-snapshot") : start.ArgumentList.Add(filterSnapshot)
         End If
+        If operation = "prepare-dof" OrElse operation = "prepare-pikes" Then
+            If Not DepthOfFieldTransaction.Supports(trackId) Then Throw New ArgumentException("Invalid Pikes track.")
+            start.ArgumentList.Add("--track") : start.ArgumentList.Add(trackId)
+            If operation = "prepare-dof" Then
+                start.ArgumentList.Add("--car") : start.ArgumentList.Add(carCode)
+            End If
+        End If
         If operation = "prepare" OrElse operation = "prepare-desktop" Then
+            DirectRaceStart.Validate(raceStart)
+            start.ArgumentList.Add("--race-start") : start.ArgumentList.Add(raceStart)
             postProcessTest = If(postProcessTest, If(operation = "prepare" OrElse operation = "prepare-desktop", ButtermilkPostProcess.DefaultProfile(trackId), "normal"))
             ButtermilkPostProcess.Validate(postProcessTest, trackId)
             start.ArgumentList.Add("--postprocess-test") : start.ArgumentList.Add(postProcessTest)
