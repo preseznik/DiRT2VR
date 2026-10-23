@@ -93,12 +93,14 @@ Public Module CustomTrackService
             Case "mizu-mountain" : Return Mizu.MizuConversion.GetProfile()
             Case "misty-loch" : Return Misty.MistyConversion.GetProfile()
             Case "spa-francorchamps" : Return Spa.SpaConversion.GetProfile()
+            Case "pikes-peak" : Return Pikes.PikesConversion.GetProfile()
             Case Else : Throw New IOException("Unknown custom-track pack.")
         End Select
     End Function
     Public Function SourceTrackFolder(packId As String) As String
         TrackPacks.Get(packId)
         If packId = "spa-francorchamps" Then Return "download/spa_francorchamps"
+        If packId = "pikes-peak" Then Return "tracks/locations/usa/pikes_peak"
         If packId = "misty-loch" Then Return "content/tracks/rt_misty_loch"
         If packId = "mizu-mountain" Then Return "tracks/locations/p2p/okutama"
         Return If(packId = "nordschleife", "content/tracks/ks_nordschleife", "tracks/locations/usa/" & If(packId = "smelter", "smelter", "aspen"))
@@ -113,7 +115,8 @@ Public Module CustomTrackService
         End Try
         For Each library In libraries
             Try
-                Dim manifest = IO.Path.Combine(library, "steamapps", If(TrackPacks.Get(packId).SourceGame = "assettocorsa", "appmanifest_244210.acf", If(TrackPacks.Get(packId).SourceGame = "grid2", "appmanifest_44350.acf", "appmanifest_321040.acf")))
+                Dim appId = If(TrackPacks.Get(packId).SourceGame = "dirtrally", "310560", If(TrackPacks.Get(packId).SourceGame = "assettocorsa", "244210", If(TrackPacks.Get(packId).SourceGame = "grid2", "44350", "321040")))
+                Dim manifest = IO.Path.Combine(library, "steamapps", "appmanifest_" & appId & ".acf")
                 If Not File.Exists(manifest) Then Continue For
                 Dim match = Regex.Match(File.ReadAllText(manifest), """installdir""\s+""([^""]+)""")
                 If Not match.Success Then Continue For
@@ -167,8 +170,10 @@ Public Module CustomTrackService
         Dim id = Guid.NewGuid().ToString("N"), stage = Staging(context, id)
         Directory.CreateDirectory(stage)
         Try
-        If New DriveInfo(IO.Path.GetPathRoot(stage)).AvailableFreeSpace < offer.StagingBytes Then Throw New IOException("Not enough free space for conversion. Free at least " & Math.Ceiling(offer.StagingBytes / 1073741824.0).ToString() & " GB on " & IO.Path.GetPathRoot(stage))
-        If New DriveInfo(IO.Path.GetPathRoot(context.GameRoot)).AvailableFreeSpace < offer.InstalledBytes * 2 Then Throw New IOException("Not enough free space beside DiRT 2 for the track and its rollback copy.")
+        Dim layoutFraction = If(pack.Id = "pikes-peak", selectedLayouts.Length / CDbl(pack.Layouts.Length), 1.0)
+        Dim stagingBytes = CLng(offer.StagingBytes * layoutFraction), installedBytes = CLng(offer.InstalledBytes * layoutFraction)
+        If New DriveInfo(IO.Path.GetPathRoot(stage)).AvailableFreeSpace < stagingBytes Then Throw New IOException("Not enough free space for conversion. Free at least " & Math.Ceiling(stagingBytes / 1073741824.0).ToString() & " GB on " & IO.Path.GetPathRoot(stage))
+        If New DriveInfo(IO.Path.GetPathRoot(context.GameRoot)).AvailableFreeSpace < installedBytes * 2 Then Throw New IOException("Not enough free space beside DiRT 2 for the track and its rollback copy.")
         Dim sources = TrackPack.VerifySources(offer, context.GameRoot, source, progress, cancel)
         cancel.ThrowIfCancellationRequested()
         context.RequireClosed()
@@ -176,6 +181,7 @@ Public Module CustomTrackService
             .UseShellExecute = False, .CreateNoWindow = True, .WorkingDirectory = stage, .RedirectStandardOutput = True, .RedirectStandardError = True}
         Dim command = If(pack.Id = "misty-loch", "--convert-misty", If(pack.Id = "mizu-mountain", "--convert-mizu", If(pack.Id = "nordschleife", "--convert-nordschleife", If(pack.Id = AspenPack.Id, "--convert-aspen", "--convert-smelter"))))
         If pack.Id = "spa-francorchamps" Then command = "--convert-spa"
+        If pack.Id = "pikes-peak" Then command = "--convert-pikes"
         For Each argument In {command, IO.Path.GetFullPath(source), context.GameRoot, IO.Path.Combine(stage, "conversion")}
             start.ArgumentList.Add(argument)
         Next

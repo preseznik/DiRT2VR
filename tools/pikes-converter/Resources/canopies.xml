@@ -1,0 +1,123 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<contracts>
+  <SHADERGROUP id="pikes_canopy_facing.fx" parameterCount="13" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0">
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TShadowMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TTreeSkyLightMapWS" type="texture" />
+    <SHADERINPUTDEFINITION name="TSourceSunMap" type="texture" />
+    <SHADERINPUTDEFINITION name="SkyMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="SunMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TreeAmbientColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="TreeDiffuseScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeShadowing" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeLightWrapping" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeShapeScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeColourBalance" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE id="pikes_leaf_material_0" shaderGroup="#pikes_canopy_facing.fx" parameterCount="13" parameterSavedCount="12" renderSortPriority="0">
+    <SHADERINPUT parameterID="0" type="texture" texture="tracksplit.pssg#nord_tex_10A18C3224DEBF94C357">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="texture" texture="tracksplit.pssg#pikes_leaf_flat_normal">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="texture" texture="tracksplit.pssg#pikes_canopy_sky_F2D7E85B3BB9F9CD4C2D">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="texture" texture="tracksplit.pssg#pikes_source_sun_690712E0532659E7D970">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="5" type="constant" format="float4">
+1.023017903e-004 1.023017903e-004 6.592480540e-001 3.019282222e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="constant" format="float4">
+2.749543346e-004 1.040098286e-004 9.397853017e-001 2.049775608e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="7" type="constant" format="float3">
+6.525490284e-001 5.760784149e-001 5.199999809e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="8" type="constant" format="float">
+1.700000048e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="9" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="10" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP id="pikes_canopy_sheet.fx" parameterCount="12" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0">
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TShadowMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TTreeSkyLightMapWS" type="texture" />
+    <SHADERINPUTDEFINITION name="TSourceSunMap" type="texture" />
+    <SHADERINPUTDEFINITION name="SkyMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="SunMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TreeAmbientColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="TreeDiffuseScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeShadowing" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeLightWrapping" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeColourBalance" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE id="pikes_leaf_material_5" shaderGroup="#pikes_canopy_sheet.fx" parameterCount="12" parameterSavedCount="11" renderSortPriority="0">
+    <SHADERINPUT parameterID="0" type="texture" texture="tracksplit.pssg#nord_tex_41373EABCC22B014B753">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="texture" texture="tracksplit.pssg#pikes_leaf_nm_F3FD9D4EB5ABC691FBC7">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="texture" texture="tracksplit.pssg#pikes_canopy_sky_F2D7E85B3BB9F9CD4C2D">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="texture" texture="tracksplit.pssg#pikes_source_sun_690712E0532659E7D970">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="5" type="constant" format="float4">
+1.023017903e-004 1.023017903e-004 6.592480540e-001 3.019282222e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="constant" format="float4">
+2.749543346e-004 1.040098286e-004 9.397853017e-001 2.049775608e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="7" type="constant" format="float3">
+8.352627754e-001 7.373803854e-001 6.656000018e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="8" type="constant" format="float">
+1.059999943e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="9" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="10" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP id="pikes_canopy_rigid.fx" parameterCount="13" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0">
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TShadowMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TTreeSkyLightMapWS" type="texture" />
+    <SHADERINPUTDEFINITION name="TSourceSunMap" type="texture" />
+    <SHADERINPUTDEFINITION name="SkyMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="SunMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TreeAmbientColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="TreeDiffuseScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeShadowing" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeLightWrapping" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeShapeScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeColourBalance" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE id="nord_material_214" shaderGroup="#pikes_canopy_rigid.fx" parameterCount="13" parameterSavedCount="12" renderSortPriority="0">
+    <SHADERINPUT parameterID="0" type="texture" texture="tracksplit.pssg#nord_tex_7F556D361CAE28F53F8A">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="texture" texture="tracksplit.pssg#pikes_leaf_flat_normal">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="texture" texture="tracksplit.pssg#pikes_canopy_sky_F2D7E85B3BB9F9CD4C2D">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="texture" texture="tracksplit.pssg#pikes_source_sun_690712E0532659E7D970">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="5" type="constant" format="float4">
+1.023017903e-004 1.023017903e-004 6.592480540e-001 3.019282222e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="constant" format="float4">
+2.749543346e-004 1.040098286e-004 9.397853017e-001 2.049775608e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="7" type="constant" format="float3">
+6.525490284e-001 5.760784149e-001 5.199999809e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="8" type="constant" format="float">
+1.700000048e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="9" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="10" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+</contracts>

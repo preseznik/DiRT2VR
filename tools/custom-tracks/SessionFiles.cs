@@ -11,7 +11,7 @@ public static class SessionFiles
     sealed record Pending(int Schema, string Id, Entry[] Files);
     static readonly string[] CarTargets = ["database/database.bin", "cars/class_mappings.xml", "audio/carsetup.bin", "audio/carsetup_ai.bin", "audio/dictionaries.bin"];
     public static void Prepare(string game, string? layoutId, Func<byte[], byte[]>? nordschleifeProgress = null,
-        IReadOnlyList<SessionReplacement>? carFiles = null, Func<byte[], byte[]>? carDatabase = null)
+        IReadOnlyList<SessionReplacement>? carFiles = null, Func<byte[], byte[]>? carDatabase = null, string? pikesRaceStart = null)
     {
         SafeFiles.RequireClosed(); Recover(game);
         var entries = new List<Entry>(); var replacements = new List<byte[]>();
@@ -25,6 +25,21 @@ public static class SessionFiles
             entries.AddRange(session.Files.Select(f => new Entry(f.Path, f.OriginalSha256,
                 receipt.Files.Single(p => p.Path == f.InstalledPath).Sha256)));
             replacements.AddRange(session.Files.Select(f => File.ReadAllBytes(SafeFiles.Inside(game, f.InstalledPath))));
+            if (pikesRaceStart is not null)
+            {
+                if (pack != TrackPacks.Pikes || pikesRaceStart is not ("grid" or "staggered")) throw new IOException("Invalid Pikes Peak race start.");
+                string variant = pikesRaceStart == "grid" ? "grid-race" : "race";
+                foreach (string name in PikesRaceFiles)
+                {
+                    string path = $"tracks/usa/{pack.GetLayout(layoutId).Folder}/route_0/{name}";
+                    string owned = $"{pack.Support}/{layoutId}/{variant}/{name}";
+                    var original = receipt.Files.Single(f => f.Path == path);
+                    var race = receipt.Files.Single(f => f.Path == owned);
+                    byte[] bytes = File.ReadAllBytes(SafeFiles.Inside(game, owned));
+                    if (Digest(bytes) != race.Sha256) throw new IOException("Pikes Peak race file changed during preparation.");
+                    entries.Add(new(path, original.Sha256, race.Sha256)); replacements.Add(bytes);
+                }
+            }
             if (nordschleifeProgress is not null)
             {
                 if (pack != TrackPacks.Nordschleife) throw new IOException("The circuit progress correction is only for Nordschleife.");
@@ -37,7 +52,7 @@ public static class SessionFiles
                 replacements.Add(corrected);
             }
         }
-        else if (nordschleifeProgress is not null) throw new IOException("A progress correction requires its installed track.");
+        else if (nordschleifeProgress is not null || pikesRaceStart is not null) throw new IOException("A route correction requires its installed track.");
         if (carFiles is not null)
         {
             if (carFiles.Count != CarTargets.Length || carFiles.Any(f => f is null) || carFiles.Select(f => f.Path).Distinct().Count() != CarTargets.Length ||
@@ -86,8 +101,10 @@ public static class SessionFiles
     }
     static string Digest(byte[] bytes) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
     static string ProgressTarget(Layout layout) => $"tracks/usa/{layout.Folder}/route_0/progress_track.xml";
+    public static readonly string[] PikesRaceFiles = ["grids.pssg", "progress_track.xml", "ai_track.xml", "dev_ai_track.xml"];
     static bool AllowedTarget(string path) => TrackPacks.SessionTargets.Contains(path) || CarTargets.Contains(path) ||
-        TrackPacks.Nordschleife.Layouts.Any(l => path == ProgressTarget(l));
+        TrackPacks.Nordschleife.Layouts.Any(l => path == ProgressTarget(l)) ||
+        TrackPacks.Pikes.Layouts.Any(l => PikesRaceFiles.Any(n => path == $"tracks/usa/{l.Folder}/route_0/{n}"));
     public static void Recover(string game)
     {
         SafeFiles.RequireClosed();

@@ -1,0 +1,258 @@
+<?xml version='1.0' encoding='utf-8'?>
+<Effect name="PikesFocusProbe" id="60" chain="Type3">
+  <ParameterGroup name="ToneMap">
+    <Param name="targetLuminance">0.65</Param>
+    <Param name="minLuminance">
+				0.231200
+			</Param>
+    <Param name="maxLuminance">
+				0.971100
+			</Param>
+    <Param name="adaptStrength">
+				1.500000
+			</Param>
+    <Param name="adaptDamping">
+				2.300000
+			</Param>
+  </ParameterGroup>
+  <ParameterGroup name="BloomFromDsX4">
+    <Param name="lowerThreshold">
+				0.156100
+			</Param>
+    <Param name="upperThreshold">
+				1.040500
+			</Param>
+    <Param name="upperThresholdLevel">
+				0.283200
+			</Param>
+    <Param name="intensity">0.25</Param>
+    <Param name="mixMedium">
+				0.161800
+			</Param>
+    <Param name="mixLarge">
+				1.595400
+			</Param>
+    <Param name="mixHuge">
+				1.121400
+			</Param>
+    <Param name="lagFactor">
+				0.500000
+			</Param>
+    <Param name="mixStreak">
+				0.066500
+			</Param>
+    <Param name="mediumBloomThreshold">
+				0.924900
+			</Param>
+    <Param name="hugeBloomThreshold">
+				1.445100
+			</Param>
+    <Param name="streakThreshold">
+				4.219700
+			</Param>
+    <Param name="streakChromaticity">
+				0.502900
+			</Param>
+  </ParameterGroup>
+  <ParameterGroup name="MotionBlur">
+    <Param name="partitionSwitch">
+				1.000000
+			</Param>
+    <Param name="blurLength">
+				9.988400
+			</Param>
+  </ParameterGroup>
+  <ParameterGroup name="ColourBalance">
+    <Param name="contrast">1.08</Param>
+    <Param name="brighness">0.0</Param>
+    <Param name="maxbrightness">
+				1.000000
+			</Param>
+    <Param name="colour">1.0</Param>
+    <Param name="gamma">
+				1.000000
+			</Param>
+    <Param name="tintAmount">0.0</Param>
+    <Param name="tintColour">
+				222, 175, 144, 255
+			</Param>
+    <Param name="vignetteAmount">0.20</Param>
+    <Param name="vignetteShape">
+				1.000000
+			</Param>
+    <Param name="vignetteColourLinkAll">
+				true
+			</Param>
+    <Param name="vignetteColourLinkLR">
+				false
+			</Param>
+    <Param name="vignetteColourLinkTB">
+				false
+			</Param>
+    <Param name="vignetteColour">
+				22, 8, 0, 255
+			</Param>
+    <Param name="vignetteColourTR">
+				0, 0, 0, 255
+			</Param>
+    <Param name="vignetteColourBL">
+				0, 0, 0, 255
+			</Param>
+    <Param name="vignetteColourBR">
+				0, 0, 0, 255
+			</Param>
+    <Param name="vignetteScaleX">
+				0.000000
+			</Param>
+    <Param name="vignetteScaleY">
+				0.820800
+			</Param>
+    <Param name="vignetteOffsetX">
+				0.057800
+			</Param>
+    <Param name="vignetteOffsetY">
+				-0.034700
+			</Param>
+    <Param name="vignetteRotation">
+				0.000000
+			</Param>
+    <Param name="vignetteTransition">
+				1.000000
+			</Param>
+    <Param name="vignetteBlendMode">
+				0.000000
+			</Param>
+    <Param name="bloomPrevalence">
+				0.080900
+			</Param>
+    <Param name="lensDistortion">
+				0.000000
+			</Param>
+  </ParameterGroup>
+  <ParameterGroup name="LensFlares">
+    <Param name="multiplierAndThreshold_H0">
+				1.000000, 0.000000, 0.000000
+			</Param>
+    <Param name="centerAndOffset_H0">
+				0.500000, 0.500000, -1.670000
+			</Param>
+    <Param name="colour_H0">
+				255, 255, 179, 255
+			</Param>
+    <Param name="multiplierAndThreshold_H1">
+				1.500000, 0.300000, 0.000000
+			</Param>
+    <Param name="centerAndOffset_H1">
+				0.500000, 0.500000, -5.000000
+			</Param>
+    <Param name="colour_H1">
+				102, 102, 255, 255
+			</Param>
+    <Param name="multiplierAndThreshold_H2">
+				1.200000, 0.500000, 0.000000
+			</Param>
+    <Param name="centerAndOffset_H2">
+				0.500000, 0.500000, 2.400000
+			</Param>
+    <Param name="colour_H2">
+				255, 43, 43, 255
+			</Param>
+    <Param name="multiplierAndThreshold_H3">
+				0.010000, 7.500000, 0.000000
+			</Param>
+    <Param name="centerAndOffset_H3">
+				0.500000, 0.500000, -0.500000
+			</Param>
+    <Param name="colour_H3">
+				255, 255, 255, 255
+			</Param>
+    <Param name="multiplierAndThreshold_L0">
+				0.670000, 0.000000, 0.000000
+			</Param>
+    <Param name="centerAndOffset_L0">
+				0.500000, 0.500000, -0.930000
+			</Param>
+    <Param name="colour_L0">
+				255, 0, 0, 255
+			</Param>
+    <Param name="multiplierAndThreshold_L1">
+				0.670000, 0.000000, 0.000000
+			</Param>
+    <Param name="centerAndOffset_L1">
+				0.495000, 0.500000, -0.950000
+			</Param>
+    <Param name="colour_L1">
+				0, 255, 0, 255
+			</Param>
+    <Param name="multiplierAndThreshold_L2">
+				0.670000, 0.000000, 0.000000
+			</Param>
+    <Param name="centerAndOffset_L2">
+				0.500000, 0.497000, -0.970000
+			</Param>
+    <Param name="colour_L2">
+				0, 0, 255, 255
+			</Param>
+    <Param name="multiplierAndThreshold_L3">
+				1.000000, 0.000000, 0.000000
+			</Param>
+    <Param name="centerAndOffset_L3">
+				0.500000, 0.500000, 1.000000
+			</Param>
+    <Param name="colour_L3">
+				0, 0, 0, 255
+			</Param>
+    <Param name="threshold">
+				20.000000
+			</Param>
+    <Param name="multiplier">
+				0.500000
+			</Param>
+  </ParameterGroup>
+  <ParameterGroup name="Twitch">
+    <Param name="direction">
+				147.745697
+			</Param>
+    <Param name="spread">
+				360.000000
+			</Param>
+    <Param name="slideAmount">
+				0.202300
+			</Param>
+    <Param name="rgbSplitSaturation">
+				0.971100
+			</Param>
+    <Param name="blurAmount">
+				54.913300
+			</Param>
+    <Param name="interval">
+				0.161800
+			</Param>
+    <Param name="intervalVariance">
+				0.502900
+			</Param>
+    <Param name="easeIn">
+				0.101200
+			</Param>
+    <Param name="rgbSplitSpread">
+				0.491300
+			</Param>
+    <Param name="amountVariance">
+				0.502900
+			</Param>
+    <Param name="mirror">
+				true
+			</Param>
+    <Param name="forceOn">
+				false
+			</Param>
+  </ParameterGroup>
+  <ParameterGroup name="Dof">
+    <Param name="useSystemFocusDistance">false</Param>
+    <Param name="useSystemFocusFalloff">false</Param>
+    <Param name="focusDistance">400</Param>
+    <Param name="focusFalloff">1600</Param>
+    <Param name="inFocusRange">798</Param>
+    <Param name="blurAmount">2</Param>
+  </ParameterGroup>
+</Effect>

@@ -313,7 +313,7 @@ Public Class Session
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
         DirectRaceDifficulty.Configure(start, settings)
         DirectRaceStart.Configure(start, settings)
-        If settings.LaunchMode = "race" AndAlso DirectRaceStart.Resolve(settings) = "grid" AndAlso settings.TrackId.StartsWith("external-track-pikes-peak-lab/", StringComparison.Ordinal) Then start.Environment("DIRT2VR_PIKES_GRID_RACE") = "1"
+        If settings.LaunchMode = "race" AndAlso DirectRaceStart.Resolve(settings) = "grid" AndAlso DepthOfFieldTransaction.Supports(settings.TrackId) Then start.Environment("DIRT2VR_PIKES_GRID_RACE") = "1"
         CarSetup.Configure(start, settings)
         CarGrades.Configure(start, settings)
         Dim returnToMenus = WaitForGame(start)

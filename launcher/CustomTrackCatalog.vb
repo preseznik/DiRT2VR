@@ -28,7 +28,8 @@ Public Module CustomTrackCatalog
         New CustomTrackPack("nordschleife", "Nordschleife", "Standard circuit · Desktop and VR · Daylight, overcast and evening", True, TrackPacks.Nordschleife.Layouts),
         New CustomTrackPack("mizu-mountain", "Mizu Mountain", "10.4 km point-to-point · Desktop and VR · Direct practice and Race", True, TrackPacks.Mizu.Layouts),
         New CustomTrackPack("misty-loch", "Misty Loch", "6.45 km circuit · Daylight, Evening and Morning Fog · Direct practice and Race · Desktop and VR", True, TrackPacks.Misty.Layouts),
-        New CustomTrackPack("spa-francorchamps", "Spa-Francorchamps", "7 km GP circuit · Direct practice and Race · Desktop and VR", True, TrackPacks.Spa.Layouts)}
+        New CustomTrackPack("spa-francorchamps", "Spa-Francorchamps", "7 km GP circuit · Direct practice and Race · Desktop and VR", True, TrackPacks.Spa.Layouts),
+        New CustomTrackPack("pikes-peak", "Pikes Peak", "19.5 km hill climb · Tarmac and gravel · Practice, Rally and Grid race · Desktop and VR", True, TrackPacks.Pikes.Layouts)}
     Public ReadOnly Property Packs As CustomTrackPack()
         Get
             Return builtIn.Concat(TrackPacks.External.Where(Function(p) p.Kind = "track").Select(Function(p)

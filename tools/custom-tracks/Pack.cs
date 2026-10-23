@@ -80,7 +80,13 @@ public static class TrackPacks
          new("misty-loch-morning-fog", "Full circuit · 6.45 km", "d2vr_misty_morning", "Morning Fog")], ["database/database.bin", "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"]);
     public static readonly TrackPack Spa = new("spa-francorchamps", "Spa-Francorchamps", "1.0.3", "0.17.95", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
         [new("spa-francorchamps", "GP circuit · 7 km", "d2vr_spa", "Daylight")], ["database/database.bin", "dx11/shaderpack/shaderpack.pssg"]);
-    public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty, Spa];
+    public static readonly TrackPack Pikes = new("pikes-peak", "Pikes Peak", "1.0.1", "0.17.144", ["desktop-solo", "vr-solo", "desktop-race", "vr-race"],
+        [new("pikes-peak-tarmac", "Tarmac · Daylight · full course", "d2vr_pikes_tarmac", "Daylight", "Rally", Circuit: false),
+         new("pikes-peak-gravel-day", "Gravel · Daylight · full course", "d2vr_pikes_gday", "Daylight", "Rally", Circuit: false),
+         new("pikes-peak-gravel-alt", "Gravel · Lower sun · full course", "d2vr_pikes_galt", "Lower sun", "Rally", Circuit: false),
+         new("pikes-peak-gravel-wet", "Gravel · Overcast · full course", "d2vr_pikes_gwet", "Overcast", "Rally", Circuit: false)],
+        ["database/database.bin", "dx11/shaderpack/shaderpack.pssg", "dx11/shaderpack/postprocess.pssg", "postprocess/effects.xml"]);
+    public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty, Spa, Pikes];
     static TrackPack[] external = [];
     public static TrackPack[] All => [..BuiltIn, ..external];
     public static ExternalPack[] External { get; private set; } = [];
@@ -115,9 +121,9 @@ public sealed class TrackPack
     public string[] RequiredTargets { get; }
     public string Support => External?.Support ?? "DiRT2VR/custom-tracks/" + Id;
     public string Receipt => External?.Receipt ?? Support + "/receipt.json";
-    public string SourceGame => External is not null ? "external" : Id switch { "nordschleife" or "misty-loch" => "assettocorsa", "mizu-mountain" or "spa-francorchamps" => "grid2", _ => "dirt3" };
-    public string SourceName => External is not null ? "External" : Id switch { "nordschleife" or "misty-loch" => "Assetto Corsa", "mizu-mountain" or "spa-francorchamps" => "GRID 2", _ => "DiRT 3 Complete Edition" };
-    public string[] SharedTargets => Id is "nordschleife" or "spa-francorchamps" ? [..AspenPack.SharedTargets, "dx11/shaderpack/shaderpack.pssg"] : Id == "misty-loch" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"] : Id == "smelter" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"] : AspenPack.SharedTargets;
+    public string SourceGame => External is not null ? "external" : Id switch { "nordschleife" or "misty-loch" => "assettocorsa", "mizu-mountain" or "spa-francorchamps" => "grid2", "pikes-peak" => "dirtrally", _ => "dirt3" };
+    public string SourceName => External is not null ? "External" : Id switch { "nordschleife" or "misty-loch" => "Assetto Corsa", "mizu-mountain" or "spa-francorchamps" => "GRID 2", "pikes-peak" => "DiRT Rally", _ => "DiRT 3 Complete Edition" };
+    public string[] SharedTargets => Id == "pikes-peak" ? [..AspenPack.SharedTargets, "dx11/shaderpack/shaderpack.pssg", "dx11/shaderpack/postprocess.pssg", "postprocess/effects.xml"] : Id is "nordschleife" or "spa-francorchamps" ? [..AspenPack.SharedTargets, "dx11/shaderpack/shaderpack.pssg"] : Id == "misty-loch" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "dx11/shaderpack/shaderpack.pssg"] : Id == "smelter" ? [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml"] : AspenPack.SharedTargets;
     internal TrackPack(string id, string name, string version, string minimumLauncher, string[] modes, Layout[] layouts, string[] requiredTargets, ExternalPack? external = null)
     {
         External = external;
@@ -145,14 +151,15 @@ public sealed class TrackPack
     public string[] ReceiptRoots(PackReceipt receipt) => ReceiptLayouts(receipt).Select(l => "tracks/usa/" + l.Folder).Append(Support).ToArray();
     // The four duel courses have two authored start positions, not an eight-car grid.
     public int MaximumOpponents(string id, string raceStart = "auto") =>
+        Id == "pikes-peak" ? (raceStart == "grid" ? 7 : 3) :
         raceStart == "grid" && SupportsStaggered(id) ? External!.Layout(id).GridMaximumOpponents :
         External?.Layout(id).MaximumOpponents ?? (GetLayout(id).Discipline == "Head-to-head" ? 1 : 7);
     public string PracticeCar(string id) => GetLayout(id).Discipline == "Landrush" ? "kin" : "sti";
     public bool IsLayout(string id) => Layouts.Any(l => l.Id == id);
-    public bool SupportsStaggered(string id) => External is not null && Modes.Contains("desktop-race") &&
+    public bool SupportsStaggered(string id) => (Id == "pikes-peak" && IsLayout(id)) || External is not null && Modes.Contains("desktop-race") &&
         External.Layout(id).RaceStart == "staggered";
     public bool SupportsGridRace(string id) => Modes.Contains("desktop-race") &&
-        (!SupportsStaggered(id) || External!.Layout(id).GridMaximumOpponents > 0);
+        (Id == "pikes-peak" || !SupportsStaggered(id) || External!.Layout(id).GridMaximumOpponents > 0);
     public bool SupportsRace(PackReceipt receipt, string? layoutId = null)
     {
         if (External is not null) return Modes.Contains("desktop-race") && (layoutId is null || External.Layout(layoutId).MaximumOpponents > 0);
@@ -182,8 +189,8 @@ public sealed class TrackPack
         if (offer is null || offer.Id != Id || !SafeFiles.Version(offer.Version) || !SafeFiles.Version(offer.MinimumLauncher) ||
             System.Version.Parse(launcherVersion) < System.Version.Parse(offer.MinimumLauncher))
             throw new IOException("Update DiRT2VR before installing this custom-track package.");
-        if (offer.StagingBytes is < 1024 * 1024 or > 16L * 1024 * 1024 * 1024 ||
-            offer.InstalledBytes is <= 0 or > 4L * 1024 * 1024 * 1024 ||
+        if (offer.StagingBytes < 1024 * 1024 || offer.StagingBytes > (Id == "pikes-peak" ? 64L : 16L) * 1024 * 1024 * 1024 ||
+            offer.InstalledBytes <= 0 || offer.InstalledBytes > (Id == "pikes-peak" ? 12L : 4L) * 1024 * 1024 * 1024 ||
             offer.Modes is null || !offer.Modes.SequenceEqual(Modes) ||
             offer.Layouts is null || !offer.Layouts.SequenceEqual(Layouts))
             throw new IOException("The bundled conversion tools are unsupported. Reinstall DiRT2VR.");
@@ -191,7 +198,7 @@ public sealed class TrackPack
     }
     public static void ValidateSources(Fingerprint[] sources, string sourceGame = "dirt3")
     {
-        if (sourceGame is not ("dirt3" or "assettocorsa" or "grid2") || sources is null || sources.Length is < 2 or > 4096 || sources.Any(f => f is null) ||
+        if (sourceGame is not ("dirt3" or "assettocorsa" or "grid2" or "dirtrally") || sources is null || sources.Length is < 2 or > 4096 || sources.Any(f => f is null) ||
             sources.Select(f => f.Game + "/" + f.Path).Distinct(StringComparer.OrdinalIgnoreCase).Count() != sources.Length ||
             sources.Any(f => (f.Game != "dirt2" && f.Game != sourceGame) || !SafeFiles.Digest(f.Sha256)))
             throw new IOException("Invalid source fingerprint inventory.");
@@ -224,9 +231,9 @@ public sealed class TrackPack
             SafeFiles.Relative(f.Path);
             string extension = Path.GetExtension(f.Path);
             bool supported = new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf" }.Contains(extension) ||
-                (Id is "nordschleife" or "mizu-mountain" or "misty-loch" or "spa-francorchamps" && extension is ".nfs" or ".gssp");
+                (Id is "nordschleife" or "mizu-mountain" or "misty-loch" or "spa-francorchamps" or "pikes-peak" && extension is ".nfs" or ".gssp");
             // Misty retains its full-resolution source textures in one 517 MiB bundle.
-            long maximumFileBytes = Id == "misty-loch" && Layouts.Any(l => f.Path == $"tracks/usa/{l.Folder}/tracksplit.pssg") ? 768L * 1024 * 1024 : 512L * 1024 * 1024;
+            long maximumFileBytes = Id == "pikes-peak" ? 1536L * 1024 * 1024 : Id == "misty-loch" && Layouts.Any(l => f.Path == $"tracks/usa/{l.Folder}/tracksplit.pssg") ? 768L * 1024 * 1024 : 512L * 1024 * 1024;
             if (!paths.Add(f.Path) || f.Path == Receipt || !allowedRoots.Any(p => f.Path.StartsWith(p + "/", StringComparison.Ordinal)) ||
                 (receipt.Schema == 2 && !ReceiptLayouts(receipt).Any(l => Owns(l, f.Path))) ||
                 !SafeFiles.Digest(f.Sha256) || f.Bytes < 0 || f.Bytes > maximumFileBytes ||
@@ -234,11 +241,18 @@ public sealed class TrackPack
                 throw new IOException("Invalid custom-track file: " + f.Path);
             total = checked(total + f.Bytes);
         }
-        if (total > 4L * 1024 * 1024 * 1024) throw new IOException("Custom-track inventory exceeds its size limit.");
+        if (total > (Id == "pikes-peak" ? 12L : 4L) * 1024 * 1024 * 1024) throw new IOException("Custom-track inventory exceeds its size limit.");
         foreach (var layout in ReceiptLayouts(receipt))
         {
             foreach (var name in new[] { "track.jpk", "routesplit.pssg", "track.vis", "grids.pssg", "progress_track.xml" })
                 if (!paths.Contains($"tracks/usa/{layout.Folder}/route_0/{name}")) throw new IOException("Incomplete custom layout: " + layout.Name);
+            if (Id == "pikes-peak")
+                foreach (string name in SessionFiles.PikesRaceFiles)
+                {
+                    if (!paths.Contains($"tracks/usa/{layout.Folder}/route_0/{name}")) throw new IOException("Incomplete Pikes Peak practice route.");
+                    foreach (string start in new[] { "race", "grid-race" })
+                        if (!paths.Contains($"{Support}/{layout.Id}/{start}/{name}")) throw new IOException("Incomplete Pikes Peak race route. Rebuild from source.");
+                }
             var session = receipt.Sessions.SingleOrDefault(s => s.LayoutId == layout.Id) ?? throw new IOException("Missing layout session inventory.");
             var targets = new HashSet<string>(StringComparer.Ordinal);
             foreach (var f in session.Files)
@@ -299,7 +313,7 @@ public sealed class TrackPack
     }
     // Inspected XML-form PSSG: these two files are byte-identical after CRLF/LF normalization.
     static bool KnownSourceVariant(string pack, Fingerprint source, string hash) =>
-        (pack is "nordschleife" or "mizu-mountain" or "misty-loch" or "spa-francorchamps") && source.Game == "dirt2" &&
+        (pack is "nordschleife" or "mizu-mountain" or "misty-loch" or "spa-francorchamps" or "pikes-peak") && source.Game == "dirt2" &&
         source.Path == "tracks/london/battersea/track_light_anims.pssg" &&
         source.Sha256 == "BEAC14E6B3910B404640ADEC1FBE8E687F3505DF4479B8D3924DF42D03A0FD6D" &&
         hash == "7C54720E9C0921E5C1CAC46FD1C8B22DF27E80DE177FAEDACB6282AD4B06BF99";

@@ -742,6 +742,7 @@ Public Class AspenSourceForm
         Dim conditions = offer.Id = "nordschleife" OrElse offer.Id = "misty-loch"
         Dim sourceGame = TrackPacks.Get(offer.Id).SourceName
         source.Name = If(TrackPacks.Get(offer.Id).SourceGame = "assettocorsa", "AssettoCorsaSourceFolder", If(TrackPacks.Get(offer.Id).SourceGame = "grid2", "Grid2SourceFolder", "Dirt3SourceFolder"))
+        If TrackPacks.Get(offer.Id).SourceGame = "dirtrally" Then source.Name = "DirtRallySourceFolder"
         Text = "Build " & offer.Name & " layouts — " & sourceGame : Font = New Font("Segoe UI", 10)
         AutoScaleMode = AutoScaleMode.Dpi : StartPosition = FormStartPosition.CenterParent
         StyleChoice(source, Me)

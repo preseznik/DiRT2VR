@@ -1,0 +1,584 @@
+[
+  {
+    "ShaderGroupId": "batched_track.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 12
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "object_simple.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 32
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 12,
+            "Stride": 32
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 16,
+            "Stride": 32
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 20,
+            "Stride": 32
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "terrain_road.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 64
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half4",
+            "Offset": 16,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 24,
+            "Stride": 64
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 28,
+            "Stride": 64
+          },
+          {
+            "Name": "Tangent",
+            "DataType": "float3",
+            "Offset": 40,
+            "Stride": 64
+          },
+          {
+            "Name": "Binormal",
+            "DataType": "float3",
+            "Offset": 52,
+            "Stride": 64
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "pikes_bank_flat47.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 40
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 40
+          },
+          {
+            "Name": "ST",
+            "DataType": "half4",
+            "Offset": 16,
+            "Stride": 40
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 24,
+            "Stride": 40
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 28,
+            "Stride": 40
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "pikes_bank_road47.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 64
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half4",
+            "Offset": 16,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 24,
+            "Stride": 64
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 28,
+            "Stride": 64
+          },
+          {
+            "Name": "Tangent",
+            "DataType": "float3",
+            "Offset": 40,
+            "Stride": 64
+          },
+          {
+            "Name": "Binormal",
+            "DataType": "float3",
+            "Offset": 52,
+            "Stride": 64
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "pikes_bank_wsm_edge47.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 64
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half4",
+            "Offset": 16,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 24,
+            "Stride": 64
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 28,
+            "Stride": 64
+          },
+          {
+            "Name": "Tangent",
+            "DataType": "float3",
+            "Offset": 40,
+            "Stride": 64
+          },
+          {
+            "Name": "Binormal",
+            "DataType": "float3",
+            "Offset": 52,
+            "Stride": 64
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "pikes_bank_rockbank47.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 64
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half4",
+            "Offset": 16,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 24,
+            "Stride": 64
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 28,
+            "Stride": 64
+          },
+          {
+            "Name": "Tangent",
+            "DataType": "float3",
+            "Offset": 40,
+            "Stride": 64
+          },
+          {
+            "Name": "Binormal",
+            "DataType": "float3",
+            "Offset": 52,
+            "Stride": 64
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "terrain_road_blend.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 64
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half4",
+            "Offset": 16,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 24,
+            "Stride": 64
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 28,
+            "Stride": 64
+          },
+          {
+            "Name": "Tangent",
+            "DataType": "float3",
+            "Offset": 40,
+            "Stride": 64
+          },
+          {
+            "Name": "Binormal",
+            "DataType": "float3",
+            "Offset": 52,
+            "Stride": 64
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "object_rotating.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 32
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 12,
+            "Stride": 32
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 16,
+            "Stride": 32
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 20,
+            "Stride": 32
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "object_scrolling.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 32
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 12,
+            "Stride": 32
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 16,
+            "Stride": 32
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 20,
+            "Stride": 32
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "pikes_bank_edge47.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 64
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half4",
+            "Offset": 16,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 24,
+            "Stride": 64
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 28,
+            "Stride": 64
+          },
+          {
+            "Name": "Tangent",
+            "DataType": "float3",
+            "Offset": 40,
+            "Stride": 64
+          },
+          {
+            "Name": "Binormal",
+            "DataType": "float3",
+            "Offset": 52,
+            "Stride": 64
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "pikes_foliage_shadow55.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 24
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 24
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 16,
+            "Stride": 24
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 20,
+            "Stride": 24
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "terrain_pikes_vista.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 56
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 56
+          },
+          {
+            "Name": "ST",
+            "DataType": "float4",
+            "Offset": 16,
+            "Stride": 56
+          },
+          {
+            "Name": "ST",
+            "DataType": "float4",
+            "Offset": 32,
+            "Stride": 56
+          },
+          {
+            "Name": "Normal",
+            "DataType": "half4",
+            "Offset": 48,
+            "Stride": 56
+          }
+        ]
+      }
+    ]
+  },
+  {
+    "ShaderGroupId": "pikes_bank_wsm_blend47.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 64
+          },
+          {
+            "Name": "Color",
+            "DataType": "uint_color_argb",
+            "Offset": 12,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half4",
+            "Offset": 16,
+            "Stride": 64
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 24,
+            "Stride": 64
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 28,
+            "Stride": 64
+          },
+          {
+            "Name": "Tangent",
+            "DataType": "float3",
+            "Offset": 40,
+            "Stride": 64
+          },
+          {
+            "Name": "Binormal",
+            "DataType": "float3",
+            "Offset": 52,
+            "Stride": 64
+          }
+        ]
+      }
+    ]
+  }
+]

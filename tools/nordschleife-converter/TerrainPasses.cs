@@ -23,11 +23,12 @@ internal static class TerrainPasses
         {
             var batch=colour.ParentElement!.ChildElements.OfType<PssgRenderNode>().Single(n=>n.Id==colour.Id.Insert(colour.Id.IndexOf('_'),"BATCH"));
             var expected=Faces(colour.RenderInstances.Where(IsOpaque));
-            var actual=Faces(batch.RenderInstances);
+            var actual=Faces(batch.RenderInstances.Where(d=>!PikesAnimatedDepth(d)));
             if(expected.Count!=actual.Count||expected.Any(f=>actual.GetValueOrDefault(f.Key)!=f.Value))
                 throw new InvalidDataException("Terrain colour/depth coverage mismatch: "+colour.Id);
             foreach(var draw in batch.RenderInstances)
             {
+                if(PikesAnimatedDepth(draw))continue;
                 if(draw.GetShaderInstance().ShaderGroup!="#batched_track.fx")throw new InvalidDataException("Invalid opaque depth shader.");
                 var source=draw.GetRenderDataSource();var stream=source.Streams.Single();var field=stream.GetDataBlock().Streams.ElementAt((int)stream.SubStream);
                 if(field.RenderType!="Vertex"||field.DataType!="float3"||field.Stride!=12||field.Offset!=0)
@@ -35,10 +36,17 @@ internal static class TerrainPasses
             }
         }
     }
+    static bool PikesAnimatedDepth(PssgRenderStreamInstance draw)
+    {
+        var shader=draw.GetShaderInstance();
+        return shader.ShaderGroup=="#pikes_foliage_shadow55.fx" ||
+            (shader.ShaderGroup is "#object_rotating.fx" or "#object_scrolling.fx") &&
+            shader.GetShaderGroup().InputDefinitions.Any(d=>d.InputName=="FlightIndex");
+    }
     static bool IsOpaque(PssgRenderStreamInstance draw)
     {
         var material=draw.GetShaderInstance();
-        if(material.ShaderGroup.StartsWith("#terrain_",StringComparison.Ordinal))return true;
+        if(material.ShaderGroup.StartsWith("#terrain_",StringComparison.Ordinal)||material.ShaderGroup.StartsWith("#pikes_bank_",StringComparison.Ordinal)||material.ShaderGroup.StartsWith("#pikes_terrain_",StringComparison.Ordinal))return true;
         if(material.ShaderGroup is "#misty_object_rgb.fx" or "#nord_object_rgb.fx")
         {
             var inputs=material.GetShaderGroup().InputDefinitions.ToArray();

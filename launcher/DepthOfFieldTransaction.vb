@@ -16,6 +16,10 @@ Public Class DepthOfFieldTransaction
             Case "external-track-pikes-peak-lab/gravel-day" : Return "d2ve_pikes_gday"
             Case "external-track-pikes-peak-lab/gravel-alt" : Return "d2ve_pikes_galt"
             Case "external-track-pikes-peak-lab/gravel-wet" : Return "d2ve_pikes_gwet"
+            Case "pikes-peak-tarmac" : Return "d2vr_pikes_tarmac"
+            Case "pikes-peak-gravel-day" : Return "d2vr_pikes_gday"
+            Case "pikes-peak-gravel-alt" : Return "d2vr_pikes_galt"
+            Case "pikes-peak-gravel-wet" : Return "d2vr_pikes_gwet"
             Case Else : Return Nothing
         End Select
     End Function

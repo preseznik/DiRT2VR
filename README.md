@@ -110,8 +110,9 @@ External tracks support only the Direct practice, Race, VR and replay modes decl
 | Misty Loch | Assetto Corsa with Misty Loch 1.4 (`rt_misty_loch`) | Full 6.45 km circuit, Direct practice and Race on desktop or in VR |
 | Aspen | DiRT 3 Complete Edition | Ten layouts |
 | Smelter | DiRT 3 Complete Edition | Ten layouts |
+| Pikes Peak | DiRT Rally | Full tarmac and gravel hill climb; four lighting/layout choices |
 
-All six packs offer **Direct practice** and experimental **Race** on desktop or in VR with stock cars. Custom cars follow their own mode limits. Custom-track LAN is unavailable.
+All seven packs offer **Direct practice** and experimental **Race** on desktop or in VR with stock cars. Custom cars follow their own mode limits. Custom-track LAN is unavailable.
 
 ### Misty Loch
 
@@ -275,7 +276,11 @@ Presets are shared between installations on this Windows account. **Save setting
 
 **Depth of field** under **Graphics → Main → Supported track effects** controls distance blur on supported Pikes Peak layouts. It is **On** by default and applies to every car, including chase look-back. Uncheck it for a sharper scene, then save and relaunch. Other tracks retain their original effects. Original files are restored after play.
 
-Prepared **Pikes Peak** packs appear under **CUSTOM tracks → External**. Tarmac and the three gravel conditions support Direct practice, Rally with up to three AI opponents, and Grid race with up to seven. Pack **1.0.8 or later** enables these modes in both desktop and native VR. Pikes pack **1.0.7 or later** also supports Full Replay recording, finish-menu playback and saved replays; enable **Record full replays** under **Replays** before launching. Track assets are installed separately; see [prepared external packs](EXTERNAL_PACKS.md). LAN is unavailable for this pack. Uneven crowd lighting remains a known issue.
+Build **Pikes Peak** from your own **DiRT Rally** installation: choose **CUSTOM tracks → Source: DiRT Rally → Pikes Peak → Build and install…**, select the source game folder, and check the layouts to build. Tarmac has Daylight lighting; gravel offers Daylight, Lower sun and Overcast. Installed layouts work offline; keep DiRT Rally available for rebuilds. The installer includes the converter, not the original game assets.
+
+Pikes Peak supports **Direct practice**, **Rally** with up to three AI opponents, and **Grid race** with up to seven, on desktop or in native VR. Each session runs from start to finish once. Enable **Record full replays** under **Replays** for finish-menu and saved-replay playback. **Manage… → Rebuild from source…** updates selected layouts while keeping the others. LAN is unavailable; uneven crowd lighting remains a known issue.
+
+Existing prepared Pikes Peak packs remain under **Source → External** and retain their saved replays. Building from DiRT Rally creates a separate installation and does not replace them. See [prepared external packs](EXTERNAL_PACKS.md).
 
 **Borderless fullscreen** is off by default. Enable it to fill the primary monitor at its current desktop resolution without window borders. It applies to desktop Normal Launch, Practice, Race and multiplayer HOST/JOIN, including desktop quick launch. The separate **VSync** toggle defaults to **On** for desktop play, with or without borderless. Turn it off for uncapped rendering. Both settings are temporary and the original display settings are restored after play. Windows resolution/refresh rate and VR launches stay unchanged. Save and relaunch to apply; Restore defaults turns it off.
 

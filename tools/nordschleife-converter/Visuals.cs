@@ -208,6 +208,7 @@ internal static class Visuals
                 for(int i=0;i<mesh.Positions.Length;i++)
                 {
                     var p=mesh.Positions[i];bounds=bounds.Union(new(p,p));writer.Positions.Add(p);writer.Normals.Add(mesh.Normals[i]);
+                    if(Target(mesh.Material) is "pikes_foliage.fx" or "pikes_canopy_facing.fx" or "pikes_canopy_sheet.fx") { var offset=System.Numerics.Vector2.Abs(UV(1));var radius=new System.Numerics.Vector3(offset.X,offset.Y,offset.X);bounds=bounds.Union(new(p-radius,p+radius)); }
                     float handedness=mesh.Binormals is null?1:Vector3.Dot(Vector3.Cross(mesh.Normals[i],mesh.Tangents[i]),mesh.Binormals[i])<0?-1:1;
                     writer.Tangents.Add(new(mesh.Tangents[i],handedness));writer.Colors.Add(mesh.Colors?[i]??Vector4.One);
                     Vector2 UV(int set)=>mesh.TexCoords is null?mesh.UV[i]:mesh.TexCoords[Math.Min(set,mesh.TexCoords.Length-1)][i];

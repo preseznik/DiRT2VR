@@ -1,0 +1,35 @@
+[
+  {
+    "ShaderGroupId": "pikes_canopy_rigid.fx",
+    "BlockInputs": [
+      {
+        "VertexInputs": [
+          {
+            "Name": "Vertex",
+            "DataType": "float3",
+            "Offset": 0,
+            "Stride": 32
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 12,
+            "Stride": 32
+          },
+          {
+            "Name": "ST",
+            "DataType": "half2",
+            "Offset": 16,
+            "Stride": 32
+          },
+          {
+            "Name": "Normal",
+            "DataType": "float3",
+            "Offset": 20,
+            "Stride": 32
+          }
+        ]
+      }
+    ]
+  }
+]

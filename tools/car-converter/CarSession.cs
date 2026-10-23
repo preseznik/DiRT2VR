@@ -7,7 +7,7 @@ public static class CarSession
     public static void Prepare(string game, string track, Func<byte[], byte[]>? progress = null)
         => Plan(game, track, progress)();
 
-    public static Action Plan(string game, string track, Func<byte[], byte[]>? progress = null)
+    public static Action Plan(string game, string track, Func<byte[], byte[]>? progress = null, string? pikesRaceStart = null)
     {
         CarPack.RequireMode(track, false, "practice", 0);
         SafeFiles.RequireClosed(); SessionFiles.Recover(game);
@@ -30,6 +30,6 @@ public static class CarSession
             }
             files.Add(new(path, hash, path == "database/database.bin" ? original : CarRegistration.Shared(path, original)));
         }
-        return () => SessionFiles.Prepare(game, trackPack is not null && external is null ? track : null, progress, files, CarRegistration.Database);
+        return () => SessionFiles.Prepare(game, trackPack is not null && external is null ? track : null, progress, files, CarRegistration.Database, pikesRaceStart);
     }
 }

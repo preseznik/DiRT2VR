@@ -136,7 +136,7 @@ Public Module Worker
                     Dim progress As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progress = AddressOf NordschleifeProgress.Patch
                     ' Verify the installed car before the VR transaction adjusts its camera.
-                    prepareCar = CustomCars.CarSession.Plan(context.GameRoot, trackId, progress)
+                    prepareCar = CustomCars.CarSession.Plan(context.GameRoot, trackId, progress, If(opponents > 0 AndAlso CustomTracks.TrackPacks.Pikes.IsLayout(trackId), raceStart, Nothing))
                 End If
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
@@ -146,7 +146,7 @@ Public Module Worker
                 ElseIf CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
-                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch)
+                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch, pikesRaceStart:=If(opponents > 0 AndAlso CustomTracks.TrackPacks.Pikes.IsLayout(trackId), raceStart, Nothing))
                 End If
                 ' Layer exposure after VR motion-blur changes; recover in the reverse order.
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)

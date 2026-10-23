@@ -1,6 +1,6 @@
 # Custom tracks
 
-Add-on tracks available in DiRT2VR's Experimental builds, checked against **0.17.109**. For installation and launch instructions, see [Custom tracks in the README](README.md#custom-tracks-experimental).
+Add-on tracks available in DiRT2VR's Experimental builds. For installation and launch instructions, see [Custom tracks in the README](README.md#custom-tracks-experimental).
 
 Build each pack from your own installed source game using **CUSTOM tracks → Build and install…** in the launcher. Conversion tools are included; original game assets are not distributed. Installed tracks work offline without the source game, but you need it again to rebuild or update them.
 
@@ -14,10 +14,11 @@ Build each pack from your own installed source game using **CUSTOM tracks → Bu
 | [Mizu Mountain](#mizu-mountain) | GRID 2 | A full 10.4 km mountain route from start to finish. | Daylight; point-to-point rather than laps; three timing checkpoints. |
 | [Spa-Francorchamps](#spa-francorchamps) | GRID 2 with Spa-Francorchamps DLC | The full 7 km Grand Prix circuit. | Three timing sectors, replay cameras and the original eight starting-grid positions. Direct practice and Race on desktop or in VR. |
 | [Misty Loch](#misty-loch) | Assetto Corsa with the Misty Loch 1.4 add-on (`rt_misty_loch`) | A full 6.45 km lakeside road circuit. | Daylight, Evening and Morning Fog; animated waterfall, lake waves and gently moving boats. One-lap Direct practice and multi-lap Race, on desktop or in VR. |
+| [Pikes Peak](#pikes-peak) | DiRT Rally | Full 19.5 km mountain hill climb, in tarmac and vintage gravel layouts. | Daylight tarmac; Daylight, Lower sun and Overcast gravel. Direct practice, staggered Rally and Grid race; summit introductions and Full Replay. |
 
 ## Play modes
 
-**All six packs** offer solo **Direct practice** and experimental **Race**, on desktop or in VR, with installed stock cars. Race allows **1–7 AI opponents**, except the four head-to-head layouts, which allow **one AI opponent**. Circuit races support **1–20 laps**; Mizu is always one complete run. Nordschleife and Misty Loch Direct practice run for one lap.
+**All seven packs** offer solo **Direct practice** and experimental **Race**, on desktop or in VR, with installed stock cars. Race allows **1–7 AI opponents**, except the four head-to-head layouts, which allow **one AI opponent**, and Pikes Peak staggered Rally, which allows **up to three**. Circuit races support **1–20 laps**; Mizu and Pikes Peak are always one complete run. Nordschleife and Misty Loch Direct practice run for one lap.
 
 Custom cars follow their own mode limits: Ferrari F2004 currently supports solo Direct practice only. Prepared community tracks appear under **Source → External** in the launcher; their available modes depend on the pack.
 
@@ -102,3 +103,20 @@ Both quality levels support **Road sheen (Experimental)** under **Graphics → M
 Both quality levels use only DiRT 2 and Misty Loch assets. HQ is not an upscaled texture pack. DiRT 2's 32-bit process memory remains a limit; the option does not change your graphics settings or Large Address Aware preference. Desktop appearance is accepted; final HQ headset and repeated in-game restart checks remain pending.
 
 For current setup advice and known limitations, see the [README](README.md#custom-tracks-experimental). Report track problems through [GitHub issues](https://github.com/preseznik/DiRT2VR/issues), including the layout, car, play mode and whether you used desktop or VR.
+
+## Pikes Peak
+
+Source: **DiRT Rally**. Choose **Source → DiRT Rally → Pikes Peak → Build and install…**, select the game folder and check the layouts you want. Conversion preserves the source scenery, detailed textures, shadow maps and lighting presets, with the Pikes Peak compatibility corrections. Tree trunks and guardrails have collision; traffic signs and hay bales can be knocked away.
+
+| Layout | Condition |
+| --- | --- |
+| Tarmac · full course | Daylight |
+| Gravel · full course | Daylight |
+| Gravel · full course | Lower sun |
+| Gravel · full course | Overcast |
+
+Overcast changes the lighting; it does not add rain or a wet-surface simulation. **Direct practice**, staggered **Rally** (up to three opponents) and **Grid race** (up to seven opponents) work on desktop or in VR. Each race is one complete climb. Full Replay uses cameras along the course. The Depth of field checkbox remains available under **Graphics → Main → Supported track effects**. Uneven crowd lighting remains a known issue.
+
+If conversion reports a missing DirectX compiler, install or repair the **DirectX End-User Runtimes (June 2010)** and rebuild.
+
+Use **Manage… → Rebuild from source…** to add or update individual layouts. The source installation can be removed after conversion, but is needed again for rebuilds. Existing prepared Pikes packs and their replays remain separate under **Source → External**.

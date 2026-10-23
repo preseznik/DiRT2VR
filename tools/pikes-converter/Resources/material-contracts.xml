@@ -1,0 +1,1459 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<contracts>
+  <SHADERGROUP parameterCount="0" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="batched_track.fx" />
+  <SHADERINSTANCE shaderGroup="#batched_track.fx" parameterCount="0" parameterSavedCount="0" renderSortPriority="0" id="batchmaterial" />
+  <SHADERGROUP parameterCount="8" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="terrain_vista.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#terrain_vista.fx" parameterCount="8" parameterSavedCount="1" renderSortPriority="0" id="nord_material_0">
+    <SHADERINPUT parameterID="7" type="texture" texture="tracksplit.pssg#nord_tex_0025E4B78F2A551EB0F9_native">
+</SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="49" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="terrain_road_blend_flat.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+  </SHADERGROUP>
+  <SHADERGROUP parameterCount="49" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="terrain_road.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#terrain_road.fx" parameterCount="49" parameterSavedCount="18" renderSortPriority="0" id="nord_material_7">
+    <SHADERINPUT parameterID="0" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#nord_tex_77C4787B553D22188164_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="texture" texture="tracksplit.pssg#nord_tex_5D25BB2CAC611D050C14_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_91E4A5CE9DF7AB5CCDFA_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_tex_C1FA2AEB0E09A82909E1_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="15" type="texture" texture="tracksplit.pssg#nord_tex_62E55E9BECA01C0F56C5_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="constant" format="float">
+4.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="constant" format="float">
+3.000000119e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="texture" texture="tracksplit.pssg#nord_tex_3AF2B1722D80551EA5CF_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="19" type="texture" texture="tracksplit.pssg#nord_tex_1D76089BC2E0687E5066_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="20" type="texture" texture="tracksplit.pssg#nord_tex_E7AA6202B5A5248015B0_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="30" type="constant" format="float3">
+1.000000000e+000 1.000000000e+000 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="24" type="texture" texture="tracksplit.pssg#nord_tex_FAADD5C9D5ED6A6F370C_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="36" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="49" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="terrain_road_blend.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#terrain_road_blend.fx" parameterCount="49" parameterSavedCount="17" renderSortPriority="0" id="nord_material_657">
+    <SHADERINPUT parameterID="0" type="constant" format="float4">
+2.500000000e-001 2.500000000e-001 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="constant" format="float4">
+5.000000000e-001 5.000000000e-001 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="constant" format="float4">
+5.000000000e-001 5.000000000e-001 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#nord_tex_59BF51EFEEA23F181E43_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="texture" texture="tracksplit.pssg#nord_tex_F76E164C3F633D6493DA_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_6ED01006B509D6EE4D04_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_tex_93D1B7B28E61F715DAD6_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="texture" texture="tracksplit.pssg#nord_tex_6E91A7B6A8298E000300_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="texture" texture="tracksplit.pssg#nord_tex_69B550F02BCEE93D774A_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="texture" texture="tracksplit.pssg#nord_tex_0D927F2817BA39160196_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="22" type="constant" format="float">
+4.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="23" type="constant" format="float">
+3.000000119e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="30" type="constant" format="float3">
+1.000000000e+000 1.000000000e+000 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="24" type="texture" texture="tracksplit.pssg#nord_tex_8F34F16C56CC48B6CCDF_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="36" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="48" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="terrain_edge_nm.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+  </SHADERGROUP>
+  <SHADERGROUP parameterCount="48" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="terrain_infield_nm.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+  </SHADERGROUP>
+  <SHADERGROUP parameterCount="20" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="object_simple.fx">
+    <SHADERINPUTDEFINITION name="time" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Lighting" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="Display_Diffuse" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="Display_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="Display_Occlusion" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TSpecularMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TOcclusionMap" type="texture" />
+    <SHADERINPUTDEFINITION name="Specular_solo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="Specular_Occlusion" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="Occlusion_solo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="Emissive_solo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="Normal_solo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="Alpha_Solo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#object_simple.fx" parameterCount="20" parameterSavedCount="3" renderSortPriority="0" id="nord_material_194">
+    <SHADERINPUT parameterID="5" type="texture" texture="tracksplit.pssg#nord_tex_049BFD6D5AD10EF1AB4D">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="texture" texture="tracksplit.pssg#nord_black">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="7" type="texture" texture="tracksplit.pssg#nord_white">
+</SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP id="pikes_foliage.fx" parameterCount="10" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0">
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TShadowMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TTreeSkyLightMapWS" type="texture" />
+    <SHADERINPUTDEFINITION name="TSourceSunMap" type="texture" />
+    <SHADERINPUTDEFINITION name="SkyMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="SunMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TreeAmbientColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="TreeDiffuseScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeShadowing" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE id="pikes_leaf_material_0" shaderGroup="#pikes_foliage.fx" parameterCount="10" parameterSavedCount="9" renderSortPriority="0">
+    <SHADERINPUT parameterID="0" type="texture" texture="tracksplit.pssg#nord_tex_10A18C3224DEBF94C357">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="texture" texture="tracksplit.pssg#pikes_leaf_flat_normal">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="texture" texture="tracksplit.pssg#pikes_source_sky_671509709523DCE9845D">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="texture" texture="tracksplit.pssg#pikes_source_sun_690712E0532659E7D970">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="5" type="constant" format="float4">
+1.023017903e-004 1.023017903e-004 6.592480540e-001 3.019282222e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="constant" format="float4">
+2.749543346e-004 1.040098286e-004 9.397853017e-001 2.049775608e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="7" type="constant" format="float3">
+8.352627754e-001 7.373803854e-001 6.656000018e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="8" type="constant" format="float">
+1.059999943e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="9" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP id="terrain_pikes_vista.fx" parameterCount="22" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0">
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TlargeColourMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TlargeBlendMap" type="texture" />
+    <SHADERINPUTDEFINITION name="enableLayer2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="enableLayer3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="enableMacro" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TShadowMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" format="" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" format="" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" format="" />
+    <SHADERINPUTDEFINITION name="TlargeNormalMap" type="texture" format="" />
+    <SHADERINPUTDEFINITION name="normal1Scale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="normal2Scale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="normal3Scale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="largeNormalScale" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE id="pikes_vista_material_0" shaderGroup="#terrain_pikes_vista.fx" parameterCount="22" parameterSavedCount="21" renderSortPriority="0">
+    <SHADERINPUT parameterID="0" type="texture" texture="tracksplit.pssg#pikes_vista_tex_82CB5B910B126C6FB842">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="texture" texture="tracksplit.pssg#pikes_vista_tex_6E91A7B6A8298E000300">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="texture" texture="tracksplit.pssg#pikes_vista_tex_E2A9F863B2902E3E4391">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="texture" texture="tracksplit.pssg#pikes_vista_tex_0D927F2817BA39160196">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="texture" texture="tracksplit.pssg#pikes_vista_tex_3CF4501137F51649A75B">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="5" type="texture" texture="tracksplit.pssg#pikes_vista_tex_44C151F87970DFDA421E">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="texture" texture="tracksplit.pssg#pikes_vista_tex_D4851BF31E995ADDCAFA">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="7" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="8" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="9" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#pikes_vista_ambient_3775AE619591A0FC9438">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="constant" format="float">
+1.299999952e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#pikes44_normal_20A2942FDD1C97D4196A">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="15" type="texture" texture="tracksplit.pssg#pikes44_normal_69B550F02BCEE93D774A">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="texture" texture="tracksplit.pssg#pikes44_normal_40D006456F1EC6809D40">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="texture" texture="tracksplit.pssg#pikes44_normal_6061E6672FA34FA91D07">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="19" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="20" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="21" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="54" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_terrain_edge_nm.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERGROUP parameterCount="54" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_terrain_infield_nm.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERGROUP parameterCount="55" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_terrain_road_blend.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERGROUP parameterCount="49" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_terrain_flat_shadow46.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+  </SHADERGROUP>
+  <SHADERGROUP parameterCount="55" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_bank_flat47.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" format="" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#pikes_bank_flat47.fx" parameterCount="55" parameterSavedCount="22" renderSortPriority="0" id="nord_material_1">
+    <SHADERINPUT parameterID="0" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#nord_tex_37C6520C2C9E22E96D4A_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_997BE879402CC0351C9E_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="15" type="texture" texture="tracksplit.pssg#nord_tex_46FF9C328EAE54F8FB78_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="22" type="constant" format="float">
+4.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="23" type="constant" format="float">
+3.000000119e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="texture" texture="tracksplit.pssg#nord_tex_37C6520C2C9E22E96D4A_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="texture" texture="tracksplit.pssg#nord_black">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="30" type="constant" format="float3">
+1.000000000e+000 1.000000000e+000 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="24" type="texture" texture="tracksplit.pssg#nord_tex_7985F0040477E273ACA8_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="36" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="texture" texture="tracksplit.pssg#nord_normal">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="49" type="texture" format="" texture="tracksplit.pssg#pikes_ground_cm_89723C3866ADA5ED2EDA">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="50" type="constant" format="float">
+2.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="53" type="constant" format="float4">
+1.294117719e-001 1.333333403e-001 1.490195990e-001 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="54" type="constant" format="float4">
+3.490196168e-001 3.411764801e-001 3.215686381e-001 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="51" type="constant" format="float">
+1.299999952e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="52" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="55" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_bank_road47.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" format="" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#pikes_bank_road47.fx" parameterCount="55" parameterSavedCount="24" renderSortPriority="0" id="nord_material_3">
+    <SHADERINPUT parameterID="0" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#nord_tex_6ED01006B509D6EE4D04_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="texture" texture="tracksplit.pssg#nord_tex_1D76089BC2E0687E5066_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_892B1B2A51AA51F76A95_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_tex_A26CA277E2BA1C5E6E9F_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="15" type="texture" texture="tracksplit.pssg#nord_tex_F6B31D173B2000627363_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="constant" format="float">
+4.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="constant" format="float">
+3.000000119e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="texture" texture="tracksplit.pssg#nord_tex_3AF2B1722D80551EA5CF_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="19" type="texture" texture="tracksplit.pssg#nord_tex_1D76089BC2E0687E5066_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="20" type="texture" texture="tracksplit.pssg#nord_tex_E7AA6202B5A5248015B0_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="30" type="constant" format="float3">
+1.000000000e+000 1.000000000e+000 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="24" type="texture" texture="tracksplit.pssg#nord_tex_FAADD5C9D5ED6A6F370C_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="36" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="49" type="texture" format="" texture="tracksplit.pssg#pikes_ground_cm_43603DD3206D0B1309F4">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="50" type="constant" format="float">
+2.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="53" type="constant" format="float4">
+2.156862766e-001 2.196078598e-001 2.392156869e-001 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="54" type="constant" format="float4">
+3.137255013e-001 3.098039329e-001 2.901960909e-001 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="51" type="constant" format="float">
+1.299999952e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="52" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="55" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_bank_rockbank47.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#pikes_bank_rockbank47.fx" parameterCount="55" parameterSavedCount="21" renderSortPriority="0" id="nord_material_4">
+    <SHADERINPUT parameterID="0" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#nord_tex_61F99F7267ABC2B7A157_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="texture" texture="tracksplit.pssg#nord_tex_3692AA5E773B8F3FA5EA_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_F0C2A7077036824531C1_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_tex_22F709207A82F8C059EB_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="30" type="constant" format="float3">
+1.000000000e+000 1.000000000e+000 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="24" type="texture" texture="tracksplit.pssg#nord_tex_FAADD5C9D5ED6A6F370C_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="36" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="texture" texture="tracksplit.pssg#nord_tex_61F99F7267ABC2B7A157_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="texture" texture="tracksplit.pssg#nord_black">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="texture" texture="tracksplit.pssg#nord_tex_3692AA5E773B8F3FA5EA_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="49" type="texture" texture="tracksplit.pssg#pikes_ground_cm_43603DD3206D0B1309F4">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="50" type="constant" format="float">
+2.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="51" type="constant" format="float">
+1.299999952e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="52" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="53" type="constant" format="float4">
+2.156862766e-001 2.196078598e-001 2.392156869e-001 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="54" type="constant" format="float4">
+3.137255013e-001 3.098039329e-001 2.901960909e-001 0.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="54" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_bank_wsm_edge47.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#pikes_bank_wsm_edge47.fx" parameterCount="54" parameterSavedCount="29" renderSortPriority="0" id="nord_material_15">
+    <SHADERINPUT parameterID="0" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="constant" format="float4">
+8.000000000e+000 8.000000000e+000 1.945812378e+002 -5.740456543e+002 </SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#nord_tex_59BF51EFEEA23F181E43_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="texture" texture="tracksplit.pssg#nord_tex_F76E164C3F633D6493DA_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_CF292FC2D586E9CBB2E5_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_tex_D000861A52990D6881A2_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="15" type="texture" texture="tracksplit.pssg#nord_tex_D4CEE9EE7023B1DFB929_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="constant" format="float">
+2.000000000e+001 </SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="19" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="20" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="21" type="texture" texture="tracksplit.pssg#nord_tex_3AF2B1722D80551EA5CF_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="22" type="texture" texture="tracksplit.pssg#nord_tex_1D76089BC2E0687E5066_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="23" type="texture" texture="tracksplit.pssg#nord_tex_E7AA6202B5A5248015B0_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="27" type="constant" format="float">
+4.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="28" type="constant" format="float">
+3.000000119e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="29" type="constant" format="float3">
+1.000000000e+000 1.000000000e+000 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="26" type="texture" texture="tracksplit.pssg#nord_tex_215C205590B8A81D8AA5_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="35" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="48" type="texture" texture="tracksplit.pssg#pikes_ground_cm_501C873476D47A18A4BF">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="49" type="constant" format="float">
+2.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="50" type="constant" format="float">
+1.299999952e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="51" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="52" type="constant" format="float4">
+1.960784346e-001 2.039215714e-001 2.274509817e-001 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="53" type="constant" format="float4">
+3.333333433e-001 3.254902065e-001 3.019607961e-001 0.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="54" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_bank_wsm_blend47.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#pikes_bank_wsm_blend47.fx" parameterCount="54" parameterSavedCount="29" renderSortPriority="0" id="nord_material_97">
+    <SHADERINPUT parameterID="0" type="constant" format="float4">
+8.000000000e+000 8.000000000e+000 1.945812378e+002 -5.740456543e+002 </SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="constant" format="float4">
+8.000000000e+000 8.000000000e+000 1.945812378e+002 -5.740456543e+002 </SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#nord_tex_995355110D4932911B2A_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="texture" texture="tracksplit.pssg#nord_tex_6BDE2607D299E6469FF0_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_CF292FC2D586E9CBB2E5_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_tex_D000861A52990D6881A2_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="15" type="texture" texture="tracksplit.pssg#nord_tex_D4CEE9EE7023B1DFB929_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="constant" format="float">
+2.000000000e+001 </SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="19" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="20" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="21" type="texture" texture="tracksplit.pssg#nord_tex_3AF2B1722D80551EA5CF_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="22" type="texture" texture="tracksplit.pssg#nord_tex_1D76089BC2E0687E5066_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="23" type="texture" texture="tracksplit.pssg#nord_tex_E7AA6202B5A5248015B0_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="27" type="constant" format="float">
+4.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="28" type="constant" format="float">
+3.000000119e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="29" type="constant" format="float3">
+1.000000000e+000 1.000000000e+000 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="26" type="texture" texture="tracksplit.pssg#nord_tex_1303FC4F47F4D21B90CE_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="35" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="48" type="texture" texture="tracksplit.pssg#pikes_ground_cm_1654771E03CA4D8C6799">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="49" type="constant" format="float">
+2.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="50" type="constant" format="float">
+1.299999952e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="51" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="52" type="constant" format="float4">
+2.039215714e-001 1.882352978e-001 2.352941185e-001 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="53" type="constant" format="float4">
+3.254902065e-001 3.411764801e-001 2.941176593e-001 0.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP parameterCount="54" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0" id="pikes_bank_edge47.fx">
+    <SHADERINPUTDEFINITION name="Map1UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map2UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map3UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="Map4UVScaleAndOffset" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="BlendMaskUVScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="CamPos" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="texcoord0" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord4" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord2" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord3" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="texcoord1" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap1" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap2" type="texture" />
+    <SHADERINPUTDEFINITION name="BlendMaskSoftness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveSteepness" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeSCurveShift" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskUScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EdgeBlendMaskVScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap3" type="texture" />
+    <SHADERINPUTDEFINITION name="TDiffuseSpecMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TBlendMap4" type="texture" />
+    <SHADERINPUTDEFINITION name="TAmbientOcclusion" type="texture" />
+    <SHADERINPUTDEFINITION name="DetailBlendPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="DetailBlendScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="FresnelMin" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelMax" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="FresnelPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongPower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="PhongScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TrackAOScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="Display_Baked_Shadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Albedo" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Specular" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Normal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_AO" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BakedShadows" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_DiffuseScalar" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_WorldSpaceNormal" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_BlendMap" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="DEV_NormalMapsEnabled" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="SOLO_Alpha" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="RenderForLod" type="constant" format="int" />
+    <SHADERINPUTDEFINITION name="TColourMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ColourMapScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceIndirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="SourceDirectIntensity" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelScale" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TColourMapChannelMin" type="constant" format="float4" />
+  </SHADERGROUP>
+  <SHADERINSTANCE shaderGroup="#pikes_bank_edge47.fx" parameterCount="54" parameterSavedCount="27" renderSortPriority="0" id="nord_material_1064">
+    <SHADERINPUT parameterID="0" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="1" type="constant" format="float4">
+8.000000000e+000 8.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="constant" format="float4">
+0.000000000e+000 0.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="constant" format="float4">
+1.000000000e+000 1.000000000e+000 0.000000000e+000 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="11" type="texture" texture="tracksplit.pssg#nord_tex_4DDA1A30F9DB97A46F47_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="12" type="texture" texture="tracksplit.pssg#nord_tex_7E9C7E04E63A03CC28AD_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_CF292FC2D586E9CBB2E5_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_tex_D000861A52990D6881A2_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="15" type="texture" texture="tracksplit.pssg#nord_tex_D4CEE9EE7023B1DFB929_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="16" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="constant" format="float">
+2.000000000e+001 </SHADERINPUT>
+    <SHADERINPUT parameterID="18" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="19" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="20" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="21" type="texture" texture="tracksplit.pssg#nord_tex_3AF2B1722D80551EA5CF_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="22" type="texture" texture="tracksplit.pssg#nord_tex_1D76089BC2E0687E5066_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="29" type="constant" format="float3">
+1.000000000e+000 1.000000000e+000 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="26" type="texture" texture="tracksplit.pssg#nord_tex_853A40F2A48AF9799A72_native">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="35" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="48" type="texture" texture="tracksplit.pssg#pikes_ground_cm_747AE74B46B312CDBC8F">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="49" type="constant" format="float">
+2.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="50" type="constant" format="float">
+1.299999952e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="51" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="52" type="constant" format="float4">
+2.000000030e-001 2.078431398e-001 2.549019754e-001 1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="53" type="constant" format="float4">
+3.294117749e-001 3.215686381e-001 2.745098174e-001 0.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="23" type="texture" format="" texture="tracksplit.pssg#nord_black">
+</SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP id="object_rotating.fx" parameterCount="22" parameterSavedCount="0" parameterStreamCount="0" passCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648">
+    <SHADERINPUTDEFINITION name="model" type="model" format="float4x4" />
+    <SHADERINPUTDEFINITION name="modelViewProj" type="modelviewproj" format="float4x4" />
+    <SHADERINPUTDEFINITION name="modelView" type="modelview" format="float4x4" />
+    <SHADERINPUTDEFINITION name="prevViewProj" type="constant" format="float4x4" />
+    <SHADERINPUTDEFINITION name="prevModel" type="constant" format="float4x4" />
+    <SHADERINPUTDEFINITION name="DynamicAmbientOcclusionInvDim" type="constant" format="float2" />
+    <SHADERINPUTDEFINITION name="preBakedShadows" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="timer" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="numberOfFrames" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="frameRate" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="pauseBetweenFrames" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="synchronise" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EmissivePower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TSpecularMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TShadowMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TDynamicAmbientOcclusionMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TOcclusionMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ShadowDepth" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="SlopeBiasVector" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="FlightIndex" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="RotorEnabled" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE id="pikes_helicopter51_1_317" shaderGroup="#object_rotating.fx" parameterCount="22" renderSortPriority="0" parameterSavedCount="6">
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#nord_tex_6F6287F9ECC571277D12_opaque">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_black">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="texture" texture="tracksplit.pssg#nord_white">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="20" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="21" type="constant" format="float">
+0.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP id="object_scrolling.fx" parameterCount="22" parameterSavedCount="0" parameterStreamCount="0" passCount="0" instancesRequireSorting="1" defaultRenderSortPriority="-2147483648">
+    <SHADERINPUTDEFINITION name="model" type="model" format="float4x4" />
+    <SHADERINPUTDEFINITION name="modelViewProj" type="modelviewproj" format="float4x4" />
+    <SHADERINPUTDEFINITION name="modelView" type="modelview" format="float4x4" />
+    <SHADERINPUTDEFINITION name="prevViewProj" type="constant" format="float4x4" />
+    <SHADERINPUTDEFINITION name="prevModel" type="constant" format="float4x4" />
+    <SHADERINPUTDEFINITION name="DynamicAmbientOcclusionInvDim" type="constant" format="float2" />
+    <SHADERINPUTDEFINITION name="preBakedShadows" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="timer" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="numberOfFrames" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="frameRate" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="pauseBetweenFrames" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="synchronise" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="EmissivePower" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TSpecularMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TShadowMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TDynamicAmbientOcclusionMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TOcclusionMap" type="texture" />
+    <SHADERINPUTDEFINITION name="ShadowDepth" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="SlopeBiasVector" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="FlightIndex" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="RotorEnabled" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE id="pikes_helicopter51_1_318" shaderGroup="#object_scrolling.fx" parameterCount="22" renderSortPriority="100" parameterSavedCount="6">
+    <SHADERINPUT parameterID="13" type="texture" texture="tracksplit.pssg#pikes_helicopter51_rotor">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="14" type="texture" texture="tracksplit.pssg#nord_black">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="17" type="texture" texture="tracksplit.pssg#nord_white">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="20" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="21" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+  <SHADERGROUP id="pikes_foliage_shadow55.fx" parameterCount="10" parameterSavedCount="0" parameterStreamCount="0" instancesRequireSorting="0" defaultRenderSortPriority="-2147483648" passCount="0">
+    <SHADERINPUTDEFINITION name="TDiffuseAlphaMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TShadowMask" type="texture" />
+    <SHADERINPUTDEFINITION name="TNormalMap" type="texture" />
+    <SHADERINPUTDEFINITION name="TTreeSkyLightMapWS" type="texture" />
+    <SHADERINPUTDEFINITION name="TSourceSunMap" type="texture" />
+    <SHADERINPUTDEFINITION name="SkyMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="SunMapMapping" type="constant" format="float4" />
+    <SHADERINPUTDEFINITION name="TreeAmbientColour" type="constant" format="float3" />
+    <SHADERINPUTDEFINITION name="TreeDiffuseScale" type="constant" format="float" />
+    <SHADERINPUTDEFINITION name="TreeShadowing" type="constant" format="float" />
+  </SHADERGROUP>
+  <SHADERINSTANCE id="pikes_leaf_material_0_shadow55" shaderGroup="#pikes_foliage_shadow55.fx" parameterCount="10" parameterSavedCount="9" renderSortPriority="0">
+    <SHADERINPUT parameterID="0" type="texture" texture="tracksplit.pssg#nord_tex_10A18C3224DEBF94C357">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="2" type="texture" texture="tracksplit.pssg#pikes_leaf_flat_normal">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="3" type="texture" texture="tracksplit.pssg#pikes_source_sky_671509709523DCE9845D">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="4" type="texture" texture="tracksplit.pssg#pikes_source_sun_690712E0532659E7D970">
+</SHADERINPUT>
+    <SHADERINPUT parameterID="5" type="constant" format="float4">
+1.023017903e-004 1.023017903e-004 6.592480540e-001 3.019282222e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="6" type="constant" format="float4">
+2.749543346e-004 1.040098286e-004 9.397853017e-001 2.049775608e-002 </SHADERINPUT>
+    <SHADERINPUT parameterID="7" type="constant" format="float3">
+8.352627754e-001 7.373803854e-001 6.656000018e-001 </SHADERINPUT>
+    <SHADERINPUT parameterID="8" type="constant" format="float">
+1.059999943e+000 </SHADERINPUT>
+    <SHADERINPUT parameterID="9" type="constant" format="float">
+1.000000000e+000 </SHADERINPUT>
+  </SHADERINSTANCE>
+</contracts>
