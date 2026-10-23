@@ -1,14 +1,19 @@
-DiRT2VR — Experimental
+DiRT2VR 0.17.143 — Experimental
 
 LATEST CHANGES (since 0.17.135)
 
-- Keep your chosen chase-camera angle while driving: enable Keep camera angle beside Free look under Controls → General, then save and relaunch. Automatic return remains the default.
-- Zoom farther out in chase views: Controls → General → Chase camera → Maximum zoom out offers 180–1000% in 10% steps. The default stays at 180%; try 500% or 750% for a wider view. Mouse wheel and replay stick/key zoom share the limit. Save and relaunch to apply. The range above 500% still needs driving and headset testing.
-- Filter the stock-car list by class in both car pickers. Choose All or one of the seven stock classes; Rookie, Pro and All-Star selection stays unchanged. CUSTOM cars keep their separate list.
-- Added the seven missing stock prize cars: MG Metro 6R4, Dallenbach Special, Ford RS200 Evolution, Mitsubishi Pajero Dakar 1993, Toyota Stadium Truck, 1995 Subaru Impreza WRX STI and Dodge Power Wagon. Direct practice and Race can use their installed assets regardless of career unlocks. They also have individual VR seat settings.
-- Fixed seat adjustment becoming unavailable during VR startup. Metro seat movement, saving and relaunch passed a Quest 3/VDXR headset check; the other added cars still need headset acceptance.
+- Pikes Peak in the normal launcher: the prepared tarmac layout and three gravel conditions now support desktop Direct practice, staggered Rally with up to three AI opponents, and Grid race with up to seven.
+- Pikes Peak Full Replay: record your runs, watch them from the finish menu and save them for later, with cameras positioned for the course. Requires Pikes pack 1.0.7 or later; enable Replays → Record full replays before launching.
+- Seven more stock cars to drive: the MG Metro 6R4, Dallenbach Special, Ford RS200 Evolution, Mitsubishi Pajero Dakar 1993, Toyota Stadium Truck, 1995 Subaru Impreza WRX STI and Dodge Power Wagon are now selectable in Direct practice and Race, with individual VR seat settings. Career unlocks and progress are unaffected.
+- More chase-camera freedom: keep your chosen viewing angle while driving or in chase replays, and zoom farther out with a maximum distance of up to 1000% of normal. Find Keep camera angle beside Free look, and Maximum zoom out, under Controls → General → Chase camera. Save and relaunch to apply.
+- Find cars faster: filter either stock-car picker by class while retaining your selected Rookie, Pro or All-Star grade.
+- VR seat adjustment fix: corrected seat controls becoming unavailable during headset startup.
+- Optional Pikes Peak depth of field: turn off distance blur under Graphics → Main → Supported track effects for a sharper view.
+- Clearer replay warnings: if an external track does not support Full Replay, the launcher explains what to change before launch.
 
-No car or track rebuild is needed for these changes. Career progress and garage ownership are unchanged.
+Pikes Peak needs a separately installed track pack; track assets are not included in this download. VR and LAN are unavailable for Pikes Peak, and crowd lighting remains uneven.
+
+Full-course Pikes replay-camera checks, chase zoom above 500%, and VR checks for the other added cars remain pending; the MG Metro seat adjustment has passed a headset check. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
