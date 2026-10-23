@@ -223,7 +223,7 @@ Direct practice bypasses the trailer menus and loads a player-driven car. Launch
 
 ### Saved replays (Experimental)
 
-In **Launcher → Replays**, switch **Record full replays** to **ON** before launching Direct practice or Race, including CUSTOM tracks. It starts **OFF**, including after updating. The choice saves immediately and applies on the next launch. OFF skips full-race recording and saving; instant replay, rewind and playback of existing saved replays remain available. Normal Launch retains the game's own replay behavior.
+In **Launcher → Replays**, switch **Record full replays** to **ON** before launching Direct practice or Race, including CUSTOM tracks that support Full Replay. It starts **OFF**, including after updating. The choice saves immediately and applies on the next launch. OFF skips full-race recording and saving; instant replay, rewind and playback of existing saved replays remain available. Normal Launch retains the game's own replay behavior.
 
 With recording on, **Full Replay** is available in the finish menu and **Save last replay** keeps the latest completed run. Turn on **Auto-save completed runs** to keep every completed attempt; it starts off and is unavailable while recording is off. Unfinished runs cannot be saved.
 
@@ -275,7 +275,7 @@ Presets are shared between installations on this Windows account. **Save setting
 
 **Depth of field** under **Graphics → Main → Supported track effects** controls distance blur on supported Pikes Peak layouts. It is **On** by default and applies to every car, including chase look-back. Uncheck it for a sharper scene, then save and relaunch. Other tracks retain their original effects. Original files are restored after play.
 
-Prepared **Pikes Peak** packs appear under **CUSTOM tracks → External**. Tarmac and the three gravel conditions support desktop Direct practice, Rally with up to three AI opponents, and Grid race with up to seven. Track assets are installed separately; see [prepared external packs](EXTERNAL_PACKS.md). Full Replay, VR and LAN are unavailable for this pack. Uneven crowd lighting remains a known issue.
+Prepared **Pikes Peak** packs appear under **CUSTOM tracks → External**. Tarmac and the three gravel conditions support desktop Direct practice, Rally with up to three AI opponents, and Grid race with up to seven. Pikes pack **1.0.7 or later** also supports Full Replay recording, finish-menu playback and saved replays; enable **Record full replays** under **Replays** before launching. Track assets are installed separately; see [prepared external packs](EXTERNAL_PACKS.md). VR and LAN are unavailable for this pack. Uneven crowd lighting remains a known issue.
 
 **Borderless fullscreen** is off by default. Enable it to fill the primary monitor at its current desktop resolution without window borders. It applies to desktop Normal Launch, Practice, Race and multiplayer HOST/JOIN, including desktop quick launch. The separate **VSync** toggle defaults to **On** for desktop play, with or without borderless. Turn it off for uncapped rendering. Both settings are temporary and the original display settings are restored after play. Windows resolution/refresh rate and VR launches stay unchanged. Save and relaunch to apply; Restore defaults turns it off.
 

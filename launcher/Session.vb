@@ -73,6 +73,7 @@ Public Class Session
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         DirectRaceStart.Resolve(settings) ' Reject unsupported explicit choices before preparing any files.
         If customTrack Then CustomTracks.TrackPacks.ForLayout(settings.TrackId).RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.CarCode, settings.GridOpponents, settings.SessionLaps, DirectRaceStart.Resolve(settings))
+        If settings.DirectMode Then ReplayContent.RequireTrackSupport(context, settings.TrackId, replayId IsNot Nothing)
         If CustomCars.CarPack.IsCustom(settings.CarCode) Then
             CustomCars.CarPack.RequireMode(settings.TrackId, vr, settings.LaunchMode, settings.GridOpponents)
             If replayId IsNot Nothing Then Throw New IOException("Custom-car replay playback is not yet supported.")

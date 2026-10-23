@@ -22,6 +22,16 @@ End Class
 Public Module ReplayContent
     Private Const MaximumFiles As Integer = 8192
 
+    Public Sub RequireTrackSupport(context As InstallContext, trackId As String, Optional playback As Boolean = False)
+        If Not TrackPacks.IsLayout(trackId) Then Return
+        Dim external = TrackPacks.ForLayout(trackId).External
+        If external Is Nothing OrElse external.Manifest.Replay Then Return
+        If playback Then Throw New IOException("This track pack does not support saved Full Replay playback. Install a compatible version of the pack.")
+        If ReplayPreferences.Load(context).RecordFullReplay Then
+            Throw New IOException("This track pack does not support Full Replay. Turn off Record full replays in Replays before launching.")
+        End If
+    End Sub
+
     Public Function Capture(context As InstallContext, trackId As String, launchConfig As XDocument, Optional token As CancellationToken = Nothing) As ReplayContentRequirement
         Dim result As New ReplayContentRequirement With {.TrackId = trackId, .Cars = RecordedCars(trackId, launchConfig)}
         If TrackPacks.IsLayout(trackId) Then result.CustomTrackVersion = LayoutVersion(TrackPacks.ForLayout(trackId).Read(context.GameRoot, False, token), trackId)

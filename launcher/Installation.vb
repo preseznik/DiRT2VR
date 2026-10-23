@@ -109,7 +109,7 @@ Public Module Worker
                     Run(context, "recover")
                     If external IsNot Nothing Then
                         CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1, raceStart)
-                        If Not external.Manifest.Replay AndAlso (replayId IsNot Nothing OrElse ReplayPreferences.Load(context).RecordFullReplay) Then Throw New IOException("This external pack does not support Full Replay. Turn Record full replays off before launching.")
+                        ReplayContent.RequireTrackSupport(context, trackId, replayId IsNot Nothing)
                         external.Verify() : external.RequireDependencies(context.GameRoot)
                     End If
                     If externalCar IsNot Nothing Then

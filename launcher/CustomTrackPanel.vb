@@ -116,6 +116,7 @@ Public Class CustomTrackPanel
         End If
         Try
             TrackPacks.Get(currentPack.Id).RequireMode(layout.Id, vr, mode, DirectCast(cars.SelectedItem, PracticeCar).Code, count, laps.Value, SelectedRaceStart)
+            ReplayContent.RequireTrackSupport(context, layout.Id)
             Return ""
         Catch ex As IOException
             Return ex.Message

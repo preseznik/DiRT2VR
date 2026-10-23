@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Enable Full Replay recording, finish-menu playback and saved replays for Pikes Peak pack 1.0.7, with cameras positioned for the course. Report unsupported external-pack replay settings before preparing game files.
+
 - Add desktop support for prepared Pikes Peak tarmac and gravel packs in the normal game folder, with Direct practice, Rally (up to three AI) and Grid race (up to seven AI). Retain the approved scenery, lighting, collisions and summit introductions. Track assets are installed separately; uneven crowd lighting remains a known issue.
 - Add a Depth of field checkbox under Graphics → Main → Supported track effects for Pikes Peak. Its camera effects and graphics changes are restored after each session. Other tracks keep their existing effects.
 
