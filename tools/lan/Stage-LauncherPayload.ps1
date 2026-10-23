@@ -23,7 +23,7 @@ New-Item -ItemType Directory -Path "$source/tools/lan" -Force | Out-Null
 foreach ($name in @('CMakeLists.txt','build.cmd','profile.cpp','profile.h','profile_names.cpp','profile_names.h','SaveRoutePath.h','integration.cpp','intro.cpp','intro.h','browser.cpp','diagnostics.cpp','diagnostics.h','xlln-integration.patch')) {
     Copy-Item -LiteralPath (Join-Path $PSScriptRoot $name) -Destination "$source/tools/lan"
 }
-Copy-Item -LiteralPath "$repo/src/common.cpp","$repo/src/common.h" -Destination "$source/src"
+Copy-Item -LiteralPath "$repo/src/common.cpp","$repo/src/common.h","$repo/src/pikes_scope.cpp","$repo/src/pikes_scope.h","$repo/src/pikes_layouts.h" -Destination "$source/src"
 Copy-Item -LiteralPath "$PSScriptRoot/SOURCE-README.md" -Destination "$source/README.md"
 [ordered]@{
     Version=$Version
