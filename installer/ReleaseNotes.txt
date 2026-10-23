@@ -1,25 +1,24 @@
 DiRT2VR 0.17.145 — Experimental
 
-LATEST CHANGES (since 0.17.135)
+LATEST CHANGES (since 0.17.143)
 
-- Build Pikes Peak from your own DiRT Rally installation: choose tarmac or gravel in Daylight, Lower sun and Overcast conditions. Detailed scenery, shadows, collisions and summit introductions carry over; existing prepared packs and their replays are preserved.
-- Pikes Peak in desktop and native VR: Direct practice, staggered Rally with up to three AI opponents, and Grid race with up to seven.
-- Pikes Peak Full Replay: record your runs, watch them from the finish menu and save them for later, with cameras positioned for the course. Enable Replays → Record full replays before launching.
-- Seven more stock cars to drive: the MG Metro 6R4, Dallenbach Special, Ford RS200 Evolution, Mitsubishi Pajero Dakar 1993, Toyota Stadium Truck, 1995 Subaru Impreza WRX STI and Dodge Power Wagon are now selectable in Direct practice and Race, with individual VR seat settings. Career unlocks and progress are unaffected.
-- More chase-camera freedom: keep your chosen viewing angle while driving or in chase replays, and zoom farther out with a maximum distance of up to 1000% of normal. Find Keep camera angle beside Free look, and Maximum zoom out, under Controls → General → Chase camera. Save and relaunch to apply.
-- Find cars faster: filter either stock-car picker by class while retaining your selected Rookie, Pro or All-Star grade.
-- VR seat adjustment fix: corrected seat controls becoming unavailable during headset startup.
-- Optional Pikes Peak depth of field: turn off distance blur under Graphics → Main → Supported track effects for a sharper view.
-- Clearer replay warnings: if an external track does not support Full Replay, the launcher explains what to change before launch.
+- Pikes Peak in VR: enables VR practice, Rally and Grid race on all four layouts—tarmac and the three gravel conditions. Existing prepared packs require version 1.0.8 or later.
+- Build Pikes Peak from your own DiRT Rally installation: select CUSTOM tracks → Source: DiRT Rally → Pikes Peak → Build and install…, then choose your source game folder and desired layouts. Existing prepared packs and their saved replays are preserved.
 
-To install Pikes Peak, select it under CUSTOM tracks, choose your DiRT Rally folder and use Build and install. Track assets are generated locally and are not included in this download. Existing prepared packs still work; they need version 1.0.8 for VR and 1.0.7 for Full Replay. LAN is unavailable for Pikes Peak, and crowd lighting remains uneven.
-
-Full-course Pikes replay-camera checks, chase zoom above 500%, and VR checks for the other added cars remain pending; the MG Metro seat adjustment has passed a headset check. Please report any problems.
+Track assets are built locally and aren’t included in the download. LAN remains unavailable for Pikes Peak, and uneven crowd lighting remains a known issue.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.17.143 — Experimental (changes since 0.17.135)
+
+- Prepared Pikes Peak packs in the normal launcher, with desktop practice, staggered Rally and Grid race, plus Full Replay recording, finish-menu playback and saved replays.
+- Seven more stock cars: MG Metro 6R4, Dallenbach Special, Ford RS200 Evolution, Mitsubishi Pajero Dakar 1993, Toyota Stadium Truck, 1995 Subaru Impreza WRX STI and Dodge Power Wagon.
+- Keep your chosen chase-camera angle and zoom out up to 1000% of normal. Filter stock-car pickers by class.
+- Fix VR seat controls becoming unavailable during headset startup.
+- Optional Pikes Peak distance-blur control and clearer warnings for unsupported external-track replay settings.
 
 0.17.135 — Experimental (changes since 0.17.131)
 

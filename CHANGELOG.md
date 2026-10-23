@@ -8,6 +8,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.145 — 2026-10-24 — Experimental
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.145)
+
 - Add Pikes Peak to Build and install using your own DiRT Rally files: tarmac and three gravel lighting conditions, with selective rebuild and removal. Carry over the prepared pack's scenery corrections, collisions, summit introductions, replay cameras and desktop/VR practice, Rally and Grid race modes. Existing prepared packs and their replays are preserved.
 
 - Enable native VR practice, Rally and Grid race on all four prepared Pikes Peak layouts with pack 1.0.8.
