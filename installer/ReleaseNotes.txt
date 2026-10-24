@@ -2,8 +2,10 @@ DiRT2VR 0.17.147 — Experimental
 
 LATEST CHANGES (since 0.17.145)
 
-- Fix Pikes Peak VR startup showing a misleading LAN/profile configuration error, including Grid race launches.
-- Fix source-built Pikes Peak layouts failing to launch in VR with an "original game file: postprocess/effects.xml" error. Update the launcher; your installed layouts do not need rebuilding.
+- Fix Pikes Peak VR launches being blocked by a misleading LAN/profile configuration error, including Grid races.
+- Fix Pikes Peak tracks built from your own DiRT Rally installation failing to launch in VR with an “original game file: postprocess/effects.xml” error.
+
+Update DiRT2VR and launch again—your installed Pikes Peak layouts do not need rebuilding.
 
 ============================================================
 EARLIER RELEASES
