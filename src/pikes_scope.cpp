@@ -42,8 +42,7 @@ bool PikesScope() {
         const auto config=PracticePath(lab);if(config.empty())return false;
         std::ifstream input(config,std::ios::binary|std::ios::ate);auto size=input.tellg();if(size<=0 || size>4096)return false;
         input.seekg(0);std::string xml(static_cast<size_t>(size),'\0');if(!input.read(xml.data(),xml.size()))return false;
-        wchar_t headset[8]{};
-        if(GetEnvironmentVariableW(L"DIRT2VR_HEADSET",headset,8)==1 && headset[0]==L'1')return false;
+        // Desktop and VR use the same verified collision archive and launch contract.
         wchar_t discipline[16]{};
         const auto disciplineLength=GetEnvironmentVariableW(L"DIRT2VR_STAGGERED_DISCIPLINE",discipline,16);
         const bool race=disciplineLength==5 && !wcscmp(discipline,L"rally");

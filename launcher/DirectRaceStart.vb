@@ -28,8 +28,12 @@ Public Module DirectRaceStart
 
     Public Sub Configure(start As ProcessStartInfo, settings As VrSettings)
         start.Environment.Remove("DIRT2VR_STAGGERED_DISCIPLINE")
-        If Resolve(settings) = "staggered" Then
+        start.Environment.Remove("DIRT2VR_PIKES_GRID_RACE")
+        Dim format = Resolve(settings)
+        If format = "staggered" Then
             start.Environment("DIRT2VR_STAGGERED_DISCIPLINE") = RaceCatalog.Current.Track(settings.TrackId).Event.ToLowerInvariant()
+        ElseIf settings.LaunchMode = "race" AndAlso DepthOfFieldTransaction.Supports(settings.TrackId) Then
+            start.Environment("DIRT2VR_PIKES_GRID_RACE") = "1"
         End If
     End Sub
 End Module
