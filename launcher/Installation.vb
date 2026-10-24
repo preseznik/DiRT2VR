@@ -126,7 +126,7 @@ Public Module Worker
                 End If
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then
                     CustomTracks.TrackPacks.ForLayout(trackId).RequireMode(trackId, operation <> "prepare-desktop", If(opponents = 0, "practice", "race"), carCode, opponents, 1, raceStart)
-                    CustomTracks.SessionFiles.Recover(context.GameRoot)
+                    RecoverCustomContent(context)
                     RaceCatalog.Current.ValidateInstalled(context, trackId, carCode)
                     Dim receipt = CustomTracks.TrackPacks.ForLayout(trackId).Read(context.GameRoot, False)
                     CustomTrackService.RequireLauncher(receipt)
@@ -138,16 +138,19 @@ Public Module Worker
                     ' Verify the installed car before the VR transaction adjusts its camera.
                     prepareCar = CustomCars.CarSession.Plan(context.GameRoot, trackId, progress, If(opponents > 0 AndAlso CustomTracks.TrackPacks.Pikes.IsLayout(trackId), raceStart, Nothing))
                 End If
-                Dim transaction As New AssetTransaction(context)
-                Dim settings = VrSettings.Load(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode), carGrade:=carGrade, preparedConfig:=preparedConfig, raceStart:=raceStart)
-                If prepareCar IsNot Nothing Then
-                    prepareCar()
-                ElseIf CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
+                Dim prepareContent As Action = prepareCar
+                If prepareContent Is Nothing AndAlso CustomTracks.TrackPacks.IsLayout(trackId) AndAlso external Is Nothing Then
                     Dim progressPatch As Func(Of Byte(), Byte()) = Nothing
                     If CustomTracks.TrackPacks.Nordschleife.IsLayout(trackId) Then progressPatch = AddressOf NordschleifeProgress.Patch
-                    CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch, pikesRaceStart:=If(opponents > 0 AndAlso CustomTracks.TrackPacks.Pikes.IsLayout(trackId), raceStart, Nothing))
+                    prepareContent = Sub() CustomTracks.SessionFiles.Prepare(context.GameRoot, trackId, progressPatch, pikesRaceStart:=If(opponents > 0 AndAlso CustomTracks.TrackPacks.Pikes.IsLayout(trackId), raceStart, Nothing))
                 End If
+                ' Pikes supplies effects.xml: install it after validation but before
+                ' VR modifies it. Other content keeps its existing preparation order.
+                Dim contentBeforeVr = operation = "prepare" AndAlso CustomTracks.TrackPacks.Pikes.IsLayout(trackId)
+                Dim transaction As New AssetTransaction(context)
+                Dim settings = VrSettings.Load(context)
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode), carGrade:=carGrade, preparedConfig:=preparedConfig, raceStart:=raceStart, prepareContent:=If(contentBeforeVr, prepareContent, Nothing))
+                If Not contentBeforeVr Then prepareContent?.Invoke()
                 ' Layer exposure after VR motion-blur changes; recover in the reverse order.
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
             Case "prepare-lan"
@@ -179,7 +182,7 @@ Public Module Worker
                 Call (New FilterTransaction(context)).Recover()
                 Call (New RoadSheenTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
-                CustomTracks.SessionFiles.Recover(context.GameRoot)
+                RecoverCustomContent(context)
                 CustomTracks.PackInstallation.Recover(context.GameRoot)
                 CustomCars.CarInstallation.Recover(context.GameRoot)
                 Call (New DirectMenus(context)).Recover()
@@ -195,7 +198,7 @@ Public Module Worker
                 Call (New FilterTransaction(context)).Recover()
                 Call (New RoadSheenTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
-                CustomTracks.SessionFiles.Recover(context.GameRoot)
+                RecoverCustomContent(context)
                 CustomTracks.PackInstallation.Install(context.GameRoot, IO.Path.Combine(CustomTrackService.Staging(context, workId), "conversion/install"), BuildInfo.Version)
             Case "remove-custom"
                 If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before removing a track; external content recovery is pending.")
@@ -205,6 +208,7 @@ Public Module Worker
                 Call (New FilterTransaction(context)).Recover()
                 Call (New RoadSheenTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
+                RecoverCustomContent(context)
                 CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
                 CustomCars.CarInstallation.Recover(context.GameRoot)
@@ -213,10 +217,14 @@ Public Module Worker
                 Call (New FilterTransaction(context)).Recover()
                 Call (New RoadSheenTransaction(context)).Recover()
                 Call (New ButtermilkPostProcess(context)).Recover()
-                CustomTracks.SessionFiles.Recover(context.GameRoot)
+                RecoverCustomContent(context)
                 Call (New Installation(context)).RemoveProxy()
             Case Else : Throw New ArgumentException("Unknown file operation.")
         End Select
+    End Sub
+    Private Sub RecoverCustomContent(context As InstallContext)
+        Call (New AssetTransaction(context)).RecoverBeforeCustomContent()
+        CustomTracks.SessionFiles.Recover(context.GameRoot)
     End Sub
     Public Sub Invoke(context As InstallContext, operation As String, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional quiet As Boolean = False, Optional workId As String = Nothing, Optional postProcessTest As String = Nothing, Optional filterSnapshot As String = Nothing, Optional replayId As String = Nothing, Optional roadSheen As Integer = -1, Optional carGrade As String = "rookie", Optional raceStart As String = "auto")
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}

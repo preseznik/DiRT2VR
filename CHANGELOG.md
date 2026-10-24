@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.146 — 2026-10-25 — Experimental
+
+- Fix source-built Pikes Peak layouts failing to launch in VR with an "original game file: postprocess/effects.xml" error. Existing layouts do not need rebuilding.
+
 ## 0.17.145 — 2026-10-24 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.145)

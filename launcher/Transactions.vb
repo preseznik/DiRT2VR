@@ -90,7 +90,7 @@ Public Class AssetTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False, Optional recordReplay As Boolean = True, Optional carGrade As String = "rookie", Optional preparedConfig As Byte() = Nothing, Optional raceStart As String = "auto")
+    Public Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing, Optional carCode As String = "sti", Optional trackId As String = Nothing, Optional configOnly As Boolean = False, Optional opponents As Integer = 0, Optional opponentCars As String = "same", Optional preserveChase As Boolean = False, Optional replay As ReplayManifest = Nothing, Optional captureReplay As Boolean = False, Optional recordReplay As Boolean = True, Optional carGrade As String = "rookie", Optional preparedConfig As Byte() = Nothing, Optional raceStart As String = "auto", Optional prepareContent As Action = Nothing)
         context.RequireClosed()
         If opponents < 0 OrElse opponents > 7 OrElse (opponents > 0 AndAlso trackId Is Nothing) Then Throw New IOException("Invalid race grid selection.")
         If Pending Then Throw New IOException("Asset recovery is pending.")
@@ -113,12 +113,16 @@ Public Class AssetTransaction
             configBytes = Text.Encoding.UTF8.GetBytes(replay.EventConfig().ToString())
         End If
         ' Version 4 journals own only a desktop practice config, with no asset entries.
-        Dim journal As New AssetJournal With {.Version = If(configOnly, 4, 5), .CarCode = carCode, .SettingsJournal = If(configOnly, "", IO.Path.Combine(context.UserRoot, "graphics-pending.json"))}
+        ' Version 6 owns VR changes layered over a managed custom-content session.
+        Dim journal As New AssetJournal With {.Version = If(configOnly, 4, If(prepareContent Is Nothing, 5, 6)), .CarCode = carCode, .SettingsJournal = If(configOnly, "", IO.Path.Combine(context.UserRoot, "graphics-pending.json"))}
         If captureReplay AndAlso recordReplay AndAlso trackId IsNot Nothing AndAlso replay Is Nothing Then
             ' Verify installed content before VR, custom-session, filter and Bloom
             ' layers deliberately change files. Keep the actual selected AI roster.
             journal.RecordingContent = ReplayContent.Capture(context, trackId, System.Xml.Linq.XDocument.Parse(Text.Encoding.UTF8.GetString(configBytes)))
         End If
+        ' Content and replay validation above must see the untouched installation.
+        ' Back up the track's effects below, then apply VR changes on top of them.
+        prepareContent?.Invoke()
         Dim targets = AssetNames(journal)
         Dim replacements As New List(Of Byte())
         For i = 0 To If(configOnly, 0, Names.Length) - 1
@@ -156,13 +160,20 @@ Public Class AssetTransaction
             afterWrite?.Invoke(entry.Index)
         Next
     End Sub
+    Public Sub RecoverBeforeCustomContent()
+        Files.NoLinks(folder)
+        If Not Pending Then Return
+        Dim journal = Files.ReadJson(Of AssetJournal)(journalPath)
+        If journal Is Nothing Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
+        If journal.Version = 6 Then Recover()
+    End Sub
     Public Sub Recover()
         context.RequireClosed()
         Files.NoLinks(folder)
         If Not Pending Then Return
         Dim journal = Files.ReadJson(Of AssetJournal)(journalPath)
         Dim parsed As Guid
-        If journal Is Nothing OrElse Not {1, 2, 3, 4, 5}.Contains(journal.Version) OrElse Not Guid.TryParseExact(journal.Id, "N", parsed) OrElse journal.Entries Is Nothing OrElse journal.Entries.Any(Function(e) e Is Nothing OrElse (journal.Version = 5 AndAlso Not e.ReadOnlyFile.HasValue)) Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
+        If journal Is Nothing OrElse Not {1, 2, 3, 4, 5, 6}.Contains(journal.Version) OrElse Not Guid.TryParseExact(journal.Id, "N", parsed) OrElse journal.Entries Is Nothing OrElse journal.Entries.Any(Function(e) e Is Nothing OrElse (journal.Version >= 5 AndAlso Not e.ReadOnlyFile.HasValue)) Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
         Dim expectedEntries = If(journal.Version = 4, 0, Names.Length)
         If journal.Entries.Count <> expectedEntries OrElse journal.Entries.Select(Function(e) e.Index).Distinct().Count() <> expectedEntries OrElse (journal.Version = 4 AndAlso String.IsNullOrEmpty(journal.PracticeConfigHash)) Then Throw New IOException("Invalid asset recovery journal. Backups were preserved.")
         Dim targets = AssetNames(journal)
@@ -182,7 +193,7 @@ Public Class AssetTransaction
             Else
                 Throw New IOException("Recovery conflict: " & target & Environment.NewLine & "Its contents changed outside DiRT2VR. The current file and original backup were preserved.")
             End If
-            If journal.Version = 5 Then CustomTracks.SafeFiles.SetReadOnly(target, entry.ReadOnlyFile.Value)
+            If journal.Version >= 5 Then CustomTracks.SafeFiles.SetReadOnly(target, entry.ReadOnlyFile.Value)
             Files.SaveJson(journalPath, journal)
         Next
         If journal.Version >= 2 AndAlso journal.PracticeConfigHash <> "" Then
@@ -212,7 +223,7 @@ Public Class AssetTransaction
     End Function
     Public Function PracticeConfig() As String
         Dim journal = Files.ReadJson(Of AssetJournal)(journalPath)
-        If Not {2, 3, 4, 5}.Contains(journal.Version) OrElse String.IsNullOrEmpty(journal.PracticeConfigHash) Then Throw New IOException("Practice preparation is incomplete.")
+        If Not {2, 3, 4, 5, 6}.Contains(journal.Version) OrElse String.IsNullOrEmpty(journal.PracticeConfigHash) Then Throw New IOException("Practice preparation is incomplete.")
         Dim relative = ConfigRelative(journal)
         Dim filename = IO.Path.Combine(context.GameRoot, relative)
         Files.NoLinks(filename)

@@ -1,16 +1,20 @@
-DiRT2VR 0.17.145 — Experimental
+DiRT2VR 0.17.146 — Experimental
 
-LATEST CHANGES (since 0.17.143)
+LATEST CHANGES (since 0.17.145)
 
-- Pikes Peak in VR: enables VR practice, Rally and Grid race on all four layouts—tarmac and the three gravel conditions. Existing prepared packs require version 1.0.8 or later.
-- Build Pikes Peak from your own DiRT Rally installation: select CUSTOM tracks → Source: DiRT Rally → Pikes Peak → Build and install…, then choose your source game folder and desired layouts. Existing prepared packs and their saved replays are preserved.
-
-Track assets are built locally and aren’t included in the download. LAN remains unavailable for Pikes Peak, and uneven crowd lighting remains a known issue.
+- Fix source-built Pikes Peak layouts failing to launch in VR with an "original game file: postprocess/effects.xml" error. Update the launcher; your installed layouts do not need rebuilding.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.17.145 — Experimental (changes since 0.17.143)
+
+- Pikes Peak in VR: enables VR practice, Rally and Grid race on all four layouts—tarmac and the three gravel conditions. Existing prepared packs require version 1.0.8 or later.
+- Build Pikes Peak from your own DiRT Rally installation: select CUSTOM tracks → Source: DiRT Rally → Pikes Peak → Build and install…, then choose your source game folder and desired layouts. Existing prepared packs and their saved replays are preserved.
+
+Track assets are built locally and aren’t included in the download. LAN remains unavailable for Pikes Peak, and uneven crowd lighting remains a known issue.
 
 0.17.143 — Experimental (changes since 0.17.135)
 
