@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix Direct practice/Race closing during startup when Photo Mode is enabled. Report an error if the game exits before its rendering window opens.
+
 ## 0.17.150 — 2026-10-25 — Experimental
 
 - Add experimental PHOTO MODE to offline DX11 driving pause menus. Fly with keyboard/mouse or an Xbox controller while the race stays frozen, with stereo and independent head tracking in VR. Start behind the car and return to the paused menu before resuming the previous driving view. Desktop practice/AI Race and headset/controller practice checks passed; broader track coverage remains experimental.

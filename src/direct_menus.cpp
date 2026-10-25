@@ -138,9 +138,8 @@ bool EnableDirectReturn() {
         if(!(*p>=L'0'&&*p<=L'9')&&!(*p>=L'a'&&*p<=L'f')) return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
     const unsigned char guard[]={0x8b,0x41,0x24,0x83,0xec,0x0c,0xa8,0x02};
-    const unsigned char replayGuard[]={0x51,0x56,0x8d,0x44,0x24,0x04,0x50,0x8b,0xf1};
+    // EnableMenuChecks owns the shared callback guard and accepts our existing hook.
     if(!SupportedHost() || std::memcmp(base+0x22ca10,guard,sizeof(guard)) ||
-       std::memcmp(base+0x23ec70,replayGuard,sizeof(replayGuard)) ||
        *reinterpret_cast<void**>(base+0xf18f94)!=base+0x22ca10) return false;
     returnEvent=OpenEventW(EVENT_MODIFY_STATE,FALSE,name);
     if(!returnEvent) return false;

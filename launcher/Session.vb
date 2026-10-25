@@ -509,6 +509,7 @@ Public Class Session
                     Thread.Sleep(8)
                 Loop
                 If Not seenGame Then Throw New IOException("The game did not start. Check that your normal DiRT 2 installation works.")
+                If Not gameWindowReady Then Throw New IOException("DiRT 2 closed during startup before opening the game window. Check the latest session log for details.")
             End Using
             recording.Complete()
             If recording.Warning <> "" Then displayWarning = recording.Warning
