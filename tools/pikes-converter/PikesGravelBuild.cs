@@ -100,7 +100,14 @@ internal static class PikesGravelBuild
         progress?.Invoke(100,"Layout assets verified");
         Console.WriteLine("Pikes Peak source assets generated: "+output);
     }
-    static void CopyMissing(string source,string target){if(!File.Exists(target))File.Copy(source,target);}
+    static void CopyMissing(string source,string target)
+    {
+        if(File.Exists(target))return;
+        // These private build copies are edited later; do not inherit read-only source attributes.
+        using var input=File.OpenRead(source);
+        using var output=new FileStream(target,FileMode.CreateNew,FileAccess.Write);
+        input.CopyTo(output);
+    }
     // Only used inside this newly created candidate, never on an installed game.
     internal static void ReplacePssg(EgoEngineLibrary.Graphics.Pssg.PssgFile file,string path)
     {using var stream=File.Create(path);file.Save(stream);}

@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix Pikes Peak builds failing with "Access to the path is denied" when original DiRT 2 files are marked read-only. Applies to Standard and Performance builds; original game files keep their existing attributes.
+
 ## 0.17.152 — 2026-10-26 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.152)
