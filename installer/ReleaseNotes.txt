@@ -1,16 +1,23 @@
-DiRT2VR 0.17.150 — Experimental
+DiRT2VR 0.17.151 — Experimental
 
-LATEST CHANGES (since 0.17.149)
+LATEST CHANGES (since 0.17.150)
 
-- PHOTO MODE in offline DX11 race and practice pause menus: move freely around the frozen scene with WASD and mouse or an Xbox controller. VR includes stereo rendering and independent head tracking.
-- Press Esc, B or Start to return to pause, then Continue to restore your driving view. Network races and replay playback are excluded.
+- Fix Direct practice and Race closing during startup when Photo Mode is enabled, on desktop and in VR.
+- Show an error if DiRT 2 closes before its game window opens, instead of reporting a normal session end.
 
-Desktop practice/AI Race and headset/controller practice have been checked. Broader track coverage remains experimental. No track or car rebuild is required.
+No track or car rebuild is required.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.17.150 — Experimental (changes since 0.17.149)
+
+- PHOTO MODE in offline DX11 race and practice pause menus: move freely around the frozen scene with WASD and mouse or an Xbox controller. VR includes stereo rendering and independent head tracking.
+- Press Esc, B or Start to return to pause, then Continue to restore your driving view. Network races and replay playback are excluded.
+
+Desktop practice/AI Race and headset/controller practice have been checked. Broader track coverage remains experimental. No track or car rebuild is required.
 
 0.17.149 — Experimental (changes since 0.17.148)
 

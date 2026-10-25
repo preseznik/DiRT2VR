@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.151 — 2026-10-25 — Experimental
+
 - Fix Direct practice/Race closing during startup when Photo Mode is enabled. Report an error if the game exits before its rendering window opens.
 
 ## 0.17.150 — 2026-10-25 — Experimental
