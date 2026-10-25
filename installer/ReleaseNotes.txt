@@ -1,16 +1,23 @@
-DiRT2VR 0.17.147 — Experimental
+DiRT2VR 0.17.148 — Experimental
 
-LATEST CHANGES (since 0.17.145)
+LATEST CHANGES (since 0.17.147)
 
-- Fix Pikes Peak VR launches being blocked by a misleading LAN/profile configuration error, including Grid races.
-- Fix Pikes Peak tracks built from your own DiRT Rally installation failing to launch in VR with an “original game file: postprocess/effects.xml” error.
+- If a supported OpenXR add-on such as ReShade or OBS Mirror fails to load, DiRT2VR names it and offers Disable and retry. Review the affected features before accepting.
+- Optionally remember a successful bypass for this installation. Re-enable it through Settings → VR compatibility → Manage layer bypasses. Other applications keep their settings.
 
-Update DiRT2VR and launch again—your installed Pikes Peak layouts do not need rebuilding.
+The new confirmation and remembered-choice flow still need affected-user testing. No track or car rebuild is required.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.17.147 — Experimental (changes since 0.17.145)
+
+- Fix Pikes Peak VR launches being blocked by a misleading LAN/profile configuration error, including Grid races.
+- Fix Pikes Peak tracks built from your own DiRT Rally installation failing to launch in VR with an “original game file: postprocess/effects.xml” error.
+
+Update DiRT2VR and launch again—your installed Pikes Peak layouts do not need rebuilding.
 
 0.17.145 — Experimental (changes since 0.17.143)
 
