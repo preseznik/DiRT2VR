@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.149 — 2026-10-25 — Experimental
+
 - Show a small progress window after Launch or Launch VR, with the current startup step and elapsed time until the game window appears. Hide dismisses the progress window while startup continues.
 
 ## 0.17.148 — 2026-10-25 — Experimental

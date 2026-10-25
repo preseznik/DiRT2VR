@@ -1,16 +1,23 @@
-DiRT2VR 0.17.148 — Experimental
+DiRT2VR 0.17.149 — Experimental
 
-LATEST CHANGES (since 0.17.147)
+LATEST CHANGES (since 0.17.148)
 
-- If a supported OpenXR add-on such as ReShade or OBS Mirror fails to load, DiRT2VR names it and offers Disable and retry. Review the affected features before accepting.
-- Optionally remember a successful bypass for this installation. Re-enable it through Settings → VR compatibility → Manage layer bypasses. Other applications keep their settings.
+- Launch and Launch VR now show the current startup step and elapsed time until the game window appears. Hide, Escape or closing the popup dismisses it while startup continues.
+- The desktop launcher stays visible during preparation and minimizes when the game window appears.
 
-The new confirmation and remembered-choice flow still need affected-user testing. No track or car rebuild is required.
+Desktop startup has been checked; VR progress still needs headset testing. No track or car rebuild is required.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.17.148 — Experimental (changes since 0.17.147)
+
+- If a supported OpenXR add-on such as ReShade or OBS Mirror fails to load, DiRT2VR names it and offers Disable and retry. Review the affected features before accepting.
+- Optionally remember a successful bypass for this installation. Re-enable it through Settings → VR compatibility → Manage layer bypasses. Other applications keep their settings.
+
+The new confirmation and remembered-choice flow still need affected-user testing. No track or car rebuild is required.
 
 0.17.147 — Experimental (changes since 0.17.145)
 
