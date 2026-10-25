@@ -1,6 +1,21 @@
-DiRT2VR 0.17.151 — Experimental
+DiRT2VR 0.17.152 — Experimental
 
-LATEST CHANGES (since 0.17.147)
+LATEST CHANGES (since 0.17.151)
+
+- Pike's Peak rebuilds use smaller geometry buffers and fewer opaque depth draws while keeping the same scenery.
+- Optional Build performance version: keep every tree and nearby detail, use simpler source trees in the distance, and reduce eligible scenery textures. Available for all four layouts on desktop and in VR; installed layouts show Standard or Performance.
+- Improved video-memory diagnostics help investigate slowdowns and graphics-device failures.
+
+After updating: use Manage → Rebuild from source for the Pike's Peak layouts you want to update. Check Build performance version for the optional distant-tree and texture changes. Existing layouts remain usable until rebuilt; unselected layouts are preserved.
+
+A short tarmac forest headset drive passed appearance and tracking checks. Broader driving and 4 GB graphics cards still need testing. Intermittent VR startup hangs remain unresolved.
+
+============================================================
+EARLIER RELEASES
+Highlights only; the latest changes are listed above.
+============================================================
+
+0.17.151 — Experimental (changes since 0.17.147)
 
 - Photo Mode (experimental): pause an offline race or practice session and choose PHOTO MODE to explore the frozen scene with a free camera. Use keyboard/mouse or an Xbox controller, with stereo depth and head tracking in VR. Press Esc, B or Start to return to the pause menu, then Continue to resume driving.
 - Help with VR startup problems: if a supported add-on such as ReShade or OpenXR OBS Mirror blocks VR startup, the launcher identifies it and offers Disable and retry. You can remember a successful choice and undo it under Settings → VR compatibility. Other applications keep their settings.
@@ -10,11 +25,6 @@ LATEST CHANGES (since 0.17.147)
 Photo Mode requires DX11 and is unavailable in multiplayer and replay playback. Broader track coverage and the new VR startup/recovery flow still need testing. Please report any problems.
 
 No track or car rebuild is required.
-
-============================================================
-EARLIER RELEASES
-Highlights only; the latest changes are listed above.
-============================================================
 
 0.17.150 — Experimental (changes since 0.17.149)
 
