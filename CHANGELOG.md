@@ -8,19 +8,16 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.151 — 2026-10-25 — Experimental
 
-- Fix Direct practice/Race closing during startup when Photo Mode is enabled. Report an error if the game exits before its rendering window opens.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.151)
 
-## 0.17.150 — 2026-10-25 — Experimental
+- **Photo Mode (experimental):** pause an offline race or practice session and choose **PHOTO MODE** to explore the frozen scene with a free camera. Use keyboard/mouse or an Xbox controller, with stereo depth and head tracking in VR. Press **Esc**, **B** or **Start** to return to the pause menu, then Continue to resume driving.
+- **Help with VR startup problems:** if a supported add-on such as ReShade or OpenXR OBS Mirror blocks VR startup, the launcher identifies it and offers **Disable and retry**. You can remember a successful choice and undo it under **Settings → VR compatibility**. Other applications keep their settings.
+- **Clearer launch progress:** see the current startup step and elapsed time until the game window opens. Hiding the progress window lets startup continue. If the game closes before opening its window, the launcher now reports an error.
+- **Direct launch fix:** prevent Direct practice and Race closing during startup when Photo Mode is enabled, on desktop and in VR.
 
-- Add experimental PHOTO MODE to offline DX11 driving pause menus. Fly with keyboard/mouse or an Xbox controller while the race stays frozen, with stereo and independent head tracking in VR. Start behind the car and return to the paused menu before resuming the previous driving view. Desktop practice/AI Race and headset/controller practice checks passed; broader track coverage remains experimental.
+Photo Mode requires DX11 and is unavailable in multiplayer and replay playback. Broader track coverage and the new VR startup/recovery flow still need testing. Please report any problems.
 
-## 0.17.149 — 2026-10-25 — Experimental
-
-- Show a small progress window after Launch or Launch VR, with the current startup step and elapsed time until the game window appears. Hide dismisses the progress window while startup continues.
-
-## 0.17.148 — 2026-10-25 — Experimental
-
-- When an OpenXR add-on prevents VR startup, identify the failing layer and offer to disable it for DiRT2VR and retry when a supported bypass is available. Remember successful bypasses only by choice, and re-enable layers through Settings → VR compatibility. Other applications keep their settings. Automated recovery checks cover the reported ReShade and OBS Mirror failures; the new launcher flow still needs affected-user testing.
+**No track or car rebuild is required.**
 
 ## 0.17.147 — 2026-10-25 — Experimental
 

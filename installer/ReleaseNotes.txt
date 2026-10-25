@@ -1,9 +1,13 @@
 DiRT2VR 0.17.151 — Experimental
 
-LATEST CHANGES (since 0.17.150)
+LATEST CHANGES (since 0.17.147)
 
-- Fix Direct practice and Race closing during startup when Photo Mode is enabled, on desktop and in VR.
-- Show an error if DiRT 2 closes before its game window opens, instead of reporting a normal session end.
+- Photo Mode (experimental): pause an offline race or practice session and choose PHOTO MODE to explore the frozen scene with a free camera. Use keyboard/mouse or an Xbox controller, with stereo depth and head tracking in VR. Press Esc, B or Start to return to the pause menu, then Continue to resume driving.
+- Help with VR startup problems: if a supported add-on such as ReShade or OpenXR OBS Mirror blocks VR startup, the launcher identifies it and offers Disable and retry. You can remember a successful choice and undo it under Settings → VR compatibility. Other applications keep their settings.
+- Clearer launch progress: see the current startup step and elapsed time until the game window opens. Hiding the progress window lets startup continue. If the game closes before opening its window, the launcher now reports an error.
+- Direct launch fix: prevent Direct practice and Race closing during startup when Photo Mode is enabled, on desktop and in VR.
+
+Photo Mode requires DX11 and is unavailable in multiplayer and replay playback. Broader track coverage and the new VR startup/recovery flow still need testing. Please report any problems.
 
 No track or car rebuild is required.
 
