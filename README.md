@@ -50,7 +50,9 @@ Start the launcher normally, **not with Run as administrator**. In protected gam
 
 **Launch** starts regular desktop play; **Launch VR** starts headset play. Both use the selected Normal Launch, Direct practice or Race mode. The launch buttons stay on the left; Save settings, Restore original files and Open logs stay on the right.
 
-The launcher minimizes after starting either mode and stays minimized during play. Reopen it from the taskbar when needed; the background session manager continues running.
+A small progress window shows the current startup step and elapsed time until the game window appears. **Hide**, Escape or closing this window dismisses it while startup continues. Runtime selection and VR compatibility prompts still need your response. Once the game opens, its own loading screens take over.
+
+The launcher stays visible during preparation. For desktop play, it minimizes when the game window appears. Reopen it from the taskbar when needed; the background session manager continues running.
 
 DiRT 2 may briefly fall behind other windows as it replaces its startup window. The launcher hands focus to the replacement once; the brief drop followed by immediate return has been confirmed on desktop.
 

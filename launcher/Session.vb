@@ -9,6 +9,43 @@ Public Class SessionStatus
     Public Property DisplayWarning As String = ""
     Public Property UpdatedUtc As DateTime = DateTime.UtcNow
     Public Property ErrorDetails As String = ""
+    Public Property StartupMessage As String = ""
+    Public Property GameWindowReady As Boolean
+    Public Sub Save(path As String)
+        Files.NoLinks(path)
+        Directory.CreateDirectory(IO.Path.GetDirectoryName(path))
+        Dim temporary = path & "." & Guid.NewGuid().ToString("N") & ".tmp"
+        Try
+            Using stream As New FileStream(temporary, FileMode.CreateNew, FileAccess.Write, FileShare.None)
+                System.Text.Json.JsonSerializer.Serialize(stream, Me, Files.JsonOptions)
+                stream.Flush(True)
+            End Using
+            ' Move-overwrite can fail with an open reader even when it shares deletion.
+            ' Replace supports polling readers and preserves the existing file's ACL.
+            If File.Exists(path) Then
+                File.Replace(temporary, path, Nothing)
+            Else
+                File.Move(temporary, path)
+            End If
+        Finally
+            If File.Exists(temporary) Then File.Delete(temporary)
+        End Try
+    End Sub
+    Public Shared Function Read(path As String) As SessionStatus
+        Try
+            ' Readers must allow the session's atomic rename while polling on Windows.
+            Using stream As New FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite Or FileShare.Delete)
+                Return System.Text.Json.JsonSerializer.Deserialize(Of SessionStatus)(stream, Files.JsonOptions)
+            End Using
+        Catch ex As FileNotFoundException
+            Return Nothing
+        Catch ex As DirectoryNotFoundException
+            Return Nothing
+        Catch ex As IOException When (ex.HResult And &HFFFF) = 32 OrElse (ex.HResult And &HFFFF) = 33
+            ' Replace briefly holds the new file exclusively; try again next poll.
+            Return Nothing
+        End Try
+    End Function
     Public Function FailureDescription(gameRunning As Boolean) As String
         ' Older sessions embedded a process-state claim in their saved error message.
         Dim detail = Message.Replace("DiRT 2 is still running. Close it, then use Restore original files.", "").Trim()
@@ -27,6 +64,8 @@ Public Class Session
     Private ReadOnly lanJoinTarget As String
     Private focusStatus As String = ""
     Private displayWarning As String = ""
+    Private startupMessage As String = ""
+    Private gameWindowReady As Boolean
     Private desktopBounds As Drawing.Rectangle?
     Private customTrack As Boolean
     Private ReadOnly postProcessTest As String = "normal"
@@ -69,7 +108,12 @@ Public Class Session
         If multiplayer OrElse joinTarget IsNot Nothing Then settings.LaunchMode = "lan"
     End Sub
     Private Sub Status(state As String, Optional message As String = "", Optional failure As Exception = Nothing)
-        Files.SaveJson(IO.Path.Combine(context.UserRoot, "session.json"), New SessionStatus With {.State = state, .Message = message & If(displayWarning = "", "", " " & displayWarning), .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus, .DisplayWarning = displayWarning, .ErrorDetails = If(settings.LoggingEnabled AndAlso failure IsNot Nothing, failure.ToString(), "")})
+        Dim value As New SessionStatus With {.State = state, .Message = message & If(displayWarning = "", "", " " & displayWarning), .ProcessId = Environment.ProcessId, .StartupFocus = focusStatus, .DisplayWarning = displayWarning, .ErrorDetails = If(settings.LoggingEnabled AndAlso failure IsNot Nothing, failure.ToString(), ""), .StartupMessage = startupMessage, .GameWindowReady = gameWindowReady}
+        value.Save(IO.Path.Combine(context.UserRoot, "session.json"))
+    End Sub
+    Private Sub Progress(message As String, Optional state As String = "Preparing")
+        startupMessage = message
+        Status(state, message)
     End Sub
     Public Sub Run(Optional vr As Boolean = True, Optional lanVr As Boolean = False)
         DirectRaceStart.Resolve(settings) ' Reject unsupported explicit choices before preparing any files.
@@ -92,10 +136,11 @@ Public Class Session
             If Not held Then Throw New IOException("A DiRT2VR session or recovery is already running.")
             Dim graphics As New GraphicsTransaction(context)
             Try
+                Progress("Checking the game installation…", "Checking")
                 Dim runtime As VrRuntimeInfo = Nothing
                 If vr AndAlso (settings.LaunchMode <> "lan" OrElse lanVr) Then
                     context.ValidateGame() : context.RequireClosed()
-                    Status("Choosing runtime")
+                    Progress(If(settings.RuntimeMode = "ask", "Choose a VR runtime to continue…", "Finding the selected VR runtime…"), "Choosing runtime")
                     runtime = VrRuntime.Choose(context, settings)
                     If runtime Is Nothing Then
                         Status("Ready", "VR launch cancelled")
@@ -106,30 +151,33 @@ Public Class Session
                     settings.Runtime = runtime.ManifestPath : settings.RuntimeMode = runtime.Mode
                 End If
                 If replayId IsNot Nothing Then
-                    Status("Checking", "Checking replay cars and track")
+                    Progress("Checking replay cars and track…", "Checking")
                     Dim library As New ReplayLibrary(context)
                     preparedReplay = library.Prepare(library.PathFor(replayId))
                     Files.SaveJson(IO.Path.Combine(preparedReplay.Folder, "event.json"), preparedReplay.Manifest)
                 End If
+                Progress("Checking the player profile…", "Checking")
                 profile = New ProfileSession(context)
+                Progress("Checking graphics settings…", "Checking")
                 filterSnapshot = FilterLaunch.Create(context, settings, vr AndAlso (settings.LaunchMode <> "lan" OrElse lanVr))
                 Do
-                    Status("Checking")
+                    Progress("Checking the game installation and selected content…", "Checking")
                     context.ValidateGame() : context.RequireClosed()
                     If settings.DirectMode Then PrototypeTrack.ValidateMode(settings.TrackId, settings.LaunchMode, vr)
                     ' Preserve desktop behavior for older LAN quick-launch commands; VR is an explicit choice.
                     If settings.LaunchMode = "lan" Then vr = vr AndAlso lanVr
                     desktopBounds = Nothing
                     If Not vr Then
-                        Status("Restoring", "Checking for an interrupted session")
+                        Progress("Restoring files from any interrupted session…", "Restoring")
                         graphics.Recover() : Worker.Invoke(context, "recover")
+                        Progress("Checking graphics files…", "Checking")
                         FilterLaunch.ValidateFiles(context, filterSnapshot)
                         If settings.BorderlessDesktop Then
                             If Screen.PrimaryScreen Is Nothing Then Throw New IOException("The primary display is unavailable.")
                             desktopBounds = Screen.PrimaryScreen.Bounds
-                            Status("Preparing", "Desktop borderless fullscreen")
                         End If
                         If File.Exists(context.GraphicsPath) OrElse settings.BorderlessDesktop Then
+                            Progress("Applying desktop graphics settings…")
                             graphics.PrepareDesktop(desktopBounds.GetValueOrDefault().Width, desktopBounds.GetValueOrDefault().Height, settings.DesktopVSync)
                         Else
                             ' Let a first Normal Launch create its graphics file; apply the preference on the next session.
@@ -146,13 +194,15 @@ Public Class Session
                         Return
                     End If
                     If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once to create graphics settings.")
-                    Status("Restoring", "Checking for an interrupted session")
+                    Progress("Restoring files from any interrupted session…", "Restoring")
                     graphics.Recover() : Worker.Invoke(context, "recover")
+                    Progress("Checking graphics files…", "Checking")
                     FilterLaunch.ValidateFiles(context, filterSnapshot)
+                    Progress("Preparing VR support…")
                     Worker.Invoke(context, "setup")
-                    Status("Preparing")
                     Dim logFolder = CreateSessionLog(True)
                     If Not ProbeRuntime(logFolder, runtime) Then
+                        Progress("Restoring session files…", "Restoring")
                         graphics.Recover() : Worker.Invoke(context, "recover")
                         Status("Ready", "VR launch cancelled")
                         Return
@@ -166,6 +216,7 @@ Public Class Session
                         DirectRaceStart.Configure(start, settings)
                         CarSetup.Configure(start, settings)
                         CarGrades.Configure(start, settings)
+                        Progress(If(settings.DirectMode, "Preparing the selected track and cars…", "Preparing game files…"))
                         If settings.DirectMode Then
                             Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade, raceStart:=DirectRaceStart.Resolve(settings))
                             start.ArgumentList.Add("-demo")
@@ -175,7 +226,9 @@ Public Class Session
                         Else
                             Worker.Invoke(context, "prepare")
                         End If
+                        Progress("Applying VR graphics settings…")
                         graphics.Prepare(settings)
+                        Progress("Preparing the player profile…")
                         profile.Configure(start, settings.LaunchMode = "lan")
                         profile.Prepare(settings.LaunchMode = "lan")
                         ' LAN validates states.bin against the game's original checksum.
@@ -210,6 +263,10 @@ Public Class Session
             Catch ex As Exception
                 Dim message = ex.Message
                 If Not context.GameRunning() Then
+                    Try : Progress("Restoring session files after a startup error…", "Restoring")
+                    Catch
+                        ' A progress-write failure must not prevent recovery.
+                    End Try
                     Try
                         graphics.Recover()
                     Catch recovery As Exception
@@ -285,11 +342,15 @@ Public Class Session
         SteeringAnimationLaunch.RequireDesktopRenderer(context, settings)
         ChaseCameraLaunch.RequireDesktopRenderer(context, settings)
         BackgroundPlayLaunch.RequireDesktopRenderer(context, settings)
-        If driving.RequiresNativeHooks OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 OrElse settings.DesktopShadowDistance <> 0 Then Worker.Invoke(context, "setup")
+        If driving.RequiresNativeHooks OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 OrElse settings.DesktopShadowDistance <> 0 Then
+            Progress("Preparing game support…")
+            Worker.Invoke(context, "setup")
+        End If
         If settings.LaunchMode = "lan" Then
-            Status("Preparing", "LAN multiplayer — use the game's Multiplayer / LAN menus")
+            Progress("Preparing LAN multiplayer…")
             Dim lanStart = LanSession.StartInfo(context, settings.SkipIntroduction, lanJoinTarget)
             ConfigureLogging(lanStart, CreateSessionLog(False))
+            Progress("Preparing the player profile…")
             profile.Configure(lanStart, True)
             profile.Prepare(True)
             WaitForGame(lanStart)
@@ -305,14 +366,16 @@ Public Class Session
             Dim document = XmlPatches.Read(File.ReadAllBytes(context.GraphicsPath))
             Dim dx = TryCast(document.SelectSingleNode("/hardware_settings_config/graphics_card/directx"), Xml.XmlElement)
             If dx Is Nothing OrElse Not String.Equals(dx.GetAttribute("forcedx9"), "false", StringComparison.OrdinalIgnoreCase) Then Throw New IOException("Desktop Direct practice and Race require the game's DX11 renderer (forcedx9=false). Use Game menus for normal DX9 play.")
+            Progress("Preparing game support…")
             Worker.Invoke(context, "setup")
-            Status("Preparing", If(settings.LaunchMode = "race", "Desktop race", "Desktop practice"))
+            Progress("Preparing the selected track and cars…")
             Worker.Invoke(context, "prepare-desktop", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade, raceStart:=DirectRaceStart.Resolve(settings))
             config = New AssetTransaction(context).PracticeConfig()
         End If
         Dim start = DesktopStartInfo(context, config, logFolder)
         CustomCarService.ConfigureProcess(start, settings)
         If FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation Then ConfigureLogging(start, logFolder)
+        Progress("Preparing the player profile…")
         profile.Configure(start, False)
         profile.Prepare(False)
         PrepareMenus()
@@ -330,8 +393,10 @@ Public Class Session
     End Function
     Private Sub PrepareMenus()
         If settings.DirectMode Then
+            Progress("Preparing game menus…")
             Worker.Invoke(context, If(settings.SkipStartupMovies, "prepare-direct-menus-movies", "prepare-direct-menus"), replayId:=PreparedReplayId())
         ElseIf settings.SkipStartupMovies AndAlso settings.LaunchMode <> "lan" Then
+            Progress("Preparing startup movies…")
             Worker.Invoke(context, "prepare-movies")
         End If
     End Sub
@@ -356,11 +421,19 @@ Public Class Session
     End Function
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
         ' Last effect layer for every launch path, including LAN and return to menus.
-        If filterSnapshot IsNot Nothing Then Worker.Invoke(context, "prepare-filter", filterSnapshot:=filterSnapshot)
-        If Not BloomTransaction.Enabled(settings, start) Then Worker.Invoke(context, "prepare-bloom")
+        If filterSnapshot IsNot Nothing Then
+            Progress("Applying graphics filters…")
+            Worker.Invoke(context, "prepare-filter", filterSnapshot:=filterSnapshot)
+        End If
+        If Not BloomTransaction.Enabled(settings, start) Then
+            Progress("Applying bloom settings…")
+            Worker.Invoke(context, "prepare-bloom")
+        End If
         If settings.DirectMode AndAlso DepthOfFieldTransaction.Supports(settings.TrackId) Then
+            Progress("Applying track graphics settings…")
             Worker.Invoke(context, "prepare-dof", carCode:=settings.CarCode, trackId:=settings.TrackId)
         End If
+        Progress("Preparing controls and replay settings…")
         NordschleifeProgress.Configure(start, settings)
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         FlashbackLaunch.Configure(start, settings)
@@ -378,14 +451,21 @@ Public Class Session
             ' Recovery owns this executable change just like other session files.
             Dim vr = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
             If settings.DirectMode AndAlso Nordschleife.RoadSheen.Supports(settings.TrackId) AndAlso Not If(vr, settings.VrRoadSheenDefault, settings.DesktopRoadSheenDefault) Then
-                Status("Preparing", "Adjusting road sheen")
+                Progress("Adjusting road sheen…")
                 Worker.Invoke(context, "prepare-road-sheen", trackId:=settings.TrackId, roadSheen:=If(vr, settings.VrRoadSheen, settings.DesktopRoadSheen))
             End If
-            If settings.ExperimentalLaa Then Worker.Invoke(context, "prepare-laa")
-            If settings.DirectMode AndAlso DepthOfFieldTransaction.Supports(settings.TrackId) Then Worker.Invoke(context, "prepare-pikes", trackId:=settings.TrackId)
+            If settings.ExperimentalLaa Then
+                Progress("Applying compatibility settings…")
+                Worker.Invoke(context, "prepare-laa")
+            End If
+            If settings.DirectMode AndAlso DepthOfFieldTransaction.Supports(settings.TrackId) Then
+                Progress("Applying track graphics settings…")
+                Worker.Invoke(context, "prepare-pikes", trackId:=settings.TrackId)
+            End If
             Dim focus As New StartupFocus(context, vr)
+            Progress("Starting the game…")
             Using child = Process.Start(start)
-                Status("Running")
+                Progress("Waiting for the game window…", "Running")
                 Dim seenGame As Boolean
                 Dim gameAlive As Boolean = True
                 Dim nextProcessCheck = DateTime.MinValue
@@ -393,6 +473,11 @@ Public Class Session
                 Do
                     Application.DoEvents() : poll?.Invoke()
                     If DateTime.UtcNow >= nextProcessCheck Then
+                        ' Readiness is independent of focus permission and its 30-second expiry.
+                        If Not gameWindowReady AndAlso GameWindow.Find(IO.Path.Combine(context.GameRoot, "dirt2_game.exe")) <> IntPtr.Zero Then
+                            gameWindowReady = True
+                            Progress("Game window opened", "Running")
+                        End If
                         recording.Poll()
                         If recording.Warning <> "" AndAlso displayWarning <> recording.Warning Then
                             displayWarning = recording.Warning : Status("Running")
@@ -456,9 +541,15 @@ Public Class Session
         Dim confirm As Func(Of VrLayerRecoveryRequest, VrLayerRecoveryChoice) = Nothing
         If Not Environment.GetCommandLineArgs().Contains("--quiet") AndAlso Environment.UserInteractive Then
             LauncherAppearance.Modern = settings.ModernInterface
-            confirm = AddressOf VrLayerRecoveryForm.Confirm
+            confirm = Function(request)
+                          Progress("Review the VR compatibility prompt to continue…")
+                          Return VrLayerRecoveryForm.Confirm(request)
+                      End Function
         End If
-        If Not preflight.Check(Function(layers) VrPreflight.RunProbe(executable, runtime, layers), confirm) Then Return False
+        If Not preflight.Check(Function(layers)
+                                  Progress("Checking the VR headset…")
+                                  Return VrPreflight.RunProbe(executable, runtime, layers)
+                              End Function, confirm) Then Return False
         vrLayerBypasses.Clear() : vrLayerBypasses.AddRange(preflight.Bypasses)
         SavePreflightReport(context, preflight.Report, Nothing)
         If preflight.Warning <> "" Then displayWarning = (displayWarning & " " & preflight.Warning).Trim()

@@ -75,13 +75,6 @@ Public Class StartupFocus
     End Function
     <DllImport("user32.dll")> Private Shared Function SetWindowPos(window As IntPtr, after As IntPtr, x As Integer, y As Integer, width As Integer, height As Integer, flags As UInteger) As Boolean
     End Function
-    Private Delegate Function EnumWindowCallback(window As IntPtr, data As IntPtr) As Boolean
-    <DllImport("user32.dll")> Private Shared Function EnumWindows(callback As EnumWindowCallback, data As IntPtr) As Boolean
-    End Function
-    <DllImport("user32.dll")> Private Shared Function GetWindowThreadProcessId(window As IntPtr, ByRef processId As UInteger) As UInteger
-    End Function
-    <DllImport("user32.dll", CharSet:=CharSet.Unicode)> Private Shared Function GetClassName(window As IntPtr, name As Text.StringBuilder, length As Integer) As Integer
-    End Function
     <DllImport("user32.dll")> Private Shared Function GetLastInputInfo(ByRef value As LastInput) As Boolean
     End Function
     Private ReadOnly policy As StartupFocusPolicy
@@ -106,18 +99,7 @@ Public Class StartupFocus
         If Not GetLastInputInfo(input) Then
             policy.Finished = True : policy.Outcome = "Input state unavailable" : Return
         End If
-        Dim window As IntPtr
-        For Each game In Process.GetProcessesByName("dirt2_game")
-            Using game
-                Try
-                    If String.Equals(game.MainModule.FileName, executable, StringComparison.OrdinalIgnoreCase) Then
-                        window = If(vrLaunch, FindGameWindow(CUInt(game.Id)), game.MainWindowHandle)
-                    End If
-                Catch ex As Exception When TypeOf ex Is ComponentModel.Win32Exception OrElse TypeOf ex Is InvalidOperationException
-                    ' Process can exit during startup or recovery.
-                End Try
-            End Using
-        Next
+        Dim window = GameWindow.Find(executable, vrLaunch)
         If policy.ShouldActivate(window, GetForegroundWindow(), input.Tick, Environment.TickCount64) Then
             Dim request = policy.Outcome
             policy.ActivationResult(If(vrLaunch, ActivateWindow(window), SetForegroundWindow(window)))
@@ -126,24 +108,6 @@ Public Class StartupFocus
             activationHistory &= request & ": " & policy.Outcome & $" (HWND={window.ToInt64():X}, visible={IsWindowVisible(window)}, minimized={IsIconic(window)}); "
         End If
     End Sub
-    Private Shared Function FindGameWindow(processId As UInteger) As IntPtr
-        Dim result As IntPtr
-        EnumWindows(Function(window, data)
-                        Dim owner As UInteger
-                        GetWindowThreadProcessId(window, owner)
-                        If owner = processId AndAlso IsWindowVisible(window) Then
-                            Dim name As New Text.StringBuilder(256)
-                            GetClassName(window, name, name.Capacity)
-                            ' InitialLoading and offline-provider windows can precede
-                            ' the real EGO renderer and briefly own foreground focus.
-                            If name.ToString().StartsWith("NeonClass_", StringComparison.Ordinal) Then
-                                result = window : Return False
-                            End If
-                        End If
-                        Return True
-                    End Function, IntPtr.Zero)
-        Return result
-    End Function
     ' Production calls only after verifying the game executable and startup policy.
     ' Also exercised with owned test windows, including minimized/maximized ones.
     Public Shared Function ActivateWindow(window As IntPtr) As Boolean

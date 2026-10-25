@@ -94,6 +94,8 @@ Public Class MainForm
     Private ReadOnly actualResolution As New Label With {.Name = "ActualResolution", .AutoSize = True}
     Private nextResolutionRefresh As DateTime
     Private lastStatus As String = ""
+    Private launchProgress As LaunchProgressMonitor
+    Private launchEndedMessage As String = ""
     Private ReadOnly toggleButton As New Button With {.AutoSize = True}
     Private ReadOnly recenterButton As New Button With {.AutoSize = True}
     Private ReadOnly desktopButton As New Button With {.Text = "Launch", .AutoSize = True, .Name = "LaunchDesktop"}
@@ -202,6 +204,7 @@ Public Class MainForm
                                   If tabs.SelectedIndex = 1 AndAlso Not busy AndAlso Not scanning AndAlso DateTime.UtcNow >= nextScan Then RefreshServerList()
                               End Sub
         AddHandler FormClosed, Sub()
+                                  launchProgress?.Dispose() : launchProgress = Nothing
                                   updateCancellation.Cancel() : updateCancellation.Dispose()
                                   timer.Stop() : timer.Dispose() : inputTimer.Stop() : inputTimer.Dispose() : input.Dispose()
                                   Icon.Dispose()
@@ -1111,20 +1114,37 @@ Public Class MainForm
         runtimeChoice.SelectedIndex = Array.IndexOf(VrRuntime.Modes, saved.RuntimeMode)
     End Sub
     Private Sub Spawn(ParamArray arguments As String())
+        Dim launching = arguments.Contains("--launch")
+        If launching AndAlso (busy OrElse launchProgress IsNot Nothing) Then Return
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In arguments.Concat({"--game", context.GameRoot})
             start.ArgumentList.Add(arg)
         Next
         If arguments.Contains("--launch") AndAlso Not arguments.Contains("--desktop") AndAlso Environment.GetCommandLineArgs().Contains("--diagnostic-capture") Then start.ArgumentList.Add("--diagnostic-capture")
-        Using child = Process.Start(start)
-            If arguments.Contains("--launch") Then
-                StartupFocus.AllowSetForegroundWindow(CUInt(child.Id))
-                ' Keep the foreground parent available for the VR startup handoff.
-                ' Minimizing now activates another app, which can revoke Windows'
-                ' foreground permission before the game renderer exists.
-                If arguments.Contains("--desktop") Then WindowState = FormWindowState.Minimized
-            End If
-        End Using
+        If Not launching Then
+            Using child = Process.Start(start)
+            End Using
+            Return
+        End If
+        ' Hold the busy state before the child has written its first session.json.
+        busy = True : launchEndedMessage = ""
+        RefreshLaunchAvailability() : tabs.Enabled = False
+        Dim desktop = arguments.Contains("--desktop") OrElse (arguments.Contains("--lan-host") OrElse arguments.Contains("--lan-join")) AndAlso Not arguments.Contains("--vr")
+        Try
+            Dim monitor = New LaunchProgressMonitor(Me, context, Not desktop, start)
+            launchProgress = monitor
+            AddHandler monitor.Completed, Sub()
+                                              If launchProgress IsNot monitor OrElse IsDisposed Then Return
+                                              launchProgress = Nothing
+                                              If monitor.State.EndedWithoutStatus Then launchEndedMessage = "Launch ended before the game window appeared"
+                                              ' Keep foreground permission available until the renderer exists.
+                                              If desktop AndAlso monitor.State.WindowReady Then WindowState = FormWindowState.Minimized
+                                              RefreshStatus()
+                                          End Sub
+        Catch
+            launchProgress?.Dispose() : launchProgress = Nothing
+            RefreshStatus() : Throw
+        End Try
     End Sub
     Private Sub RefreshBindings()
         For action = 0 To 8
@@ -1225,12 +1245,17 @@ Public Class MainForm
                 customTracks?.RefreshBestTime()
             End If
             Dim statusPath = IO.Path.Combine(context.UserRoot, "session.json")
-            Dim status = If(File.Exists(statusPath), Files.ReadJson(Of SessionStatus)(statusPath), Nothing)
-            busy = False
+            Dim status As SessionStatus = Nothing, statusError As String = ""
+            Try
+                status = SessionStatus.Read(statusPath)
+            Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.Text.Json.JsonException
+                statusError = ex.Message
+            End Try
+            busy = launchProgress IsNot Nothing OrElse (status Is Nothing AndAlso context.GameRunning())
             If status IsNot Nothing AndAlso status.State <> "Ready" AndAlso status.State <> "Failed" Then
                 Try
                     Using owner = Process.GetProcessById(status.ProcessId)
-                        busy = Not owner.HasExited AndAlso owner.ProcessName = Process.GetCurrentProcess().ProcessName
+                        busy = busy OrElse (Not owner.HasExited AndAlso owner.ProcessName = Process.GetCurrentProcess().ProcessName)
                     End Using
                 Catch
                 End Try
@@ -1244,21 +1269,27 @@ Public Class MainForm
                 lastStatus = currentStatus : RefreshDisplayRate()
                 RefreshRuntimePreference()
             End If
-            If busy Then
-                stateLabel.Text = status.State & If(status.Message <> "", ": " & status.Message, "")
+            If launchProgress IsNot Nothing Then
+                stateLabel.Text = launchProgress.State.Message
+            ElseIf launchEndedMessage <> "" Then
+                stateLabel.Text = launchEndedMessage
+            ElseIf busy Then
+                stateLabel.Text = If(status Is Nothing, "Game is running; session status is unavailable.", status.State & If(status.Message <> "", ": " & status.Message, ""))
             ElseIf New AssetTransaction(context).Pending OrElse New GraphicsTransaction(context).Pending OrElse New LanTransaction(context).Pending OrElse New StartupMovies(context).Pending OrElse New DirectMenus(context).Pending OrElse CustomTrackService.RecoveryPending(context) Then
                 stateLabel.Text = "Recovery pending. Close the game and choose Restore original files."
             ElseIf status IsNot Nothing AndAlso status.State = "Failed" Then
                 stateLabel.Text = status.FailureDescription(context.GameRunning())
             ElseIf status IsNot Nothing AndAlso status.DisplayWarning <> "" Then
                 stateLabel.Text = "Ready — " & status.DisplayWarning
+            ElseIf statusError <> "" Then
+                stateLabel.Text = statusError
             ElseIf Not File.Exists(IO.Path.Combine(context.GameRoot, "dirt2_game.exe")) Then
                 stateLabel.Text = "Extract the complete package into your DiRT 2 game folder."
             Else
                 stateLabel.Text = "Ready — the game build and files will be checked before launching."
             End If
         Catch ex As Exception
-            stateLabel.Text = ex.Message
+            stateLabel.Text = If(launchProgress IsNot Nothing, launchProgress.State.Message, If(launchEndedMessage <> "", launchEndedMessage, ex.Message))
         End Try
     End Sub
 End Class
