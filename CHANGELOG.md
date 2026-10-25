@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.150 — 2026-10-25 — Experimental
+
 - Add experimental PHOTO MODE to offline DX11 driving pause menus. Fly with keyboard/mouse or an Xbox controller while the race stays frozen, with stereo and independent head tracking in VR. Start behind the car and return to the paused menu before resuming the previous driving view. Desktop practice/AI Race and headset/controller practice checks passed; broader track coverage remains experimental.
 
 ## 0.17.149 — 2026-10-25 — Experimental
