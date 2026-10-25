@@ -1,6 +1,7 @@
 #include "draw_distance.h"
 #include "common.h"
 #include "gfwl_compat.h"
+#include "pikes_scope.h"
 #include <array>
 #include <intrin.h>
 
@@ -47,7 +48,7 @@ bool ExtendRoute(void* self) {
     const float clip=Field<float>(self,0x764);
     lod::Scenery ranges{Field<float>(self,0x75c),Field<float>(self,0x760),
         Field<float>(self,0x770),Field<float>(self,0x778)};
-    if(!terrain || !world || !std::isfinite(clip) || clip<1 || !lod::Extend(ranges)) return false;
+    if(!terrain || !world || !std::isfinite(clip) || clip<1 || !lod::Extend(ranges,PikesPerformanceAssets())) return false;
     Field<float>(self,0x75c)=ranges.terrainCull;
     Field<float>(self,0x760)=ranges.worldCull;
     Field<float>(self,0x770)=ranges.terrainDetail;

@@ -6,7 +6,8 @@ public sealed record Fingerprint(string Game, string Path, string Sha256);
 public sealed record PackFile(string Path, long Bytes, string Sha256);
 public sealed record SessionFile(string Path, string OriginalSha256, string InstalledPath);
 public sealed record LayoutSession(string LayoutId, SessionFile[] Files,
-    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Version = null);
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingNull)] string? Version = null,
+    [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] bool PerformanceAssets = false);
 public sealed record PackReceipt(int Schema, string Id, string Version, string MinimumLauncher,
     PackFile[] Files, LayoutSession[] Sessions, Fingerprint[] Sources,
     [property: System.Text.Json.Serialization.JsonIgnore(Condition = System.Text.Json.Serialization.JsonIgnoreCondition.WhenWritingDefault)] bool HighQualityAssets = false);
@@ -218,6 +219,8 @@ public sealed class TrackPack
             throw new IOException("Unsupported custom-track receipt.");
         if (receipt.Schema == 2 && (System.Version.Parse(receipt.MinimumLauncher) < System.Version.Parse(SelectiveBuildLauncher) ||
             receipt.Sessions.Any(s => !SafeFiles.Version(s.Version!)))) throw new IOException("Invalid selective-build receipt.");
+        if (receipt.Sessions.Any(s => s.PerformanceAssets) && Id != "pikes-peak")
+            throw new IOException("Performance assets are supported only for Pike's Peak.");
         if (receipt.Schema == 1 && receipt.Sessions.Any(s => s.Version is not null)) throw new IOException("Invalid legacy layout version.");
         if (receipt.HighQualityAssets && (Id is not ("misty-loch" or "nordschleife") || receipt.Schema != 2 || receipt.Sessions.Length != Layouts.Length ||
             System.Version.Parse(receipt.MinimumLauncher) < System.Version.Parse(Id == "nordschleife" ? TrackPacks.NordHighQualityLauncher : TrackPacks.MistyHighQualityLauncher)))

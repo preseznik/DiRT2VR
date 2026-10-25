@@ -21,6 +21,7 @@ internal sealed record Mesh(string Name, Material Material, bool Physical, Vecto
     internal bool CastShadows { get; init; } = true;
     internal float LodIn { get; init; }
     internal float LodOut { get; init; }
+    internal Vector3? DetailAnchor { get; init; }
     internal Vector4[]? Colors { get; init; }
     internal Vector2[][]? TexCoords { get; init; }
     internal Vector3[]? Binormals { get; init; }

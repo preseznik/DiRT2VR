@@ -36,7 +36,8 @@ internal static class Visuals
     {
         var root = new XElement("root"); element.WriteXml(root); return root.Elements().Single();
     }
-    internal static (Bounds[] Before, Bounds[] After) Build(Scene scene, string donor, string output,bool independentTiles=false)
+    internal static (Bounds[] Before, Bounds[] After) Build(Scene scene, string donor, string output,bool independentTiles=false,
+        bool splitDetailLevels=false)
     {
         var route = Files.Pssg(Path.Combine(donor,"route_1/routesplit.pssg"));
         var roots = route.Elements<PssgNode>().Where(n => n.Id.StartsWith("ROOT_",StringComparison.Ordinal)).Reverse().ToArray();
@@ -203,12 +204,14 @@ internal static class Visuals
             var bounds=new Bounds(new(float.MaxValue),new(float.MinValue));
             foreach(var mesh in scene.FullCourse?VisualBatches.Combine(parts[t]):parts[t])
             {
+                bool inHigh=!splitDetailLevels||mesh.LodIn==0,inLow=!splitDetailLevels||mesh.LodOut==0;
                 string id="nord_RDS_"+meshId++;var writer=new RenderDataSourceWriter(id);
                 var grass=GrassMaterial.Read(mesh.Material);
                 for(int i=0;i<mesh.Positions.Length;i++)
                 {
                     var p=mesh.Positions[i];bounds=bounds.Union(new(p,p));writer.Positions.Add(p);writer.Normals.Add(mesh.Normals[i]);
                     if(Target(mesh.Material) is "pikes_foliage.fx" or "pikes_canopy_facing.fx" or "pikes_canopy_sheet.fx") { var offset=System.Numerics.Vector2.Abs(UV(1));var radius=new System.Numerics.Vector3(offset.X,offset.Y,offset.X);bounds=bounds.Union(new(p-radius,p+radius)); }
+                    if(Target(mesh.Material)=="pikes_tree_billboard.fx") { var offset=Vector2.Abs(UV(1));var radius=new Vector3(offset.X+offset.Y);bounds=bounds.Union(new(p-radius,p+radius)); }
                     float handedness=mesh.Binormals is null?1:Vector3.Dot(Vector3.Cross(mesh.Normals[i],mesh.Tangents[i]),mesh.Binormals[i])<0?-1:1;
                     writer.Tangents.Add(new(mesh.Tangents[i],handedness));writer.Colors.Add(mesh.Colors?[i]??Vector4.One);
                     Vector2 UV(int set)=>mesh.TexCoords is null?mesh.UV[i]:mesh.TexCoords[Math.Min(set,mesh.TexCoords.Length-1)][i];
@@ -220,7 +223,7 @@ internal static class Visuals
                 // Native decals have their own terrain list and draw after the
                 // road. In HIGH/LOW they are hidden by the opaque terrain pass.
                 var colourNodes=Target(mesh.Material)=="decal_ao.fx"?
-                    new[]{root.ChildElements.OfType<PssgRenderNode>().Single(n=>n.Id=="DECAL_"+root.Id[5..])}:new[]{high,low};
+                    new[]{root.ChildElements.OfType<PssgRenderNode>().Single(n=>n.Id=="DECAL_"+root.Id[5..])}:new[]{high,low}.Where(n=>n==high?inHigh:inLow).ToArray();
                 foreach(var node in colourNodes)
                 {
                     var instance=new PssgRenderStreamInstance(route,node){Id=id+"_"+node.Id,SourceCount=1,Indices="#"+id,StreamCount=0,Shader="#"+ids[mesh.Material.Id]};
@@ -235,7 +238,7 @@ internal static class Visuals
                     depthWriter.Positions.AddRange(mesh.Positions);depthWriter.Indices.AddRange(writer.Indices);
                     var depthSet=new PssgSegmentSet(route,segmentLib){Id=depthId+"_segments",SegmentCount=1};segmentLib.AppendChild(depthSet);
                     depthWriter.Write(depthLayout,depthSet,dataLib,state);depthSet.Segments.Single().Primitive="triangles";
-                    foreach(var node in new[]{high,low})
+                    foreach(var node in new[]{high,low}.Where(n=>n==high?inHigh:inLow))
                     {
                         var batch=root.ChildElements.OfType<PssgRenderNode>().Single(n=>n.Id==node.Id.Insert(node.Id.IndexOf('_'),"BATCH"));
                         var instance=new PssgRenderStreamInstance(route,batch){Id=depthId+"_"+batch.Id,SourceCount=1,Indices="#"+depthId,StreamCount=0,Shader="#batchmaterial"};
@@ -260,7 +263,7 @@ internal static class Visuals
         Files.Save(route,Path.Combine(output,"routesplit.pssg"));
         TerrainPasses.Validate(Files.Pssg(Path.Combine(output,"routesplit.pssg")),parts.Count);
         Files.Json(Path.Combine(output,"materials.json"),shaderMappings);
-        Files.Json(Path.Combine(output,"visuals.json"),new{Meshes=meshId,Tiles=parts.Count,InitialTileSizeMetres=tileSize,DisjointSplitsPopulateAllVisibilityIdentities=!independentTiles,IndependentSpatialTiles=independentTiles,MaterialBatches=scene.FullCourse,TriangleCount=scene.Visuals.Sum(m=>m.Indices.Length/3),OpaqueDepthTriangles=depthTriangles,TextureContainer="shared/tracksplit.pssg",UniqueSourceTextures=textureBytes.Count,SourceTextureBytes=textureBytes.Values.Sum(b=>(long)b.Length),HighestDetailInBothLevels=true,RuntimeValidated=false});
+        Files.Json(Path.Combine(output,"visuals.json"),new{Meshes=meshId,Tiles=parts.Count,InitialTileSizeMetres=tileSize,DisjointSplitsPopulateAllVisibilityIdentities=!independentTiles,IndependentSpatialTiles=independentTiles,MaterialBatches=scene.FullCourse,TriangleCount=scene.Visuals.Sum(m=>m.Indices.Length/3),OpaqueDepthTriangles=depthTriangles,TextureContainer="shared/tracksplit.pssg",UniqueSourceTextures=textureBytes.Count,SourceTextureBytes=textureBytes.Values.Sum(b=>(long)b.Length),HighestDetailInBothLevels=!splitDetailLevels,RuntimeValidated=false});
         return(before,after);
     }
 }

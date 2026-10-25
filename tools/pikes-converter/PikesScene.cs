@@ -45,6 +45,9 @@ internal sealed class PikesScene
     bool foliageOnly;
     bool facingRadialNormals;
     bool rigidFoliageOnly;
+    bool performanceAssets;
+    int treePlacements,billboardPlacements;
+    readonly Dictionary<string,int> billboardModels=[];
     readonly Dictionary<string,Vector2> treeDimensions=[];
     bool roadEnvelope;
     float propRadius=25;
@@ -102,12 +105,13 @@ internal sealed class PikesScene
                 foreach(var g in gates)if((g.Position.X-position.X)*(g.Position.X-position.X)+(g.Position.Z-position.Z)*(g.Position.Z-position.Z)<=radius*radius && MathF.Abs(g.Position.Y-position.Y)<180)return true;
         return false;
     }
-    internal static Scene Read(string game, string dirt2, string output, float length, bool fullCourse=false, int routeIndex=0,float? groundRadius=null,float obstacleRadius=25,float roadRadius=35,PikesSourceProfile? profile=null,PikesGravelMaterials? gravelMaterials=null)
+    internal static Scene Read(string game, string dirt2, string output, float length, bool fullCourse=false, int routeIndex=0,float? groundRadius=null,float obstacleRadius=25,float roadRadius=35,PikesSourceProfile? profile=null,PikesGravelMaterials? gravelMaterials=null,bool performanceAssets=false)
     {
         if (!fullCourse && routeIndex==0 && (!float.IsFinite(length) || length is < 500 or > 1000)) throw new ArgumentException("Prototype length must be 500â€“1000 metres");
         var reader = new PikesScene(game,routeIndex,profile){roadEnvelope=routeIndex!=0||fullCourse,propRadius=obstacleRadius,roadRadius=roadRadius,continuousCorridor=fullCourse};reader.staging=output;
         reader.scene.FullCourse=fullCourse;
         reader.gravelMaterials=gravelMaterials;
+        reader.performanceAssets=performanceAssets;
         if(fullCourse)reader.scene.RoadSurfaces.UnionWith(["MDG+","MDG*"]);
         reader.scene.RoadSurfaces.UnionWith(["COB+","COB*","CON+","CON*","SDT+","SDT*"]);
         reader.Route(length,output);
@@ -140,6 +144,8 @@ internal sealed class PikesScene
         reader.PlacementFile(reader.route+"/trees.bin", "trees.pssg", true);
         reader.PlacementFile(reader.route+"/ornaments.bin", "objects.pssg", false);
         reader.Entities();
+        Files.Json(Path.Combine(output,"tree-detail.json"),new{PerformanceAssets=performanceAssets,TreePlacements=reader.treePlacements,BillboardPlacements=reader.billboardPlacements,
+            FullDetailFallbackPlacements=reader.treePlacements-reader.billboardPlacements,Models=reader.billboardModels,TransitionMetres=performanceAssets?250:1200,PlacementsRemoved=0});
         var combined = VisualBatches.Combine(reader.scene.Visuals).ToArray();
         reader.scene.Visuals.Clear(); reader.scene.Visuals.AddRange(combined);
         foreach (var triangle in reader.scene.Collision) reader.scene.Surfaces[triangle.Material] = reader.scene.Surfaces.GetValueOrDefault(triangle.Material)+1;
@@ -288,7 +294,7 @@ internal sealed class PikesScene
             }
             dimensions=size;
         }
-        int before=scene.Collision.Count;
+        int before=scene.Collision.Count,visualStart=scene.Visuals.Count;
         foreach(var node in Descendants(root).OfType<PssgNode>())
         {
             bool physics=node.Id.EndsWith("_physics",StringComparison.OrdinalIgnoreCase);
@@ -307,6 +313,34 @@ internal sealed class PikesScene
         // Keep the tested source physics meshes. Pikes has no GRID 2
         // objecttypes.pssg library for Mizu's primitive-body reconstruction.
         physicsModelTriangles[root.Id]=physicsModelTriangles.GetValueOrDefault(root.Id)+scene.Collision.Count-before;
+        if(trees&&scene.Visuals.Count>visualStart)
+        {
+            treePlacements++;
+            var nodes=Descendants(root).OfType<PssgRenderNode>().Where(n=>n.Id.EndsWith("_x2",StringComparison.Ordinal)).ToArray();
+            if(performanceAssets&&nodes.Length==1&&nodes[0].RenderInstances.Count()==1)
+            {
+                var draw=nodes[0].RenderInstances.Single();var world=World(nodes[0])*placement;
+                var geometry=PikesTreeBillboards.Geometry(draw,world,scene.Origin,label);
+                if(geometry is not null)
+                {
+                    var source=draw.GetShaderInstance();var material=Material(source,out _);
+                    var definitions=source.GetShaderGroup().InputDefinitions.ToArray();
+                    var normal=source.Inputs.SingleOrDefault(i=>definitions[i.ParameterId].InputName=="TNormalMap");
+                    if(material is not null&&normal is not null)
+                    {
+                        string? texture=Texture(source,normal.Texture,source.Id,"TNormalMap","Billboard",Vector4.One);
+                        if(texture is not null)
+                        {
+                            var anchor=placement.Translation-scene.Origin;
+                            for(int i=visualStart;i<scene.Visuals.Count;i++)scene.Visuals[i]=scene.Visuals[i] with{LodOut=PikesTreeBillboards.Distance,DetailAnchor=anchor};
+                            var maps=new Dictionary<string,string>(material.Textures){["TNormalMap"]=texture};
+                            scene.Visuals.Add(geometry with{Material=material with{Id=material.Id+"_billboard",Shader=PikesTreeBillboards.Name,Textures=maps},DetailAnchor=anchor});
+                            billboardPlacements++;billboardModels[root.Id]=billboardModels.GetValueOrDefault(root.Id)+1;
+                        }
+                    }
+                }
+            }
+        }
     }
     static bool DrivingCollisionModel(string name)=>new[]{"barr","fence","wall","bridge","tunnel","dam","arch","gate","building","temple","armco","rock","haybale"}
         .Any(part=>name.Contains(part,StringComparison.OrdinalIgnoreCase));

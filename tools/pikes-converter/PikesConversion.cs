@@ -19,15 +19,22 @@ public static class PikesConversion
     {
         try
         {
-            if(args.Length is not (4 or 6)||args[0]!="--convert-pikes"||args.Skip(1).Take(3).Any(string.IsNullOrWhiteSpace)||args.Length==6&&args[4]!="--layouts")
-                throw new IOException("Usage: DiRT2VR.exe --convert-pikes <DiRT Rally folder> <DiRT 2 folder> <new output folder> [--layouts ids]");
+            const string usage="Usage: DiRT2VR.exe --convert-pikes <DiRT Rally folder> <DiRT 2 folder> <new output folder> [--layouts ids] [--performance-assets]";
+            if(args.Length<4||args[0]!="--convert-pikes"||args.Skip(1).Take(3).Any(string.IsNullOrWhiteSpace))throw new IOException(usage);
+            string[]? layouts=null;bool performanceAssets=false;
+            for(int i=4;i<args.Length;i++)
+            {
+                if(args[i]=="--performance-assets"&&!performanceAssets)performanceAssets=true;
+                else if(args[i]=="--layouts"&&layouts is null&&i+1<args.Length)layouts=args[++i].Split(',');
+                else throw new IOException(usage);
+            }
             if(OperatingSystem.IsWindows()&&new WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator))
                 throw new IOException("Start the track converter normally, without Run as administrator.");
-            Build(args[1],args[2],args[3],args.Length==6?args[5].Split(','):null,p=>{Console.WriteLine(JsonSerializer.Serialize(p));Console.Out.Flush();});return 0;
+            Build(args[1],args[2],args[3],layouts,p=>{Console.WriteLine(JsonSerializer.Serialize(p));Console.Out.Flush();},performanceAssets);return 0;
         }
         catch(Exception e){Console.Error.WriteLine(e.Message);return 1;}
     }
-    public static void Build(string rally,string dirt2,string output,IEnumerable<string>? layoutIds=null,Action<TrackProgress>? progress=null)
+    public static void Build(string rally,string dirt2,string output,IEnumerable<string>? layoutIds=null,Action<TrackProgress>? progress=null,bool performanceAssets=false)
     {
         SafeFiles.RequireClosed();rally=Path.GetFullPath(rally);dirt2=Path.GetFullPath(dirt2);output=Path.GetFullPath(output);
         var pack=TrackPacks.Pikes;var selected=pack.SelectLayouts(layoutIds);var profile=GetProfile();
@@ -53,7 +60,7 @@ public static class PikesConversion
             string candidate=Path.Combine(output,"build-"+layout.Id);
             bool tarmac=layout.Id=="pikes-peak-tarmac";string condition=layout.Id switch{"pikes-peak-gravel-alt"=>"day_alt","pikes-peak-gravel-wet"=>"wet",_=>"day"};
             PikesGravelBuild.Run(rally,dirt2,tarmac?"tarmac":"gravel",condition,candidate,
-                (percent,message)=>Report(5+(index*85+percent*85/100)/selected.Length,layout.Name+": "+message));
+                (percent,message)=>Report(5+(index*85+percent*85/100)/selected.Length,layout.Name+": "+message),performanceAssets);
             foreach(var input in SafeFiles.ReadJson<Dictionary<string,string>>(Path.Combine(candidate,"inputs.json")))
                 if(!expected.TryGetValue(Path.GetFullPath(input.Key),out var hash)||hash!=input.Value)throw new IOException("Conversion used an unsupported source file: "+input.Key);
             using var validation=JsonDocument.Parse(File.ReadAllBytes(Path.Combine(candidate,"validation.json")));
@@ -78,7 +85,7 @@ public static class PikesConversion
             Session("dx11/shaderpack/shaderpack.pssg",Path.Combine(candidate,"shaderpack.pssg"));
             Session("dx11/shaderpack/postprocess.pssg",Path.Combine(candidate,"postprocess.pssg"));
             Session("postprocess/effects.xml",effects);
-            sessions.Add(new(layout.Id,session.ToArray(),pack.Version));
+            sessions.Add(new(layout.Id,session.ToArray(),pack.Version,performanceAssets));
             void Session(string path,string source)
             {
                 string owned=$"{pack.Support}/{layout.Id}/{path}";Copy(source,owned);

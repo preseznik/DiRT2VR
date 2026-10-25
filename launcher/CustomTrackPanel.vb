@@ -63,12 +63,13 @@ Public Class CustomTrackPanel
     Public Event AvailabilityChanged As EventHandler
     Private Class LayoutItem
         Public ReadOnly Value As Layout
+        Public Property AssetQuality As String = ""
         Private ReadOnly conditionName As Boolean
         Public Sub New(value As Layout, Optional showCondition As Boolean = False)
             Me.Value = value : conditionName = showCondition
         End Sub
         Public Overrides Function ToString() As String
-            Return If(conditionName, Value.Condition, Value.Name)
+            Return If(conditionName, Value.Condition, Value.Name) & AssetQuality
         End Function
     End Class
     Public ReadOnly Property CustomEnabled As Boolean
@@ -406,6 +407,14 @@ Public Class CustomTrackPanel
                 layouts.SelectedItem = layouts.Items.Cast(Of LayoutItem).FirstOrDefault(Function(item) item.Value.Id = selectedLayout)
                 lightingTest.SelectedIndex = lighting : layouts.EndUpdate()
             End If
+            For i = 0 To layouts.Items.Count - 1
+                Dim item = DirectCast(layouts.Items(i), LayoutItem)
+                Dim session = installedReceipt?.Sessions.FirstOrDefault(Function(s) s.LayoutId = item.Value.Id)
+                Dim quality = If(currentPack.Id = "pikes-peak" AndAlso session IsNot Nothing, " · " & If(session?.PerformanceAssets, "Performance", "Standard"), "")
+                If item.AssetQuality <> quality Then
+                    item.AssetQuality = quality : layouts.Items(i) = item
+                End If
+            Next
         Finally
             loading = False : browser.ResumeLayout(True)
         End Try
@@ -572,13 +581,13 @@ Public Class CustomTrackPanel
         Await Operation(Async Function(token, progress)
                             context.RequireClosed()
                             Dim offer = CustomTrackService.Profile(currentPack.Id), selected = preferences.ForPack(currentPack.Id)
-                            Using picker As New AspenSourceForm(selected.SourceFolder, CustomTrackService.SourceFolders(currentPack.Id), offer, selected.BuildLayoutIds, installedReceipt, selected.HighQualityAssets)
+                            Using picker As New AspenSourceForm(selected.SourceFolder, CustomTrackService.SourceFolders(currentPack.Id), offer, selected.BuildLayoutIds, installedReceipt, selected.HighQualityAssets, selected.PerformanceAssets)
                                 If picker.ShowDialog(Me) <> DialogResult.OK Then Return
-                                selected.SourceFolder = picker.SourceFolder : selected.BuildLayoutIds = picker.SelectedLayoutIds : selected.HighQualityAssets = picker.HighQualityAssets : preferences.Save(context)
+                                selected.SourceFolder = picker.SourceFolder : selected.BuildLayoutIds = picker.SelectedLayoutIds : selected.HighQualityAssets = picker.HighQualityAssets : selected.PerformanceAssets = picker.PerformanceAssets : preferences.Save(context)
                             End Using
                             SetStatus("Building…", "Building " & selected.BuildLayoutIds.Length.ToString() & " selected " & currentPack.Name & " layouts…")
                             verification.Invalidate(currentPack.Id)
-                            Await CustomTrackService.InstallAsync(context, offer, selected.SourceFolder, progress, token, selected.BuildLayoutIds, selected.HighQualityAssets)
+                            Await CustomTrackService.InstallAsync(context, offer, selected.SourceFolder, progress, token, selected.BuildLayoutIds, selected.HighQualityAssets, selected.PerformanceAssets)
                             ' InstallAsync has committed successfully; a late stop must not misreport it as cancelled.
                             installedReceipt = Await Task.Run(Function() verification.Read(TrackPacks.Get(currentPack.Id), CancellationToken.None))
                             installationValid = True : hasReceipt = True
@@ -716,6 +725,12 @@ Public Class AspenSourceForm
     Private ReadOnly source As New ComboBox With {.Name = "Dirt3SourceFolder", .DropDownStyle = ComboBoxStyle.DropDown}
     Private ReadOnly choices As New List(Of CheckBox)
     Private ReadOnly quality As New CheckBox With {.Name = "BuildHighQualityAssets", .Text = "Build with high quality assets", .AutoSize = True}
+    Private ReadOnly performance As New CheckBox With {.Name = "BuildPerformanceAssets", .Text = "Build performance version", .AutoSize = True}
+    Public ReadOnly Property PerformanceAssets As Boolean
+        Get
+            Return performance.Checked
+        End Get
+    End Property
     Public ReadOnly Property HighQualityAssets As Boolean
         Get
             Return quality.Checked
@@ -738,7 +753,7 @@ Public Class AspenSourceForm
             Return source.Text.Trim().Trim(""""c)
         End Get
     End Property
-    Public Sub New(previous As String, detected As String(), offer As ConversionProfile, Optional selectedIds As String() = Nothing, Optional installed As PackReceipt = Nothing, Optional highQualityAssets As Boolean = False)
+    Public Sub New(previous As String, detected As String(), offer As ConversionProfile, Optional selectedIds As String() = Nothing, Optional installed As PackReceipt = Nothing, Optional highQualityAssets As Boolean = False, Optional performanceAssets As Boolean = False)
         Dim conditions = offer.Id = "nordschleife" OrElse offer.Id = "misty-loch"
         Dim sourceGame = TrackPacks.Get(offer.Id).SourceName
         source.Name = If(TrackPacks.Get(offer.Id).SourceGame = "assettocorsa", "AssettoCorsaSourceFolder", If(TrackPacks.Get(offer.Id).SourceGame = "grid2", "Grid2SourceFolder", "Dirt3SourceFolder"))
@@ -775,6 +790,7 @@ Public Class AspenSourceForm
         For Each trackLayout In offer.Layouts
             Dim session = installed?.Sessions.FirstOrDefault(Function(s) s.LayoutId = trackLayout.Id)
             Dim status = If(session Is Nothing, "Not installed", "Installed")
+            If offer.Id = "pikes-peak" AndAlso session IsNot Nothing Then status &= " · " & If(session.PerformanceAssets, "Performance", "Standard")
             Dim choice As New CheckBox With {.Name = "BuildLayout_" & trackLayout.Id, .Tag = trackLayout.Id, .AutoSize = True,
                 .Text = If(conditions, trackLayout.Condition, trackLayout.Name) & " · " & status,
                 .Checked = conditions OrElse selectedIds Is Nothing OrElse selectedIds.Contains(trackLayout.Id, StringComparer.Ordinal), .Enabled = Not conditions, .AccessibleName = If(conditions, trackLayout.Condition, trackLayout.Name)}
@@ -786,6 +802,11 @@ Public Class AspenSourceForm
             quality.Checked = highQualityAssets
             content.Controls.Add(quality)
             content.Controls.Add(New Label With {.Text = If(offer.Id = "nordschleife", "Source ambient shading, materials and scenery shadows. Uses the local CSP ambient patch when available; higher GPU and memory use. Requires rebuilding.", "More faithful materials and denser grass. Higher GPU and memory use; requires rebuilding."), .AutoSize = True})
+        End If
+        If offer.Id = "pikes-peak" Then
+            performance.Checked = performanceAssets
+            content.Controls.Add(performance)
+            content.Controls.Add(New Label With {.Text = "Keeps every tree, with simpler distant trees and smaller scenery textures. Applies to checked layouts on desktop and in VR. Changing this option requires rebuilding those layouts.", .AutoSize = True})
         End If
         content.Controls.Add(New Label With {.Text = $"Conversion runs locally. Allow up to {Math.Ceiling(offer.StagingBytes / 1073741824.0)} GB of working space. Your original games stay unchanged.", .AutoSize = True})
         UpdateSelection()

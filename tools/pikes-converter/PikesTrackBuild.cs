@@ -182,7 +182,7 @@ internal static class PikesTrackBuild
         var visuals=Files.Pssg(Path.Combine(output,"routesplit.pssg"));int triangles=0;
         foreach(var mesh in visuals.Elements<PssgRenderDataSource>())
         {
-            var draw=visuals.Elements<PssgRenderStreamInstance>().First(x=>x.Indices=="#"+mesh.Id && x.GetShaderInstance().ShaderGroup!="#pikes_foliage_shadow55.fx");
+            var draw=visuals.Elements<PssgRenderStreamInstance>().First(x=>x.Indices=="#"+mesh.Id && x.GetShaderInstance().ShaderGroup is not ("#pikes_foliage_shadow55.fx" or "#pikes_tree_billboard_shadow.fx"));
             if(draw.GetShaderInstance().ShaderGroup=="#batched_track.fx")continue;
             var reader=new EgoEngineLibrary.Formats.Pssg.RenderDataSourceReader(mesh);if(reader.IndexCount%3!=0 || mesh.Primitive!="triangles")throw new InvalidDataException("Invalid visual primitive.");
             for(int i=0;i<reader.IndexCount;i++)if(!Kn5.Finite(reader.GetPosition(reader.GetIndex(i))))throw new InvalidDataException("Invalid visual position.");

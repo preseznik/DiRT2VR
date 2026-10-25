@@ -1464,6 +1464,7 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     }
     const auto start=draws.load();
     if(DetailedTrace() && mainView && f==3000) scenePass=1;
+    if(mainView && !HeadsetEnabled() && PikesScope() && TakeCaptureRequest(f,false))scenePass=1;
     sampleInner=mainView && f==3000 && InnerReplayEnabled() && !ContinuousReplayEnabled();
     continuousMain=mainView && (ContinuousReplayEnabled() || HudProbe());
     const auto previousRenderer=classifiedRenderer;
@@ -1485,7 +1486,26 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
         }
         if(f%120==0)Log("extended main frame=%llu kind=%u prepared=%d",f,unsigned(classifiedCamera),preparedCameraRenderer==self && preparedCameraFrame==f);
     }
+    // The opt-in desktop tracer measures the native main scene separately from
+    // VR's stereo pair. Timestamp queries use the same nonblocking ring.
+    static GpuTimer desktopGpu;
+    const bool desktopTiming=mainView && !HeadsetEnabled() && LoggingEnabled() && PikesScope() && gameSwapchain;
+    bool desktopSample=false;
+    if(desktopTiming) {
+        static const bool initialized=[] {
+            ComPtr<ID3D11Device> device;gameSwapchain->GetDevice(IID_PPV_ARGS(&device));
+            const bool ready=desktopGpu.Initialize(device.Get());Log("Pikes desktop GPU timer initialized=%d",ready);return ready;
+        }();
+        if(initialized) {
+            static auto csv=TraceFile(Output()/"desktop-gpu-frames.csv");
+            static bool header=false;if(!header){csv << "frame,main_scene_gpu_ms,valid\n";header=true;}
+            for(const auto& timing:desktopGpu.Poll())csv << timing.frame << ',' << timing.milliseconds << ',' << timing.valid << '\n';
+            if(f%120==0)csv.flush();
+            desktopSample=desktopGpu.Begin(f);
+        }
+    }
     realScene(self,a,b,c,d,e);
+    if(desktopSample)desktopGpu.End();
     classifiedRenderer=previousRenderer;
     classifiedCamera=previousCamera;
     sampleInner=false;
@@ -1754,6 +1774,7 @@ bool ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
 
 HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST)return realPresent(swapchain,interval,flags);
+    graphics::SampleVideoMemory(swapchain);
     PhotoModeFrame();
     const auto f=frame.fetch_add(1);
     if(TakeCaptureRequest(f,false)) {
@@ -1764,7 +1785,11 @@ HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT i
 }
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
+    graphics::SampleVideoMemory(swapchain);
     PhotoModeFrame();
+    if(!HeadsetEnabled() && (requestedCaptureFrame==frame.load() || TakeCaptureRequest(frame.load(),false))) {
+        Screenshot(swapchain,frame.load());requestedCaptureFrame=~uint64_t{};
+    }
     if(HeadsetEnabled()) {
         static ResolutionReport resolution([] {
             static wchar_t name[128]{};
@@ -1995,7 +2020,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         EnablePikesCockpit();
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
-        if(swapchain && (PhotoModeRequested() || (RequestedCapturesEnabled() && PikesScope())))
+        if(swapchain && (LoggingEnabled() || PhotoModeRequested() || (RequestedCapturesEnabled() && PikesScope())))
             Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;
     }

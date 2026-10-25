@@ -79,5 +79,18 @@ bool PikesScope() {
     return allowed;
 }
 unsigned PikesChunks(){return PikesScope() && selectedLayout ? selectedLayout->chunks:0;}
+bool PikesPerformanceAssets(){
+    static const bool enabled=[] {
+        if(!PikesScope() || !selectedLayout || std::string_view(selectedLayout->country)!="usa")return false;
+        wchar_t folder[64]{};
+        const auto length=GetEnvironmentVariableW(L"DIRT2VR_PIKES_PERFORMANCE_ASSETS",folder,_countof(folder));
+        if(!length || length>=_countof(folder))return false;
+        const std::wstring selected(selectedLayout->folder,selectedLayout->folder+strlen(selectedLayout->folder));
+        const bool matches=selected==folder;
+        if(matches)Log("pikes performance assets: source tree detail transition=250m; full world visibility retained");
+        return matches;
+    }();
+    return enabled;
+}
 const char* PikesHash(){return PikesScope() && selectedLayout ? selectedLayout->hash:"";}
 }

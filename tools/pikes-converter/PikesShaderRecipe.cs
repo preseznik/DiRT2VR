@@ -9,7 +9,7 @@ using EgoEngineLibrary.Graphics.Pssg.Elements;
 // programs and source grading pixels are read from the user's verified games.
 internal static class PikesShaderRecipe
 {
-    internal static void Write(string game,string rally,string layout,string output,bool grading=false)
+    internal static void Write(string game,string rally,string layout,string output,bool grading=false,bool performanceAssets=false)
     {
         string name=grading?"postprocess":"shaderpack";
         string input=Files.Inside(game,"dx11/shaderpack/"+name+".pssg");
@@ -27,6 +27,7 @@ internal static class PikesShaderRecipe
             byte[] flight=PikesHelicopters.Program(rally);
             program.SetAttributeValue("codeSize",flight.Length);
             program.Element("SHADERPROGRAMCODEBLOCK")!.Value=string.Join(" ",flight.Select(b=>b.ToString("X2",CultureInfo.InvariantCulture)));
+            if(performanceAssets)PikesTreeBillboards.Shaders(generated);
         }
         var file=Files.FromDocument(generated);PikesShaderPayload45.Validate(file);
         Files.Save(file,output);

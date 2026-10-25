@@ -8,6 +8,7 @@ Public Class CustomTrackSettings
     Public Property SourceFolder As String = ""
     Public Property BuildLayoutIds As String()
     Public Property HighQualityAssets As Boolean
+    Public Property PerformanceAssets As Boolean
     Public Property LaunchMode As String = "practice"
     Public Property RaceStart As String = "auto"
     Public Property CarCode As String = "sti"
@@ -150,17 +151,18 @@ Public Module CustomTrackService
             End Try
         End Using
     End Sub
-    Public Function InstallAsync(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, Optional layoutIds As String() = Nothing, Optional highQualityAssets As Boolean = False) As Task
+    Public Function InstallAsync(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, Optional layoutIds As String() = Nothing, Optional highQualityAssets As Boolean = False, Optional performanceAssets As Boolean = False) As Task
         Return Task.Run(Sub()
                             BuildDiagnostics.Run(context, "track", offer.Id, source,
-                                                 Sub() WithSessionLock(Sub() Install(context, offer, source, progress, cancel, layoutIds, highQualityAssets)))
+                                                 Sub() WithSessionLock(Sub() Install(context, offer, source, progress, cancel, layoutIds, highQualityAssets, performanceAssets)))
                             CacheCleanup.Run(context)
                         End Sub, cancel)
     End Function
-    Private Sub Install(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, layoutIds As String(), highQualityAssets As Boolean)
+    Private Sub Install(context As InstallContext, offer As ConversionProfile, source As String, progress As IProgress(Of TrackProgress), cancel As CancellationToken, layoutIds As String(), highQualityAssets As Boolean, performanceAssets As Boolean)
         context.ValidateGame() : context.RequireClosed()
         Worker.Invoke(context, "recover")
         Dim pack = TrackPacks.Get(offer.Id)
+        If performanceAssets AndAlso pack.Id <> "pikes-peak" Then Throw New IOException("Performance assets are supported only for Pike's Peak.")
         If highQualityAssets AndAlso pack.Id <> "misty-loch" AndAlso pack.Id <> "nordschleife" Then Throw New IOException("High quality assets are supported only for Misty Loch and Nordschleife.")
         If pack.Id = "nordschleife" Then offer = DiRT2VR.Nordschleife.NordschleifeConversion.GetProfile(highQualityAssets, source)
         pack.Validate(offer, BuildInfo.Version)
@@ -186,6 +188,7 @@ Public Module CustomTrackService
             start.ArgumentList.Add(argument)
         Next
         If highQualityAssets Then start.ArgumentList.Add("--high-quality-assets")
+        If performanceAssets Then start.ArgumentList.Add("--performance-assets")
         If pack.Id <> "nordschleife" AndAlso pack.Id <> "mizu-mountain" AndAlso pack.Id <> "misty-loch" AndAlso pack.Id <> "spa-francorchamps" Then
             start.ArgumentList.Add("--layouts")
             start.ArgumentList.Add(String.Join(",", selectedLayouts.Select(Function(l) l.Id)))
@@ -218,6 +221,7 @@ Public Module CustomTrackService
         Dim receipt = pack.Read(built, True, cancel)
         RequireLauncher(receipt)
         If receipt.HighQualityAssets <> highQualityAssets Then Throw New IOException("Converted asset quality does not match the build selection.")
+        If receipt.Sessions.Any(Function(s) s.PerformanceAssets <> performanceAssets) Then Throw New IOException("Converted layout quality does not match the build selection.")
         If receipt.Version <> offer.Version OrElse Not receipt.Sources.SequenceEqual(sources) OrElse Not receipt.Sessions.Select(Function(s) s.LayoutId).SequenceEqual(selectedLayouts.Select(Function(l) l.Id)) Then Throw New IOException("Converted pack does not match the selected package.")
         cancel.ThrowIfCancellationRequested() : context.RequireClosed()
         progress.Report(New TrackProgress(100, "Finishing installation — please wait. It is no longer safe to stop.", False))

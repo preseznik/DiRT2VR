@@ -57,6 +57,7 @@ inline std::vector<std::string> ParsePikesRaceXml(std::string_view xml,std::stri
     return cars.size()>=2?cars:std::vector<std::string>{};
 }
 bool PikesScope();
+bool PikesPerformanceAssets();
 unsigned PikesChunks();
 const char* PikesHash();
 }

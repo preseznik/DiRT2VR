@@ -6,7 +6,7 @@ internal static class VisualBatches
 {
     internal static IEnumerable<Mesh> Combine(IEnumerable<Mesh> meshes)
     {
-        foreach(var group in meshes.GroupBy(m=>(m.Material.Id,m.LodIn,m.LodOut)))
+        foreach(var group in meshes.GroupBy(m=>(m.Material.Id,m.LodIn,m.LodOut,m.DetailAnchor)))
         {
             var batch=new List<Mesh>();int vertices=0;
             foreach(var mesh in group)

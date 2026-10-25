@@ -39,11 +39,11 @@ internal static class TerrainPasses
     static bool PikesAnimatedDepth(PssgRenderStreamInstance draw)
     {
         var shader=draw.GetShaderInstance();
-        return shader.ShaderGroup=="#pikes_foliage_shadow55.fx" ||
+        return shader.ShaderGroup is "#pikes_foliage_shadow55.fx" or "#pikes_tree_billboard_shadow.fx" ||
             (shader.ShaderGroup is "#object_rotating.fx" or "#object_scrolling.fx") &&
             shader.GetShaderGroup().InputDefinitions.Any(d=>d.InputName=="FlightIndex");
     }
-    static bool IsOpaque(PssgRenderStreamInstance draw)
+    internal static bool IsOpaque(PssgRenderStreamInstance draw)
     {
         var material=draw.GetShaderInstance();
         if(material.ShaderGroup.StartsWith("#terrain_",StringComparison.Ordinal)||material.ShaderGroup.StartsWith("#pikes_bank_",StringComparison.Ordinal)||material.ShaderGroup.StartsWith("#pikes_terrain_",StringComparison.Ordinal))return true;

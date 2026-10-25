@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Pike's Peak rebuilds use smaller geometry buffers and fewer opaque depth draws while keeping the same scenery.
+- Add **Build performance version** for selected Pike's Peak layouts: keep the forest and nearby detail, use source tree billboards in the distance, and reduce eligible scenery textures. Installed layout labels show Standard or Performance. Requires rebuilding. Desktop and Virtual Desktop VR checks improved performance; a short tarmac forest drive passed appearance and tracking checks. Intermittent VR startup hangs remain unresolved.
+- Diagnostic logs include the graphics adapter and video-memory usage/budget to help investigate slowdowns and device-removal failures.
+
 ## 0.17.151 — 2026-10-25 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.151)

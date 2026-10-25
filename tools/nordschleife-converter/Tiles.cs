@@ -16,7 +16,7 @@ internal static class Tiles
                 var buckets=new Dictionary<Cell,List<ushort>>();
                 for(int i=0;i<mesh.Indices.Length;i+=3)
                 {
-                    var centre=(mesh.Positions[mesh.Indices[i]]+mesh.Positions[mesh.Indices[i+1]]+mesh.Positions[mesh.Indices[i+2]])/3;
+                    var centre=mesh.DetailAnchor??(mesh.Positions[mesh.Indices[i]]+mesh.Positions[mesh.Indices[i+1]]+mesh.Positions[mesh.Indices[i+2]])/3;
                     var cell=new Cell((int)MathF.Floor(centre.X/size),(int)MathF.Floor(centre.Z/size));
                     if(!buckets.TryGetValue(cell,out var indices))buckets[cell]=indices=[];
                     indices.AddRange([mesh.Indices[i],mesh.Indices[i+1],mesh.Indices[i+2]]);
@@ -24,7 +24,7 @@ internal static class Tiles
                 foreach(var (cell,indices) in buckets)
                 {
                     if(!partition.TryGetValue(cell,out var list))partition[cell]=list=[];
-                    list.Add(Scene.Compact(mesh,indices));
+                    list.Add(Scene.Compact(mesh,indices) with{DetailAnchor=null});
                 }
             }
             if(partition.Count<=(fixedCount??NativeLimit))break;

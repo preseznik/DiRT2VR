@@ -120,3 +120,7 @@ Overcast changes the lighting; it does not add rain or a wet-surface simulation.
 If conversion reports a missing DirectX compiler, install or repair the **DirectX End-User Runtimes (June 2010)** and rebuild.
 
 Use **Manage… → Rebuild from source…** to add or update individual layouts. The source installation can be removed after conversion, but is needed again for rebuilds. Existing prepared Pikes packs and their replays remain separate under **Source → External**.
+
+**Build performance version** is optional and starts unchecked. It keeps every tree and nearby scenery detail, uses simpler source trees in the distance, and limits eligible scenery textures to 2048 pixels. Roads, markings, readable signs, collision and mountain visibility are preserved. The option applies to the checked layouts on desktop and in VR; changing it requires rebuilding those layouts. Unchecked installed layouts keep their current assets. Each installed layout is labelled **Standard** or **Performance**.
+
+Desktop and Virtual Desktop VR checks improved performance. A short tarmac forest drive and head turns passed appearance and tracking checks. Broader driving and gravel headset use still need testing; intermittent VR startup hangs remain unresolved.

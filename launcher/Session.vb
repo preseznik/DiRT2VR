@@ -439,6 +439,7 @@ Public Class Session
             Worker.Invoke(context, "prepare-dof", carCode:=settings.CarCode, trackId:=settings.TrackId)
         End If
         Progress("Preparing controls and replay settings…")
+        PikesPerformance.Configure(context, start, settings)
         NordschleifeProgress.Configure(start, settings)
         driving.ConfigureProcess(context, start, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1")
         FlashbackLaunch.Configure(start, settings)
