@@ -3,6 +3,7 @@
 #include "camera_math.h"
 #include "gfwl_compat.h"
 #include "replay_camera.h"
+#include "photo_mode.h"
 #include <intrin.h>
 #include <MinHook.h>
 #include <array>
@@ -158,7 +159,7 @@ bool EnableSceneCameraObserver(bool required) {
         if(status==MH_OK)status=EnableRecordedHook(base+0x725080);
     }
     Log("extended views observer hook=%s",MH_StatusToString(status));
-    if(status==MH_OK && ReplayCamerasEnabled()) {
+    if(status==MH_OK && (ReplayCamerasEnabled() || PhotoModeRequested())) {
         const unsigned char displayGuard[]={0x8b,0x44,0x24,0x04,0x50,0xe8,0x16,0x56,0xff,0xff,0x8b,0x00,0xc2,0x04,0x00};
         const unsigned char callGuard[]={0xe8,0xfd,0xc8,0x45,0x00};
         if(memcmp(base+0x72fa60,displayGuard,sizeof(displayGuard)) || memcmp(base+0x2d315e,callGuard,sizeof(callGuard)))return false;
@@ -170,6 +171,7 @@ bool EnableSceneCameraObserver(bool required) {
 }
 SceneCamera IdentifySceneCamera(const float* a,const float* b,uint64_t frame) {
     if(!a || !b)return SceneCamera::Unknown;
+    if(MatchingPhotoCamera(a,b))return SceneCamera::Photo;
     if(MatchingTrailerCamera(a,b))return SceneCamera::Frontend;
     if(ReplayCamerasEnabled() && ObservedReplayPlayback().Available(GetTickCount64())) {
         return ReplayStereoEnabled() && MatchingReplayChaseCamera(a,b) ? SceneCamera::ReplayChase : SceneCamera::Unknown;

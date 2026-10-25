@@ -149,7 +149,7 @@ Public Module Worker
                 Dim contentBeforeVr = operation = "prepare" AndAlso CustomTracks.TrackPacks.Pikes.IsLayout(trackId)
                 Dim transaction As New AssetTransaction(context)
                 Dim settings = VrSettings.Load(context)
-                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=settings.VrExtendedViews OrElse settings.VrReplayCameras, replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode), carGrade:=carGrade, preparedConfig:=preparedConfig, raceStart:=raceStart, prepareContent:=If(contentBeforeVr, prepareContent, Nothing))
+                transaction.Recover() : transaction.Prepare(carCode:=carCode, trackId:=trackId, configOnly:=operation = "prepare-desktop", opponents:=opponents, opponentCars:=opponentCars, preserveChase:=PhotoModeLaunch.PreserveChase(context, settings, operation = "prepare", replayId IsNot Nothing), replay:=If(replayId Is Nothing, Nothing, ReplaySession.ReadPrepared(context, replayId)), captureReplay:=replayId Is Nothing AndAlso Not CustomCars.CarPack.IsCustom(carCode), recordReplay:=ReplayPreferences.Load(context).RecordFullReplay AndAlso Not CustomCars.CarPack.IsCustom(carCode), carGrade:=carGrade, preparedConfig:=preparedConfig, raceStart:=raceStart, prepareContent:=If(contentBeforeVr, prepareContent, Nothing))
                 If Not contentBeforeVr Then prepareContent?.Invoke()
                 ' Layer exposure after VR motion-blur changes; recover in the reverse order.
                 If CustomTracks.TrackPacks.IsLayout(trackId) Then Call (New ButtermilkPostProcess(context)).Prepare(postProcessTest, trackId)
@@ -169,11 +169,12 @@ Public Module Worker
                 Call (New LanTransaction(context)).Prepare(offlineProfile:=True)
             Case "prepare-movies"
                 Call (New StartupMovies(context)).Prepare()
-            Case "prepare-direct-menus", "prepare-direct-menus-movies"
+            Case "prepare-direct-menus", "prepare-direct-menus-movies", "prepare-direct-photo-menus", "prepare-direct-photo-menus-movies", "prepare-photo-menus", "prepare-photo-menus-movies"
                 ' Assets were verified during event preparation; custom-session
                 ' overlays (e.g. Nordschleife progress) are already active here.
                 If replayId IsNot Nothing Then ReplaySession.ReadPrepared(context, replayId, verifyContent:=False)
-                Call (New DirectMenus(context)).Prepare(operation = "prepare-direct-menus-movies", savedReplay:=replayId IsNot Nothing, recordReplay:=ReplaySession.RecordingEnabled(context))
+                Dim directSession = operation.StartsWith("prepare-direct-", StringComparison.Ordinal)
+                Call (New DirectMenus(context)).Prepare(operation.EndsWith("-movies", StringComparison.Ordinal), savedReplay:=replayId IsNot Nothing, recordReplay:=If(directSession, ReplaySession.RecordingEnabled(context), True), directSession:=directSession, photoMode:=operation.Contains("photo", StringComparison.Ordinal))
             Case "recover"
                 Call (New PikesCollisionTransaction(context)).Recover()
                 Call (New LargeAddressAware(context)).Recover()

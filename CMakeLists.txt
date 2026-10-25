@@ -34,6 +34,7 @@ target_sources(d3d11 PRIVATE src/car_setup.cpp src/car_grade.cpp src/f04_camera.
 target_sources(d3d11 PRIVATE src/transmission.cpp)
 target_sources(d3d11 PRIVATE src/replay_storage.cpp)
 target_sources(d3d11 PRIVATE src/chase_camera.cpp src/chase_cursor.cpp src/game_pause.cpp src/background_play.cpp)
+target_sources(d3d11 PRIVATE src/photo_mode.cpp)
 target_sources(d3d11 PRIVATE src/anisotropic_filter.cpp)
 target_sources(d3d11 PRIVATE src/shadow_distance.cpp)
 target_sources(d3d11 PRIVATE src/trailer_background.cpp)

@@ -1,5 +1,6 @@
 #include "chase_cursor.h"
 #include "game_pause.h"
+#include "photo_mode.h"
 #include <atomic>
 
 namespace vr {
@@ -8,9 +9,12 @@ SRWLOCK windowLock=SRWLOCK_INIT;
 HWND attached{};
 WNDPROC previous{};
 std::atomic<ULONGLONG> activeTick{};
+std::atomic<ULONGLONG> photoTick{};
 // These are only accessed by the window thread.
 HCURSOR savedCursor{};
 bool hidden{};
+bool clipped{};
+RECT previousClip{},photoClip{};
 bool windowInteraction{};
 UINT_PTR timer{};
 UINT WakeMessage() {
@@ -20,6 +24,11 @@ UINT WakeMessage() {
 }
 
 void Restore() {
+    if(clipped) {
+        RECT current{};
+        if(GetClipCursor(&current) && EqualRect(&current,&photoClip))ClipCursor(&previousClip);
+        clipped=false;
+    }
     if(!hidden)return;
     SetCursor(savedCursor);
     savedCursor=nullptr;hidden=false;
@@ -32,9 +41,21 @@ bool Inside(HWND window) {
 }
 bool Refresh(HWND window) {
     const auto tick=activeTick.load();
-    if(!tick || GetTickCount64()-tick>250 || windowInteraction || GamePaused() || !Inside(window)) {Restore();return false;}
-    // Do not touch ShowCursor's counter or constrain the pointer. WM_SETCURSOR
-    // handles movement; the timer also handles a stationary pointer and pause.
+    const auto photo=photoTick.load();
+    const auto now=GetTickCount64();const bool flying=photo && now-photo<=250;
+    if(windowInteraction || GetForegroundWindow()!=window || IsIconic(window) ||
+       (!flying && (!tick || now-tick>250 || GamePaused()))) {Restore();return false;}
+    if(flying && !clipped) {
+        RECT client{};POINT origin{};
+        if(GetClientRect(window,&client) && ClientToScreen(window,&origin) && GetClipCursor(&previousClip)) {
+            OffsetRect(&client,origin.x,origin.y);photoClip=client;
+            clipped=ClipCursor(&photoClip)!=FALSE;
+        }
+    }
+    if(!flying && clipped){Restore();}
+    if(!Inside(window)){Restore();return false;}
+    // Avoid ShowCursor's counter. WM_SETCURSOR handles movement; the timer
+    // also handles a stationary pointer and pause.
     const auto cursor=GetCursor();
     if(!hidden || cursor)savedCursor=cursor;
     hidden=true;SetCursor(nullptr);return true;
@@ -54,12 +75,16 @@ LRESULT CALLBACK WindowProc(HWND window,UINT message,WPARAM key,LPARAM flags) {
         Restore();
     }
     if(message==WM_KILLFOCUS || (message==WM_ACTIVATEAPP && !key) || message==WM_ENTERMENULOOP || message==WM_ENTERSIZEMOVE) {
-        activeTick=0;Restore();
+        PhotoModeFocusLost();
+        activeTick=0;photoTick=0;Restore();
+    }
+    if(message==WM_SIZE && key==SIZE_MINIMIZED) {
+        PhotoModeFocusLost();activeTick=0;photoTick=0;Restore();
     }
     if(message==WM_ENTERMENULOOP || message==WM_ENTERSIZEMOVE)windowInteraction=true;
     if(message==WM_EXITMENULOOP || message==WM_EXITSIZEMOVE)windowInteraction=false;
     if(message==WM_NCDESTROY) {
-        activeTick=0;Restore();
+        activeTick=0;photoTick=0;Restore();
         if(timer)KillTimer(window,timer);
         timer=0;windowInteraction=false;
         AcquireSRWLockExclusive(&windowLock);
@@ -69,8 +94,8 @@ LRESULT CALLBACK WindowProc(HWND window,UINT message,WPARAM key,LPARAM flags) {
     return original?CallWindowProcW(original,window,message,key,flags):DefWindowProcW(window,message,key,flags);
 }
 }
-void UpdateChaseCursor(HWND window,bool active) {
-    const auto old=activeTick.exchange(active?GetTickCount64():0);
+void UpdateCursor(HWND window,bool active,bool photo) {
+    const auto old=(photo?photoTick:activeTick).exchange(active?GetTickCount64():0);
     const auto wake=WakeMessage();
     if(!wake)return;
     bool installed=false;
@@ -94,4 +119,6 @@ void UpdateChaseCursor(HWND window,bool active) {
     ReleaseSRWLockExclusive(&windowLock);
     if(target && (installed || (old!=0)!=active))PostMessageW(target,wake,0,0);
 }
+void UpdateChaseCursor(HWND window,bool active){UpdateCursor(window,active,false);}
+void UpdatePhotoCursor(HWND window,bool active){UpdateCursor(window,active,true);}
 }

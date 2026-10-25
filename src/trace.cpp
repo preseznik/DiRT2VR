@@ -11,6 +11,7 @@
 #include "scene_camera.h"
 #include "replay_camera.h"
 #include "game_pause.h"
+#include "photo_mode.h"
 #include "game_xr.h"
 #include "hud_capture.h"
 #include "hud_elements.h"
@@ -615,7 +616,7 @@ thread_local void* preparedCameraRenderer{};
 thread_local uint64_t preparedCameraFrame=~uint64_t{};
 thread_local SceneCamera preparedCameraKind=SceneCamera::Unknown;
 SceneCamera RenderSceneCamera(void* renderer,const float* a,const float* b,uint64_t f) {
-    if((ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled()) && renderer==classifiedRenderer)return classifiedCamera;
+    if((ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled() || PhotoModeRequested()) && renderer==classifiedRenderer)return classifiedCamera;
     return IdentifySceneCamera(a,b,f);
 }
 using FrustumCopyFn = void* (__thiscall*)(void*,const void*);
@@ -648,7 +649,7 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
             TraceShadowPresets(frame.load());
             if(before!=shadowCoverage.Active())Log("cockpit shadow preparation frame=%llu extended=%d",frame.load(),shadowCoverage.Active());
         }
-        if(ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled()) {
+        if(ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled() || PhotoModeRequested()) {
             preparedCameraRenderer=renderer;preparedCameraFrame=frame.load();preparedCameraKind=kind;
         }
         if(WideVisibility() && StereoCameraAllowed(kind,ExtendedViewsEnabled(),GamePaused(),true,ReplayStereoEnabled(),TrailerMenusEnabled()) && VisibilityBox(a,b,matrix.data(),static_cast<const float*>(source))) {
@@ -846,6 +847,8 @@ bool CaptureHudDraw(ID3D11DeviceContext* context,const std::function<void()>& dr
 }
 uint64_t xrTickFrame=~uint64_t{};
 XrPosef headsetReference{{0,0,0,1},{0,0,0}};
+XrPosef photoReference{{0,0,0,1},{0,0,0}};
+bool photoReferenceReady{};
 bool recenterRequested=true;
 bool headsetCentered=false;
 bool initialCockpitCentered=false;
@@ -903,6 +906,7 @@ bool CockpitShadowMode() {
     return gameXr && gameXr->Active() && gameXr->Visible() && !ScreenMode() && !GamePaused();
 }
 void PrepareHeadsetViews(const std::array<XrView,2>& views,bool cockpit=false) {
+    if(!PhotoModeActive())photoReferenceReady=false;
     if(cockpit && !initialCockpitCentered && gameXr->CanRecenter()) {
         // The loading screen can appear while the player is still putting on
         // the headset. Establish the driving origin once cockpit play begins.
@@ -1033,14 +1037,14 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     // workers must retain the previous cockpit state during frame preparation.
     if(!continuousMain || xrTickFrame==f) return false;
     SteeringCockpitFrame steeringFrame;
-    if(ScreenMode() || f<300 || !gameSwapchain || !cameraHooksReady) return false;
+    if((ScreenMode() && !PhotoModeActive()) || f<300 || !gameSwapchain || !cameraHooksReady) return false;
     auto renderer=static_cast<unsigned char*>(self);
     if(cameraA!=renderer+0x5e0 || cameraB!=renderer+0x650) return false;
     const auto camera=RenderSceneCamera(self,static_cast<const float*>(cameraA),static_cast<const float*>(cameraB),f);
     const bool cockpit=camera==SceneCamera::Cockpit;
     static int previousCandidate=-1;
     if(previousCandidate!=static_cast<int>(camera)) {
-        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f trailer_tracking_scale=%.3f",cockpit?"cockpit":camera==SceneCamera::External?"external":camera==SceneCamera::ReplayChase?"replay-chase":camera==SceneCamera::Frontend?"trailer":"screen",f,
+        Log("OpenXR camera candidate=%s frame=%llu near=%f/%f trailer_tracking_scale=%.3f",cockpit?"cockpit":camera==SceneCamera::External?"external":camera==SceneCamera::ReplayChase?"replay-chase":camera==SceneCamera::Frontend?"trailer":camera==SceneCamera::Photo?"photo":"screen",f,
             static_cast<const float*>(cameraA)[21],static_cast<const float*>(cameraB)[21],TrailerTrackingScale(camera));
         previousCandidate=static_cast<int>(camera);
     }
@@ -1090,7 +1094,8 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     groundCoverPair.Begin();
     XrFrames::Overlay hud;
     const bool trailer=camera==SceneCamera::Frontend;
-    const bool captureHud=hudCapture.Begin(back.Get(),f,trailer?0:HiddenHudElements(),trailer);
+    const bool photo=camera==SceneCamera::Photo;
+    const bool captureHud=!photo && hudCapture.Begin(back.Get(),f,trailer?0:HiddenHudElements(),trailer);
     static const float hudDistance=GraphicsScale(L"DIRT2VR_HUD_DISTANCE",1.f,1.f,20.f);
     const float panelDistance=trailer?2.f:hudDistance;
     // Preserve the angular size of the existing 4 m wide, 4 m distant panel.
@@ -1110,7 +1115,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         eyeProjectionUploads=0;
         if(eye==0) gpu.Begin(f);
         {
-            auto relative=RelativePose(headsetReference,view.pose);
+            auto relative=RelativePose(photo?photoReference:headsetReference,view.pose);
             if(cockpit) relative=SeatEyePose(relative);
             ScopedEyePose pose(cameraA,cameraB,relative,scale*TrailerTrackingScale(camera));
             ScopedSceneDepth depthRange(static_cast<unsigned char*>(self)+0x40);
@@ -1135,7 +1140,15 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             std::array<float,16> projection{}; projection[11]=-1;
             ApplyFov(projection.data(),view.fov);
         }
-        PrepareHeadsetViews(views,cockpit);
+        if(photo) {
+            if(!photoReferenceReady || (recenterRequested && gameXr->CanRecenter())) {
+                photoReference=RecenterPose(CenterPose(views),photoReference);
+                if(gameXr->CanRecenter()) {
+                    photoReferenceReady=true;recenterRequested=false;
+                    Log("OpenXR photo recentered frame=%llu tracked=1 focused=1",f);
+                }
+            }
+        } else PrepareHeadsetViews(views,cockpit);
         if(trailer) {
             trailerTrackedPose=RelativePose(headsetReference,CenterPose(views));
             trailerTrackedFrame=f;
@@ -1458,7 +1471,7 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
     classifiedRenderer=mainView ? self : nullptr;
     classifiedCamera=SceneCamera::Unknown;
     if(mainView)ObserveReplayRenderCamera(a,b);
-    if(mainView && (ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled())) {
+    if(mainView && (ExtendedViewsEnabled() || ReplayStereoEnabled() || TrailerMenusEnabled() || PhotoModeRequested())) {
         classifiedCamera=(preparedCameraRenderer==self && preparedCameraFrame==f) ? preparedCameraKind :
             IdentifySceneCamera(static_cast<float*>(a),static_cast<float*>(b),f);
         if(classifiedCamera==SceneCamera::Frontend) {
@@ -1740,6 +1753,8 @@ bool ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
 }
 
 HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
+    if(flags & DXGI_PRESENT_TEST)return realPresent(swapchain,interval,flags);
+    PhotoModeFrame();
     const auto f=frame.fetch_add(1);
     if(TakeCaptureRequest(f,false)) {
         Screenshot(swapchain,f);
@@ -1749,6 +1764,7 @@ HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT i
 }
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
+    PhotoModeFrame();
     if(HeadsetEnabled()) {
         static ResolutionReport resolution([] {
             static wchar_t name[128]{};
@@ -1979,7 +1995,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         EnablePikesCockpit();
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
-        if(RequestedCapturesEnabled() && swapchain && PikesScope())
+        if(swapchain && (PhotoModeRequested() || (RequestedCapturesEnabled() && PikesScope())))
             Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;
     }

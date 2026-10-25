@@ -4,7 +4,7 @@
 #include <string_view>
 #include <utility>
 namespace vr {
-enum class SceneCamera { Unknown, Cockpit, External, Replay, Frontend, ReplayChase };
+enum class SceneCamera { Unknown, Cockpit, External, Replay, Frontend, ReplayChase, Photo };
 inline SceneCamera NamedSceneCamera(std::string_view name) {
     if(name=="head-cam")return SceneCamera::Cockpit;
     for(auto n:{"bonnet","bonnet_reverse","bumper","bumper_reverse","chase_close","chase_close_reverse","chase_far","chase_far_reverse","head-cam_reverse","drift_cam_rear"})
@@ -33,9 +33,9 @@ inline bool MatchingSceneCamera(const float* a,const float* b) {
     return true;
 }
 inline bool StereoCameraAllowed(SceneCamera camera,bool extended,bool paused,bool ready,bool replay=false,bool trailer=false) {
-    return !paused && ready && (camera==SceneCamera::Cockpit ||
+    return ready && ((paused && camera==SceneCamera::Photo) || (!paused && (camera==SceneCamera::Cockpit ||
         (extended && camera==SceneCamera::External) || (replay && camera==SceneCamera::ReplayChase) ||
-        (trailer && camera==SceneCamera::Frontend));
+        (trailer && camera==SceneCamera::Frontend))));
 }
 bool TrailerMenusEnabled();
 // The RV first renders its intermediate texture (2), then the displayed

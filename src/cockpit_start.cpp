@@ -4,6 +4,7 @@
 #include "steering_animation.h"
 #include "chase_camera.h"
 #include "replay_camera.h"
+#include "photo_mode.h"
 #include "gfwl_compat.h"
 #include <MinHook.h>
 #include <intrin.h>
@@ -33,6 +34,7 @@ int __fastcall FindView(void* manager,void*,const char* name) {
         SeatSelectCamera(manager);
         SteeringSelectCamera(manager);
         ChaseSelectCamera(manager);
+        PhotoSelectCamera(manager);
         if(!forceCockpitStart && !ChaseCameraDiagnostic()) return findView(manager,name);
         const char* startup="head-cam";
         char diagnostic[48]{};

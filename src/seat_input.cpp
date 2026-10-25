@@ -3,6 +3,7 @@
 #include "test_message.h"
 #include "gfwl_compat.h"
 #include "common.h"
+#include "photo_mode.h"
 #include <dinput.h>
 #include <xinput.h>
 #include <MinHook.h>
@@ -10,10 +11,15 @@
 #include <mutex>
 #include <vector>
 #include <intrin.h>
+#include <cstring>
 
 namespace vr {
 namespace {
-struct Device { GUID id{}; bool keyboard{},unicode{}; std::vector<DIOBJECTDATAFORMAT> objects; };
+struct NeutralObject { DWORD offset{},bytes{},value{}; };
+struct Device {
+    GUID id{}; bool keyboard{},unicode{}; std::vector<DIOBJECTDATAFORMAT> objects;
+    bool relative{}; DWORD neutralLength{~0u}; std::vector<NeutralObject> neutral;
+};
 std::mutex deviceMutex;
 std::map<void*,Device> devices;
 using CreateFn=HRESULT (STDMETHODCALLTYPE*)(IDirectInput8W*,REFGUID,IDirectInputDevice8W**,IUnknown*);
@@ -30,7 +36,7 @@ bool GameCaller(void* caller) {
 }
 SHORT WINAPI AsyncKey(int key) {
     auto value=asyncKey(key);
-    return GameCaller(_ReturnAddress()) && (TestMessageBlocksKey(unsigned(key)) || SeatBlocksKey(unsigned(key))) ? 0 : value;
+    return GameCaller(_ReturnAddress()) && (PhotoModeBlocksInput() || TestMessageBlocksKey(unsigned(key)) || SeatBlocksKey(unsigned(key))) ? 0 : value;
 }
 void FilterInput(Device& device,DWORD offset,DWORD type,void* value,DWORD size) {
     if(device.keyboard && size==1) {
@@ -47,8 +53,53 @@ void Filter(Device& device,DWORD offset,void* value,DWORD bytes) {
         if(offset==object.dwOfs && bytes>=size) { FilterInput(device,offset,object.dwType,value,size); break; }
     }
 }
+void Neutralize(IDirectInputDevice8W* self,DWORD length,void* output) {
+    if(length>4096)return;
+    std::lock_guard lock(deviceMutex);
+    auto& device=devices[self];
+    if(device.neutralLength!=length) {
+        device.neutral.clear();device.neutralLength=length;
+        DIPROPDWORD mode{};
+        mode.diph={sizeof(mode),sizeof(mode.diph),0,DIPH_DEVICE};
+        if(SUCCEEDED(self->GetProperty(DIPROP_AXISMODE,&mode.diph)))device.relative=mode.dwData==DIPROPAXISMODE_REL;
+        auto objects=device.objects;
+        // Devices created before the hook can already have a custom data format.
+        // Ask for its actual offsets instead of assuming DIJOYSTATE layout.
+        if(objects.empty())for(DWORD offset=0;offset<length;) {
+            DWORD type{};bool found=false;
+            DIDEVICEOBJECTINSTANCEW wide{sizeof(wide)};
+            if(SUCCEEDED(self->GetObjectInfo(&wide,offset,DIPH_BYOFFSET)) && wide.dwOfs==offset) {
+                type=wide.dwType;found=true;
+            } else {
+                DIDEVICEOBJECTINSTANCEA ansi{sizeof(ansi)};
+                if(SUCCEEDED(reinterpret_cast<IDirectInputDevice8A*>(self)->GetObjectInfo(&ansi,offset,DIPH_BYOFFSET)) && ansi.dwOfs==offset) {
+                    type=ansi.dwType;found=true;
+                }
+            }
+            if(found)objects.push_back({nullptr,offset,type,0});
+            offset+=found && !(type&DIDFT_BUTTON)?4u:1u;
+        }
+        for(const auto& object:objects) {
+            NeutralObject value{object.dwOfs,(object.dwType&DIDFT_BUTTON)?1u:4u,0};
+            if(value.offset>length || value.bytes>length-value.offset)continue;
+            if(object.dwType&DIDFT_POV)value.value=0xffffffffu;
+            else if(object.dwType&DIDFT_AXIS) {
+                if(!device.relative && DIDFT_GETTYPE(object.dwType)!=DIDFT_RELAXIS) {
+                    DIPROPRANGE range{};
+                    range.diph={sizeof(range),sizeof(range.diph),object.dwOfs,DIPH_BYOFFSET};
+                    if(FAILED(self->GetProperty(DIPROP_RANGE,&range.diph)) || range.lMax<range.lMin)continue;
+                    value.value=DWORD((static_cast<long long>(range.lMin)+range.lMax)/2);
+                }
+            } else if(!(object.dwType&DIDFT_BUTTON))continue;
+            device.neutral.push_back(value);
+        }
+    }
+    for(const auto& object:device.neutral)
+        std::memcpy(static_cast<BYTE*>(output)+object.offset,&object.value,object.bytes);
+}
 HRESULT STDMETHODCALLTYPE State(IDirectInputDevice8W* self,DWORD length,void* output) {
     const auto hr=state(self,length,output);
+    if(SUCCEEDED(hr) && output && GameCaller(_ReturnAddress()) && PhotoModeBlocksInput()) {Neutralize(self,length,output);return hr;}
     if(SUCCEEDED(hr) && output) {
         std::lock_guard lock(deviceMutex);
         if(auto it=devices.find(self);it!=devices.end()) for(const auto& object:it->second.objects) {
@@ -61,6 +112,7 @@ HRESULT STDMETHODCALLTYPE State(IDirectInputDevice8W* self,DWORD length,void* ou
 }
 HRESULT STDMETHODCALLTYPE Data(IDirectInputDevice8W* self,DWORD objectSize,DIDEVICEOBJECTDATA* output,DWORD* count,DWORD flags) {
     const auto hr=data(self,objectSize,output,count,flags);
+    if(SUCCEEDED(hr) && count && GameCaller(_ReturnAddress()) && PhotoModeBlocksInput()) {*count=0;return hr;}
     if(SUCCEEDED(hr) && output && count && objectSize>=16) {
         std::lock_guard lock(deviceMutex);
         if(auto it=devices.find(self);it!=devices.end()) for(DWORD i=0;i<*count;++i) {
@@ -87,6 +139,8 @@ HRESULT STDMETHODCALLTYPE Format(IDirectInputDevice8W* self,const DIDATAFORMAT* 
         }
         std::lock_guard lock(deviceMutex);
         devices[self].objects=std::move(objects);
+        devices[self].relative=(value->dwFlags&DIDF_RELAXIS)!=0;
+        devices[self].neutralLength=~0u;devices[self].neutral.clear();
     }
     return hr;
 }
@@ -123,7 +177,12 @@ template<bool Unicode> HRESULT STDMETHODCALLTYPE CreateDevice(IDirectInput8W* se
 using XboxFn=DWORD (WINAPI*)(DWORD,XINPUT_STATE*);
 XboxFn xbox[4]{};
 template<unsigned I> DWORD WINAPI Xbox(DWORD slot,XINPUT_STATE* output) {
-    const auto result=xbox[I](slot,output); if(result==ERROR_SUCCESS && output) SeatFilterXbox(slot,output->Gamepad.wButtons); return result;
+    const auto result=xbox[I](slot,output);
+    if(result==ERROR_SUCCESS && output) {
+        if(GameCaller(_ReturnAddress()) && PhotoModeBlocksInput())output->Gamepad={};
+        else SeatFilterXbox(slot,output->Gamepad.wButtons);
+    }
+    return result;
 }
 }
 bool EnableSeatInput() {

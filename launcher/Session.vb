@@ -232,7 +232,7 @@ Public Class Session
                         profile.Configure(start, settings.LaunchMode = "lan")
                         profile.Prepare(settings.LaunchMode = "lan")
                         ' LAN validates states.bin against the game's original checksum.
-                        PrepareMenus()
+                        PrepareMenus(True)
                         Dim returnToMenus As Boolean
                         Using input As New ControllerInput(context), machine As New BindingMachine(settings.Bindings)
                             Dim counts As UInteger() = {0UI, 0UI}
@@ -342,7 +342,7 @@ Public Class Session
         SteeringAnimationLaunch.RequireDesktopRenderer(context, settings)
         ChaseCameraLaunch.RequireDesktopRenderer(context, settings)
         BackgroundPlayLaunch.RequireDesktopRenderer(context, settings)
-        If driving.RequiresNativeHooks OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 OrElse settings.DesktopShadowDistance <> 0 Then
+        If PhotoModeLaunch.Eligible(context, settings, False, replayId IsNot Nothing) OrElse driving.RequiresNativeHooks OrElse FlashbackLaunch.Enabled(settings) OrElse settings.VrSteeringAnimation OrElse settings.ChaseFreeLook OrElse settings.KeepRunningUnfocused OrElse settings.DesktopAnisotropy <> 0 OrElse settings.DesktopShadowDistance <> 0 Then
             Progress("Preparing game support…")
             Worker.Invoke(context, "setup")
         End If
@@ -378,7 +378,7 @@ Public Class Session
         Progress("Preparing the player profile…")
         profile.Configure(start, False)
         profile.Prepare(False)
-        PrepareMenus()
+        PrepareMenus(False)
         If config IsNot Nothing Then start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
         DirectRaceDifficulty.Configure(start, settings)
         DirectRaceStart.Configure(start, settings)
@@ -391,10 +391,15 @@ Public Class Session
     Private Function PreparedReplayId() As String
         Return If(settings.DirectMode AndAlso preparedReplay IsNot Nothing, IO.Path.GetFileName(preparedReplay?.Folder), Nothing)
     End Function
-    Private Sub PrepareMenus()
+    Private Sub PrepareMenus(vr As Boolean)
+        Dim photoMode = PhotoModeLaunch.Eligible(context, settings, vr, replayId IsNot Nothing)
         If settings.DirectMode Then
             Progress("Preparing game menus…")
-            Worker.Invoke(context, If(settings.SkipStartupMovies, "prepare-direct-menus-movies", "prepare-direct-menus"), replayId:=PreparedReplayId())
+            Dim operation = If(photoMode, "prepare-direct-photo-menus", "prepare-direct-menus") & If(settings.SkipStartupMovies, "-movies", "")
+            Worker.Invoke(context, operation, replayId:=PreparedReplayId())
+        ElseIf photoMode Then
+            Progress("Preparing game menus…")
+            Worker.Invoke(context, If(settings.SkipStartupMovies, "prepare-photo-menus-movies", "prepare-photo-menus"))
         ElseIf settings.SkipStartupMovies AndAlso settings.LaunchMode <> "lan" Then
             Progress("Preparing startup movies…")
             Worker.Invoke(context, "prepare-movies")
@@ -443,6 +448,7 @@ Public Class Session
         AnisotropicFiltering.Configure(start, settings)
         DesktopShadows.Configure(start, settings)
         ReplayCameraLaunch.Configure(start, settings)
+        PhotoModeLaunch.Configure(start, PhotoModeLaunch.Eligible(context, settings, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1", replayId IsNot Nothing))
         replayControls.ConfigureZoom(start)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using recording As New ReplaySession(context, settings, start, If(settings.DirectMode, preparedReplay, Nothing)), returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),

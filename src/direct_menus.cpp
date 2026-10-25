@@ -1,6 +1,7 @@
 #include "gfwl_compat.h"
 #include "direct_menus.h"
 #include "replay_storage.h"
+#include "photo_mode.h"
 #include "common.h"
 #include <MinHook.h>
 #include <cstring>
@@ -95,6 +96,7 @@ void* __fastcall ReplayCheck(void* state,void*,void* result) {
     if(std::memcmp(static_cast<const char*>(state)+4,"d2vr_record_begin",sizeof("d2vr_record_begin"))==0)
         ReplayStorageBegin();
     auto value=originalReplayCheck(state,result);
+    if(PhotoModeMenu(state,result))return value;
     if(std::memcmp(static_cast<const char*>(state)+4,"d2vr_replay_rearm",sizeof("d2vr_replay_rearm"))==0) {
         using Assign=void (__thiscall*)(void*,const char*);
         auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
@@ -128,7 +130,7 @@ void __fastcall Shutdown(void* state,void*,void* argument) {
 bool EnableDirectReturn() {
     wchar_t name[128]{};
     const auto length=GetEnvironmentVariableW(L"DIRT2VR_RETURN_CHANNEL",name,128);
-    if(!length) return true; // Existing diagnostic launches do not use this feature.
+    if(!length) return true; // Photo menu checks initialize independently.
     if(originalShutdown) return true;
     constexpr wchar_t prefix[]=L"Local\\DiRT2VR.Return.";
     if(length!=wcslen(prefix)+32 || wcsncmp(name,prefix,wcslen(prefix))!=0) return false;
@@ -153,9 +155,8 @@ bool EnableDirectReturn() {
     auto status=MH_Initialize();
     if(status==MH_OK || status==MH_ERROR_ALREADY_INITIALIZED) {
         status=MH_CreateHook(base+0x22ca10,reinterpret_cast<void*>(Shutdown),reinterpret_cast<void**>(&originalShutdown));
-        if(status==MH_OK) status=MH_CreateHook(base+0x23ec70,reinterpret_cast<void*>(ReplayCheck),reinterpret_cast<void**>(&originalReplayCheck));
+        if(status==MH_OK && !EnableMenuChecks())status=MH_ERROR_UNSUPPORTED_FUNCTION;
         if(status==MH_OK) status=EnableRecordedHook(base+0x22ca10);
-        if(status==MH_OK) status=EnableRecordedHook(base+0x23ec70);
         if(status==MH_OK && !EnableReplayStorage()) status=MH_ERROR_UNSUPPORTED_FUNCTION;
 #ifdef DIRT2VR_REPLAY_ARCHIVE_LAB
         if(status==MH_OK && !EnableReplayArchiveLab()) status=MH_ERROR_UNSUPPORTED_FUNCTION;
@@ -166,6 +167,18 @@ bool EnableDirectReturn() {
         if(profileFailureEvent) { CloseHandle(profileFailureEvent); profileFailureEvent=nullptr; }
     }
     Log("direct session: return-to-menus hook=%s",MH_StatusToString(status));
+    return status==MH_OK;
+}
+bool EnableMenuChecks() {
+    if(originalReplayCheck)return true;
+    if(!SupportedHost())return false;
+    auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+    const unsigned char guard[]={0x51,0x56,0x8d,0x44,0x24,0x04,0x50,0x8b,0xf1};
+    if(std::memcmp(base+0x23ec70,guard,sizeof(guard)))return false;
+    auto status=MH_Initialize();if(status!=MH_OK && status!=MH_ERROR_ALREADY_INITIALIZED)return false;
+    status=MH_CreateHook(base+0x23ec70,reinterpret_cast<void*>(ReplayCheck),reinterpret_cast<void**>(&originalReplayCheck));
+    if(status==MH_OK)status=EnableRecordedHook(base+0x23ec70);
+    if(status!=MH_OK){MH_RemoveHook(base+0x23ec70);originalReplayCheck=nullptr;}
     return status==MH_OK;
 }
 }

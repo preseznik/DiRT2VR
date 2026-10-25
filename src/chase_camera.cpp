@@ -11,6 +11,7 @@
 #include "scene_camera.h"
 #include "game_pause.h"
 #include "replay_camera.h"
+#include "photo_mode.h"
 #include "replay_pose_overlay.h"
 #include "replay_display_pose.h"
 #include <MinHook.h>
@@ -359,6 +360,7 @@ bool CurrentDisplayPose(DisplayPose& result) {
 }
 float* __fastcall ExportCamera(void* owner,void*) {
  auto result=exportCamera(owner);
+ if(auto photo=PhotoModeExport(owner,result))return photo;
  DisplayPose latest;void* manager{};
  if(!Read(owner,0x24,manager) || manager!=selected.load())return result;
  const auto camera=ObservedDisplayCamera();
@@ -461,7 +463,7 @@ bool ChaseCameraDiagnostic() {
  char value[8]{};return LoggingEnabled() && GetEnvironmentVariableA("DIRT2VR_CHASE_PROBE",value,sizeof(value))==1 && (value[0]=='1'||value[0]=='2');
 }
 bool ChaseCameraRequested() {
- return ChaseCameraDiagnostic() || ReplayCamerasEnabled() || (EnvFlag("DIRT2VR_CHASE_FREE_LOOK") && (!EnvFlag("DIRT2VR_HEADSET") || ExtendedViewsEnabled()));
+ return PhotoModeRequested() || ChaseCameraDiagnostic() || ReplayCamerasEnabled() || (EnvFlag("DIRT2VR_CHASE_FREE_LOOK") && (!EnvFlag("DIRT2VR_HEADSET") || ExtendedViewsEnabled()));
 }
 bool EnableChaseCamera() {
  if(!ChaseCameraRequested())return true;if(update)return true;if(!SupportedHost())return false;
@@ -485,6 +487,7 @@ bool EnableChaseCamera() {
  const unsigned char storeGuard[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x08,0x56,0x57};
  const unsigned char exportGuard[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x2c,0x56};
  const unsigned char sceneGuard[]={0x81,0xec,0xf8,0,0,0,0x56,0x8b,0xf1};
+ if(PhotoModeRequested() && memcmp(base+0x7293c0,exportGuard,sizeof(exportGuard)))return false;
  if(memcmp(base+0x72db40,updateGuard,sizeof(updateGuard))||memcmp(base+0x71f530,collisionGuard,sizeof(collisionGuard))||
     memcmp(base+0x70e770,targetGuard,sizeof(targetGuard))||memcmp(base+0x6f70b0,lookGuard,sizeof(lookGuard))||
     (ReplayCamerasEnabled() && (memcmp(base+0x92cb10,replayGuard,sizeof(replayGuard)) ||
@@ -498,9 +501,11 @@ bool EnableChaseCamera() {
   status=MH_CreateHook(base+pair.first,pair.second,destination);if(status!=MH_OK)break;
   created[count++]=pair.first;
  }
- if(status==MH_OK && ReplayCamerasEnabled()) {
-  status=MH_CreateHook(base+0x92cb10,reinterpret_cast<void*>(ReplayUpdate),reinterpret_cast<void**>(&replayUpdate));
-  if(status==MH_OK)created[count++]=0x92cb10;
+ if(status==MH_OK && (ReplayCamerasEnabled() || PhotoModeRequested())) {
+  if(ReplayCamerasEnabled()) {
+   status=MH_CreateHook(base+0x92cb10,reinterpret_cast<void*>(ReplayUpdate),reinterpret_cast<void**>(&replayUpdate));
+   if(status==MH_OK)created[count++]=0x92cb10;
+  }
   if(status==MH_OK && ReplayCameraProbe()) {
    status=MH_CreateHook(base+0x6eafd0,reinterpret_cast<void*>(FinalizePose),reinterpret_cast<void**>(&finalizePose));
    if(status==MH_OK)created[count++]=0x6eafd0;

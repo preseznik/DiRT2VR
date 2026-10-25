@@ -1,7 +1,7 @@
 Imports EgoEngineLibrary.Xml
 Imports System.Xml
 
-' Only direct sessions prepare these files. Normal and LAN launches use the originals.
+' Offline DX11 sessions share one guarded transaction for driving and photo menus.
 Public Class DirectMenus
     Public Const FlowHash As String = "D261EA3394627188AF47DBF8F36F22FDF3B99E70835921B8590D739220DC601F"
     Private Shared ReadOnly Names As String() = {"states.bin", "flow.bin"}
@@ -31,14 +31,14 @@ Public Class DirectMenus
         child.SetAttribute("id", id) : child.SetAttribute("state", state) : parent.AppendChild(child)
         Return child
     End Function
-    Public Shared Function Patch(original As Byte(), flow As Boolean, Optional skipMovies As Boolean = False, Optional savedReplay As Boolean = False, Optional recordReplay As Boolean = True) As Byte()
+    Public Shared Function Patch(original As Byte(), flow As Boolean, Optional skipMovies As Boolean = False, Optional savedReplay As Boolean = False, Optional recordReplay As Boolean = True, Optional directSession As Boolean = True, Optional photoMode As Boolean = False) As Byte()
         recordReplay = recordReplay OrElse savedReplay
         Dim expected = If(flow, FlowHash, StartupMovies.OriginalHash)
         If Convert.ToHexString(Security.Cryptography.SHA256.HashData(original)) <> expected Then Throw New IOException("Direct-session menus require the original supported system files.")
         If Not flow AndAlso skipMovies Then original = StartupMovies.Patch(original)
         Using input As New MemoryStream(original)
             Dim binary As New XmlFile(input), document = binary.Document
-            If flow Then
+            If directSession AndAlso flow Then
                 Dim root = One(document, "//node[@id='S']")
                 LoadDrivingProfile(document, root)
                 ' The native hook identifies this dedicated shutdown state. The session
@@ -122,7 +122,7 @@ Public Class DirectMenus
                     Link(record, "enabled", native.GetAttribute("id")) : Link(record, "disabled", native.GetAttribute("id"))
                 Next
                 If savedReplay Then PrepareSavedPlayback(document)
-            Else
+            ElseIf directSession Then
                 Dim replayCheck = DirectCast(One(document, "//StateReplayEnabledCheck[@id='replay_enabled_check']").CloneNode(True), XmlElement)
                 replayCheck.SetAttribute("id", "d2vr_full_replay_check") : document.DocumentElement.AppendChild(replayCheck)
                 Dim recordBegin = DirectCast(replayCheck.CloneNode(True), XmlElement)
@@ -149,6 +149,7 @@ Public Class DirectMenus
                     Next
                 End If
             End If
+            If photoMode AndAlso Not savedReplay Then PhotoMenus.Patch(document, flow)
             Using output As New MemoryStream()
                 binary.Write(output, XmlType.BinXml) : Return output.ToArray()
             End Using
@@ -255,11 +256,11 @@ Public Class DirectMenus
             Files.NoLinks(Target(i)) : Files.NoLinks(Backup(i))
         Next
     End Sub
-    Public Sub Prepare(Optional skipMovies As Boolean = False, Optional afterWrite As Action(Of Integer) = Nothing, Optional savedReplay As Boolean = False, Optional recordReplay As Boolean = True)
+    Public Sub Prepare(Optional skipMovies As Boolean = False, Optional afterWrite As Action(Of Integer) = Nothing, Optional savedReplay As Boolean = False, Optional recordReplay As Boolean = True, Optional directSession As Boolean = True, Optional photoMode As Boolean = False)
         CheckPaths()
         If Pending OrElse New StartupMovies(context).Pending OrElse New LanTransaction(context).BlocksMenuChanges Then Throw New IOException("Restore pending files before preparing direct-session menus.")
         Dim original = Names.Select(Function(n) File.ReadAllBytes(IO.Path.Combine(context.GameRoot, "system", n))).ToArray()
-        Dim modified = {Patch(original(0), False, skipMovies, savedReplay, recordReplay), Patch(original(1), True, savedReplay:=savedReplay, recordReplay:=recordReplay)}
+        Dim modified = {Patch(original(0), False, skipMovies, savedReplay, recordReplay, directSession, photoMode), Patch(original(1), True, savedReplay:=savedReplay, recordReplay:=recordReplay, directSession:=directSession, photoMode:=photoMode)}
         Dim journal As New DirectMenuJournal With {.Version = 2, .ReadOnlyFiles = New List(Of Boolean)}
         For i = 0 To 1
             If File.Exists(Backup(i)) Then

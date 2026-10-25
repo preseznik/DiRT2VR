@@ -337,6 +337,16 @@ For a comparison, use the same car and event for three short runs: main option *
 | **F10** | Recenter |
 | Normal game controls | Driving and menu navigation |
 
+**Photo Mode (experimental):** pause an offline race or practice session and choose **PHOTO MODE** to move a free camera while the race stays frozen. It requires DX11 and is unavailable in network races and replay playback. It works independently of chase-camera Free look and the extended VR views settings.
+
+- **Keyboard/mouse:** WASD moves, the mouse looks, E/Q rises/descends, and Shift moves faster.
+- **Xbox controller:** left stick moves, right stick looks, right/left trigger rises/descends, and right bumper moves faster.
+- **Esc**, controller **B** or **Start** returns to the pause menu. Choose Continue to resume driving. Moving the camera does not move your car. Switching away from the game returns to the pause menu too.
+
+The camera has no collision, so you can fly through scenery.
+
+VR Photo Mode uses stereo rendering, independent head tracking and smooth mouse/stick turning. Leaving it restores your driving view and seated reference. Desktop practice and AI Race, plus headset/controller practice, have passed bounded checks. Broader track coverage remains experimental.
+
 Controls has **General**, **VR**, **Driving** and **Seat** subtabs. General contains cockpit animation and chase-camera settings. VR contains Toggle VR and Recenter; Seat contains the seat panel shortcut and optional individual bindings. The binding rows have **Action**, **Keyboard** and **Controller / wheel** columns. Click an action's keyboard binding to change it, optionally with Ctrl, Alt or Shift. Escape or switching tabs cancels capture without discarding other edits.
 
 **Chase-camera free look (experimental):** enable **Controls → General → Chase camera → Free look**, save settings and relaunch, then select a chase view using the game's camera control. Free look starts **off**. Desktop play requires DX11. For VR driving, enable **Advanced → Graphics → 3D beyond the cockpit**; for replay 3D, use the separate **3D chase replays** switch. Desktop controls and VR chase-replay orbit/zoom have passed player checks.
