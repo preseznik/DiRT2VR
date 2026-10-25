@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- When an OpenXR add-on prevents VR startup, identify the failing layer and offer to disable it for DiRT2VR and retry when a supported bypass is available. Remember successful bypasses only by choice, and re-enable layers through Settings → VR compatibility. Other applications keep their settings. Automated recovery checks cover the reported ReShade and OBS Mirror failures; the new launcher flow still needs affected-user testing.
+
 ## 0.17.147 — 2026-10-25 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.147)

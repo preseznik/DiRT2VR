@@ -34,6 +34,7 @@ Public Class Session
     Private filterSnapshot As String
     Private ReadOnly replayId As String
     Private preparedReplay As PreparedReplay
+    Private ReadOnly vrLayerBypasses As New List(Of VrLayerBypass)()
     Public Sub New(value As InstallContext, Optional multiplayer As Boolean = False, Optional joinTarget As String = Nothing, Optional savedReplayId As String = Nothing)
         context = value
         CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
@@ -151,11 +152,15 @@ Public Class Session
                     Worker.Invoke(context, "setup")
                     Status("Preparing")
                     Dim logFolder = CreateSessionLog(True)
-                    ProbeRuntime(logFolder, runtime)
+                    If Not ProbeRuntime(logFolder, runtime) Then
+                        graphics.Recover() : Worker.Invoke(context, "recover")
+                        Status("Ready", "VR launch cancelled")
+                        Return
+                    End If
                     Dim channel = "Local\DiRT2VR.Input." & Guid.NewGuid().ToString("N")
                     Using mapping = MemoryMappedFile.CreateNew(channel, 16), view = mapping.CreateViewAccessor(), seat As New SeatChannel(context, settings)
                         view.Write(0, &H32565244) : view.Write(4, 1) : view.Write(8, 0UI) : view.Write(12, 0UI)
-                        Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget)
+                        Dim start = VrStartInfo(context, settings, channel, logFolder, lanJoinTarget, vrLayerBypasses)
                         start.Environment("DIRT2VR_SEAT_CHANNEL") = seat.Name
                         DirectRaceDifficulty.Configure(start, settings)
                         DirectRaceStart.Configure(start, settings)
@@ -238,7 +243,7 @@ Public Class Session
             End Try
         End Using
     End Sub
-    Public Shared Function VrStartInfo(context As InstallContext, settings As VrSettings, channel As String, logFolder As String, Optional joinTarget As String = Nothing) As ProcessStartInfo
+    Public Shared Function VrStartInfo(context As InstallContext, settings As VrSettings, channel As String, logFolder As String, Optional joinTarget As String = Nothing, Optional layerBypasses As IReadOnlyList(Of VrLayerBypass) = Nothing) As ProcessStartInfo
         ' Both factories clear inherited experiments before setting their explicit launch flags.
         Dim start = If(settings.LaunchMode = "lan", LanSession.StartInfo(context, settings.SkipIntroduction, joinTarget), DesktopStartInfo(context, Nothing, Nothing))
         CustomCarService.ConfigureProcess(start, settings)
@@ -270,6 +275,7 @@ Public Class Session
         start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
         start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
         start.Environment("XR_RUNTIME_JSON") = settings.Runtime
+        If layerBypasses IsNot Nothing Then VrApiLayers.Configure(start, layerBypasses)
         Return start
     End Function
     Private Function RunDesktop() As Boolean
@@ -440,24 +446,22 @@ Public Class Session
         Dim match = System.Text.RegularExpressions.Regex.Match(report, "(?m)^display_refresh_hz=([0-9.]+)")
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "headset.json"), New HeadsetStatus With {.RefreshHz = If(match.Success, match.Groups(1).Value, "")})
     End Sub
-    Private Sub ProbeRuntime(logFolder As String, runtime As VrRuntimeInfo)
+    Private Function ProbeRuntime(logFolder As String, runtime As VrRuntimeInfo) As Boolean
         Dim executable = IO.Path.Combine(context.ModRoot, "payload\xr_probe.exe")
         Dim manifest = Files.ReadJson(Of PackageManifest)(IO.Path.Combine(context.ModRoot, "package.json"))
         Const relative As String = "DiRT2VR/payload/xr_probe.exe"
         If Not File.Exists(executable) OrElse Not manifest.Files.ContainsKey(relative) OrElse Files.Hash(executable) <> manifest.Files(relative) Then Throw New IOException("Headset preflight tool is missing or damaged. Extract the complete package again.")
-        Dim start As New ProcessStartInfo(executable) With {.UseShellExecute = False, .CreateNoWindow = True, .RedirectStandardOutput = True, .RedirectStandardError = True}
-        runtime.Configure(start)
-        start.Environment("DIRT2VR_ACTIVE") = "0"
-        Using probe = Process.Start(start)
-            Dim stdout = probe.StandardOutput.ReadToEndAsync()
-            Dim stderr = probe.StandardError.ReadToEndAsync()
-            If Not probe.WaitForExit(30000) Then
-                probe.Kill() : probe.WaitForExit()
-                Throw New IOException(runtime.Name & " preflight timed out. Start the selected headset software, connect your headset, then retry. You can change VR runtime in Settings.")
-            End If
-            Dim report = "selected_runtime_mode=" & runtime.Mode & Environment.NewLine & "selected_runtime_manifest=" & IO.Path.GetFileName(runtime.ManifestPath) & Environment.NewLine & stdout.GetAwaiter().GetResult() & stderr.GetAwaiter().GetResult()
-            SavePreflightReport(context, report, logFolder)
-            If probe.ExitCode <> 0 Then Throw New IOException(runtime.Name & " could not open a headset session. Connect your headset and check its software. Change VR runtime in Settings to try SteamVR or system OpenXR. " & If(logFolder Is Nothing, "Enable diagnostic logging in Settings and retry for details.", "Details are in " & IO.Path.Combine(logFolder, "preflight.txt")))
-        End Using
-    End Sub
+        Dim preflight As New VrPreflight(context, runtime, logFolder)
+        preflight.Bypasses.AddRange(vrLayerBypasses)
+        Dim confirm As Func(Of VrLayerRecoveryRequest, VrLayerRecoveryChoice) = Nothing
+        If Not Environment.GetCommandLineArgs().Contains("--quiet") AndAlso Environment.UserInteractive Then
+            LauncherAppearance.Modern = settings.ModernInterface
+            confirm = AddressOf VrLayerRecoveryForm.Confirm
+        End If
+        If Not preflight.Check(Function(layers) VrPreflight.RunProbe(executable, runtime, layers), confirm) Then Return False
+        vrLayerBypasses.Clear() : vrLayerBypasses.AddRange(preflight.Bypasses)
+        SavePreflightReport(context, preflight.Report, Nothing)
+        If preflight.Warning <> "" Then displayWarning = (displayWarning & " " & preflight.Warning).Trim()
+        Return True
+    End Function
 End Class

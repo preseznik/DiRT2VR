@@ -631,6 +631,23 @@ Public Class MainForm
         runtimeRow.Controls.Add(browse) : Field(runtimes, "SteamVR runtime", runtimeRow)
         runtimeRow.Enabled = settings.RuntimeMode <> "openxr"
         AddHandler runtimeChoice.SelectedIndexChanged, Sub() runtimeRow.Enabled = runtimeChoice.SelectedIndex <> 1
+        Dim compatibility = Section(columns.First, "VR compatibility")
+        Dim layerSummary As New Label With {.Name = "VrCompatibilitySummary", .AutoSize = True, .MaximumSize = New Size(460, 0)}
+        Dim refreshLayers As Action = Sub()
+                                          Dim count = VrLayerPreferences.Load(context).Bypasses.Count
+                                          layerSummary.Text = If(count = 0, "No remembered OpenXR layer bypasses.", count & If(count = 1, " remembered OpenXR layer bypass.", " remembered OpenXR layer bypasses."))
+                                      End Sub
+        refreshLayers()
+        AddHandler Me.Activated, Sub() refreshLayers()
+        compatibility.Controls.Add(layerSummary)
+        Dim manageLayers As New Button With {.Text = "Manage layer bypasses…", .Name = "ManageVrCompatibility", .AutoSize = True}
+        AddHandler manageLayers.Click, Sub()
+                                           Using dialog As New VrCompatibilityForm(context)
+                                               dialog.ShowDialog(Me)
+                                           End Using
+                                           refreshLayers()
+                                       End Sub
+        compatibility.Controls.Add(manageLayers)
         Dim options = Section(columns.Second, "Startup & diagnostics")
         skipStartupMovies.Text = "On" : skipStartupMovies.Checked = settings.SkipStartupMovies : Field(options, "Skip logos (single player)", skipStartupMovies)
         skipIntroduction.Text = "On" : skipIntroduction.Checked = settings.SkipIntroduction : Field(options, "Skip introduction (LAN)", skipIntroduction)
