@@ -8,11 +8,15 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.17.152 — 2026-10-26 — Experimental
 
-- Pike's Peak rebuilds use smaller geometry buffers and fewer opaque depth draws while keeping the same scenery.
-- Add **Build performance version** for selected Pike's Peak layouts: keep the forest and nearby detail, use source tree billboards in the distance, and reduce eligible scenery textures. Installed layout labels show Standard or Performance. Requires rebuilding. Desktop and Virtual Desktop VR checks improved performance; a short tarmac forest drive passed appearance and tracking checks. Intermittent VR startup hangs remain unresolved.
-- Diagnostic logs include the graphics adapter and video-memory usage/budget to help investigate slowdowns and device-removal failures.
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.152)
 
-**Rebuild the selected Pike's Peak layouts to apply these improvements.** Use **Manage… → Rebuild from source…**; check **Build performance version** for the optional distant-tree and texture changes. Existing layouts remain usable until rebuilt.
+- **Better Pikes Peak performance:** rebuilt tracks use less memory and reduce rendering load without removing scenery.
+- **Optional Performance build:** the new **Build performance version** option keeps the full forest and nearby detail, while using simpler distant trees and smaller scenery textures. Available for all four layouts on desktop and in VR. Installed layouts are labelled **Standard** or **Performance**.
+- **More useful diagnostic logs:** record graphics-card memory use to help investigate slowdowns and graphics errors.
+
+**After updating:** use **Manage… → Rebuild from source…** for the Pikes Peak layouts you want to update. Check **Build performance version** for the optional changes. Existing layouts remain usable until rebuilt, and unselected layouts are preserved.
+
+Broader driving, gravel VR and 4 GB graphics cards still need testing. Intermittent VR startup hangs remain unresolved. Please report any problems.
 
 ## 0.17.151 — 2026-10-25 — Experimental
 

@@ -2,13 +2,13 @@ DiRT2VR 0.17.152 — Experimental
 
 LATEST CHANGES (since 0.17.151)
 
-- Pike's Peak rebuilds use smaller geometry buffers and fewer opaque depth draws while keeping the same scenery.
-- Optional Build performance version: keep every tree and nearby detail, use simpler source trees in the distance, and reduce eligible scenery textures. Available for all four layouts on desktop and in VR; installed layouts show Standard or Performance.
-- Improved video-memory diagnostics help investigate slowdowns and graphics-device failures.
+- Better Pikes Peak performance: rebuilt tracks use less memory and reduce rendering load without removing scenery.
+- Optional Performance build: the new Build performance version option keeps the full forest and nearby detail, while using simpler distant trees and smaller scenery textures. Available for all four layouts on desktop and in VR. Installed layouts are labelled Standard or Performance.
+- More useful diagnostic logs: record graphics-card memory use to help investigate slowdowns and graphics errors.
 
-After updating: use Manage → Rebuild from source for the Pike's Peak layouts you want to update. Check Build performance version for the optional distant-tree and texture changes. Existing layouts remain usable until rebuilt; unselected layouts are preserved.
+After updating: use Manage… → Rebuild from source… for the Pikes Peak layouts you want to update. Check Build performance version for the optional changes. Existing layouts remain usable until rebuilt, and unselected layouts are preserved.
 
-A short tarmac forest headset drive passed appearance and tracking checks. Broader driving and 4 GB graphics cards still need testing. Intermittent VR startup hangs remain unresolved.
+Broader driving, gravel VR and 4 GB graphics cards still need testing. Intermittent VR startup hangs remain unresolved. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
