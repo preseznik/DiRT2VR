@@ -1,8 +1,8 @@
-DiRT2VR 0.17.155 — Experimental
+DiRT2VR 0.17.156 — Experimental
 
 LATEST CHANGES (since 0.17.153)
 
-- Water reflection diagnostics: when logging is enabled, records reflection changes to help investigate brief water shifts in VR. This is a diagnostic build; the flicker is not yet fixed.
+- Water diagnostics: when logging is enabled, records reflection changes and first-use water shader/texture bindings to investigate brief shifts on the first lap. This is a diagnostic build; the flicker is not yet fixed.
 - Pikes Peak Performance builds reduce distant scenery work while preserving nearby trees, roads, collision and mountain visibility. Rebuild selected Performance layouts to apply the changes. Desktop spot checks show modest GPU savings; headset checks are still pending.
 
 No track rebuild is needed for the water test. Existing installed tracks and settings are preserved.

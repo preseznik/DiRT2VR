@@ -276,6 +276,8 @@ DispatchFn realDispatch{};
 TargetsFn realTargets{};
 VertexShaderFn realVS{};
 PixelShaderFn realPS{};
+using BindPixelShaderFn=void (STDMETHODCALLTYPE*)(ID3D11DeviceContext*,ID3D11PixelShader*,ID3D11ClassInstance* const*,UINT);
+BindPixelShaderFn realBindPixelShader{};
 using MapFn = HRESULT (STDMETHODCALLTYPE*)(ID3D11DeviceContext*,ID3D11Resource*,UINT,D3D11_MAP,UINT,D3D11_MAPPED_SUBRESOURCE*);
 using UnmapFn = void (STDMETHODCALLTYPE*)(ID3D11DeviceContext*,ID3D11Resource*,UINT);
 MapFn realMap{};
@@ -1221,6 +1223,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         eyeLights.clear();
     }
     gpu.End(false); // Close a partial pair after an acquire/draw failure.
+    FlushWaterSurfaceTrace(f);
     scenePass=0;
     if(requestedCapture && submitted && eyes.Ready(f)) {
         const unsigned id=920000+requestedCaptureCount*2;
@@ -1707,6 +1710,10 @@ uint64_t Shader(const void* bytes, SIZE_T length, const char* stage) {
 }
 
 bool RecordDraw(ID3D11DeviceContext* context,const char* kind,UINT count,UINT instances=1,UINT start=0,INT base=0,UINT firstInstance=0) {
+    // Normal headset frames have scenePass==0. Observe known water bindings
+    // before the detailed-capture gate, excluding the reflection subpass itself.
+    if(lightingEye && !waterEyeRenderer)
+        TraceWaterSurfaceDraw(context,frame.load(),lightingEye,kind,count,instances,start,base,firstInstance);
     if(Sample()) {
         static unsigned long long sampledFrame{};
         static unsigned samples{};
@@ -2046,9 +2053,21 @@ HRESULT STDMETHODCALLTYPE CreateVS(ID3D11Device* d,const void* b,SIZE_T n,ID3D11
     return hr;
 }
 HRESULT STDMETHODCALLTYPE CreatePS(ID3D11Device* d,const void* b,SIZE_T n,ID3D11ClassLinkage* l,ID3D11PixelShader** s) {
-    auto hash=Shader(b,n,"ps"); auto hr=realPS(d,b,n,l,s);
+    auto hash=Shader(b,n,"ps");
+    const bool water=TraceWaterShaderCreationEnabled(hash);
+    LARGE_INTEGER begin{},end{},frequency{};
+    if(water) { QueryPerformanceFrequency(&frequency);QueryPerformanceCounter(&begin); }
+    auto hr=realPS(d,b,n,l,s);
+    if(water) {
+        QueryPerformanceCounter(&end);
+        if(SUCCEEDED(hr) && s && *s) ObserveWaterShaderCreation(*s,hash,frame.load(),1000.0*(end.QuadPart-begin.QuadPart)/frequency.QuadPart);
+    }
     if(SUCCEEDED(hr) && s && *s) { std::lock_guard lock(shaderMutex); shaderNames[*s]=hash; }
     return hr;
+}
+void STDMETHODCALLTYPE BindPixelShader(ID3D11DeviceContext* context,ID3D11PixelShader* shader,ID3D11ClassInstance* const* classes,UINT count) {
+    realBindPixelShader(context,shader,classes,count);
+    ObserveWaterShaderBinding(context,shader);
 }
 template<class F> void Hook(void* object,unsigned index,void* replacement,F& original) {
     auto target=(*static_cast<void***>(object))[index];
@@ -2087,6 +2106,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     Hook(device,15,reinterpret_cast<void*>(CreatePS),realPS);
     ComPtr<ID3D11DeviceContext> owned;
     if(!context) { device->GetImmediateContext(&owned); context=owned.Get(); }
+    if(InitializeWaterSurfaceTrace()) Hook(context,9,reinterpret_cast<void*>(BindPixelShader),realBindPixelShader);
     Hook(context,12,reinterpret_cast<void*>(DrawIndexed),realDrawIndexed);
     Hook(context,13,reinterpret_cast<void*>(Draw),realDraw);
     Hook(context,14,reinterpret_cast<void*>(Map),realMap);
