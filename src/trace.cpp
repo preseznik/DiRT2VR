@@ -439,6 +439,8 @@ void TraceShadowPresets(uint64_t f) {
 thread_local void* waterEyeRenderer{};
 void* waterRenderer{};
 uint64_t waterRendererFrame=~uint64_t{};
+unsigned waterNativePasses{};
+bool waterMultipleRenderers{};
 bool WaterReflectionsEnabled() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_WATER_REFLECTIONS",value,8)==1 && value[0]==L'1'; }();
     return enabled;
@@ -1002,16 +1004,63 @@ public:
     }
 };
 
+// Record transitions without GPU readbacks or per-draw inspection. A normal
+// 120-frame sample cannot explain a single skipped reflection or plane change.
+// Never dereference a renderer retained from an earlier frame: it may be gone.
+void TraceWaterReflection(const char* status,const unsigned char* renderer,uint64_t count=0) {
+    if(!LoggingEnabled() || lightingEye<1 || lightingEye>2) return;
+    struct State {
+        const char* status{};
+        const void* renderer{};
+        unsigned nativePasses{};
+        bool multipleRenderers{};
+        bool planeValid{};
+        std::array<float,4> plane{};
+    };
+    static std::array<State,2> previous{};
+    static unsigned transitions{};
+    if(transitions>=1024) return;
+    const bool current=waterRendererFrame==frame.load();
+    State state{status,renderer,current?waterNativePasses:0,current && waterMultipleRenderers,false,{}};
+    std::array<float,8> p{}; // Native point (+0xd20) and normal (+0xd30).
+    if(renderer) {
+        memcpy(p.data(),renderer+0xd20,sizeof(p));
+        const float length=std::sqrt(p[4]*p[4]+p[5]*p[5]+p[6]*p[6]);
+        if(std::isfinite(length) && length>0) {
+            for(unsigned i=0;i<3;++i) state.plane[i]=p[i+4]/length;
+            state.plane[3]=-(p[0]*state.plane[0]+p[1]*state.plane[1]+p[2]*state.plane[2]);
+            state.planeValid=std::all_of(state.plane.begin(),state.plane.end(),[](float v){return std::isfinite(v);});
+        }
+    }
+    // A different point on the same plane is not a reflection transition.
+    // Ignore sub-millimetre numerical drift so normal driving does not spam logs.
+    auto& last=previous[lightingEye-1];
+    if(last.status && !strcmp(last.status,state.status) && last.renderer==state.renderer &&
+       last.nativePasses==state.nativePasses && last.multipleRenderers==state.multipleRenderers &&
+       last.planeValid==state.planeValid && (!state.planeValid ||
+       std::equal(last.plane.begin(),last.plane.end(),state.plane.begin(),[](float a,float b){return std::abs(a-b)<0.001f;}))) return;
+    last=state;
+    Log("water reflection transition frame=%llu eye=%u status=%s renderer=%p native_passes=%u multiple_renderers=%d renderer_frame=%llu lists_frame=%llu draws=%llu plane_valid=%d point=%.6f,%.6f,%.6f,%.6f normal=%.6f,%.6f,%.6f,%.6f",
+        frame.load(),lightingEye,status,renderer,state.nativePasses,state.multipleRenderers,
+        waterRendererFrame,waterListsFrame,count,state.planeValid,p[0],p[1],p[2],p[3],p[4],p[5],p[6],p[7]);
+    if(++transitions==1024) Log("water reflection transition limit reached; start a fresh session for further investigation");
+}
+
 void RenderEyeReflection(void* mainCamera) {
-    if(!WaterReflectionsEnabled() || !waterPrepareTail || !waterCameraA || !waterRenderer || waterRendererFrame!=frame.load() || waterListsFrame!=frame.load()) return;
+    if(!WaterReflectionsEnabled()) return;
+    if(!waterPrepareTail) { TraceWaterReflection("hook-unavailable",nullptr); return; }
+    if(!waterRenderer || waterRendererFrame!=frame.load()) { TraceWaterReflection("no-current-renderer",nullptr); return; }
+    if(!waterCameraA || waterListsFrame!=frame.load()) { TraceWaterReflection("no-current-lists",nullptr); return; }
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
     auto renderer=static_cast<unsigned char*>(waterRenderer);
     const unsigned char prepare[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0xb4,0x01,0,0};
     const unsigned char render[]={0x53,0x56,0x8b,0xf1,0x33,0xdb};
     if(*reinterpret_cast<void**>(renderer)!=base+0xf262f8 ||
-       *reinterpret_cast<void**>(renderer+0x940)!=mainCamera ||
-       *reinterpret_cast<void**>(renderer+0x95c) ||
-       memcmp(base+0x2e22d0,prepare,sizeof(prepare)) || memcmp(base+0x2d1d40,render,sizeof(render))) return;
+       memcmp(base+0x2e22d0,prepare,sizeof(prepare)) || memcmp(base+0x2d1d40,render,sizeof(render))) {
+        TraceWaterReflection("guard-rejected",nullptr); return;
+    }
+    if(*reinterpret_cast<void**>(renderer+0x940)!=mainCamera) { TraceWaterReflection("source-camera-mismatch",renderer); return; }
+    if(*reinterpret_cast<void**>(renderer+0x95c)) { TraceWaterReflection("preparation-pending",renderer); return; }
     const auto pass=scenePass;
     const bool main=continuousMain;
     const auto before=draws.load();
@@ -1027,6 +1076,7 @@ void RenderEyeReflection(void* mainCamera) {
     waterEyeRenderer=nullptr;
     continuousMain=main;
     scenePass=pass;
+    TraceWaterReflection("rendered",renderer,draws.load()-before);
     if(frame.load()%120==0) Log("water per-eye reflection frame=%llu draws=%llu pending=%p",frame.load(),draws.load()-before,*reinterpret_cast<void**>(renderer+0x95c));
 }
 
@@ -1445,7 +1495,12 @@ void __fastcall Scene(void* self,void*,void* a,void* b,void* c,void* d,void* e) 
         static bool sampled=false;
         if(!sampled && f>300) { sampled=true; Stack("TrailerScene"); }
     }
-    if(WaterReflectionsEnabled() && caller==0x2d1daf && !waterEyeRenderer) { waterRenderer=self; waterRendererFrame=f; }
+    if(WaterReflectionsEnabled() && caller==0x2d1daf && !waterEyeRenderer) {
+        if(waterRendererFrame!=f) { waterNativePasses=0; waterMultipleRenderers=false; }
+        else if(waterRenderer!=self) waterMultipleRenderers=true;
+        ++waterNativePasses;
+        waterRenderer=self; waterRendererFrame=f;
+    }
     const bool sample=DetailedTrace() && (f==300 || f==1200 || f==3000);
     if(sample) {
         Log("scene_enter frame=%llu caller=0x%zx main=%d self=%p args=%p,%p,%p,%p,%p",f,caller,mainView,self,a,b,c,d,e);

@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Water reflection diagnostics:** logs changes in the reflection plane and skipped per-eye updates to help investigate brief water shifts in VR. The reported flicker is not yet resolved.
 - **Pikes Peak Performance build:** uses a 200-metre detail setting, lower-detail source models for rocks and supported decorative objects, and fewer distant tree shadows. Nearby trees retain their full geometry; selected distant forest billboards fade beyond 600 metres. Roads, collision and mountain visibility are preserved. Rebuild the selected Performance layouts to apply these changes. Desktop spot checks show modest GPU savings; headset and longer driving checks are still pending.
 
 ## 0.17.153 — 2026-10-26 — Experimental
