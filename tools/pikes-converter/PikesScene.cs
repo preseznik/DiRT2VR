@@ -46,6 +46,7 @@ internal sealed class PikesScene
     bool facingRadialNormals;
     bool rigidFoliageOnly;
     bool performanceAssets;
+    readonly List<object> sceneryDetails=[];
     int treePlacements,billboardPlacements;
     readonly Dictionary<string,int> billboardModels=[];
     readonly Dictionary<string,Vector2> treeDimensions=[];
@@ -145,7 +146,8 @@ internal sealed class PikesScene
         reader.PlacementFile(reader.route+"/ornaments.bin", "objects.pssg", false);
         reader.Entities();
         Files.Json(Path.Combine(output,"tree-detail.json"),new{PerformanceAssets=performanceAssets,TreePlacements=reader.treePlacements,BillboardPlacements=reader.billboardPlacements,
-            FullDetailFallbackPlacements=reader.treePlacements-reader.billboardPlacements,Models=reader.billboardModels,TransitionMetres=performanceAssets?250:1200,PlacementsRemoved=0});
+            FullDetailFallbackPlacements=reader.treePlacements-reader.billboardPlacements,Models=reader.billboardModels,TransitionMetres=performanceAssets?PikesTreeBillboards.Distance:1200,PlacementsRemoved=0});
+        if(performanceAssets)Files.Json(Path.Combine(output,"scenery-detail.json"),new{AuthoredSourceModelsOnly=true,Placements=reader.sceneryDetails});
         var combined = VisualBatches.Combine(reader.scene.Visuals).ToArray();
         reader.scene.Visuals.Clear(); reader.scene.Visuals.AddRange(combined);
         foreach (var triangle in reader.scene.Collision) reader.scene.Surfaces[triangle.Material] = reader.scene.Surfaces.GetValueOrDefault(triangle.Material)+1;
@@ -313,6 +315,7 @@ internal sealed class PikesScene
         // Keep the tested source physics meshes. Pikes has no GRID 2
         // objecttypes.pssg library for Mizu's primitive-body reconstruction.
         physicsModelTriangles[root.Id]=physicsModelTriangles.GetValueOrDefault(root.Id)+scene.Collision.Count-before;
+        if(performanceAssets&&!trees&&scene.Visuals.Count>visualStart)DistantScenery(root,placement,label,visualStart);
         if(trees&&scene.Visuals.Count>visualStart)
         {
             treePlacements++;
@@ -341,6 +344,35 @@ internal sealed class PikesScene
                 }
             }
         }
+    }
+    void DistantScenery(PssgNode root,Matrix4x4 placement,string label,int highStart)
+    {
+        // Use the source artist's lower meshes, not a blanket simplifier on roads,
+        // signs, barriers, buildings or mountain terrain. Physics was already read.
+        string[] eligible={"_rock_","_boulder_","core_suv","core_pickup","core_van","core_car","core_truck","core_tent","core_camp"};
+        if(!eligible.Any(s=>root.Id.Contains(s,StringComparison.OrdinalIgnoreCase)))return;
+        var nodes=Descendants(root).OfType<PssgLodVisibleRenderNode>().ToArray();
+        var selected=new List<(PssgNode Node,PssgRenderStreamInstance[] Draws)>();
+        foreach(var node in nodes)
+        {
+            var choices=node.ChildElements.OfType<PssgLodRenderInstances>().SelectMany(l=>l.InstanceLists)
+                .Select(l=>l.RenderInstances.OfType<PssgRenderStreamInstance>().ToArray()).Where(d=>d.Length>0).ToArray();
+            if(choices.Length==0)return;
+            var draws=choices.MinBy(ds=>ds.Sum(d=>(long)new RenderDataSourceReader(d.GetRenderDataSource()).IndexCount))!;
+            selected.Add((node,draws));
+        }
+        if(selected.Count==0)return;
+        int lowStart=scene.Visuals.Count;
+        long highTriangles=scene.Visuals.Skip(highStart).Sum(m=>(long)m.Indices.Length/3);
+        foreach(var (node,draws) in selected)foreach(var draw in draws)
+            Draw(draw,(profile.IsGravel?World(node):root.Transform.Transform)*placement,label+":distant",false);
+        long lowTriangles=scene.Visuals.Skip(lowStart).Sum(m=>(long)m.Indices.Length/3);
+        if(scene.Visuals.Count-lowStart!=selected.Sum(s=>s.Draws.Length)||lowTriangles==0||lowTriangles>=highTriangles)
+        {scene.Visuals.RemoveRange(lowStart,scene.Visuals.Count-lowStart);return;}
+        var anchor=placement.Translation-scene.Origin;
+        for(int i=highStart;i<lowStart;i++)scene.Visuals[i]=scene.Visuals[i] with{LodOut=PikesTreeBillboards.Distance,DetailAnchor=anchor};
+        for(int i=lowStart;i<scene.Visuals.Count;i++)scene.Visuals[i]=scene.Visuals[i] with{LodIn=PikesTreeBillboards.Distance,DetailAnchor=anchor};
+        sceneryDetails.Add(new{Model=root.Id,Placement=label,HighTriangles=highTriangles,LowTriangles=lowTriangles});
     }
     static bool DrivingCollisionModel(string name)=>new[]{"barr","fence","wall","bridge","tunnel","dam","arch","gate","building","temple","armco","rock","haybale"}
         .Any(part=>name.Contains(part,StringComparison.OrdinalIgnoreCase));

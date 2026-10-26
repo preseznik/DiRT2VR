@@ -32,7 +32,7 @@ internal static class PikesGravelBuild
         using(var stream=File.Create(Path.Combine(output,"track.jpk")))ground.Write(stream);
         Phase(45,"Reconstructing directional canopy lighting");
         PikesCanopies.Apply(scene,rally,profile,output);
-        if(performanceAssets)PikesTreeBillboards.Materials(scene);
+        if(performanceAssets){PikesTreeBillboards.Materials(scene);PikesDistantForest.Apply(scene,output);}
         if(!profile.IsGravel)PikesStartPaint.Apply(scene,output);
         string layout=profile.IsGravel?condition switch{"day"=>"gravel-day","day_alt"=>"gravel-alt",_=>"gravel-wet"}:"tarmac";
         PikesShaderRecipe.Write(game,rally,layout,Path.Combine(output,"shaderpack.pssg"),performanceAssets:performanceAssets);
@@ -43,7 +43,7 @@ internal static class PikesGravelBuild
         var (_,bounds)=Visuals.Build(scene,donor,output,independentTiles:true,splitDetailLevels:performanceAssets);
         SurfaceFiltering.ApplyToNewBuild(output);
         var route=Files.Pssg(Path.Combine(output,"routesplit.pssg"));
-        ShaderFormats.Validate(route,true);AddCanopyShadows(route);PikesHelicopters.DepthAndBounds(route,flights,bounds);ReplacePssg(route,Path.Combine(output,"routesplit.pssg"));
+        ShaderFormats.Validate(route,true);AddCanopyShadows(route,!performanceAssets);PikesHelicopters.DepthAndBounds(route,flights,bounds);ReplacePssg(route,Path.Combine(output,"routesplit.pssg"));
         Visibility.WriteDiagnostic(Path.Combine(donor,"route_1/track.vis"),output,bounds);
         Phase(70,"Writing point-to-point route and native session assets");
         PikesTrackBuild.Route(scene,donor,output);
@@ -66,7 +66,7 @@ internal static class PikesGravelBuild
         if(performanceAssets)
         {
             string path=Path.Combine(output,"route_overrides.xml");var overrides=PikesSourceProfile.ReadXml(path);
-            overrides.Root!.Element("default")!.Attribute("track_lod_dist")!.Value="250.0";
+            overrides.Root!.Element("default")!.Attribute("track_lod_dist")!.Value=PikesTreeBillboards.Distance.ToString("F1",System.Globalization.CultureInfo.InvariantCulture);
             ReplaceXml(overrides,path);
         }
         foreach(var file in Directory.EnumerateFiles(donor))CopyMissing(file,Path.Combine(output,"shared",Path.GetFileName(file)));
@@ -113,7 +113,7 @@ internal static class PikesGravelBuild
     {using var stream=File.Create(path);file.Save(stream);}
     internal static void ReplaceXml(XDocument file,string path)
     {string temporary=path+".new";Files.Xml(file,temporary);File.Move(temporary,path,true);}
-    static void AddCanopyShadows(EgoEngineLibrary.Graphics.Pssg.PssgFile route)
+    static void AddCanopyShadows(EgoEngineLibrary.Graphics.Pssg.PssgFile route,bool distantTreeShadows=true)
     {
         var xml=XDocument.Parse(PikesResources.Text("material-contracts.xml"));
         var source=new XElement(xml.Root!.Elements("SHADERGROUP").Single(g=>(string?)g.Attribute("id")=="pikes_foliage.fx"));source.SetAttributeValue("id","pikes_foliage_shadow55.fx");
@@ -121,7 +121,7 @@ internal static class PikesGravelBuild
         var shadow=(PssgShaderGroup)EgoEngineLibrary.Graphics.Pssg.PssgElement.ReadXml(source,route,parent);parent.AppendChild(shadow);
         var shaders=new Dictionary<string,string>();
         var billboard=route.Elements<PssgShaderGroup>().SingleOrDefault(g=>g.Id==PikesTreeBillboards.Name+".fx");
-        if(billboard is not null)
+        if(billboard is not null&&distantTreeShadows)
         {
             var group=(PssgShaderGroup)billboard.DeepClone();group.Id=PikesTreeBillboards.Name+"_shadow.fx";parent.AppendChild(group);
             foreach(var material in route.Elements<PssgShaderInstance>().Where(m=>m.ShaderGroup=="#"+billboard.Id).ToArray())

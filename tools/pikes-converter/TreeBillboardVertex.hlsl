@@ -9,11 +9,11 @@ cbuffer CameraParamsConstantBuffer : register(b3) {
     float4x4 view, projection, viewProjection, viewI, projectionI, viewIT;
     float4 eyePositionWS;
 };
-struct Vertex { float3 position:POSITION0; float2 uv:TEXCOORD0; float2 offset:TEXCOORD1; float3 up:NORMAL0; float3 axisX:TANGENT0; };
+struct Vertex { float3 position:POSITION0; float2 uv:TEXCOORD0; float2 offset:TEXCOORD1; float2 detail:TEXCOORD2; float3 up:NORMAL0; float3 axisX:TANGENT0; };
 struct Pixel {
     float4 position:SV_Position; float4 fog:COLOR0; float4 uv:TEXCOORD0;
     float3 axisX:TEXCOORD1; float3 up:TEXCOORD2; float3 axisZ:TEXCOORD3;
-    float3 world:TEXCOORD4; float2 blendHeight:TEXCOORD5;
+    float3 world:TEXCOORD4; float2 blendHeight:TEXCOORD5; float fade:TEXCOORD6;
 };
 Pixel main(Vertex i) {
     Pixel o;
@@ -33,6 +33,13 @@ Pixel main(Vertex i) {
     o.blendHeight=float2(frac(sector),i.offset.y+abs(i.offset.y));
     o.axisX=axisX;o.up=up;o.axisZ=axisZ;o.world=p;
     o.position=mul(viewProjection,float4(p,1));
+#ifdef BILLBOARD_SHADOW
+    o.fade=1;
+#else
+    o.fade=1-i.detail.x*saturate((length(eyePositionWS.xyz-i.position)-600)/100);
+#endif
+    // Fully faded cards produce no rasterized pixels, including depth/normal passes.
+    if(o.fade<=0)o.position=float4(0,0,0,1);
     float3 toPoint=p-eyePositionWS.xyz;
     float distance=max(length(toPoint),.0001);
     float hazePower=pow(saturate(dot(toPoint/distance,sunDirection.xyz)),hazeParams2.w);

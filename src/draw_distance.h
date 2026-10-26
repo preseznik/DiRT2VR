@@ -16,7 +16,7 @@ inline bool Extend(Scenery& value,bool performancePikes=false) {
     if(value.terrainCull<1 || value.worldCull<1 || value.terrainDetail<1) return false;
     value.terrainCull=std::max(value.terrainCull,1500.f);
     value.worldCull=std::max(value.worldCull,1000.f);
-    value.terrainDetail=std::max(value.terrainDetail,performancePikes?250.f:1000.f);
+    value.terrainDetail=std::max(value.terrainDetail,performancePikes?200.f:1000.f);
     value.objectSize=std::min(value.objectSize,.001f);
     return true;
 }

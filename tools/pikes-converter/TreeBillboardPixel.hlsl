@@ -21,9 +21,12 @@ cbuffer RenderTargetConstantBuffer : register(b2) { float4 viewportDimensions; }
 struct Pixel {
     float4 position:SV_Position; float4 fog:COLOR0; float4 uv:TEXCOORD0;
     float3 axisX:TEXCOORD1; float3 up:TEXCOORD2; float3 axisZ:TEXCOORD3;
-    float3 world:TEXCOORD4; float2 blendHeight:TEXCOORD5;
+    float3 world:TEXCOORD4; float2 blendHeight:TEXCOORD5; float fade:TEXCOORD6;
 };
 float4 main(Pixel i):SV_Target {
+    // World-space stippling is stable across frames and shared by both eyes.
+    float threshold=frac(dot(floor(i.world*8),float3(.754877666,.569840296,.438289)));
+    if(i.fade<1)clip(i.fade-threshold-.00001);
     float4 texel=lerp(tex2Dbias(TDiffuseAlphaMap,float4(i.uv.xy,0,-1)),tex2Dbias(TDiffuseAlphaMap,float4(i.uv.zw,0,-1)),i.blendHeight.x);
     clip(texel.a-.35);
 #ifdef BILLBOARD_DEPTH

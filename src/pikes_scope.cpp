@@ -87,7 +87,7 @@ bool PikesPerformanceAssets(){
         if(!length || length>=_countof(folder))return false;
         const std::wstring selected(selectedLayout->folder,selectedLayout->folder+strlen(selectedLayout->folder));
         const bool matches=selected==folder;
-        if(matches)Log("pikes performance assets: source tree detail transition=250m; full world visibility retained");
+        if(matches)Log("pikes performance assets: authored detail range accepted with 200m floor; full world visibility retained");
         return matches;
     }();
     return enabled;

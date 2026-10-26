@@ -10,10 +10,10 @@ using EgoEngineLibrary.Graphics.Pssg.Elements;
 internal static class PikesTreeBillboards
 {
     internal const string Name="pikes_tree_billboard";
-    internal const float Distance=250;
-    static readonly (string Semantic,string Type)[] Streams=[("POSITION","Vertex"),("TEXCOORD0","ST"),("TEXCOORD1","ST"),("NORMAL","Normal"),("TANGENT","Tangent")];
+    internal const float Distance=200;
+    static readonly (string Semantic,string Type)[] Streams=[("POSITION","Vertex"),("TEXCOORD0","ST"),("TEXCOORD1","ST"),("TEXCOORD2","ST"),("NORMAL","Normal"),("TANGENT","Tangent")];
     static readonly ShaderInputInfo Layout=new(Name+".fx",[new ShaderBlockInputInfo([
-        new("Vertex","float3",0,52),new("ST","float2",12,52),new("ST","float2",20,52),new("Normal","float3",28,52),new("Tangent","float3",40,52)])]);
+        new("Vertex","float3",0,60),new("ST","float2",12,60),new("ST","float2",20,60),new("ST","float2",28,60),new("Normal","float3",36,60),new("Tangent","float3",48,60)])]);
 
     internal static Mesh? Geometry(PssgRenderStreamInstance draw,Matrix4x4 world,Vector3 origin,string label)
     {
@@ -35,7 +35,7 @@ internal static class PikesTreeBillboards
         foreach(var input in draw.GetShaderInstance().Inputs.Where(i=>definitions[i.ParameterId].InputName is "ScaleX_solo" or "ScaleY_solo"))
             if(input.Value.Length!=4||BinaryPrimitives.ReadSingleBigEndian(input.Value)!=1)return null;
         return new(label+"_billboard",null!,false,positions,Enumerable.Repeat(y,4).ToArray(),uv,Enumerable.Repeat(x,4).ToArray(),
-            Enumerable.Range(0,6).Select(i=>checked((ushort)r.GetIndex(i))).ToArray()) {TexCoords=[uv,offsets],LodIn=Distance};
+            Enumerable.Range(0,6).Select(i=>checked((ushort)r.GetIndex(i))).ToArray()) {TexCoords=[uv,offsets,new Vector2[4]],LodIn=Distance};
     }
 
     internal static void Materials(Scene scene)
