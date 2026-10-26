@@ -40,6 +40,7 @@ target_sources(d3d11 PRIVATE src/shadow_distance.cpp)
 target_sources(d3d11 PRIVATE src/trailer_background.cpp)
 
 target_sources(d3d11 PRIVATE src/sky_sun.cpp)
+target_sources(d3d11 PRIVATE src/water_ripples.cpp)
 target_include_directories(d3d11 PRIVATE "${CMAKE_BINARY_DIR}" src)
 target_link_libraries(d3d11 PRIVATE minhook d3dcompiler dxguid psapi bcrypt gdiplus dinput8 openxr_loader)
 target_compile_definitions(d3d11 PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX XR_USE_PLATFORM_WIN32 XR_USE_GRAPHICS_API_D3D11)

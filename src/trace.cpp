@@ -16,6 +16,7 @@
 #include "hud_capture.h"
 #include "hud_elements.h"
 #include "water_trace.h"
+#include "water_ripples.h"
 #include "gpu_timer.h"
 #include "vr_hotkeys.h"
 #include "seat_adjustment.h"
@@ -2171,6 +2172,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                 lightingHooksReady=p && s && m;
                 Log("lighting parameter hooks ready=%d",lightingHooksReady);
             }
+            if(WaterReflectionsEnabled())EnableWaterRippleInitialization();
             if(WaterReflectionsEnabled() && !waterPrepareTail) {
                 const unsigned char tail[]={0x8d,0x8e,0x60,0x09,0,0};
                 const unsigned char exit[]={0x5f,0x5e,0x5b,0x8b,0xe5,0x5d,0xc3};
