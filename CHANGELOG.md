@@ -6,7 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.17.153 — 2026-10-26 — Experimental
+
 - Fix Pikes Peak builds failing with "Access to the path is denied" when original DiRT 2 files are marked read-only. Applies to Standard and Performance builds; original game files keep their existing attributes.
+
+After updating, retry the failed build. Existing installed layouts remain usable.
 
 ## 0.17.152 — 2026-10-26 — Experimental
 
