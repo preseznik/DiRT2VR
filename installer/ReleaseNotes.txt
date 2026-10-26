@@ -2,10 +2,10 @@ DiRT2VR 0.17.158 — Experimental
 
 LATEST CHANGES (since 0.17.153)
 
-- VR water candidate: addresses a possible cause of the brief reflection shift when first approaching water. Please test from a fresh game launch, then compare the same puddles after Restart. Headset confirmation is still needed; logging remains available for comparison.
+- VR water fix: fixes the brief reflection shift when first approaching puddles or crossing water. Confirmed resolved in headset tests on Ensenada and Novigrad.
 - Pikes Peak Performance builds reduce distant scenery work while preserving nearby trees, roads, collision and mountain visibility. Rebuild selected Performance layouts to apply the changes. Desktop spot checks show modest GPU savings; headset checks are still pending.
 
-No track rebuild is needed for the water test. Existing installed tracks and settings are preserved.
+No track rebuild is needed for the water fix. Existing installed tracks and settings are preserved.
 
 ============================================================
 EARLIER RELEASES
