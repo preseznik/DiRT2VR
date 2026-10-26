@@ -6,9 +6,17 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- **VR water fix:** fixes the brief water/reflection shift when first approaching puddles or crossing water. Confirmed resolved in headset tests on Ensenada and Novigrad with 0.17.158. No track rebuild is needed.
-- **Water diagnostics:** logging records reflection transitions and first-use water shader/texture bindings to help diagnose water rendering issues. Diagnostic work is bounded and timed separately.
-- **Pikes Peak Performance build:** uses a 200-metre detail setting, lower-detail source models for rocks and supported decorative objects, and fewer distant tree shadows. Nearby trees retain their full geometry; selected distant forest billboards fade beyond 600 metres. Roads, collision and mountain visibility are preserved. Rebuild the selected Performance layouts to apply these changes. Desktop spot checks show modest GPU savings; headset and longer driving checks are still pending.
+## 0.17.158 — 2026-10-26 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.158)
+
+- **VR water fix:** fixes the brief reflection shift when first approaching puddles or crossing water. Confirmed resolved in headset tests on Ensenada and Novigrad.
+- **Lighter Pikes Peak Performance builds:** simplifies distant scenery, reduces distant tree shadows and fades out some faraway trees to ease graphics-card load. Nearby trees, roads and mountain views are preserved.
+- **Better water diagnostics:** more useful logs when reporting water-rendering problems.
+
+**After updating:** no track rebuild is needed for the water fix. For the Pikes Peak improvements, use **Manage… → Rebuild from source…** for your selected layouts with **Build performance version** enabled.
+
+The latest Pikes Peak refinements still need headset and longer driving checks. Intermittent VR startup hangs remain unresolved. Please report any problems.
 
 ## 0.17.153 — 2026-10-26 — Experimental
 
