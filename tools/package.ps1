@@ -31,6 +31,14 @@ foreach ($line in (git worktree list --porcelain)) {
         if ($reservation.Version -match '^[0-9]+\.[0-9]+\.[0-9]+$') { $known += [version]$reservation.Version }
     }
 }
+# An explicitly approved Stable minor promotion starts from the current series,
+# even when incorrectly numbered historical candidates exist in other series.
+if ($Channel -eq 'Stable' -and $VersionBump -eq 'Minor' -and $ApprovedVersion -and
+    $ApprovedVersion -ceq (& (Join-Path $PSScriptRoot 'next-version.ps1') -Current $current -Bump Minor)) {
+    if ($known -contains [version]$ApprovedVersion) { throw "Approved version $ApprovedVersion is already reserved. No version was reserved." }
+    $series=[version]$current
+    $known=@($known | Where-Object { $_.Major -eq $series.Major -and $_.Minor -eq $series.Minor })
+}
 # A patch release stays in the checkout's major.minor series. A retained candidate
 # from another series must not silently move an Experimental patch to that series.
 if ($VersionBump -eq 'Patch') {
@@ -52,9 +60,9 @@ if ($version -notmatch '^0\.17\.(0|[1-9][0-9]*)$' -and $ApprovedVersion -cne $ve
 if ($FinalizeReservedVersion) {
     # Explicitly authorized finalization of an unpublished reservation; ordinary
     # packages still reserve a fresh number. Never alter an existing release/tag.
-    if ($Channel -ne 'Experimental' -or $FinalizeReservedVersion -ne $current -or $base -ne $current -or !$ReservedPackageDirectory) { throw 'Finalization requires the current highest reserved experimental version and its original package directory.' }
+    if ($FinalizeReservedVersion -ne $current -or $base -ne $current -or !$ReservedPackageDirectory) { throw 'Finalization requires the current highest reserved version and its original package directory.' }
     $reserved=Get-Content -LiteralPath (Join-Path $ReservedPackageDirectory 'stage/DiRT2VR/package.json') -Raw | ConvertFrom-Json
-    if ($reserved.Version -ne $current -or $reserved.Channel -ne 'Experimental') { throw 'Original package does not match the reservation.' }
+    if ($reserved.Version -ne $current -or $reserved.Channel -ne $Channel) { throw 'Original package does not match the reservation.' }
     & (Join-Path $PSScriptRoot 'verify-release.ps1') -PackageDirectory $ReservedPackageDirectory
     if ($LASTEXITCODE) { throw 'Original reserved package validation failed.' }
     $localTag=@(git tag --list "v$current")

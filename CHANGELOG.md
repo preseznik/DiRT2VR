@@ -6,6 +6,24 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.0 — 2026-10-27 — Stable
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.0)
+
+**0.18.0 brings the 0.17.158 build to the Stable channel, replacing 0.16.0. There are no new gameplay changes compared with 0.17.158.**
+
+Highlights since 0.16.0:
+
+- **More ways to race:** direct practice and AI races, selectable car grades and classes, staggered rally starts, saved replays and more chase-camera control.
+- **More VR options:** choose SteamVR or system OpenXR, adjust seats for individual cars, use additional 3D camera views and optional 3D menus, with fixes for grass, lighting and water reflections.
+- **Custom tracks and cars:** build supported tracks and the Ferrari F2004 from your own source-game files, including Pikes Peak, Nordschleife and Misty Loch. Source games are required; their assets are not included.
+- **Photo Mode:** explore a paused offline race with a free camera using keyboard/mouse or an Xbox controller, including stereo depth and head tracking in VR.
+- **Easier setup and troubleshooting:** separate career profiles, more graphics and control options, launch progress and help with supported OpenXR add-ons that block startup.
+
+**Updating:** 0.16 users will be offered this Stable update without enabling experimental releases. Install over your existing DiRT2VR installation to retain settings and installed content. Users already on 0.17.158 do not need to rebuild tracks or cars for this promotion.
+
+Optional features and custom content retain their documented experimental limitations. Intermittent Pikes Peak VR startup hangs remain unresolved. The latest Pikes Peak Performance refinements still need headset and longer driving checks; rebuild selected layouts with **Build performance version** enabled to apply those refinements.
+
 ## 0.17.158 — 2026-10-26 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.17.158)

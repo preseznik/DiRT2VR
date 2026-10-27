@@ -6,7 +6,7 @@ Open **Assets** on the release page and choose the installer or ZIP. Choose a re
 
 A desktop and VR launcher for **DiRT 2**, with custom tracks, visual presets and experimental stereoscopic VR with head tracking. Game menus use a virtual screen in VR.
 
-Tested with **Quest 3 through SteamVR**. Xbox-compatible controller binding, launching, Toggle VR and Recenter have been tested in game. Other headsets and wheel button bindings need testing; **PSVR2, Logitech and Fanatec hardware are not yet verified**. This remains an experimental build.
+Tested with **Quest 3 through SteamVR**. Xbox-compatible controller binding, launching, Toggle VR and Recenter have been tested in game. Other headsets and wheel button bindings need testing; **PSVR2, Logitech and Fanatec hardware are not yet verified**. 0.18.0 is the current Stable release; optional features and custom content retain their documented experimental limitations.
 
 This mod will remain free forever. If you'd like to support the work, you can [support me on Patreon](https://www.patreon.com/cw/bohloney).
 
