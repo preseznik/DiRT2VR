@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Fix the blurry, sideways-smeared view outside the RV with 3D menus in VR. The menus' motion blur compared each eye with the other eye's camera; headset eyes now render it without motion. Desktop menus and racing are unchanged. Checked outside the RV on Quest 3 through Virtual Desktop.
+
 ## 0.18.0 — 2026-10-27 — Stable
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.0)

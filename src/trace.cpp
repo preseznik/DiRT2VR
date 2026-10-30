@@ -32,6 +32,7 @@
 #include "exposure_window.h"
 #include "trailer_background.h"
 #include "sky_sun.h"
+#include "menu_motion_blur.h"
 #include "direct_menus.h"
 #include "gfwl_compat.h"
 #include "driving_controls.h"
@@ -1934,9 +1935,10 @@ void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT 
         if(found!=shaderNames.end())captureShader=found->second;
     }
     ++draws;
-    // Only the main headset eyes own this correction. Native desktop/screen
-    // rendering and per-eye water reflections keep their original sky pass.
-    if(lightingEye && !waterEyeRenderer) {
+    // Only the main headset eyes own these corrections; the menu blur also
+    // covers the wide trailer source. Native desktop/screen rendering and
+    // per-eye water reflections keep their original passes.
+    if((lightingEye || trailerSourceSetup) && !waterEyeRenderer) {
         ComPtr<ID3D11PixelShader> ps;c->PSGetShader(&ps,nullptr,nullptr);
         uint64_t vertex{},pixel{};
         {
@@ -1944,17 +1946,20 @@ void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT 
             const auto p=shaderNames.find(ps.Get());
             if(p!=shaderNames.end())pixel=p->second;
         }
-        if(pixel==0xa0291237968fd075ull) {
+        if(pixel==0xa0291237968fd075ull || pixel==0x56a138db8eaa2db3ull) {
             ComPtr<ID3D11VertexShader> vs;c->VSGetShader(&vs,nullptr,nullptr);
-            {
-                std::lock_guard lock(shaderMutex);const auto v=shaderNames.find(vs.Get());
-                if(v!=shaderNames.end())vertex=v->second;
-            }
-            static SkySunPass sun;
-            if(sun.Draw(c,vertex,pixel,[&] {
-                TracePipelineDraw(c,frame.load(),lightingEye,false,"indexed",n,1,vertex,pixel,true,requestedCaptureFrame==frame.load());
-                realDrawIndexed(c,n,start,base);
-            }))return;
+            std::lock_guard lock(shaderMutex);const auto v=shaderNames.find(vs.Get());
+            if(v!=shaderNames.end())vertex=v->second;
+        }
+        static SkySunPass sun;
+        if(lightingEye && pixel==0xa0291237968fd075ull && sun.Draw(c,vertex,pixel,[&] {
+            TracePipelineDraw(c,frame.load(),lightingEye,false,"indexed",n,1,vertex,pixel,true,requestedCaptureFrame==frame.load());
+            realDrawIndexed(c,n,start,base);
+        }))return;
+        static MenuMotionBlur motionBlur;
+        if(pixel==0x56a138db8eaa2db3ull && motionBlur.Draw(c,vertex,pixel,[&] {realDrawIndexed(c,n,start,base);})) {
+            if(frame.load()%120==0)Log("VR menu motion blur stilled frame=%llu eye=%u",frame.load(),lightingEye);
+            return;
         }
     }
     realDrawIndexed(c,n,start,base);
