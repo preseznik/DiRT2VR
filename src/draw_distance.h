@@ -4,6 +4,10 @@
 
 namespace vr {
 bool EnableDrawDistance();
+// Ground-cover budgets. DIRT2VR_EXTENDED_GRASS=1 raises them for desktop and VR;
+// otherwise VR keeps its 0.18.0 budget and desktop is untouched. VR always keeps
+// its 250 m range floor.
+bool EnableGrassBudget(bool headset);
 namespace lod {
 // A bounded detail floor, not an unlimited render distance. Authored longer
 // distances (including Aspen's accepted ranges) are never reduced.

@@ -35,6 +35,10 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     const bool playerCameraReady=!(cockpit || steering || chase || replayProbe || photo) || EnableCockpitStart(cockpit);
     if(cockpit && !playerCameraReady) { Log("VR starting camera: incompatible process"); return false; }
     if(headset && !EnableDrawDistance()) { Log("VR draw distance: incompatible process"); return false; }
+    if(!EnableGrassBudget(headset)) {
+        if(headset) { Log("VR grass budget: incompatible process"); return false; }
+        Log("grass budget: unavailable; native grass budget retained");
+    }
     const bool observerReady=!(headset || cockpit || steering || chase || replayProbe || photo) || EnableSceneCameraObserver(steering || chase || replayProbe || photo);
     if(!observerReady) Log("camera observer: unavailable; original steering visuals retained");
     if(steering && (!playerCameraReady || !observerReady || !EnableSteeringAnimation(headset))) Log("steering animation: unavailable; original visuals retained");

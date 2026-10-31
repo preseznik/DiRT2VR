@@ -213,6 +213,9 @@ Trailer menus and replay 3D have their own switches. Loading screens, dialogs an
 3D menus (Experimental)
 Advanced → Graphics → 3D menus adds stereo depth and head tracking to the interactive trailer interior and exterior. It is off by default and independent of the driving and replay 3D options. Save and relaunch VR to apply. Use the usual game controls to navigate; Toggle VR (F9 by default) returns to the flat screen. Loading screens, movies, pause screens and unsupported views stay flat. Seat positions and racing HUD masks do not affect the trailer. Menu camera animations still move the view; turn this option off if uncomfortable. Interior and exterior menus, text readability and window reflections have been checked in VDXR. Returning from a race still needs acceptance.
 
+Extended grass distance
+Advanced → Graphics → Extended grass distance lets dense grass reach its normal distance instead of stopping abruptly near the camera. It is on by default for desktop and VR and uses some extra memory. Turn it off and relaunch to use DiRT 2's original grass budget if you notice stuttering or crashes.
+
 3D chase replays (Experimental)
 Enable Advanced → Graphics → 3D chase replays, save and relaunch VR. This separate switch adds stereo depth and head tracking to replay chase views, including paused playback. Cinematic replay angles remain flat. Toggle VR returns to the flat screen.
 

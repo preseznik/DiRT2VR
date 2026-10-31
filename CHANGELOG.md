@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Grass no longer stops abruptly a short way from the camera on tracks with dense grass. The grass budget rises from 10,000 to 131,072 clumps on desktop and from 50,000 to 262,144 in VR, so grass fills its normal draw range and fades out there. **Advanced → Graphics → Extended grass distance** is on by default; turn it off to return to the original grass budget if you notice stuttering or crashes. Desktop frame times stayed within about 0.2 ms in tests on Ladang Long and a custom track; one VR headset session on Ladang Long and a custom track ran, with slight hitching noted on Ladang Long.
+
 - Fix the blurry, sideways-smeared view outside the RV with 3D menus in VR. The menus' motion blur compared each eye with the other eye's camera; headset eyes now render it without motion. Desktop menus and racing are unchanged. Checked outside the RV on Quest 3 through Virtual Desktop.
 
 ## 0.18.0 — 2026-10-27 — Stable
