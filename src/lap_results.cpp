@@ -36,10 +36,11 @@ bool __fastcall Finished(void* participant,void*,int64_t fractionTime,bool allow
     int64_t time{};
     // The game publishes this same microsecond duration to its finish observer.
     // Its initial finish crossing starts lap zero and has no completed duration.
-    if(laps!=1 || !ReadProcessMemory(GetCurrentProcess(),static_cast<char*>(participant)+0x70,&time,sizeof(time),&read) ||
+    // Later crossings carry the duration of the lap just completed.
+    if(laps<1 || laps>20 || !ReadProcessMemory(GetCurrentProcess(),static_cast<char*>(participant)+0x70,&time,sizeof(time),&read) ||
        time<1000000 || time>7200000000LL) return accepted;
     InterlockedIncrement(&result->sequence);
-    result->processId=GetCurrentProcessId();result->completedLaps=1;result->microseconds=time;
+    result->processId=GetCurrentProcessId();result->completedLaps=uint32_t(laps);result->microseconds=time;
     MemoryBarrier();InterlockedIncrement(&result->sequence);
     Log("lap result: completed=%d engine-microseconds=%lld",laps,time);
     return accepted;
