@@ -78,6 +78,7 @@ Public Class MainForm
     Private ReadOnly opponentCars As ComboBox = Choice("OpponentCars")
     Private ReadOnly raceDifficulty As ComboBox = Choice("RaceDifficulty")
     Private ReadOnly opponentHint As New Label With {.AutoSize = False, .MinimumSize = New Size(0, 44), .MaximumSize = New Size(710, 0)}
+    Private ReadOnly bestTime As New Label With {.Name = "StockBestTime", .AutoSize = True, .UseMnemonic = False, .Margin = New Padding(0, 10, 0, 0)}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
     Private ReadOnly hudDistance As New ValueSlider("HudDistance", 2, 40, 2, " m", 2D)
@@ -474,6 +475,7 @@ Public Class MainForm
         Next
         Dim setupButton As New Button With {.Text = "Vehicle setup…", .Name = "VehicleSetup", .AutoSize = True}
         selection.Controls.Add(setupButton)
+        selection.Controls.Add(bestTime)
         AddHandler setupButton.Click, Sub() EditCarSetup()
         StyleChoice(raceDifficulty, Me)
         StyleChoice(raceStart, Me)
@@ -530,8 +532,21 @@ Public Class MainForm
             If dialog.ShowDialog(Me) = DialogResult.OK Then settings.DirectCarSetup = dialog.Result
         End Using
     End Sub
+    Private Sub RefreshBestTime()
+        Dim track = TryCast(trackChoice.SelectedItem, PracticeTrack)
+        Dim carCode = TryCast(carChoice.SelectedItem, PracticeCar)?.Code
+        Try
+            If customCars IsNot Nothing AndAlso customCars.CustomEnabled Then carCode = CustomCarService.SelectedCode(context)
+        Catch ex As IOException
+            carCode = Nothing
+        End Try
+        Dim text = If((launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2) AndAlso track IsNot Nothing AndAlso carCode IsNot Nothing, BestLapStore.Summary(context, track.Id, carCode), "")
+        If bestTime.Text <> text Then bestTime.Text = text
+        bestTime.Visible = text <> ""
+    End Sub
     Private Sub RefreshOpponentHint()
         RefreshLaunchAvailability()
+        RefreshBestTime()
         If customTracks IsNot Nothing AndAlso customTracks.CustomEnabled Then
             opponentHint.Text = ""
             Return
@@ -1242,7 +1257,7 @@ Public Class MainForm
         Try
             If DateTime.UtcNow >= nextResolutionRefresh Then
                 RefreshResolutionReport() : nextResolutionRefresh = DateTime.UtcNow.AddSeconds(1)
-                customTracks?.RefreshBestTime()
+                customTracks?.RefreshBestTime() : RefreshBestTime()
             End If
             Dim statusPath = IO.Path.Combine(context.UserRoot, "session.json")
             Dim status As SessionStatus = Nothing, statusError As String = ""
