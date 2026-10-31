@@ -1,25 +1,23 @@
-DiRT2VR 0.18.0 — Stable
+DiRT2VR 0.18.1 — Experimental
 
-LATEST CHANGES (Stable promotion of 0.17.158)
+LATEST CHANGES (since 0.18.0)
 
-0.18.0 brings the 0.17.158 build to the Stable channel, replacing 0.16.0. There are no new gameplay changes compared with 0.17.158.
+- Extended grass distance: grass now fills its normal draw range on tracks with dense grass instead of stopping abruptly a short way from the camera. On by default under Advanced → Graphics → Extended grass distance; turn it off to return to the original grass budget if you notice stuttering or crashes.
+- Best times on every track: the launcher shows your best Direct practice time on stock, CUSTOM and External tracks, with its car and grade and the game's world record for your car's class where one exists.
+- Sharper 3D menus in VR: fixes the blurry, sideways-smeared view outside the RV with 3D menus.
 
-Highlights since 0.16.0:
+After updating: no track rebuild is needed. Existing settings and best laps are kept.
 
-- More ways to race: direct practice and AI races, selectable car grades and classes, staggered rally starts, saved replays and more chase-camera control.
-- More VR options: choose SteamVR or system OpenXR, adjust seats for individual cars, use additional 3D camera views and optional 3D menus, with fixes for grass, lighting and water reflections.
-- Custom tracks and cars: build supported tracks and the Ferrari F2004 from your own source-game files, including Pikes Peak, Nordschleife and Misty Loch. Source games are required; their assets are not included.
-- Photo Mode: explore a paused offline race with a free camera using keyboard/mouse or an Xbox controller, including stereo depth and head tracking in VR.
-- Easier setup and troubleshooting: separate career profiles, more graphics and control options, launch progress and help with supported OpenXR add-ons that block startup.
-
-Updating: 0.16 users will be offered this Stable update without enabling experimental releases. Install over your existing DiRT2VR installation to retain settings and installed content. Users already on 0.17.158 do not need to rebuild tracks or cars for this promotion.
-
-Optional features and custom content retain their documented experimental limitations. Intermittent Pikes Peak VR startup hangs remain unresolved. The latest Pikes Peak Performance refinements still need headset and longer driving checks; rebuild selected layouts with Build performance version enabled to apply those refinements.
+Please report any problems.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.0 — Stable (promotion of 0.17.158)
+
+- Brings the 0.17.158 build to the Stable channel, replacing 0.16.0. No gameplay changes compared with 0.17.158.
 
 0.17.158 — Experimental (changes since 0.17.153)
 
