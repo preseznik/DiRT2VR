@@ -1,9 +1,12 @@
 #include "draw_distance.h"
 #include "common.h"
 #include "gfwl_compat.h"
+#include "grass_cache.h"
 #include "pikes_scope.h"
 #include <array>
+#include <cstring>
 #include <intrin.h>
+#include <mutex>
 
 namespace vr {
 namespace {
@@ -26,7 +29,24 @@ using GrassIndicesFn=void(__thiscall*)(void*);
 GrassIndicesFn originalGrassIndices{};
 TreeReadFn originalTreeAttributes{},originalTreeSettings{},originalOrnamentAttributes{},originalOrnamentSettings{};
 unsigned char* host{};
-constexpr unsigned grassItems=50000,grassIndexCount=grassItems*6,grassCells=512;
+// Extended (launcher default): main-view clumps/cells and a shared cache of the
+// same size (the loader doubles maxitems and zones). Dense custom-track grass
+// needs about 240,000 clumps within VR's 250 m; desktop's 150 m view needs far
+// fewer, and each clump costs four vertices in the 32-bit process.
+// Original: the 0.18.0 VR budget; the native ushort allocator caps the cache
+// at 65,534 clumps. Desktop keeps the game's own budget (no hooks).
+constexpr unsigned grassVrItems=262144,grassDesktopItems=131072,grassOriginalItems=50000;
+bool grassVr{},grassExtended{};
+unsigned GrassItems() { return !grassExtended ? grassOriginalItems : grassVr ? grassVrItems : grassDesktopItems; }
+unsigned GrassIndexCount() { return GrassItems()*6; }
+unsigned GrassCells() { return grassExtended ? 1024 : 512; }
+int GrassSharedItems() { return grassExtended ? static_cast<int>(GrassItems()/2) : 32767; }
+int GrassSharedZones() { return grassExtended ? 600 : 300; }
+using GrassCacheInitFn=void*(__thiscall*)(void*,void*,unsigned,unsigned);
+GrassCacheInitFn originalGrassCacheInit{};
+std::mutex grassCacheLock;
+void* grassCacheOwner{};
+grass::Cache grassCache;
 struct GrassCellAllocation {void* system{};void* view{};unsigned original{};};
 GrassCellAllocation grassCellAllocation;
 void BoundGrassCells(void* self,void* view) {
@@ -35,7 +55,7 @@ void BoundGrassCells(void* self,void* view) {
     const auto shared=Field<unsigned>(self,0x74c);
     // A view may be created before track loading. If the loaded cache is
     // smaller, narrow our allocation's usable capacity; never grow a live one.
-    if(capacity==grassCells && shared>0 && shared<grassCells) {
+    if(capacity==GrassCells() && shared>0 && shared<GrassCells()) {
         capacity=std::min(grassCellAllocation.original,shared);
         Log("VR vegetation smaller grass cache=%u; main-view cells=%u",shared,capacity);
     }
@@ -82,14 +102,68 @@ bool ExtendGrass(void* self) {
     auto& zones=Field<int>(self,0x548);
     if(!std::isfinite(distance) || distance<=0 || items<=0 || items>50000 || zones<=0 || zones>300) return false;
     const float before=distance; const int oldItems=items,oldZones=zones;
-    distance=std::max(distance,250.f);
-    // The loader doubles maxitems. Native allocator 9651e0 stores each block's
-    // length in a ushort: 100,000 wraps to 34,464; 65,534 fits without wrapping.
-    // This shared cache is separate from the 50,000-clump main-view budget.
-    items=32767; zones=300;
+    if(grassVr) distance=std::max(distance,250.f);
+    // The loader doubles maxitems and zones. The native cache allocator keeps
+    // block lengths in ushorts; GrassCacheAllocate below replaces it, so the
+    // shared cache may exceed 65,535 clumps. It is separate from the view budget.
+    items=GrassSharedItems(); zones=GrassSharedZones();
     if(distance!=before || items!=oldItems || zones!=oldZones)
-        Log("VR vegetation grass range=%.1f->%.1f items=%d->%d zones=%d->%d",before,distance,oldItems,items,oldZones,zones);
+        Log("grass budget range=%.1f->%.1f items=%d->%d zones=%d->%d",before,distance,oldItems,items,oldZones,zones);
     return true;
+}
+// Native cache layout (9651e0): +0 cells, +4 items, +0x10 per-cell slot
+// records (+8 count, +0xc first item), +0x2c used blocks, +0x30 free blocks,
+// +0x34 64-byte instances, +0x3c used items. Callers read only the slots,
+// counters and instances, never the native block list.
+constexpr size_t grassInstanceBytes=64;
+void SetGrassSlot(void* cache,uint32_t owner,uint32_t start,uint32_t count) {
+    auto slot=Field<void**>(cache,0x10)[owner];
+    Field<uint32_t>(slot,0xc)=start; Field<uint32_t>(slot,8)=count;
+}
+void SyncGrassCounters(void* cache) {
+    Field<uint32_t>(cache,0x2c)=grassCache.AllocatedBlocks();
+    Field<uint32_t>(cache,0x30)=grassCache.FreeBlocks();
+    Field<uint32_t>(cache,0x3c)=grassCache.UsedItems();
+}
+void UseGrassCache(void* cache) {
+    if(grassCacheOwner==cache && grassCache.Items()==Field<uint32_t>(cache,4)) return;
+    grassCacheOwner=cache; grassCache.Reset(Field<uint32_t>(cache,4));
+}
+void* __fastcall GrassCacheInit(void* self,void*,void* allocator,unsigned cells,unsigned items) {
+    auto result=originalGrassCacheInit(self,allocator,cells,items);
+    std::scoped_lock lock(grassCacheLock);
+    grassCacheOwner=nullptr; UseGrassCache(self); SyncGrassCounters(self);
+    Log("grass cache items=%u cells=%u (32-bit blocks)",items,cells);
+    return result;
+}
+bool __fastcall GrassCacheAllocate(void* cache,void*,uint32_t owner,uint32_t count) {
+    std::scoped_lock lock(grassCacheLock);
+    if(owner>=Field<uint32_t>(cache,0)) return false;
+    UseGrassCache(cache);
+    const auto start=grassCache.Allocate(owner,count);
+    SetGrassSlot(cache,owner,start ? *start : 0,start ? count : 0);
+    SyncGrassCounters(cache);
+    return start.has_value();
+}
+void __fastcall GrassCacheRelease(void* cache,void*,uint32_t owner) {
+    std::scoped_lock lock(grassCacheLock);
+    if(owner>=Field<uint32_t>(cache,0)) return;
+    UseGrassCache(cache);
+    SetGrassSlot(cache,owner,0,0);
+    grassCache.Release(owner);
+    SyncGrassCounters(cache);
+}
+void __fastcall GrassCacheCompact(void* cache,void*,int steps) {
+    std::scoped_lock lock(grassCacheLock);
+    if(steps<=0) return;
+    UseGrassCache(cache);
+    auto instances=Field<unsigned char*>(cache,0x34);
+    grassCache.Compact(static_cast<uint32_t>(steps),
+        [&](uint32_t to,uint32_t from,uint32_t count) { memmove(instances+to*grassInstanceBytes,instances+from*grassInstanceBytes,count*grassInstanceBytes); },
+        [&](uint32_t owner,uint32_t start,uint32_t count) { if(owner<Field<uint32_t>(cache,0)) SetGrassSlot(cache,owner,start,count); });
+    SyncGrassCounters(cache);
+    static unsigned samples{};
+    if(samples++%1800==0) Log("grass cache used=%u/%u blocks=%u free_blocks=%u",grassCache.UsedItems(),grassCache.Items(),grassCache.AllocatedBlocks(),grassCache.FreeBlocks());
 }
 bool __fastcall GrassLoad(void* self,void*) {
     ExtendGrass(self);
@@ -105,7 +179,7 @@ template<class Index> void FillGrassIndices(Index* output,unsigned quads) {
 bool GrassIndicesReady(void* self) {
     auto source=Field<void*>(self,0x760);
     return host && source && Field<void*>(source,0x3c)==host+0x106c890 &&
-        Field<unsigned>(source,0x48)>=grassIndexCount;
+        Field<unsigned>(source,0x48)>=GrassIndexCount();
 }
 bool ConfigureGrassIndices(void* self,bool wide) {
     auto source=Field<void*>(self,0x760),renderer=Field<void*>(self,0x718);
@@ -120,12 +194,12 @@ bool ConfigureGrassIndices(void* self,bool wide) {
     using MapFn=void*(__thiscall*)(void*,void*);
     using CommitFn=void(__thiscall*)(void*,void*);
     if(reinterpret_cast<ModeFn>(sourceTable[0x24/4])(source,false)!=0) return false;
-    const unsigned count=wide ? grassIndexCount : 0xffff;
+    const unsigned count=wide ? GrassIndexCount() : 0xffff;
     if(reinterpret_cast<ConfigureFn>(sourceTable[0x2c/4])(source,host+(wide ? 0x106c890 : 0x106c910),count,4)!=0) return false;
     reinterpret_cast<CountFn>(sourceTable[0x40/4])(source,count);
     auto data=reinterpret_cast<MapFn>(rendererTable[0x68/4])(renderer,source);
     if(!data) return false;
-    if(wide) FillGrassIndices(static_cast<unsigned*>(data),grassItems);
+    if(wide) FillGrassIndices(static_cast<unsigned*>(data),GrassItems());
     else FillGrassIndices(static_cast<unsigned short*>(data),0x2aaa);
     reinterpret_cast<CommitFn>(rendererTable[0x78/4])(renderer,source);
     return true;
@@ -133,7 +207,7 @@ bool ConfigureGrassIndices(void* self,bool wide) {
 void __fastcall GrassIndices(void* self,void*) {
     originalGrassIndices(self);
     if(ConfigureGrassIndices(self,true)) {
-        Log("VR vegetation grass indices=300000 format=uint32 capacity=50000 clumps");
+        Log("grass budget indices=%u format=uint32 capacity=%u clumps",GrassIndexCount(),GrassItems());
     } else {
         // A failed larger allocation must not leave a large view pointing into
         // the stock short buffer. Restore stock indices; the view guard below
@@ -148,15 +222,16 @@ bool ExtendGrassViewBudget(void* self,void* settings) {
     // vertex buffers are allocated. The shared cache's maxitems is separate.
     if(!settings || Field<void*>(self,0x6f0) || !GrassIndicesReady(self)) return false;
     auto& items=Field<int>(settings,4);
-    if(items<=0 || items>50000) return false;
-    bool changed=items<50000;
-    items=50000;
+    const int budget=static_cast<int>(GrassItems());
+    if(items<=0 || items>budget) return false;
+    bool changed=items<budget;
+    items=budget;
     auto& cells=Field<unsigned>(settings,12);
     const auto shared=Field<unsigned>(self,0x74c);
-    // Zero is the pre-load state; the normal extended cache later holds 600
-    // cells. Dense sections need more than the stock 300 to cover 250 metres.
-    if(cells==300 && (shared==0 || shared>=grassCells)) {
-        cells=grassCells;changed=true;
+    // Zero is the pre-load state; the extended cache later holds 1,200 cells.
+    // Dense sections need more than the stock 300 to cover the whole range.
+    if(cells==300 && (shared==0 || shared>=GrassCells())) {
+        cells=GrassCells();changed=true;
     }
     return changed;
 }
@@ -171,9 +246,9 @@ void* __fastcall GrassCreateView(void* self,void*,void* settings) {
     // Do not mutate the caller's settings or resize any live buffer.
     auto view=originalGrassCreateView(self,changed ? local.data() : settings);
     if(changed && view && Field<void*>(self,0x6f0)==view) {
-        if(Field<unsigned>(settings,12)==300 && Field<unsigned>(local.data(),12)==grassCells &&
-           Field<unsigned>(view,0x1c)==grassCells) grassCellAllocation={self,view,300};
-        Log("VR vegetation main-view grass budget=%d->%d cells=%u->%u selected_capacity=%d vertices=%d",
+        if(Field<unsigned>(settings,12)==300 && Field<unsigned>(local.data(),12)==GrassCells() &&
+           Field<unsigned>(view,0x1c)==GrassCells()) grassCellAllocation={self,view,300};
+        Log("grass budget main view=%d->%d cells=%u->%u selected_capacity=%d vertices=%d",
             Field<int>(settings,4),Field<int>(view,0x14),Field<unsigned>(settings,12),Field<unsigned>(view,0x1c),
             Field<int>(view,0x28),Field<int>(view,0x2c));
     }
@@ -186,7 +261,7 @@ bool ExtendGrassView(void* self,void* view) {
     if(!view || Field<void*>(self,0x6f0)!=view) return false;
     BoundGrassCells(self,view);
     auto& distance=Field<float>(view,4);
-    if(!std::isfinite(distance) || distance<=0) return false;
+    if(!grassVr || !std::isfinite(distance) || distance<=0) return false;
     const float before=distance;
     distance=std::max(distance,250.f);
     static thread_local unsigned samples{};
@@ -196,6 +271,14 @@ bool ExtendGrassView(void* self,void* view) {
 void __fastcall GrassView(void* self,void*,void* view,void* matrix,void* position,int count,void* cells) {
     ExtendGrassView(self,view);
     originalGrassView(self,view,matrix,position,count,cells);
+}
+using GrassDrawFn=void(__thiscall*)(void*,void*);
+GrassDrawFn originalGrassDraw{};
+void __fastcall GrassDraw(void* view,void*,void* context) {
+    // 9770d0 waits for the view's selection, then draws +0x44 clumps (of +0x28).
+    originalGrassDraw(view,context);
+    static thread_local unsigned samples{};
+    if(samples++%600==0) Log("grass view drawn=%d capacity=%d range=%.1f",Field<int>(view,0x44),Field<int>(view,0x28),Field<float>(view,0x60));
 }
 int ExtendTreeAttributes(void* self) {
     auto records=Field<unsigned char*>(self,0xf8);
@@ -330,17 +413,12 @@ bool EnableDrawDistance() {
     if(host[0x8d2a20]!=0xa0 || Field<uintptr_t>(host,0x8d2a21)!=reinterpret_cast<uintptr_t>(host+0x10476f9) ||
        memcmp(host+0x8d2a25,route,sizeof(route)) || memcmp(host+0x9b8250,cars,sizeof(cars)) ||
        memcmp(host+0x9cc43f,applyCall,sizeof(applyCall))) return false;
-    const unsigned char grass[]={0x83,0xec,0x20,0x56,0x8b,0xf1,0x80,0xbe,0x9c,0,0,0,0};
-    const unsigned char grassIndices[]={0x81,0xec,0x88,0,0,0,0x53,0x56,0x57,0x8b,0xf1};
-    const unsigned char grassCreateView[]={0x55,0x56,0x8b,0xf1,0x8d,0xae,0xf8,0x06,0,0};
-    const unsigned char grassView[]={0x56,0x8b,0xf1,0x83,0x7e,0x04,0x00,0x74,0x7a};
     const unsigned char attributes[]={0x83,0xec,0x2c,0x56,0x57,0x8b,0x7c,0x24,0x38,0x8b,0xf1};
     const unsigned char settings[]={0x83,0xec,0x58,0x56,0x8b,0x74,0x24,0x60,0x57,0x8b,0xf9};
     const unsigned char ornamentAttributes[]={0x83,0xec,0x30,0x56,0x57,0x8b,0x7c,0x24,0x3c,0x8b,0xf1};
     if(memcmp(host+0x959170,ornamentAttributes,sizeof(ornamentAttributes)) ||
        memcmp(host+0x967ad0,settings,sizeof(settings))) return false;
-    if(memcmp(host+0x9622a0,grassIndices,sizeof(grassIndices)) || memcmp(host+0x981e10,grassCreateView,sizeof(grassCreateView)) || memcmp(host+0x98e5e0,grassView,sizeof(grassView)) || memcmp(host+0x4cd1c0,grass,sizeof(grass)) || memcmp(host+0x95bd70,attributes,sizeof(attributes)) ||
-       memcmp(host+0x96dd20,settings,sizeof(settings))) return false;
+    if(memcmp(host+0x95bd70,attributes,sizeof(attributes)) || memcmp(host+0x96dd20,settings,sizeof(settings))) return false;
     auto hook=[&](size_t rva,void* replacement,void** original) {
         auto result=MH_CreateHook(host+rva,replacement,original);
         if(result==MH_OK) result=EnableRecordedHook(host+rva);
@@ -349,14 +427,54 @@ bool EnableDrawDistance() {
     };
     ready=hook(0x8d2a20,reinterpret_cast<void*>(RouteUpdate),reinterpret_cast<void**>(&originalRoute)) &&
         hook(0x9b8250,reinterpret_cast<void*>(CarApply),reinterpret_cast<void**>(&originalCars)) &&
-        hook(0x4cd1c0,reinterpret_cast<void*>(GrassLoad),reinterpret_cast<void**>(&originalGrass)) &&
-        hook(0x9622a0,reinterpret_cast<void*>(GrassIndices),reinterpret_cast<void**>(&originalGrassIndices)) &&
-        hook(0x981e10,reinterpret_cast<void*>(GrassCreateView),reinterpret_cast<void**>(&originalGrassCreateView)) &&
-        hook(0x98e5e0,reinterpret_cast<void*>(GrassView),reinterpret_cast<void**>(&originalGrassView)) &&
         hook(0x95bd70,reinterpret_cast<void*>(TreeAttributes),reinterpret_cast<void**>(&originalTreeAttributes)) &&
         hook(0x96dd20,reinterpret_cast<void*>(TreeSettings),reinterpret_cast<void**>(&originalTreeSettings)) &&
         hook(0x959170,reinterpret_cast<void*>(OrnamentAttributes),reinterpret_cast<void**>(&originalOrnamentAttributes)) &&
         hook(0x967ad0,reinterpret_cast<void*>(OrnamentSettings),reinterpret_cast<void**>(&originalOrnamentSettings));
+    return ready;
+}
+bool EnableGrassBudget(bool headset) {
+    static bool ready{};
+    if(ready) return true;
+    if(!SupportedHost()) return false;
+    host=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
+    const unsigned char grass[]={0x83,0xec,0x20,0x56,0x8b,0xf1,0x80,0xbe,0x9c,0,0,0,0};
+    const unsigned char grassIndices[]={0x81,0xec,0x88,0,0,0,0x53,0x56,0x57,0x8b,0xf1};
+    const unsigned char grassCreateView[]={0x55,0x56,0x8b,0xf1,0x8d,0xae,0xf8,0x06,0,0};
+    const unsigned char grassView[]={0x56,0x8b,0xf1,0x83,0x7e,0x04,0x00,0x74,0x7a};
+    const unsigned char cacheInit[]={0x8b,0x44,0x24,0x0c,0x53,0x56,0x8b,0xf1,0x8b,0x4c,0x24,0x10,0x57};
+    const unsigned char cacheAllocate[]={0x53,0x8b,0x5c,0x24,0x0c,0x55,0x56,0x57,0x53,0x8b,0xf1};
+    const unsigned char cacheRelease[]={0x53,0x56,0x8b,0xf1,0x8b,0x46,0x24,0x8b,0x4c,0x24,0x0c,0x33,0xdb};
+    const unsigned char cacheCompact[]={0x83,0xec,0x08,0x53,0x56,0x57,0x8b,0xf9,0x8b,0x47,0x24,0x8b,0x57,0x04};
+    const unsigned char grassDraw[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x6c,0x56,0x8b,0xf1};
+    if(memcmp(host+0x4cd1c0,grass,sizeof(grass)) || memcmp(host+0x9622a0,grassIndices,sizeof(grassIndices)) ||
+       memcmp(host+0x981e10,grassCreateView,sizeof(grassCreateView)) || memcmp(host+0x98e5e0,grassView,sizeof(grassView)) ||
+       memcmp(host+0x9651e0,cacheInit,sizeof(cacheInit)) || memcmp(host+0x979440,cacheAllocate,sizeof(cacheAllocate)) ||
+       memcmp(host+0x979510,cacheRelease,sizeof(cacheRelease)) || memcmp(host+0x9792a0,cacheCompact,sizeof(cacheCompact)) ||
+       memcmp(host+0x9770d0,grassDraw,sizeof(grassDraw))) return false;
+    grassVr=headset;
+    wchar_t value[8]{};
+    grassExtended=GetEnvironmentVariableW(L"DIRT2VR_EXTENDED_GRASS",value,8)==1 && value[0]==L'1';
+    Log("grass budget mode=%s %s",grassExtended ? "extended" : "original",headset ? "vr" : "desktop");
+    // Original desktop sessions keep the game's own grass code untouched.
+    if(!grassExtended && !headset) return ready=true;
+    // Without the original pointers the allocator replacements are pure detours.
+    void* unusedAllocate{}; void* unusedRelease{}; void* unusedCompact{};
+    auto hook=[&](size_t rva,void* replacement,void** original) {
+        auto result=MH_CreateHook(host+rva,replacement,original);
+        if(result==MH_OK) result=EnableRecordedHook(host+rva);
+        Log("grass budget hook RVA=0x%zx status=%s",rva,MH_StatusToString(result));
+        return result==MH_OK;
+    };
+    if(grassExtended && !(hook(0x9651e0,reinterpret_cast<void*>(GrassCacheInit),reinterpret_cast<void**>(&originalGrassCacheInit)) &&
+        hook(0x979440,reinterpret_cast<void*>(GrassCacheAllocate),&unusedAllocate) &&
+        hook(0x979510,reinterpret_cast<void*>(GrassCacheRelease),&unusedRelease) &&
+        hook(0x9792a0,reinterpret_cast<void*>(GrassCacheCompact),&unusedCompact) &&
+        hook(0x9770d0,reinterpret_cast<void*>(GrassDraw),reinterpret_cast<void**>(&originalGrassDraw)))) return false;
+    ready=hook(0x4cd1c0,reinterpret_cast<void*>(GrassLoad),reinterpret_cast<void**>(&originalGrass)) &&
+        hook(0x9622a0,reinterpret_cast<void*>(GrassIndices),reinterpret_cast<void**>(&originalGrassIndices)) &&
+        hook(0x981e10,reinterpret_cast<void*>(GrassCreateView),reinterpret_cast<void**>(&originalGrassCreateView)) &&
+        hook(0x98e5e0,reinterpret_cast<void*>(GrassView),reinterpret_cast<void**>(&originalGrassView));
     return ready;
 }
 }

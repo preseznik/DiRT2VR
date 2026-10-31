@@ -148,6 +148,7 @@ Public Class VrSettings
     Public Property VrExtendedViews As Boolean = False
     Public Property VrReplayCameras As Boolean = False
     Public Property VrTrailerMenus As Boolean = False
+    Public Property ExtendedGrass As Boolean = True
     Public Property VrMsaa As Integer = 2
     <Serialization.JsonIgnore>
     Public ReadOnly Property VrMsaaToken As String
