@@ -4,6 +4,7 @@ Imports DiRT2VR.CustomTracks
 Public Class CompletedLap
     Public Property Sequence As Integer
     Public Property ProcessId As Integer
+    Public Property Lap As Integer
     Public Property Microseconds As Long
 End Class
 Public NotInheritable Class BestLapChannel
@@ -21,9 +22,9 @@ Public NotInheritable Class BestLapChannel
     Public ReadOnly Name As String
     Public Sub New(context As InstallContext, start As ProcessStartInfo, layoutId As String, carCode As String, Optional carGrade As String = Nothing)
         start.Environment.Remove("DIRT2VR_LAP_CHANNEL")
-        If Not TrackPacks.Nordschleife.IsLayout(layoutId) OrElse CustomCars.ExternalCars.Find(carCode) IsNot Nothing Then Return
+        If Not BestLapStore.Timed(layoutId) OrElse CustomCars.ExternalCars.Find(carCode) IsNot Nothing Then Return
         Me.context = context : Me.layoutId = layoutId : Me.carCode = carCode : Me.carGrade = If(carGrade, "")
-        version = TrackPacks.Nordschleife.Read(context.GameRoot, False).Version
+        version = BestLapStore.TrackVersion(context, layoutId)
         If CustomCars.CarPack.IsCustom(carCode) Then carVersion = CustomCars.CarPack.Read(context.GameRoot, False).Version
         Name = "Local\DiRT2VR.Lap." & Guid.NewGuid().ToString("N")
         mapping = MemoryMappedFile.CreateNew(Name, 32) : view = mapping.CreateViewAccessor()
@@ -37,8 +38,8 @@ Public NotInheritable Class BestLapChannel
         Thread.MemoryBarrier()
         Dim pid = view.ReadInt32(16), laps = view.ReadInt32(20), duration = view.ReadInt64(24)
         Thread.MemoryBarrier()
-        If view.ReadInt32(12) <> sequence OrElse pid <= 0 OrElse laps <> 1 OrElse duration < 1000000 OrElse duration > 7200000000L Then Return Nothing
-        Return New CompletedLap With {.Sequence = sequence, .ProcessId = pid, .Microseconds = duration}
+        If view.ReadInt32(12) <> sequence OrElse pid <= 0 OrElse laps < 1 OrElse laps > 20 OrElse duration < 1000000 OrElse duration > 7200000000L Then Return Nothing
+        Return New CompletedLap With {.Sequence = sequence, .ProcessId = pid, .Lap = laps, .Microseconds = duration}
     End Function
     Public Sub Poll()
         If view Is Nothing Then Return

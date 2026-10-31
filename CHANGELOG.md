@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Show your best Direct practice time on every track, not only Nordschleife: stock DiRT 2 routes, converted CUSTOM tracks and External tracks. Every completed practice lap counts; point-to-point routes record the full run. The launcher shows the time with its car and grade, plus the game's world record for your car's class. Converted CUSTOM tracks have no world records, so none is shown; External packs can include their own. Existing Nordschleife best laps are kept, and older launchers can still read them. The in-race HUD does not show the world record during practice.
 - Fix the blurry, sideways-smeared view outside the RV with 3D menus in VR. The menus' motion blur compared each eye with the other eye's camera; headset eyes now render it without motion. Desktop menus and racing are unchanged. Checked outside the RV on Quest 3 through Virtual Desktop.
 
 ## 0.18.0 — 2026-10-27 — Stable
