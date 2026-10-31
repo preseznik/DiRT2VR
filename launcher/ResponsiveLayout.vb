@@ -113,13 +113,17 @@ Public Class SettingRow
         editor = value : editor.Dock = DockStyle.None : editor.Margin = New Padding(0)
         If editor.AccessibleName Is Nothing Then editor.AccessibleName = title
         Controls.Add(caption) : Controls.Add(editor)
+        ' Self-sizing editors such as the car picker can grow after this row's layout.
+        AddHandler editor.SizeChanged, Sub() If Not arranging Then PerformLayout()
     End Sub
     Protected Overrides Sub OnLayout(e As LayoutEventArgs)
         MyBase.OnLayout(e)
         If arranging OrElse editor Is Nothing OrElse ClientSize.Width <= 0 Then Return
         arranging = True
         Try
-            Dim compact = TypeOf editor Is ValueSlider OrElse TypeOf editor Is ComboBox OrElse TypeOf editor Is MouseLookPicker
+            ' A car picker aligns with the dropdowns and keeps its caption beside the model dropdown.
+            Dim picker = TryCast(editor, CustomCarSelection)
+            Dim compact = TypeOf editor Is ValueSlider OrElse TypeOf editor Is ComboBox OrElse TypeOf editor Is MouseLookPicker OrElse picker IsNot Nothing
             Dim gap = Px(Me, If(compact, 8, 10)), padding = Px(Me, If(compact, 3, 5)), width = ClientSize.Width
             Dim stacked = width < Px(Me, If(compact, 380, 590)) AndAlso Not TypeOf editor Is CheckBox
             Dim labelWidth = If(compact, Math.Min(Px(Me, 170), CInt(width * 0.4)), Math.Min(Px(Me, 215), width \ 2))
@@ -127,10 +131,16 @@ Public Class SettingRow
             Dim editorHeight = If(TypeOf editor Is ValueSlider, Px(Me, DirectCast(editor, ValueSlider).LogicalHeight), editor.GetPreferredSize(New Size(editorWidth, 0)).Height)
             editorHeight = Math.Max(Px(Me, 28), editorHeight)
             Dim labelHeight = TextRenderer.MeasureText(caption.Text, Font, New Size(If(stacked, width, labelWidth), 0), TextFormatFlags.WordBreak Or TextFormatFlags.NoPrefix).Height
-            Dim rowHeight = If(stacked, labelHeight + editorHeight + gap, Math.Max(labelHeight, editorHeight))
-            caption.SetBounds(0, padding, If(stacked, width, labelWidth), If(stacked, labelHeight, rowHeight))
-            editor.SetBounds(If(stacked, 0, labelWidth + gap), padding + If(stacked, labelHeight + gap, (rowHeight - editorHeight) \ 2), editorWidth, editorHeight)
-            Height = rowHeight + padding * 2
+            ' A width change can make a self-sizing editor settle at a new height; measure it once more.
+            For attempt = 0 To 1
+                Dim rowHeight = If(stacked, labelHeight + editorHeight + gap, Math.Max(labelHeight, editorHeight))
+                Dim captionHeight = If(stacked, labelHeight, If(picker Is Nothing, rowHeight, Math.Min(rowHeight, Math.Max(labelHeight, picker.CaptionHeight))))
+                caption.SetBounds(0, padding, If(stacked, width, labelWidth), captionHeight)
+                editor.SetBounds(If(stacked, 0, labelWidth + gap), padding + If(stacked, labelHeight + gap, (rowHeight - editorHeight) \ 2), editorWidth, editorHeight)
+                Height = rowHeight + padding * 2
+                If editor.Height = editorHeight Then Exit For
+                editorHeight = Math.Max(Px(Me, 28), editor.Height)
+            Next
         Finally
             arranging = False
         End Try

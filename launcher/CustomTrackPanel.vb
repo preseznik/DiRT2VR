@@ -177,7 +177,7 @@ Public Class CustomTrackPanel
                                       End Sub
         opponentCars.Items.AddRange({"Same as driver", "Mixed", "Same class"})
         raceDifficulty.Items.AddRange(DirectRaceDifficulty.Labels)
-        Field(columns.First, "Launch mode", launchMode) : Field(columns.First, "Car", customCars)
+        Field(columns.First, "Launch mode", launchMode) : Field(columns.First, "Class", customCars.ClassFilter) : Field(columns.First, "Car", customCars)
         Dim vehicleSetup As New Button With {.Text = "Vehicle setup…", .Name = "CustomVehicleSetup", .AutoSize = True}
         columns.First.Controls.Add(vehicleSetup)
         AddHandler vehicleSetup.Click, Sub() RaiseEvent VehicleSetupRequested(Me, EventArgs.Empty)
