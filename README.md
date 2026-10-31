@@ -514,6 +514,10 @@ Enable **Advanced → Graphics → 3D menus**, save and relaunch VR for stereo d
 
 The game's menu camera animations still move the view; disable this option if uncomfortable. Interior and exterior menus, text readability and window reflections have been checked in VDXR. Returning from a race still needs acceptance.
 
+### Extended grass distance
+
+**Advanced → Graphics → Extended grass distance** lets dense grass reach its normal distance instead of stopping abruptly a short way from the camera. It is on by default for desktop and VR and uses some extra memory. If you notice stuttering or crashes, turn it off, save and relaunch to use DiRT 2's original grass budget.
+
 ### Chase replays (Experimental)
 
 Enable **Advanced → Graphics → 3D chase replays**, save and relaunch VR for stereo depth and head tracking in replay chase views. It starts off and works independently of **3D beyond the cockpit**. Cinematic replay angles stay on the flat screen; Toggle VR also returns to the flat screen.

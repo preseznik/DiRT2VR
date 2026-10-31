@@ -447,6 +447,7 @@ Public Class Session
         ChaseCameraLaunch.Configure(start, settings)
         BackgroundPlayLaunch.Configure(start, settings)
         AnisotropicFiltering.Configure(start, settings)
+        GrassLaunch.Configure(start, settings)
         DesktopShadows.Configure(start, settings)
         ReplayCameraLaunch.Configure(start, settings)
         PhotoModeLaunch.Configure(start, PhotoModeLaunch.Eligible(context, settings, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1", replayId IsNot Nothing))
