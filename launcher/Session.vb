@@ -454,7 +454,7 @@ Public Class Session
         replayControls.ConfigureZoom(start)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using recording As New ReplaySession(context, settings, start, If(settings.DirectMode, preparedReplay, Nothing)), returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
-            lap As New BestLapChannel(context, start, If(customTrack AndAlso settings.DirectMode AndAlso settings.LaunchMode = "practice", settings.TrackId, ""), settings.CarCode, CarGrades.Effective(settings))
+            lap As New BestLapChannel(context, start, If(settings.LaunchMode = "practice" AndAlso replayId Is Nothing, settings.TrackId, ""), settings.CarCode, CarGrades.Effective(settings))
             ' Last preparation step: all asset/profile validation has succeeded.
             ' Recovery owns this executable change just like other session files.
             Dim vr = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
