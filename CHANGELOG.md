@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Line up the car Class filter with the other launcher choices: Class now has its own row with its label on the left, and the Car dropdown aligns with Launch mode, Event and Track. Shrinking the launcher window no longer lets **Vehicle setup…** cover the grade buttons or the CUSTOM cars option.
+
 ## 0.18.1 — 2026-10-31 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.1)

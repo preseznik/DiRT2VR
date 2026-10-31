@@ -35,6 +35,23 @@ Public Class CustomCarSelection
             Return stockCode
         End Get
     End Property
+    ' Hosts place the filter in its own row so it aligns with their other choices.
+    Public ReadOnly Property ClassFilter As ComboBox
+        Get
+            Return carClass
+        End Get
+    End Property
+    ' Height that centres a host caption on the model dropdown line.
+    Public ReadOnly Property CaptionHeight As Integer
+        Get
+            Dim top = 0
+            Dim item As Control = cars
+            While item IsNot Nothing AndAlso item IsNot Me
+                top += item.Top : item = item.Parent
+            End While
+            Return top * 2 + cars.Height
+        End Get
+    End Property
     Public ReadOnly Property ReadyForDesktop As Boolean
         Get
             Return Not CustomEnabled OrElse (ready AndAlso Not CustomCarService.Building)
@@ -68,9 +85,9 @@ Public Class CustomCarSelection
         carClass.Items.Add("All")
         carClass.Items.AddRange(RaceCatalog.Current.Cars.Select(Function(c) c.ClassName).Distinct().Order().Cast(Of Object).ToArray())
         carClass.SelectedIndex = 0
-        Field(Me, "Class", carClass)
         Dim row As New ResponsiveColumns With {.WideAt = 560}
         Grades.Name = Name & "Grade"
+        cars.Margin = New Padding(0) ' Line up with the host's other dropdowns.
         row.First.Controls.Add(cars) : row.Second.Controls.Add(Grades)
         AddHandler cars.EnabledChanged, Sub()
                                             Grades.Enabled = cars.Enabled

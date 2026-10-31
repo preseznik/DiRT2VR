@@ -473,6 +473,7 @@ Public Class MainForm
         Dim choices = {launchMode, eventChoice, trackChoice, carChoice, opponentCars}
         For i = 0 To choices.Length - 1
             StyleChoice(choices(i), Me)
+            If i = 3 Then Field(selection, "Class", customCars.ClassFilter)
             Field(If(i = 4, race, selection), labels(i), If(i = 3, CType(customCars, Control), choices(i)))
         Next
         Dim setupButton As New Button With {.Text = "Vehicle setup…", .Name = "VehicleSetup", .AutoSize = True}
