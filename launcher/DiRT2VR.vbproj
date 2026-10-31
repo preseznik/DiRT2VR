@@ -24,6 +24,7 @@
     <AssemblyMetadata Include="BuildUtc" Value="$(BuildUtc)" />
     <EmbeddedResource Include="assets\DiRT2VR.ico" LogicalName="DiRT2VR.ico" />
     <EmbeddedResource Include="assets\race-catalog.json" LogicalName="DiRT2VR.race-catalog.json" />
+    <EmbeddedResource Include="..\.deps\Ego-Engine-Modding\src\EgoDatabaseEditor\schema\schemaDirt2.xml" LogicalName="DiRT2VR.schemaDirt2.xml" />
     <Import Include="System.IO" />
     <Import Include="System.Diagnostics" />
     <Import Include="System.Threading" />

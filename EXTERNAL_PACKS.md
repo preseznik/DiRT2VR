@@ -54,7 +54,7 @@ Disciplines are `Rally`, `Rallycross`, `Landrush`, `Trailblazer`, `Head-to-head`
 
 Payload files for a layout live under `payload/tracks/usa/<Folder>/`. At minimum its `route_0` contains `track.jpk`, `routesplit.pssg`, `track.vis`, `grids.pssg` and `progress_track.xml`. Include every other resource the prepared track needs; these five files alone do not establish playability. `route_0.clm` is optional when the track does not use a baked shadow map.
 
-Each `Session` entry pairs a game `Target` with a prepared `File` under `payload/session/`. The file must appear in `Files`, and its original target hash must appear in `Dependencies`. `database/database.bin` registration is required. Only these shared targets are currently permitted:
+Each `Session` entry pairs a game `Target` with a prepared `File` under `payload/session/`. The file must appear in `Files`, and its original target hash must appear in `Dependencies`. `database/database.bin` registration is required. The launcher shows a world record for the selected car's class when this database has a `world_record` row for the layout's track model and that class; without rows it shows none. Only these shared targets are currently permitted:
 
 - `database/database.bin`, `surface_materials.xml`
 - `language/language_eng.lng`, `language/language_fre.lng`, `language/language_ger.lng`, `language/language_ita.lng`, `language/language_jpn.lng`, `language/language_pol.lng`, `language/language_rus.lng`, `language/language_spa.lng`, `language/language_use.lng`

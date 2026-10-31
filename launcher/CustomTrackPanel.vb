@@ -421,17 +421,19 @@ Public Class CustomTrackPanel
         RefreshRaceOptions() : RenderState()
     End Sub
     Public Sub RefreshBestTime()
-        bestTime.Visible = currentPack?.Id = "nordschleife"
         detail.Controls.SetChildIndex(bestTime, 2)
-        If currentPack?.Id <> "nordschleife" Then Return
-        Dim layoutId = If(TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id, TrackPacks.Nordschleife.Layouts(0).Id)
-        Try
-            If customCars IsNot Nothing AndAlso customCars.CustomEnabled AndAlso CustomCarPreferences.Load(context).SelectedId <> Global.DiRT2VR.CustomCars.CarPack.Code Then Return
-            Dim lap = BestLapStore.Best(context, layoutId, TrackPacks.Nordschleife.Version, customCars IsNot Nothing AndAlso customCars.CustomEnabled)
-            bestTime.Text = If(lap Is Nothing, "Best lap: no completed lap yet", "Best lap: " & BestLapStore.Display(lap))
-        Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.Text.Json.JsonException
-            bestTime.Text = "Best lap history unavailable; saved file kept"
-        End Try
+        Dim layoutId = TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id, carCode = TryCast(cars.SelectedItem, PracticeCar)?.Code
+        Dim text = ""
+        If CustomEnabled AndAlso currentPack IsNot Nothing AndAlso currentPack.Available AndAlso layoutId IsNot Nothing Then
+            Try
+                If customCars IsNot Nothing AndAlso customCars.CustomEnabled Then carCode = Global.DiRT2VR.CustomCarService.SelectedCode(context)
+                If carCode IsNot Nothing Then text = BestLapStore.Summary(context, layoutId, carCode, installedReceipt)
+            Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
+                text = ""
+            End Try
+        End If
+        If bestTime.Text <> text Then bestTime.Text = text
+        bestTime.Visible = text <> ""
     End Sub
     Private ReadOnly Property OneLapPractice As Boolean
         Get
@@ -483,11 +485,11 @@ Public Class CustomTrackPanel
         If pointToPoint Then laps.Value = 1
         If OneLapPractice AndAlso Not loading Then laps.Value = If(race, circuitRaceLaps, 1)
         modeHint.Text = If(OneLapPractice, "Desktop and VR · " & If(race, "1–20 laps", "One lap") & " · VR and AI races are experimental", "Desktop and VR · AI races are experimental · LAN unavailable")
-        If currentPack?.Id = "nordschleife" AndAlso launchMode.SelectedIndex = 1 Then modeHint.Text &= ". Best laps are saved in Direct practice."
         If pointToPoint Then modeHint.Text = "One complete run · AI races and VR depend on the selected pack · LAN unavailable"
         If currentPack.External IsNot Nothing AndAlso currentPack.Available Then modeHint.Text = "External · " & String.Join(", ", TrackPacks.Get(currentPack.Id).Modes.Select(Function(mode) mode.Replace("desktop-", "Desktop ").Replace("vr-", "VR ").Replace("solo", "Practice").Replace("race", "Race"))) & If(currentPack.External.Manifest.Replay, " · Full Replay supported by author", " · Turn full-race recording off")
         If race AndAlso SelectedRaceStart = "staggered" Then modeHint.Text &= " · Staggered starts with individual stage times"
         If race AndAlso SelectedRaceStart = "grid" Then modeHint.Text &= " · Simultaneous grid start"
+        If race Then modeHint.Text &= " · Best times are saved in Direct practice"
         If chosen?.Discipline = "Head-to-head" Then modeHint.Text = "Two-car grid: one AI opponent. Race timing on these separate-lane courses needs testing; knockout Head-to-head rules are unavailable."
         If customCars IsNot Nothing AndAlso customCars.CustomEnabled AndAlso CustomCarPreferences.Load(context).SelectedId = Global.DiRT2VR.CustomCars.CarPack.Code Then modeHint.Text = "Ferrari F2004: Direct practice and Race on compatible tracks · Desktop and VR · AI handling is experimental."
         If currentPack?.Id = "spa-francorchamps" Then modeHint.Text = "Desktop and VR · 1–20 laps · VR and AI races are experimental"
