@@ -8,6 +8,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Line up the car Class filter with the other launcher choices: Class now has its own row with its label on the left, and the Car dropdown aligns with Launch mode, Event and Track. Shrinking the launcher window no longer lets **Vehicle setup…** cover the grade buttons or the CUSTOM cars option.
 - Shorten the README to download, requirements, installation, a first VR launch and help. Detailed instructions, with their wording kept, move into seven player guides (Playing, Custom tracks, Graphics, Controls, LAN multiplayer, Settings and updates, Troubleshooting), linked from the README. The guides are installed with the launcher in `DiRT2VR/guide`, and the launcher's Instructions page points to them.
+- **Driving control presets:** **Controls → Driving → Configure driving controls…** now has **Save preset…** and **Load preset…**, like GRID2VR. A preset keeps your bindings, calibration and both driving checkboxes, so you can switch between, for example, a wheel setup and a controller setup. Loading a preset changes the editor only until you choose **Save driving controls**. Presets are shared by your DiRT2VR installations on this Windows account. Saving and loading are covered by automated checks; switching presets with physical wheels has not been tested.
 
 ## 0.18.1 — 2026-10-31 — Experimental
 

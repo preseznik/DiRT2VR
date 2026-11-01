@@ -60,6 +60,10 @@ Public Class DrivingControlsForm
                                                      settings.Bindings.RemoveAll(Function(b) b.Action = action)
                                                      RefreshRows(action)
                                                  End Sub)
+        If Not replay Then
+            AddButton(buttons, "Save preset…", AddressOf SavePreset)
+            AddButton(buttons, "Load preset…", AddressOf LoadPreset)
+        End If
         AddButton(buttons, If(replay, "Save replay controls", "Save driving controls"), Sub()
                                                           Try
                                                               context.RequireClosed()
@@ -109,6 +113,36 @@ Public Class DrivingControlsForm
             list.Items.Add(row) : row.Selected = action = selected
         Next
         list.EndUpdate()
+    End Sub
+    Private Sub SavePreset()
+        Try
+            Dim folder = DrivingControls.PresetFolder(context)
+            Directory.CreateDirectory(folder)
+            Using dialog As New SaveFileDialog With {.Title = "Save driving controls preset", .Filter = "Driving controls preset (*.json)|*.json", .DefaultExt = "json", .AddExtension = True,
+                                                     .InitialDirectory = folder, .FileName = "Driving controls.json", .OverwritePrompt = True}
+                If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
+                settings.Enabled = enabledBox.Checked : settings.CombinedManualGears = combinedGearsBox.Checked
+                settings.SavePreset(dialog.FileName)
+                status.Text = "Preset saved: " & IO.Path.GetFileNameWithoutExtension(dialog.FileName) & ". Load preset… restores it later, on any DiRT2VR installation on this PC."
+            End Using
+        Catch ex As Exception
+            status.Text = ex.Message
+        End Try
+    End Sub
+    Private Sub LoadPreset()
+        Try
+            Dim folder = DrivingControls.PresetFolder(context)
+            Using dialog As New OpenFileDialog With {.Title = "Load driving controls preset", .Filter = "Driving controls preset (*.json)|*.json", .InitialDirectory = If(Directory.Exists(folder), folder, "")}
+                If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
+                Dim preset = DrivingControls.LoadPreset(dialog.FileName)
+                settings.Bindings.Clear() : settings.Bindings.AddRange(preset.Bindings)
+                enabledBox.Checked = preset.Enabled : combinedGearsBox.Checked = preset.CombinedManualGears
+                RefreshRows(SelectedAction())
+                status.Text = If(settings.Problems().Count > 0, String.Join(" ", settings.Problems()), "Preset loaded: " & IO.Path.GetFileNameWithoutExtension(dialog.FileName) & ". Save driving controls to use it on the next launch.")
+            End Using
+        Catch ex As Exception
+            status.Text = ex.Message
+        End Try
     End Sub
     Private Sub BindSelected(keyboard As Boolean)
         Dim action = SelectedAction()
