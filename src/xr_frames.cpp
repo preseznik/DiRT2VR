@@ -104,7 +104,7 @@ bool XrFrames::CreatePanel() {
     }
     return true;
 }
-bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen,const Overlay* overlay,const Overlay* panel) {
+bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen,const Overlay* overlay,const Overlay* panel,const XrCompositionLayerQuad* top) {
     const bool wasReady=canRecenter_;
     canRecenter_=false;
     if(screen || (overlay && !overlay->draw)) overlay=nullptr;
@@ -238,10 +238,11 @@ bool XrFrames::Tick(const Draw& draw,const Prepare& prepare,const Screen* screen
         seat.pose=panel->pose; seat.size=panel->size; seat.subImage.swapchain=eyes_[3].chain;
         seat.subImage.imageRect.extent={768,1024};
     }
-    const XrCompositionLayerBaseHeader* layers[3]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&projection)};
+    const XrCompositionLayerBaseHeader* layers[4]={reinterpret_cast<const XrCompositionLayerBaseHeader*>(&projection)};
     unsigned layerCount=1;
     if(overlay) layers[layerCount++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&hud);
     if(panel) layers[layerCount++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&seat);
+    if(top) layers[layerCount++]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(top);
     if(screen) layers[0]=reinterpret_cast<const XrCompositionLayerBaseHeader*>(&quad);
     if(valid) { end.layerCount=layerCount; end.layers=layers; }
     const auto endStarted=stamp();

@@ -10,6 +10,7 @@ Public Class DrivingControlsForm
     Private ReadOnly actions As String()
     Private ReadOnly enabledBox As New CheckBox With {.Text = "Use launcher driving bindings (all launcher modes, DX11)", .AutoSize = True}
     Private ReadOnly combinedGearsBox As New CheckBox With {.Text = "Use sequential and H-pattern shifts together (manual transmission, experimental)", .AutoSize = True}
+    Private ReadOnly transmissionBox As New ComboBox With {.Name = "DrivingTransmission", .AccessibleName = "Transmission", .DropDownStyle = ComboBoxStyle.DropDownList, .Width = 240}
     Private ReadOnly list As New ListView With {.Name = "DrivingBindings", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .ShowItemToolTips = True, .Dock = DockStyle.Fill}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(820, 0)}
     Public Sub New(value As InstallContext, Optional replay As Boolean = False)
@@ -32,6 +33,12 @@ Public Class DrivingControlsForm
         If Not replay Then
             combinedGearsBox.Checked = settings.CombinedManualGears
             options.Controls.Add(combinedGearsBox)
+            transmissionBox.Items.AddRange(DrivingControls.TransmissionNames)
+            transmissionBox.SelectedIndex = Array.IndexOf(DrivingControls.Transmissions, settings.Transmission)
+            Dim transmissionRow As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0, 6, 0, 0)}
+            transmissionRow.Controls.Add(New Label With {.Text = "Transmission (experimental)", .AutoSize = True, .Margin = New Padding(0, 6, 8, 0)})
+            transmissionRow.Controls.Add(transmissionBox)
+            options.Controls.Add(transmissionRow)
         End If
         layout.Controls.Add(options)
         layout.Controls.Add(New Label With {.Text = If(replay, "Select a replay action, bind a key or device input, then save. Unassigned native actions keep the game's bindings; clearing zoom leaves the mouse wheel available. Avoid using the same input for different replay actions.", "Assigned controls apply in every launcher mode; unassigned actions keep the game's bindings. Use the wizard or select an action, then save."), .AutoSize = True, .MaximumSize = New Size(820, 0), .Margin = New Padding(0, 10, 0, 10)})
@@ -54,6 +61,7 @@ Public Class DrivingControlsForm
         AddButton(buttons, "Bind keyboard…", Sub() BindSelected(True))
         AddButton(buttons, "Bind device…", Sub() BindSelected(False))
         AddButton(buttons, "Calibration…", AddressOf Calibrate)
+        If Not replay Then AddButton(buttons, "Wheel rotation…", AddressOf WheelRotation)
         AddButton(buttons, If(replay, "Clear / use game binding", "Use game binding"), Sub()
                                                      Dim action = SelectedAction()
                                                      If action Is Nothing Then Return
@@ -71,7 +79,7 @@ Public Class DrivingControlsForm
                                                               If replayMode Then
                                                                   DirectCast(settings, ReplayControls).Save(context)
                                                               Else
-                                                                  settings.CombinedManualGears = combinedGearsBox.Checked
+                                                                  ReadOptions()
                                                                   settings.Save(context)
                                                               End If
                                                               DialogResult = DialogResult.OK : Close()
@@ -81,7 +89,7 @@ Public Class DrivingControlsForm
                                                       End Sub)
         AddButton(buttons, "Cancel", Sub() Close())
         layout.Controls.Add(buttons) : layout.Controls.Add(status) : Controls.Add(layout)
-        status.Text = If(replay, "Zoom: left stick up/down or Page Up/Down by default; keyboard/Xbox bindings supported. Other actions also support wheels. Free look must be enabled. Changes apply on next launch.", "Ferrari F2004 uses sequential shifting for its session. Other cars retain the game's transmission setting. Combined shifts use the most recently moved shifter or shift button; select manual transmission in-game for stock cars. Save to apply next launch.")
+        status.Text = If(replay, "Zoom: left stick up/down or Page Up/Down by default; keyboard/Xbox bindings supported. Other actions also support wheels. Free look must be enabled. Changes apply on next launch.", "Transmission applies to your car in every launcher mode without changing your career's saved setting; Ferrari F2004 always uses sequential. Combined shifts use the most recently moved shifter or shift button with a manual transmission. Save to apply next launch.")
         RefreshRows()
         If settings.Problems().Count > 0 Then status.Text = String.Join(" ", settings.Problems())
     End Sub
@@ -121,13 +129,17 @@ Public Class DrivingControlsForm
             Using dialog As New SaveFileDialog With {.Title = "Save driving controls preset", .Filter = "Driving controls preset (*.json)|*.json", .DefaultExt = "json", .AddExtension = True,
                                                      .InitialDirectory = folder, .FileName = "Driving controls.json", .OverwritePrompt = True}
                 If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
-                settings.Enabled = enabledBox.Checked : settings.CombinedManualGears = combinedGearsBox.Checked
+                settings.Enabled = enabledBox.Checked : ReadOptions()
                 settings.SavePreset(dialog.FileName)
                 status.Text = "Preset saved: " & IO.Path.GetFileNameWithoutExtension(dialog.FileName) & ". Load preset… restores it later, on any DiRT2VR installation on this PC."
             End Using
         Catch ex As Exception
             status.Text = ex.Message
         End Try
+    End Sub
+    Private Sub ReadOptions()
+        settings.CombinedManualGears = combinedGearsBox.Checked
+        settings.Transmission = DrivingControls.Transmissions(transmissionBox.SelectedIndex)
     End Sub
     Private Sub LoadPreset()
         Try
@@ -137,6 +149,8 @@ Public Class DrivingControlsForm
                 Dim preset = DrivingControls.LoadPreset(dialog.FileName)
                 settings.Bindings.Clear() : settings.Bindings.AddRange(preset.Bindings)
                 enabledBox.Checked = preset.Enabled : combinedGearsBox.Checked = preset.CombinedManualGears
+                transmissionBox.SelectedIndex = Array.IndexOf(DrivingControls.Transmissions, preset.Transmission)
+                settings.WheelRotation = preset.WheelRotation
                 RefreshRows(SelectedAction())
                 status.Text = If(settings.Problems().Count > 0, String.Join(" ", settings.Problems()), "Preset loaded: " & IO.Path.GetFileNameWithoutExtension(dialog.FileName) & ". Save driving controls to use it on the next launch.")
             End Using
@@ -168,6 +182,48 @@ Public Class DrivingControlsForm
         Finally
             liveInput.ResumeMonitoring()
         End Try
+    End Sub
+    Private Sub WheelRotation()
+        Dim steering = settings.SteeringWheel()
+        If steering Is Nothing Then status.Text = "Bind Steer Left and Steer Right to your wheel first, with the Binding wizard or Bind device…." : Return
+        Dim device = steering(0).Device, suggested = DrivingControls.SuggestedWheelRotation(device)
+        Dim wheelValue = If(settings.WheelRotation <> 0, settings.WheelRotation, If(suggested <> 0, suggested, 900))
+        Dim gameValue = Math.Clamp(CInt(Math.Round(steering.Max(Function(b) b.Saturation) * wheelValue)), 90, wheelValue)
+        Using dialog As New Form With {.Name = "WheelRotationDialog", .Text = "Wheel rotation", .ClientSize = New Size(520, 500), .StartPosition = FormStartPosition.CenterParent, .AutoScaleMode = AutoScaleMode.Dpi, .MinimizeBox = False, .MaximizeBox = False}
+            Dim panel As New FlowLayoutPanel With {.Dock = DockStyle.Fill, .FlowDirection = FlowDirection.TopDown, .Padding = New Padding(12), .WrapContents = False, .AutoScroll = True}
+            Dim note = If(suggested <> 0, $"Suggested: {suggested}°, this wheel's maximum. If you lowered it in the wheel's software, use that value.",
+                If(device.ToUpperInvariant().Contains("FANATEC"), "Use the SEN value from your wheelbase's tuning menu.", "Use the rotation set in your wheel's software."))
+            Dim wheel As New ValueSlider("WheelRotationHardware", DrivingControls.MinimumWheelRotation, DrivingControls.MaximumWheelRotation, wheelValue, "°") With {.Width = 470}
+            Dim game As New ValueSlider("WheelRotationGame", 90, wheelValue, gameValue, "°") With {.Width = 470}
+            Dim result As New Label With {.AutoSize = True, .MaximumSize = New Size(470, 0), .Margin = New Padding(3, 8, 3, 8)}
+            Dim errorLabel As New Label With {.AutoSize = True, .MaximumSize = New Size(470, 0)}
+            Dim show = Sub() result.Text = $"Full steering lock at {game.Value}° lock to lock: {Math.Round(CDec(game.Value) / wheel.Value, 2):P0} of your wheel's travel (Steer Left/Right saturation)."
+            AddHandler wheel.ValueChanged, Sub()
+                                               game.Maximum = wheel.Value
+                                               show()
+                                           End Sub
+            AddHandler game.ValueChanged, Sub() show()
+            show()
+            Dim apply As New Button With {.Text = "Apply", .AutoSize = True}
+            AddHandler apply.Click, Sub()
+                                        Try
+                                            settings.ApplyWheelRotation(wheel.Value, game.Value)
+                                            dialog.DialogResult = DialogResult.OK : dialog.Close()
+                                        Catch ex As IOException
+                                            errorLabel.Text = ex.Message
+                                        End Try
+                                    End Sub
+            panel.Controls.AddRange({New Label With {.Text = "Wheel: " & device, .AutoSize = True, .MaximumSize = New Size(470, 0)},
+                New Label With {.Text = "Your wheel's rotation, lock to lock", .AutoSize = True, .Margin = New Padding(3, 10, 3, 0)}, wheel,
+                New Label With {.Text = note, .AutoSize = True, .MaximumSize = New Size(470, 0)},
+                New Label With {.Text = "Steering rotation in DiRT 2, lock to lock", .AutoSize = True, .Margin = New Padding(3, 10, 3, 0)}, game, result,
+                New Label With {.Text = "The cockpit wheel can't turn further than each car's animation. Lower DiRT 2's rotation until the cockpit wheel keeps up with your hands. If your wheel's software can set its rotation, setting it to the same value also stops the wheel at full lock.", .AutoSize = True, .MaximumSize = New Size(470, 0)},
+                apply, errorLabel})
+            dialog.Controls.Add(panel)
+            If dialog.ShowDialog(Me) <> DialogResult.OK Then Return
+        End Using
+        RefreshRows("Steer Left")
+        status.Text = $"Wheel rotation applied: full lock at {CInt(Math.Round(steering(0).Saturation * settings.WheelRotation))}° of your {settings.WheelRotation}° wheel. Save driving controls to use it on the next launch."
     End Sub
     Private Sub Calibrate()
         Dim action = SelectedAction(), binding = settings.Bindings.FirstOrDefault(Function(b) b.Action = action AndAlso Not b.Keyboard)

@@ -38,28 +38,46 @@ bool GameXr::Initialize(ID3D11Device* device,float scale,float fovScale,uint32_t
     if(!Check(xrCreateSession(instance_,&session,&session_),"create game session")) { Shutdown(); return false; }
     frames_=std::make_unique<XrFrames>([](const char* message) { vr::Log("OpenXR %s",message); });
     if(!frames_->Initialize(instance_,system,session_,device,scale,fovScale,hudWidth,hudHeight) || !blit_.Initialize(device)) { Shutdown(); return false; }
-    eyeDimensions_=frames_->EyeDimensions();
+    eyeDimensions_=frames_->EyeDimensions();device_=device;performanceTried_=false;
     vr::Log("OpenXR game session initialized; experimental cameras, visibility unvalidated"); return true;
+}
+const XrCompositionLayerQuad* GameXr::PerformanceLayer() {
+    // Created on the first frame, on the thread that submits frames.
+    if(!performanceTried_) {
+        performanceTried_=true;
+        if(vr::PerformanceDisplay::Requested()) {
+            auto display=std::make_unique<vr::PerformanceDisplay>();
+            if(display->Initialize(session_,device_.Get()))performance_=std::move(display);
+            else {display->Shutdown();vr::Log("performance display unavailable");}
+        }
+    }
+    return performance_?performance_->Layer(GetTickCount64()):nullptr;
 }
 bool GameXr::Tick(const XrFrames::Draw& draw,const XrFrames::Prepare& prepare,const XrFrames::Screen* screen,const XrFrames::Overlay* overlay,const XrFrames::Overlay* panel) {
     if(!frames_)return false;
-    if(!vr::TestMessagesEnabled())return frames_->Tick(draw,prepare,screen,overlay,panel);
-    vr::PollTestMessage();
-    XrFrames::Overlay combined;combined.enabled=false;
-    const bool submitted=frames_->Tick(draw,[&](const std::array<XrView,2>& views) {
-        if(prepare)prepare(views);
-        const bool seatActive=panel && panel->enabled && panel->draw;
-        vr::PrepareTestMessage(seatActive);
-        combined=seatActive?*panel:*vr::TestMessageOverlay();
-    },screen,overlay,&combined);
-    vr::TestMessageSubmitted(submitted && frames_->Visible());
+    const auto top=PerformanceLayer();
+    bool submitted;
+    if(!vr::TestMessagesEnabled())submitted=frames_->Tick(draw,prepare,screen,overlay,panel,top);
+    else {
+        vr::PollTestMessage();
+        XrFrames::Overlay combined;combined.enabled=false;
+        submitted=frames_->Tick(draw,[&](const std::array<XrView,2>& views) {
+            if(prepare)prepare(views);
+            const bool seatActive=panel && panel->enabled && panel->draw;
+            vr::PrepareTestMessage(seatActive);
+            combined=seatActive?*panel:*vr::TestMessageOverlay();
+        },screen,overlay,&combined,top);
+        vr::TestMessageSubmitted(submitted && frames_->Visible());
+    }
+    if(submitted && performance_)performance_->Submitted(GetTickCount64());
     return submitted;
 }
 bool GameXr::CopyEye(unsigned eye,ID3D11Texture2D* image,ID3D11RenderTargetView* target,unsigned w,unsigned h,bool alpha) {
     return blit_.Draw(eye,image,target,w,h,alpha);
 }
 void GameXr::Shutdown() {
-    frames_.reset();
+    if(performance_) {performance_->Shutdown();performance_.reset();}
+    frames_.reset();device_.Reset();
     if(session_) { xrDestroySession(session_); session_=XR_NULL_HANDLE; }
     if(instance_) { xrDestroyInstance(instance_); instance_=XR_NULL_HANDLE; }
 }

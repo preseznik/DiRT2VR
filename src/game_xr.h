@@ -1,6 +1,7 @@
 #pragma once
 #include "xr_frames.h"
 #include "eye_blit.h"
+#include "performance_display.h"
 #include <memory>
 
 class GameXr {
@@ -17,9 +18,13 @@ public:
     uint64_t Submitted() const { return frames_ ? frames_->Submitted() : 0; }
     std::array<uint32_t,4> EyeDimensions() const { return eyeDimensions_; }
 private:
+    const XrCompositionLayerQuad* PerformanceLayer();
     XrInstance instance_{};
     XrSession session_{};
+    Microsoft::WRL::ComPtr<ID3D11Device> device_;
     std::unique_ptr<XrFrames> frames_;
+    std::unique_ptr<vr::PerformanceDisplay> performance_;
+    bool performanceTried_{};
     EyeBlit blit_;
     std::array<uint32_t,4> eyeDimensions_{}; // Retain the last allocation for the final session report.
 };
