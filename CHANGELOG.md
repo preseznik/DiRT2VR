@@ -7,6 +7,7 @@ Version headings identify distribution builds; published packages include a GitH
 ## Unreleased
 
 - Line up the car Class filter with the other launcher choices: Class now has its own row with its label on the left, and the Car dropdown aligns with Launch mode, Event and Track. Shrinking the launcher window no longer lets **Vehicle setup…** cover the grade buttons or the CUSTOM cars option.
+- Shorten the README to download, requirements, installation, a first VR launch and help. Detailed instructions, with their wording kept, move into seven player guides (Playing, Custom tracks, Graphics, Controls, LAN multiplayer, Settings and updates, Troubleshooting), linked from the README. The guides are installed with the launcher in `DiRT2VR/guide`, and the launcher's Instructions page points to them.
 
 ## 0.18.1 — 2026-10-31 — Experimental
 

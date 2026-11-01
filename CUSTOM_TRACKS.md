@@ -1,6 +1,6 @@
 # Custom tracks
 
-Add-on tracks available in DiRT2VR's Experimental builds. For installation and launch instructions, see [Custom tracks in the README](README.md#custom-tracks-experimental).
+Add-on tracks available in DiRT2VR's Experimental builds. For installation and launch instructions, see the [custom tracks guide](guide/custom-tracks.md).
 
 Build each pack from your own installed source game using **CUSTOM tracks → Build and install…** in the launcher. Conversion tools are included; original game assets are not distributed. Installed tracks work offline without the source game, but you need it again to rebuild or update them.
 
@@ -102,7 +102,7 @@ Both quality levels support **Road sheen (Experimental)** under **Graphics → M
 
 Both quality levels use only DiRT 2 and Misty Loch assets. HQ is not an upscaled texture pack. DiRT 2's 32-bit process memory remains a limit; the option does not change your graphics settings or Large Address Aware preference. Desktop appearance is accepted; final HQ headset and repeated in-game restart checks remain pending.
 
-For current setup advice and known limitations, see the [README](README.md#custom-tracks-experimental). Report track problems through [GitHub issues](https://github.com/preseznik/DiRT2VR/issues), including the layout, car, play mode and whether you used desktop or VR.
+For current setup advice and known limitations, see the [custom tracks guide](guide/custom-tracks.md). Report track problems through [GitHub issues](https://github.com/preseznik/DiRT2VR/issues), including the layout, car, play mode and whether you used desktop or VR.
 
 ## Pikes Peak
 

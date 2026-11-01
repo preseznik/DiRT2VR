@@ -199,7 +199,7 @@ About shows the installed version, Stable/Experimental channel, build and GitHub
 The launcher checks temporary files at most daily while idle: older installers (keeping the newest and recent downloads), abandoned track builds older than one day, and logs older than 30 days (keeping the latest 10 sessions). Settings, bindings, profiles, presets, installed tracks and recovery backups are kept. Cleanup skips active operations and never asks for administrator approval.
 
 Documentation
-The installed README contains setup, controls, recovery and current limitations. GitHub Releases contains published installers and ZIP packages.",
+The installed README covers setup and links to the player guides in the DiRT2VR\guide folder: controls, graphics, custom tracks, recovery and current limitations. GitHub Releases contains published installers and ZIP packages.",
         "Large Address Aware (Experimental)
 Advanced → Memory → Large Address Aware (LAA) lets DiRT 2 use up to 4 GB of address space on 64-bit Windows. It may help crashes when loading another race, but does not fix every crash or increase VRAM. Off by default. Save settings and launch again to apply to desktop or VR.
 
