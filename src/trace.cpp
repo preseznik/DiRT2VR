@@ -31,6 +31,7 @@
 #include "shadow_distance.h"
 #include "exposure_window.h"
 #include "trailer_background.h"
+#include "paddock_zoom.h"
 #include "sky_sun.h"
 #include "menu_motion_blur.h"
 #include "direct_menus.h"
@@ -1148,6 +1149,8 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     groundCoverPair.Begin();
     XrFrames::Overlay hud;
     const bool trailer=camera==SceneCamera::Frontend;
+    // Paddock zoom moves the headset view forward outside the RV (display pass 0) only.
+    const float paddockZoom=PaddockZoomDistance(trailer && *reinterpret_cast<const unsigned*>(renderer+0x960)==0,static_cast<const float*>(cameraA));
     const bool photo=camera==SceneCamera::Photo;
     const bool captureHud=!photo && hudCapture.Begin(back.Get(),f,trailer?0:HiddenHudElements(),trailer);
     static const float hudDistance=GraphicsScale(L"DIRT2VR_HUD_DISTANCE",1.f,1.f,20.f);
@@ -1171,6 +1174,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         {
             auto relative=RelativePose(photo?photoReference:headsetReference,view.pose);
             if(cockpit) relative=SeatEyePose(relative);
+            relative.position.z-=paddockZoom; // Eye offsets use +z backwards.
             ScopedEyePose pose(cameraA,cameraB,relative,scale*TrailerTrackingScale(camera));
             ScopedSceneDepth depthRange(static_cast<unsigned char*>(self)+0x40);
             shadowRays={}; meterWindow={};

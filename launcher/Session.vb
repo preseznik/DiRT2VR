@@ -319,6 +319,8 @@ Public Class Session
         BackgroundPlayLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_EXTENDED_VIEWS") = If(settings.VrExtendedViews, "1", "0")
         start.Environment("DIRT2VR_TRAILER_MENUS") = If(settings.VrTrailerMenus, "1", "0")
+        start.Environment("DIRT2VR_PERFORMANCE_DISPLAY") = If(settings.VrPerformanceDisplay, "1", "0")
+        start.Environment("DIRT2VR_PADDOCK_ZOOM") = If(settings.VrTrailerMenus AndAlso settings.VrPaddockZoom, "1", "0")
         ReplayCameraLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
         start.Environment("DIRT2VR_WORLD_SCALE") = "1"

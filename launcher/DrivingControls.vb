@@ -23,17 +23,26 @@ Public Class DrivingControls
     Public Property Version As Integer = 1
     Public Property Enabled As Boolean
     Public Property CombinedManualGears As Boolean
+    ' Session-only transmission for your car; "game" keeps the career's saved choice.
+    Public Property Transmission As String = "game"
+    ' The steering wheel's own rotation lock to lock, as set in its software;
+    ' 0 until set with Wheel rotation…. Only used to show and apply saturation.
+    Public Property WheelRotation As Integer
     Public Property Bindings As New List(Of DrivingBinding)
     <System.Text.Json.Serialization.JsonIgnore>
     Public ReadOnly Property RequiresNativeHooks As Boolean
         Get
-            Return CombinedManualGears OrElse (Enabled AndAlso Bindings.Count > 0)
+            Return CombinedManualGears OrElse Transmission <> "game" OrElse (Enabled AndAlso Bindings.Count > 0)
         End Get
     End Property
+    Public Shared ReadOnly Transmissions As String() = {"game", "automatic", "sequential", "hpattern", "hpattern_clutch"}
+    Public Shared ReadOnly TransmissionNames As String() = {"Use game setting", "Automatic", "Manual sequential", "Manual H-pattern", "Manual H-pattern + clutch"}
     Public Shared ReadOnly Actions As String() = {"Steer Left", "Steer Right", "Accelerate", "Brake", "Clutch", "Hand Brake", "Gear Up", "Gear Down", "Gear 1", "Gear 2", "Gear 3", "Gear 4", "Gear 5", "Gear 6", "Gear Reverse", "Change View", "Look Back", "Horn", "Pause", "Menu Start Button", "Menu Select", "Menu Back", "Menu Up", "Menu Down", "Menu Left", "Menu Right"}
     Public Shared ReadOnly Calibrations As String() = {"uniDirectionalPositive", "uniDirectionalNegative", "biDirectionalLower", "biDirectionalUpper"}
     Public Sub Validate()
         If Version <> 1 OrElse Bindings Is Nothing OrElse Bindings.Count > (Actions.Length + ReplayControls.ReplayActions.Length) * 2 Then Throw New IOException("Invalid driving-controls configuration.")
+        If Not Transmissions.Contains(Transmission) Then Throw New IOException("Invalid transmission setting.")
+        If WheelRotation <> 0 AndAlso (WheelRotation < MinimumWheelRotation OrElse WheelRotation > MaximumWheelRotation) Then Throw New IOException("Invalid wheel rotation.")
         Dim slots As New HashSet(Of String)
         For Each binding In Bindings
             If binding Is Nothing OrElse Not Actions.Concat(ReplayControls.ReplayActions).Contains(binding.Action) OrElse Not Calibrations.Contains(binding.Calibration) OrElse
@@ -58,6 +67,46 @@ Public Class DrivingControls
         Validate()
         If Enabled AndAlso Problems().Count > 0 Then Throw New IOException(String.Join(Environment.NewLine, Problems()))
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "driving-controls.json"), Me)
+    End Sub
+    Public Const MinimumWheelRotation = 180, MaximumWheelRotation = 2520
+    ' Steer Left and Steer Right on one DirectInput wheel, or Nothing.
+    Public Function SteeringWheel() As DrivingBinding()
+        Dim steering = Bindings.Where(Function(b) (b.Action = "Steer Left" OrElse b.Action = "Steer Right") AndAlso Not b.Keyboard AndAlso b.Device <> "win_xinput").ToArray()
+        Return If(steering.Length = 2 AndAlso steering(0).DeviceId = steering(1).DeviceId, steering, Nothing)
+    End Function
+    ' The hardware maximum of wheels with a fixed range, from the DirectInput
+    ' product name, or 0 when the rotation depends on the wheel's own settings.
+    Public Shared Function SuggestedWheelRotation(device As String) As Integer
+        Dim name = If(device, "").ToUpperInvariant()
+        If name.Contains("LOGITECH") AndAlso name.Contains("G PRO") Then Return 1080
+        For Each model In {"G25", "G27", "G29", "G920", "G923", "DRIVING FORCE GT"}
+            If name.Contains(model) Then Return 900
+        Next
+        If name.Contains("THRUSTMASTER") OrElse name.StartsWith("T", StringComparison.Ordinal) Then
+            For Each model In {"T248", "T128", "TMX", "TX RACING", "TX GIP"}
+                If name.Contains(model) Then Return 900
+            Next
+            For Each model In {"T300", "T150", "T500", "T-GT", "TS-PC", "TS-XW"}
+                If name.Contains(model) Then Return 1080
+            Next
+        End If
+        Return 0
+    End Function
+    ' DiRT 2 reaches full steering lock at the binding's saturation: the share
+    ' of each half of the wheel's travel. Full lock at gameRotation therefore
+    ' needs saturation = gameRotation / wheelRotation.
+    Public Sub ApplyWheelRotation(wheelRotation As Integer, gameRotation As Integer)
+        Dim steering = SteeringWheel()
+        If steering Is Nothing Then Throw New IOException("Bind Steer Left and Steer Right to your wheel first, with the Binding wizard or Bind device….")
+        If wheelRotation < MinimumWheelRotation OrElse wheelRotation > MaximumWheelRotation Then Throw New IOException($"Wheel rotation must be {MinimumWheelRotation}–{MaximumWheelRotation}°.")
+        If gameRotation > wheelRotation Then Throw New IOException("DiRT 2's rotation can't be more than your wheel's rotation.")
+        Dim saturation = Math.Round(CDec(gameRotation) / wheelRotation, 2)
+        If saturation < 0.1D Then Throw New IOException("DiRT 2's rotation must be at least a tenth of your wheel's rotation.")
+        If steering.Any(Function(b) b.DeadZone >= saturation) Then Throw New IOException("Lower the steering dead zone below " & saturation.ToString("P0") & " first.")
+        For Each binding In steering
+            binding.Saturation = saturation
+        Next
+        Me.WheelRotation = wheelRotation
     End Sub
     ' Presets are shared by installations on this Windows account, like filter presets.
     Public Shared Function PresetFolder(context As InstallContext) As String
@@ -136,6 +185,7 @@ Public Class DrivingControls
     Public Sub ConfigureProcess(context As InstallContext, start As ProcessStartInfo, vr As Boolean)
         start.Environment.Remove("DIRT2VR_DRIVING_CONTROLS")
         start.Environment.Remove("DIRT2VR_COMBINED_MANUAL_GEARS")
+        start.Environment.Remove("DIRT2VR_TRANSMISSION")
         Dim overrideBindings = Enabled AndAlso Bindings.Count > 0
         If Not RequiresNativeHooks Then Return
         Validate()
@@ -143,11 +193,12 @@ Public Class DrivingControls
         If Not vr Then
             If Not File.Exists(context.GraphicsPath) Then Throw New IOException("Run DiRT 2 normally once before using launcher driving controls.")
             Dim doc = XmlPatches.Read(File.ReadAllBytes(context.GraphicsPath))
-            If doc.SelectSingleNode("/hardware_settings_config/graphics_card/directx/@forcedx9")?.Value <> "false" Then Throw New IOException("Launcher driving bindings and combined shifts require DiRT 2's DX11 renderer. Disable both options to use the game's saved controls in DX9.")
+            If doc.SelectSingleNode("/hardware_settings_config/graphics_card/directx/@forcedx9")?.Value <> "false" Then Throw New IOException("Launcher driving bindings, transmission and combined shifts require DiRT 2's DX11 renderer. Turn them off and set Transmission to Use game setting to use the game's saved controls in DX9.")
             start.Environment("DIRT2VR_ACTIVE") = "1"
             start.Environment("DIRT2VR_DESKTOP_CONTROLS") = "1"
         End If
         If CombinedManualGears Then start.Environment("DIRT2VR_COMBINED_MANUAL_GEARS") = "1"
+        If Transmission <> "game" Then start.Environment("DIRT2VR_TRANSMISSION") = Transmission
         If overrideBindings Then
             Dim path = IO.Path.Combine(context.UserRoot, "driving-controls.xml")
             Files.AtomicWrite(path, ToXml())

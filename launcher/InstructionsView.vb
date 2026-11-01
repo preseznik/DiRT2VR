@@ -149,7 +149,11 @@ Controller buttons still reach DiRT 2. Avoid combinations that also trigger driv
 Driving controls
 Xbox preset also fills missing keyboard bindings with the game's default keys, while preserving your custom keyboard assignments. Apply the preset again and save if an earlier preset left keyboard controls blank.
 
-Save preset… stores the current bindings, calibration and both checkboxes as a named file shared by your installations on this Windows account. Load preset… replaces the editor's bindings with a saved preset; Save driving controls to use it, or Cancel to keep your previous controls.
+Wheel rotation… (with Steer Left/Right bound to your wheel) sets how far you turn for full steering lock. Enter your wheel's rotation from its software (SEN on Fanatec; Logitech and Thrustmaster maximums are suggested), then DiRT 2's rotation; Apply sets the steering saturation to match. Lower DiRT 2's rotation until the cockpit wheel keeps up with your hands.
+
+Transmission (experimental) uses Automatic, Manual sequential, Manual H-pattern or Manual H-pattern + clutch for your car in every launcher mode, without changing your career's saved setting. + clutch needs a Clutch binding. Use game setting keeps the saved choice; the Ferrari F2004 always uses sequential. Save and relaunch to apply.
+
+Save preset… stores the current bindings, calibration, both checkboxes and the transmission choice as a named file shared by your installations on this Windows account. Load preset… replaces the editor's bindings with a saved preset; Save driving controls to use it, or Cancel to keep your previous controls.
 
 Direct practice and Race load the existing profile's controls. Already-signed-in accounts continue straight to the event; otherwise, sign in when GFWL asks. Canceling sign-in or a career-load error ends the launch without creating a replacement save. Live device input shows axes, pressed buttons and POV hats for the selected device without changing bindings. Refresh after connecting a device. These are raw readings before calibration; resting pedals can read at either end of an axis. Configure driving controls opens the optional editor for driving and menu actions. Bind Pause and Menu Start Button to Start; Menu Select confirms, Menu Back cancels and Menu Up/Down/Left/Right navigate. Xbox preset includes these assignments. Unassigned actions use the game's saved controls; an assigned action replaces its saved bindings. Keyboard capture accepts Escape; use Cancel to leave without assigning it.
 
@@ -218,6 +222,12 @@ Advanced → Graphics → 3D menus adds stereo depth and head tracking to the in
 Extended grass distance
 Advanced → Graphics → Extended grass distance lets dense grass reach its normal distance instead of stopping abruptly near the camera. It is on by default for desktop and VR and uses some extra memory. Turn it off and relaunch to use DiRT 2's original grass budget if you notice stuttering or crashes.
 
+Paddock zoom (VR)
+With 3D menus on, Advanced → Graphics → Paddock zoom lets you scroll the mouse wheel forward in the paddock outside the RV to move your view closer to your car, up to 3 m; scroll back to return. It resets when the game cuts to another shot. Off by default; save and relaunch VR.
+
+FPS + GPU usage (VR)
+Advanced → Graphics → FPS + GPU usage shows a small panel below your view in the headset, updated once a second. FPS counts frames the game submits, not headset refresh or reprojection. GPU usage is the busiest engine on the game's graphics card, including other apps; N/A means Windows could not provide a reading. Off by default; save and relaunch VR. Desktop play ignores it.
+
 3D chase replays (Experimental)
 Enable Advanced → Graphics → 3D chase replays, save and relaunch VR. This separate switch adds stereo depth and head tracking to replay chase views, including paused playback. Cinematic replay angles remain flat. Toggle VR returns to the flat screen.
 
@@ -262,7 +272,7 @@ Choose Direct practice or Race on a compatible installed track, then Launch for 
 
 After updating the launcher, use Manage → Rebuild from source beside the car selector to apply the revised engine tones, LCD, steering and tyre tuning. Updating the launcher alone does not regenerate an installed car.
 
-The F2004 uses sequential shifting for its session without changing the game's saved transmission setting. Use your Gear Up/Down bindings (A/Z with the default keyboard preset). Controls → Configure driving controls also offers experimental combined sequential and H-pattern inputs for manual cars. The latest shift button or moved shifter takes control. H-pattern supports gears 1–6 and reverse; use sequential shifts for seventh. Stock cars still need manual transmission selected in-game; hardware acceptance is pending.
+The F2004 uses sequential shifting for its session without changing the game's saved transmission setting. Use your Gear Up/Down bindings (A/Z with the default keyboard preset). Controls → Configure driving controls also offers experimental combined sequential and H-pattern inputs for manual cars. The latest shift button or moved shifter takes control. H-pattern supports gears 1–6 and reverse; use sequential shifts for seventh. Combined shifts need a manual transmission, selected in-game or with Transmission in the same window; hardware acceptance is pending.
 
 Current limitations
 Handling, suspension, cockpit motion and audio calibration remain experimental. The steering-wheel LCD shows RPM, gear and speed in the game-selected units; the stock HUD RPM dial is not calibrated for the F2004. AI opponents currently retain donor engine audio. The native driver is fitted to the F2004 seat with moving steering grips; its appearance and animation remain experimental. The normal handbrake control can hold the car on the grid (Space with default keyboard controls; A with the Xbox preset). Body paint uses a matte approximation. Mirrors are static; damage and distant detail levels use approximations. LAN, career and saved full-replay playback are unavailable for this car. If an installed car file changes outside the launcher, it and recovery backups are preserved; resolve the reported conflict before rebuilding.",

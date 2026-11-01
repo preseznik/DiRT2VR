@@ -83,9 +83,15 @@ Enable **Advanced → Graphics → 3D menus**, save and relaunch VR for stereo d
 
 The game's menu camera animations still move the view; disable this option if uncomfortable. Interior and exterior menus, text readability and window reflections have been checked in VDXR. Returning from a race still needs acceptance.
 
+**Paddock zoom (Experimental):** with 3D menus on, enable **Advanced → Graphics → Paddock zoom (mouse wheel)**, save and relaunch VR. In the paddock outside the RV, scroll the mouse wheel forward to move your view closer to your car, up to 3 m in 25 cm steps; scroll back to return. The view moves along the game's own camera, so you keep looking where the game's shot looks. It resets when the game cuts to another shot and when you go back into the RV. Desktop play and the flat virtual screen are not affected. The game window must be in front. It has automated checks only; a headset check, including whether DiRT 2 uses the mouse wheel for anything in the paddock, is still pending.
+
 ### Extended grass distance
 
 **Advanced → Graphics → Extended grass distance** lets dense grass reach its normal distance instead of stopping abruptly a short way from the camera. It is on by default for desktop and VR and uses some extra memory. If you notice stuttering or crashes, turn it off, save and relaunch to use DiRT 2's original grass budget.
+
+### FPS + GPU usage (Experimental)
+
+**Advanced → Graphics → FPS + GPU usage (VR)** shows a small panel just below the centre of your view in the headset, updated once a second, in races, replays and menus. **FPS** counts the frames the game submits to the headset, not the headset's refresh rate or reprojected frames. **GPU** is the busiest engine on the graphics card the game uses, including other apps; **N/A** means Windows could not provide a reading. It starts off; save and relaunch VR to apply. Desktop play ignores it. The panel follows your head and does not change the game's picture or HUD. It has automated checks only; a headset check is still pending.
 
 ### Chase replays (Experimental)
 
