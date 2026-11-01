@@ -155,7 +155,9 @@ Source is preserved in the repository; it is not a release asset or needed to pl
 License: XLLN-LGPL-2.1.txt in this directory.
 "@ | Set-Content -LiteralPath "$stage/DiRT2VR/licenses/LAN-source.txt" -Encoding utf8
 # Ship user-facing guidance only; development notes remain local.
-foreach ($name in @('README.md','CHANGELOG.md','CUSTOM_TRACKS.md','EXTERNAL_PACKS.md')) {
+New-Item -ItemType Directory -Path "$stage\DiRT2VR\guide" -Force | Out-Null
+$guides=@(Get-ChildItem -LiteralPath 'guide' -Filter '*.md' -File | Sort-Object Name | ForEach-Object {"guide\$($_.Name)"})
+foreach ($name in @('README.md','CHANGELOG.md','CUSTOM_TRACKS.md','EXTERNAL_PACKS.md')+$guides) {
     $text=Get-Content -LiteralPath $name -Raw
     [IO.File]::WriteAllText((Join-Path "$stage\DiRT2VR" $name),$text)
 }
