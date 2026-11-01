@@ -59,6 +59,22 @@ Public Class DrivingControls
         If Enabled AndAlso Problems().Count > 0 Then Throw New IOException(String.Join(Environment.NewLine, Problems()))
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "driving-controls.json"), Me)
     End Sub
+    ' Presets are shared by installations on this Windows account, like filter presets.
+    Public Shared Function PresetFolder(context As InstallContext) As String
+        Return CustomTracks.SafeFiles.Inside(IO.Path.GetDirectoryName(context.UserRoot), "driving-presets")
+    End Function
+    Public Shared Function LoadPreset(path As String) As DrivingControls
+        If New FileInfo(path).Length > 1024 * 1024 Then Throw New IOException("This driving controls preset is too large.")
+        Dim result = Files.ReadJson(Of DrivingControls)(path)
+        If result Is Nothing Then Throw New IOException("Invalid driving controls preset.")
+        result.Validate() : Return result
+    End Function
+    Public Sub SavePreset(path As String)
+        Validate()
+        If Enabled AndAlso Problems().Count > 0 Then Throw New IOException(String.Join(Environment.NewLine, Problems()))
+        Directory.CreateDirectory(IO.Path.GetDirectoryName(IO.Path.GetFullPath(path)))
+        Files.SaveJson(path, Me)
+    End Sub
     Public Function Problems() As List(Of String)
         Dim result As New List(Of String)
         Dim left = Bindings.FirstOrDefault(Function(b) b.Action = "Steer Left" AndAlso Not b.Keyboard)
