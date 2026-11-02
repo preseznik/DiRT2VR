@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.5 — 2026-11-02 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.5)
+
 - **VR LAN keeps game files unchanged (experimental):** a reported VR LAN race still ended right after the countdown with matching 3D options on both PCs, so the camera-file change in 0.18.4 was not the cause; the game appears to check the files a VR session edits. In LAN, VR no longer edits `cameras.xml` or `postprocess/effects.xml`: motion blur and head camera shake are removed in memory instead, and graphics filters, Bloom off and the experimental Large Address Aware patch are not applied in LAN (desktop or VR). Builds and launcher checks pass; a VR LAN race on two PCs still needs to confirm it.
 - **In-game desktop seat panel (experimental):** in desktop Direct practice and Race, the seat panel shortcut (**Tab** by default) now opens the seat panel in the desktop cockpit view too. Arrow keys move the seat (hold **Shift** for sideways), **Page Up/Page Down** change the view angle, and the view follows immediately; **Enter** saves to the desktop seat positions and **Field of view (desktop)**. While the panel is open, its keys no longer reach the car; this also fixes the VR seat panel, whose arrow keys could steer because the game's keyboard was opened before DiRT2VR's input filter. Controllers work too: bind **Open seat adjustment** under **Controls → Seat**; the D-pad moves the seat and **RB/LB** change the view angle (controller use not yet checked by a player). Not in Game menus mode or LAN. Keyboard use checked by a player on desktop (STI, Direct practice).
 - **Collapsible sections:** launcher section titles are now buttons, as in GRID2VR: click a title (▾) to collapse its section and click again to expand it. The launcher remembers which sections you collapsed.
@@ -13,6 +17,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 - **Fixed External tracks on desktop with a cockpit seat or field of view:** in 0.18.4, desktop Direct practice and Race on an External track stopped before the game started with "Unknown practice track" when a seat offset or a desktop cockpit field of view was set. The same check could stop the depth-of-field step on the External Pikes Peak layouts.
 - **External tracks can set their own tree budgets:** an External pack may now include a session copy of `tracks/tree_system_settings.xml`, as it already could for `tracks/ornament_system_settings.xml`. The launcher applies it only while that track runs and restores your original file afterwards. A track with more trees than DiRT 2's built-in styles allow can add its own style, so its trees no longer flicker in VR or wide camera views. See [EXTERNAL_PACKS.md](EXTERNAL_PACKS.md).
+
+**After updating:** no track rebuild is needed. Seats you saved before stay with VR; the desktop seat starts at the game's position.
+
+Please report any problems.
 
 ## 0.18.4 — 2026-11-02 — Experimental
 

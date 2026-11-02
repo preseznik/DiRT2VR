@@ -1,29 +1,27 @@
-DiRT2VR 0.18.4 — Experimental
+DiRT2VR 0.18.5 — Experimental
 
-LATEST CHANGES (since 0.18.0)
+LATEST CHANGES (since 0.18.4)
 
-- Extended grass distance: grass now fills its normal draw range on tracks with dense grass instead of stopping abruptly a short way from the camera. On by default under Advanced → Graphics → Extended grass distance; turn it off to return to the original grass budget if you notice stuttering or crashes.
-- Best times on every track: the launcher shows your best Direct practice time on stock, CUSTOM and External tracks, with its car and grade and the game's world record for your car's class where one exists.
-- Sharper 3D menus in VR: fixes the blurry, sideways-smeared view outside the RV with 3D menus.
-- Driving control presets: Controls → Driving → Configure driving controls… now has Save preset… and Load preset…, so you can switch between, for example, a wheel setup and a controller setup.
-- Wheel rotation: Configure driving controls… → Wheel rotation… matches DiRT 2's steering to how far you turn your wheel, for example 540° on a 1080° wheel.
-- Transmission choice (experimental): choose Automatic, Manual sequential, Manual H-pattern or Manual H-pattern + clutch for your car in every launcher mode, on desktop or in VR, without changing your career's saved setting.
-- FPS + GPU usage in VR (experimental): Advanced → Graphics → FPS + GPU usage (VR) shows a small frame rate and GPU usage panel below your view in the headset.
-- Paddock zoom in VR (experimental): with 3D menus on, Advanced → Graphics → Paddock zoom (wheel or stick) lets you scroll the mouse wheel forward or push the Xbox right stick up to move your view up to 3 m closer to your car outside the RV.
-- VR LAN: every PC now prepares the same camera file. This may fix a disconnect at the race countdown when the two PCs used different 3D options.
-- Desktop seat and field of view (experimental): Graphics → Cockpit seat now also moves the desktop cockpit view, per car or for all cars, and Field of view (desktop) sets the cockpit view angle from 40° to 90° (DiRT 2 uses 52°). VR and LAN games are unchanged.
-- "new" marks: in Experimental builds, settings added since the last published release show a small green "new".
-- Player guides: the README is now a short front page, and the detailed instructions are installed as guides in DiRT2VR\guide.
-- Tidier launcher: the car Class filter has its own row, and a smaller launcher window no longer lets Vehicle setup… cover the grade buttons.
+- Separate VR and desktop seats: Graphics → Cockpit seat has a Positions for: VR / Desktop switch, so a VR seat no longer moves the desktop cockpit view. Seats you saved before stay with VR; desktop starts at the game's position.
+- In-game desktop seat panel (experimental): in desktop Direct practice and Race, press Tab in the cockpit view (or bind Open seat adjustment under Controls → Seat for a controller). Arrows or the D-pad move the seat, Shift or X moves sideways, Page Up/Page Down or RB/LB change the view angle, Enter or A saves. While the panel is open its keys no longer move the car; this also fixes the VR seat panel.
+- Collapsible sections: click a section title in the launcher to collapse or expand it; the launcher remembers your choice.
+- VR LAN (experimental): LAN no longer changes game files. VR removes motion blur and camera shake in memory instead, and graphics filters, Bloom off and Experimental LAA are not applied in LAN. This aims to fix the VR disconnect at the race countdown.
+- External tracks: fixes desktop Direct practice and Race on External tracks when a desktop seat or view angle is set (a 0.18.4 problem), and External packs can now set their own tree budgets. The next Salto Colorado pack needs 0.18.5.
 
-After updating: no track rebuild is needed. Existing settings and best laps are kept. Extended grass distance is on; the FPS panel and paddock zoom start off, the desktop field of view starts at 52°, and Transmission starts at Use game setting.
+After updating: no track rebuild is needed. Existing settings and best laps are kept.
 
-The new driving options have not yet been driven with a physical wheel, the FPS panel and paddock zoom have not yet been checked in a headset, and the desktop seat and field of view have not yet been checked in the game. Until the VR LAN change is confirmed, use the same Advanced → Graphics 3D options on both PCs. Please report any problems.
+Still to check: the desktop seat panel with a controller, and a VR LAN race on two PCs. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.4 — Experimental (changes since 0.18.0)
+
+- Extended grass distance, best times on every track and sharper 3D menus in VR.
+- Driving control presets, wheel rotation and a transmission choice.
+- FPS + GPU usage and paddock zoom in VR, a desktop seat position and field of view, and player guides.
 
 0.18.0 — Stable (promotion of 0.17.158)
 
