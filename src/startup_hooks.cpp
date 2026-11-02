@@ -14,7 +14,7 @@
 #include "test_message.h"
 #include "background_play.h"
 #include "photo_mode.h"
-namespace vr { bool EnableSeatAdjustment(); bool DesktopSeatRequested(); }
+namespace vr { bool EnableSeatAdjustment(); bool DesktopSeatRequested(); bool EnableLanMemory(); }
 #include "common.h"
 
 namespace vr {
@@ -47,6 +47,7 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     const bool chaseReady=!chase || (playerCameraReady && observerReady && EnableChaseCamera());
     if(!chaseReady)Log("chase camera: unavailable; native view retained");
     if(photo && (!chaseReady || !playerCameraReady || !observerReady || !EnablePhotoMode())) {Log("photo mode: incompatible process");return false;}
+    if(headset && !EnableLanMemory()) Log("VR LAN: in-memory camera/motion-blur changes unavailable; original files are kept");
     if((headset || desktopSeat) && !EnableSeatAdjustment()) Log("seat adjustment: unavailable; %s",headset ? "existing VR remains active" : "desktop seat panel off");
     if(headset && TestMessagesEnabled())Log("headset reply input ready=%d",EnableTestMessageInput());
     EnableEventDiagnostics();

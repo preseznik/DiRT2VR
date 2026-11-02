@@ -223,6 +223,10 @@ Public Class Session
                             start.ArgumentList.Add(New AssetTransaction(context).PracticeConfig())
                             start.Environment("DIRT2VR_DIRECT_PRACTICE") = "1"
                             start.Environment("DIRT2VR_LAPS") = settings.SessionLaps.ToString(Globalization.CultureInfo.InvariantCulture)
+                        ElseIf settings.LaunchMode = "lan" Then
+                            ' The LAN race start checks game files: keep them original and
+                            ' remove motion blur and head camera shake in memory (ProJict 8ac0f636).
+                            start.Environment("DIRT2VR_LAN_MEMORY") = "1"
                         Else
                             Worker.Invoke(context, "prepare")
                         End If
@@ -433,12 +437,14 @@ Public Class Session
         Return start
     End Function
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
-        ' Last effect layer for every launch path, including LAN and return to menus.
-        If filterSnapshot IsNot Nothing Then
+        ' Last effect layer for every launch path except LAN, whose race start
+        ' checks game files; also on return to menus.
+        Dim lan = settings.LaunchMode = "lan"
+        If filterSnapshot IsNot Nothing AndAlso Not lan Then
             Progress("Applying graphics filters…")
             Worker.Invoke(context, "prepare-filter", filterSnapshot:=filterSnapshot)
         End If
-        If Not BloomTransaction.Enabled(settings, start) Then
+        If Not lan AndAlso Not BloomTransaction.Enabled(settings, start) Then
             Progress("Applying bloom settings…")
             Worker.Invoke(context, "prepare-bloom")
         End If
