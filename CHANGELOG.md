@@ -6,6 +6,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.3 — 2026-11-02 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.3)
+
+Also covers the 0.18.2 package, which was not published.
+
 - Line up the car Class filter with the other launcher choices: Class now has its own row with its label on the left, and the Car dropdown aligns with Launch mode, Event and Track. Shrinking the launcher window no longer lets **Vehicle setup…** cover the grade buttons or the CUSTOM cars option.
 - Shorten the README to download, requirements, installation, a first VR launch and help. Detailed instructions, with their wording kept, move into seven player guides (Playing, Custom tracks, Graphics, Controls, LAN multiplayer, Settings and updates, Troubleshooting), linked from the README. The guides are installed with the launcher in `DiRT2VR/guide`, and the launcher's Instructions page points to them.
 - **Driving control presets:** **Controls → Driving → Configure driving controls…** now has **Save preset…** and **Load preset…**, like GRID2VR. A preset keeps your bindings, calibration and both driving checkboxes, so you can switch between, for example, a wheel setup and a controller setup. Loading a preset changes the editor only until you choose **Save driving controls**. Presets are shared by your DiRT2VR installations on this Windows account. Saving and loading are covered by automated checks; switching presets with physical wheels has not been tested.
@@ -15,6 +21,10 @@ Version headings identify distribution builds; published packages include a GitH
 - **Paddock zoom in VR (experimental):** with 3D menus on, **Advanced → Graphics → Paddock zoom (wheel or stick)** lets you scroll the mouse wheel forward, or push the Xbox right stick up, in the paddock outside the RV to move your view up to 3 m closer to your car, along the game's own camera; scroll back or pull the stick down to return. It resets when the game cuts to another shot. It starts off and only moves the headset view; the game's camera and menus are unchanged. Launcher and native checks pass; it has not yet been checked in a headset.
 - **"new" marks (Experimental builds):** settings added since the last published release show a small green **new** beside them: FPS + GPU usage and Paddock zoom under Advanced, and Transmission, Wheel rotation…, Save preset… and Load preset… in Configure driving controls. They disappear once a newer release is published. Stable builds never show them.
 - **VR LAN:** every PC now prepares the same game camera file for a VR LAN session, whatever its own **3D beyond the cockpit** and **3D chase replays** choices. In a reported VR LAN disconnect at the race countdown, the host had those options on and the client had them off, and the host's game ended the session at the start. Whether this resolves the disconnect still needs a two-PC VR retest; until then, use the same **Advanced → Graphics** 3D options on both PCs.
+
+**After updating:** no track rebuild is needed. Existing settings and best laps are kept. The FPS panel and paddock zoom start off, and **Transmission** starts at **Use game setting**.
+
+Please report any problems.
 
 ## 0.18.1 — 2026-10-31 — Experimental
 
