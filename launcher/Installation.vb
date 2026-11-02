@@ -45,6 +45,7 @@ Public Class Installation
         context.RequireClosed()
         Call (New PikesCollisionTransaction(context)).Recover()
         Call (New LargeAddressAware(context)).Recover()
+        Call (New DesktopSeatTransaction(context)).Recover()
         Call (New DepthOfFieldTransaction(context)).Recover()
         Call (New BloomTransaction(context)).Recover()
         Call (New FilterTransaction(context)).Recover()
@@ -163,6 +164,8 @@ Public Module Worker
                 Call (New DepthOfFieldTransaction(context)).PrepareForCar(trackId, carCode, VrSettings.Load(context).TrackDepthOfField)
             Case "prepare-bloom"
                 Call (New BloomTransaction(context)).Prepare()
+            Case "prepare-seat"
+                Call (New DesktopSeatTransaction(context)).Prepare()
             Case "prepare-filter"
                 FilterLaunch.Prepare(context, filterSnapshot)
             Case "prepare-profile"
@@ -178,6 +181,7 @@ Public Module Worker
             Case "recover"
                 Call (New PikesCollisionTransaction(context)).Recover()
                 Call (New LargeAddressAware(context)).Recover()
+                Call (New DesktopSeatTransaction(context)).Recover()
                 Call (New DepthOfFieldTransaction(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
@@ -194,6 +198,7 @@ Public Module Worker
             Case "install-custom"
                 If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before installing a track; external content recovery is pending.")
                 CustomCars.CarInstallation.Recover(context.GameRoot)
+                Call (New DesktopSeatTransaction(context)).Recover()
                 Call (New DepthOfFieldTransaction(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
@@ -204,6 +209,7 @@ Public Module Worker
             Case "remove-custom"
                 If CustomTracks.ExternalSession.Pending(context.GameRoot) Then Throw New IOException("Restore original files before removing a track; external content recovery is pending.")
                 CustomCars.CarInstallation.Recover(context.GameRoot)
+                Call (New DesktopSeatTransaction(context)).Recover()
                 Call (New DepthOfFieldTransaction(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()
@@ -213,6 +219,7 @@ Public Module Worker
                 CustomTracks.PackInstallation.Uninstall(context.GameRoot, If(trackId, CustomTracks.AspenPack.Id))
             Case "remove"
                 CustomCars.CarInstallation.Recover(context.GameRoot)
+                Call (New DesktopSeatTransaction(context)).Recover()
                 Call (New DepthOfFieldTransaction(context)).Recover()
                 Call (New BloomTransaction(context)).Recover()
                 Call (New FilterTransaction(context)).Recover()

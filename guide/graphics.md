@@ -6,7 +6,7 @@ This guide covers the **Graphics** tab and the graphics options under **Advanced
 
 ## Main and Filters
 
-Graphics opens on **Main**, with the existing Desktop, VR rendering, VR cockpit and VR HUD settings. **Filters** edits post-processing presets. Hover over a setting for a short explanation. Open **? → Instructions** for more detail and troubleshooting. Tabs adapt to wide and portrait windows; smaller windows scroll vertically while the action buttons remain available.
+Graphics opens on **Main**, with the existing Desktop, VR rendering, Cockpit seat and VR HUD settings. **Filters** edits post-processing presets. Hover over a setting for a short explanation. Open **? → Instructions** for more detail and troubleshooting. Tabs adapt to wide and portrait windows; smaller windows scroll vertically while the action buttons remain available.
 
 **Filters (experimental):** choose **New** or **Save as**, then edit the preset's **Day** and **Night** adjustments. Choosing a preset in the editor, creating one or importing one selects it for **both Desktop and VR**. You can still choose different presets with the two launch selectors afterward. Click **Save settings**, then relaunch to apply. **Original** preserves the track's look. The game chooses Day or Night using its effect files, not your computer's clock.
 

@@ -22,8 +22,8 @@ Public Class EffectTransaction
         Public Property Entries As Entry()
     End Class
     Public Sub New(value As InstallContext, layer As String)
-        If Not {"bloom", "filter", "dof"}.Contains(layer) Then Throw New ArgumentException("Unknown effect layer.")
-        label = If(layer = "dof", "Depth of field", If(layer = "bloom", "Bloom", "Filter"))
+        If Not {"bloom", "filter", "dof", "seat"}.Contains(layer) Then Throw New ArgumentException("Unknown effect layer.")
+        label = If(layer = "dof", "Depth of field", If(layer = "bloom", "Bloom", If(layer = "seat", "Seat position", "Filter")))
         context = value
         folder = SafeFiles.Inside(context.ModRoot, layer & "-session")
         journalPath = SafeFiles.Inside(folder, "pending.json")
@@ -37,7 +37,8 @@ Public Class EffectTransaction
         If String.IsNullOrWhiteSpace(relative) OrElse relative.Contains("\"c) Then Return False
         Dim parts = relative.Split("/"c)
         If parts.Any(Function(p) p = "" OrElse p = "." OrElse p = ".." OrElse p.IndexOfAny(IO.Path.GetInvalidFileNameChars()) >= 0) Then Return False
-        If label = "Depth of field" AndAlso parts.Length = 3 AndAlso parts(0) = "cars" AndAlso parts(2) = "cameras.xml" AndAlso Text.RegularExpressions.Regex.IsMatch(parts(1), "^[a-z0-9]{3}$") Then Return True
+        If (label = "Depth of field" OrElse label = "Seat position") AndAlso parts.Length = 3 AndAlso parts(0) = "cars" AndAlso parts(2) = "cameras.xml" AndAlso Text.RegularExpressions.Regex.IsMatch(parts(1), "^[a-z0-9]{3}$") Then Return True
+        If label = "Seat position" Then Return False
         Return relative = "frontend/persistentdatarender.xml" OrElse relative = "postprocess/effects.xml" OrElse
             (parts.Length >= 2 AndAlso parts.Length <= 10 AndAlso parts(0) = "tracks" AndAlso {"effects.xml", "night_effects.xml"}.Contains(parts.Last()))
     End Function

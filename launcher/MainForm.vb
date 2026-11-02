@@ -803,6 +803,7 @@ Public Class MainForm
                                        filters.ResetSelections()
                                        msaa.Value = 1 : vrShadows.Checked = False : vrShadowQuality.SelectedIndex = 0 : vrShadowDetailDistance.Value = 14 : vrCrowds.Checked = False
                                        renderScale.Value = 100 : headsetScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
+                                       desktopCockpitFov.Value = DesktopSeatTransaction.GameFov
                                        hudFollow.Checked = False : hudDistance.Value = 2
                                        treeDetail.Value = 0 : objectDetail.Value = 0 : hudGauges.Checked = False
                                        For Each element In {hudLapTime, hudPosition, hudMap, hudProgress}
@@ -1103,6 +1104,7 @@ Public Class MainForm
         settings.DesktopAnisotropy = AnisotropicFiltering.Levels(desktopAnisotropy.Value)
         settings.DesktopShadowDistance = DesktopShadows.Distances(desktopShadowDistance.Value)
         settings.DesktopShadowDistanceInVr = desktopShadowDistanceInVr.Checked
+        settings.DesktopCockpitFov = desktopCockpitFov.Value
         settings.VrAnisotropy = AnisotropicFiltering.Levels(vrAnisotropy.Value)
         settings.DesktopRoadSheenDefault = desktopRoadSheen.UseTrackDefault : settings.DesktopRoadSheen = desktopRoadSheen.Percent
         settings.VrRoadSheenDefault = vrRoadSheen.UseTrackDefault : settings.VrRoadSheen = vrRoadSheen.Percent
