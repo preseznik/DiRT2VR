@@ -31,7 +31,7 @@ Public Class DesktopSeatTransaction
         Return result.ToArray()
     End Function
     Public Overloads Sub Prepare(Optional afterWrite As Action(Of Integer) = Nothing)
-        Dim seats = SeatPositions.Load(context), fov = VrSettings.Load(context).DesktopCockpitFov
+        Dim seats = SeatPositions.Load(context, desktop:=True), fov = VrSettings.Load(context).DesktopCockpitFov
         MyBase.Prepare(Function(relative, original) Patch(original, If(seats.UseUniversal, seats.Universal, seats.GetPosition(relative.Split("/"c)(1))), fov), afterWrite)
     End Sub
     Public Shared Function Patch(original As Byte(), seat As SeatPosition, fov As Integer) As Byte()

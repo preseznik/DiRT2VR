@@ -49,8 +49,12 @@ Public Class SeatPositions
     Public Property UseUniversal As Boolean = False
     Public Property Universal As New SeatPosition
 
-    Public Shared Function Load(context As InstallContext) As SeatPositions
-        Dim path = IO.Path.Combine(context.UserRoot, "seat-positions.json")
+    ' VR and desktop keep separate positions; VR keeps the original file.
+    Public Shared Function FileName(desktop As Boolean) As String
+        Return If(desktop, "desktop-seat-positions.json", "seat-positions.json")
+    End Function
+    Public Shared Function Load(context As InstallContext, Optional desktop As Boolean = False) As SeatPositions
+        Dim path = IO.Path.Combine(context.UserRoot, FileName(desktop))
         Dim result = If(File.Exists(path), Files.ReadJson(Of SeatPositions)(path), New SeatPositions)
         If result Is Nothing OrElse result.Version <> 1 OrElse result.Cars Is Nothing OrElse result.Cars.Count > 128 Then Throw New IOException("Unsupported seat positions file.")
         If result.Universal Is Nothing Then Throw New IOException("Invalid universal seat position.")
@@ -65,8 +69,8 @@ Public Class SeatPositions
         Dim value As SeatPosition = Nothing
         Return If(Cars.TryGetValue(car, value), value.Copy(), New SeatPosition)
     End Function
-    Public Sub Save(context As InstallContext)
-        Files.SaveJson(IO.Path.Combine(context.UserRoot, "seat-positions.json"), Me)
+    Public Sub Save(context As InstallContext, Optional desktop As Boolean = False)
+        Files.SaveJson(IO.Path.Combine(context.UserRoot, FileName(desktop)), Me)
     End Sub
 End Class
 

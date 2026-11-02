@@ -6,6 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Separate VR and desktop seats:** **Graphics → Cockpit seat** has a new **Positions for: VR / Desktop** switch. VR and desktop now keep their own seat positions, per car or universal, so a VR seat set to match your real head no longer moves the desktop cockpit view. Positions you saved before stay with VR; desktop starts at the game's position. **Field of view (desktop)** shows in Desktop mode. Launcher checks pass; not yet checked in the game.
+
+- **Fixed External tracks on desktop with a cockpit seat or field of view:** in 0.18.4, desktop Direct practice and Race on an External track stopped before the game started with "Unknown practice track" when a seat offset or a desktop cockpit field of view was set. The same check could stop the depth-of-field step on the External Pikes Peak layouts.
+- **External tracks can set their own tree budgets:** an External pack may now include a session copy of `tracks/tree_system_settings.xml`, as it already could for `tracks/ornament_system_settings.xml`. The launcher applies it only while that track runs and restores your original file afterwards. A track with more trees than DiRT 2's built-in styles allow can add its own style, so its trees no longer flicker in VR or wide camera views. See [EXTERNAL_PACKS.md](EXTERNAL_PACKS.md).
+
 ## 0.18.4 — 2026-11-02 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.4)

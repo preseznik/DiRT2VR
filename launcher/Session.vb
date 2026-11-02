@@ -442,7 +442,7 @@ Public Class Session
         End If
         ' VR moves the headset eye instead; LAN peers need identical camera files.
         Dim headset = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
-        If Not headset AndAlso settings.LaunchMode <> "lan" AndAlso DesktopSeatTransaction.Applies(SeatPositions.Load(context), settings.DesktopCockpitFov) Then
+        If Not headset AndAlso settings.LaunchMode <> "lan" AndAlso DesktopSeatTransaction.Applies(SeatPositions.Load(context, desktop:=True), settings.DesktopCockpitFov) Then
             Progress("Adjusting the cockpit seat…")
             Worker.Invoke(context, "prepare-seat")
         End If
