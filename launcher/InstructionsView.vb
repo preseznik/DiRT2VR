@@ -223,7 +223,7 @@ Extended grass distance
 Advanced → Graphics → Extended grass distance lets dense grass reach its normal distance instead of stopping abruptly near the camera. It is on by default for desktop and VR and uses some extra memory. Turn it off and relaunch to use DiRT 2's original grass budget if you notice stuttering or crashes.
 
 Paddock zoom (VR)
-With 3D menus on, Advanced → Graphics → Paddock zoom lets you scroll the mouse wheel forward in the paddock outside the RV to move your view closer to your car, up to 3 m; scroll back to return. It resets when the game cuts to another shot. Off by default; save and relaunch VR.
+With 3D menus on, Advanced → Graphics → Paddock zoom lets you scroll the mouse wheel forward, or push the Xbox right stick up, in the paddock outside the RV to move your view closer to your car, up to 3 m; scroll back or pull the stick down to return. It resets when the game cuts to another shot. Off by default; save and relaunch VR.
 
 FPS + GPU usage (VR)
 Advanced → Graphics → FPS + GPU usage shows a small panel below your view in the headset, updated once a second. FPS counts frames the game submits, not headset refresh or reprojection. GPU usage is the busiest engine on the game's graphics card, including other apps; N/A means Windows could not provide a reading. Off by default; save and relaunch VR. Desktop play ignores it.

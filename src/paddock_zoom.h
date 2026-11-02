@@ -34,6 +34,15 @@ struct PaddockZoom {
         return true;
     }
 };
+// Xbox right stick, which the paddock menus leave unused: up moves closer.
+// Full deflection matches eight wheel notches a second, like replay zoom;
+// a resting stick inside the dead zone does nothing.
+inline float PaddockStickWheel(short thumbY,float dt) {
+    if(!std::isfinite(dt) || dt<=0 || dt>.25f)return 0;
+    constexpr float deadZone=.25f;
+    const float y=std::clamp(thumbY/32767.f,-1.f,1.f),amount=std::abs(y);
+    return amount<=deadZone?0.f:std::copysign((amount-deadZone)/(1-deadZone),y)*960.f*dt;
+}
 bool PaddockZoomEnabled();
 // Once per headset frame: returns the forward offset in metres, or 0 when
 // the paddock is not shown (which also resets the zoom).

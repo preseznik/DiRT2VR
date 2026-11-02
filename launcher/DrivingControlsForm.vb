@@ -38,6 +38,7 @@ Public Class DrivingControlsForm
             Dim transmissionRow As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = False, .Margin = New Padding(0, 6, 0, 0)}
             transmissionRow.Controls.Add(New Label With {.Text = "Transmission (experimental)", .AutoSize = True, .Margin = New Padding(0, 6, 8, 0)})
             transmissionRow.Controls.Add(transmissionBox)
+            NewFeatures.MarkIfNew(transmissionRow, transmissionBox)
             options.Controls.Add(transmissionRow)
         End If
         layout.Controls.Add(options)
@@ -61,7 +62,7 @@ Public Class DrivingControlsForm
         AddButton(buttons, "Bind keyboard…", Sub() BindSelected(True))
         AddButton(buttons, "Bind device…", Sub() BindSelected(False))
         AddButton(buttons, "Calibration…", AddressOf Calibrate)
-        If Not replay Then AddButton(buttons, "Wheel rotation…", AddressOf WheelRotation)
+        If Not replay Then AddButton(buttons, "Wheel rotation…", AddressOf WheelRotation, "DrivingWheelRotation")
         AddButton(buttons, If(replay, "Clear / use game binding", "Use game binding"), Sub()
                                                      Dim action = SelectedAction()
                                                      If action Is Nothing Then Return
@@ -69,8 +70,8 @@ Public Class DrivingControlsForm
                                                      RefreshRows(action)
                                                  End Sub)
         If Not replay Then
-            AddButton(buttons, "Save preset…", AddressOf SavePreset)
-            AddButton(buttons, "Load preset…", AddressOf LoadPreset)
+            AddButton(buttons, "Save preset…", AddressOf SavePreset, "DrivingSavePreset")
+            AddButton(buttons, "Load preset…", AddressOf LoadPreset, "DrivingLoadPreset")
         End If
         AddButton(buttons, If(replay, "Save replay controls", "Save driving controls"), Sub()
                                                           Try
@@ -99,11 +100,13 @@ Public Class DrivingControlsForm
         MinimumSize = New Size(Math.Min(MinimumSize.Width, area.Width), Math.Min(MinimumSize.Height, area.Height))
         Size = New Size(Math.Min(Width, area.Width), Math.Min(Height, area.Height))
     End Sub
-    Private Shared Sub AddButton(panel As FlowLayoutPanel, text As String, action As Action)
-        Dim button As New Button With {.Text = text, .AutoSize = True}
+    Private Shared Function AddButton(panel As FlowLayoutPanel, text As String, action As Action, Optional name As String = Nothing) As Button
+        Dim button As New Button With {.Text = text, .AutoSize = True, .Name = If(name, "")}
         AddHandler button.Click, Sub() action()
         panel.Controls.Add(button)
-    End Sub
+        NewFeatures.MarkIfNew(panel, button)
+        Return button
+    End Function
     Private Function SelectedAction() As String
         Return If(list.SelectedItems.Count = 1, list.SelectedItems(0).Text, Nothing)
     End Function

@@ -66,7 +66,7 @@ Public Class MainForm
     Private ReadOnly extendedViews As New CheckBox With {.Text = "On (Experimental)", .Name = "VrExtendedViews", .AccessibleName = "3D beyond the cockpit (Experimental)", .AutoSize = True}
     Private ReadOnly replayCameras As New CheckBox With {.Text = "On (Experimental)", .Name = "VrReplayCameras", .AccessibleName = "3D chase replays (Experimental)", .AutoSize = True}
     Private ReadOnly trailerMenus As New CheckBox With {.Text = "On (Experimental)", .Name = "VrTrailerMenus", .AccessibleName = "3D menus (Experimental)", .AutoSize = True}
-    Private ReadOnly paddockZoom As New CheckBox With {.Text = "On (Experimental)", .Name = "VrPaddockZoom", .AccessibleName = "Paddock zoom with the mouse wheel (Experimental)", .AutoSize = True}
+    Private ReadOnly paddockZoom As New CheckBox With {.Text = "On (Experimental)", .Name = "VrPaddockZoom", .AccessibleName = "Paddock zoom with the mouse wheel or right stick (Experimental)", .AutoSize = True}
     Private ReadOnly extendedGrass As New CheckBox With {.Text = "On", .Name = "ExtendedGrass", .AccessibleName = "Extended grass distance", .AutoSize = True}
     Private ReadOnly performanceDisplay As New CheckBox With {.Text = "On (Experimental)", .Name = "VrPerformanceDisplay", .AccessibleName = "FPS and GPU usage in VR (Experimental)", .AutoSize = True}
     Private ReadOnly vrShadows As New CheckBox With {.Text = "On", .Name = "VrShadows", .AutoSize = True}
@@ -251,7 +251,7 @@ Public Class MainForm
         Tip(mirrors, "Turn the car's rear-view mirrors on or off in VR." & vbCrLf & "Off can improve performance. Game setting keeps your usual choice.")
         Tip(extendedViews, "Use headset 3D and head tracking in bonnet, bumper and chase views while driving. Replay 3D and trailer-menu 3D have separate switches below. Save and relaunch VR to apply.")
         Tip(replayCameras, "Watch chase-camera replays in 3D, with head tracking, even while playback is paused. Cinematic angles stay on the flat screen. For orbit and zoom, enable Controls → General → Chase camera → Free look. Save and relaunch VR to apply.")
-        Tip(paddockZoom, "In the paddock outside the RV, scroll the mouse wheel forward to move your view closer to the car (up to 3 m) and back to return. Resets when the game changes shot. Needs 3D menus; save and relaunch VR.")
+        Tip(paddockZoom, "In the paddock outside the RV, scroll the mouse wheel forward or push the Xbox right stick up to move your view closer to the car (up to 3 m); scroll back or pull down to return. Resets when the game changes shot. Needs 3D menus; save and relaunch VR.")
         Tip(performanceDisplay, "Shows a small FPS and GPU usage panel below your view in the headset. FPS counts frames the game submits, not headset refresh or reprojection. GPU usage is the busiest engine on the game's graphics card, including other apps; N/A means Windows could not provide a reading. Off by default; save and relaunch VR. Desktop play ignores it.")
         Tip(trailerMenus, "Use headset 3D and head tracking in the interactive trailer menus. Loading screens, movies and unsupported menu views stay on the virtual screen. F9 (default) returns to the flat screen. Off by default; save and relaunch VR to apply.")
         Tip(extendedGrass, "Draws grass out to its normal distance on tracks with dense grass, instead of cutting it off near the camera. Applies to desktop and VR and uses some extra memory. On by default; turn it off to use DiRT 2's original grass budget if you notice stuttering or crashes. Save and relaunch to apply.")
@@ -698,7 +698,7 @@ Public Class MainForm
         trailerMenus.Checked = settings.VrTrailerMenus
         Field(graphics, "3D menus", trailerMenus)
         paddockZoom.Checked = settings.VrPaddockZoom
-        Field(graphics, "Paddock zoom (mouse wheel)", paddockZoom)
+        Field(graphics, "Paddock zoom (wheel or stick)", paddockZoom)
         paddockZoom.Enabled = trailerMenus.Checked
         AddHandler trailerMenus.CheckedChanged, Sub() paddockZoom.Enabled = trailerMenus.Checked
         extendedGrass.Checked = settings.ExtendedGrass
