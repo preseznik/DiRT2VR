@@ -8,7 +8,7 @@
 class EyeBlit {
 public:
     bool Initialize(ID3D11Device* device);
-    bool Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* target,unsigned width,unsigned height,bool alpha=false);
+    bool Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* target,unsigned width,unsigned height,bool alpha=false,float x=0,float y=0);
 private:
     Microsoft::WRL::ComPtr<ID3D11Device> device_;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext1> context_;

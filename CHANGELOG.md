@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **In-game desktop seat panel (experimental):** in desktop Direct practice and Race, the seat panel shortcut (**Tab** by default) now opens the seat panel in the desktop cockpit view too. Arrow keys move the seat (hold **Shift** for sideways), **Page Up/Page Down** change the view angle, and the view follows immediately; **Enter** saves to the desktop seat positions and **Field of view (desktop)**. Keyboard only for now; not in Game menus mode or LAN. A lab run confirmed the game applies a saved desktop seat and view angle and that live camera changes move the view; the panel itself still needs a player check.
 - **Collapsible sections:** launcher section titles are now buttons, as in GRID2VR: click a title (▾) to collapse its section and click again to expand it. The launcher remembers which sections you collapsed.
 - **Separate VR and desktop seats:** **Graphics → Cockpit seat** has a new **Positions for: VR / Desktop** switch. VR and desktop now keep their own seat positions, per car or universal, so a VR seat set to match your real head no longer moves the desktop cockpit view. Positions you saved before stay with VR; desktop starts at the game's position. **Field of view (desktop)** shows in Desktop mode. Launcher checks pass; not yet checked in the game.
 

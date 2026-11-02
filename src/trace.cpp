@@ -1844,6 +1844,7 @@ HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT i
     if(flags & DXGI_PRESENT_TEST)return realPresent(swapchain,interval,flags);
     graphics::SampleVideoMemory(swapchain);
     PhotoModeFrame();
+    SeatDesktopFrame(swapchain);
     const auto f=frame.fetch_add(1);
     if(TakeCaptureRequest(f,false)) {
         Screenshot(swapchain,f);
@@ -2104,7 +2105,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         EnablePikesCockpit();
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
-        if(swapchain && (LoggingEnabled() || PhotoModeRequested() || (RequestedCapturesEnabled() && PikesScope())))
+        if(swapchain && (LoggingEnabled() || PhotoModeRequested() || DesktopSeatRequested() || (RequestedCapturesEnabled() && PikesScope())))
             Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;
     }

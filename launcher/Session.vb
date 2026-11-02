@@ -386,9 +386,15 @@ Public Class Session
         DirectRaceStart.Configure(start, settings)
         CarSetup.Configure(start, settings)
         CarGrades.Configure(start, settings)
-        Dim returnToMenus = WaitForGame(start)
-        profile.ConfirmStartup(False)
-        Return returnToMenus
+        ' Direct sessions run the DLL, so the seat panel can adjust the desktop cockpit.
+        Using seat = If(config IsNot Nothing, New SeatChannel(context, settings, desktopMode:=True), Nothing)
+            If seat IsNot Nothing Then
+                start.Environment("DIRT2VR_SEAT_CHANNEL") = seat.Name : start.Environment("DIRT2VR_DESKTOP_SEAT") = "1"
+            End If
+            Dim returnToMenus = WaitForGame(start, If(seat Is Nothing, Nothing, Sub() seat.Poll(Array.Empty(Of ControllerSample)(), ControllerInput.GameFocused())))
+            profile.ConfirmStartup(False)
+            Return returnToMenus
+        End Using
     End Function
     Private Function PreparedReplayId() As String
         Return If(settings.DirectMode AndAlso preparedReplay IsNot Nothing, IO.Path.GetFileName(preparedReplay?.Folder), Nothing)

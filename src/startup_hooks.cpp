@@ -14,7 +14,7 @@
 #include "test_message.h"
 #include "background_play.h"
 #include "photo_mode.h"
-namespace vr { bool EnableSeatAdjustment(); }
+namespace vr { bool EnableSeatAdjustment(); bool DesktopSeatRequested(); }
 #include "common.h"
 
 namespace vr {
@@ -32,7 +32,9 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); return false; }
     if(!EnableF04Audio()) { Log("f04 audio: incompatible process"); return false; }
     if(!EnableTransmission()) { Log("transmission: incompatible process"); return false; }
-    const bool playerCameraReady=!(cockpit || steering || chase || replayProbe || photo) || EnableCockpitStart(cockpit);
+    // The desktop seat panel needs the startup camera lookup to identify the car.
+    const bool desktopSeat=!headset && direct && DesktopSeatRequested();
+    const bool playerCameraReady=!(cockpit || steering || chase || replayProbe || photo || desktopSeat) || EnableCockpitStart(cockpit);
     if(cockpit && !playerCameraReady) { Log("VR starting camera: incompatible process"); return false; }
     if(headset && !EnableDrawDistance()) { Log("VR draw distance: incompatible process"); return false; }
     if(!EnableGrassBudget(headset)) {
@@ -45,7 +47,7 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     const bool chaseReady=!chase || (playerCameraReady && observerReady && EnableChaseCamera());
     if(!chaseReady)Log("chase camera: unavailable; native view retained");
     if(photo && (!chaseReady || !playerCameraReady || !observerReady || !EnablePhotoMode())) {Log("photo mode: incompatible process");return false;}
-    if(headset && !EnableSeatAdjustment()) Log("seat adjustment: unavailable; existing VR remains active");
+    if((headset || desktopSeat) && !EnableSeatAdjustment()) Log("seat adjustment: unavailable; %s",headset ? "existing VR remains active" : "desktop seat panel off");
     if(headset && TestMessagesEnabled())Log("headset reply input ready=%d",EnableTestMessageInput());
     EnableEventDiagnostics();
     return true;

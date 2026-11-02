@@ -87,6 +87,7 @@ Partial Public Class MainForm
     Private seatTargets As SeatTarget()
     Private activeSeat As SeatTarget
     Private loadingSeat As Boolean
+    Private fovEdited As Boolean
     Private seatWasBusy As Boolean
     Private ReadOnly seatKeyButtons As Button() = Enumerable.Range(0, 7).Select(Function(i) New Button With {.AutoSize = True}).ToArray()
     Private Function Shortcut(action As Integer) As SeatKey
@@ -146,6 +147,9 @@ Partial Public Class MainForm
                                               loadingSeat = True : universalSeat.Checked = activeSeat.Positions.UseUniversal : loadingSeat = False
                                               LoadSeatSelection()
                                           End Sub
+        AddHandler desktopCockpitFov.ValueChanged, Sub()
+                                                     If Not loadingSeat Then fovEdited = True
+                                                 End Sub
         AddHandler seatCar.SelectedIndexChanged, Sub() LoadSeatSelection()
         For Each slider In {seatHeight, seatDepth, seatSide}
             AddHandler slider.ValueChanged, Sub() EditSeat()
@@ -181,8 +185,11 @@ Partial Public Class MainForm
         For Each slider In {seatHeight, seatDepth, seatSide}
             slider.Enabled = Not busy
         Next
-        ' Pick up positions the game saved during the session, unless edited here.
+        ' Pick up positions and the view angle the game saved during the session, unless edited here.
         If seatWasBusy AndAlso Not busy Then
+            If Not fovEdited Then
+                loadingSeat = True : desktopCockpitFov.Value = VrSettings.Load(context).DesktopCockpitFov : loadingSeat = False
+            End If
             For Each target In seatTargets.Where(Function(t) Not t.Dirty)
                 target.Reload(context)
             Next
@@ -192,6 +199,7 @@ Partial Public Class MainForm
         seatWasBusy = busy
     End Sub
     Private Sub SaveSeats()
+        fovEdited = False
         For Each target In seatTargets
             target.Save(context)
         Next

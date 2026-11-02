@@ -4,8 +4,11 @@
 #include "seat_state.h"
 #include <string>
 
+struct IDXGISwapChain;
 namespace vr {
 bool EnableSeatAdjustment();
+bool DesktopSeatRequested();
+void SeatDesktopFrame(IDXGISwapChain* swapchain);
 void SeatSelectCamera(void* manager);
 void SeatInactive();
 void SeatPrepare(const std::array<XrView,2>& views);

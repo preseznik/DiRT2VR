@@ -14,6 +14,9 @@
 #include <vector>
 #include <memory>
 #include <cstring>
+#include <algorithm>
+#include <cmath>
+#include <dxgi.h>
 
 namespace vr {
 namespace {
@@ -34,6 +37,20 @@ XrFrames::Overlay overlay;
 struct Input { unsigned held{},source{},slot{}; GUID guid{}; unsigned buttons[4]{},pov{}; } input;
 using SetCamerasFn=void (__thiscall*)(void*,void*);
 SetCamerasFn setCameras{};
+// Desktop: the live head cameras as loaded (their cameras.xml already holds the
+// launch-time seat and field of view) and each car's seat at launch.
+constexpr unsigned headBindRva=0x6faf30, headVtableRva=0xf51e00, headFov=0x250, headPosition=0x2a0;
+struct HeadCamera { unsigned char* camera; float x,y,z,fov; };
+using BindFn=void (__thiscall*)(void*,void*);
+BindFn bindHead{};
+unsigned char* gameBase{};
+std::vector<HeadCamera> heads;
+std::vector<seat::Position> launchCars;
+seat::Position launchUniversal{};
+bool desktop{};
+float fov=52,savedFov=52,openingFov=52;
+int fovDirection{};
+double fovHeld{};
 template<class T> T Read(unsigned offset) { T value{}; memcpy(&value,channel+offset,sizeof(value)); return value; }
 template<class T> void Write(unsigned offset,T value) { memcpy(channel+offset,&value,sizeof(value)); }
 std::string CarString(int index,unsigned offset,unsigned length) {
@@ -50,15 +67,17 @@ void Publish(bool commit=false) {
     overlay.enabled=panel;
     Write(80,unsigned(panel)); Write(84,unsigned(!inputReady ? 2 : !CanAdjust() ? 1 : 0));
     Write(88,active); Write(96,current);
-    if(commit && CanAdjust()) {
-        Write(108,current); Write(120,Universal() ? -2 : active);
+    if(commit && (CanAdjust() || desktop)) {
+        // -3: no identified car; the launcher then saves only the field of view.
+        Write(108,current); Write(120,!CanAdjust() ? -3 : Universal() ? -2 : active);
+        if(desktop) Write(212,int(std::lround(fov)));
         Write(124,Read<unsigned>(124)+1);
-        if(Universal()) Write(192,current); else Write(table+stride*active+64,current);
+        if(CanAdjust()) { if(Universal()) Write(192,current); else Write(table+stride*active+64,current); }
     }
     MemoryBarrier(); InterlockedIncrement(reinterpret_cast<LONG*>(channel+92));
 }
-void Commit() { if(CanAdjust() && current!=saved) { saved=current; Publish(true); } dirty=false; }
-void Cancel() { if(panel) current=opening; panel=false; movement.Reset(); }
+void Commit() { if((CanAdjust() && current!=saved) || fov!=savedFov) { saved=current; savedFov=fov; Publish(true); } dirty=false; }
+void Cancel() { if(panel) { current=opening; fov=openingFov; } panel=false; movement.Reset(); }
 bool Key(unsigned vk) { return vk && !TestMessageBlocksKey(vk) && (GetAsyncKeyState(int(vk))&0x8000)!=0; }
 unsigned Modifiers() { return (Key(VK_CONTROL)?1:0)|(Key(VK_MENU)?2:0)|(Key(VK_SHIFT)?4:0); }
 unsigned HeldKeys() {
@@ -106,7 +125,7 @@ class PanelImage {
     std::wstring last_;
     std::unique_ptr<Gdiplus::Bitmap> bitmap_;
 public:
-    void Draw(ID3D11RenderTargetView* target,unsigned w,unsigned h) {
+    void Draw(ID3D11RenderTargetView* target,unsigned w,unsigned h,float x=0,float y=0) {
         Microsoft::WRL::ComPtr<ID3D11Device> device; target->GetDevice(&device);
         if(!texture_) {
             Gdiplus::GdiplusStartupInput startup;
@@ -120,12 +139,14 @@ public:
         int n=MultiByteToWideChar(CP_UTF8,0,text.data(),int(text.size()),nullptr,0);
         name.resize(n); MultiByteToWideChar(CP_UTF8,0,text.data(),int(text.size()),name.data(),n);
         wchar_t values[256]{};
-        swprintf_s(values,L"Height     %+.1f cm\nDepth      %+.1f cm\nSideways  %+.1f cm",current.y*100,-current.z*100,current.x*100);
+        if(desktop) swprintf_s(values,L"Height     %+.1f cm\nDepth      %+.1f cm\nSideways  %+.1f cm\nView angle %.0f\u00b0",current.y*100,-current.z*100,current.x*100,fov);
+        else swprintf_s(values,L"Height     %+.1f cm\nDepth      %+.1f cm\nSideways  %+.1f cm",current.y*100,-current.z*100,current.x*100);
         wchar_t keyName[64]{};
         const auto vk=Read<unsigned>(128),mods=Read<unsigned>(132);
         GetKeyNameTextW(LONG(MapVirtualKeyW(vk,MAPVK_VK_TO_VSC)<<16),keyName,64);
         std::wstring close=std::wstring(mods&1?L"Ctrl+":L"")+(mods&2?L"Alt+":L"")+(mods&4?L"Shift+":L"")+keyName+L": save & close";
         std::wstring hint(reinterpret_cast<const wchar_t*>(channel+10500),wcsnlen_s(reinterpret_cast<const wchar_t*>(channel+10500),400));
+        if(desktop) hint+=L"\nPgUp / PgDn: view angle";
         const auto signature=name+values+close+hint+(sideways?L"side":L"depth")+(inputReady?L"":L"disabled");
         if(signature!=last_) {
             if(!bitmap_) bitmap_=std::make_unique<Gdiplus::Bitmap>(768,1024,PixelFormat32bppPARGB);
@@ -151,7 +172,7 @@ public:
             arrow(384,254,0,-1); arrow(384,555,0,1); arrow(126,406,-1,0); arrow(642,406,1,0);
             label(L"UP",356,286,90,45,bold,white); label(L"DOWN",335,597,130,45,bold,white);
             label(sideways?L"LEFT":L"BACK",55,451,180,45,bold,white); label(sideways?L"RIGHT":L"FORWARD",550,451,205,45,bold,white);
-            label(values,175,670,550,145,bold,white);
+            label(values,175,desktop?640.f:670.f,550,desktop?200.f:145.f,bold,white);
             label(!inputReady?L"Input filtering unavailable":!CanAdjust()?L"Adjustment unavailable for this car":L"Arrows / D-pad: move",40,838,690,45,normal,white);
             label(hint.c_str(),40,886,690,120,normal,white);
             Gdiplus::BitmapData data{}; Gdiplus::Rect rect(0,0,768,1024);
@@ -160,10 +181,35 @@ public:
             dc->UpdateSubresource(texture_.Get(),0,nullptr,data.Scan0,UINT(data.Stride),0); bitmap.UnlockBits(&data);
             last_=signature;
         }
-        if(!blit_.Draw(0,texture_.Get(),target,w,h,true)) throw std::runtime_error("seat panel copy");
+        if(!blit_.Draw(0,texture_.Get(),target,w,h,true,x,y)) throw std::runtime_error("seat panel copy");
     }
 };
 PanelImage panelImage;
+bool LiveHead(const unsigned char* c) {
+    // Cars can be unloaded; only touch objects that still are head cameras.
+    unsigned vtable{}; SIZE_T read{};
+    return ReadProcessMemory(GetCurrentProcess(),c,&vtable,sizeof(vtable),&read) && vtable==unsigned(uintptr_t(gameBase)+headVtableRva);
+}
+void __fastcall BindHead(void* self,void*,void* visitor) {
+    bindHead(self,visitor);
+    auto* c=static_cast<unsigned char*>(self);
+    HeadCamera h{c}; memcpy(&h.x,c+headPosition,12); memcpy(&h.fov,c+headFov,4);
+    std::lock_guard lock(mutex);
+    auto found=std::find_if(heads.begin(),heads.end(),[&](const HeadCamera& e) { return e.camera==c; });
+    if(found!=heads.end()) *found=h; else heads.push_back(h);
+    Log("desktop seat: head camera %p fov=%.2f position=%.4f,%.4f,%.4f",c,h.fov,h.x,h.y,h.z);
+}
+void ApplyDesktop() {
+    // Car space is x left, y up, z forward; seat offsets are right, up and back.
+    const auto launch=Universal() ? launchUniversal : active>=0 && unsigned(active)<launchCars.size() ? launchCars[active] : seat::Position{};
+    const float dx=current.x-launch.x,dy=current.y-launch.y,dz=current.z-launch.z;
+    for(const auto& h:heads) {
+        if(!LiveHead(h.camera)) continue;
+        const float position[3]{h.x-dx,h.y+dy,h.z-dz};
+        if(memcmp(h.camera+headPosition,position,sizeof(position))) memcpy(h.camera+headPosition,position,sizeof(position));
+        if(memcmp(h.camera+headFov,&fov,sizeof(fov))) memcpy(h.camera+headFov,&fov,sizeof(fov));
+    }
+}
 }
 bool EnableSeatAdjustment() {
     // OpenXR can create another D3D device after the game device. Keep the
@@ -182,6 +228,18 @@ bool EnableSeatAdjustment() {
     auto result=MH_CreateHook(base+0x99f4c0,reinterpret_cast<void*>(SetCameras),reinterpret_cast<void**>(&setCameras));
     if(result==MH_OK) result=EnableRecordedHook(base+0x99f4c0);
     for(unsigned i=0;i<256;++i) keysArmed[i]=!Key(i);
+    desktop=Read<unsigned>(204)==1;
+    if(desktop && result==MH_OK) {
+        gameBase=base;
+        fov=savedFov=float(std::clamp(Read<int>(208),40,90));
+        launchUniversal=Read<seat::Position>(192);
+        for(unsigned i=0;i<Read<unsigned>(184);++i) launchCars.push_back(Read<seat::Position>(table+i*stride+64));
+        const unsigned char headGuard[]={0x56,0x8b,0x74,0x24,0x08,0x8b,0x06,0x8b,0x50,0x10,0x57,0x8b,0xf9,0x8d,0x4f,0x7b};
+        if(memcmp(base+headBindRva,headGuard,sizeof(headGuard))) { Log("desktop seat: unexpected head camera binding code"); result=MH_ERROR_UNSUPPORTED_FUNCTION; }
+        if(result==MH_OK) result=MH_CreateHook(base+headBindRva,reinterpret_cast<void*>(BindHead),reinterpret_cast<void**>(&bindHead));
+        if(result==MH_OK) result=EnableRecordedHook(base+headBindRva);
+        Log("desktop seat: head camera hook=%s fov=%.0f",MH_StatusToString(result),fov);
+    }
     inputReady=result==MH_OK && EnableSeatInput();
     SetPanelKeyFilter(SeatWindowKey);
     overlay.enabled=false;
@@ -208,10 +266,8 @@ void SeatInactive() {
     eligible=false; Cancel(); if(dirty) Commit(); previousHeld=~0u; lastTick=0; Publish();
     for(unsigned i=0;i<256;++i) keysArmed[i]=!Key(i);
 }
-void SeatPrepare(const std::array<XrView,2>& views) {
-    if(!channel) return;
-    if(TestMessageTyping()){SeatInactive();return;}
-    std::lock_guard lock(mutex);
+// Shared by VR (with the eye views for placing the panel) and desktop frames.
+static void Update(const std::array<XrView,2>* views) {
     eligible=inputReady;
     const auto now=GetTickCount64(); const double dt=lastTick ? double(now-lastTick)/1000 : 0; lastTick=now;
     if(selected!=active) {
@@ -225,7 +281,7 @@ void SeatPrepare(const std::array<XrView,2>& views) {
     const unsigned held=input.held|HeldKeys(),pressed=held&~previousHeld; previousHeld=held;
     if(pressed&(1u<<13)) {
         if(panel) { Commit(); panel=false; }
-        else if(inputReady) { Commit(); opening=current; panel=true; panelPose=ScreenPose(CenterPose(views),1.f); movement.Reset();
+        else if(inputReady) { Commit(); opening=current; openingFov=fov; panel=true; if(views) panelPose=ScreenPose(CenterPose(*views),1.f); movement.Reset();
             for(unsigned vk:{VK_SHIFT,VK_UP,VK_DOWN,VK_LEFT,VK_RIGHT,VK_RETURN,VK_ESCAPE}) keysArmed[vk]=!Key(vk); }
     }
     if(panel && (pressed&(1u<<12))) Cancel();
@@ -238,8 +294,23 @@ void SeatPrepare(const std::array<XrView,2>& views) {
         if(held&(1u<<10)) directions|=sideways?2:32;
     }
     if(inputReady && CanAdjust() && movement.Update(current,directions,dt)) { dirty=!panel; lastChange=now; }
+    if(desktop && panel) {
+        // Page Up / Page Down: one degree per press, repeating while held.
+        const int direction=(Key(VK_PRIOR)?1:0)-(Key(VK_NEXT)?1:0);
+        int steps=0;
+        if(direction!=fovDirection) { fovHeld=0; steps=direction!=0; }
+        else if(direction) { const double before=fovHeld; fovHeld+=dt; steps=int(std::max(0.0,fovHeld-.35)*12)-int(std::max(0.0,before-.35)*12); }
+        fovDirection=direction;
+        if(steps) fov=std::clamp(fov+float(direction*steps),40.f,90.f);
+    } else fovDirection=0;
     if(dirty && !directions && now-lastChange>=300) Commit();
     overlay.pose=panelPose; Publish();
+}
+void SeatPrepare(const std::array<XrView,2>& views) {
+    if(!channel) return;
+    if(TestMessageTyping()){SeatInactive();return;}
+    std::lock_guard lock(mutex);
+    Update(&views);
 }
 XrPosef SeatEyePose(XrPosef relative) { relative.position.x+=current.x; relative.position.y+=current.y; relative.position.z+=current.z; return relative; }
 XrPosef SeatHudPose(XrPosef pose,const XrPosef& reference) {
@@ -253,14 +324,38 @@ XrPosef SeatHudPose(XrPosef pose,const XrPosef& reference) {
     pose.position.z+=v.z+q.w*t.z+q.x*t.y-q.y*t.x;
     return pose;
 }
-XrFrames::Overlay* SeatOverlay() { return channel ? &overlay : nullptr; }
+XrFrames::Overlay* SeatOverlay() { return channel && !desktop ? &overlay : nullptr; }
+bool DesktopSeatRequested() {
+    char value[4]{};
+    return GetEnvironmentVariableA("DIRT2VR_DESKTOP_SEAT",value,sizeof(value))==1 && value[0]=='1';
+}
+void SeatDesktopFrame(IDXGISwapChain* swapchain) {
+    if(!channel || !desktop) return;
+    if(TestMessageTyping()){SeatInactive();return;}
+    {
+        std::lock_guard lock(mutex);
+        Update(nullptr);
+        ApplyDesktop();
+        if(!panel) return;
+    }
+    Microsoft::WRL::ComPtr<ID3D11Texture2D> back;
+    if(FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return;
+    Microsoft::WRL::ComPtr<ID3D11Device> device; back->GetDevice(&device);
+    D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
+    Microsoft::WRL::ComPtr<ID3D11RenderTargetView> target;
+    if(FAILED(device->CreateRenderTargetView(back.Get(),nullptr,&target))) return;
+    // Same 3:4 panel as in VR, at the left edge, 60% of the frame height.
+    const unsigned h=desc.Height*3/5,w=h*3/4;
+    try { panelImage.Draw(target.Get(),w,h,float(desc.Height/20),float((desc.Height-h)/2)); }
+    catch(const std::exception& e) { Log("desktop seat: panel draw failed: %s",e.what()); }
+}
 bool SeatInputReady() { return inputReady; }
 bool SeatBlocksKey(unsigned key) {
     if(!channel || key>255) return false;
     std::lock_guard lock(mutex);
     bool block=keysBlocked[key];
     if(eligible) for(unsigned k=0;k<7;++k) if(key && key==Read<unsigned>(128+k*8) && Modifiers()==Read<unsigned>(132+k*8)) block=keysBlocked[key]=true;
-    if(panel && (key==VK_SHIFT || key==VK_LSHIFT || key==VK_RSHIFT || key==VK_RETURN || key==VK_ESCAPE || (key>=VK_LEFT&&key<=VK_DOWN))) block=true;
+    if(panel && (key==VK_SHIFT || key==VK_LSHIFT || key==VK_RSHIFT || key==VK_RETURN || key==VK_ESCAPE || (key>=VK_LEFT&&key<=VK_DOWN) || (desktop && (key==VK_PRIOR || key==VK_NEXT)))) block=true;
     if(!Key(key)) keysBlocked[key]=false;
     return block;
 }

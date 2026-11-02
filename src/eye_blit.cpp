@@ -39,7 +39,7 @@ float4 alphaPs(V v):SV_Target {
        vr::graphics::Failed(device->CreateDepthStencilState(&depth,&depth_),device,"blit depth state")) return false;
     device_=device; return true;
 }
-bool EyeBlit::Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* target,unsigned width,unsigned height,bool alpha) {
+bool EyeBlit::Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* target,unsigned width,unsigned height,bool alpha,float x,float y) {
     if(!device_ || eye>=sources_.size() || !source || !target || !width || !height) return false;
     if(sources_[eye].Get()!=source) {
         ComPtr<ID3D11ShaderResourceView> view;
@@ -51,7 +51,7 @@ bool EyeBlit::Draw(unsigned eye,ID3D11Texture2D* source,ID3D11RenderTargetView* 
     context_->SwapDeviceContextState(state_.Get(),&previous);
     context_->OMSetRenderTargets(1,&target,nullptr); context_->OMSetDepthStencilState(depth_.Get(),0);
     context_->OMSetBlendState(nullptr,nullptr,0xffffffff);
-    D3D11_VIEWPORT viewport{0,0,static_cast<float>(width),static_cast<float>(height),0,1};
+    D3D11_VIEWPORT viewport{x,y,static_cast<float>(width),static_cast<float>(height),0,1};
     context_->RSSetViewports(1,&viewport); context_->RSSetState(raster_.Get());
     context_->IASetInputLayout(nullptr); context_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
     context_->VSSetShader(vs_.Get(),nullptr,0); context_->PSSetShader(alpha ? alphaPs_.Get() : ps_.Get(),nullptr,0);

@@ -85,6 +85,8 @@ Public Class SeatChannel
     Private ReadOnly context As InstallContext
     Private ReadOnly settings As VrSettings
     Private ReadOnly positions As SeatPositions
+    Private ReadOnly desktop As Boolean
+    Private savedFov As Integer
     Private ReadOnly cars As PracticeCar()
     Private ReadOnly blocked As New Dictionary(Of String, HashSet(Of Integer))
     Private selected As String
@@ -92,13 +94,17 @@ Public Class SeatChannel
     Private sequence As Integer
     Private generation As UInteger
     Private lastHints As String
-    Public Sub New(installation As InstallContext, preferences As VrSettings)
-        context = installation : settings = preferences : positions = SeatPositions.Load(context)
+    ' Desktop sessions use the desktop positions and also carry the desktop
+    ' field of view (offsets 204-215 were unused).
+    Public Sub New(installation As InstallContext, preferences As VrSettings, Optional desktopMode As Boolean = False)
+        context = installation : settings = preferences : desktop = desktopMode
+        positions = SeatPositions.Load(context, desktop) : savedFov = settings.DesktopCockpitFov
         cars = RaceCatalog.Current.Cars.Take(128).ToArray()
         mapping = MemoryMappedFile.CreateNew(Name, Size) : view = mapping.CreateViewAccessor()
         view.Write(0, &H54414553) : view.Write(4, 2) : view.Write(8, Size)
         view.Write(12, CUInt(Environment.TickCount64 And &HFFFFFFFFL)) : view.Write(88, -1) : view.Write(120, -1)
         view.Write(184, cars.Length)
+        view.Write(204, If(desktop, 1, 0)) : view.Write(208, savedFov) : view.Write(212, savedFov)
         view.Write(188, If(positions.UseUniversal, 1, 0))
         view.Write(192, positions.Universal.X) : view.Write(196, positions.Universal.Y) : view.Write(200, positions.Universal.Z)
         For i = 0 To 6
@@ -243,7 +249,15 @@ Public Class SeatChannel
         Dim nextGeneration = view.ReadUInt32(124), index = view.ReadInt32(120)
         Dim p As New SeatPosition With {.X = view.ReadSingle(108), .Y = view.ReadSingle(112), .Z = view.ReadSingle(116)}
         Thread.MemoryBarrier()
+        Dim fov = view.ReadInt32(212)
         If before <> view.ReadInt32(92) OrElse nextGeneration = generation Then Return
+        If desktop AndAlso fov <> savedFov AndAlso fov >= DesktopSeatTransaction.MinimumFov AndAlso fov <= DesktopSeatTransaction.MaximumFov Then
+            Dim latest = VrSettings.Load(context)
+            latest.DesktopCockpitFov = fov : Files.SaveJson(context.PreferencesPath, latest) : savedFov = fov
+        End If
+        If index = -3 Then
+            generation = nextGeneration : Return
+        End If
         If positions.UseUniversal Then
             If index <> -2 Then Return
             p.Validate() : positions.Universal = p
@@ -251,7 +265,7 @@ Public Class SeatChannel
             If index < 0 OrElse index >= cars.Length Then Return
             p.Validate() : positions.Cars(cars(index).Code) = p
         End If
-        positions.Save(context)
+        positions.Save(context, desktop)
         generation = nextGeneration
     End Sub
     Public Sub Dispose() Implements IDisposable.Dispose
