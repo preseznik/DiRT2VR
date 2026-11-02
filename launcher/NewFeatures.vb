@@ -5,10 +5,11 @@ Imports System.Windows.Forms
 ' beside them in Experimental builds. When publishing a release, set
 ' LastPublished to it so earlier marks disappear. Stable builds never show marks.
 Public Module NewFeatures
-    Public Const LastPublished As String = "0.18.0"
+    ' The last published release; tests may set it.
+    Public Property LastPublished As String = "0.18.4"
     ' Control name -> the published release it was added after.
     Private ReadOnly addedAfter As New Dictionary(Of String, String) From {
-        {"ExtendedGrass", "0.18.0"}, {"DesktopCockpitFov", "0.18.0"},{"VrPerformanceDisplay", "0.18.0"}, {"VrPaddockZoom", "0.18.0"}, {"DrivingTransmission", "0.18.0"},
+        {"ExtendedGrass", "0.18.0"}, {"DesktopCockpitFov", "0.18.0"}, {"VrPerformanceDisplay", "0.18.0"}, {"VrPaddockZoom", "0.18.0"}, {"DrivingTransmission", "0.18.0"},
         {"DrivingSavePreset", "0.18.0"}, {"DrivingLoadPreset", "0.18.0"}, {"DrivingWheelRotation", "0.18.0"}}
     ' The running build's channel; tests may set it.
     Public Property Channel As String = BuildInfo.Channel
