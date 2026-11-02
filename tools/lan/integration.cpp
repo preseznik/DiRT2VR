@@ -1,5 +1,6 @@
 #include "profile.h"
 #include "intro.h"
+#include "filecheck.h"
 #include "common.h"
 #include <fstream>
 #include <filesystem>
@@ -20,6 +21,8 @@ void DiRT2VRLanInitialize() {
         MessageBoxW(nullptr,L"The introduction bypass did not match the supported game. The game will close; disable Skip introduction in LAN settings to use normal onboarding.",L"DiRT2VR LAN test",MB_ICONERROR);
         ExitProcess(ERROR_INVALID_DATA);
     }
+    // The race-start file check judges game files only (ProJict 8ac0f636).
+    const bool fileCheck=InstallLanFileCheck(GetModuleHandleW(nullptr));
     // One overwritten readiness receipt, not a diagnostic log.
     std::filesystem::path receiptPath=std::filesystem::path(documents)/L"profile-ready.txt";
     if (sharedCareer) {
@@ -32,6 +35,7 @@ void DiRT2VRLanInitialize() {
     receipt << (sharedCareer ? "Normal career: system Documents lookup unchanged\n" : "Documents import redirected before game entry\n");
     if (GetEnvironmentVariableW(L"DIRT2VR_PROFILE_ROOT",nullptr,0)) receipt << "Managed career mount active\n";
     receipt << "Introduction bypass: " << (skipIntro ? "enabled" : "disabled") << '\n';
+    receipt << "File check: " << (fileCheck ? "game files only" : "unchanged (unsupported code)") << '\n';
     receipt.flush();
     if (!receipt) ExitProcess(ERROR_WRITE_FAULT);
     extern void DiRT2VRLanBrowserConfigure();
