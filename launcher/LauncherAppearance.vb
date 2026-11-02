@@ -77,6 +77,7 @@ Public Module LauncherAppearance
                     End If
                 End If
             End If
+            If TypeOf root Is SectionHeader AndAlso styled Then root.ForeColor = Accent
             If TypeOf root Is LinkLabel AndAlso SystemInformation.HighContrast Then DirectCast(root, LinkLabel).LinkColor = SystemColors.HotTrack
             If TypeOf root Is ModernTabs Then DirectCast(root, ModernTabs).UseModernStyle = styled
             If TypeOf root Is BindingRow Then DirectCast(root, BindingRow).UseModernStyle = Modern

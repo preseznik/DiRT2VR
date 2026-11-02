@@ -124,6 +124,7 @@ Public Class MainForm
     Private updateGeneration As Integer
     Public Sub New(value As InstallContext, Optional releaseCheck As Func(Of CancellationToken, Task(Of ReleaseUpdate)) = Nothing)
         context = value
+        SectionMemory.Load(context)
         input = New ControllerInput(context)
         checkForUpdate = If(releaseCheck, AddressOf CheckReleaseAsync)
         settings = VrSettings.Load(context)

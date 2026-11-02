@@ -11,7 +11,9 @@ Public Module LauncherLayout
     Public Function Section(parent As Control, title As String) As VerticalStack
         Dim panel = Stack()
         panel.Margin = New Padding(0, 0, 0, 14)
-        panel.Controls.Add(New Label With {.Text = title, .UseMnemonic = False, .AutoSize = True, .Font = New Font("Segoe UI", 11, FontStyle.Bold), .Margin = New Padding(0, 8, 0, 10)})
+        Dim header As New SectionHeader(title) With {.Font = New Font("Segoe UI", 11, FontStyle.Bold), .Margin = New Padding(0, 8, 0, 10), .Collapsed = SectionMemory.IsCollapsed(title)}
+        AddHandler header.CollapsedChanged, Sub() SectionMemory.Remember(title, header.Collapsed)
+        panel.Controls.Add(header)
         parent.Controls.Add(panel)
         Return panel
     End Function
@@ -62,14 +64,25 @@ End Module
 Public Class VerticalStack
     Inherits Panel
     Private arranging As Boolean
+    ' Rows hidden by a collapsed section header, and rows a setting leaves out.
+    Private ReadOnly collapsedHidden As New HashSet(Of Control)
+    Private ReadOnly excluded As New HashSet(Of Control)
     Protected Overrides Sub OnControlAdded(e As ControlEventArgs)
         e.Control.Dock = DockStyle.None
         AddHandler e.Control.SizeChanged, AddressOf ChildSizeChanged
         MyBase.OnControlAdded(e)
     End Sub
     Protected Overrides Sub OnControlRemoved(e As ControlEventArgs)
+        If collapsedHidden.Remove(e.Control) Then e.Control.Visible = True
+        excluded.Remove(e.Control)
         RemoveHandler e.Control.SizeChanged, AddressOf ChildSizeChanged
         MyBase.OnControlRemoved(e)
+    End Sub
+    ' Leaves a row out of the stack without a gap; including it shows it again.
+    Public Sub Exclude(child As Control, value As Boolean)
+        If value Then excluded.Add(child) Else excluded.Remove(child)
+        child.Visible = Not value AndAlso Not collapsedHidden.Contains(child)
+        PerformLayout()
     End Sub
     Private Sub ChildSizeChanged(sender As Object, e As EventArgs)
         PerformLayout()
@@ -80,7 +93,18 @@ Public Class VerticalStack
         arranging = True
         Try
             Dim y = Padding.Top
+            Dim collapsed = False
             For Each child As Control In Controls
+                If TypeOf child Is SectionHeader Then collapsed = DirectCast(child, SectionHeader).Collapsed
+                ' Hidden rows keep their size (only some types are re-measured below)
+                ' and take no space; a hidden control cannot keep tab focus.
+                If excluded.Contains(child) Then
+                    collapsedHidden.Remove(child) : Continue For
+                End If
+                If collapsed AndAlso TypeOf child IsNot SectionHeader Then
+                    collapsedHidden.Add(child) : child.Visible = False : Continue For
+                End If
+                If collapsedHidden.Remove(child) Then child.Visible = True
                 Dim width = Math.Max(1, ClientSize.Width - Padding.Horizontal - child.Margin.Horizontal)
                 Dim fixedWidth = TypeOf child Is Button OrElse TypeOf child Is LinkLabel
                 child.SetBounds(Padding.Left + child.Margin.Left, y + child.Margin.Top, If(fixedWidth, Math.Min(width, child.PreferredSize.Width), width), child.Height)
@@ -374,3 +398,64 @@ Public Class CollapsibleSection
         End Try
     End Sub
 End Class
+
+' Section title that collapses or expands the rows below it, as in GRID2VR.
+Public Class SectionHeader
+    Inherits Button
+    Private value As Boolean
+    Public ReadOnly Property Title As String
+    Public Event CollapsedChanged As EventHandler
+    Public Sub New(caption As String)
+        Title = caption : Name = "Section" & New String(caption.Where(AddressOf Char.IsLetterOrDigit).ToArray())
+        AutoSize = True : TextAlign = ContentAlignment.MiddleLeft : UseMnemonic = False : AccessibleName = caption
+        UpdateText()
+        AddHandler Click, Sub() Collapsed = Not Collapsed
+    End Sub
+    <System.ComponentModel.DesignerSerializationVisibility(System.ComponentModel.DesignerSerializationVisibility.Hidden)>
+    Public Property Collapsed As Boolean
+        Get
+            Return value
+        End Get
+        Set(collapse As Boolean)
+            If value = collapse Then Return
+            value = collapse : UpdateText()
+            Parent?.PerformLayout()
+            RaiseEvent CollapsedChanged(Me, EventArgs.Empty)
+        End Set
+    End Property
+    Private Sub UpdateText()
+        Text = If(value, "▸ ", "▾ ") & Title
+        AccessibleDescription = If(value, "Collapsed section; press to expand", "Expanded section; press to collapse")
+    End Sub
+End Class
+
+' Collapsed section titles, kept like the window size: saved at once, apart from settings.
+Public Module SectionMemory
+    Private ReadOnly collapsed As New HashSet(Of String)(StringComparer.Ordinal)
+    Private path As String
+    Public Sub Load(context As InstallContext)
+        path = IO.Path.Combine(context.UserRoot, "collapsed-sections.json")
+        collapsed.Clear()
+        Try
+            If File.Exists(path) Then
+                Dim titles = Files.ReadJson(Of String())(path)
+                If titles IsNot Nothing Then collapsed.UnionWith(titles.Where(Function(t) Not String.IsNullOrEmpty(t)).Take(200))
+            End If
+        Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is System.Text.Json.JsonException OrElse TypeOf ex Is UnauthorizedAccessException
+            ' A damaged preference must not prevent startup; every section opens.
+        End Try
+    End Sub
+    Public Function IsCollapsed(title As String) As Boolean
+        Return collapsed.Contains(title)
+    End Function
+    Public Sub Remember(title As String, value As Boolean)
+        If value Then collapsed.Add(title) Else collapsed.Remove(title)
+        If path Is Nothing Then Return
+        Try
+            Files.NoLinks(path)
+            Files.SaveJson(path, collapsed.OrderBy(Function(t) t, StringComparer.Ordinal).ToArray())
+        Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
+            ' Optional; a read-only profile keeps the state for this session only.
+        End Try
+    End Sub
+End Module

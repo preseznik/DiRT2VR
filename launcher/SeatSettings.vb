@@ -139,10 +139,10 @@ Partial Public Class MainForm
         desktopCockpitFov.Value = settings.DesktopCockpitFov
         Field(section, "Field of view (desktop)", desktopCockpitFov)
         Tip(desktopCockpitFov, "Vertical field of view of the desktop cockpit view, for every car. DiRT 2 uses 52°; raise it to see more of the cockpit, lower it to zoom in. VR uses your headset's own field of view. Not applied to LAN games. Save and relaunch to apply.")
-        desktopCockpitFov.Parent.Visible = False
+        section.Exclude(desktopCockpitFov.Parent, True)
         AddHandler seatMode.ValueChanged, Sub()
                                               activeSeat = seatTargets(If(seatMode.Desktop, 1, 0))
-                                              desktopCockpitFov.Parent.Visible = seatMode.Desktop
+                                              section.Exclude(desktopCockpitFov.Parent, Not seatMode.Desktop)
                                               loadingSeat = True : universalSeat.Checked = activeSeat.Positions.UseUniversal : loadingSeat = False
                                               LoadSeatSelection()
                                           End Sub
