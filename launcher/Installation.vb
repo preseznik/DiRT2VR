@@ -161,10 +161,13 @@ Public Module Worker
             Case "prepare-pikes"
                 Call (New PikesCollisionTransaction(context)).Prepare(trackId)
             Case "prepare-dof"
+                ' Loading settings validates the selected track, which may be an External layout.
+                CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
                 Call (New DepthOfFieldTransaction(context)).PrepareForCar(trackId, carCode, VrSettings.Load(context).TrackDepthOfField)
             Case "prepare-bloom"
                 Call (New BloomTransaction(context)).Prepare()
             Case "prepare-seat"
+                CustomTracks.TrackPacks.DiscoverExternal(context.GameRoot, BuildInfo.Version)
                 Call (New DesktopSeatTransaction(context)).Prepare()
             Case "prepare-filter"
                 FilterLaunch.Prepare(context, filterSnapshot)

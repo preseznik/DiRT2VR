@@ -97,7 +97,7 @@ public static class TrackPacks
         external = found.Where(p => p.Ready && p.Kind == "track").Select(p => p.TrackDefinition()).ToArray();
         External = found;
     }
-    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml", "dx11/shaderpack/shaderpack.pssg", "dx11/shaderpack/postprocess.pssg", "postprocess/effects.xml"];
+    public static readonly string[] SessionTargets = [..AspenPack.SharedTargets, "tracks/waterdefs.xml", "tracks/ornament_system_settings.xml", "tracks/tree_system_settings.xml", "dx11/shaderpack/shaderpack.pssg", "dx11/shaderpack/postprocess.pssg", "postprocess/effects.xml"];
     public static TrackPack Get(string id) => All.SingleOrDefault(p => p.Id == id) ?? throw new IOException("Unknown custom-track pack.");
     public static bool IsLayout(string? id) => All.Any(p => p.Layouts.Any(l => l.Id == id));
     public static TrackPack ForLayout(string id) => All.SingleOrDefault(p => p.IsLayout(id)) ?? throw new IOException("Unknown custom layout.");

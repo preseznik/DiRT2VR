@@ -59,8 +59,10 @@ Each `Session` entry pairs a game `Target` with a prepared `File` under `payload
 - `database/database.bin`, `surface_materials.xml`
 - `language/language_eng.lng`, `language/language_fre.lng`, `language/language_ger.lng`, `language/language_ita.lng`, `language/language_jpn.lng`, `language/language_pol.lng`, `language/language_rus.lng`, `language/language_spa.lng`, `language/language_use.lng`
 - `effects/pfx_kickup_data_set.xml`, `effects/pfx_pssg_dataset.xml`
-- `tracks/light_definitions.xml`, `tracks/waterdefs.xml`, `tracks/ornament_system_settings.xml`
+- `tracks/light_definitions.xml`, `tracks/waterdefs.xml`, `tracks/ornament_system_settings.xml`, `tracks/tree_system_settings.xml`
 - `dx11/shaderpack/shaderpack.pssg`, `dx11/shaderpack/postprocess.pssg`, `postprocess/effects.xml`
+
+The two `*_system_settings.xml` files hold the tree and trackside-object draw budgets by named style. A pack with more trees or objects than the stock styles allow can add its own style to a session copy and select it in its route's `route_overrides.xml`; the launcher restores the original file after the session.
 
 All other game destinations are blocked. Shared files are accepted only when their original hashes match. Existing files in an external track's destination are never overwritten. Two packs claiming the same folder are both blocked.
 
