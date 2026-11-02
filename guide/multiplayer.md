@@ -28,6 +28,8 @@ The browser lists PCs launched using **HOST** while their game is running. **HOS
 
 ## Problems
 
+**VR race disconnects at the countdown:** use the same **Advanced → Graphics** 3D options (3D beyond the cockpit, 3D chase replays, 3D menus) on both PCs, and keep **Skip startup logo movies** off on both. One reported VR disconnect happened right after the countdown while the host had these 3D options on and the client had them off. If it still happens, please send the logs described below.
+
 For a LAN disconnect report, enable **Settings → Enable diagnostic logging** on both PCs, save, and repeat the event. Quit both games, then use **Open logs** to collect `lan-network.log` and, if present, `lan-network.previous.log` from each PC's newest session folder. These contain network addresses and transport metadata, not packet payloads or save data. LAN traces are limited to 8 MiB per session; turn logging off after the test. Older session folders are kept until you remove them.
 
 After a crash or power failure, close any remaining game processes and choose **Restore original files** before ordinary play. The launcher also recovers interrupted sessions from the older LAN kits. Keep `DiRT2VR/lan-backups`; conflicting edits are preserved and reported. If Windows asks about network access, allow DiRT 2 on your Private/home network rather than disabling the firewall.

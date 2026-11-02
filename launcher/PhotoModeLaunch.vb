@@ -8,6 +8,10 @@ Public NotInheritable Class PhotoModeLaunch
     End Function
 
     Public Shared Function PreserveChase(context As InstallContext, settings As VrSettings, vr As Boolean, Optional savedReplay As Boolean = False) As Boolean
+        ' Every VR LAN peer prepares the same camera file, whatever its own view
+        ' options: a host keeping chase views dropped a client without them at the
+        ' race start, through the game's race-loading check path (ProJict 8ac0f636).
+        If settings.LaunchMode = "lan" Then Return False
         ' Photo Mode starts from the native external camera even when other VR views are disabled.
         Return settings.VrExtendedViews OrElse settings.VrReplayCameras OrElse Eligible(context, settings, vr, savedReplay)
     End Function

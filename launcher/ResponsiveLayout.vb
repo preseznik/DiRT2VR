@@ -106,6 +106,7 @@ Public Class SettingRow
     Inherits Panel
     Private ReadOnly caption As Label
     Private ReadOnly editor As Control
+    Private ReadOnly mark As NewMark
     Private arranging As Boolean
     Public Sub New(title As String, value As Control)
         Dock = DockStyle.Top : Margin = New Padding(0) : TabStop = False : AutoSize = True : AutoSizeMode = AutoSizeMode.GrowAndShrink
@@ -113,6 +114,7 @@ Public Class SettingRow
         editor = value : editor.Dock = DockStyle.None : editor.Margin = New Padding(0)
         If editor.AccessibleName Is Nothing Then editor.AccessibleName = title
         Controls.Add(caption) : Controls.Add(editor)
+        If NewFeatures.IsNew(value.Name) Then mark = New NewMark : Controls.Add(mark)
         ' Self-sizing editors such as the car picker can grow after this row's layout.
         AddHandler editor.SizeChanged, Sub() If Not arranging Then PerformLayout()
     End Sub
@@ -128,14 +130,21 @@ Public Class SettingRow
             Dim stacked = width < Px(Me, If(compact, 380, 590)) AndAlso Not TypeOf editor Is CheckBox
             Dim labelWidth = If(compact, Math.Min(Px(Me, 170), CInt(width * 0.4)), Math.Min(Px(Me, 215), width \ 2))
             Dim editorWidth = If(stacked, width, width - labelWidth - gap)
+            ' A "new" mark follows the caption text; long captions wrap before it.
+            Dim markWidth = If(mark Is Nothing, 0, mark.PreferredWidth + Px(Me, 4))
+            Dim captionWidth = Math.Max(1, If(stacked, width, labelWidth) - markWidth)
             Dim editorHeight = If(TypeOf editor Is ValueSlider, Px(Me, DirectCast(editor, ValueSlider).LogicalHeight), editor.GetPreferredSize(New Size(editorWidth, 0)).Height)
             editorHeight = Math.Max(Px(Me, 28), editorHeight)
-            Dim labelHeight = TextRenderer.MeasureText(caption.Text, Font, New Size(If(stacked, width, labelWidth), 0), TextFormatFlags.WordBreak Or TextFormatFlags.NoPrefix).Height
+            Dim labelHeight = TextRenderer.MeasureText(caption.Text, Font, New Size(captionWidth, 0), TextFormatFlags.WordBreak Or TextFormatFlags.NoPrefix).Height
             ' A width change can make a self-sizing editor settle at a new height; measure it once more.
             For attempt = 0 To 1
                 Dim rowHeight = If(stacked, labelHeight + editorHeight + gap, Math.Max(labelHeight, editorHeight))
                 Dim captionHeight = If(stacked, labelHeight, If(picker Is Nothing, rowHeight, Math.Min(rowHeight, Math.Max(labelHeight, picker.CaptionHeight))))
-                caption.SetBounds(0, padding, If(stacked, width, labelWidth), captionHeight)
+                caption.SetBounds(0, padding, captionWidth, captionHeight)
+                If mark IsNot Nothing Then
+                    Dim textWidth = Math.Min(captionWidth, TextRenderer.MeasureText(caption.Text, Font, New Size(Integer.MaxValue, 0), TextFormatFlags.NoPrefix).Width)
+                    mark.SetBounds(textWidth + Px(Me, 4), padding + (captionHeight - mark.PreferredHeight) \ 2, mark.PreferredWidth, mark.PreferredHeight)
+                End If
                 editor.SetBounds(If(stacked, 0, labelWidth + gap), padding + If(stacked, labelHeight + gap, (rowHeight - editorHeight) \ 2), editorWidth, editorHeight)
                 Height = rowHeight + padding * 2
                 If editor.Height = editorHeight Then Exit For
