@@ -1,7 +1,10 @@
 DiRT2VR 0.18.3 — Experimental
 
-LATEST CHANGES (since 0.18.1)
+LATEST CHANGES (since 0.18.0)
 
+- Extended grass distance: grass now fills its normal draw range on tracks with dense grass instead of stopping abruptly a short way from the camera. On by default under Advanced → Graphics → Extended grass distance; turn it off to return to the original grass budget if you notice stuttering or crashes.
+- Best times on every track: the launcher shows your best Direct practice time on stock, CUSTOM and External tracks, with its car and grade and the game's world record for your car's class where one exists.
+- Sharper 3D menus in VR: fixes the blurry, sideways-smeared view outside the RV with 3D menus.
 - Driving control presets: Controls → Driving → Configure driving controls… now has Save preset… and Load preset…, so you can switch between, for example, a wheel setup and a controller setup.
 - Wheel rotation: Configure driving controls… → Wheel rotation… matches DiRT 2's steering to how far you turn your wheel, for example 540° on a 1080° wheel.
 - Transmission choice (experimental): choose Automatic, Manual sequential, Manual H-pattern or Manual H-pattern + clutch for your car in every launcher mode, on desktop or in VR, without changing your career's saved setting.
@@ -12,7 +15,7 @@ LATEST CHANGES (since 0.18.1)
 - Player guides: the README is now a short front page, and the detailed instructions are installed as guides in DiRT2VR\guide.
 - Tidier launcher: the car Class filter has its own row, and a smaller launcher window no longer lets Vehicle setup… cover the grade buttons.
 
-After updating: no track rebuild is needed. Existing settings and best laps are kept. The FPS panel and paddock zoom start off, and Transmission starts at Use game setting.
+After updating: no track rebuild is needed. Existing settings and best laps are kept. Extended grass distance is on; the FPS panel and paddock zoom start off, and Transmission starts at Use game setting.
 
 The new driving options have not yet been driven with a physical wheel, and the FPS panel and paddock zoom have not yet been checked in a headset. Until the VR LAN change is confirmed, use the same Advanced → Graphics 3D options on both PCs. Please report any problems.
 
@@ -20,12 +23,6 @@ The new driving options have not yet been driven with a physical wheel, and the 
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
-
-0.18.1 — Experimental (changes since 0.18.0)
-
-- Extended grass distance: grass now fills its normal draw range on tracks with dense grass instead of stopping abruptly a short way from the camera.
-- Best times on every track: the launcher shows your best Direct practice time on stock, CUSTOM and External tracks.
-- Sharper 3D menus in VR: fixes the blurry, sideways-smeared view outside the RV with 3D menus.
 
 0.18.0 — Stable (promotion of 0.17.158)
 
