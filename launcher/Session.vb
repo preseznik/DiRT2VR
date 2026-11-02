@@ -482,7 +482,7 @@ Public Class Session
                 Progress("Adjusting road sheen…")
                 Worker.Invoke(context, "prepare-road-sheen", trackId:=settings.TrackId, roadSheen:=If(vr, settings.VrRoadSheen, settings.DesktopRoadSheen))
             End If
-            If settings.ExperimentalLaa Then
+            If settings.ExperimentalLaa AndAlso Not lan Then
                 Progress("Applying compatibility settings…")
                 Worker.Invoke(context, "prepare-laa")
             End If

@@ -28,7 +28,7 @@ The browser lists PCs launched using **HOST** while their game is running. **HOS
 
 ## Problems
 
-**VR race disconnects at the countdown:** the race start checks game files, so LAN sessions leave them unchanged: VR switches off motion blur and head camera shake in memory instead of editing camera and effect files, and graphics filters and **Bloom** off are not applied in LAN. Keep **Skip startup logo movies** off on both PCs. A reported VR disconnect right after the countdown is the reason for this; it has not yet been confirmed fixed, so if it still happens, please send the logs described below.
+**VR race disconnects at the countdown:** the race start checks game files, so LAN sessions leave them unchanged: VR switches off motion blur and head camera shake in memory instead of editing camera and effect files, and graphics filters, **Bloom** off and the experimental Large Address Aware patch are not applied in LAN. Keep **Skip startup logo movies** off on both PCs. A reported VR disconnect right after the countdown is the reason for this; it has not yet been confirmed fixed, so if it still happens, please send the logs described below.
 
 For a LAN disconnect report, enable **Settings → Enable diagnostic logging** on both PCs, save, and repeat the event. Quit both games, then use **Open logs** to collect `lan-network.log` and, if present, `lan-network.previous.log` from each PC's newest session folder. These contain network addresses and transport metadata, not packet payloads or save data. LAN traces are limited to 8 MiB per session; turn logging off after the test. Older session folders are kept until you remove them.
 
