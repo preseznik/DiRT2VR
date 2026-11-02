@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.6 — 2026-11-03 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.6)
+
 - **Fixed LAN disconnects at the race start:** a player using DiRT2VR features (always in VR; on desktop with features such as steering corrections, chase free look, extended grass, anisotropic filtering or launcher driving controls) was dropped with "You lost your connection to the session" right as the race began. DiRT 2 checks at each LAN race start that its program code is unchanged, and DiRT2VR's features change it in memory. The LAN support now judges only the game files at that check; a player whose car, track or core data files differ is still refused. Confirmed in a desktop race between two PCs with features on; VR LAN is not yet checked.
 - **VR LAN camera shake and motion blur:** on PCs where Windows loads the game at a different address, VR LAN skipped its in-memory removal of camera shake and motion blur ("unexpected code at RVA 66ad20" in the log). It now applies there too. This does not fix the reported VR LAN disconnect at the race start, which is still being investigated.
 - **Fixed Transmission having no effect:** in 0.18.4 and 0.18.5, choosing Automatic, Manual sequential, Manual H-pattern or Manual H-pattern + clutch under **Configure driving controls** was saved but never reached the game, so your career's saved transmission stayed in use. The choice now applies at launch. Not yet checked in the game.
@@ -13,6 +17,10 @@ Version headings identify distribution builds; published packages include a GitH
 - **Live input highlights bindings:** in **Configure driving controls**, pressing a button, the D-pad or moving an axis on the device shown under **Live device input** lights up the bound action's row in the launcher's accent colour.
 - **0% dead zone for new wheel and pedal bindings:** newly bound wheel, pedal and Xbox trigger axes start at 0% instead of 3%; Xbox thumbsticks keep 20% so a resting stick doesn't drift. Existing assignments keep their saved values.
 - **Next event in Direct practice and Race (experimental):** the pause and finish menus have a new **Next event** row. It opens a panel, over the menu on desktop and in front of you in VR, where you choose Practice or Race, discipline, track, car, opponents and laps with the arrow keys or D-pad. **Start event** closes the game and starts that event directly instead of reopening the game menus; **Cancel**, **Esc** or **B** goes back to the menu. It offers the stock tracks and cars the launcher lists; car grade, opponent cars, difficulty and race start keep the launcher's choices, and a staggered start becomes Automatic on tracks that can't stagger. The launcher's own selection is unchanged. Not yet checked in the game or headset.
+
+**After updating:** no track rebuild is needed. Existing settings and best laps are kept.
+
+Please report any problems.
 
 ## 0.18.5 — 2026-11-02 — Experimental
 

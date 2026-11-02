@@ -1,21 +1,28 @@
-DiRT2VR 0.18.5 — Experimental
+DiRT2VR 0.18.6 — Experimental
 
-LATEST CHANGES (since 0.18.4)
+LATEST CHANGES (since 0.18.5)
 
-- Separate VR and desktop seats: Graphics → Cockpit seat has a Positions for: VR / Desktop switch, so a VR seat no longer moves the desktop cockpit view. Seats you saved before stay with VR; desktop starts at the game's position.
-- In-game desktop seat panel (experimental): in desktop Direct practice and Race, press Tab in the cockpit view (or bind Open seat adjustment under Controls → Seat for a controller). Arrows or the D-pad move the seat, Shift or X moves sideways, Page Up/Page Down or RB/LB change the view angle, Enter or A saves. While the panel is open its keys no longer move the car; this also fixes the VR seat panel.
-- Collapsible sections: click a section title in the launcher to collapse or expand it; the launcher remembers your choice.
-- VR LAN (experimental): LAN no longer changes game files. VR removes motion blur and camera shake in memory instead, and graphics filters, Bloom off and Experimental LAA are not applied in LAN. This aims to fix the VR disconnect at the race countdown.
-- External tracks: fixes desktop Direct practice and Race on External tracks when a desktop seat or view angle is set (a 0.18.4 problem), and External packs can now set their own tree budgets. The next Salto Colorado pack needs 0.18.5.
+- LAN races no longer drop at the start: a player using DiRT2VR features (always in VR) was disconnected with "You lost your connection to the session" right as the race began, because DiRT 2 checks at each LAN race start that its program code is unchanged. LAN now checks only the game files, so a player whose car, track or core data files differ is still refused. Confirmed in a desktop race between two PCs; VR LAN still needs a test.
+- Transmission now works: in 0.18.4 and 0.18.5 the Transmission choice under Configure driving controls was saved but never reached the game.
+- Next event (experimental): the Direct practice and Race pause and finish menus have a Next event row. Choose Practice or Race, discipline, track, car, opponents and laps in an in-game panel; Start event restarts the game straight into that event, Cancel returns to the menu.
+- Wheel D-pads can be bound: the binding wizard and Bind device now detect a wheel's D-pad, for example on a Logitech G920, so Menu Up/Down/Left/Right can use it.
+- Live input highlight: in Configure driving controls, pressing an input on the device shown under Live device input lights up the bound action in the accent colour.
+- New wheel, pedal and Xbox trigger bindings start at 0% dead zone; Xbox thumbsticks keep 20%. Existing bindings keep their values.
+- VR LAN removal of camera shake and motion blur now also works when Windows loads the game at a different address.
 
 After updating: no track rebuild is needed. Existing settings and best laps are kept.
 
-Still to check: the desktop seat panel with a controller, and a VR LAN race on two PCs. Please report any problems.
+Still to check: a VR LAN race on two PCs, Next event in the game, the transmission choices in a race and wheel D-pad binding on a real wheel. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.5 — Experimental (changes since 0.18.4)
+
+- Separate VR and desktop seat positions, an in-game desktop seat panel and collapsible launcher sections.
+- VR LAN keeps game files unchanged; External packs can set their own tree budgets.
 
 0.18.4 — Experimental (changes since 0.18.0)
 
