@@ -6,13 +6,11 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-- **Desktop seat position and field of view (experimental):** the seat positions under **Graphics → Cockpit seat** (formerly VR cockpit), per car or universal, now also move the desktop cockpit view. The new **Field of view (desktop)** slider sets that view's vertical angle for every car, from 40° to 90°; DiRT 2 uses 52°. The launcher writes both into each car's cockpit camera for the session and restores the original files when the game closes. VR keeps its own seat handling and headset field of view. LAN games are left unchanged, because every PC needs identical camera files. Launcher checks pass; the desktop seat and field of view have not yet been checked in the game.
+## 0.18.4 — 2026-11-02 — Experimental
 
-## 0.18.3 — 2026-11-02 — Experimental
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.4)
 
-[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.3)
-
-Also covers the 0.18.1 and 0.18.2 packages, which were not published.
+Also covers the 0.18.1, 0.18.2 and 0.18.3 packages, which were not published.
 
 - **Extended grass distance:** grass no longer stops abruptly a short way from the camera on tracks with dense grass. The grass budget rises from 10,000 to 131,072 clumps on desktop and from 50,000 to 262,144 in VR, so grass fills its normal draw range and fades out there. **Advanced → Graphics → Extended grass distance** is on by default; turn it off to return to the original grass budget if you notice stuttering or crashes. Desktop frame times stayed within about 0.2 ms in tests on Ladang Long and a custom track; one VR headset session on Ladang Long and a custom track ran, with slight hitching noted on Ladang Long.
 - **Best times on every track:** shows your best Direct practice time on every track, not only Nordschleife: stock DiRT 2 routes, converted CUSTOM tracks and External tracks. Every completed practice lap counts; point-to-point routes record the full run. The launcher shows the time with its car and grade, plus the game's world record for your car's class. Converted CUSTOM tracks have no world records, so none is shown; External packs can include their own. Existing Nordschleife best laps are kept, and older launchers can still read them. The in-race HUD does not show the world record during practice.
@@ -26,8 +24,9 @@ Also covers the 0.18.1 and 0.18.2 packages, which were not published.
 - **Paddock zoom in VR (experimental):** with 3D menus on, **Advanced → Graphics → Paddock zoom (wheel or stick)** lets you scroll the mouse wheel forward, or push the Xbox right stick up, in the paddock outside the RV to move your view up to 3 m closer to your car, along the game's own camera; scroll back or pull the stick down to return. It resets when the game cuts to another shot. It starts off and only moves the headset view; the game's camera and menus are unchanged. Launcher and native checks pass; it has not yet been checked in a headset.
 - **"new" marks (Experimental builds):** settings added since the last published release (0.18.0) show a small green **new** beside them: Extended grass distance, FPS + GPU usage and Paddock zoom under Advanced, and Transmission, Wheel rotation…, Save preset… and Load preset… in Configure driving controls. They disappear once a newer release is published. Stable builds never show them.
 - **VR LAN:** every PC now prepares the same game camera file for a VR LAN session, whatever its own **3D beyond the cockpit** and **3D chase replays** choices. In a reported VR LAN disconnect at the race countdown, the host had those options on and the client had them off, and the host's game ended the session at the start. Whether this resolves the disconnect still needs a two-PC VR retest; until then, use the same **Advanced → Graphics** 3D options on both PCs.
+- **Desktop seat position and field of view (experimental):** the seat positions under **Graphics → Cockpit seat** (formerly VR cockpit), per car or universal, now also move the desktop cockpit view. The new **Field of view (desktop)** slider sets that view's vertical angle for every car, from 40° to 90°; DiRT 2 uses 52°. The launcher writes both into each car's cockpit camera for the session and restores the original files when the game closes. VR keeps its own seat handling and headset field of view. LAN games are left unchanged, because every PC needs identical camera files. Launcher checks pass; the desktop seat and field of view have not yet been checked in the game.
 
-**After updating:** no track rebuild is needed. Existing settings and best laps are kept. Extended grass distance is on; the FPS panel and paddock zoom start off, and **Transmission** starts at **Use game setting**.
+**After updating:** no track rebuild is needed. Existing settings and best laps are kept. Extended grass distance is on; the FPS panel and paddock zoom start off, the desktop field of view starts at 52°, and **Transmission** starts at **Use game setting**.
 
 Please report any problems.
 
