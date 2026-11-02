@@ -1,4 +1,4 @@
-DiRT2VR 0.18.3 — Experimental
+DiRT2VR 0.18.4 — Experimental
 
 LATEST CHANGES (since 0.18.0)
 
@@ -11,13 +11,14 @@ LATEST CHANGES (since 0.18.0)
 - FPS + GPU usage in VR (experimental): Advanced → Graphics → FPS + GPU usage (VR) shows a small frame rate and GPU usage panel below your view in the headset.
 - Paddock zoom in VR (experimental): with 3D menus on, Advanced → Graphics → Paddock zoom (wheel or stick) lets you scroll the mouse wheel forward or push the Xbox right stick up to move your view up to 3 m closer to your car outside the RV.
 - VR LAN: every PC now prepares the same camera file. This may fix a disconnect at the race countdown when the two PCs used different 3D options.
+- Desktop seat and field of view (experimental): Graphics → Cockpit seat now also moves the desktop cockpit view, per car or for all cars, and Field of view (desktop) sets the cockpit view angle from 40° to 90° (DiRT 2 uses 52°). VR and LAN games are unchanged.
 - "new" marks: in Experimental builds, settings added since the last published release show a small green "new".
 - Player guides: the README is now a short front page, and the detailed instructions are installed as guides in DiRT2VR\guide.
 - Tidier launcher: the car Class filter has its own row, and a smaller launcher window no longer lets Vehicle setup… cover the grade buttons.
 
-After updating: no track rebuild is needed. Existing settings and best laps are kept. Extended grass distance is on; the FPS panel and paddock zoom start off, and Transmission starts at Use game setting.
+After updating: no track rebuild is needed. Existing settings and best laps are kept. Extended grass distance is on; the FPS panel and paddock zoom start off, the desktop field of view starts at 52°, and Transmission starts at Use game setting.
 
-The new driving options have not yet been driven with a physical wheel, and the FPS panel and paddock zoom have not yet been checked in a headset. Until the VR LAN change is confirmed, use the same Advanced → Graphics 3D options on both PCs. Please report any problems.
+The new driving options have not yet been driven with a physical wheel, the FPS panel and paddock zoom have not yet been checked in a headset, and the desktop seat and field of view have not yet been checked in the game. Until the VR LAN change is confirmed, use the same Advanced → Graphics 3D options on both PCs. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
