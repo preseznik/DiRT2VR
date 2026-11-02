@@ -13,6 +13,8 @@ Public Class DrivingInputMonitor
     Private input As DrivingInput
     Private suspended As Boolean
     Private selectedId As String
+    ' Each poll's device and sample, so the bindings list can highlight pressed inputs (ProJict b7bcb77b).
+    Public Event SampleRead(device As DrivingInput.Device, sample As DrivingInput.Sample)
     Public Sub New(value As InstallContext)
         context = value
         AutoSize = True : Dock = DockStyle.Top : Padding = New Padding(0, 8, 0, 8)
@@ -45,6 +47,7 @@ Public Class DrivingInputMonitor
         suspended = True : polling.Stop()
         selectedId = TryCast(devices.SelectedItem, DrivingInput.Device)?.Id
         input?.Dispose() : input = Nothing
+        RaiseEvent SampleRead(Nothing, Nothing)
     End Sub
     Public Sub ResumeMonitoring()
         If IsDisposed Then Return
@@ -74,10 +77,13 @@ Public Class DrivingInputMonitor
         If suspended OrElse input Is Nothing OrElse Not Visible Then Return
         Dim device = TryCast(devices.SelectedItem, DrivingInput.Device)
         Try
-            ShowSample(device, If(device Is Nothing, Nothing, input.Read(device)))
+            Dim sample = If(device Is Nothing, Nothing, input.Read(device))
+            ShowSample(device, sample)
+            RaiseEvent SampleRead(device, sample)
         Catch ex As Exception
             polling.Stop() : input?.Dispose() : input = Nothing
             ShowSample(device, Nothing)
+            RaiseEvent SampleRead(Nothing, Nothing)
             stateLabel.Text = "Unable to read device. Reconnect it and choose Refresh."
         End Try
     End Sub

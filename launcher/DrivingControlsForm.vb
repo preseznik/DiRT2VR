@@ -13,6 +13,7 @@ Public Class DrivingControlsForm
     Private ReadOnly transmissionBox As New ComboBox With {.Name = "DrivingTransmission", .AccessibleName = "Transmission", .DropDownStyle = ComboBoxStyle.DropDownList, .Width = 240}
     Private ReadOnly list As New ListView With {.Name = "DrivingBindings", .View = View.Details, .FullRowSelect = True, .MultiSelect = False, .HideSelection = False, .ShowItemToolTips = True, .Dock = DockStyle.Fill}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(820, 0)}
+    Private ReadOnly highlighted As New HashSet(Of String)
     Public Sub New(value As InstallContext, Optional replay As Boolean = False)
         context = value : replayMode = replay
         settings = If(replay, DirectCast(ReplayControls.Load(context), DrivingControls), DrivingControls.Load(context))
@@ -48,6 +49,7 @@ Public Class DrivingControlsForm
         AddHandler list.Resize, Sub() list.Columns(2).Width = Math.Max(190, list.ClientSize.Width - 125 - 100 - 110 - 110 - 24)
         list.AccessibleName = "Driving bindings" : layout.Controls.Add(list)
         layout.Controls.Add(liveInput)
+        AddHandler liveInput.SampleRead, AddressOf HighlightPressed
         Dim buttons As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill}
         If Not replay Then AddButton(buttons, "Binding wizard…", Sub() BindActions())
         AddButton(buttons, If(replay, "Restore replay defaults", "Xbox preset"), Sub()
@@ -110,7 +112,19 @@ Public Class DrivingControlsForm
     Private Function SelectedAction() As String
         Return If(list.SelectedItems.Count = 1, list.SelectedItems(0).Text, Nothing)
     End Function
+    ' Rows whose controller input is pressed on the live device use the accent colour (ProJict b7bcb77b).
+    Friend Sub HighlightPressed(device As DrivingInput.Device, sample As DrivingInput.Sample)
+        Dim back = If(SystemInformation.HighContrast, SystemColors.Highlight, LauncherAppearance.Accent)
+        Dim fore = If(SystemInformation.HighContrast, SystemColors.HighlightText, If(LauncherAppearance.Dark, LauncherAppearance.Surface, Color.White))
+        For Each row As ListViewItem In list.Items
+            Dim pressed = settings.Bindings.Any(Function(b) b.Action = row.Text AndAlso DrivingInput.IsPressed(b, device, sample))
+            If pressed = highlighted.Contains(row.Text) Then Continue For
+            If pressed Then highlighted.Add(row.Text) Else highlighted.Remove(row.Text)
+            row.BackColor = If(pressed, back, list.BackColor) : row.ForeColor = If(pressed, fore, list.ForeColor)
+        Next
+    End Sub
     Private Sub RefreshRows(Optional selected As String = Nothing)
+        highlighted.Clear()
         list.BeginUpdate() : list.Items.Clear()
         For Each action In actions
             Dim bindings = settings.Bindings.Where(Function(b) b.Action = action).ToArray()

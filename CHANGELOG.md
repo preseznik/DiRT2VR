@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Wheel D-pads can be bound:** the binding wizard and **Bind device…** now detect a wheel's D-pad (POV hat), for example on a Logitech G920, so **Menu Up/Down/Left/Right** and other button actions can use it. Press straight up, down, left or right. Not yet checked on a real wheel.
+- **Live input highlights bindings:** in **Configure driving controls**, pressing a button, the D-pad or moving an axis on the device shown under **Live device input** lights up the bound action's row in the launcher's accent colour.
+- **0% dead zone for new wheel and pedal bindings:** newly bound wheel, pedal and Xbox trigger axes start at 0% instead of 3%; Xbox thumbsticks keep 20% so a resting stick doesn't drift. Existing assignments keep their saved values.
 - **Next event in Direct practice and Race (experimental):** the pause and finish menus have a new **Next event** row. It opens a panel, over the menu on desktop and in front of you in VR, where you choose Practice or Race, discipline, track, car, opponents and laps with the arrow keys or D-pad. **Start event** closes the game and starts that event directly instead of reopening the game menus; **Cancel**, **Esc** or **B** goes back to the menu. It offers the stock tracks and cars the launcher lists; car grade, opponent cars, difficulty and race start keep the launcher's choices, and a staggered start becomes Automatic on tracks that can't stagger. The launcher's own selection is unchanged. Not yet checked in the game or headset.
 
 ## 0.18.5 — 2026-11-02 — Experimental

@@ -61,6 +61,53 @@ Public Class DrivingInput
         reader(handle, device.Index, state)
         Return state
     End Function
+    Private Shared ReadOnly XboxButtons As String() = {"DPadUp", "DPadDown", "DPadLeft", "DPadRight", "Start", "Back", "LeftStick", "RightStick", "LeftShoulder", "RightShoulder", "", "", "A", "B", "X", "Y"}
+    Private Shared ReadOnly XboxAxes As String() = {"analogLeftStickX", "analogLeftStickY", "analogRightStickX", "analogRightStickY", "buttonLeftTrigger", "buttonRightTrigger"}
+    Private Shared ReadOnly DirectAxes As String() = {"X", "Y", "Z", "Rx", "Ry", "Rz", "Slider0", "Slider1"}
+    ' Wheel D-pads are POV hats; the game's own wheel maps name them DPad0 axes (ProJict 8634717e).
+    Private Shared ReadOnly DPadDirections As String() = {"up", "right", "down", "left"}
+    Public Const DPadInput As String = "win_con_di_axisDPad0"
+    Public Shared Function PovCentered(value As UInteger) As Boolean
+        Return (value And &HFFFFUI) = &HFFFFUI OrElse value >= 36000UI
+    End Function
+    ' A D-pad press to bind: within 30° of up, right, down or left, never a diagonal; -1 otherwise.
+    Public Shared Function PovDirection(value As UInteger) As Integer
+        If PovCentered(value) Then Return -1
+        Dim nearest = Math.Round(value / 9000.0)
+        Return If(Math.Abs(value - nearest * 9000) <= 3000, CInt(nearest) Mod 4, -1)
+    End Function
+    ' Whether the hat points into a direction's quarter, diagonals included, as the game reads it.
+    Public Shared Function DPadPressed(direction As String, pov As UInteger) As Boolean
+        Dim index = Array.IndexOf(DPadDirections, direction)
+        If index < 0 OrElse PovCentered(pov) Then Return False
+        Dim offset = (CLng(pov) - index * 9000L + 36000L) Mod 36000L
+        Return offset <= 4500L OrElse offset >= 31500L
+    End Function
+    ' Whether a controller binding's button, D-pad direction or axis is pressed in this sample (ProJict b7bcb77b).
+    Public Shared Function IsPressed(binding As DrivingBinding, device As Device, sample As Sample) As Boolean
+        If binding Is Nothing OrElse binding.Keyboard OrElse device Is Nothing OrElse binding.DeviceId <> device.Id OrElse sample.Connected = 0 Then Return False
+        Dim xbox = device.Name = "win_xinput", prefix = If(xbox, "win_con_xi_", "win_con_di_")
+        If Not binding.Input.StartsWith(prefix, StringComparison.Ordinal) Then Return False
+        Dim control = binding.Input.Substring(prefix.Length)
+        If Not xbox AndAlso binding.Input.StartsWith(DPadInput, StringComparison.Ordinal) Then
+            Return sample.Pov IsNot Nothing AndAlso sample.Pov.Length > 0 AndAlso DPadPressed(binding.Input.Substring(DPadInput.Length), sample.Pov(0))
+        End If
+        Dim button = -1
+        If xbox AndAlso control.StartsWith("button", StringComparison.Ordinal) Then button = Array.IndexOf(XboxButtons, control.Substring(6))
+        If Not xbox AndAlso control.StartsWith("button", StringComparison.Ordinal) AndAlso Not Integer.TryParse(control.Substring(6), Globalization.NumberStyles.None, Globalization.CultureInfo.InvariantCulture, button) Then button = -1
+        If button >= 0 Then Return sample.Buttons IsNot Nothing AndAlso button < sample.Buttons.Length AndAlso sample.Buttons(button) <> 0
+        Dim axis = If(xbox, Array.IndexOf(XboxAxes, control), If(control.StartsWith("axis", StringComparison.Ordinal), Array.IndexOf(DirectAxes, control.Substring(4)), -1))
+        If axis < 0 OrElse (sample.Axes And (1UI << axis)) = 0 OrElse sample.Values Is Nothing OrElse axis >= sample.Values.Length Then Return False
+        Dim value = sample.Values(axis)
+        ' DiRT's stick Y is down-positive; XInput's is up-positive.
+        If xbox AndAlso (axis = 1 OrElse axis = 3) Then value = -value
+        Select Case binding.Calibration
+            Case "biDirectionalLower" : Return value < -0.5F
+            Case "biDirectionalUpper" : Return value > 0.5F
+            Case "uniDirectionalNegative" : Return value < -0.25F
+            Case Else : Return value > If(xbox, 0.5F, 0.25F)
+        End Select
+    End Function
     Public Shared Function Detect(action As String, device As Device, baseline As Sample, current As Sample, Optional axesOnly As Boolean = False, Optional buttonsOnly As Boolean = False) As DrivingBinding
         If baseline.Connected = 0 OrElse current.Connected = 0 Then Return Nothing
         Dim binding As New DrivingBinding With {.Action = action, .DeviceId = device.Id, .Device = device.Name}
@@ -73,14 +120,20 @@ Public Class DrivingInput
         For i = 0 To current.Buttons.Length - 1
             If current.Buttons(i) = 0 OrElse baseline.Buttons(i) <> 0 Then Continue For
             If device.Name = "win_xinput" Then
-                Dim names = {"DPadUp", "DPadDown", "DPadLeft", "DPadRight", "Start", "Back", "LeftStick", "RightStick", "LeftShoulder", "RightShoulder", "", "", "A", "B", "X", "Y"}
-                If i >= names.Length OrElse names(i) = "" Then Continue For
-                binding.Input = "win_con_xi_button" & names(i)
+                If i >= XboxButtons.Length OrElse XboxButtons(i) = "" Then Continue For
+                binding.Input = "win_con_xi_button" & XboxButtons(i)
             Else
                 binding.Input = "win_con_di_button" & i.ToString()
             End If
             Return binding
         Next
+        If device.Name <> "win_xinput" AndAlso current.Pov IsNot Nothing AndAlso baseline.Pov IsNot Nothing AndAlso current.Pov.Length > 0 AndAlso baseline.Pov.Length > 0 Then
+            Dim direction = PovDirection(current.Pov(0))
+            If direction >= 0 AndAlso PovCentered(baseline.Pov(0)) Then
+                binding.Input = DPadInput & DPadDirections(direction)
+                Return binding
+            End If
+        End If
         Return Nothing
     End Function
     Private Shared Function DetectAxis(action As String, device As Device, baseline As Sample, current As Sample) As DrivingBinding
@@ -106,9 +159,8 @@ Public Class DrivingInput
         End If
         Dim centered = action.StartsWith("Steer ", StringComparison.Ordinal) OrElse Math.Abs(baseline.Values(best)) < 0.35F
         If device.Name = "win_xinput" Then
-            Dim names = {"analogLeftStickX", "analogLeftStickY", "analogRightStickX", "analogRightStickY", "buttonLeftTrigger", "buttonRightTrigger"}
-            If best >= names.Length Then Return Nothing
-            binding.Input = "win_con_xi_" & names(best)
+            If best >= XboxAxes.Length Then Return Nothing
+            binding.Input = "win_con_xi_" & XboxAxes(best)
             ' XInput has a known zero, unlike wheel/pedal axes. Never bind trigger release as inverted.
             If best >= 4 Then
                 If current.Values(best) < 0.4F OrElse baseline.Values(best) > 0.15F Then Return Nothing
@@ -121,10 +173,12 @@ Public Class DrivingInput
                 centered = True
             End If
         Else
-            binding.Input = "win_con_di_axis" & {"X", "Y", "Z", "Rx", "Ry", "Rz", "Slider0", "Slider1"}(best)
+            binding.Input = "win_con_di_axis" & DirectAxes(best)
         End If
         binding.Calibration = If(centered, If(negative, "biDirectionalLower", "biDirectionalUpper"), If(negative, "uniDirectionalNegative", "uniDirectionalPositive"))
-        binding.DeadZone = If(device.Name = "win_xinput" AndAlso best < 4, 0.2D, 0.03D)
+        ' Wheels, pedals and Xbox triggers start without a dead zone (ProJict b7dd76c8);
+        ' Xbox thumbsticks keep 20% because a resting stick drifts.
+        binding.DeadZone = If(device.Name = "win_xinput" AndAlso best < 4, 0.2D, 0D)
         Return binding
     End Function
     Public Shared Function Description(binding As DrivingBinding) As String
@@ -132,6 +186,7 @@ Public Class DrivingInput
         If binding.Keyboard Then Return binding.Input.Replace("win_key_", "").ToUpperInvariant()
         Dim control = binding.Input.Replace("win_con_xi_", "").Replace("win_con_di_", "")
         control = control.Replace("analogLeftStick", "Left stick ").Replace("analogRightStick", "Right stick ").Replace("button", "Button ").Replace("axis", "Axis ")
+        If binding.Input.StartsWith(DPadInput, StringComparison.Ordinal) Then control = "D-pad " & binding.Input.Substring(DPadInput.Length)
         Dim direction = If(binding.Calibration = "biDirectionalLower", " (−)", If(binding.Calibration = "biDirectionalUpper", " (+)", If(binding.Calibration = "uniDirectionalNegative", " (inverted)", "")))
         Return If(binding.Device = "win_xinput", "Xbox", binding.Device) & " · " & control & direction
     End Function

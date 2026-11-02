@@ -58,7 +58,9 @@ Public Class DrivingCapture
             If now - axisSince(i) >= 600 Then baseline.Axes = baseline.Axes Or bit
         Next
         If Not buttonsReady AndAlso Not AxesOnly Then
-            If Not current.Buttons.SequenceEqual(baseline.Buttons) Then baseline.Buttons = CType(current.Buttons.Clone(), Byte()) : buttonsSince = now
+            If Not current.Buttons.SequenceEqual(baseline.Buttons) OrElse Not current.Pov.SequenceEqual(baseline.Pov) Then
+                baseline.Buttons = CType(current.Buttons.Clone(), Byte()) : baseline.Pov = CType(current.Pov.Clone(), UInteger()) : buttonsSince = now
+            End If
             buttonsReady = now - buttonsSince >= 600
         End If
         Ready = (Not ButtonsOnly AndAlso baseline.Axes <> 0) OrElse buttonsReady
@@ -67,13 +69,15 @@ Public Class DrivingCapture
         For i = 0 To baseline.Buttons.Length - 1
             If current.Buttons(i) = 0 Then baseline.Buttons(i) = 0
         Next
+        If DrivingInput.PovCentered(current.Pov(0)) Then baseline.Pov(0) = UInteger.MaxValue
         If Not WaitingForRelease Then
             Dim detected = DrivingInput.Detect(action, device, baseline, current, AxesOnly OrElse Not buttonsReady, ButtonsOnly)
             If detected Is Nothing Then candidate = Nothing : Return
             If candidate Is Nothing OrElse candidate.Input <> detected.Input OrElse candidate.Calibration <> detected.Calibration Then
                 candidate = detected : candidateSince = now
             End If
-            Dim analog = candidate.Input.Contains("axis", StringComparison.Ordinal) OrElse candidate.Input.Contains("analog", StringComparison.Ordinal) OrElse candidate.Input.EndsWith("Trigger", StringComparison.Ordinal)
+            Dim dpad = candidate.Input.StartsWith(DrivingInput.DPadInput, StringComparison.Ordinal)
+            Dim analog = Not dpad AndAlso (candidate.Input.Contains("axis", StringComparison.Ordinal) OrElse candidate.Input.Contains("analog", StringComparison.Ordinal) OrElse candidate.Input.EndsWith("Trigger", StringComparison.Ordinal))
             If analog AndAlso now - candidateSince < 100 Then Return
             WaitingForRelease = True
             For i = 0 To 7
@@ -81,7 +85,9 @@ Public Class DrivingCapture
                     peak = Math.Abs(current.Values(i) - baseline.Values(i)) : activeAxis = i
                 End If
             Next
-            If Not analog Then
+            If dpad Then
+                activeAxis = -1
+            ElseIf Not analog Then
                 activeAxis = -1
                 For i = 0 To current.Buttons.Length - 1
                     If current.Buttons(i) = 0 OrElse baseline.Buttons(i) <> 0 Then Continue For
@@ -93,7 +99,10 @@ Public Class DrivingCapture
             End If
         End If
         Dim released As Boolean
-        If activeAxis >= 0 Then
+        If candidate.Input.StartsWith(DrivingInput.DPadInput, StringComparison.Ordinal) Then
+            released = Not DrivingInput.DPadPressed(candidate.Input.Substring(DrivingInput.DPadInput.Length), current.Pov(0))
+            Travel = If(released, 0, 100)
+        ElseIf activeAxis >= 0 Then
             Dim displacement = Math.Abs(current.Values(activeAxis) - baseline.Values(activeAxis))
             peak = Math.Max(peak, displacement)
             Travel = CInt(Math.Clamp(displacement / Math.Max(peak, 0.4F) * 100, 0, 100))
