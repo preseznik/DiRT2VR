@@ -59,7 +59,8 @@ Public Class ReplayControls
     End Sub
     Public Function Combined(driving As DrivingControls) As DrivingControls
         Validate() : driving.Validate()
-        Dim result As New DrivingControls With {.CombinedManualGears = driving.CombinedManualGears}
+        ' Sessions launch with this copy: keep every driving choice, not only the bindings (ProJict 9155b3e1).
+        Dim result As New DrivingControls With {.CombinedManualGears = driving.CombinedManualGears, .Transmission = driving.Transmission, .WheelRotation = driving.WheelRotation}
         If driving.Enabled Then result.Bindings.AddRange(driving.Bindings)
         If Enabled Then result.Bindings.AddRange(Bindings.Where(Function(b) NativeActions.Contains(b.Action)))
         result.Enabled = result.Bindings.Count > 0

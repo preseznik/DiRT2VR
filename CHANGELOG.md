@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Fixed Transmission having no effect:** in 0.18.4 and 0.18.5, choosing Automatic, Manual sequential, Manual H-pattern or Manual H-pattern + clutch under **Configure driving controls** was saved but never reached the game, so your career's saved transmission stayed in use. The choice now applies at launch. Not yet checked in the game.
 - **Wheel D-pads can be bound:** the binding wizard and **Bind device…** now detect a wheel's D-pad (POV hat), for example on a Logitech G920, so **Menu Up/Down/Left/Right** and other button actions can use it. Press straight up, down, left or right. Not yet checked on a real wheel.
 - **Live input highlights bindings:** in **Configure driving controls**, pressing a button, the D-pad or moving an axis on the device shown under **Live device input** lights up the bound action's row in the launcher's accent colour.
 - **0% dead zone for new wheel and pedal bindings:** newly bound wheel, pedal and Xbox trigger axes start at 0% instead of 3%; Xbox thumbsticks keep 20% so a resting stick doesn't drift. Existing assignments keep their saved values.
