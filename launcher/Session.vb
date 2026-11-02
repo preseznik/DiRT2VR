@@ -440,6 +440,12 @@ Public Class Session
             Progress("Applying track graphics settings…")
             Worker.Invoke(context, "prepare-dof", carCode:=settings.CarCode, trackId:=settings.TrackId)
         End If
+        ' VR moves the headset eye instead; LAN peers need identical camera files.
+        Dim headset = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
+        If Not headset AndAlso settings.LaunchMode <> "lan" AndAlso DesktopSeatTransaction.Applies(SeatPositions.Load(context), settings.DesktopCockpitFov) Then
+            Progress("Adjusting the cockpit seat…")
+            Worker.Invoke(context, "prepare-seat")
+        End If
         Progress("Preparing controls and replay settings…")
         PikesPerformance.Configure(context, start, settings)
         NordschleifeProgress.Configure(start, settings)

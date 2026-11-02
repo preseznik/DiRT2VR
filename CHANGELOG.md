@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Desktop seat position and field of view (experimental):** the seat positions under **Graphics → Cockpit seat** (formerly VR cockpit), per car or universal, now also move the desktop cockpit view. The new **Field of view (desktop)** slider sets that view's vertical angle for every car, from 40° to 90°; DiRT 2 uses 52°. The launcher writes both into each car's cockpit camera for the session and restores the original files when the game closes. VR keeps its own seat handling and headset field of view. LAN games are left unchanged, because every PC needs identical camera files. Launcher checks pass; the desktop seat and field of view have not yet been checked in the game.
+
 ## 0.18.3 — 2026-11-02 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.3)

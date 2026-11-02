@@ -5,6 +5,8 @@ Partial Public Class MainForm
     Private ReadOnly seatHeight As New ValueSlider("SeatHeight", -100, 100, 0, " cm", 2D)
     Private ReadOnly seatDepth As New ValueSlider("SeatDepth", -100, 100, 0, " cm", 2D)
     Private ReadOnly seatSide As New ValueSlider("SeatSideways", -100, 100, 0, " cm", 2D)
+    Private ReadOnly desktopCockpitFov As New ValueSlider("DesktopCockpitFov", DesktopSeatTransaction.MinimumFov, DesktopSeatTransaction.MaximumFov, DesktopSeatTransaction.GameFov,
+        valueLabels:=Enumerable.Range(DesktopSeatTransaction.MinimumFov, DesktopSeatTransaction.MaximumFov - DesktopSeatTransaction.MinimumFov + 1).Select(Function(v) v & "°" & If(v = DesktopSeatTransaction.GameFov, " (game)", "")).ToArray())
     Private ReadOnly universalSeat As New CheckBox With {.Text = "Use universal seat position", .Name = "UseUniversalSeat", .AutoSize = True}
     Private universalEdited As Boolean
     Private seatModeEdited As Boolean
@@ -32,10 +34,10 @@ Partial Public Class MainForm
     End Function
     Private Sub BuildSeatSettings(parent As Control)
         seatPositions = SeatPositions.Load(context)
-        Dim section = LauncherLayout.Section(parent, "VR cockpit (Experimental)")
+        Dim section = LauncherLayout.Section(parent, "Cockpit seat (Experimental)")
         universalSeat.Checked = seatPositions.UseUniversal
         section.Controls.Add(universalSeat)
-        Tip(universalSeat, "Use one seat position for all cars. Your per-car positions are kept for when you turn this off. Save and relaunch to apply.")
+        Tip(universalSeat, "Use one seat position for all cars, on desktop and in VR. Your per-car positions are kept for when you turn this off. Save and relaunch to apply.")
         AddHandler universalSeat.CheckedChanged, Sub()
                                                     If loadingSeat OrElse busy Then Return
                                                     seatPositions.UseUniversal = universalSeat.Checked
@@ -46,7 +48,7 @@ Partial Public Class MainForm
         Field(section, "Car", seatCar)
         Tip(seatCar, "Choose the car whose saved seat position you want to adjust. The game selects its actual car automatically while driving.")
         Field(section, "Height", seatHeight) : Field(section, "Forward / back", seatDepth) : Field(section, "Left / right", seatSide)
-        Tip(seatHeight, "Raise or lower the active seat position. You can also adjust it in VR with Tab.")
+        Tip(seatHeight, "Raise or lower the active seat position, in the desktop cockpit view and in VR. In VR you can also adjust it with Tab. Not applied to desktop LAN games.")
         Tip(seatDepth, "Positive moves you toward the dashboard. This does not change world scale.")
         Tip(seatSide, "Positive moves your seat to the right. Edits the shared position when universal mode is on.")
         Dim reset As New Button With {.Text = "Reset seat position", .Name = "ResetSeat", .AutoSize = True}
@@ -57,6 +59,9 @@ Partial Public Class MainForm
                                 End Sub
         Tip(reset, "Reset the active seat position to zero. In universal mode, individual car positions stay unchanged. Save settings to keep the reset.")
         section.Controls.Add(reset)
+        desktopCockpitFov.Value = settings.DesktopCockpitFov
+        Field(section, "Field of view (desktop)", desktopCockpitFov)
+        Tip(desktopCockpitFov, "Vertical field of view of the desktop cockpit view, for every car. DiRT 2 uses 52°; raise it to see more of the cockpit, lower it to zoom in. VR uses your headset's own field of view. Not applied to LAN games. Save and relaunch to apply.")
         AddHandler seatCar.SelectedIndexChanged, Sub() LoadSeatSelection()
         For Each slider In {seatHeight, seatDepth, seatSide}
             AddHandler slider.ValueChanged, Sub() EditSeat()
