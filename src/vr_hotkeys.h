@@ -11,4 +11,5 @@ bool EnableMessageQueueInput();
 bool ConfigureHotkeys(unsigned toggleKey,unsigned toggleModifiers,unsigned recenterKey,unsigned recenterModifiers);
 unsigned ConsumeHotkeys();
 void SetPanelKeyFilter(bool (*filter)(UINT,WPARAM));
+bool AttachPanelFilter(HWND window);
 }

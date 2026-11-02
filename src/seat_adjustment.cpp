@@ -332,6 +332,14 @@ bool DesktopSeatRequested() {
 void SeatDesktopFrame(IDXGISwapChain* swapchain) {
     if(!channel || !desktop) return;
     if(TestMessageTyping()){SeatInactive();return;}
+    static bool filtering{};
+    if(!filtering) {
+        DXGI_SWAP_CHAIN_DESC chain{};
+        if(SUCCEEDED(swapchain->GetDesc(&chain)) && chain.OutputWindow) {
+            filtering=AttachPanelFilter(chain.OutputWindow);
+            Log("desktop seat: panel key filter attached=%d",filtering);
+        }
+    }
     {
         std::lock_guard lock(mutex);
         Update(nullptr);

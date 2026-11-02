@@ -84,6 +84,12 @@ LRESULT CALLBACK WindowProc(HWND window,UINT message,WPARAM key,LPARAM flags) {
 }
 }
 void SetPanelKeyFilter(bool (*filter)(UINT,WPARAM)) { panelFilter=filter; }
+bool AttachPanelFilter(HWND window) {
+    // Desktop: the same window filter keeps panel keys from the game, with no
+    // VR toggle or recenter keys bound.
+    if(!gameWindow) { bindings[0]={}; bindings[1]={}; configured=true; }
+    return AttachHotkeys(window);
+}
 bool EnableMessageQueueInput() {
     static bool attempted{},ready{};
     if(attempted)return ready;
