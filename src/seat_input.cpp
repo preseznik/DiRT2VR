@@ -22,6 +22,20 @@ struct Device {
 };
 std::mutex deviceMutex;
 std::map<void*,Device> devices;
+// The game opens its keyboard before these hooks exist, so its device is first
+// seen when read. Register it then: a keyboard reads DirectInput's standard
+// layout, one button per scan code. Caller holds deviceMutex.
+Device* Known(IDirectInputDevice8W* self) {
+    if(auto it=devices.find(self);it!=devices.end()) return &it->second;
+    auto& device=devices[self];
+    DIDEVCAPS caps{sizeof(caps)};
+    if(SUCCEEDED(self->GetCapabilities(&caps)) && GET_DIDEVICE_TYPE(caps.dwDevType)==DI8DEVTYPE_KEYBOARD) {
+        device.id=GUID_SysKeyboard; device.keyboard=true;
+        for(DWORD scan=0;scan<256;++scan) device.objects.push_back({nullptr,scan,DWORD(DIDFT_BUTTON|DIDFT_MAKEINSTANCE(scan)),0});
+        Log("seat input: registered a keyboard opened before the hooks");
+    }
+    return &device;
+}
 using CreateFn=HRESULT (STDMETHODCALLTYPE*)(IDirectInput8W*,REFGUID,IDirectInputDevice8W**,IUnknown*);
 using StateFn=HRESULT (STDMETHODCALLTYPE*)(IDirectInputDevice8W*,DWORD,void*);
 using DataFn=HRESULT (STDMETHODCALLTYPE*)(IDirectInputDevice8W*,DWORD,DIDEVICEOBJECTDATA*,DWORD*,DWORD);
@@ -102,10 +116,11 @@ HRESULT STDMETHODCALLTYPE State(IDirectInputDevice8W* self,DWORD length,void* ou
     if(SUCCEEDED(hr) && output && GameCaller(_ReturnAddress()) && PhotoModeBlocksInput()) {Neutralize(self,length,output);return hr;}
     if(SUCCEEDED(hr) && output) {
         std::lock_guard lock(deviceMutex);
-        if(auto it=devices.find(self);it!=devices.end()) for(const auto& object:it->second.objects) {
+        auto* device=Known(self);
+        for(const auto& object:device->objects) {
             const unsigned size=(object.dwType&DIDFT_BUTTON)?1:4;
             if(object.dwOfs<=length && size<=length-object.dwOfs)
-                FilterInput(it->second,object.dwOfs,object.dwType,static_cast<BYTE*>(output)+object.dwOfs,size);
+                FilterInput(*device,object.dwOfs,object.dwType,static_cast<BYTE*>(output)+object.dwOfs,size);
         }
     }
     return hr;
@@ -115,9 +130,10 @@ HRESULT STDMETHODCALLTYPE Data(IDirectInputDevice8W* self,DWORD objectSize,DIDEV
     if(SUCCEEDED(hr) && count && GameCaller(_ReturnAddress()) && PhotoModeBlocksInput()) {*count=0;return hr;}
     if(SUCCEEDED(hr) && output && count && objectSize>=16) {
         std::lock_guard lock(deviceMutex);
-        if(auto it=devices.find(self);it!=devices.end()) for(DWORD i=0;i<*count;++i) {
+        auto* device=Known(self);
+        for(DWORD i=0;i<*count;++i) {
             auto row=reinterpret_cast<DIDEVICEOBJECTDATA*>(reinterpret_cast<BYTE*>(output)+i*objectSize);
-            Filter(it->second,row->dwOfs,&row->dwData,sizeof(row->dwData));
+            Filter(*device,row->dwOfs,&row->dwData,sizeof(row->dwData));
         }
     }
     return hr;

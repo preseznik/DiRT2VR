@@ -409,7 +409,7 @@ void SeatFilterController(const GUID& device,bool keyboard,unsigned,unsigned typ
         const auto vk=MapVirtualKeyW(instance&0x7f,MAPVK_VSC_TO_VK_EX);
         unsigned key=vk;
         if(instance==DIK_UP) key=VK_UP; if(instance==DIK_DOWN) key=VK_DOWN;
-        if(instance==DIK_LEFT) key=VK_LEFT; if(instance==DIK_RIGHT) key=VK_RIGHT;
+        if(instance==DIK_LEFT) key=VK_LEFT; if(instance==DIK_RIGHT) key=VK_RIGHT; if(instance==DIK_PRIOR) key=VK_PRIOR; if(instance==DIK_NEXT) key=VK_NEXT;
         if(SeatBlocksKey(key)) *static_cast<BYTE*>(value)=0;
         return;
     }
