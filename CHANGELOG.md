@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Next event in Direct practice and Race (experimental):** the pause and finish menus have a new **Next event** row. It opens a panel, over the menu on desktop and in front of you in VR, where you choose Practice or Race, discipline, track, car, opponents and laps with the arrow keys or D-pad. **Start event** closes the game and starts that event directly instead of reopening the game menus; **Cancel**, **Esc** or **B** goes back to the menu. It offers the stock tracks and cars the launcher lists; car grade, opponent cars, difficulty and race start keep the launcher's choices, and a staggered start becomes Automatic on tracks that can't stagger. The launcher's own selection is unchanged. Not yet checked in the game or headset.
+
 ## 0.18.5 — 2026-11-02 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.5)

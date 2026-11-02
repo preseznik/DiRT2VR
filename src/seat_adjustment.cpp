@@ -1,4 +1,5 @@
 #include "seat_adjustment.h"
+#include "event_picker.h"
 #include "event_diagnostics.h"
 #include "common.h"
 #include "gfwl_compat.h"
@@ -29,6 +30,8 @@ int active=-2;
 seat::Position current{},opening{},saved{};
 seat::Movement movement;
 bool panel{},dirty{},sideways{},inputReady{},eligible{};
+// The Next event panel borrows the seat panel's navigation, key blocking and layer.
+bool picker{};
 bool keysBlocked[256]{},keysArmed[256]{};
 unsigned previousHeld{};
 ULONGLONG lastTick{},lastChange{};
@@ -64,8 +67,8 @@ seat::Position SavedPosition() { return Universal() ? Read<seat::Position>(192) 
 void Publish(bool commit=false) {
     if(!channel) return;
     InterlockedIncrement(reinterpret_cast<LONG*>(channel+92));
-    overlay.enabled=panel;
-    Write(80,unsigned(panel)); Write(84,unsigned(!inputReady ? 2 : !CanAdjust() ? 1 : 0));
+    overlay.enabled=panel || picker;
+    Write(80,unsigned(panel || picker)); Write(84,unsigned(!inputReady ? 2 : !CanAdjust() ? 1 : 0));
     Write(88,active); Write(96,current);
     if(commit && (CanAdjust() || desktop)) {
         // -3: no identified car; the launcher then saves only the field of view.
@@ -88,7 +91,7 @@ unsigned HeldKeys() {
         if(!Key(vk)) { keysArmed[vk]=true; continue; }
         if(keysArmed[vk] && Modifiers()==mods) { held|=1u<<(k==0?13:k-1); keysBlocked[vk]=true; }
     }
-    if(panel) {
+    if(panel || picker) {
         constexpr unsigned nav[]={VK_SHIFT,VK_UP,VK_DOWN,VK_LEFT,VK_RIGHT,VK_RETURN,VK_ESCAPE};
         for(unsigned k=0;k<7;++k) {
             const auto vk=nav[k];
@@ -185,6 +188,21 @@ public:
     }
 };
 PanelImage panelImage;
+// Draws the open panel into a game frame: the seat panel at the left, the Next
+// event panel over the inactive game menu in the middle.
+void DrawToFrame(ID3D11Texture2D* back,const char* owner) {
+    Microsoft::WRL::ComPtr<ID3D11Device> device; back->GetDevice(&device);
+    D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
+    Microsoft::WRL::ComPtr<ID3D11RenderTargetView> target;
+    if(FAILED(device->CreateRenderTargetView(back,nullptr,&target))) return;
+    // Same 3:4 panel as in VR, 60% of the frame height.
+    const unsigned h=desc.Height*3/5,w=h*3/4;
+    try {
+        if(picker) EventPickerDraw(target.Get(),w,h,float((desc.Width-w)/2),float((desc.Height-h)/2));
+        else panelImage.Draw(target.Get(),w,h,float(desc.Height/20),float((desc.Height-h)/2));
+    }
+    catch(const std::exception& e) { Log("%s: panel draw failed: %s",owner,e.what()); }
+}
 bool LiveHead(const unsigned char* c) {
     // Cars can be unloaded; only touch objects that still are head cameras.
     unsigned vtable{}; SIZE_T read{};
@@ -244,7 +262,7 @@ bool EnableSeatAdjustment() {
     SetPanelKeyFilter(SeatWindowKey);
     overlay.enabled=false;
     overlay.unavailable=[] { SeatInactive(); };
-    overlay.size={.6f,.8f}; overlay.draw=[](unsigned,const XrView&,ID3D11RenderTargetView* target,unsigned w,unsigned h) { panelImage.Draw(target,w,h); };
+    overlay.size={.6f,.8f}; overlay.draw=[](unsigned,const XrView&,ID3D11RenderTargetView* target,unsigned w,unsigned h) { if(picker) EventPickerDraw(target,w,h); else panelImage.Draw(target,w,h); };
     Log("seat adjustment: camera hook=%s input=%d",MH_StatusToString(result),inputReady);
     return result==MH_OK && inputReady;
 }
@@ -278,7 +296,16 @@ static void Update(const std::array<XrView,2>* views) {
     if(DWORD(GetTickCount()-Read<DWORD>(12))>1000) { Cancel(); input={}; }
     DWORD foreground{}; GetWindowThreadProcessId(GetForegroundWindow(),&foreground);
     if(foreground!=GetCurrentProcessId()) { Cancel(); previousHeld=~0u; Publish(); return; }
+    const bool picking=EventPickerOpen();
+    if(picking && !picker) {
+        // Keys and buttons still held from choosing the menu row wait for a release.
+        Cancel(); if(views) panelPose=ScreenPose(CenterPose(*views),1.f);
+        for(unsigned vk:{VK_SHIFT,VK_UP,VK_DOWN,VK_LEFT,VK_RIGHT,VK_RETURN,VK_ESCAPE}) keysArmed[vk]=!Key(vk);
+        previousHeld=~0u;
+    }
+    picker=picking;
     const unsigned held=input.held|HeldKeys(),pressed=held&~previousHeld; previousHeld=held;
+    if(picker) { EventPickerInput(held,pressed,dt); overlay.pose=panelPose; Publish(); return; }
     if(pressed&(1u<<13)) {
         if(panel) { Commit(); panel=false; }
         else if(inputReady) { Commit(); opening=current; openingFov=fov; panel=true; if(views) panelPose=ScreenPose(CenterPose(*views),1.f); movement.Reset();
@@ -344,18 +371,21 @@ void SeatDesktopFrame(IDXGISwapChain* swapchain) {
         std::lock_guard lock(mutex);
         Update(nullptr);
         ApplyDesktop();
-        if(!panel) return;
+        if(!panel && !picker) return;
     }
     Microsoft::WRL::ComPtr<ID3D11Texture2D> back;
     if(FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return;
-    Microsoft::WRL::ComPtr<ID3D11Device> device; back->GetDevice(&device);
-    D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
-    Microsoft::WRL::ComPtr<ID3D11RenderTargetView> target;
-    if(FAILED(device->CreateRenderTargetView(back.Get(),nullptr,&target))) return;
-    // Same 3:4 panel as in VR, at the left edge, 60% of the frame height.
-    const unsigned h=desc.Height*3/5,w=h*3/4;
-    try { panelImage.Draw(target.Get(),w,h,float(desc.Height/20),float((desc.Height-h)/2)); }
-    catch(const std::exception& e) { Log("desktop seat: panel draw failed: %s",e.what()); }
+    DrawToFrame(back.Get(),"desktop seat");
+}
+bool SeatScreenFrame(ID3D11Texture2D* back) {
+    if(!channel || TestMessageTyping() || !EventPickerOpen()) return false;
+    {
+        std::lock_guard lock(mutex);
+        Update(nullptr);
+        if(!picker) return false;
+    }
+    DrawToFrame(back,"next event");
+    return true;
 }
 bool SeatInputReady() { return inputReady; }
 bool SeatBlocksKey(unsigned key) {
@@ -363,13 +393,13 @@ bool SeatBlocksKey(unsigned key) {
     std::lock_guard lock(mutex);
     bool block=keysBlocked[key];
     if(eligible) for(unsigned k=0;k<7;++k) if(key && key==Read<unsigned>(128+k*8) && Modifiers()==Read<unsigned>(132+k*8)) block=keysBlocked[key]=true;
-    if(panel && (key==VK_SHIFT || key==VK_LSHIFT || key==VK_RSHIFT || key==VK_RETURN || key==VK_ESCAPE || (key>=VK_LEFT&&key<=VK_DOWN) || (desktop && (key==VK_PRIOR || key==VK_NEXT)))) block=true;
+    if((panel || picker) && (key==VK_SHIFT || key==VK_LSHIFT || key==VK_RSHIFT || key==VK_RETURN || key==VK_ESCAPE || (key>=VK_LEFT&&key<=VK_DOWN) || (desktop && (key==VK_PRIOR || key==VK_NEXT)))) block=true;
     if(!Key(key)) keysBlocked[key]=false;
     return block;
 }
 bool SeatWindowKey(UINT message,WPARAM key) {
     if(message==WM_CHAR && (key==9 || key==13 || key==27)) {
-        std::lock_guard lock(mutex); if(panel || keysBlocked[key]) return true;
+        std::lock_guard lock(mutex); if(panel || picker || keysBlocked[key]) return true;
     }
     return (message==WM_KEYDOWN || message==WM_KEYUP || message==WM_SYSKEYDOWN || message==WM_SYSKEYUP) && SeatBlocksKey(unsigned(key));
 }
@@ -382,11 +412,11 @@ Reserved ReservedFor(unsigned source,unsigned slot,const GUID& guid) {
     for(unsigned i=0;i<Read<unsigned>(11300);++i) {
         const unsigned at=11304+i*48;
         if(Read<unsigned>(at)!=source || (source==1 ? Read<unsigned>(at+4)!=slot : Read<GUID>(at+8)!=guid)) continue;
-        if(Read<unsigned>(at+44)>=9 && !panel) continue;
+        if(Read<unsigned>(at+44)>=9 && !panel && !picker) continue;
         for(unsigned j=0;j<4;++j) mask.buttons[j]|=Read<unsigned>(at+24+j*4);
         mask.pov|=Read<unsigned>(at+40);
     }
-    const bool ownsPanel=panel && (!input.source || (source==input.source && (source==1 ? slot==input.slot : guid==input.guid)));
+    const bool ownsPanel=(panel || picker) && (!input.source || (source==input.source && (source==1 ? slot==input.slot : guid==input.guid)));
     if(ownsPanel) {
         if(source==1) mask.buttons[0]|=0x700f|(desktop?0x0300u:0u); // D-pad, X, A, B (+ LB/RB on desktop).
         else mask.pov|=1;

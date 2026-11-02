@@ -2,6 +2,7 @@
 #include "direct_menus.h"
 #include "replay_storage.h"
 #include "photo_mode.h"
+#include "event_picker.h"
 #include "common.h"
 #include <MinHook.h>
 #include <cstring>
@@ -97,6 +98,7 @@ void* __fastcall ReplayCheck(void* state,void*,void* result) {
         ReplayStorageBegin();
     auto value=originalReplayCheck(state,result);
     if(PhotoModeMenu(state,result))return value;
+    if(EventPickerMenu(state,result))return value;
     if(std::memcmp(static_cast<const char*>(state)+4,"d2vr_replay_rearm",sizeof("d2vr_replay_rearm"))==0) {
         using Assign=void (__thiscall*)(void*,const char*);
         auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));

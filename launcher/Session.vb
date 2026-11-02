@@ -68,7 +68,8 @@ Public Class Session
     Private gameWindowReady As Boolean
     Private desktopBounds As Drawing.Rectangle?
     Private customTrack As Boolean
-    Private ReadOnly postProcessTest As String = "normal"
+    Private postProcessTest As String = "normal"
+    Private chosenEvent As NextEvent
     Private profile As ProfileSession
     Private filterSnapshot As String
     Private ReadOnly replayId As String
@@ -186,8 +187,7 @@ Public Class Session
                         Dim returnToMenus = RunDesktop()
                         Status("Restoring") : graphics.Recover() : Worker.Invoke(context, "recover")
                         If returnToMenus Then
-                            customTrack = False
-                            settings.LaunchMode = "menus"
+                            PrepareReturn()
                             Continue Do
                         End If
                         Status("Ready", "Desktop session ended")
@@ -256,8 +256,7 @@ Public Class Session
                         Status("Restoring")
                         graphics.Recover() : Worker.Invoke(context, "recover")
                         If returnToMenus Then
-                            customTrack = False
-                            settings.LaunchMode = "menus"
+                            PrepareReturn()
                             Continue Do
                         End If
                     End Using
@@ -341,6 +340,16 @@ Public Class Session
         If layerBypasses IsNot Nothing Then VrApiLayers.Configure(start, layerBypasses)
         Return start
     End Function
+    ' Return to menus, or start the event chosen with Next event in the game.
+    Private Sub PrepareReturn()
+        customTrack = False
+        If chosenEvent Is Nothing Then
+            settings.LaunchMode = "menus"
+        Else
+            chosenEvent.ApplyTo(settings) : chosenEvent = Nothing
+            postProcessTest = "normal"
+        End If
+    End Sub
     Private Function RunDesktop() As Boolean
         AnisotropicFiltering.RequireDesktopRenderer(context, settings)
         DesktopShadows.RequireDesktopRenderer(context, settings)
@@ -477,6 +486,7 @@ Public Class Session
         replayControls.ConfigureZoom(start)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using recording As New ReplaySession(context, settings, start, If(settings.DirectMode, preparedReplay, Nothing)), returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
+            eventChannel As New NextEventChannel(context, start, settings, settings.DirectMode AndAlso replayId Is Nothing),
             lap As New BestLapChannel(context, start, If(settings.LaunchMode = "practice" AndAlso replayId Is Nothing, settings.TrackId, ""), settings.CarCode, CarGrades.Effective(settings))
             ' Last preparation step: all asset/profile validation has succeeded.
             ' Recovery owns this executable change just like other session files.
@@ -539,6 +549,7 @@ Public Class Session
             recording.Complete()
             If recording.Warning <> "" Then displayWarning = recording.Warning
             If returnChannel.ProfileLoadFailed Then Throw New IOException("The career could not be loaded for this direct event, or sign-in was canceled. Use Normal Launch to sign in to your usual GFWL profile and confirm it loads. No replacement career was created.")
+            chosenEvent = If(returnChannel.Requested, eventChannel.Choice(), Nothing)
             Return returnChannel.Requested
         End Using
     End Function

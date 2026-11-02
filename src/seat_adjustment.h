@@ -5,10 +5,13 @@
 #include <string>
 
 struct IDXGISwapChain;
+struct ID3D11Texture2D;
 namespace vr {
 bool EnableSeatAdjustment();
 bool DesktopSeatRequested();
 void SeatDesktopFrame(IDXGISwapChain* swapchain);
+// VR virtual screen (paused game, menus): runs and draws an open Next event panel.
+bool SeatScreenFrame(ID3D11Texture2D* back);
 void SeatSelectCamera(void* manager);
 void SeatInactive();
 void SeatPrepare(const std::array<XrView,2>& views);

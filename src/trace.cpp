@@ -20,6 +20,7 @@
 #include "gpu_timer.h"
 #include "vr_hotkeys.h"
 #include "seat_adjustment.h"
+#include "event_picker.h"
 #include "light_replay.h"
 #include "ground_cover.h"
 #include "shadow_trace.h"
@@ -935,10 +936,11 @@ void PrepareHeadsetViews(const std::array<XrView,2>& views,bool cockpit=false) {
     }
 }
 void HeadsetScreen() {
-    SeatInactive();
     const auto f=frame.load();
     ComPtr<ID3D11Texture2D> back;
-    if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) return;
+    if(FAILED(gameSwapchain->GetBuffer(0,IID_PPV_ARGS(&back)))) { SeatInactive(); return; }
+    // A paused game shows its menus here; Next event draws into this frame.
+    if(!SeatScreenFrame(back.Get())) SeatInactive();
     D3D11_TEXTURE2D_DESC desc{}; back->GetDesc(&desc);
     XrFrames::Screen screen; screen.size.height=screen.size.width*desc.Height/desc.Width;
     static EyePair image;
@@ -1107,7 +1109,7 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     // frame (including modal dialogs) on the screen instead of replaying it.
     // Preserve the requested mode so resuming returns to cockpit VR.
     if(!StereoCameraAllowed(camera,ExtendedViewsEnabled(),GamePaused(),lightingHooksReady && pauseHookReady,ReplayStereoEnabled(),TrailerMenusEnabled())) return false;
-    if(!cockpit) SeatInactive();
+    if(!cockpit && !EventPickerOpen()) SeatInactive();
     if(!preparedLights.Snapshot(f,context,eyeLights)) {
         Log("lighting replay capacity exceeded; using virtual screen frame=%llu",f);
         return false;
@@ -1211,12 +1213,12 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
             trailerTrackedPose=RelativePose(headsetReference,CenterPose(views));
             trailerTrackedFrame=f;
         }
-        if(cockpit) SeatPrepare(views);
+        if(cockpit || EventPickerOpen()) SeatPrepare(views);
         SteeringCockpitView(cockpit && gameXr->Visible());
         static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;
         hud.pose=ScreenPose(follow && !trailer ? CenterPose(views) : headsetReference,panelDistance);
         if(!follow && cockpit) hud.pose=SeatHudPose(hud.pose,headsetReference);
-    },nullptr,captureHud ? &hud : nullptr,cockpit ? SeatOverlay() : nullptr);
+    },nullptr,captureHud ? &hud : nullptr,cockpit || EventPickerOpen() ? SeatOverlay() : nullptr);
     steeringFrame.Complete(cockpit && submitted && gameXr->Visible());
     if(!submitted) SeatInactive();
     hudEye=0;
