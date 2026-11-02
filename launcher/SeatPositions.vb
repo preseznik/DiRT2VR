@@ -213,6 +213,12 @@ Public Class SeatChannel
                         If buttons.Contains(button) Then mask = mask Or (1UI << If(i = 0, 6, 10 + i))
                         localConsumed.Add(button)
                     Next
+                    If desktop Then
+                        ' Desktop view angle: RB up (bit 14), LB down (bit 15).
+                        If buttons.Contains(512) Then mask = mask Or (1UI << 14)
+                        If buttons.Contains(256) Then mask = mask Or (1UI << 15)
+                        localConsumed.Add(256) : localConsumed.Add(512)
+                    End If
                 End If
             End If
             If mask = 0 AndAlso selected <> key Then Continue For

@@ -146,7 +146,7 @@ public:
         GetKeyNameTextW(LONG(MapVirtualKeyW(vk,MAPVK_VK_TO_VSC)<<16),keyName,64);
         std::wstring close=std::wstring(mods&1?L"Ctrl+":L"")+(mods&2?L"Alt+":L"")+(mods&4?L"Shift+":L"")+keyName+L": save & close";
         std::wstring hint(reinterpret_cast<const wchar_t*>(channel+10500),wcsnlen_s(reinterpret_cast<const wchar_t*>(channel+10500),400));
-        if(desktop) hint+=L"\nPgUp / PgDn: view angle";
+        if(desktop) hint+=L"\nPgUp/PgDn or LB/RB: view angle";
         const auto signature=name+values+close+hint+(sideways?L"side":L"depth")+(inputReady?L"":L"disabled");
         if(signature!=last_) {
             if(!bitmap_) bitmap_=std::make_unique<Gdiplus::Bitmap>(768,1024,PixelFormat32bppPARGB);
@@ -295,8 +295,8 @@ static void Update(const std::array<XrView,2>* views) {
     }
     if(inputReady && CanAdjust() && movement.Update(current,directions,dt)) { dirty=!panel; lastChange=now; }
     if(desktop && panel) {
-        // Page Up / Page Down: one degree per press, repeating while held.
-        const int direction=(Key(VK_PRIOR)?1:0)-(Key(VK_NEXT)?1:0);
+        // Page Up / Page Down or RB / LB: one degree per press, repeating while held.
+        const int direction=((Key(VK_PRIOR) || (held&(1u<<14)))?1:0)-((Key(VK_NEXT) || (held&(1u<<15)))?1:0);
         int steps=0;
         if(direction!=fovDirection) { fovHeld=0; steps=direction!=0; }
         else if(direction) { const double before=fovHeld; fovHeld+=dt; steps=int(std::max(0.0,fovHeld-.35)*12)-int(std::max(0.0,before-.35)*12); }
@@ -388,7 +388,7 @@ Reserved ReservedFor(unsigned source,unsigned slot,const GUID& guid) {
     }
     const bool ownsPanel=panel && (!input.source || (source==input.source && (source==1 ? slot==input.slot : guid==input.guid)));
     if(ownsPanel) {
-        if(source==1) mask.buttons[0]|=0x700f; // D-pad, X, A, B.
+        if(source==1) mask.buttons[0]|=0x700f|(desktop?0x0300u:0u); // D-pad, X, A, B (+ LB/RB on desktop).
         else mask.pov|=1;
     }
     return mask;

@@ -391,11 +391,14 @@ Public Class Session
         CarSetup.Configure(start, settings)
         CarGrades.Configure(start, settings)
         ' Direct sessions run the DLL, so the seat panel can adjust the desktop cockpit.
-        Using seat = If(config IsNot Nothing, New SeatChannel(context, settings, desktopMode:=True), Nothing)
+        Using seat = If(config IsNot Nothing, New SeatChannel(context, settings, desktopMode:=True), Nothing), input = If(config IsNot Nothing, New ControllerInput(context), Nothing)
             If seat IsNot Nothing Then
                 start.Environment("DIRT2VR_SEAT_CHANNEL") = seat.Name : start.Environment("DIRT2VR_DESKTOP_SEAT") = "1"
             End If
-            Dim returnToMenus = WaitForGame(start, If(seat Is Nothing, Nothing, Sub() seat.Poll(Array.Empty(Of ControllerSample)(), ControllerInput.GameFocused())))
+            Dim returnToMenus = WaitForGame(start, If(seat Is Nothing, Nothing, Sub()
+                                                                               input.Poll()
+                                                                               seat.Poll(input.Snapshot(), ControllerInput.GameFocused())
+                                                                           End Sub))
             profile.ConfirmStartup(False)
             Return returnToMenus
         End Using
