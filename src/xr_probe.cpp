@@ -7,6 +7,7 @@
 #include <cstdio>
 #include <vector>
 #include <cstring>
+#include "xr_adapter.h"
 using Microsoft::WRL::ComPtr;
 
 bool RenderProbe(XrInstance,XrSystemId,XrSession,ID3D11Device*);
@@ -58,7 +59,10 @@ int main(int argc,char** argv) {
     ComPtr<IDXGIAdapter1> adapter;
     if(factory) for(UINT i=0;factory->EnumAdapters1(i,&adapter)==S_OK;++i) {
         DXGI_ADAPTER_DESC1 desc{}; adapter->GetDesc1(&desc);
-        if(!memcmp(&desc.AdapterLuid,&requirements.adapterLuid,sizeof(LUID))) break;
+        if(RequiredAdapter(requirements.adapterLuid,desc.AdapterLuid)) {
+            if(AnyAdapter(requirements.adapterLuid)) printf("runtime names no graphics adapter; using %ls\n",desc.Description);
+            break;
+        }
         adapter.Reset();
     }
     if(!adapter) { puts("Required graphics adapter not found"); xrDestroyInstance(instance); return 6; }

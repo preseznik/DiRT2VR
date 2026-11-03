@@ -2,6 +2,7 @@
 #include "common.h"
 #include "test_message.h"
 #include "graphics_diagnostics.h"
+#include "xr_adapter.h"
 #include <dxgi.h>
 #include <cstring>
 using Microsoft::WRL::ComPtr;
@@ -28,10 +29,11 @@ bool GameXr::Initialize(ID3D11Device* device,float scale,float fovScale,uint32_t
     if(!Check(requirementsFn(instance_,system,&requirements),"graphics requirements")) { Shutdown(); return false; }
     ComPtr<IDXGIDevice> dxgi; ComPtr<IDXGIAdapter> adapter; DXGI_ADAPTER_DESC desc{};
     if(FAILED(device->QueryInterface(IID_PPV_ARGS(&dxgi))) || FAILED(dxgi->GetAdapter(&adapter)) ||
-       FAILED(adapter->GetDesc(&desc)) || std::memcmp(&desc.AdapterLuid,&requirements.adapterLuid,sizeof(LUID)) ||
+       FAILED(adapter->GetDesc(&desc)) || !RequiredAdapter(requirements.adapterLuid,desc.AdapterLuid) ||
        device->GetFeatureLevel()<requirements.minFeatureLevel) {
         vr::Log("OpenXR incompatible game graphics adapter or feature level"); Shutdown(); return false;
     }
+    if(AnyAdapter(requirements.adapterLuid)) vr::Log("OpenXR runtime names no graphics adapter; using the game's");
     XrGraphicsBindingD3D11KHR binding{XR_TYPE_GRAPHICS_BINDING_D3D11_KHR}; binding.device=device;
     XrSessionCreateInfo session{XR_TYPE_SESSION_CREATE_INFO}; session.next=&binding; session.systemId=system;
     vr::graphics::Allocation allocation("OpenXR session and resources");
