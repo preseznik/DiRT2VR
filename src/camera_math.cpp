@@ -123,4 +123,43 @@ bool VisibilityBox(const float* a,const float* b,float* matrix,const float* orig
     for(unsigned i=0;i<16;++i) matrix[i]=result[i];
     return true;
 }
+bool FrustumEyeBox(const float* originalFrustum,float* matrix) {
+    // The four nearest-together corners are the near quad, just ahead of the eye.
+    std::array<std::array<double,3>,8> corner;
+    for(unsigned i=0;i<8;++i) for(unsigned axis=0;axis<3;++axis) {
+        corner[i][axis]=originalFrustum[24+i*4+axis];
+        if(!std::isfinite(corner[i][axis]) || std::abs(corner[i][axis])>1e6) return false;
+    }
+    auto distance=[&](unsigned i,unsigned j) {
+        return std::hypot(corner[i][0]-corner[j][0],corner[i][1]-corner[j][1],corner[i][2]-corner[j][2]);
+    };
+    unsigned nearMask{}; double nearSpan=1e300,farSpan{};
+    for(unsigned mask=0;mask<256;++mask) {
+        unsigned count{};
+        for(unsigned i=0;i<8;++i) count+=mask>>i&1;
+        if(count!=4) continue;
+        double span{},rest{};
+        for(unsigned i=0;i<8;++i) for(unsigned j=i+1;j<8;++j) {
+            const bool a=mask>>i&1,b=mask>>j&1;
+            if(a && b) span=std::max(span,distance(i,j));
+            else if(!a && !b) rest=std::max(rest,distance(i,j));
+        }
+        if(span<nearSpan) { nearSpan=span; farSpan=rest; nearMask=mask; }
+    }
+    std::array<double,3> eye{},far{};
+    for(unsigned i=0;i<8;++i) for(unsigned axis=0;axis<3;++axis)
+        ((nearMask>>i&1) ? eye : far)[axis]+=corner[i][axis]/4;
+    const double range=std::hypot(far[0]-eye[0],far[1]-eye[1],far[2]-eye[2]);
+    if(!(farSpan>nearSpan*4) || !(range>=25) || range>100000.) return false;
+    // Keep the pass's own distance; the margin covers the near plane and head motion.
+    const float extent=float(range)+8.f;
+    std::array<float,16> result{};
+    for(unsigned axis=0;axis<3;++axis) {
+        const float scale=(axis==2 ? -1.f : 1.f)/extent;
+        result[axis*5]=scale; result[12+axis]=-float(eye[axis])*scale;
+    }
+    result[15]=1;
+    for(unsigned i=0;i<16;++i) matrix[i]=result[i];
+    return true;
+}
 }

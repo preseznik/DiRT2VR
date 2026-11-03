@@ -628,7 +628,9 @@ SceneCamera RenderSceneCamera(void* renderer,const float* a,const float* b,uint6
     return IdentifySceneCamera(a,b,f);
 }
 using FrustumCopyFn = void* (__thiscall*)(void*,const void*);
-FrustumCopyFn realFrustumCopy{},buildFrustum{};
+FrustumCopyFn realFrustumCopy{},buildFrustum{},realFrustumBuild{};
+// Last frame whose main scene volume was widened to all directions.
+std::atomic<unsigned long long> wideSceneFrame{~0ull};
 bool WideVisibility() {
     static const bool enabled=[] { wchar_t value[8]{}; return GetEnvironmentVariableW(L"DIRT2VR_WIDE_VISIBILITY",value,8)>0 && wcscmp(value,L"1")==0; }();
     return enabled;
@@ -673,12 +675,46 @@ void* __fastcall FrustumCopy(void* self,void*,const void* source) {
                     Log("visibility expanded to all directions frame=%llu far=%.1f/%.1f",frame.load(),a[22],b[22]);
                 }
                 if(frame.load()%120==0) Log("visibility all-directions frame=%llu far=%.1f/%.1f",frame.load(),a[22],b[22]);
+                wideSceneFrame.store(frame.load());
                 return realFrustumCopy(self,volume.data());
             }
             Log("visibility expansion rejected invalid frustum frame=%llu",frame.load());
         }
     }
     return realFrustumCopy(self,source);
+}
+// Trees cull against a frustum of their own (985350 builds it at 985597), so
+// the widened scene volume above never reaches them and trees still visible
+// beside or behind the headset vanish. Widen only the main scene's tree pass
+// (called at 29231b), with its own distance, while the scene volume is wide.
+using TreeCullFn = uintptr_t (__thiscall*)(void*,void*,void*,void*,void*,void*,void*);
+TreeCullFn realTreeCull{};
+thread_local bool mainTreeCull{};
+uintptr_t __fastcall TreeCull(void* self,void*,void* a,void* b,void* c,void* d,void* e,void* f) {
+    const auto caller=reinterpret_cast<uintptr_t>(_ReturnAddress())-reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+    const bool previous=mainTreeCull;
+    mainTreeCull=caller==0x292320;
+    const auto result=realTreeCull(self,a,b,c,d,e,f);
+    mainTreeCull=previous;
+    return result;
+}
+void* __fastcall FrustumBuild(void* self,void*,const void* matrix) {
+    auto result=realFrustumBuild(self,matrix);
+    if(!mainTreeCull) return result;
+    const auto caller=reinterpret_cast<uintptr_t>(_ReturnAddress())-reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
+    // The scene volume may be prepared after the trees in a frame; allow one frame.
+    const auto now=frame.load(),wide=wideSceneFrame.load();
+    if(caller!=0x98559c || wide==~0ull || now<wide || now-wide>1) return result;
+    alignas(16) std::array<float,16> box;
+    if(!vr::FrustumEyeBox(static_cast<const float*>(self),box.data())) return result;
+    realFrustumBuild(self,box.data());
+    const auto volume=static_cast<const float*>(self);
+    if(!std::all_of(volume,volume+56,[](float v){return std::isfinite(v);})) {
+        Log("tree visibility expansion rejected invalid frustum frame=%llu",now);
+        return realFrustumBuild(self,matrix);
+    }
+    if(now%600==0) Log("tree visibility all-directions frame=%llu range=%.1f",now,1/box[0]-8);
+    return result;
 }
 
 void __fastcall CameraSetup(void* self,void*,void* context,void* camera,float nearPlane,bool upload) {
@@ -2164,6 +2200,21 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
                     if(status==MH_OK) status=EnableRecordedHook(base+0x2b7db0);
                     Log("visibility frustum hook status=%s",MH_StatusToString(status));
                 } else Log("visibility frustum hook rejected instruction guard");
+            }
+            if(HeadsetEnabled() && WideVisibility() && realFrustumCopy && !realTreeCull) {
+                const unsigned char cull[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x81,0xec,0x64,0x01,0,0};
+                auto calls=[&](uintptr_t at,uintptr_t target) {
+                    return base[at]==0xe8 && at+5+*reinterpret_cast<const int32_t*>(base+at+1)==target;
+                };
+                if(memcmp(base+0x985350,cull,sizeof(cull))==0 && calls(0x29231b,0x985350) && calls(0x985597,0xd26c40)) {
+                    auto status=MH_CreateHook(base+0x985350,reinterpret_cast<void*>(TreeCull),reinterpret_cast<void**>(&realTreeCull));
+                    if(status==MH_OK) status=MH_CreateHook(base+0xd26c40,reinterpret_cast<void*>(FrustumBuild),reinterpret_cast<void**>(&realFrustumBuild));
+                    if(status==MH_OK) status=EnableRecordedHook(base+0xd26c40);
+                    if(status==MH_OK) status=EnableRecordedHook(base+0x985350);
+                    // The scene volume keeps building through the original, without the detour.
+                    if(status==MH_OK) buildFrustum=realFrustumBuild;
+                    Log("tree visibility hooks status=%s",MH_StatusToString(status));
+                } else Log("tree visibility hooks rejected instruction guard");
             }
             if(HeadsetEnabled() || PipelineLights()) {
                 const unsigned char point[]={0x55,0x8b,0xec,0x83,0xe4,0xf0,0x83,0xec,0x10};

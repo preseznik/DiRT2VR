@@ -19,4 +19,7 @@ void ApplyFov(float* projection,const XrFovf& fov);
 void MultiplyMatrices(const float* a,const float* b,float* result);
 // World-to-clip box preserving the native scenery extent for every head direction.
 bool VisibilityBox(const float* cameraA,const float* cameraB,float* matrix,const float* originalFrustum=nullptr);
+// The same box around a native perspective volume's eye, sized by its own far
+// distance, for a pass that builds its frustum without a camera record.
+bool FrustumEyeBox(const float* originalFrustum,float* matrix);
 }
