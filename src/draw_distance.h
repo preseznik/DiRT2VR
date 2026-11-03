@@ -44,19 +44,24 @@ inline bool OrnamentRanges(float* ranges) {
     ranges[2]=std::max(ranges[2],1000.f);
     return true;
 }
-// Tree shadows are billboards drawn by the near (shadow_1) and outer
-// (shadow_2) map passes, each capped per style for the game's 14 m and 80 m
-// ranges. A longer range covers more trees; once a dense track overflows the
-// cap, which trees cast a shadow changes as the view moves. Scale the cap with
-// the covered area. A zero budget (no billboard shadows) stays zero. Budgets
-// cost memory (about 70 bytes a billboard in lab runs) in a VR process limited
-// to 2 GB, so stop at 12,000 per style: enough for the ~13,000 trees across
-// Tanamera's styles in a 640 m outer map.
-inline int ShadowBillboards(int budget,float range,float native) {
+// Trees and trackside props draw shadows through the near (shadow_1) and
+// outer (shadow_2) map passes, each capped per style for the game's 14 m and
+// 80 m ranges (Tanamera Falls: trees 150/600, props 200/200). A longer range
+// covers more of them; once a dense scene overflows the cap, which ones cast a
+// shadow changes as the view moves. Scale the cap with the covered area.
+// A zero budget (no shadows from that pass) stays zero. Budgets cost memory in
+// a VR process limited to 2 GB, so the caller bounds each style.
+inline int ShadowBudget(int budget,float range,float native,int cap) {
     if(budget<=0 || !std::isfinite(range) || !(native>0) || range<=native) return budget;
-    const float scaled=std::min(float(budget)*(range/native)*(range/native),12000.f);
+    const float scaled=std::min(float(budget)*(range/native)*(range/native),float(cap));
     return std::max(budget,int(scaled));
 }
+// About 70 bytes a tree billboard in lab runs; 12,000 per style still covers
+// the ~13,000 trees across Tanamera's styles in a 640 m outer map.
+constexpr int TreeShadowCap=12000;
+// Trackside props (banners, tents, gantries) take 36 bytes an instance. A 640 m
+// outer map of Tanamera's start area holds about 560 against a budget of 200.
+constexpr int PropShadowCap=6000;
 inline bool Nearby(const float* eye,const float* car,bool previous) {
     float squared=0;
     for(unsigned i=0;i<3;++i) {

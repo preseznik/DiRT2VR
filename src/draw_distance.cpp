@@ -312,13 +312,20 @@ float ShadowRange(const wchar_t* name,float fallback,float low,float high) {
     const auto parsed=wcstoul(value,&end,10);
     return end!=value && !*end && parsed>=low && parsed<=high ? float(parsed) : fallback;
 }
+float ShadowNearRange() {
+    static const float range=ShadowRange(L"DIRT2VR_SHADOW_DETAIL_DISTANCE",14.f,14.f,60.f);
+    return range;
+}
+float ShadowOuterRange() {
+    static const float range=ShadowRange(L"DIRT2VR_VR_SHADOW_DISTANCE",80.f,160.f,640.f);
+    return range;
+}
 int shadowNearBillboards{},shadowOuterBillboards{};
 int ExtendTreeSettings(void* self) {
     auto styles=Field<unsigned char*>(self,0x180);
     const int count=Field<int>(self,0x184);
     if(!styles || count<=0 || count>64) return 0;
-    static const float nearRange=ShadowRange(L"DIRT2VR_SHADOW_DETAIL_DISTANCE",14.f,14.f,60.f);
-    static const float outerRange=ShadowRange(L"DIRT2VR_VR_SHADOW_DISTANCE",80.f,160.f,640.f);
+    const float nearRange=ShadowNearRange(),outerRange=ShadowOuterRange();
     int changed=0;
     for(int i=0;i<count;++i) {
         // 96dd20: 0x78-byte style with 11 traversals in file order (main_scene,
@@ -334,8 +341,8 @@ int ExtendTreeSettings(void* self) {
         const int oldInstances=instances,oldBillboards=billboards,oldNear=nearShadows,oldOuter=outerShadows;
         if(instances>0) instances=std::max(instances,2000);
         if(billboards>0) billboards=std::max(billboards,3000);
-        nearShadows=lod::ShadowBillboards(nearShadows,nearRange,14.f);
-        outerShadows=lod::ShadowBillboards(outerShadows,outerRange,80.f);
+        nearShadows=lod::ShadowBudget(nearShadows,nearRange,14.f,lod::TreeShadowCap);
+        outerShadows=lod::ShadowBudget(outerShadows,outerRange,80.f,lod::TreeShadowCap);
         shadowNearBillboards=std::max(shadowNearBillboards,nearShadows);
         shadowOuterBillboards=std::max(shadowOuterBillboards,outerShadows);
         if(instances!=oldInstances || billboards!=oldBillboards || nearShadows!=oldNear || outerShadows!=oldOuter) ++changed;
@@ -370,23 +377,37 @@ void __fastcall OrnamentAttributes(void* self,void*,void* xml) {
     const int changed=ExtendOrnamentAttributes(self);
     if(changed) Log("VR trackside prop LOD floors=80/300/1000m changed=%d",changed);
 }
+int propNearShadows{},propOuterShadows{};
 int ExtendOrnamentSettings(void* self) {
     // 967ad0 reads 0x50-byte styles. 982df4 copies their 12 traversal budgets
-    // before allocating instance buffers. Only raise main_scene (index 0).
+    // (main_scene, shadow_1, shadow_2, shadow_3, envmap_0..5, rear_view,
+    // reflection) from +0x20 before allocating instance buffers. Raise
+    // main_scene and the near/outer shadow passes; the others stay.
     auto styles=Field<unsigned char*>(self,0x468);
     const int count=Field<int>(self,0x46c);
     if(!styles || count<=0 || count>64) return 0;
+    const float nearRange=ShadowNearRange(),outerRange=ShadowOuterRange();
     int changed=0;
     for(int i=0;i<count;++i) {
         auto& capacity=Field<int>(styles+i*0x50,0x20);
-        if(capacity>0 && capacity<2000) {capacity=2000;++changed;}
+        auto& nearShadows=Field<int>(styles+i*0x50,0x24);
+        auto& outerShadows=Field<int>(styles+i*0x50,0x28);
+        if(capacity<0 || capacity>100000 || nearShadows<0 || nearShadows>100000 || outerShadows<0 || outerShadows>100000) continue;
+        const int oldCapacity=capacity,oldNear=nearShadows,oldOuter=outerShadows;
+        if(capacity>0) capacity=std::max(capacity,2000);
+        nearShadows=lod::ShadowBudget(nearShadows,nearRange,14.f,lod::PropShadowCap);
+        outerShadows=lod::ShadowBudget(outerShadows,outerRange,80.f,lod::PropShadowCap);
+        propNearShadows=std::max(propNearShadows,nearShadows);
+        propOuterShadows=std::max(propOuterShadows,outerShadows);
+        if(capacity!=oldCapacity || nearShadows!=oldNear || outerShadows!=oldOuter) ++changed;
     }
     return changed;
 }
 void __fastcall OrnamentSettings(void* self,void*,void* xml) {
     originalOrnamentSettings(self,xml);
     const int changed=ExtendOrnamentSettings(self);
-    if(changed) Log("VR trackside prop main-scene capacity floor=2000 changed_styles=%d",changed);
+    if(changed) Log("VR trackside prop main-scene capacity floor=2000, shadows up to near=%d outer=%d changed_styles=%d",
+        propNearShadows,propOuterShadows,changed);
 }
 struct NearCar {void* car{}; bool close{};};
 void KeepNearbyCars(void* self,std::array<NearCar,8>& state) {
