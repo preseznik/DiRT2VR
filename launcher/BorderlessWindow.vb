@@ -56,7 +56,8 @@ Public Class BorderlessWindow
         For Each game In Process.GetProcessesByName("dirt2_game")
             Using game
                 Try
-                    If String.Equals(game.MainModule.FileName, executable, StringComparison.OrdinalIgnoreCase) Then
+                    ' A process caught as it starts has no main module yet; check it on the next poll.
+                    If String.Equals(game.MainModule?.FileName, executable, StringComparison.OrdinalIgnoreCase) Then
                         UpdateWindow(game.MainWindowHandle, Environment.TickCount64)
                     End If
                 Catch ex As InvalidOperationException

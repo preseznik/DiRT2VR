@@ -48,7 +48,7 @@ Public NotInheritable Class BestLapChannel
         Try
             Using game = Process.GetProcessById(result.ProcessId)
                 If game.HasExited OrElse game.ProcessName <> "dirt2_game" OrElse game.StartTime.ToUniversalTime() < createdUtc.AddSeconds(-1) OrElse
-                    Not String.Equals(game.MainModule.FileName, IO.Path.Combine(context.GameRoot, "dirt2_game.exe"), StringComparison.OrdinalIgnoreCase) Then Return
+                    Not String.Equals(game.MainModule?.FileName, IO.Path.Combine(context.GameRoot, "dirt2_game.exe"), StringComparison.OrdinalIgnoreCase) Then Return
             End Using
             lastSequence = result.Sequence
             BestLapStore.Record(context, New BestLapRecord With {.LayoutId = layoutId, .PackVersion = version, .CarCode = carCode, .CarGrade = carGrade,

@@ -13,7 +13,8 @@ Public Module GameWindow
         For Each game In Process.GetProcessesByName(IO.Path.GetFileNameWithoutExtension(executable))
             Using game
                 Try
-                    If String.Equals(game.MainModule.FileName, executable, StringComparison.OrdinalIgnoreCase) Then
+                    ' A process caught as it starts has no main module yet; keep waiting.
+                    If String.Equals(game.MainModule?.FileName, executable, StringComparison.OrdinalIgnoreCase) Then
                         result = If(rendererOnly, FindRenderer(CUInt(game.Id)), game.MainWindowHandle)
                         If result <> IntPtr.Zero Then Return result
                     End If
