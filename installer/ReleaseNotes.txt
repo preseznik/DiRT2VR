@@ -1,20 +1,24 @@
-DiRT2VR 0.18.8 — Experimental
+DiRT2VR 0.18.9 — Experimental
 
-LATEST CHANGES (since 0.18.7)
+LATEST CHANGES (since 0.18.8)
 
-- Launcher opens with collapsed sections: since 0.18.5, collapsing a section such as Graphics > Desktop could stop the launcher opening on the next start with "Object reference not set to an instance of an object". Remembered collapsed sections now open normally.
-- Sharper VR above 150% render resolution: when Render resolution made the game image larger than the headset's eye image (for example 200-300% on a Valve Index at SteamVR's 100% resolution), it looked lower resolution than 150%. The image is now averaged properly when it's shrunk; at or below the eye size nothing changes.
-- Steadier VR shadows: shadow edges on walls, scenery and the road could crawl and flicker as you moved, especially with Detailed distance above 14 m or a Shadow distance shared through Also apply in VR. VR shadows, and desktop shadows with a Shadow distance override, now stay on a fixed grid. Longer ranges are still less sharp.
-- Launch no longer fails while the game starts: a launch could stop with "Object reference not set to an instance of an object. DiRT 2 is still running..." The launcher now keeps waiting for the game window.
+- Force feedback works with Keep on: in 0.18.7 and 0.18.8, Keep on never took effect in Direct practice, so wheels DiRT 2 doesn't recognise, such as the Logitech G920, had no force feedback unless you switched it in Options mid-race. Force feedback is now switched on as soon as you start driving.
+- VR tree shadows no longer switch on and off: with Detailed distance above about 50 m, or a Shadow distance shared through Also apply in VR, tree and palm shadows could switch on and off as you drove, especially in dense forest such as Tanamera Falls. VR now draws enough tree shadows for the longer ranges, using about 10-20 MB more memory at 60 m and 640 m.
+- One VR render scale: Graphics > VR rendering now has a single VR render scale (50-300%) instead of Render resolution and Headset texture scale. 100% gives the game image as many pixels as your headset's recommended eye image; Graphics shows both sizes.
+- Wheel D-pad binds with "All connected devices": with Automatic input, a Logitech G920's D-pad is now picked up for Menu Up/Down/Left/Right without selecting the wheel first, and a firm press no longer binds an axis instead.
 
-After updating: no track rebuild is needed. Existing settings and best laps are kept.
+After updating: no track rebuild is needed. Existing settings and best laps are kept, except that VR render scale starts at 100%.
 
-Still to check: render resolution above 150% and the steadier shadows in a headset. Please report any problems.
+Still to check: force feedback and the D-pad on a wheel, and the tree shadows and VR render scale in a headset. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.8 — Experimental (changes since 0.18.7)
+
+- Launcher opens with collapsed sections, sharper VR above 150%, steadier VR shadows and a more reliable launch.
 
 0.18.7 — Experimental (changes since 0.18.6)
 
