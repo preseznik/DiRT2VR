@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **VR LAN with 3D beyond the cockpit:** in a LAN race with **3D beyond the cockpit** on, every view, the cockpit included, stayed on the flat theatre screen. VR used the game's flashback recording to tell live driving from replays, and LAN races never record flashbacks. LAN races now count as live driving, which also lets **Remove artificial steering corrections** and chase free look work in LAN. Steering corrections were checked in a desktop LAN race's cockpit; VR LAN with 3D beyond the cockpit is not yet checked in a headset. Until then, VR LAN shows the 3D cockpit with **3D beyond the cockpit** off.
+
 ## 0.18.6 — 2026-11-03 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.6)

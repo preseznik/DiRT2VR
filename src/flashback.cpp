@@ -88,7 +88,11 @@ void __fastcall Update(void* root, void*, const double* dt) {
         playback={Field<int>(root,0xa60),playback.frame+1,GetTickCount64(),
             Field<double>(static_cast<unsigned char*>(root)+0x10,0x1b8),dt?*dt:0.0};
     }
-    liveRecordingTick.store(Field<int>(root,0xa60)==0 ? GetTickCount64() : 0);
+    // LAN races never record flashbacks or replays: the recorder stays idle (7)
+    // for the whole race, so there idle is live driving (ProJict cea14538).
+    static const bool lan=GetEnvironmentVariableW(L"DIRT2VR_LAN_CONFIG",nullptr,0)!=0;
+    const int recording=Field<int>(root,0xa60);
+    liveRecordingTick.store(recording==0 || (lan && recording==7) ? GetTickCount64() : 0);
     activeRecorder=previousRecorder;
     if(!LoggingEnabled()) return;
     // Observe only after the original update has completed.
