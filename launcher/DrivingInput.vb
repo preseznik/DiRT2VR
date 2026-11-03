@@ -123,6 +123,10 @@ Public Class DrivingInput
             Dim analog = DetectAxis(action, device, baseline, current)
             If analog IsNot Nothing Then Return analog
         End If
+        ' Menu, gear and view actions also take the D-pad over a button that changes
+        ' with it, such as an engaged H-shifter gear whose contact flickers.
+        Dim pad = If(Not axesOnly OrElse povReady, DPadPress(device, baseline, current), Nothing)
+        If digital AndAlso pad IsNot Nothing Then binding.Input = pad : Return binding
         If Not axesOnly Then
             For i = 0 To current.Buttons.Length - 1
                 If current.Buttons(i) = 0 OrElse baseline.Buttons(i) <> 0 Then Continue For
@@ -135,15 +139,18 @@ Public Class DrivingInput
                 Return binding
             Next
         End If
-        If (Not axesOnly OrElse povReady) AndAlso device.Name <> "win_xinput" AndAlso current.Pov IsNot Nothing AndAlso baseline.Pov IsNot Nothing AndAlso current.Pov.Length > 0 AndAlso baseline.Pov.Length > 0 Then
-            Dim direction = PovDirection(current.Pov(0))
-            If direction >= 0 AndAlso PovCentered(baseline.Pov(0)) Then
-                binding.Input = DPadInput & DPadDirections(direction)
-                Return binding
-            End If
-        End If
+        If pad IsNot Nothing Then binding.Input = pad : Return binding
         If Not buttonsOnly AndAlso digital Then Return DetectAxis(action, device, baseline, current)
         Return Nothing
+    End Function
+    Public Shared Function IsDigital(action As String) As Boolean
+        Return DigitalActions.Contains(action)
+    End Function
+    ' The D-pad direction pressed from a centred hat, as the game's DPad0 input; Nothing otherwise.
+    Public Shared Function DPadPress(device As Device, baseline As Sample, current As Sample) As String
+        If device.Name = "win_xinput" OrElse current.Pov Is Nothing OrElse baseline.Pov Is Nothing OrElse current.Pov.Length = 0 OrElse baseline.Pov.Length = 0 Then Return Nothing
+        Dim direction = PovDirection(current.Pov(0))
+        Return If(direction >= 0 AndAlso PovCentered(baseline.Pov(0)), DPadInput & DPadDirections(direction), Nothing)
     End Function
     Private Shared Function DetectAxis(action As String, device As Device, baseline As Sample, current As Sample) As DrivingBinding
         Dim binding As New DrivingBinding With {.Action = action, .DeviceId = device.Id, .Device = device.Name}

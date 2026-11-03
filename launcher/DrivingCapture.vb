@@ -99,6 +99,14 @@ Public Class DrivingCapture
                     If probe IsNot Nothing AndAlso probe.Input = candidate.Input Then activeButton = i : Exit For
                 Next
             End If
+        ElseIf Not AxesOnly AndAlso DrivingInput.IsDigital(action) AndAlso Not candidate.Input.StartsWith(DrivingInput.DPadInput, StringComparison.Ordinal) Then
+            ' A D-pad press replaces a button or axis caught on the way to it, such as
+            ' a flickering H-shifter gear (ProJict 8634717e).
+            Dim pad = DrivingInput.DPadPress(device, baseline, current)
+            If pad IsNot Nothing Then
+                candidate = New DrivingBinding With {.Action = action, .DeviceId = device.Id, .Device = device.Name, .Input = pad}
+                activeAxis = -1 : activeButton = -1 : releasedSince = -1
+            End If
         End If
         Dim released As Boolean
         If candidate.Input.StartsWith(DrivingInput.DPadInput, StringComparison.Ordinal) Then

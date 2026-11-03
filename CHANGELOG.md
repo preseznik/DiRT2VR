@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Wheel D-pad binds with a shifter gear engaged:** with a gear engaged on an H-shifter, the binding wizard could take the shifter's gear button (for example "Button 15") instead of a light D-pad press and then keep waiting for it. Menu, gear, view, horn and pause actions now take the D-pad over a button that changes with it, and a D-pad press replaces a button the wizard is still waiting on. Not yet checked on a real wheel.
 - **Desktop puddle flicker:** on desktop, water puddles could flicker or shift briefly when you first reached them, the same game bug that 0.17.158 fixed in VR: the game's first update of its water ripple textures uploads only one of the three. The fix now applies on desktop too. Not yet checked while driving on desktop.
 ## 0.18.9 — 2026-11-03 — Experimental
 
