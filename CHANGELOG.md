@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Force feedback stays on:** for wheels DiRT 2 doesn't recognise, such as the Logitech G920, its force feedback option is off again at every launch. So force feedback was off in Direct practice, Race and LAN, and turning it on in Options didn't last. New **Controls → Driving → Force feedback → Keep on** (on by default) switches it back on at the start of each race, in desktop and VR (DX11). To keep it off, turn Keep on off. Not yet checked on a wheel.
 - **VR LAN with 3D beyond the cockpit:** in a LAN race with **3D beyond the cockpit** on, every view, the cockpit included, stayed on the flat theatre screen. VR used the game's flashback recording to tell live driving from replays, and LAN races never record flashbacks. LAN races now count as live driving, which also lets **Remove artificial steering corrections** and chase free look work in LAN. Steering corrections were checked in a desktop LAN race's cockpit; VR LAN with 3D beyond the cockpit is not yet checked in a headset. Until then, VR LAN shows the 3D cockpit with **3D beyond the cockpit** off.
 
 ## 0.18.6 — 2026-11-03 — Experimental

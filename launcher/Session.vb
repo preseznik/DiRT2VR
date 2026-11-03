@@ -478,6 +478,7 @@ Public Class Session
         SteeringAnimationLaunch.Configure(start, settings)
         ChaseCameraLaunch.Configure(start, settings)
         BackgroundPlayLaunch.Configure(start, settings)
+        ForceFeedbackLaunch.Configure(start, settings)
         AnisotropicFiltering.Configure(start, settings)
         GrassLaunch.Configure(start, settings)
         DesktopShadows.Configure(start, settings)

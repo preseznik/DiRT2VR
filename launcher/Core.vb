@@ -141,6 +141,7 @@ Public Class VrSettings
     Public Property SteeringObserveOnly As Boolean = False
     Public Property ChaseFreeLook As Boolean = False
     Public Property ChaseKeepAngle As Boolean = False
+    Public Property ForceFeedbackOn As Boolean = True
     Public Property ChaseMouseSensitivity As Integer = 100
     Public Property ChaseMouseMode As String = "right"
     Public Property ChaseStickSensitivity As Integer = 100

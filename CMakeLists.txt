@@ -31,7 +31,7 @@ add_library(d3d11 SHARED src/proxy.cpp src/trace.cpp src/direct_menus.cpp src/gf
 target_sources(d3d11 PRIVATE src/race_drivers.cpp src/race_difficulty.cpp src/direct_startup_trace.cpp src/steering_animation.cpp src/driving_controls.cpp src/cockpit_start.cpp src/scene_camera.cpp src/startup_hooks.cpp src/draw_distance.cpp src/flashback.cpp src/seat_adjustment.cpp src/seat_input.cpp src/lan_memory.cpp src/event_picker.cpp)
 target_sources(d3d11 PRIVATE src/event_diagnostics.cpp src/lap_results.cpp)
 target_sources(d3d11 PRIVATE src/car_setup.cpp src/car_grade.cpp src/f04_camera.cpp src/f04_audio.cpp)
-target_sources(d3d11 PRIVATE src/transmission.cpp)
+target_sources(d3d11 PRIVATE src/transmission.cpp src/force_feedback.cpp)
 target_sources(d3d11 PRIVATE src/replay_storage.cpp)
 target_sources(d3d11 PRIVATE src/chase_camera.cpp src/chase_cursor.cpp src/game_pause.cpp src/background_play.cpp)
 target_sources(d3d11 PRIVATE src/photo_mode.cpp)

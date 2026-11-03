@@ -165,6 +165,7 @@ Use the same car/event for three runs: main option off; main option on with Obse
 
 Deadzone resets
 Enabled launcher assignments and calibration reapply on every launch. The editor shows dead zone and saturation beside each controller assignment. Newly bound wheel, pedal and Xbox trigger axes start at 0% dead zone; Xbox thumbsticks start at 20%. To retain zero steering deadzone on older assignments with launcher bindings, set Calibration to 0% for both Steer Left and Steer Right, then Save driving controls. Alternatively, disable launcher bindings and use the game's saved controls. If a reset persists with overrides disabled, report the wheel model, launch mode and whether the game's Save Profile action retains the setting across two launches.
+Force feedback → Keep on is on by default. For wheels DiRT 2 doesn't recognise, such as the Logitech G920, its force feedback option is off again at every launch; Keep on switches it back on at the start of each race in Normal, Direct and LAN sessions (DX11). To keep it off, turn Keep on off. Save and relaunch.
 
 Analogue capture
 Leave axes at rest before starting, then move the requested axis deliberately. Small movements are ignored. Follow the wizard prompts for steering directions and pedals.

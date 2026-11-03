@@ -23,6 +23,7 @@ Public Class MainForm
     Private ReadOnly backgroundPlay As New CheckBox With {.Text = "On (Experimental)", .Name = "KeepRunningUnfocused", .AccessibleName = "Keep running when unfocused (Experimental)", .AutoSize = True}
     Private ReadOnly logging As New CheckBox With {.Text = "Enable diagnostic logging", .Name = "LoggingEnabled", .AutoSize = True}
     Private ReadOnly chaseFreeLook As New CheckBox With {.Text = "On (Experimental)", .Name = "ChaseFreeLook", .AccessibleName = "Free look", .AutoSize = True}
+    Private ReadOnly forceFeedback As New CheckBox With {.Text = "Keep on", .Name = "ForceFeedbackOn", .AccessibleName = "Keep force feedback on", .AutoSize = True}
     Private ReadOnly chaseKeepAngle As New CheckBox With {.Text = "Keep camera angle", .Name = "ChaseKeepAngle", .AutoSize = True}
     Private ReadOnly chaseInvert As New CheckBox With {.Text = "On", .Name = "ChaseInvertVertical", .AutoSize = True}
     Private ReadOnly chaseMouse As New ValueSlider("ChaseMouseSensitivity", 25, 300, 100, "%")
@@ -1008,6 +1009,10 @@ Public Class MainForm
                                                 End Sub)
                                  End Sub
         content.Controls.Add(driving)
+        content.Controls.Add(New Label With {.Text = "Force feedback", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
+        forceFeedback.Checked = settings.ForceFeedbackOn
+        Tip(forceFeedback, "For wheels DiRT 2 doesn't recognise, such as the Logitech G920, its force feedback option is off again at every launch, so turning it on in the game's Options doesn't last. Keep on switches it back on at the start of each race in Normal, Direct and LAN sessions. To keep it off, turn this off. Desktop requires DX11. Save and relaunch.")
+        Field(content, "Force feedback", forceFeedback)
         content = general
         content.Controls.Add(New Label With {.Text = "Cockpit animation", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold), .Margin = New Padding(0, 20, 0, 8)})
         steeringAnimation.Checked = settings.VrSteeringAnimation
@@ -1092,6 +1097,7 @@ Public Class MainForm
         settings.SteeringObserveOnly = steeringObserve.Checked
         settings.ChaseFreeLook = chaseFreeLook.Checked
         settings.ChaseKeepAngle = chaseKeepAngle.Checked
+        settings.ForceFeedbackOn = forceFeedback.Checked
         settings.ChaseMouseSensitivity = chaseMouse.Value : settings.ChaseStickSensitivity = chaseStick.Value
         settings.ChaseMaxZoomOut = chaseMaxZoomOut.Value * 10
         settings.ChaseMouseMode = chaseMouseMode.SelectedMode

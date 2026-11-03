@@ -4,6 +4,7 @@
 #include "gfwl_compat.h"
 #include "driving_controls.h"
 #include "transmission.h"
+#include "force_feedback.h"
 #include "f04_audio.h"
 #include "cockpit_start.h"
 #include "scene_camera.h"
@@ -32,6 +33,8 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); return false; }
     if(!EnableF04Audio()) { Log("f04 audio: incompatible process"); return false; }
     if(!EnableTransmission()) { Log("transmission: incompatible process"); return false; }
+    // Unlike the overrides above, the game's own FFB default is a safe fallback.
+    if(!EnableForceFeedback()) Log("force feedback: keep-on unavailable; game default kept");
     // The desktop seat panel needs the startup camera lookup to identify the car.
     const bool desktopSeat=!headset && direct && DesktopSeatRequested();
     const bool playerCameraReady=!(cockpit || steering || chase || replayProbe || photo || desktopSeat) || EnableCockpitStart(cockpit);
