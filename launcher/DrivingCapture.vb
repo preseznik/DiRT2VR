@@ -58,20 +58,22 @@ Public Class DrivingCapture
             If now - axisSince(i) >= 600 Then baseline.Axes = baseline.Axes Or bit
         Next
         If Not buttonsReady AndAlso Not AxesOnly Then
-            If Not current.Buttons.SequenceEqual(baseline.Buttons) OrElse Not current.Pov.SequenceEqual(baseline.Pov) Then
-                baseline.Buttons = CType(current.Buttons.Clone(), Byte()) : baseline.Pov = CType(current.Pov.Clone(), UInteger()) : buttonsSince = now
+            If Not current.Buttons.SequenceEqual(baseline.Buttons) Then
+                baseline.Buttons = CType(current.Buttons.Clone(), Byte()) : buttonsSince = now
             End If
             buttonsReady = now - buttonsSince >= 600
         End If
+        ' A D-pad rests centred, so it needs no settling like the buttons; one
+        ' held at the start counts once it has been released (ProJict 8634717e).
+        If DrivingInput.PovCentered(current.Pov(0)) Then baseline.Pov(0) = UInteger.MaxValue
         Ready = (Not ButtonsOnly AndAlso baseline.Axes <> 0) OrElse buttonsReady
         If Not Ready Then Return
         ' A button already held at rest is ignored until it has been released.
         For i = 0 To baseline.Buttons.Length - 1
             If current.Buttons(i) = 0 Then baseline.Buttons(i) = 0
         Next
-        If DrivingInput.PovCentered(current.Pov(0)) Then baseline.Pov(0) = UInteger.MaxValue
         If Not WaitingForRelease Then
-            Dim detected = DrivingInput.Detect(action, device, baseline, current, AxesOnly OrElse Not buttonsReady, ButtonsOnly)
+            Dim detected = DrivingInput.Detect(action, device, baseline, current, AxesOnly OrElse Not buttonsReady, ButtonsOnly, povReady:=Not AxesOnly)
             If detected Is Nothing Then candidate = Nothing : Return
             If candidate Is Nothing OrElse candidate.Input <> detected.Input OrElse candidate.Calibration <> detected.Calibration Then
                 candidate = detected : candidateSince = now

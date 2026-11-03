@@ -108,32 +108,41 @@ Public Class DrivingInput
             Case Else : Return value > If(xbox, 0.5F, 0.25F)
         End Select
     End Function
-    Public Shared Function Detect(action As String, device As Device, baseline As Sample, current As Sample, Optional axesOnly As Boolean = False, Optional buttonsOnly As Boolean = False) As DrivingBinding
+    ' Actions normally bound to a button or the D-pad: those win over an axis that
+    ' happens to move with a firm press (ProJict 8634717e).
+    Private Shared ReadOnly DigitalActions As New HashSet(Of String) From {
+        "Gear Up", "Gear Down", "Gear 1", "Gear 2", "Gear 3", "Gear 4", "Gear 5", "Gear 6", "Gear Reverse", "Change View", "Look Back", "Horn", "Pause",
+        "Menu Start Button", "Menu Select", "Menu Back", "Menu Up", "Menu Down", "Menu Left", "Menu Right"}
+    ' povReady reads the D-pad even while axesOnly waits for the buttons to settle.
+    Public Shared Function Detect(action As String, device As Device, baseline As Sample, current As Sample, Optional axesOnly As Boolean = False, Optional buttonsOnly As Boolean = False, Optional povReady As Boolean = False) As DrivingBinding
         If baseline.Connected = 0 OrElse current.Connected = 0 Then Return Nothing
         Dim binding As New DrivingBinding With {.Action = action, .DeviceId = device.Id, .Device = device.Name}
+        Dim digital = DigitalActions.Contains(action)
         ' Prefer analog travel for steering/pedals: some devices also emit a button at the threshold.
-        If Not buttonsOnly Then
+        If Not buttonsOnly AndAlso Not digital Then
             Dim analog = DetectAxis(action, device, baseline, current)
             If analog IsNot Nothing Then Return analog
         End If
-        If axesOnly Then Return Nothing
-        For i = 0 To current.Buttons.Length - 1
-            If current.Buttons(i) = 0 OrElse baseline.Buttons(i) <> 0 Then Continue For
-            If device.Name = "win_xinput" Then
-                If i >= XboxButtons.Length OrElse XboxButtons(i) = "" Then Continue For
-                binding.Input = "win_con_xi_button" & XboxButtons(i)
-            Else
-                binding.Input = "win_con_di_button" & i.ToString()
-            End If
-            Return binding
-        Next
-        If device.Name <> "win_xinput" AndAlso current.Pov IsNot Nothing AndAlso baseline.Pov IsNot Nothing AndAlso current.Pov.Length > 0 AndAlso baseline.Pov.Length > 0 Then
+        If Not axesOnly Then
+            For i = 0 To current.Buttons.Length - 1
+                If current.Buttons(i) = 0 OrElse baseline.Buttons(i) <> 0 Then Continue For
+                If device.Name = "win_xinput" Then
+                    If i >= XboxButtons.Length OrElse XboxButtons(i) = "" Then Continue For
+                    binding.Input = "win_con_xi_button" & XboxButtons(i)
+                Else
+                    binding.Input = "win_con_di_button" & i.ToString()
+                End If
+                Return binding
+            Next
+        End If
+        If (Not axesOnly OrElse povReady) AndAlso device.Name <> "win_xinput" AndAlso current.Pov IsNot Nothing AndAlso baseline.Pov IsNot Nothing AndAlso current.Pov.Length > 0 AndAlso baseline.Pov.Length > 0 Then
             Dim direction = PovDirection(current.Pov(0))
             If direction >= 0 AndAlso PovCentered(baseline.Pov(0)) Then
                 binding.Input = DPadInput & DPadDirections(direction)
                 Return binding
             End If
         End If
+        If Not buttonsOnly AndAlso digital Then Return DetectAxis(action, device, baseline, current)
         Return Nothing
     End Function
     Private Shared Function DetectAxis(action As String, device As Device, baseline As Sample, current As Sample) As DrivingBinding
