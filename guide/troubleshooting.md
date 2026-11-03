@@ -22,6 +22,8 @@
 
 **Unsupported executable or foreign proxy:** use the supported game build and resolve the reported conflict. Do not bypass compatibility checks or download replacement game executables from an untrusted source.
 
+**Launcher won't open: "Object reference not set to an instance of an object":** in 0.18.5 to 0.18.7, a section collapsed in the Graphics tab (for example **Desktop**) can stop the launcher opening on the next start. Update to a newer build, or delete `collapsed-sections.json` from your installation's folder under `%LOCALAPPDATA%\DiRT2VR`; the launcher then opens with every section expanded.
+
 **Custom track/car build failed:** enable diagnostic logging in **Settings**, save, then retry the build. On failure, **Open logs** contains a dated folder with `custom-build-error.json`; its location also appears in the error details. It records the pack, source-folder path and error details, including converter error output when available. Cancelled builds do not create failure reports.
 
 **Move built tracks or cars to another PC:** see [Custom tracks → Moving built tracks or cars to another PC](custom-tracks.md#moving-built-tracks-or-cars-to-another-pc).

@@ -68,7 +68,14 @@ Public Class VerticalStack
     Private ReadOnly collapsedHidden As New HashSet(Of Control)
     Private ReadOnly excluded As New HashSet(Of Control)
     Protected Overrides Sub OnControlAdded(e As ControlEventArgs)
-        e.Control.Dock = DockStyle.None
+        ' Undocking lays out this stack; a row added under a collapsed header is
+        ' already hidden then, and that nested layout fails (ProJict a485819c).
+        SuspendLayout()
+        Try
+            e.Control.Dock = DockStyle.None
+        Finally
+            ResumeLayout(False)
+        End Try
         AddHandler e.Control.SizeChanged, AddressOf ChildSizeChanged
         MyBase.OnControlAdded(e)
     End Sub

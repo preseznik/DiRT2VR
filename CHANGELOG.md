@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Launcher opens with collapsed sections:** since 0.18.5, collapsing a section such as **Graphics → Desktop** could stop the launcher opening on the next start with "Object reference not set to an instance of an object". Remembered collapsed sections now open normally. If you saw this error, delete `collapsed-sections.json` in the launcher's settings folder under `%LOCALAPPDATA%\DiRT2VR`, or update.
+
 ## 0.18.7 — 2026-11-03 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.7)
