@@ -61,8 +61,7 @@ Public Class MainForm
     Private ReadOnly vrAnisotropy As New ValueSlider("VrAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
     Private ReadOnly desktopRoadSheen As New RoadSheenControl("Desktop")
     Private ReadOnly vrRoadSheen As New RoadSheenControl("Vr")
-    Private ReadOnly renderScale As New ValueSlider("RenderScale", 50, 300, 100, "%", recommendedValue:=150)
-    Private ReadOnly headsetScale As New ValueSlider("HeadsetScale", 25, 100, 100, "%")
+    Private ReadOnly renderScale As New ValueSlider("VrRenderScale", VrResolution.MinimumScale, VrResolution.MaximumScale, 100, "%", recommendedValue:=100)
     Private ReadOnly msaa As New ValueSlider("VrMsaa", 0, 3, 1, valueLabels:={"Off", "2×", "4×", "8×"})
     Private ReadOnly extendedViews As New CheckBox With {.Text = "On (Experimental)", .Name = "VrExtendedViews", .AccessibleName = "3D beyond the cockpit (Experimental)", .AutoSize = True}
     Private ReadOnly replayCameras As New CheckBox With {.Text = "On (Experimental)", .Name = "VrReplayCameras", .AccessibleName = "3D chase replays (Experimental)", .AutoSize = True}
@@ -238,11 +237,8 @@ Public Class MainForm
     Private Sub ConfigureTooltips()
         Tip(flashback, "Keeps more rewind history when playing at high FPS, without slowing the game." & vbCrLf & "Single-player desktop and VR only. Experimental; off by default.")
         Tip(backgroundPlay, "Keeps races and replays running when you switch to another app. You can still pause manually. Use windowed or borderless mode for background playback. Save and relaunch.")
-        Tip(renderScale, "How much detail the game draws for each eye. The green notch marks 150% recommended. Higher can be sharper," & vbCrLf &
-            "but needs more GPU power and memory. A low Headset texture scale" & vbCrLf & "can still make the final picture look soft.")
-        Tip(headsetScale, "Size of the finished picture sent to your headset." & vbCrLf &
-            "Lower uses less memory but can blur the view. 100% keeps the" & vbCrLf &
-            "size your VR runtime recommends. This is not car or road texture quality.")
+        Tip(renderScale, "How much detail the game draws for each eye. 100% (the green notch) matches your headset's" & vbCrLf &
+            "recommended resolution, read at each VR launch. Higher can be sharper but needs more GPU power" & vbCrLf & "and memory; lower is faster but softer. The picture sent to the headset always uses its recommended size.")
         Tip(msaa, "Smooths jagged edges in VR. Higher settings use more memory" & vbCrLf & "and GPU power; 4× and 8× can cause crashes. 2× is the default.")
         For Each filtering In {desktopAnisotropy, vrAnisotropy}
             Tip(filtering, "Keeps repeating surface textures clearer at shallow angles. Game preserves native filtering;" & vbCrLf & "Off disables anisotropy on those textures. Higher levels may use more GPU time." & vbCrLf & "Applies next launch; overrides require DX11. Point, shadow-comparison and clamped samplers stay unchanged.")
@@ -740,11 +736,11 @@ Public Class MainForm
         Field(trackEffects, "Depth of field", trackDepthOfField)
         Tip(trackDepthOfField, "Enable distance blur on supported tracks (currently Pikes Peak)." & vbCrLf & "Applies to every car. Other tracks keep their original effects. Save and relaunch to apply.")
         Dim render = Section(columns.First, "VR rendering")
-        renderScale.Value = settings.RenderScale : headsetScale.Value = settings.HeadsetScale : fieldOfView.Value = settings.FieldOfView
+        renderScale.Value = settings.VrRenderScale : fieldOfView.Value = settings.FieldOfView
         mirrors.Items.AddRange({"Game setting", "On", "Off"})
         mirrors.SelectedIndex = Array.IndexOf({"game", "on", "off"}, settings.Mirrors)
         StyleChoice(mirrors, Me)
-        Field(render, "Render resolution", renderScale) : Field(render, "Headset texture scale", headsetScale)
+        Field(render, "VR render scale", renderScale)
         msaa.Value = Array.IndexOf({0, 2, 4, 8}, settings.VrMsaa)
         Field(render, "Anti-aliasing (MSAA)", msaa)
         vrAnisotropy.Value = Array.IndexOf(AnisotropicFiltering.Levels, settings.VrAnisotropy)
@@ -804,7 +800,7 @@ Public Class MainForm
                                        desktopRoadSheen.Percent = 25 : vrRoadSheen.Percent = 25
                                        filters.ResetSelections()
                                        msaa.Value = 1 : vrShadows.Checked = False : vrShadowQuality.SelectedIndex = 0 : vrShadowDetailDistance.Value = 14 : vrCrowds.Checked = False
-                                       renderScale.Value = 100 : headsetScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
+                                       renderScale.Value = 100 : fieldOfView.Value = 100 : mirrors.SelectedIndex = 0
                                        desktopCockpitFov.Value = DesktopSeatTransaction.GameFov
                                        hudFollow.Checked = False : hudDistance.Value = 2
                                        treeDetail.Value = 0 : objectDetail.Value = 0 : hudGauges.Checked = False
@@ -817,7 +813,6 @@ Public Class MainForm
         columns.Second.Controls.Add(HelpLink(Sub() ShowAbout("VR rendering")))
         columns.Second.Controls.Add(actualResolution)
         AddHandler renderScale.ValueChanged, Sub() RefreshGraphicsSummary()
-        AddHandler headsetScale.ValueChanged, Sub() RefreshGraphicsSummary()
         AddHandler fieldOfView.ValueChanged, Sub() RefreshGraphicsSummary()
         RefreshGraphicsSummary()
         RefreshResolutionReport()
@@ -835,10 +830,13 @@ Public Class MainForm
         desktopRoadSheen.SetTrack(layout) : vrRoadSheen.SetTrack(layout)
     End Sub
     Private Sub RefreshGraphicsSummary()
-        Dim preview As New VrSettings With {.RenderScale = CInt(renderScale.Value), .FieldOfView = CInt(fieldOfView.Value)}
-        Dim pixels = preview.RenderWidth * CDbl(preview.RenderHeight) / (1600 * 1200)
-        requestedResolution.Text = $"{preview.RenderWidth} × {preview.RenderHeight} per eye ({pixels:P0} of default pixels)"
-        renderScale.AccessibleDescription = "Requested scene: " & requestedResolution.Text & $". Headset texture: {headsetScale.Value}% of recommended width and height."
+        Dim eye = HeadsetStatus.LastEye(context)
+        Dim preview As New VrSettings With {.VrRenderScale = CInt(renderScale.Value), .FieldOfView = CInt(fieldOfView.Value), .HeadsetEye = eye}
+        Dim limit = VrResolution.Limit(eye, preview.FieldOfView)
+        requestedResolution.Text = $"{preview.RenderWidth} × {preview.RenderHeight} per eye" &
+            If(eye.IsEmpty, " (your headset's size is read at the next VR launch)", $" (headset {eye.Width} × {eye.Height})") &
+            If(preview.VrRenderScale > limit, $"; limited to {limit}% here", "")
+        renderScale.AccessibleDescription = "Requested scene: " & requestedResolution.Text
     End Sub
     Private Sub RefreshResolutionReport()
         Dim description = "Actual resolution: not reported yet. Start a VR session to measure it."
@@ -1115,7 +1113,7 @@ Public Class MainForm
         settings.VrAnisotropy = AnisotropicFiltering.Levels(vrAnisotropy.Value)
         settings.DesktopRoadSheenDefault = desktopRoadSheen.UseTrackDefault : settings.DesktopRoadSheen = desktopRoadSheen.Percent
         settings.VrRoadSheenDefault = vrRoadSheen.UseTrackDefault : settings.VrRoadSheen = vrRoadSheen.Percent
-        settings.RenderScale = CInt(renderScale.Value) : settings.HeadsetScale = CInt(headsetScale.Value)
+        settings.VrRenderScale = CInt(renderScale.Value)
         settings.VrMsaa = {0, 2, 4, 8}(msaa.Value) : settings.VrShadows = vrShadows.Checked
         settings.VrShadowDetailDistance = vrShadowDetailDistance.Value
         settings.VrShadowQuality = vrShadowQuality.SelectedIndex

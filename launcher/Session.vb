@@ -54,7 +54,18 @@ Public Class SessionStatus
 End Class
 Public Class HeadsetStatus
     Public Property RefreshHz As String = ""
+    ' Recommended per-eye size, the basis of VR render scale.
+    Public Property EyeWidth As Integer
+    Public Property EyeHeight As Integer
     Public Property UpdatedUtc As DateTime = DateTime.UtcNow
+    Public Shared Function LastEye(context As InstallContext) As Drawing.Size
+        Try
+            Dim status = Files.ReadJson(Of HeadsetStatus)(IO.Path.Combine(context.UserRoot, "headset.json"))
+            If status IsNot Nothing AndAlso status.EyeWidth > 0 AndAlso status.EyeHeight > 0 Then Return New Drawing.Size(status.EyeWidth, status.EyeHeight)
+        Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is Text.Json.JsonException
+        End Try
+        Return Drawing.Size.Empty
+    End Function
 End Class
 Public Class Session
     Private ReadOnly context As InstallContext
@@ -200,6 +211,7 @@ Public Class Session
                     FilterLaunch.ValidateFiles(context, filterSnapshot)
                     Progress("Preparing VR support…")
                     Worker.Invoke(context, "setup")
+                    settings.HeadsetEye = HeadsetStatus.LastEye(context)
                     Dim logFolder = CreateSessionLog(True)
                     If Not ProbeRuntime(logFolder, runtime) Then
                         Progress("Restoring session files…", "Restoring")
@@ -327,7 +339,8 @@ Public Class Session
         ReplayCameraLaunch.Configure(start, settings)
         start.Environment("DIRT2VR_TRACE_LIGHTS") = "0"
         start.Environment("DIRT2VR_WORLD_SCALE") = "1"
-        start.Environment("DIRT2VR_HEADSET_SCALE") = (settings.HeadsetScale / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
+        ' The headset image always uses the runtime's recommended size (ProJict ec0902fe).
+        start.Environment("DIRT2VR_HEADSET_SCALE") = "1"
         start.Environment("DIRT2VR_SCENE_SIZE") = $"{settings.RenderWidth}x{settings.RenderHeight}"
         start.Environment("DIRT2VR_FOV_SCALE") = (settings.FieldOfView / 100.0).ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_HUD_FOLLOW") = If(settings.HudFollowView, "1", "0")
@@ -573,7 +586,8 @@ Public Class Session
     Public Shared Sub SavePreflightReport(context As InstallContext, report As String, logFolder As String)
         If logFolder IsNot Nothing Then File.WriteAllText(IO.Path.Combine(logFolder, "preflight.txt"), report)
         Dim match = System.Text.RegularExpressions.Regex.Match(report, "(?m)^display_refresh_hz=([0-9.]+)")
-        Files.SaveJson(IO.Path.Combine(context.UserRoot, "headset.json"), New HeadsetStatus With {.RefreshHz = If(match.Success, match.Groups(1).Value, "")})
+        Dim eye = VrResolution.EyeFromReport(report)
+        Files.SaveJson(IO.Path.Combine(context.UserRoot, "headset.json"), New HeadsetStatus With {.RefreshHz = If(match.Success, match.Groups(1).Value, ""), .EyeWidth = eye.Width, .EyeHeight = eye.Height})
     End Sub
     Private Function ProbeRuntime(logFolder As String, runtime As VrRuntimeInfo) As Boolean
         Dim executable = IO.Path.Combine(context.ModRoot, "payload\xr_probe.exe")
@@ -597,6 +611,10 @@ Public Class Session
         vrLayerBypasses.Clear() : vrLayerBypasses.AddRange(preflight.Bypasses)
         SavePreflightReport(context, preflight.Report, Nothing)
         If preflight.Warning <> "" Then displayWarning = (displayWarning & " " & preflight.Warning).Trim()
+        ' VR render scale is relative to this headset's recommended eye size.
+        settings.HeadsetEye = VrResolution.EyeFromReport(preflight.Report)
+        Dim limit = VrResolution.Limit(settings.HeadsetEye, settings.FieldOfView)
+        If settings.VrRenderScale > limit Then displayWarning = (displayWarning & $" VR render scale is limited to {limit}% on this headset ({VrResolution.MaximumWidth} × {VrResolution.MaximumHeight}).").Trim()
         Return True
     End Function
 End Class

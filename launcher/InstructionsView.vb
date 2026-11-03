@@ -78,13 +78,10 @@ Driver settings, Windows and your monitor can affect frame rate and presentation
 
 First launch and recovery
 If the game has not created a graphics file yet, use Normal Launch once before applying display overrides. If Windows rejects a borderless window change, the launcher reports a warning and keeps ordinary windowed play available. Alt+Tab and minimization remain available.",
-        "Render resolution
-100% requests 1600 × 1200 per eye at full field of view. The 50–300% slider scales width and height. A green notch marks the recommended 150%; the default remains 100%. 300% requests 4800 × 3600 per eye, nine times the baseline pixels, and needs substantially more memory and GPU time if applied. Graphics shows the requested scene size and the last VR launch's measured game and headset dimensions. A mismatch means the game did not retain the requested size; the apparent mirror window size alone is not proof. Enable diagnostic logging before a troubleshooting run to record startup size changes.
+        "VR render scale
+How much detail the game draws for each eye, 50–300%. 100% (the green notch) gives the game image as many pixels as your headset's recommended eye image, read at each VR launch; the image stays 4:3 because DiRT 2 also shows its menus on it. For example, a Valve Index's 2016 × 2240 eye gives 2454 × 1840 at 100%. Higher can be sharper but needs more GPU power and memory; lower is faster but softer. The picture sent to the headset always uses its recommended size. The game supports up to 4800 × 3600; a higher scale is limited to that, and the launcher says so. Before the first VR launch, 100% is 1600 × 1200.
 
-Headset texture scale
-This is the size of the finished picture sent to your headset, not the quality of car or road textures. Render resolution controls how much detail the game draws first; Headset texture scale controls how much of that detail survives in the final picture. A low value can make even a high-resolution scene look soft.
-
-100% uses the picture size your VR runtime recommends. 50% halves both width and height, leaving one quarter as many pixels. For example, if your VR runtime recommends 3000 × 3000, 50% sends 1500 × 1500. Lower values use less memory and may help performance; higher values can retain more detail but cannot create detail missing from the game render. Default: 100%. Existing saved values are kept; Reset graphics defaults selects 100%. This changes neither headset refresh rate nor the quality of the game's original textures. Change one slider at a time when comparing clarity. The floating HUD uses a separate image and is not scaled by this slider.
+Graphics shows the size it will render and your headset's size from the last VR launch, plus the last launch's measured game and headset dimensions. A mismatch means the game did not retain the requested size; the apparent mirror window size alone is not proof. Enable diagnostic logging before a troubleshooting run to record startup size changes.
 
 Anti-aliasing (MSAA)
 VR uses its own Off / 2× / 4× / 8× setting. Default: 2×. Higher values smooth edges but cost memory and GPU time; 4× and especially 8× may make VR unstable in this 32-bit game. Reduce MSAA first if VR crashes. Your desktop MSAA is restored after play.

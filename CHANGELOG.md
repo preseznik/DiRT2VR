@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **One VR render scale:** **Graphics → VR rendering** now has a single **VR render scale** (50–300%) instead of **Render resolution** and **Headset texture scale**, as in GRID2VR and DIRT3VR. 100% gives the game image as many pixels as your headset's recommended eye image, read at each VR launch; the image stays 4:3 because DiRT 2 also shows its menus on it in VR. The picture sent to the headset always uses its recommended size. Graphics shows the size it will render and your headset's size. Scales that would go over the game's 4800 × 3600 limit use the largest size that fits, and the launcher says so. Your previous Render resolution and Headset texture scale aren't carried over: VR render scale starts at 100%. Not yet checked in a headset.
 ## 0.18.8 — 2026-11-03 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.8)

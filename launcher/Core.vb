@@ -131,8 +131,11 @@ Public Class VrSettings
     Public Property VrRoadSheen As Integer = 25
     Public Property DesktopFilterId As String = "original"
     Public Property VrFilterId As String = "original"
-    Public Property RenderScale As Integer = 100
-    Public Property HeadsetScale As Integer = 100
+    ' 100% = the headset's recommended eye pixels; see VrResolution.
+    Public Property VrRenderScale As Integer = 100
+    ' The connected headset's recommended eye size for this launch, or the last one seen.
+    <Serialization.JsonIgnore>
+    Public Property HeadsetEye As Drawing.Size
     Public Property VrShadows As Boolean = False
     Public Property VrShadowQuality As Integer = 0
     Public Property VrShadowDetailDistance As Integer = 14
@@ -209,13 +212,13 @@ Public Class VrSettings
     <Serialization.JsonIgnore>
     Public ReadOnly Property RenderWidth As Integer
         Get
-            Return CInt(Math.Round(1600.0 * RenderScale * FieldOfView / 10000))
+            Return VrResolution.Scene(HeadsetEye, VrRenderScale, FieldOfView).Width
         End Get
     End Property
     <Serialization.JsonIgnore>
     Public ReadOnly Property RenderHeight As Integer
         Get
-            Return CInt(Math.Round(1200.0 * RenderScale * FieldOfView / 10000))
+            Return VrResolution.Scene(HeadsetEye, VrRenderScale, FieldOfView).Height
         End Get
     End Property
     Public Sub Validate()
@@ -242,7 +245,7 @@ Public Class VrSettings
         DirectCarSetup.Validate()
         If Laps < 1 OrElse Laps > 20 Then Throw New IOException("Choose between one and twenty laps.")
         RaceCatalog.Current.Track(TrackId) : RaceCatalog.Current.Car(CarCode)
-        If RenderScale < 50 OrElse RenderScale > 300 OrElse HeadsetScale < 25 OrElse HeadsetScale > 100 OrElse FieldOfView < 70 OrElse FieldOfView > 100 OrElse Not {"game", "on", "off"}.Contains(Mirrors) Then Throw New IOException("Invalid VR graphics settings.")
+        If VrRenderScale < VrResolution.MinimumScale OrElse VrRenderScale > VrResolution.MaximumScale OrElse FieldOfView < 70 OrElse FieldOfView > 100 OrElse Not {"game", "on", "off"}.Contains(Mirrors) Then Throw New IOException("Invalid VR graphics settings.")
         If TreeDetail < 0 OrElse TreeDetail > 5 OrElse ObjectDetail < 0 OrElse ObjectDetail > 5 Then Throw New IOException("Invalid scenery detail settings.")
         If Not ValidKey(ToggleKey) OrElse Not ValidKey(RecenterKey) OrElse ToggleModifiers < 0 OrElse ToggleModifiers > 7 OrElse RecenterModifiers < 0 OrElse RecenterModifiers > 7 Then Throw New IOException("Choose valid keyboard shortcuts.")
         If ToggleKey = RecenterKey AndAlso ToggleModifiers = RecenterModifiers Then Throw New IOException("Toggle VR and recenter must have different shortcuts.")
