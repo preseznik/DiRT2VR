@@ -48,10 +48,13 @@ inline bool OrnamentRanges(float* ranges) {
 // (shadow_2) map passes, each capped per style for the game's 14 m and 80 m
 // ranges. A longer range covers more trees; once a dense track overflows the
 // cap, which trees cast a shadow changes as the view moves. Scale the cap with
-// the covered area. A zero budget (no billboard shadows) stays zero.
+// the covered area. A zero budget (no billboard shadows) stays zero. Budgets
+// cost memory (about 70 bytes a billboard in lab runs) in a VR process limited
+// to 2 GB, so stop at 12,000 per style: enough for the ~13,000 trees across
+// Tanamera's styles in a 640 m outer map.
 inline int ShadowBillboards(int budget,float range,float native) {
     if(budget<=0 || !std::isfinite(range) || !(native>0) || range<=native) return budget;
-    const float scaled=std::min(float(budget)*(range/native)*(range/native),30000.f);
+    const float scaled=std::min(float(budget)*(range/native)*(range/native),12000.f);
     return std::max(budget,int(scaled));
 }
 inline bool Nearby(const float* eye,const float* car,bool previous) {
