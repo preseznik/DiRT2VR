@@ -94,11 +94,24 @@ Public Class SeatChannel
     Private sequence As Integer
     Private generation As UInteger
     Private lastHints As String
+    ' A wheel without its own Save / Cancel uses its launcher Menu Select / Menu Back
+    ' buttons, as Xbox controllers use A / B (ProJict 70b7663d, 1be75408).
+    Private ReadOnly menuButtons As New Dictionary(Of String, Integer())(StringComparer.OrdinalIgnoreCase)
     ' Desktop sessions use the desktop positions and also carry the desktop
     ' field of view (offsets 204-215 were unused).
     Public Sub New(installation As InstallContext, preferences As VrSettings, Optional desktopMode As Boolean = False)
         context = installation : settings = preferences : desktop = desktopMode
         positions = SeatPositions.Load(context, desktop) : savedFov = settings.DesktopCockpitFov
+        Dim driving = DrivingControls.Load(context)
+        If driving.Enabled Then
+            For Each binding In driving.Bindings
+                Dim slot = Array.IndexOf({"Menu Select", "Menu Back"}, binding.Action), button As Integer
+                If slot < 0 OrElse binding.Keyboard OrElse binding.Device = "win_xinput" OrElse Not binding.Input.StartsWith("win_con_di_button", StringComparison.Ordinal) OrElse
+                   Not Integer.TryParse(binding.Input.Substring(17), Globalization.NumberStyles.None, Globalization.CultureInfo.InvariantCulture, button) Then Continue For
+                If Not menuButtons.ContainsKey(binding.DeviceId) Then menuButtons(binding.DeviceId) = New Integer(1) {}
+                If menuButtons(binding.DeviceId)(slot) = 0 Then menuButtons(binding.DeviceId)(slot) = button + 1
+            Next
+        End If
         cars = RaceCatalog.Current.Cars.Take(128).ToArray()
         mapping = MemoryMappedFile.CreateNew(Name, Size) : view = mapping.CreateViewAccessor()
         view.Write(0, &H54414553) : view.Write(4, 2) : view.Write(8, Size)
@@ -145,7 +158,11 @@ Public Class SeatChannel
     Private Sub WriteHints(device As ControllerSample)
         Dim modifier = "Shift", save = "Enter", cancel = "Esc"
         If device IsNot Nothing Then
-            Dim defaults = If(device.Source = "xinput", {"X", "A", "B"}, {"unbound", "unbound", "unbound"})
+            Dim menu As Integer() = Nothing
+            menuButtons.TryGetValue(device.Device, menu)
+            Dim defaults = If(device.Source = "xinput", {"X", "A", "B"},
+                {"unbound", If(menu IsNot Nothing AndAlso menu(0) > 0, ControllerNames.ButtonName(device.Source, menu(0)), "unbound"),
+                            If(menu IsNot Nothing AndAlso menu(1) > 0, ControllerNames.ButtonName(device.Source, menu(1)), "unbound")})
             Dim names As New List(Of String)
             For action = 9 To 11
                 Dim a = action
@@ -219,6 +236,13 @@ Public Class SeatChannel
                         If buttons.Contains(256) Then mask = mask Or (1UI << 15)
                         localConsumed.Add(256) : localConsumed.Add(512)
                     End If
+                ElseIf menuButtons.ContainsKey(sample.Device) Then
+                    For i = 0 To 1
+                        Dim action = 10 + i, button = menuButtons(sample.Device)(i)
+                        If button = 0 OrElse settings.Bindings.Any(Function(b) b.Action = action AndAlso b.Source = sample.Source AndAlso b.Device = sample.Device) Then Continue For
+                        If buttons.Contains(button) Then mask = mask Or (1UI << (11 + i))
+                        localConsumed.Add(button)
+                    Next
                 End If
             End If
             If mask = 0 AndAlso selected <> key Then Continue For
