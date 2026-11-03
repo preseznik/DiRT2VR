@@ -44,6 +44,16 @@ inline bool OrnamentRanges(float* ranges) {
     ranges[2]=std::max(ranges[2],1000.f);
     return true;
 }
+// Tree shadows are billboards drawn by the near (shadow_1) and outer
+// (shadow_2) map passes, each capped per style for the game's 14 m and 80 m
+// ranges. A longer range covers more trees; once a dense track overflows the
+// cap, which trees cast a shadow changes as the view moves. Scale the cap with
+// the covered area. A zero budget (no billboard shadows) stays zero.
+inline int ShadowBillboards(int budget,float range,float native) {
+    if(budget<=0 || !std::isfinite(range) || !(native>0) || range<=native) return budget;
+    const float scaled=std::min(float(budget)*(range/native)*(range/native),30000.f);
+    return std::max(budget,int(scaled));
+}
 inline bool Nearby(const float* eye,const float* car,bool previous) {
     float squared=0;
     for(unsigned i=0;i<3;++i) {

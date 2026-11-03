@@ -299,28 +299,54 @@ void __fastcall TreeAttributes(void* self,void*,void* xml) {
     const int changed=ExtendTreeAttributes(self);
     if(changed) Log("VR vegetation tree/bush LOD floors=80/300/1000m changed=%d",changed);
 }
+// VR shadow map ranges, as the launcher passes them: Detailed distance for the
+// near map (14 m default) and the shared Shadow distance for the outer map
+// (the game's 80 m unless extended).
+float ShadowRange(const wchar_t* name,float fallback,float low,float high) {
+    wchar_t flag[8]{};
+    if(GetEnvironmentVariableW(L"DIRT2VR_SHADOWS",flag,8)!=1 || flag[0]!=L'1') return fallback;
+    wchar_t value[16]{};
+    const auto size=GetEnvironmentVariableW(name,value,16);
+    if(!size || size>=16) return fallback;
+    wchar_t* end{};
+    const auto parsed=wcstoul(value,&end,10);
+    return end!=value && !*end && parsed>=low && parsed<=high ? float(parsed) : fallback;
+}
+int shadowNearBillboards{},shadowOuterBillboards{};
 int ExtendTreeSettings(void* self) {
     auto styles=Field<unsigned char*>(self,0x180);
     const int count=Field<int>(self,0x184);
     if(!styles || count<=0 || count>64) return 0;
+    static const float nearRange=ShadowRange(L"DIRT2VR_SHADOW_DETAIL_DISTANCE",14.f,14.f,60.f);
+    static const float outerRange=ShadowRange(L"DIRT2VR_VR_SHADOW_DISTANCE",80.f,160.f,640.f);
     int changed=0;
     for(int i=0;i<count;++i) {
-        // 96dd20: 0x78-byte style, main_scene traversal index 0. Other
-        // traversal budgets (shadows, reflections, mirrors) stay untouched.
+        // 96dd20: 0x78-byte style with 11 traversals in file order (main_scene,
+        // shadow_1, shadow_2, shadow_3, envmap_0..5, rear_view): instance
+        // budgets from +0x20 and billboard budgets from +0x4c. Raise main_scene
+        // and the near/outer shadow billboards; reflections and mirrors stay.
         auto& instances=Field<int>(styles+i*0x78,0x20);
         auto& billboards=Field<int>(styles+i*0x78,0x4c);
-        if(instances<0 || instances>100000 || billboards<0 || billboards>100000) continue;
-        const int oldInstances=instances,oldBillboards=billboards;
+        auto& nearShadows=Field<int>(styles+i*0x78,0x50);
+        auto& outerShadows=Field<int>(styles+i*0x78,0x54);
+        if(instances<0 || instances>100000 || billboards<0 || billboards>100000 ||
+           nearShadows<0 || nearShadows>100000 || outerShadows<0 || outerShadows>100000) continue;
+        const int oldInstances=instances,oldBillboards=billboards,oldNear=nearShadows,oldOuter=outerShadows;
         if(instances>0) instances=std::max(instances,2000);
         if(billboards>0) billboards=std::max(billboards,3000);
-        if(instances!=oldInstances || billboards!=oldBillboards) ++changed;
+        nearShadows=lod::ShadowBillboards(nearShadows,nearRange,14.f);
+        outerShadows=lod::ShadowBillboards(outerShadows,outerRange,80.f);
+        shadowNearBillboards=std::max(shadowNearBillboards,nearShadows);
+        shadowOuterBillboards=std::max(shadowOuterBillboards,outerShadows);
+        if(instances!=oldInstances || billboards!=oldBillboards || nearShadows!=oldNear || outerShadows!=oldOuter) ++changed;
     }
     return changed;
 }
 void __fastcall TreeSettings(void* self,void*,void* xml) {
     originalTreeSettings(self,xml);
     const int changed=ExtendTreeSettings(self);
-    if(changed) Log("VR vegetation main-scene tree capacity floors=2000/3000 changed_styles=%d",changed);
+    if(changed) Log("VR vegetation main-scene tree capacity floors=2000/3000, shadow billboards up to near=%d outer=%d changed_styles=%d",
+        shadowNearBillboards,shadowOuterBillboards,changed);
 }
 int ExtendOrnamentAttributes(void* self) {
     // 959170 allocates 0x58-byte records, then reads linear distances at +24.
