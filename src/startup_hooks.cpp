@@ -15,6 +15,7 @@
 #include "test_message.h"
 #include "background_play.h"
 #include "photo_mode.h"
+#include "water_ripples.h"
 namespace vr { bool EnableSeatAdjustment(); bool DesktopSeatRequested(); bool EnableLanMemory(); }
 #include "common.h"
 
@@ -35,6 +36,9 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     if(!EnableTransmission()) { Log("transmission: incompatible process"); return false; }
     // Unlike the overrides above, the game's own FFB default is a safe fallback.
     if(!EnableForceFeedback()) Log("force feedback: keep-on unavailable; game default kept");
+    // The game's first ripple update skips two of three texture uploads, so puddles
+    // flicker on first approach on desktop as in VR. VR also enables it in trace.cpp.
+    if(!EnableWaterRippleInitialization()) Log("water ripples: first-use fix unavailable; game behaviour kept");
     // The desktop seat panel needs the startup camera lookup to identify the car.
     const bool desktopSeat=!headset && direct && DesktopSeatRequested();
     const bool playerCameraReady=!(cockpit || steering || chase || replayProbe || photo || desktopSeat) || EnableCockpitStart(cockpit);

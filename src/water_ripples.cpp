@@ -61,7 +61,8 @@ bool RippleCodeMatches(const unsigned char* base) {
 
 bool EnableWaterRippleInitialization() {
     if(realUpdate)return true;
-    if(!SupportedHost())return false;
+    // Desktop sessions may not edit code yet; hide this edit from GFWL's image check too.
+    if(!SupportedHost() || !EnableGfwlCompatibility())return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
     if(!RippleCodeMatches(base)) {
         Log("water ripple initialization hook rejected instruction guard");
@@ -75,7 +76,7 @@ bool EnableWaterRippleInitialization() {
         if(status!=MH_OK)MH_RemoveHook(entry);
     }
     if(status!=MH_OK){realUpdate=nullptr;markDirty=nullptr;}
-    Log("water ripple initialization hook RVA=0x6b7b50 status=%s; headset validation pending",MH_StatusToString(status));
+    Log("water ripple initialization hook RVA=0x6b7b50 status=%s",MH_StatusToString(status));
     return status==MH_OK;
 }
 }
