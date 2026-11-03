@@ -5,6 +5,7 @@
 #include "chase_camera.h"
 #include "replay_camera.h"
 #include "replay_storage.h"
+#include "force_feedback.h"
 #include <intrin.h>
 #include "gfwl_compat.h"
 #include <MinHook.h>
@@ -92,7 +93,13 @@ void __fastcall Update(void* root, void*, const double* dt) {
     // for the whole race, so there idle is live driving (ProJict cea14538).
     static const bool lan=GetEnvironmentVariableW(L"DIRT2VR_LAN_CONFIG",nullptr,0)!=0;
     const int recording=Field<int>(root,0xa60);
-    liveRecordingTick.store(recording==0 || (lan && recording==7) ? GetTickCount64() : 0);
+    const bool live=recording==0 || (lan && recording==7);
+    // Direct practice can start driving with the player's FFB off (ProJict 2ec8701d).
+    // Track the root too: a restarted race may go live again without leaving it.
+    static void* liveRoot{};
+    if(live && liveRoot!=root && ForceFeedbackRequested()) ForceFeedbackLiveDriving();
+    liveRoot=live ? root : nullptr;
+    liveRecordingTick.store(live ? GetTickCount64() : 0);
     activeRecorder=previousRecorder;
     if(!LoggingEnabled()) return;
     // Observe only after the original update has completed.
@@ -129,7 +136,7 @@ bool EnableFlashback() {
     sample60=GetEnvironmentVariableW(L"DIRT2VR_FLASHBACK60",enabled,8)==1 && enabled[0]==L'1';
     disableFullRecording=GetEnvironmentVariableW(L"DIRT2VR_RECORD_FULL_REPLAY",enabled,8)==1 && enabled[0]==L'0';
     const bool interceptSerialization=sample60 || disableFullRecording;
-    if(!interceptSerialization && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled() && !ReplayStorageRequested()) return true;
+    if(!interceptSerialization && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled() && !ReplayStorageRequested() && !ForceFeedbackRequested()) return true;
     if(update && (!interceptSerialization || serialize)) return true;
     if(!SupportedHost()) return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));
