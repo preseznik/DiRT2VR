@@ -1,20 +1,24 @@
-DiRT2VR 0.18.9 — Experimental
+DiRT2VR 0.18.10 — Experimental
 
-LATEST CHANGES (since 0.18.8)
+LATEST CHANGES (since 0.18.9)
 
-- Force feedback works with Keep on: in 0.18.7 and 0.18.8, Keep on never took effect in Direct practice, so wheels DiRT 2 doesn't recognise, such as the Logitech G920, had no force feedback unless you switched it in Options mid-race. Force feedback is now switched on as soon as you start driving.
-- VR tree shadows no longer switch on and off: with Detailed distance above about 50 m, or a Shadow distance shared through Also apply in VR, tree and palm shadows could switch on and off as you drove, especially in dense forest such as Tanamera Falls. VR now draws enough tree shadows for the longer ranges, using about 10-20 MB more memory at 60 m and 640 m.
-- One VR render scale: Graphics > VR rendering now has a single VR render scale (50-300%) instead of Render resolution and Headset texture scale. 100% gives the game image as many pixels as your headset's recommended eye image; Graphics shows both sizes.
-- Wheel D-pad binds with "All connected devices": with Automatic input, a Logitech G920's D-pad is now picked up for Menu Up/Down/Left/Right without selecting the wheel first, and a firm press no longer binds an axis instead.
+- Wheel buttons in Next event and the seat panel: on a wheel such as the Logitech G920, only the D-pad worked in the Next event panel and the seat panel. A wheel now confirms and cancels with the buttons you assigned to Menu Select and Menu Back in Configure driving controls, as Xbox controllers use A and B. Seat panel buttons you assigned yourself still take precedence.
+- Wheel D-pad binds with a shifter gear engaged: with a gear engaged on an H-shifter, the binding wizard could take the shifter's gear button instead of a light D-pad press. Menu, gear, view, horn and pause actions now take the D-pad.
+- Desktop puddle flicker: on desktop, water puddles could flicker or shift briefly when you first reached them. The fix VR already had now applies on desktop too.
+- VR trackside shadows stay put: with a long Shadow distance, shadows of trackside props such as the start-line gantry at Tanamera Falls could switch on and off. VR now draws enough of them for the longer ranges.
 
-After updating: no track rebuild is needed. Existing settings and best laps are kept, except that VR render scale starts at 100%.
+After updating: no track rebuild is needed. Existing settings and best laps are kept.
 
-Still to check: force feedback and the D-pad on a wheel, and the tree shadows and VR render scale in a headset. Please report any problems.
+Still to check: the wheel buttons and D-pad on a wheel, desktop puddles while driving, and the trackside shadows in a headset. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.9 — Experimental (changes since 0.18.8)
+
+- Force feedback Keep on works in Direct practice, VR tree shadows stop switching on and off, one VR render scale and wheel D-pad binding.
 
 0.18.8 — Experimental (changes since 0.18.7)
 

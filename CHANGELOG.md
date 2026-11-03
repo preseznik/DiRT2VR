@@ -6,10 +6,19 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.10 — 2026-11-03 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.10)
+
 - **Wheel buttons in Next event and the seat panel:** on a wheel such as the Logitech G920, only the D-pad worked in the **Next event** panel and the seat panel; **A** didn't confirm, because a wheel had no save or cancel button unless you assigned seat panel buttons. A wheel now uses the buttons you assigned to **Menu Select** and **Menu Back** in **Configure driving controls**, as Xbox controllers use **A** and **B**. Seat panel buttons you assigned yourself still take precedence. Not yet checked on a real wheel.
 - **Wheel D-pad binds with a shifter gear engaged:** with a gear engaged on an H-shifter, the binding wizard could take the shifter's gear button (for example "Button 15") instead of a light D-pad press and then keep waiting for it. Menu, gear, view, horn and pause actions now take the D-pad over a button that changes with it, and a D-pad press replaces a button the wizard is still waiting on. Not yet checked on a real wheel.
 - **Desktop puddle flicker:** on desktop, water puddles could flicker or shift briefly when you first reached them, the same game bug that 0.17.158 fixed in VR: the game's first update of its water ripple textures uploads only one of the three. The fix now applies on desktop too. Not yet checked while driving on desktop.
 - **VR trackside prop shadows no longer switch on and off:** with a **Shadow distance** shared through **Also apply in VR** or a longer **Detailed distance**, shadows of banners, tents, gantries and other trackside props could still switch on and off as you drove or looked around, most visibly around the Tanamera Falls start line. Like tree shadows in 0.18.9, the game draws them from a fixed number of props per shadow map: Tanamera's start area needs about 560 in a 640 m map, but the game allows 200. VR now raises those budgets in the same way (up to 6,000 props per map), which uses well under 1 MB more memory. At the default 14 m and Game distances nothing changes. Not yet checked in a headset.
+
+**After updating:** no track rebuild is needed. Existing settings and best laps are kept.
+
+Please report any problems.
+
 ## 0.18.9 — 2026-11-03 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.9)
