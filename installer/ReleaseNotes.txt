@@ -1,19 +1,24 @@
-DiRT2VR 0.18.7 — Experimental
+DiRT2VR 0.18.8 — Experimental
 
-LATEST CHANGES (since 0.18.6)
+LATEST CHANGES (since 0.18.7)
 
-- Force feedback stays on: for wheels DiRT 2 doesn't recognise, such as the Logitech G920, its force feedback option was off again at every launch, so Direct practice, Race and LAN had no force feedback. New Controls > Driving > Force feedback > Keep on (on by default) switches it back on at the start of each race, in desktop and VR (DX11). To keep force feedback off, turn Keep on off.
-- VR LAN with 3D beyond the cockpit: in a LAN race with 3D beyond the cockpit on, every view, the cockpit included, stayed on the flat screen. LAN races now count as live driving, so VR shows them in 3D. This also lets Remove artificial steering corrections and chase free look work in LAN.
-- VR trees beside and behind you: trees you could still see out of a side window or when looking back could disappear as you drove past. VR now keeps the main view's trees visible in every direction, with their usual draw distance.
+- Launcher opens with collapsed sections: since 0.18.5, collapsing a section such as Graphics > Desktop could stop the launcher opening on the next start with "Object reference not set to an instance of an object". Remembered collapsed sections now open normally.
+- Sharper VR above 150% render resolution: when Render resolution made the game image larger than the headset's eye image (for example 200-300% on a Valve Index at SteamVR's 100% resolution), it looked lower resolution than 150%. The image is now averaged properly when it's shrunk; at or below the eye size nothing changes.
+- Steadier VR shadows: shadow edges on walls, scenery and the road could crawl and flicker as you moved, especially with Detailed distance above 14 m or a Shadow distance shared through Also apply in VR. VR shadows, and desktop shadows with a Shadow distance override, now stay on a fixed grid. Longer ranges are still less sharp.
+- Launch no longer fails while the game starts: a launch could stop with "Object reference not set to an instance of an object. DiRT 2 is still running..." The launcher now keeps waiting for the game window.
 
 After updating: no track rebuild is needed. Existing settings and best laps are kept.
 
-Still to check: force feedback on a real wheel, a VR LAN race with 3D beyond the cockpit on, and the trees in a headset. Please report any problems.
+Still to check: render resolution above 150% and the steadier shadows in a headset. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.7 — Experimental (changes since 0.18.6)
+
+- Force feedback Keep on, VR LAN with 3D beyond the cockpit, and VR trees beside and behind you.
 
 0.18.6 — Experimental (changes since 0.18.5)
 
