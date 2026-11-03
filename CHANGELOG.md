@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Sharper VR above 150% render resolution:** when **Render resolution** made the game image larger than the headset's eye image (for example 200–300% on a Valve Index at SteamVR's 100% resolution), DiRT2VR shrank it with one sample per pixel, which skipped detail and shimmered, so it looked lower resolution than 150% ([#5](https://github.com/preseznik/DiRT2VR/issues/5)). The image is now averaged over each eye pixel when it's shrunk; at or below the eye size nothing changes. Not yet checked in a headset.
 - **Launcher opens with collapsed sections:** since 0.18.5, collapsing a section such as **Graphics → Desktop** could stop the launcher opening on the next start with "Object reference not set to an instance of an object". Remembered collapsed sections now open normally. If you saw this error, delete `collapsed-sections.json` in the launcher's settings folder under `%LOCALAPPDATA%\DiRT2VR`, or update.
 
 ## 0.18.7 — 2026-11-03 — Experimental

@@ -11,16 +11,28 @@ bool EyeBlit::Initialize(ID3D11Device* device) {
     if(vr::graphics::Failed(device->QueryInterface(IID_PPV_ARGS(&device1)),device,"blit D3D11.1 device") || vr::graphics::Failed(context.As(&context_),device,"blit D3D11.1 context")) return false;
     auto level=device->GetFeatureLevel();
     if(vr::graphics::Failed(device1->CreateDeviceContextState(0,&level,1,D3D11_SDK_VERSION,__uuidof(ID3D11Device),nullptr,&state_),device,"blit context state")) return false;
+    // A scene rendered larger than the eye texture (e.g. 300% into a 2016-wide
+    // eye) must be averaged over each pixel's footprint: one bilinear tap
+    // skips texels and shimmers, which reads as lower resolution (GitHub #5).
     const char* shader=R"(
 Texture2D image:register(t0); SamplerState linearClamp:register(s0);
 struct V { float4 position:SV_Position; float2 uv:TEXCOORD; };
 V vs(uint id:SV_VertexID) { V v; v.uv=float2((id<<1)&2,id&2); v.position=float4(v.uv*float2(2,-2)+float2(-1,1),0,1); return v; }
+float4 Footprint(float2 uv) {
+    float w,h; image.GetDimensions(w,h);
+    float2 span=float2(abs(ddx(uv.x)),abs(ddy(uv.y)));
+    int2 taps=clamp((int2)ceil(span*float2(w,h)),1,4);
+    float4 sum=0;
+    for(int y=0;y<taps.y;++y) for(int x=0;x<taps.x;++x)
+        sum+=image.SampleLevel(linearClamp,uv+((float2(x,y)+0.5)/taps-0.5)*span,0);
+    return sum/(taps.x*taps.y);
+}
 float4 ps(V v):SV_Target {
-    float3 c=image.Sample(linearClamp,v.uv).rgb;
+    float3 c=Footprint(v.uv).rgb;
     return float4(lerp(c/12.92,pow((c+0.055)/1.055,2.4),step(0.04045,c)),1);
 }
 float4 alphaPs(V v):SV_Target {
-    float4 texel=image.Sample(linearClamp,v.uv);
+    float4 texel=Footprint(v.uv);
     float3 c=texel.a>0.00001 ? saturate(texel.rgb/texel.a) : 0;
     return float4(lerp(c/12.92,pow((c+0.055)/1.055,2.4),step(0.04045,c)),texel.a);
 })";
