@@ -6,9 +6,17 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.7 — 2026-11-03 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.7)
+
 - **Force feedback stays on:** for wheels DiRT 2 doesn't recognise, such as the Logitech G920, its force feedback option is off again at every launch. So force feedback was off in Direct practice, Race and LAN, and turning it on in Options didn't last. New **Controls → Driving → Force feedback → Keep on** (on by default) switches it back on at the start of each race, in desktop and VR (DX11). To keep it off, turn Keep on off. Not yet checked on a wheel.
 - **VR LAN with 3D beyond the cockpit:** in a LAN race with **3D beyond the cockpit** on, every view, the cockpit included, stayed on the flat theatre screen. VR used the game's flashback recording to tell live driving from replays, and LAN races never record flashbacks. LAN races now count as live driving, which also lets **Remove artificial steering corrections** and chase free look work in LAN. Steering corrections were checked in a desktop LAN race's cockpit; VR LAN with 3D beyond the cockpit is not yet checked in a headset. Until then, VR LAN shows the 3D cockpit with **3D beyond the cockpit** off.
 - **VR trees beside and behind you:** in VR, trees you could still see out of a side window, or when looking back, could disappear as you drove past (reported at a custom track's water crossing). The game culls trees against its own narrower camera view, separately from the rest of the scenery that VR already keeps in every direction. VR now gives the main view's trees the same all-round visibility, with their usual draw distance. Shadows, reflections, mirrors and desktop play are unchanged. Not yet checked in a headset.
+
+**After updating:** no track rebuild is needed. Existing settings and best laps are kept.
+
+Please report any problems.
 
 ## 0.18.6 — 2026-11-03 — Experimental
 

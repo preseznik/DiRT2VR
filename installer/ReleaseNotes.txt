@@ -1,23 +1,24 @@
-DiRT2VR 0.18.6 — Experimental
+DiRT2VR 0.18.7 — Experimental
 
-LATEST CHANGES (since 0.18.5)
+LATEST CHANGES (since 0.18.6)
 
-- LAN races no longer drop at the start: a player using DiRT2VR features (always in VR) was disconnected with "You lost your connection to the session" right as the race began, because DiRT 2 checks at each LAN race start that its program code is unchanged. LAN now checks only the game files, so a player whose car, track or core data files differ is still refused. Confirmed in a desktop race between two PCs; VR LAN still needs a test.
-- Transmission now works: in 0.18.4 and 0.18.5 the Transmission choice under Configure driving controls was saved but never reached the game.
-- Next event (experimental): the Direct practice and Race pause and finish menus have a Next event row. Choose Practice or Race, discipline, track, car, opponents and laps in an in-game panel; Start event restarts the game straight into that event, Cancel returns to the menu.
-- Wheel D-pads can be bound: the binding wizard and Bind device now detect a wheel's D-pad, for example on a Logitech G920, so Menu Up/Down/Left/Right can use it.
-- Live input highlight: in Configure driving controls, pressing an input on the device shown under Live device input lights up the bound action in the accent colour.
-- New wheel, pedal and Xbox trigger bindings start at 0% dead zone; Xbox thumbsticks keep 20%. Existing bindings keep their values.
-- VR LAN removal of camera shake and motion blur now also works when Windows loads the game at a different address.
+- Force feedback stays on: for wheels DiRT 2 doesn't recognise, such as the Logitech G920, its force feedback option was off again at every launch, so Direct practice, Race and LAN had no force feedback. New Controls > Driving > Force feedback > Keep on (on by default) switches it back on at the start of each race, in desktop and VR (DX11). To keep force feedback off, turn Keep on off.
+- VR LAN with 3D beyond the cockpit: in a LAN race with 3D beyond the cockpit on, every view, the cockpit included, stayed on the flat screen. LAN races now count as live driving, so VR shows them in 3D. This also lets Remove artificial steering corrections and chase free look work in LAN.
+- VR trees beside and behind you: trees you could still see out of a side window or when looking back could disappear as you drove past. VR now keeps the main view's trees visible in every direction, with their usual draw distance.
 
 After updating: no track rebuild is needed. Existing settings and best laps are kept.
 
-Still to check: a VR LAN race on two PCs, Next event in the game, the transmission choices in a race and wheel D-pad binding on a real wheel. Please report any problems.
+Still to check: force feedback on a real wheel, a VR LAN race with 3D beyond the cockpit on, and the trees in a headset. Please report any problems.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.6 — Experimental (changes since 0.18.5)
+
+- LAN races no longer drop at the start, and VR LAN works (with 3D beyond the cockpit off).
+- Transmission choice works, Next event menus, wheel D-pad binding and live input highlight.
 
 0.18.5 — Experimental (changes since 0.18.4)
 
