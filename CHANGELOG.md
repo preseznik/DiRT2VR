@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Complete LAN source archive:** the LAN source archives for 0.18.6 to 0.18.10 lacked `tools/lan/filecheck.cpp` and `filecheck.h`, which the LAN library has been built with since 0.18.6. Both files are in the repository at each of those version tags. From the next build the archive includes them, and packaging now stops if a file the LAN library compiles, or a header those files include, is missing from the archive.
 - **Visual settings in LAN games:** graphics filters, **Bloom** off, the desktop cockpit seat and field of view, and the experimental Large Address Aware patch were switched off in LAN games, because DiRT 2's race-start check might reject the changed files. That check covers 56 car, track and core files, none of which these settings change, so they now apply in LAN too, on desktop and in VR. **Skip startup logo movies** stays off in LAN, since the check does cover that file. Checked in a desktop LAN race between two PCs with a filter, Bloom off, Large Address Aware and a custom field of view on the host; not yet checked in VR LAN.
 ## 0.18.10 — 2026-11-03 — Experimental
 
