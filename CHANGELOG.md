@@ -6,6 +6,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- **Visual settings in LAN games:** graphics filters, **Bloom** off, the desktop cockpit seat and field of view, and the experimental Large Address Aware patch were switched off in LAN games, because DiRT 2's race-start check might reject the changed files. That check covers 56 car, track and core files, none of which these settings change, so they now apply in LAN too, on desktop and in VR. **Skip startup logo movies** stays off in LAN, since the check does cover that file. Checked in a desktop LAN race between two PCs with a filter, Bloom off, Large Address Aware and a custom field of view on the host; not yet checked in VR LAN.
 ## 0.18.10 — 2026-11-03 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.10)

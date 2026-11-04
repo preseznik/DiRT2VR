@@ -462,14 +462,14 @@ Public Class Session
         Return start
     End Function
     Private Function WaitForGame(start As ProcessStartInfo, Optional poll As Action = Nothing) As Boolean
-        ' Last effect layer for every launch path except LAN, whose race start
-        ' checks game files; also on return to menus.
-        Dim lan = settings.LaunchMode = "lan"
-        If filterSnapshot IsNot Nothing AndAlso Not lan Then
+        ' Last effect layer for every launch path, LAN included, and on return to
+        ' menus. LAN's race start checks 56 game files, none of them the effect,
+        ' camera or executable files changed here (ProJict 72e4ce74).
+        If filterSnapshot IsNot Nothing Then
             Progress("Applying graphics filters…")
             Worker.Invoke(context, "prepare-filter", filterSnapshot:=filterSnapshot)
         End If
-        If Not lan AndAlso Not BloomTransaction.Enabled(settings, start) Then
+        If Not BloomTransaction.Enabled(settings, start) Then
             Progress("Applying bloom settings…")
             Worker.Invoke(context, "prepare-bloom")
         End If
@@ -477,9 +477,9 @@ Public Class Session
             Progress("Applying track graphics settings…")
             Worker.Invoke(context, "prepare-dof", carCode:=settings.CarCode, trackId:=settings.TrackId)
         End If
-        ' VR moves the headset eye instead; LAN peers need identical camera files.
+        ' VR moves the headset eye instead.
         Dim headset = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
-        If Not headset AndAlso settings.LaunchMode <> "lan" AndAlso DesktopSeatTransaction.Applies(SeatPositions.Load(context, desktop:=True), settings.DesktopCockpitFov) Then
+        If Not headset AndAlso DesktopSeatTransaction.Applies(SeatPositions.Load(context, desktop:=True), settings.DesktopCockpitFov) Then
             Progress("Adjusting the cockpit seat…")
             Worker.Invoke(context, "prepare-seat")
         End If
@@ -509,7 +509,7 @@ Public Class Session
                 Progress("Adjusting road sheen…")
                 Worker.Invoke(context, "prepare-road-sheen", trackId:=settings.TrackId, roadSheen:=If(vr, settings.VrRoadSheen, settings.DesktopRoadSheen))
             End If
-            If settings.ExperimentalLaa AndAlso Not lan Then
+            If settings.ExperimentalLaa Then
                 Progress("Applying compatibility settings…")
                 Worker.Invoke(context, "prepare-laa")
             End If
