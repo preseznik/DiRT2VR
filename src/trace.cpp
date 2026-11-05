@@ -878,9 +878,10 @@ bool HudShader(ID3D11DeviceContext* context) {
     case 0xbef999561247f2d5ull: case 0x9d4dd795ddf7c656ull:
     case 0x47b5203eae84ab0full: case 0xedfda3c33aa2b9fcull:
     case 0xce4f6cb0ec7d5697ull: return true;
-    // Scaled UI image variant used by trailer popup backing panels. Keep this
-    // extension scoped to menus; racing HUD classification stays unchanged.
-    case 0x2444a05c829f7ffbull: return classifiedCamera==SceneCamera::Frontend;
+    // Scaled UI image variant used by trailer popup backing panels, and the
+    // RV level badge's XP fill, which draws visibly after a race. Keep these
+    // extensions scoped to menus; racing HUD classification stays unchanged.
+    case 0x2444a05c829f7ffbull: case 0x692f35feedc24131ull: return classifiedCamera==SceneCamera::Frontend;
     default: return false;
     }
 }
