@@ -2,6 +2,8 @@ Imports System.Windows.Forms
 Imports System.Security.Principal
 
 Public Module Program
+    ' Kept for the life of the process (ProJict 32a34bd2).
+    Private wheelGuard As SettingsWheelGuard
     <STAThread>
     Public Function Main(args As String()) As Integer
         If args.Contains("--convert-f2004") Then Return CustomCars.CarConversion.Run(args)
@@ -21,6 +23,8 @@ Public Module Program
                 Application.SetHighDpiMode(HighDpiMode.PerMonitorV2)
                 Application.SetColorMode(SystemColorMode.System)
                 Application.EnableVisualStyles()
+                ' The mouse wheel scrolls settings pages instead of changing sliders and lists under the pointer.
+                wheelGuard = New SettingsWheelGuard()
             End If
             Dim root = Argument(args, "--game", AppContext.BaseDirectory)
             Dim context As New InstallContext(root, If(args.Contains("--worker"), Argument(args, "--owner-base", Nothing), Nothing))
