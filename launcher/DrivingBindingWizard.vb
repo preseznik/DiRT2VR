@@ -56,9 +56,14 @@ Public Class DrivingBindingWizard
         Dim title As New TableLayoutPanel With {.AutoSize = True, .ColumnCount = 2, .RowCount = 1, .Width = 660}
         title.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize)) : title.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100))
         title.Controls.Add(actionIcon, 0, 0) : title.Controls.Add(heading, 1, 0)
-        panel.Controls.AddRange({stepLabel, title, source, selection, instruction, status, travel, review, buttons,
-            New Label With {.AutoSize = True, .MaximumSize = New Size(650, 0), .Text = "Skip keeps your current binding. Changes are reviewed before saving."}})
-        Controls.Add(panel)
+        panel.Controls.AddRange({stepLabel, title, source, selection, instruction, status, travel, review})
+        ' The buttons stay at the bottom of the window, outside the scrolling page: on the review step
+        ' the page outgrew the window and Apply bindings scrolled out of sight (ProJict fd2faa90).
+        Dim footer As New FlowLayoutPanel With {.Dock = DockStyle.Bottom, .FlowDirection = FlowDirection.TopDown, .WrapContents = False,
+            .AutoSize = True, .AutoSizeMode = AutoSizeMode.GrowAndShrink, .Padding = New Padding(20, 6, 20, 12)}
+        footer.Controls.AddRange({buttons, New Label With {.AutoSize = True, .MaximumSize = New Size(650, 0), .Text = "Skip keeps your current binding. Changes are reviewed before saving."}})
+        ' Docking runs in reverse order of addition: the footer takes the bottom, the page fills the rest.
+        Controls.Add(panel) : Controls.Add(footer)
         AddHandler Shown, Sub() RefreshDevices()
         AddHandler refresh.Click, Sub() RefreshDevices()
         AddHandler source.SelectedIndexChanged, Sub() BeginStep()
@@ -97,7 +102,7 @@ Public Class DrivingBindingWizard
     Private Sub BeginStep()
         captures.Clear() : active = Nothing : key = Keys.None : pendingKey = Nothing : keyReleased = -1 : travel.Value = 0
         Dim finished = index >= actions.Length
-        review.Visible = finished : apply.Visible = finished : skip.Visible = Not finished : retry.Visible = Not finished
+        review.Visible = finished : apply.Visible = finished : skip.Visible = Not finished : retry.Visible = Not finished : travel.Visible = Not finished
         source.Enabled = Not finished : devices.Enabled = Not finished AndAlso source.SelectedIndex = 0 : filter.Enabled = devices.Enabled
         back.Enabled = index > 0
         If finished Then
