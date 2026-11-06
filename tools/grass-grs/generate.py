@@ -6,7 +6,10 @@ The policy names the built terrain PSSG files, the stock donor grass.grs whose
 type library matches the track's ground_cover.pssg, the course (road)
 materials, the grass materials with their vertex-colour weight byte, and
 distance bands that paint grass types. Only the type library is taken from
-the donor; every cell is built from the track's own triangles.
+the donor; every cell is built from the track's own triangles. An optional
+`near` mask ({"points": [[x, z], ...] or a JSON file of them, "radius": m})
+keeps only ground within `radius` of those points, such as a source track's
+own grass placements.
 """
 import hashlib, heapq, json, math, os, struct, sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -111,8 +114,22 @@ def main(policy_path, out):
         shade = max(0, min(255, round(policy['shade'] + (hash01(round(x * 4), round(z * 4), seed + 3) - .5) * 2 * jitter)))
         return grassgrs.Vertex(x, 0, z, primary, secondary, policy.get('gradient', 0), shade, int(policy['tint'], 0))
 
+    near, reach = None, 0.0
+    if 'near' in policy:
+        points, reach = policy['near']['points'], policy['near']['radius']
+        if isinstance(points, str):
+            points = json.load(open(os.path.join(os.path.dirname(os.path.abspath(policy_path)), points)))
+        near = {}
+        for x, z in points:
+            near.setdefault((math.floor(x / reach), math.floor(z / reach)), []).append((x, z))
+
+    def is_near(x, z):
+        i, j = math.floor(x / reach), math.floor(z / reach)
+        return any((px - x) ** 2 + (pz - z) ** 2 <= reach * reach
+                   for di in (-1, 0, 1) for dj in (-1, 0, 1) for px, pz in near.get((i + di, j + dj), ()))
+
     max_slope = math.cos(math.radians(policy.get('maxSlopeDegrees', 40)))
-    chosen, rejected = [], {'weight': 0, 'corridor': 0, 'slope': 0, 'degenerate': 0}
+    chosen, rejected = [], {'weight': 0, 'corridor': 0, 'near': 0, 'slope': 0, 'degenerate': 0}
     for material, tri in source:
         rule = grass_materials[material]
         (a, ca), (b, cb), (c, cc) = tri
@@ -122,6 +139,8 @@ def main(policy_path, out):
         cx, cz = (a[0] + b[0] + c[0]) / 3, (a[2] + b[2] + c[2]) / 3
         if field(cx, cz) > corridor:
             rejected['corridor'] += 1; continue
+        if near is not None and not is_near(cx, cz):
+            rejected['near'] += 1; continue
         u = [b[k] - a[k] for k in range(3)]; v = [c[k] - a[k] for k in range(3)]
         n = (u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0])
         length = math.sqrt(sum(x * x for x in n))
