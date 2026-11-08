@@ -39,6 +39,7 @@
 #include "gfwl_compat.h"
 #include "driving_controls.h"
 #include "lap_results.h"
+#include "world_record_target.h"
 #include "cockpit_start.h"
 #include "startup_hooks.h"
 #include "steering_animation.h"
@@ -194,6 +195,7 @@ bool EnableNordschleifeCheckpoints() {
 // Only change the controller's override, preserving the frontend's loading flow.
 void EnableDirectPractice() {
     EnableLapResults();
+    EnableWorldRecordTarget();
     if(!EnableNordschleifeCheckpoints()) {
         Log("Nordschleife: checkpoint display guard failed; stopping launch");
         ExitProcess(ERROR_BAD_EXE_FORMAT);

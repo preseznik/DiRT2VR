@@ -498,6 +498,7 @@ Public Class Session
         ReplayCameraLaunch.Configure(start, settings)
         PhotoModeLaunch.Configure(start, PhotoModeLaunch.Eligible(context, settings, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1", replayId IsNot Nothing))
         replayControls.ConfigureZoom(start)
+        WorldRecords.ConfigureTarget(context, start, settings, replayId IsNot Nothing)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)
         Using recording As New ReplaySession(context, settings, start, If(settings.DirectMode, preparedReplay, Nothing)), returnChannel As New DirectReturnChannel(start, settings.DirectMode), resolution As New ResolutionChannel(context, start, settings),
             eventChannel As New NextEventChannel(context, start, settings, settings.DirectMode AndAlso replayId Is Nothing),

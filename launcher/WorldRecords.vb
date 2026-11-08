@@ -80,4 +80,18 @@ Public Module WorldRecords
             Return ""
         End Try
     End Function
+    ' Desktop Direct practice uses the game's native TARGET box. Clear inherited
+    ' values in every other mode and when no record exists for the selected class.
+    Public Sub ConfigureTarget(context As InstallContext, start As ProcessStartInfo, settings As VrSettings, Optional replay As Boolean = False)
+        start.Environment.Remove("DIRT2VR_WORLD_RECORD_MICROSECONDS")
+        If Not settings.DirectMode OrElse settings.LaunchMode <> "practice" OrElse replay OrElse
+            (start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1") Then Return
+        Try
+            Dim track = RaceCatalog.Current.Track(settings.TrackId), vehicle = RaceCatalog.Current.Car(settings.CarCode), seconds As Single
+            If Read(DatabasePath(context, settings.TrackId)).TryGetValue(track.Country & "/" & track.Track & "/" & track.Route & "|" & vehicle.ClassId, seconds) Then
+                start.Environment("DIRT2VR_WORLD_RECORD_MICROSECONDS") = CLng(Math.Round(CDbl(seconds) * 1000000)).ToString(Globalization.CultureInfo.InvariantCulture)
+            End If
+        Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
+        End Try
+    End Sub
 End Module
