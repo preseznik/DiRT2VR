@@ -14,7 +14,7 @@ Public Class LaunchProgressState
     Public Sub New(processId As Integer, requestedUtc As DateTime)
         Me.processId = processId : Me.requestedUtc = requestedUtc
     End Sub
-    Public Sub Observe(status As SessionStatus, exited As Boolean)
+    Public Sub Observe(status As SessionStatus, exited As Boolean, Optional cancelled As Boolean = False)
         If Finished Then Return
         If status IsNot Nothing AndAlso status.ProcessId = processId AndAlso status.UpdatedUtc >= requestedUtc Then
             If Not String.IsNullOrWhiteSpace(status.StartupMessage) Then Message = status.StartupMessage
@@ -26,7 +26,8 @@ Public Class LaunchProgressState
             End If
         End If
         If exited Then
-            EndedWithoutStatus = True : Finished = True
+            If cancelled Then Message = "Launch cancelled"
+            EndedWithoutStatus = Not cancelled : Finished = True
         End If
     End Sub
 End Class
@@ -116,7 +117,7 @@ Public Class LaunchProgressMonitor
         Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is JsonException
             ' An atomic replacement or damaged old status cannot stop exit monitoring.
         End Try
-        State.Observe(status, exited)
+        State.Observe(status, exited, exited AndAlso child.ExitCode = Program.CancelledLaunchExitCode)
         If State.Finished Then
             Dispose()
             RaiseEvent Completed()

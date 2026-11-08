@@ -2,6 +2,7 @@ Imports System.Windows.Forms
 Imports System.Security.Principal
 
 Public Module Program
+    Public Const CancelledLaunchExitCode As Integer = 1223
     ' Kept for the life of the process (ProJict 32a34bd2).
     Private wheelGuard As SettingsWheelGuard
     <STAThread>
@@ -87,7 +88,13 @@ Public Module Program
                 Return 0
             End If
             If args.Contains("--launch") Then
-                If New WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator) Then Throw New IOException("Start DiRT2VR normally, without Run as administrator. Only the file worker needs elevation.")
+                Dim elevated = New WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)
+                If Not ConfirmElevatedLaunch(elevated, Environment.UserInteractive AndAlso Not args.Contains("--quiet"), args.Contains("--allow-elevated"),
+                    Function() MessageBox.Show("DiRT2VR is running as administrator. Continuing will also give DiRT 2 and all mods it loads administrator access for this session." & Environment.NewLine & Environment.NewLine &
+                        "Normally only the separate file worker needs elevation." & Environment.NewLine & Environment.NewLine & "Continue anyway?",
+                        "Run DiRT 2 as administrator?", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) = DialogResult.OK) Then
+                    Return CancelledLaunchExitCode
+                End If
                 Call (New Session(context, args.Contains("--lan-host"), Argument(args, "--lan-join", Nothing), Argument(args, "--replay", Nothing))).Run(Not args.Contains("--desktop"), args.Contains("--vr"))
             Else
                 Application.Run(New MainForm(context))
@@ -101,6 +108,11 @@ Public Module Program
             End If
             Return 1
         End Try
+    End Function
+    Public Function ConfirmElevatedLaunch(elevated As Boolean, interactive As Boolean, accepted As Boolean, confirm As Func(Of Boolean)) As Boolean
+        If Not elevated OrElse accepted Then Return True
+        If Not interactive Then Throw New IOException("DiRT2VR is running as administrator. DiRT 2 and its mods would also run as administrator. Start without elevation, or add --allow-elevated to explicitly accept this for this launch.")
+        Return confirm()
     End Function
     Private Function Argument(args As String(), name As String, fallback As String) As String
         Dim index = Array.IndexOf(args, name)

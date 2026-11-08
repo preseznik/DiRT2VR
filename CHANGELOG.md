@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Elevated launches offer a warning with **OK** to continue and **Cancel** selected by default, instead of refusing to start. Acceptance applies only to that launch; DiRT 2 and its loaded mods inherit administrator access. Quiet command-line launches require explicit `--allow-elevated` consent. No game run has been performed for this change.
+
 - Direct practice retains personal-best improvements per car and grade. **Best times…** opens a selected track's history with a car filter; **Launcher → Leaderboards…** shows saved bests with track and car filters. Existing saved times are kept; previously unsaved laps cannot be recovered. These are local results, with track and car conversion versions kept separate.
 
 - Experimental desktop Direct practice shows the selected track and car class's world record in the game's **TARGET** time box, below the lap or stage time. Tracks without a matching record show no target. VR and replay playback retain their existing HUD. This integration still needs an in-game check.
