@@ -82,6 +82,7 @@ Public Class MainForm
     Private ReadOnly raceDifficulty As ComboBox = Choice("RaceDifficulty")
     Private ReadOnly opponentHint As New Label With {.AutoSize = False, .MinimumSize = New Size(0, 44), .MaximumSize = New Size(710, 0)}
     Private ReadOnly bestTime As New Label With {.Name = "StockBestTime", .AutoSize = True, .UseMnemonic = False, .Margin = New Padding(0, 10, 0, 0)}
+    Private ReadOnly bestTimes As New Button With {.Text = "Best times…", .Name = "BestTimes", .AutoSize = True}
     Private ReadOnly mirrors As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Dock = DockStyle.Top, .DropDownWidth = 230, .Name = "Mirrors"}
     Private ReadOnly hudFollow As New CheckBox With {.Text = "HUD follows view", .Name = "HudFollowView", .AutoSize = True}
     Private ReadOnly hudDistance As New ValueSlider("HudDistance", 2, 40, 2, " m", 2D)
@@ -481,6 +482,13 @@ Public Class MainForm
         Dim setupButton As New Button With {.Text = "Vehicle setup…", .Name = "VehicleSetup", .AutoSize = True}
         selection.Controls.Add(setupButton)
         selection.Controls.Add(bestTime)
+        Dim bestTimeActions As New FlowLayoutPanel With {.AutoSize = True}
+        bestTimeActions.Controls.Add(bestTimes) : NewFeatures.MarkIfNew(bestTimeActions, bestTimes)
+        selection.Controls.Add(bestTimeActions)
+        AddHandler bestTimes.Click, Sub() SafeAction(Sub()
+                                                       Dim carCode = If(customCars.CustomEnabled, CustomCarService.SelectedCode(context), TryCast(carChoice.SelectedItem, PracticeCar)?.Code)
+                                                       ShowPracticeTimes(TryCast(trackChoice.SelectedItem, PracticeTrack)?.Id, carCode)
+                                                   End Sub)
         AddHandler setupButton.Click, Sub() EditCarSetup()
         StyleChoice(raceDifficulty, Me)
         StyleChoice(raceStart, Me)
@@ -530,7 +538,17 @@ Public Class MainForm
                                                     End Sub
         launchMode.SelectedIndex = Math.Max(0, Array.IndexOf({"menus", "practice", "race"}, settings.LaunchMode))
         content.Controls.Add(opponentHint)
+        Dim recordActions As New FlowLayoutPanel With {.AutoSize = True}
+        Dim leaderboards As New Button With {.Text = "Leaderboards…", .Name = "Leaderboards", .AutoSize = True}
+        recordActions.Controls.Add(leaderboards) : NewFeatures.MarkIfNew(recordActions, leaderboards)
+        AddHandler leaderboards.Click, Sub() SafeAction(Sub() ShowPracticeTimes())
+        content.Controls.Add(recordActions)
         content.Controls.Add(HelpLink(Sub() ShowAbout(If(customTracks.CustomEnabled, "Custom tracks", "Getting started"))))
+    End Sub
+    Private Sub ShowPracticeTimes(Optional trackId As String = "", Optional carCode As String = "")
+        Using dialog As New PracticeTimesForm(context, trackId, carCode)
+            dialog.ShowDialog(Me)
+        End Using
     End Sub
     Private Sub EditCarSetup()
         Using dialog As New CarSetupForm(settings.DirectCarSetup)
@@ -548,6 +566,7 @@ Public Class MainForm
         Dim text = If((launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2) AndAlso track IsNot Nothing AndAlso carCode IsNot Nothing, BestLapStore.Summary(context, track.Id, carCode), "")
         If bestTime.Text <> text Then bestTime.Text = text
         bestTime.Visible = text <> ""
+        bestTimes.Enabled = track IsNot Nothing
     End Sub
     Private Sub RefreshOpponentHint()
         RefreshLaunchAvailability()

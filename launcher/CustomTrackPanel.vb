@@ -21,6 +21,7 @@ Public Class CustomTrackPanel
     Private ReadOnly installCard As New TrackBuildStack
     Private ReadOnly installHint As New Label With {.AutoSize = True}
     Private ReadOnly bestTime As New Label With {.Name = "CustomBestTime", .AutoSize = True}
+    Private ReadOnly bestTimes As New Button With {.Name = "CustomBestTimes", .Text = "Best times…", .AutoSize = True}
     Private ReadOnly unavailable As New Label With {.Name = "CustomPackUnavailable", .AutoSize = False}
     Private ReadOnly layouts As New ComboBox With {.Name = "CustomTrackLayout", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly condition As New Label With {.Name = "CustomTrackCondition", .AutoSize = False, .TextAlign = ContentAlignment.MiddleLeft}
@@ -160,7 +161,20 @@ Public Class CustomTrackPanel
                 MessageBox.Show(Me, ex.Message, "Refresh custom tracks", MessageBoxButtons.OK, MessageBoxIcon.Warning)
             End Try
         End Sub
-        detail.Controls.Add(title) : detail.Controls.Add(description) : detail.Controls.Add(bestTime) : detail.Controls.Add(status)
+        detail.Controls.Add(title) : detail.Controls.Add(description) : detail.Controls.Add(bestTime)
+        Dim bestTimeActions As New FlowLayoutPanel With {.AutoSize = True}
+        bestTimeActions.Controls.Add(bestTimes) : NewFeatures.MarkIfNew(bestTimeActions, bestTimes)
+        detail.Controls.Add(bestTimeActions) : detail.Controls.Add(status)
+        AddHandler bestTimes.Click, Sub()
+                                       Try
+                                           Dim carCode = If(customCars IsNot Nothing AndAlso customCars.CustomEnabled, Global.DiRT2VR.CustomCarService.SelectedCode(context), TryCast(cars.SelectedItem, PracticeCar)?.Code)
+                                           Using dialog As New PracticeTimesForm(context, SelectedLayoutId, carCode)
+                                               dialog.ShowDialog(Me)
+                                           End Using
+                                       Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
+                                           MessageBox.Show(Me, ex.Message, "Best times", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                                       End Try
+                                   End Sub
         detail.Controls.Add(workActions) : detail.Controls.Add(body)
         Dim layoutColumns As New ResponsiveColumns With {.WideAt = 560}
         Field(layoutColumns.First, "Layout", layouts) : Field(layoutColumns.Second, "Conditions", condition)
@@ -423,6 +437,7 @@ Public Class CustomTrackPanel
     Public Sub RefreshBestTime()
         detail.Controls.SetChildIndex(bestTime, 2)
         Dim layoutId = TryCast(layouts.SelectedItem, LayoutItem)?.Value.Id, carCode = TryCast(cars.SelectedItem, PracticeCar)?.Code
+        bestTimes.Enabled = layoutId IsNot Nothing
         Dim text = ""
         If CustomEnabled AndAlso currentPack IsNot Nothing AndAlso currentPack.Available AndAlso layoutId IsNot Nothing Then
             Try

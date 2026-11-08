@@ -59,7 +59,7 @@ Public Module BestLapStore
         End If
         Return If(receipt.Sessions.FirstOrDefault(Function(s) s.LayoutId = trackId)?.Version, receipt.Version)
     End Function
-    Private Function TimedLayout(layoutId As String) As String
+    Friend Function TimedLayout(layoutId As String) As String
         ' These condition IDs share the same standard circuit and finish line.
         Select Case layoutId
             Case "nordschleife-daylight", "nordschleife-overcast", "nordschleife-evening"
@@ -68,7 +68,7 @@ Public Module BestLapStore
                 Return layoutId
         End Select
     End Function
-    Private Function CompatibleVersion(layoutId As String, saved As String, current As String) As Boolean
+    Friend Function CompatibleVersion(layoutId As String, saved As String, current As String) As Boolean
         ' Nordschleife 1.0.1 adds race grids; the timed course and finish line are unchanged.
         Return saved = current OrElse TrackPacks.Nordschleife.IsLayout(layoutId) AndAlso current = "1.0.1" AndAlso saved = "1.0.0"
     End Function
@@ -79,8 +79,9 @@ Public Module BestLapStore
     Public Function Record(context As InstallContext, lap As BestLapRecord) As Boolean
         Dim customCar = CustomCars.CarPack.IsCustom(lap.CarCode)
         If Not Valid(lap, customCar) Then Throw New IOException("Invalid completed lap result.")
+        Dim personalBest = PracticeTimes.RecordPersonalBest(context, lap)
         Dim bestTime = Best(context, lap.LayoutId, lap.PackVersion, customCar)
-        If bestTime IsNot Nothing AndAlso bestTime.Milliseconds <= lap.Milliseconds Then Return False
+        If bestTime IsNot Nothing AndAlso bestTime.Milliseconds <= lap.Milliseconds Then Return personalBest
         Dim history = Load(context, customCar)
         history.Records.RemoveAll(Function(r) TimedLayout(r.LayoutId) = TimedLayout(lap.LayoutId) AndAlso CompatibleVersion(lap.LayoutId, r.PackVersion, lap.PackVersion) AndAlso r.CarConversionVersion = lap.CarConversionVersion)
         history.Records.Add(lap)

@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Direct practice retains personal-best improvements per car and grade. **Best times…** opens a selected track's history with a car filter; **Launcher → Leaderboards…** shows saved bests with track and car filters. Existing saved times are kept; previously unsaved laps cannot be recovered. These are local results, with track and car conversion versions kept separate.
+
 - Experimental desktop Direct practice shows the selected track and car class's world record in the game's **TARGET** time box, below the lap or stage time. Tracks without a matching record show no target. VR and replay playback retain their existing HUD. This integration still needs an in-game check.
 
 - **Apply bindings always visible:** after **Bind device…** on one control, the binding window's review step was taller than the window, so **Apply bindings** and **Cancel** sat below the visible area and were easy to miss. The buttons now stay at the bottom of the binding window on every step, outside the part that scrolls. Checked with automated launcher checks; not yet checked by hand.
