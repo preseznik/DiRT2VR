@@ -36,6 +36,8 @@ Public Class MainForm
     Private ReadOnly hostButton As New Button With {.Name = "HostLAN", .Text = "HOST", .AutoSize = True}
     Private ReadOnly joinButton As New Button With {.Name = "JoinLAN", .Text = "JOIN", .AutoSize = True, .Enabled = False}
     Private ReadOnly refreshServers As New Button With {.Name = "RefreshLAN", .Text = "Refresh", .AutoSize = True}
+    Private ReadOnly multiplayerMode As ComboBox = Choice("MultiplayerMode")
+    Private ReadOnly directLobby As New Button With {.Name = "DirectLobby", .Text = "Open Direct lobby…", .AutoSize = True}
     Private ReadOnly browserStatus As New Label With {.AutoSize = True, .MaximumSize = New Size(710, 0), .Text = "Open Multiplayer to find LAN hosts."}
     Private scanning As Boolean
     Private nextScan As DateTime
@@ -362,7 +364,18 @@ Public Class MainForm
     End Sub
     Private Sub BuildMultiplayerTab()
         Dim content = TabLayout("Multiplayer")
-        content.Controls.Add(New Label With {.Text = "LAN servers", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)})
+        Dim heading As New Label With {.Text = "LAN servers", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)}
+        Dim experimental = BuildInfo.Channel = "Experimental"
+        If experimental Then
+            multiplayerMode.Dock = DockStyle.None : multiplayerMode.Width = 220
+            multiplayerMode.Items.AddRange({"XLLN (In-game LAN)", "Direct (Super Experimental)"})
+            multiplayerMode.SelectedIndex = 0
+            Dim modes As New FlowLayoutPanel With {.AutoSize = True}
+            modes.Controls.Add(multiplayerMode)
+            NewFeatures.MarkIfNew(modes, multiplayerMode)
+            content.Controls.Add(modes)
+        End If
+        content.Controls.Add(heading)
         serverList.Columns.Add("Host", 240) : serverList.Columns.Add("Address", 170)
         serverList.Columns.Add("Players", 85) : serverList.Columns.Add("Status", 180)
         serverList.BackColor = BackColor : serverList.ForeColor = ForeColor
@@ -370,6 +383,23 @@ Public Class MainForm
         Dim buttons As New FlowLayoutPanel With {.Dock = DockStyle.Top, .AutoSize = True}
         buttons.Controls.AddRange({hostButton, joinButton, refreshServers}) : content.Controls.Add(buttons)
         content.Controls.Add(browserStatus)
+        If experimental Then
+            content.Controls.Add(directLobby)
+            content.Exclude(directLobby, True)
+            AddHandler multiplayerMode.SelectedIndexChanged, Sub()
+                Dim direct = multiplayerMode.SelectedIndex = 1
+                For Each control As Control In {DirectCast(heading, Control), serverList, buttons, browserStatus}
+                    content.Exclude(control, direct)
+                Next
+                content.Exclude(directLobby, Not direct)
+            End Sub
+            AddHandler directLobby.Click, Sub() SafeAction(Sub()
+                SaveSettings()
+                Using dialog As New DirectLobbyForm(context)
+                    dialog.ShowDialog(Me)
+                End Using
+            End Sub)
+        End If
         content.Controls.Add(HelpLink(Sub() ShowAbout("Multiplayer")))
         Dim page = DirectCast(content.Parent, TabPage)
         AddHandler page.SizeChanged, Sub() serverList.Height = Math.Max(Px(Me, 160), page.ClientSize.Height - Px(Me, 180))
@@ -396,7 +426,7 @@ Public Class MainForm
         Return If(serverList.SelectedItems.Count = 1, TryCast(serverList.SelectedItems(0).Tag, LanHost), Nothing)
     End Function
     Private Async Sub RefreshServerList()
-        If scanning OrElse busy OrElse IsDisposed Then Return
+        If scanning OrElse busy OrElse IsDisposed OrElse multiplayerMode.SelectedIndex = 1 Then Return
         scanning = True : refreshServers.Enabled = False : browserStatus.Text = "Searching LAN…"
         Dim previous = SelectedHost()?.Endpoint.ToString()
         Try
@@ -589,6 +619,7 @@ Public Class MainForm
         launchTips?.SetReason(desktopButton, desktopReason) : launchTips?.SetReason(launchButton, vrReason)
         saveButton.Enabled = Not working : recoverButton.Enabled = Not working
         hostButton.Enabled = Not working AndAlso (customCars Is Nothing OrElse Not customCars.CustomEnabled) AndAlso (customTracks Is Nothing OrElse Not customTracks.CustomEnabled)
+        directLobby.Enabled = hostButton.Enabled
         joinButton.Enabled = hostButton.Enabled AndAlso If(SelectedHost()?.Joinable, False)
         Dim lanReason = If(working, "Finish the current session or build before starting LAN multiplayer.", If(Not hostButton.Enabled, "Turn CUSTOM cars and CUSTOM tracks off before starting LAN multiplayer.", ""))
         launchTips?.SetReason(hostButton, lanReason)

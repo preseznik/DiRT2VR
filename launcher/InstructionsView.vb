@@ -169,11 +169,16 @@ Leave axes at rest before starting, then move the requested axis deliberately. S
 
 Applying changes
 Save settings and start a new session. Resizing the launcher keeps unsaved assignments and an active capture intact.",
-        "HOST
+        "XLLN (In-game LAN) — HOST
 Choose Desktop or VR, then create a lobby in the game's Multiplayer / LAN menu. The launcher lists this PC while its HOST game runs; that status does not confirm an open lobby or a player count.
 
 JOIN
-Select an available host and choose Desktop or VR. Finish joining in the game's Multiplayer / LAN menu. Automatic lobby entry is not available yet.
+Select an available host and choose Desktop or VR. Finish joining in the game's Multiplayer / LAN menu.
+
+Direct (Super Experimental)
+Two desktop players on the same LAN can race from the launcher. Select an existing career on Profile and allow about 12 GB per PC for a private game copy. Open Direct lobby, then host on one PC and join by its displayed IPv4 address on the other. Choose different Subarus. The host selects Battersea Bridge, Battersea Air or Spa-Francorchamps. Spa requires the same race-capable pack on both PCs.
+
+Mark both players ready and choose Start race. Two PCs have raced together on Battersea Air. Spa driving and automatic return after finishing still need a live two-PC check. If the games stay open after the finish, quit each one to return to the same lobby.
 
 Network and career
 Both PCs need the same local network. Allow DiRT 2 on the Windows Private network if prompted. LAN uses the career selected on Profile. Current game career uses your normal save; no import is needed. Graphics settings stay shared.

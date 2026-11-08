@@ -1,3 +1,4 @@
+param([switch]$Direct)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path $PSScriptRoot -Parent
 $dependencies = @(
@@ -60,3 +61,12 @@ if ($LASTEXITCODE) {
     if ($LASTEXITCODE) { throw 'XLLN integration patch failed' }
 }
 Write-Host "XLiveLessNess: verified $revision with integration patch"
+if ($Direct) {
+    $python=if ($env:DIRT2VR_PYTHON) { $env:DIRT2VR_PYTHON } else { 'python' }
+    $target=Join-Path $root '.deps/python'
+    & $python -B -c "import sys; sys.path.insert(0, sys.argv[1]); import pefile; sys.exit(pefile.__version__ != '2024.8.26')" $target
+    if ($LASTEXITCODE) {
+        & $python -m pip install --no-deps --upgrade --target $target pefile==2024.8.26
+        if ($LASTEXITCODE) { throw 'Direct provider build dependency installation failed.' }
+    }
+}

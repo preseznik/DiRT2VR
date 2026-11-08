@@ -37,6 +37,7 @@
     <ProjectReference Include="../tools/spa-converter/SpaConverter.csproj" />
     <ProjectReference Include="../tools/pikes-converter/PikesConverter.csproj" />
     <ProjectReference Include="../tools/profiles/Profiles.csproj" />
+    <ProjectReference Include="../tools/direct-multiplayer/DirectMultiplayer.csproj" />
     <ProjectReference Include="../tools/car-converter/CarConverter.csproj" />
   </ItemGroup>
 </Project>

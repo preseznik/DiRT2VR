@@ -77,11 +77,16 @@ if ($FinalizeReservedVersion) {
 # Reserve the version before building. Failed attempts keep their number; retries advance it.
 [IO.File]::WriteAllText($projectPath,$projectText.Replace('<Version>'+$current+'</Version>','<Version>'+$version+'</Version>'))
 Write-Host "Build version: $current -> $version"
+$includeDirect=$Channel -eq 'Experimental' -and (!$FinalizeReservedVersion -or $reserved.Files.'DiRT2VR/payload/direct-host.dll')
 if (!$SkipNativeBuild) {
     & (Join-Path $PSScriptRoot 'build-distribution.cmd')
     if ($LASTEXITCODE) { throw 'Native distribution build/tests failed' }
     & (Join-Path $PSScriptRoot 'lan/build.cmd')
     if ($LASTEXITCODE) { throw 'Native LAN build/tests failed' }
+    if ($includeDirect) {
+        & (Join-Path $PSScriptRoot 'lan/direct/build.cmd')
+        if ($LASTEXITCODE) { throw 'Direct multiplayer provider build failed' }
+    }
     & (Join-Path $PSScriptRoot 'driving-input/build.cmd')
     if ($LASTEXITCODE) { throw 'Driving input helper build failed' }
 }
@@ -97,7 +102,7 @@ Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
 Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
 Copy-Item -LiteralPath 'build\driving-input\driving_input.dll' -Destination "$stage\DiRT2VR\payload"
 $sourceStage=Join-Path $output 'lan-source'
-& (Join-Path $PSScriptRoot 'lan/Stage-LauncherPayload.ps1') -Stage $stage -SourceStage $sourceStage -Version $version
+& (Join-Path $PSScriptRoot 'lan/Stage-LauncherPayload.ps1') -Stage $stage -SourceStage $sourceStage -Version $version -Direct:$includeDirect
 $sourceName="DiRT2VR-$version-LAN-source.zip"
 $sourceArchive=Join-Path $root 'source-archives/lan'
 New-Item -ItemType Directory -Path $sourceArchive -Force | Out-Null
@@ -123,7 +128,7 @@ if (Test-Path -LiteralPath $sourceZip) {
             $digest=[Convert]::ToHexString([Security.Cryptography.SHA256]::HashData($bytes))
             if ($digest -ne (Get-FileHash -LiteralPath $file.FullName).Hash) {
                 $utf8=[Text.UTF8Encoding]::new($false,$true)
-                if ([IO.Path]::GetExtension($relative) -notin @('.c','.cpp','.h','.patch') -or
+                if ([IO.Path]::GetExtension($relative) -notin @('.c','.cpp','.h','.inc','.py','.json','.cmd','.patch') -or
                     $utf8.GetString($bytes).Replace("`r`n","`n") -cne [IO.File]::ReadAllText($file.FullName,$utf8).Replace("`r`n","`n")) { throw "Reserved LAN source differs: $relative" }
                 [IO.File]::WriteAllBytes($file.FullName,$bytes)
             }
@@ -136,6 +141,15 @@ if (Test-Path -LiteralPath $sourceZip) {
             $oldInfo.BinarySha256 -ne $reservedLanHash -or $reserved.Files.'DiRT2VR/payload/xlive-lan.dll' -ne $reservedLanHash -or
             $oldInfo.IntegrationPatchSha256 -ne (Get-FileHash -LiteralPath (Join-Path $sourceStage 'tools/lan/xlln-integration.patch')).Hash) { throw 'Reserved LAN binary/source attribution does not match; original package preserved.' }
         Copy-Item -LiteralPath $reservedLan -Destination "$stage/DiRT2VR/payload/xlive-lan.dll" -Force
+        if ($includeDirect) {
+            foreach ($role in 'host','client') {
+                $key="DiRT2VR/payload/direct-$role.dll"
+                $original=Join-Path $ReservedPackageDirectory "stage/$key"
+                $digest=(Get-FileHash -LiteralPath $original).Hash
+                if ($reserved.Files.$key -ne $digest -or $oldInfo.DirectProviders.$role -ne $digest) { throw "Reserved Direct $role provider differs from its source record." }
+                Copy-Item -LiteralPath $original -Destination (Join-Path $stage $key) -Force
+            }
+        }
         [IO.File]::WriteAllBytes((Join-Path $sourceStage 'source-info.json'),$reservedInfoBytes)
     } finally {$existing.Dispose()}
 } else {
@@ -197,6 +211,11 @@ if (Test-Path -LiteralPath "$stage\DiRT2VR\lan-source") { throw 'LAN source must
 Get-ChildItem -LiteralPath $stage -File -Recurse | Sort-Object FullName | ForEach-Object {
     $relative=[IO.Path]::GetRelativePath($stage,$_.FullName).Replace('\','/')
     $hashes[$relative]=(Get-FileHash -LiteralPath $_.FullName -Algorithm SHA256).Hash
+}
+foreach ($role in 'host','client') {
+    if ($hashes.Contains("DiRT2VR/payload/direct-$role.dll") -ne $includeDirect) {
+        throw "The Direct $role library does not match the selected package contents."
+    }
 }
 [ordered]@{Version=$version;Channel=$Channel;Files=$hashes} | ConvertTo-Json -Depth 5 | Set-Content -LiteralPath "$stage\DiRT2VR\package.json" -Encoding utf8
 $zip=Join-Path $output "DiRT2VR-$version.zip"

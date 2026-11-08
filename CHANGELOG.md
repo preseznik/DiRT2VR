@@ -12,6 +12,16 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Experimental desktop Direct practice shows the selected track and car class's world record in the game's **TARGET** time box, below the lap or stage time. Tracks without a matching record show no target. VR and replay playback retain their existing HUD. This integration still needs an in-game check.
 
+- Experimental builds add **Multiplayer → Direct (Super Experimental)** for two desktop players on the same LAN. Two players verified driving Battersea Air together and starting another race in the same lobby after quitting. The lobby shows recorded laps and times and offers **Save race logs…** for reporting early AI takeover. XLLN remains the default.
+
+- The Experimental Direct lobby adds **Spa-Francorchamps (custom)** for players with matching race packs. Both PCs check their circuit files before enabling a start. Private game preparation and switching back to Battersea have been verified offline. A live two-PC Spa race remains unverified.
+
+- Direct checks a previously prepared game folder faster. It still verifies the SHA-256 of every required file before starting the race.
+
+- **Save race logs…** in the Experimental Direct lobby now records which cars the game's race clock counted as finished. This helps investigate the reported first-lap AI takeover when the other car stays parked.
+
+- The host can finish all three laps of Battersea Air with the guest parked, as confirmed on two PCs. The Direct lobby now reads the game's finish list even when the final lap time is missing. Automatic return with a finisher and a parked, disqualified driver passed a local launcher replay. Verification in a live two-PC race remains open.
+
 - **Apply bindings always visible:** after **Bind device…** on one control, the binding window's review step was taller than the window, so **Apply bindings** and **Cancel** sat below the visible area and were easy to miss. The buttons now stay at the bottom of the binding window on every step, outside the part that scrolls. Checked with automated launcher checks; not yet checked by hand.
 - **Scrolling no longer changes settings:** in the launcher, scrolling the mouse wheel over a slider, a drop-down list or a number box changed its value instead of scrolling the long settings page, which made it easy to change a setting without noticing. The wheel now always scrolls the page there, in every launcher window; drag a slider, click a list or use the keyboard to change a value, and an open drop-down list still scrolls with the wheel. Checked with automated launcher checks on the main and driving controls windows; not yet checked by hand.
 - **Complete LAN source archive:** the LAN source archives for 0.18.6 to 0.18.10 lacked `tools/lan/filecheck.cpp` and `filecheck.h`, which the LAN library has been built with since 0.18.6. Both files are in the repository at each of those version tags, and `source-archives/lan` now also has a complete archive for each of those versions (`DiRT2VR-<version>-LAN-source-complete.zip`). From the next build the archive includes them, and packaging now stops if a file the LAN library compiles, or a header those files include, is missing from the archive.

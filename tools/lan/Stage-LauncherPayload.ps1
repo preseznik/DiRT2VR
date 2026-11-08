@@ -1,4 +1,4 @@
-param([Parameter(Mandatory)][string]$Stage,[Parameter(Mandatory)][string]$SourceStage,[Parameter(Mandatory)][string]$Version)
+param([Parameter(Mandatory)][string]$Stage,[Parameter(Mandatory)][string]$SourceStage,[Parameter(Mandatory)][string]$Version,[switch]$Direct)
 $ErrorActionPreference='Stop'
 $repo=Split-Path (Split-Path $PSScriptRoot -Parent) -Parent
 $upstream=Join-Path $repo '.deps/xlivelessness'
@@ -41,10 +41,32 @@ foreach ($file in Get-ChildItem -LiteralPath "$source/tools/lan","$source/src" -
     }
 }
 Copy-Item -LiteralPath "$PSScriptRoot/SOURCE-README.md" -Destination "$source/README.md"
-[ordered]@{
+$info=[ordered]@{
     Version=$Version
     ProjectCommit=(git -C $repo rev-parse HEAD)
     UpstreamCommit=(git -C $upstream rev-parse HEAD)
     BinarySha256=(Get-FileHash -LiteralPath "$Stage/DiRT2VR/payload/xlive-lan.dll").Hash
     IntegrationPatchSha256=(Get-FileHash -LiteralPath "$PSScriptRoot/xlln-integration.patch").Hash
-} | ConvertTo-Json | Set-Content -LiteralPath "$source/source-info.json" -Encoding utf8
+}
+if ($Direct) {
+    $minHook=Join-Path $repo '.deps/minhook'
+    $safeMinHook=$minHook.Replace('\','/')
+    if ((git -c "safe.directory=$safeMinHook" -C $minHook rev-parse HEAD) -ne 'c3fcafdc10146beb5919319d0683e44e3c30d537') { throw 'Wrong Direct MinHook revision.' }
+    New-Item -ItemType Directory -Path "$source/.deps/minhook","$source/tools/lan/direct" -Force | Out-Null
+    foreach ($name in 'include','src','LICENSE.txt') {
+        Copy-Item -LiteralPath "$minHook/$name" -Destination "$source/.deps/minhook" -Recurse
+    }
+    foreach ($name in 'engine','CMakeLists.txt','build.cmd','README.md','entry.cpp','private-game.inc','host-ticket.inc','provider_contract.py','provider-windows.json') {
+        Copy-Item -LiteralPath "$PSScriptRoot/direct/$name" -Destination "$source/tools/lan/direct" -Recurse
+    }
+    $python=if ($env:DIRT2VR_PYTHON) { $env:DIRT2VR_PYTHON } else { 'python' }
+    $info.DirectProviders=[ordered]@{}
+    foreach ($role in 'host','client') {
+        & $python -B "$PSScriptRoot/direct/provider_contract.py" verify $role
+        if ($LASTEXITCODE) { throw "Direct $role provider verification failed." }
+        $dest="$Stage/DiRT2VR/payload/direct-$role.dll"
+        Copy-Item -LiteralPath "$repo/build/direct-$role/payload/xlive.dll" -Destination $dest
+        $info.DirectProviders[$role]=(Get-FileHash -LiteralPath $dest).Hash
+    }
+}
+$info | ConvertTo-Json | Set-Content -LiteralPath "$source/source-info.json" -Encoding utf8

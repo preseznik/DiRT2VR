@@ -4,6 +4,26 @@
 
 LAN support is included in the launcher package; no separate test kit or PowerShell window is needed. Both PCs need the supported game and the current launcher package on the same LAN.
 
+## Direct lobby (Super Experimental)
+
+Direct is available in Experimental builds for two desktop players on the same LAN. Two-PC testing is still open for Spa driving and automatic return after the finish.
+
+1. On both PCs, select an existing career on **Profile**. Open **Multiplayer**, choose **Direct (Super Experimental)**, then **Open Direct lobby**.
+2. Enter a player name on each PC. If your original game files are in another installation, select **Stock game folder…** before connecting. On one PC choose **Host lobby**. On the other, enter the host's displayed private LAN IPv4 address and choose **Join lobby**.
+3. Chat and choose a different Subaru each. The host chooses Battersea Bridge, Battersea Air or **Spa-Francorchamps (custom)**. The launcher requests three Rallycross laps. Changing the track or a car clears both ready marks.
+4. Choose **Ready** on both PCs, then **Start race** on the host. With two players and different cars, the host can also **Force start** before everyone marks ready. Keep both launchers open until both players have quit the game.
+5. Quit DiRT 2 on your PC to bring your existing lobby back into view. Your partner can keep driving. The lobby shows each driver's result, lap count and available times. Both launchers ask their games to close once both PCs confirm the finish results. A driver disqualified for standing still can return automatically once the other driver finishes. If the cars keep circling, you can still quit locally or both choose **Return to lobby**. Once both games close, mark ready to race again with the same drivers, cars, track and chat.
+
+The first start needs about 12 GB free on each PC for a private copy of the stock game. Both PCs verify their files before DiRT 2 opens directly into the event. Each race uses a snapshot of the selected career. Progress from Direct stays in that copy. If the PCs cannot connect, allow the launcher and the private game on the Windows Private network. The lobby uses TCP 39822 and DiRT 2 uses UDP 39001 and 39002.
+
+For Spa, install the same race-capable pack on both PCs using **Manage → GRID 2 → Spa-Francorchamps**. Ready and Force start become available once both copies match. If you update a pack while the lobby is open, switch to Battersea and back to Spa to repeat the check.
+
+Two PCs have raced together on Battersea Air and started another race in the same room after quitting. With the guest parked, the host finished all three laps and AI took over after the finish. If the remaining driver also stops for long enough, DiRT 2 can disqualify both cars and end the race.
+
+If AI takes over early, quit DiRT 2 and choose **Save race logs…** on each PC before starting another race. Send both ZIPs and say which car you drove and where control changed. The logs include each car's lap report and the game's finish list. The optional **Record lap telemetry** setting adds motion data and redirects the game's motion output away from any external dashboard or rig during that race. Leave it off to keep using your normal motion feed. Direct currently supports desktop starts with both players present.
+
+## XLLN (In-game LAN)
+
 1. LAN uses the career selected on **Profile**. **Current game career** uses your usual save in `Documents\My Games\DiRT2`, without importing or copying it. You can also choose a separate launcher-created career.
 2. Optionally enable **Skip introduction for LAN multiplayer**. It defaults off and skips the opening first-race movie and forced career tutorial while retaining profile creation.
 3. Open the launcher's **Multiplayer** tab. On the host PC, click **HOST**, then choose **Desktop** or **VR** (or **Cancel**). Create a session through the game's **Multiplayer / LAN** menus. Select the event, track and cars inside the game.
@@ -24,7 +44,7 @@ The browser lists PCs launched using **HOST** while their game is running. **HOS
 
 ## Current status
 
-**Multiplayer VR is available but untested.** Launcher-side event setup and direct creation of a game lobby remain unfinished; HOST opens the game menus. Launcher discovery and JOIN have reached a lobby on two PCs. The Battersea race-loading disconnect was traced to modified startup movie definitions; with logo skipping disabled, both players drove, finished the race and reached results. Current LAN launches automatically keep those definitions intact. Install the same current package on both PCs. Broader event coverage and repeat races still need testing. A manually saved profile change persisted from LAN into Normal Launch.
+**XLLN multiplayer VR is available but untested.** XLLN HOST opens the game menus. Launcher discovery and JOIN have reached a lobby on two PCs. The Battersea race-loading disconnect was traced to modified startup movie definitions. With logo skipping disabled, both players drove, finished the race and reached results. XLLN automatically keeps those definitions intact. Install the same current package on both PCs. Broader event coverage and repeat races still need testing. A manually saved profile change persisted from XLLN into Normal Launch.
 
 ## Problems
 

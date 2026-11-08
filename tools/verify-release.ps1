@@ -5,6 +5,13 @@ $manifest=Get-Content -LiteralPath (Join-Path $PackageDirectory 'stage/DiRT2VR/p
 $release=Get-Content -LiteralPath (Join-Path $PackageDirectory 'release.json') -Raw | ConvertFrom-Json
 if ($manifest.Channel -notin @('Stable','Experimental') -or $manifest.Version -notmatch '^(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)\.(0|[1-9][0-9]*)$') { throw 'Invalid package channel/version' }
 $experimental=$manifest.Channel -eq 'Experimental'
+if ($manifest.Files.'DiRT2VR/payload/direct-host.dll' -or $manifest.Files.'DiRT2VR/payload/direct-client.dll') {
+    if (!$experimental) { throw 'Direct multiplayer providers belong to the Experimental channel.' }
+    foreach ($role in 'host','client') {
+        $key="DiRT2VR/payload/direct-$role.dll"
+        if ((Get-FileHash -LiteralPath (Join-Path $PackageDirectory "stage/$key")).Hash -ne $manifest.Files.$key) { throw "Direct $role library differs from its manifest." }
+    }
+}
 if ($release.tag_name -cne "v$($manifest.Version)" -or $release.prerelease -isnot [bool] -or $release.prerelease -ne $experimental -or $release.make_latest -cne $(if($experimental){'false'}else{'true'})) { throw 'Release designation does not match the packaged channel' }
 foreach ($name in @("DiRT2VR-$($manifest.Version)-Setup.exe","DiRT2VR-$($manifest.Version).zip",'SHA256SUMS.txt')) {
     if (!(Test-Path -LiteralPath (Join-Path $PackageDirectory $name))) { throw "Release asset missing: $name" }

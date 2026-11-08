@@ -75,11 +75,28 @@ public static class SessionFiles
             entries[database] = entries[database] with { AppliedSha256 = Digest(replacements[database]) };
         }
         else if (carDatabase is not null) throw new IOException("A car database patch requires its verified session files.");
+        Apply(game, SafeFiles.Inside(game, Folder), entries, replacements);
+    }
+
+    // Direct uses a stock-only private game tree. Keep its transaction and
+    // verified backups alongside that tree so stock inventory checks still apply.
+    internal static void PreparePrivateCircuit(string cache, IReadOnlyList<SessionReplacement> files)
+    {
+        SafeFiles.RequireClosed();
+        RecoverPrivateCircuit(cache);
+        if (files.Any(f => !TrackPacks.Spa.SharedTargets.Contains(f.Path) || !SafeFiles.Digest(f.OriginalSha256)))
+            throw new IOException("Invalid private circuit replacements.");
+        Apply(SafeFiles.Inside(cache, "game"), SafeFiles.Inside(cache, "circuit-session"),
+            files.Select(f => new Entry(f.Path, f.OriginalSha256, Digest(f.Bytes))).ToList(),
+            files.Select(f => f.Bytes).ToList());
+    }
+
+    static void Apply(string game, string folder, List<Entry> entries, List<byte[]> replacements)
+    {
         if (entries.Count == 0 || entries.Select(e => e.Path).Distinct().Count() != entries.Count) throw new IOException("Invalid custom-content session.");
         for (int i = 0; i < entries.Count; i++)
             if (Digest(replacements[i]) != entries[i].AppliedSha256) throw new IOException("Custom session file changed during preparation.");
         var id = Guid.NewGuid().ToString("N");
-        var folder = SafeFiles.Inside(game, Folder);
         Directory.CreateDirectory(folder);
         for (int i = 0; i < entries.Count; i++)
         {
@@ -108,13 +125,25 @@ public static class SessionFiles
     public static void Recover(string game)
     {
         SafeFiles.RequireClosed();
-        var folder = SafeFiles.Inside(game, Folder);
+        Recover(game, SafeFiles.Inside(game, Folder), AllowedTarget);
+    }
+
+    internal static void RecoverPrivateCircuit(string cache)
+    {
+        var folder = SafeFiles.Inside(cache, "circuit-session");
+        if (!File.Exists(SafeFiles.Inside(folder, "pending.json"))) return;
+        SafeFiles.RequireClosed();
+        Recover(SafeFiles.Inside(cache, "game"), folder, path => TrackPacks.Spa.SharedTargets.Contains(path));
+    }
+
+    static void Recover(string game, string folder, Func<string,bool> allowedTarget)
+    {
         var journal = SafeFiles.Inside(folder, "pending.json");
         if (!File.Exists(journal)) return;
         var pending = SafeFiles.ReadJson<Pending>(journal);
         if (pending.Schema != 1 || !Guid.TryParseExact(pending.Id, "N", out _) || pending.Files is null || pending.Files.Length == 0 || pending.Files.Any(f => f is null) ||
             pending.Files.Select(f => f.Path).Distinct().Count() != pending.Files.Length ||
-            pending.Files.Any(f => !AllowedTarget(f.Path) || !SafeFiles.Digest(f.OriginalSha256) || !SafeFiles.Digest(f.AppliedSha256)))
+            pending.Files.Any(f => !allowedTarget(f.Path) || !SafeFiles.Digest(f.OriginalSha256) || !SafeFiles.Digest(f.AppliedSha256)))
             throw new IOException("Invalid custom-track session journal; files preserved.");
         for (int i = 0; i < pending.Files.Length; i++)
             if (SafeFiles.Hash(SafeFiles.Inside(folder, pending.Id + "/" + i + ".original")) != pending.Files[i].OriginalSha256)

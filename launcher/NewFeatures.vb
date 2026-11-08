@@ -10,6 +10,7 @@ Public Module NewFeatures
     ' Control name -> the published release it was added after.
     Private ReadOnly addedAfter As New Dictionary(Of String, String) From {
         {"BestTimes", "0.18.10"}, {"CustomBestTimes", "0.18.10"}, {"Leaderboards", "0.18.10"},
+        {"MultiplayerMode", "0.18.10"}, {"DirectRecordLaps", "0.18.10"},
         {"VrRenderScale", "0.18.8"}, {"ForceFeedbackOn", "0.18.6"}, {"SeatMode", "0.18.4"}, {"ExtendedGrass", "0.18.0"}, {"DesktopCockpitFov", "0.18.0"}, {"VrPerformanceDisplay", "0.18.0"}, {"VrPaddockZoom", "0.18.0"}, {"DrivingTransmission", "0.18.0"},
         {"DrivingSavePreset", "0.18.0"}, {"DrivingLoadPreset", "0.18.0"}, {"DrivingWheelRotation", "0.18.0"}}
     ' The running build's channel; tests may set it.

@@ -63,6 +63,8 @@ tests/launcher/obj/
 /tools/custom-tracks/obj/
 /tools/profiles/bin/
 /tools/profiles/obj/
+/tools/direct-multiplayer/bin/
+/tools/direct-multiplayer/obj/
 /tools/aspen-port/TerrainBatching.cs
 /tools/nordschleife-converter/bin/
 /tools/nordschleife-converter/obj/

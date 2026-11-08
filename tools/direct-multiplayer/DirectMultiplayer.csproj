@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../profiles/Profiles.csproj" />
+    <ProjectReference Include="../custom-tracks/CustomTracks.csproj" />
+    <ProjectReference Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/EgoEngineLibrary.csproj" />
+    <EmbeddedResource Include="../../.deps/Ego-Engine-Modding/src/EgoDatabaseEditor/schema/schemaDirt2.xml" LogicalName="DirectCircuitSchema" />
+    <EmbeddedResource Include="assets.json.gz" LogicalName="DirectStockAssets" />
+    <InternalsVisibleTo Include="DirectLobbyTests" />
+  </ItemGroup>
+</Project>
