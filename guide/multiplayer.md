@@ -25,6 +25,8 @@ For a custom circuit, install the same layout on both PCs using **Manage** befor
 
 Two PCs have raced together on Battersea Air and started another race in the same room after quitting. With the guest parked, the host finished all three laps and AI took over after the finish. If the remaining driver also stops for long enough, DiRT 2 can disqualify both cars and end the race.
 
+Direct requests the standard race HUD after the start on each PC and respects the game's overall HUD setting. Its visibility still needs the queued two-PC check, including each Desktop/VR combination.
+
 If AI takes over early or the race HUD is missing, quit DiRT 2 and choose **Save race logs…** on each PC before starting another race. Send both ZIPs and say which PC and car were affected. For an early AI takeover, include where it happened. The logs include lap reports, finish results and front-end update counts. The optional **Record lap telemetry** setting adds motion data and redirects the game's motion output away from any external dashboard or rig during that race. Leave it off to keep using your normal motion feed.
 
 ## XLLN (In-game LAN)

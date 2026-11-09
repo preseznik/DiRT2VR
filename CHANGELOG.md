@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Direct now requests the game's race HUD on each PC after the native race start, respecting the saved overall HUD preference. In-game timing, lap, position and gauge visibility still need the queued two-PC check.
+
 - The Direct lobby now lists all 41 stock Race/Practice layouts and 50 stock cars. It also lists installed Mizu Mountain and Pikes Peak layouts, the imported Ferrari F2004 and compatible external car and track packs. Hosts can prepare a point-to-point route as a single run. Race starts still require a supported Rallycross combination.
 - Both PCs check the selected custom car files and the Direct lobby shows which player needs a matching pack.
 

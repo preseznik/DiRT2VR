@@ -233,6 +233,7 @@ bool NativeLoadedSessionState(U32 tree,U32 session,bool afterAck);
 #include "../direct-bootstrap/native-distance-rule.inc"
 #include "../combined-noop-scope-20261018/frame-combined-noop-v1.inc"
 #include "../nd2-buffer-observer-20261018/nd2-buffer-observer-v1.inc"
+#include "../direct-bootstrap/native-race-hud.inc"
 void InitialLoadJob(void* self) {
     if(!armed || !initialConfigCommitted || holdFailed || !CoreInitializationReady())return;
     initial_load_v2::Permit permit{};
@@ -245,6 +246,7 @@ void InitialLoadJob(void* self) {
     // executing on the still-running owner scheduler. Pending work has deadlines.
     permit.nativeQueuesAdvancing=coreReady!=0 && coreObserved==7 && holdCalls>1;
     NativeInitialLoadAndActivateScopedV2(self,searchContainer,searchHolder,joinedSession,joinedTransport,false,permit);
+    direct_race_hud::Tick(self);
     query_retirement_live::AfterNativeStartup();
     frame_observer::AfterNativeStartup();
     vehicle_processor_live::AfterNativeStartup();
@@ -285,6 +287,7 @@ extern "C" DWORD WINAPI StartBootstrap(void*) {
     if (!InitialConfigSignatures()) return 1514;
     if (!trace::ReadableEqual(reinterpret_cast<void*>(At(0x5781A0)),FrontendReturnBytes,sizeof(FrontendReturnBytes))) return 1515;
     if (!trace::ReadableEqual(reinterpret_cast<void*>(At(0x577DE0)),FrontendBytes,sizeof(FrontendBytes))) return 1516;
+    if (!direct_race_hud::Signatures()) return 1517;
     logFile = CreateFileW(path.c_str(), GENERIC_WRITE, FILE_SHARE_READ, nullptr, CREATE_NEW, FILE_ATTRIBUTE_NORMAL, nullptr);
     if (logFile == INVALID_HANDLE_VALUE) return 16;
     HMODULE pinned{};
