@@ -81,7 +81,7 @@ public static class SessionFiles
     {
         SafeFiles.RequireClosed();
         RecoverPrivateCircuit(cache);
-        if (!TrackPacks.DirectCircuitPacks.Contains(pack) || files.Any(f => !pack.SharedTargets.Contains(f.Path) || !SafeFiles.Digest(f.OriginalSha256)))
+        if (!TrackPacks.DirectRacePacks.Contains(pack) || files.Any(f => !pack.SharedTargets.Contains(f.Path) || !SafeFiles.Digest(f.OriginalSha256)))
             throw new IOException("Invalid private circuit replacements.");
         Apply(SafeFiles.Inside(cache, "game"), SafeFiles.Inside(cache, "circuit-session"),
             files.Select(f => new Entry(f.Path, f.OriginalSha256, Digest(f.Bytes))).ToList(),
@@ -144,7 +144,7 @@ public static class SessionFiles
         if (!File.Exists(SafeFiles.Inside(folder, "pending.json"))) return;
         SafeFiles.RequireClosed();
         Recover(SafeFiles.Inside(cache, "game"), folder,
-            path => TrackPacks.DirectCircuitPacks.Any(pack => pack.SharedTargets.Contains(path)));
+            path => TrackPacks.DirectRacePacks.Any(pack => pack.SharedTargets.Contains(path)));
     }
 
     static void Recover(string game, string folder, Func<string,bool> allowedTarget)

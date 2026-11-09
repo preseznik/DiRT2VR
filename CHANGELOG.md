@@ -6,6 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- The Direct lobby now lists all 41 stock Race/Practice layouts and 50 stock cars. It also lists installed Mizu Mountain and Pikes Peak layouts, the imported Ferrari F2004 and compatible external car and track packs. Hosts can prepare a point-to-point route as a single run. Race starts still require a supported Rallycross combination.
+- Both PCs check the selected custom car files and the Direct lobby shows which player needs a matching pack.
+
 - Direct hosts can set the track, their car and **Laps** before a guest joins. The guest receives the prepared grid; circuits offer 1–20 laps and point-to-point routes use one run. Changing laps clears both ready marks. The selected distance is passed to both native race workers and finish handling. A live race with a changed lap count remains unverified.
 
 - Private Direct race preparation now uses the Landrush event and checks both cars against the selected track. Landrush driving support is still in development.

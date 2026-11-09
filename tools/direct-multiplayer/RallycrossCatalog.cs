@@ -2,13 +2,17 @@ using DiRT2VR.CustomTracks;
 
 namespace DiRT2VR.Multiplayer;
 
-public sealed record RallycrossChoice(int Id, string Name, string? LayoutId = null)
+public sealed record RallycrossChoice(int Id, string Name, string? LayoutId = null, bool Circuit = true, DirectCustomCar? CustomCar = null)
 {
     public override string ToString() => Name;
 }
 
 public static class RallycrossCatalog
 {
+    internal static bool Supports(Grid grid) =>
+        (grid.Layout == null ? Tracks.Any(track => track.Id == grid.Track) : grid.Layout.ExternalCircuit == null && grid.IsCircuit) &&
+        Cars.Any(car => car.Id == grid.Host.Car) && (grid.Guest == null || Cars.Any(car => car.Id == grid.Guest.Car));
+
     // Stock model IDs accepted by the Direct Rallycross event. Custom layouts use their pack digest.
     public static IReadOnlyList<RallycrossChoice> Tracks { get; } = Array.AsReadOnly<RallycrossChoice>([
         new(143, "London – Battersea Bridge"), new(144, "London – Battersea Air"),
@@ -23,13 +27,17 @@ public static class RallycrossCatalog
         var layout = pack.GetLayout(id);
         string label = pack.Layouts.Length == 1 ? pack.Name : pack.Name + " – " +
             (pack.Layouts.Count(other=>other.Name==layout.Name)>1 ? layout.Condition : layout.Name);
-        return new(0, label + " (custom)", id);
+        return new(0, label + (pack.External == null ? " (custom)" : " (external)"), id, layout.Circuit);
     }
+
+    public static RallycrossChoice Circuit(DirectLayout selection) =>
+        selection.ExternalCircuit is bool circuit && !TrackPacks.IsLayout(selection.Id)
+            ? new(0, selection.Id + " (external)", selection.Id, circuit) : Circuit(selection.Id);
 
     public static IEnumerable<RallycrossChoice> InstalledCircuits(string game)
     {
         yield return Circuit(DirectLayout.SpaId);
-        foreach (var pack in TrackPacks.DirectCircuitPacks.Where(pack => pack != TrackPacks.Spa))
+        foreach (var pack in TrackPacks.DirectRacePacks.Where(pack => pack != TrackPacks.Spa))
         {
             PackReceipt receipt;
             try
@@ -41,6 +49,8 @@ public static class RallycrossCatalog
             foreach (var layout in pack.ReceiptLayouts(receipt))
                 if (pack.SupportsRace(receipt,layout.Id)) yield return Circuit(layout.Id);
         }
+        foreach (var pack in TrackPacks.All.Where(p => p.External != null))
+            foreach (var layout in pack.Layouts) yield return Circuit(layout.Id);
     }
 
     // One entry per stock Rallycross model with a default livery.

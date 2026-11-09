@@ -50,11 +50,13 @@ Public Class DirectLobbyForm
         For i = 0 To 8
             layout.RowStyles.Add(If(i = 7, New RowStyle(SizeType.Percent, 100), New RowStyle(SizeType.AutoSize)))
         Next
-        track.Items.AddRange(RallycrossCatalog.Tracks.Cast(Of Object)().ToArray())
+        track.Items.AddRange(DirectStockCatalog.Tracks.Values.Cast(Of Object)().ToArray())
+        If PrototypeTrack.Installed(RaceCatalog.Current.Track(PrototypeTrack.Id), context) Then track.Items.Add(DirectStockCatalog.Prototype)
         track.Items.AddRange(RallycrossCatalog.InstalledCircuits(context.GameRoot).Cast(Of Object)().ToArray())
-        car.Items.AddRange(RallycrossCatalog.Cars.Cast(Of Object)().ToArray())
+        car.Items.AddRange(DirectStockCatalog.Cars.Values.Cast(Of Object)().ToArray())
+        car.Items.AddRange(DirectCustomCar.Installed(context.GameRoot).Cast(Of Object)().ToArray())
         FitChoiceToItems(track) : FitChoiceToItems(car)
-        track.SelectedIndex = 0 : car.SelectedIndex = 0
+        track.SelectedItem = DirectStockCatalog.Tracks(143) : car.SelectedItem = DirectStockCatalog.Cars(88)
         layout.Controls.Add(Row(Caption("Player"), playerName, host, address, join), 0, 0)
         servers = New DirectServers(context, address)
         layout.Controls.Add(servers, 0, 1)
@@ -120,9 +122,22 @@ Public Class DirectLobbyForm
     Private Function LocalPlayer() As Player
         Return If(room.IsHost, room.Grid.Host, room.Grid.Guest)
     End Function
-    Private Shared Function PlayerLine(p As Player) As String
-        Dim model = RallycrossCatalog.Cars.Single(Function(choice) choice.Id = p.Car).Name
+    Private Function CarChoice(p As Player) As RallycrossChoice
+        If p.CustomCar Is Nothing Then Return DirectStockCatalog.Cars(p.Car)
+        Return car.Items.OfType(Of RallycrossChoice)().FirstOrDefault(Function(choice) Object.Equals(choice.CustomCar, p.CustomCar))
+    End Function
+    Private Function PlayerLine(p As Player) As String
+        Dim choice = CarChoice(p)
+        Dim model = If(choice Is Nothing, p.CustomCar.Code & " (matching custom car missing on this PC)", choice.Name)
         Return $"{p.Name}   ·   {model}   ·   {If(p.Ready, "Ready", "Choosing")}"
+    End Function
+    Private Shared Function CarFileStatus(grid As Grid) As String
+        Dim missing As New List(Of String)
+        If grid.HostCarsMatch.HasValue AndAlso Not grid.HostCarsMatch.Value Then missing.Add(grid.Host.Name)
+        If grid.GuestCarsMatch.HasValue AndAlso Not grid.GuestCarsMatch.Value Then missing.Add(grid.Guest.Name)
+        If missing.Count > 0 Then Return "Check the custom car files for " & String.Join(" and ", missing) & ". Install matching packs and reopen the lobby."
+        If grid.HostCarsMatch.HasValue AndAlso grid.GuestCarsMatch.HasValue Then Return "Both PCs have matching custom car files."
+        Return "Checking the selected custom car files on both PCs…"
     End Function
     Private Sub AddChat(line As String)
         If log.Items.Count >= 150 Then log.Items.RemoveAt(0)
@@ -148,8 +163,7 @@ Public Class DirectLobbyForm
             Dim connected = room IsNot Nothing AndAlso room.Connected
             Dim editable = room IsNot Nothing AndAlso (connected OrElse room.CanConfigure) AndAlso Not room.Starting
             Dim checking = editable AndAlso room.IsHost AndAlso room.CheckingLayout
-            Dim layoutReady = connected AndAlso editable AndAlso Not checking AndAlso
-                (room.Grid.Layout Is Nothing OrElse room.Grid.Agreement = LayoutAgreement.Matching)
+            Dim layoutReady = connected AndAlso editable AndAlso Not checking AndAlso room.Grid.CanStart
             host.Enabled = room Is Nothing : join.Enabled = host.Enabled
             servers.Enabled = host.Enabled
             If connected AndAlso Not room.IsHost AndAlso Not joinedHostSaved Then
@@ -175,8 +189,8 @@ Public Class DirectLobbyForm
                 If connected OrElse room.IsHost Then
                     Dim grid = room.Grid
                     If Not checking Then
-                        Dim choice = If(grid.Layout IsNot Nothing, RallycrossCatalog.Circuit(grid.Layout.Id),
-                                        RallycrossCatalog.Tracks.Single(Function(item) item.Id = grid.Track))
+                        Dim choice = If(grid.Layout IsNot Nothing, RallycrossCatalog.Circuit(grid.Layout),
+                                        DirectStockCatalog.Track(grid.Track))
                         If remoteCircuit IsNot Nothing AndAlso Not remoteCircuit.Equals(choice) Then
                             track.Items.Remove(remoteCircuit) : remoteCircuit = Nothing
                         End If
@@ -185,16 +199,19 @@ Public Class DirectLobbyForm
                         End If
                         track.SelectedItem = choice
                     End If
-                    car.SelectedItem = RallycrossCatalog.Cars.Single(Function(choice) choice.Id = LocalPlayer().Car)
+                    car.SelectedItem = CarChoice(LocalPlayer())
                     laps.Value = grid.RequiredLaps
                     roster.Text = PlayerLine(grid.Host) & vbCrLf & If(grid.Guest Is Nothing, "Waiting for a player…", PlayerLine(grid.Guest))
+                    If connected AndAlso grid.HasCustomCars Then roster.Text &= vbCrLf & CarFileStatus(grid)
                     ready.Text = If(LocalPlayer().Ready, "Unready", "Ready")
                     If checking Then
-                        status.Text = "Checking this PC’s circuit files…"
+                        status.Text = "Checking this PC’s track files…"
                     ElseIf connected AndAlso editable AndAlso grid.Layout IsNot Nothing AndAlso grid.Agreement = LayoutAgreement.Pending Then
-                        status.Text = "Checking that both PCs have the same circuit files…"
+                        status.Text = "Checking that both PCs have the same track files…"
                     ElseIf editable AndAlso grid.Layout IsNot Nothing AndAlso grid.Agreement = LayoutAgreement.Different Then
-                        status.Text = RallycrossCatalog.Circuit(grid.Layout.Id).Name & " files differ or are missing. Install the same layout on both PCs, then select it again."
+                        status.Text = RallycrossCatalog.Circuit(grid.Layout).Name & " files differ or are missing. Install the same layout on both PCs, then select it again."
+                    ElseIf editable AndAlso Not grid.SupportsRace Then
+                        status.Text = "To start a race, choose a supported Rallycross circuit and a Rallycross car for each player."
                     End If
                 End If
             End If
@@ -270,7 +287,7 @@ Public Class DirectLobbyForm
         End If
         If remoteCircuit IsNot Nothing Then
             track.Items.Remove(remoteCircuit) : remoteCircuit = Nothing
-            track.SelectedIndex = 0
+            track.SelectedItem = DirectStockCatalog.Tracks(143)
         End If
         If Not IsDisposed Then
             roster.Text = ""
@@ -291,23 +308,24 @@ Public Class DirectLobbyForm
             Await Command(Function() room.SetLapsAsync(CInt(laps.Value)))
             Return
         End If
-        Dim selectedCar = DirectCast(car.SelectedItem, RallycrossChoice).Id
+        Dim selectedCar = TryCast(car.SelectedItem, RallycrossChoice)
+        If selectedCar Is Nothing Then Return
         If sender Is car Then
-            Await Command(Function() room.SelectAsync(selectedCar, room.Grid.Track))
+            Await Command(Function() room.SelectAsync(selectedCar.Id, room.Grid.Track, selectedCar.CustomCar))
             Return
         End If
         Dim selection = TryCast(track.SelectedItem, RallycrossChoice)
         If selection Is Nothing Then Return
         If room.IsHost AndAlso selection.LayoutId IsNot Nothing Then
             Try
-                Await room.SelectLayoutAsync(selectedCar, selection.LayoutId)
+                Await room.SelectLayoutAsync(selectedCar.Id, selection.LayoutId, selectedCar.CustomCar)
             Catch ex As OperationCanceledException
                 ' A newer selection or a closed lobby cancelled this file check.
             Catch ex As Exception
                 If Not IsDisposed Then status.Text = ex.Message
             End Try
         Else
-            Await Command(Function() room.SelectAsync(selectedCar, selection.Id))
+            Await Command(Function() room.SelectAsync(selectedCar.Id, selection.Id, selectedCar.CustomCar))
         End If
     End Sub
     Private Async Function SendChat() As Task

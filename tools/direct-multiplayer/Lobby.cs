@@ -5,33 +5,47 @@ using System.Text.Json;
 
 namespace DiRT2VR.Multiplayer;
 
-public sealed record Player(string Name, int Car, bool Ready = false);
+public sealed record Player(string Name, int Car, bool Ready = false, DirectCustomCar? CustomCar = null);
 public enum LayoutAgreement { Pending, Matching, Different }
 public sealed record Grid(int Track, Player Host, Player? Guest, int Revision = 0,
-                          DirectLayout? Layout = null, LayoutAgreement Agreement = LayoutAgreement.Pending, int Laps = 3)
+                          DirectLayout? Layout = null, LayoutAgreement Agreement = LayoutAgreement.Pending, int Laps = 3,
+                          int CarRevision = 0, bool? HostCarsMatch = null, bool? GuestCarsMatch = null)
 {
-    public bool CanStart => Guest != null && (Layout == null || Agreement == LayoutAgreement.Matching);
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool SupportsRace => RallycrossCatalog.Supports(this);
+    [System.Text.Json.Serialization.JsonIgnore]
+    public bool HasCustomCars => Host.CustomCar != null || Guest?.CustomCar != null;
+    public bool CanStart => Guest != null && SupportsRace && (Layout == null || Agreement == LayoutAgreement.Matching) &&
+        (!HasCustomCars || HostCarsMatch == true && GuestCarsMatch == true);
     public bool BothReady => CanStart && Host.Ready && Guest!.Ready;
-    public bool IsCircuit => Layout is null || DiRT2VR.CustomTracks.TrackPacks.ForLayout(Layout.Id).GetLayout(Layout.Id).Circuit;
+    public bool IsCircuit => Layout is null ? ValidTrack(Track) && DirectStockCatalog.Track(Track).Circuit
+        : Layout.ExternalCircuit ?? DiRT2VR.CustomTracks.TrackPacks.ForLayout(Layout.Id).GetLayout(Layout.Id).Circuit;
     public int RequiredLaps => IsCircuit ? Laps : 1;
     public static bool ValidLaps(int laps) => laps is >= 1 and <= 20;
-    public static bool ValidCar(int id) => RallycrossCatalog.Cars.Any(car => car.Id == id);
-    public static bool ValidTrack(int id) => RallycrossCatalog.Tracks.Any(track => track.Id == id);
+    public static bool ValidCar(int id, DirectCustomCar? custom = null) =>
+        custom == null ? DirectStockCatalog.Cars.ContainsKey(id) : id == 0 && custom.Valid;
+    public static bool ValidTrack(int id) => id == DirectStockCatalog.PrototypeId || DirectStockCatalog.Tracks.ContainsKey(id);
 
-    public Grid Select(bool host, int car, int track, DirectLayout? layout = null)
+    public Grid Select(bool host, int car, int track, DirectLayout? layout = null, DirectCustomCar? customCar = null)
     {
-        if (!ValidCar(car) || !ValidSelection(track, layout) || (!host && (Guest == null || track != Track || layout != Layout)))
+        if (!ValidCar(car, customCar) || !ValidSelection(track, layout) || (!host && (Guest == null || track != Track || layout != Layout)))
             throw new InvalidDataException("Invalid race selection.");
-        if ((host ? Host : Guest!).Car == car && Track == track && layout == Layout) return this;
-        return this with { Track = track, Revision = checked(Revision + 1),
+        var player = host ? Host : Guest!;
+        if (player.Car == car && player.CustomCar == customCar && Track == track && layout == Layout) return this;
+        var selected = player with { Car = car, CustomCar = customCar, Ready = false };
+        int revision = checked(Revision + 1);
+        return this with { Track = track, Revision = revision,
             Layout = layout, Agreement = layout == Layout && Agreement == LayoutAgreement.Matching ? Agreement : LayoutAgreement.Pending,
-            Host = Host with { Car = host ? car : Host.Car, Ready = false },
-            Guest = Guest == null ? null : Guest with { Car = host ? Guest.Car : car, Ready = false } };
+            CarRevision = player.CustomCar == customCar ? CarRevision : revision,
+            HostCarsMatch = player.CustomCar == customCar ? HostCarsMatch : null,
+            GuestCarsMatch = player.CustomCar == customCar ? GuestCarsMatch : null,
+            Host = host ? selected : Host with { Ready = false },
+            Guest = !host ? selected : Guest is null ? null : Guest with { Ready = false } };
     }
 
     public Grid SetReady(bool host, bool ready, int revision)
     {
-        if (revision != Revision || Guest == null || (ready && Layout != null && Agreement != LayoutAgreement.Matching)) return this;
+        if (revision != Revision || Guest == null || (ready && !CanStart)) return this;
         return host ? this with { Host = Host with { Ready = ready } }
                     : this with { Guest = Guest with { Ready = ready } };
     }
@@ -45,11 +59,13 @@ public sealed record Grid(int Track, Player Host, Player? Guest, int Revision = 
     }
 
     internal static bool ValidSelection(int track, DirectLayout? layout) => layout == null ? ValidTrack(track)
-        : track == 0 && DirectLayout.Known(layout.Id) && DiRT2VR.CustomTracks.SafeFiles.Digest(layout.Digest);
+        : track == 0 && DiRT2VR.CustomTracks.SafeFiles.Digest(layout.Digest) &&
+          (layout.ExternalCircuit.HasValue ? DiRT2VR.CustomTracks.ExternalPacks.IsTrackLayoutId(layout.Id) : DirectLayout.Known(layout.Id));
 }
 
 public sealed record LobbyMessage(string Kind, string Text = "", int Car = 0, int Track = 0,
-                                 bool Ready = false, int Revision = 0, Grid? Grid = null, int? ExitCode = null);
+                                 bool Ready = false, int Revision = 0, Grid? Grid = null, int? ExitCode = null,
+                                 DirectCustomCar? CustomCar = null);
 
 // Only the host publishes the grid and starts the race. Race traffic stays in DiRT 2.
 public sealed class LobbyConnection : IDisposable

@@ -10,22 +10,27 @@ internal sealed record PreparedCircuit(CircuitCatalog Catalog, PackFile[] Files)
 
 // The selected database is part of the digest. Model numbers alone can identify
 // different circuits on the two PCs.
-public sealed record DirectLayout(string Id, string Digest)
+public sealed record DirectLayout(string Id, string Digest, bool? ExternalCircuit = null)
 {
     public static string SpaId => TrackPacks.Spa.Layouts[0].Id;
-    internal static bool Known(string id) => TrackPacks.DirectCircuitPacks.Any(pack => pack.IsLayout(id));
-    internal static TrackPack Pack(string id) => TrackPacks.DirectCircuitPacks.SingleOrDefault(pack => pack.IsLayout(id))
-        ?? throw new IOException("This layout does not support a Direct circuit race.");
+    internal static bool Known(string id) => TrackPacks.DirectRacePacks.Any(pack => pack.IsLayout(id));
+    internal static TrackPack Pack(string id) => TrackPacks.ForLayout(id);
 
-    internal static DirectLayout Read(string install, string id, CancellationToken cancel) =>
-        VerifyRaceAssets(install, Pack(id), id, cancel, null);
+    internal static DirectLayout Read(string install, string id, CancellationToken cancel)
+    {
+        var pack = Pack(id);
+        if (pack.External is not { } external) return VerifyRaceAssets(install, pack, id, cancel, null);
+        external.Verify(cancel);
+        external.RequireDependencies(install, cancel);
+        return new(id, external.ManifestHash, external.Layout(id).Circuit);
+    }
 
     // The source pack is read-only. Publish the private layout directory only
     // after its bytes match the lobby selection and its race catalog is ready.
     internal PreparedCircuit Prepare(string install, string privateRun, CancellationToken cancel)
     {
-        // Stage packs can be prepared privately before the lobby supports their event type.
-        var pack = TrackPacks.Mizu.IsLayout(Id) || TrackPacks.Pikes.IsLayout(Id) ? TrackPacks.ForLayout(Id) : Pack(Id);
+        var pack = Pack(Id);
+        if (pack.External != null) throw new IOException("The Direct race worker cannot start external tracks yet.");
         var layout = pack.GetLayout(Id);
         cancel.ThrowIfCancellationRequested();
         string root = Path.GetFullPath(privateRun);

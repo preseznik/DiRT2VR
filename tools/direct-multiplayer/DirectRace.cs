@@ -177,15 +177,20 @@ public class DirectRace
     internal static void ConfigureGrid(ProcessStartInfo start, Grid grid, bool host, int model, string gameRoot, string run)
     {
         var guest = grid.Guest ?? throw new IOException("The Direct starting grid needs two players.");
+        if (grid.Layout == null && model != grid.Track)
+            throw new IOException("The prepared track does not match the lobby selection.");
         int race = 1, vehicleClass = 1;
-        bool customStage = grid.Layout != null && !grid.IsCircuit;
-        if (customStage || (grid.Layout == null && !RallycrossCatalog.Tracks.Any(track => track.Id == model)))
+        if (!RallycrossCatalog.Supports(grid))
         {
+            if (grid.Layout?.ExternalCircuit != null || grid.Track == DirectStockCatalog.PrototypeId ||
+                grid.Host.CustomCar != null || guest.CustomCar != null)
+                throw new IOException("The selected custom content has no Direct race setup.");
             string schema = CircuitCatalog.WriteSchema(run);
             try
             {
                 using var database = new DatabaseFile(Path.Combine(gameRoot, "database", "database.bin"), schema);
-                (race, vehicleClass) = CircuitCatalog.OffroadEvent(database, model, grid.Host.Car, guest.Car, customStage);
+                string? discipline = grid.Layout == null ? null : grid.IsCircuit ? "rallycross" : "raid";
+                (race, vehicleClass) = CircuitCatalog.RaceEvent(database, model, grid.Host.Car, guest.Car, discipline);
             }
             finally { File.Delete(schema); }
         }

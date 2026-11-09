@@ -6,11 +6,13 @@
   </PropertyGroup>
   <ItemGroup>
     <ProjectReference Include="../profiles/Profiles.csproj" />
+    <ProjectReference Include="../car-converter/CarConverter.csproj" />
     <ProjectReference Include="../custom-tracks/CustomTracks.csproj" />
     <ProjectReference Include="../nordschleife-converter/NordschleifeConverter.csproj" />
     <ProjectReference Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/EgoEngineLibrary.csproj" />
     <EmbeddedResource Include="../../.deps/Ego-Engine-Modding/src/EgoDatabaseEditor/schema/schemaDirt2.xml" LogicalName="DirectCircuitSchema" />
     <EmbeddedResource Include="assets.json.gz" LogicalName="DirectStockAssets" />
+    <EmbeddedResource Include="../../launcher/assets/race-catalog.json" LogicalName="RaceCatalog" />
     <InternalsVisibleTo Include="DirectLobbyTests" />
   </ItemGroup>
 </Project>

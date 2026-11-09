@@ -81,6 +81,13 @@ public static class ExternalPacks
         ? "DiRT2VR/custom-" + kind + "s/external" : throw new IOException("Unknown external content kind.");
     static readonly JsonSerializerOptions Json = new(SafeFiles.Json) { UnmappedMemberHandling = JsonUnmappedMemberHandling.Disallow };
     static bool Slug(string? id) => id is not null && Regex.IsMatch(id, "^[a-z0-9][a-z0-9-]{0,47}$");
+    public static bool IsTrackLayoutId(string? id)
+    {
+        const string prefix = "external-track-";
+        if (id is null || id.Length > prefix.Length + 97 || !id.StartsWith(prefix, StringComparison.Ordinal) || id.Any(char.IsControl)) return false;
+        var parts = id[prefix.Length..].Split('/');
+        return parts.Length == 2 && Slug(parts[0]) && Slug(parts[1]);
+    }
     internal static bool AssetPath(string path) => Regex.IsMatch(path, "^tracks/usa/d2ve_[a-z0-9_]{1,48}/") && DataExtension(path);
     static bool DataExtension(string path) => new[] { ".xml", ".bin", ".pssg", ".ens", ".jpk", ".vis", ".clm", ".grs", ".cqtc", ".cns", ".txt", ".lng", ".htf", ".nfs", ".gssp", ".ctf", ".nd2", ".ini", ".dic", ".wip", ".ppts" }.Contains(Path.GetExtension(path));
     public static ExternalPack[] Discover(string game, string launcherVersion)

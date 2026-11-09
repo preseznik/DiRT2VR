@@ -15,18 +15,22 @@ internal sealed record CircuitCatalog(int Model, int Track, int Location)
         return path;
     }
 
-    internal static (int Race, int VehicleClass) OffroadEvent(DatabaseFile database, int model, int hostCar, int guestCar, bool customStage)
+    internal static (int Race, int VehicleClass) RaceEvent(DatabaseFile database, int model, int hostCar, int guestCar, string? customDiscipline = null)
     {
-        int databaseRace = 5, nativeRace = 4; // Custom point-to-point routes use the Raid event.
-        if (!customStage)
+        DataRow race;
+        if (customDiscipline == null)
         {
             var track = One(database, "track_model", r => (int)r["id"] == model);
-            var discipline = One(database, "discipline", r => (int)r["id"] == (int)track["discipline_id"]);
-            if ((string)discipline["name_string_id"] != "landrush")
-                throw new IOException("Direct has no race setup for this stock discipline.");
-            databaseRace = 4;
-            nativeRace = 3;
+            race = One(database, "net_race_type", r => (int)r["discipline"] == (int)track["discipline_id"] && (int)r["race_type"] == 1);
         }
+        else
+            race = One(database, "net_race_type", r => (string)r["name_string_id"] == customDiscipline);
+        int databaseRace = (int)race["id"];
+        int nativeRace = (string)race["name_string_id"] switch
+        {
+            "rally" => 0, "rallycross" => 1, "trailblazer" => 2, "landrush" => 3, "raid" => 4,
+            _ => throw new IOException("Direct has no setup for this race discipline.")
+        };
 
         int ClassOf(int car)
         {
@@ -40,9 +44,10 @@ internal sealed record CircuitCatalog(int Model, int Track, int Location)
         // Baja with Raid T1, and trophy trucks with class 1 buggies.
         (int native, int netClass) = (Math.Min(host, guest), Math.Max(host, guest)) switch
         {
+            (16, 16) => (0, 16), (17, 17) => (1, 17), (18, 18) => (2, 18),
             (19, 19) => (4, 19), (20, 20) => (5, 20), (21, 21) => (3, 21), (22, 22) => (6, 22),
             (19, 20) => (7, 23), (21, 22) => (8, 24),
-            _ => throw new IOException("These two cars do not share a stock off-road event class.")
+            _ => throw new IOException("These two cars do not share a stock multiplayer event class.")
         };
         _ = One(database, "net_race_tracks", r => (int)r["track_model_id"] == model && (int)r["net_race_type"] == databaseRace);
         _ = One(database, "net_session_restrictions", r => (int)r["net_race_type_id"] == databaseRace && (int)r["net_vehicle_class_id"] == netClass);

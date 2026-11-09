@@ -9,7 +9,11 @@ namespace DiRT2VR.Multiplayer;
 internal static class PrivateCircuit
 {
     sealed record RouteReceipt(string LayoutId, PackFile[] Files);
-    static string Route(string id) => "tracks/usa/" + DirectLayout.Pack(id).GetLayout(id).Folder;
+    static string Route(string id)
+    {
+        if (!DirectLayout.Known(id)) throw new IOException("Unknown layout in the private circuit cache.");
+        return "tracks/usa/" + DirectLayout.Pack(id).GetLayout(id).Folder;
+    }
     const string Journal = "circuit-route.json";
     const string Retiring = "circuit-route-retiring";
 

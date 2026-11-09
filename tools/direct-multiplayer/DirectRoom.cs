@@ -19,6 +19,9 @@ public sealed class DirectRoom : IDisposable
     bool localResultReady, remoteResultReady;
     readonly string layoutRoot;
     CancellationTokenSource? layoutCheck;
+    CancellationTokenSource? carCheck;
+    (int Revision, DirectCustomCar? Host, DirectCustomCar? Guest)? checkedCars;
+    bool localCarsMatch;
     DirectLayout? verifiedGuestLayout;
     int checkedRevision = -1;
     int firstCarRevision;
@@ -106,7 +109,7 @@ public sealed class DirectRoom : IDisposable
             Connected=true;
             if (IsHost) await Publish(); // Include edits made while the initial handshake was in flight.
             SetStatus("Lobby open. Choose your cars and mark yourselves ready.");
-            if (!IsHost) _=CheckGuestLayout(Grid);
+            if (!IsHost) { _=CheckGuestLayout(Grid); _=CheckCars(); }
             while (!stop.IsCancellationRequested) await Receive(await connection.ReceiveAsync(stop.Token));
         }
         catch(Exception ex) when (ex is IOException or InvalidDataException or SocketException or OperationCanceledException or System.Text.Json.JsonException or ObjectDisposedException)
@@ -131,18 +134,18 @@ public sealed class DirectRoom : IDisposable
         if (IsHost && CanConfigure) return;
         LobbyOnly();
     }
-    public async Task SelectAsync(int car,int track)
+    public async Task SelectAsync(int car,int track,DirectCustomCar? customCar = null)
     {
         SelectionOnly();
         if (IsHost)
         {
             layoutCheck?.Cancel();
-            await PublishSelection(Grid.Select(true,car,track,track==0 ? Grid.Layout : null));
+            await PublishSelection(Grid.Select(true,car,track,track==0 ? Grid.Layout : null,customCar));
         }
-        else await Send(new("select",Car:car,Revision:Grid.Revision));
+        else await Send(new("select",Car:car,Revision:Grid.Revision,CustomCar:customCar));
     }
 
-    public async Task SelectLayoutAsync(int car,string id)
+    public async Task SelectLayoutAsync(int car,string id,DirectCustomCar? customCar = null)
     {
         SelectionOnly();
         if (!IsHost) throw new IOException("Only the host can select the track.");
@@ -155,7 +158,7 @@ public sealed class DirectRoom : IDisposable
             var layout=await Task.Run(()=>DirectLayout.Read(layoutRoot,id,check.Token),check.Token);
             check.Token.ThrowIfCancellationRequested();
             SelectionOnly();
-            var updated=Grid.Select(true,car,0,layout);
+            var updated=Grid.Select(true,car,0,layout,customCar);
             if (updated==Grid && Grid.Agreement==LayoutAgreement.Different)
                 updated=Grid with { Agreement=LayoutAgreement.Pending, Revision=checked(Grid.Revision+1) };
             await PublishSelection(updated);
@@ -198,7 +201,49 @@ public sealed class DirectRoom : IDisposable
         if (IsHost) { Grid=Grid.SetReady(true,ready,Grid.Revision); await Publish(); }
         else await Send(new("ready",Ready:ready,Revision:Grid.Revision));
     }
-    async Task Publish() { Changed?.Invoke(); if (Connected) await Send(new("grid",Grid:Grid)); }
+    // Both PCs check both cars. Changing only laps or layout keeps the same file checks.
+    async Task CheckCars()
+    {
+        var cars = (Revision: Grid.CarRevision, Host: Grid.Host.CustomCar, Guest: Grid.Guest?.CustomCar);
+        if (!Connected || cars == checkedCars) return;
+        checkedCars = cars;
+        carCheck?.Cancel();
+        localCarsMatch = !Grid.HasCustomCars;
+        if (localCarsMatch) return;
+        using var check = CancellationTokenSource.CreateLinkedTokenSource(stop.Token);
+        carCheck = check;
+        try
+        {
+            bool match;
+            try
+            {
+                match = await Task.Run(() =>
+                    (cars.Host?.Matches(layoutRoot, check.Token) ?? true) &&
+                    (cars.Guest == cars.Host || (cars.Guest?.Matches(layoutRoot, check.Token) ?? true)), check.Token);
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
+            { match = false; }
+            if (check.IsCancellationRequested) return;
+            localCarsMatch = match;
+            if (IsHost)
+            {
+                Grid = Grid with { HostCarsMatch = match };
+                await Publish();
+            }
+            else await Send(new("cars-checked", Ready: match, Revision: cars.Revision));
+        }
+        catch (OperationCanceledException) when (check.IsCancellationRequested) { }
+        catch (Exception ex) { if (!stop.IsCancellationRequested) Abort(ex.Message); }
+        finally { if (carCheck == check) carCheck = null; }
+    }
+
+    async Task Publish()
+    {
+        Changed?.Invoke();
+        if (!Connected) return;
+        _=CheckCars();
+        await Send(new("grid",Grid:Grid));
+    }
     Task PublishSelection(Grid updated)
     {
         if (updated.Track!=Grid.Track || updated.Layout!=Grid.Layout) firstCarRevision=updated.Revision;
@@ -244,8 +289,9 @@ public sealed class DirectRoom : IDisposable
         if (remoteReturn || remoteDone) race?.RequestReturn();
     }
     static bool ValidGrid(Grid? g) => g?.Guest != null && g.Host != null && Enum.IsDefined(g.Agreement) &&
-        Grid.ValidLaps(g.Laps) && (g.Layout!=null || g.Agreement==LayoutAgreement.Pending) && Grid.ValidSelection(g.Track,g.Layout) && Grid.ValidCar(g.Host.Car) &&
-        Grid.ValidCar(g.Guest.Car) && LobbyConnection.ValidText(g.Host.Name,32) && LobbyConnection.ValidText(g.Guest.Name,32) && g.Revision >= 0;
+        g.CarRevision >= 0 && g.CarRevision <= g.Revision && (g.HasCustomCars || (g.HostCarsMatch == null && g.GuestCarsMatch == null)) &&
+        Grid.ValidLaps(g.Laps) && (g.Layout!=null || g.Agreement==LayoutAgreement.Pending) && Grid.ValidSelection(g.Track,g.Layout) && Grid.ValidCar(g.Host.Car,g.Host.CustomCar) &&
+        Grid.ValidCar(g.Guest.Car,g.Guest.CustomCar) && LobbyConnection.ValidText(g.Host.Name,32) && LobbyConnection.ValidText(g.Guest.Name,32) && g.Revision >= 0;
     async Task Receive(LobbyMessage msg)
     {
         switch(msg.Kind)
@@ -256,7 +302,7 @@ public sealed class DirectRoom : IDisposable
             case "select" when IsHost:
                 // Car picks are independent within a circuit and round. Ready marks still require an exact revision.
                 if (!launching && msg.Revision>=firstCarRevision && msg.Revision<=Grid.Revision)
-                    Grid=Grid.Select(false,msg.Car,Grid.Track,Grid.Layout);
+                    Grid=Grid.Select(false,msg.Car,Grid.Track,Grid.Layout,msg.CustomCar);
                 if (!launching) await Publish();
                 break;
             case "ready" when IsHost:
@@ -265,6 +311,14 @@ public sealed class DirectRoom : IDisposable
             case "grid" when !IsHost && !launching && ValidGrid(msg.Grid):
                 Grid=msg.Grid!; Changed?.Invoke();
                 if (Grid.Revision!=checkedRevision) _=CheckGuestLayout(Grid);
+                _=CheckCars();
+                break;
+            case "cars-checked" when IsHost:
+                if (!launching && Grid.HasCustomCars && msg.Revision==Grid.CarRevision)
+                {
+                    Grid=Grid with { GuestCarsMatch=msg.Ready };
+                    await Publish();
+                }
                 break;
             case "layout-check" when IsHost:
                 if (!launching && Grid.Layout!=null && msg.Revision==Grid.Revision)
@@ -273,7 +327,7 @@ public sealed class DirectRoom : IDisposable
                     await Publish();
                 }
                 break;
-            case "start" when !IsHost && !launching && msg.Grid==Grid && Grid.CanStart && Grid.Layout==verifiedGuestLayout:
+            case "start" when !IsHost && !launching && msg.Grid==Grid && Grid.CanStart && Grid.Layout==verifiedGuestLayout && (!Grid.HasCustomCars || localCarsMatch):
                 if (!await AcceptLocalStart())
                 {
                     if (Connected && !stop.IsCancellationRequested) await Send(new("start-declined",Revision:Grid.Revision));
@@ -393,7 +447,8 @@ public sealed class DirectRoom : IDisposable
         if (!IsHost || !localDone || !remoteDone || resetting) return;
         resetting=true;
         Grid=Grid with {Host=Grid.Host with {Ready=false},Guest=Grid.Guest! with {Ready=false},
-            Revision=checked(Grid.Revision+1),Agreement=LayoutAgreement.Pending};
+            Revision=checked(Grid.Revision+1),Agreement=LayoutAgreement.Pending,
+            CarRevision=Grid.HasCustomCars ? checked(Grid.Revision+1) : Grid.CarRevision,HostCarsMatch=null,GuestCarsMatch=null};
         firstCarRevision=Grid.Revision;
         await Send(new("reset",Grid:Grid)); Reset();
     }
@@ -401,6 +456,7 @@ public sealed class DirectRoom : IDisposable
     {
         launching=resetting=hostPrepared=guestPrepared=localDone=remoteDone=false; race=null;
         onTrack=localReturn=remoteReturn=localResultReady=remoteResultReady=false;
+        _=CheckCars();
         SetStatus("Both players returned. Choose cars for the next race.");
     }
     void Abort(string reason)
