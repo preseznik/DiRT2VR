@@ -88,11 +88,7 @@ Public Module Program
                 Return 0
             End If
             If args.Contains("--launch") Then
-                Dim elevated = New WindowsPrincipal(WindowsIdentity.GetCurrent()).IsInRole(WindowsBuiltInRole.Administrator)
-                If Not ConfirmElevatedLaunch(elevated, Environment.UserInteractive AndAlso Not args.Contains("--quiet"), args.Contains("--allow-elevated"),
-                    Function() MessageBox.Show("DiRT2VR is running as administrator. Continuing will also give DiRT 2 and all mods it loads administrator access for this session." & Environment.NewLine & Environment.NewLine &
-                        "Normally only the separate file worker needs elevation." & Environment.NewLine & Environment.NewLine & "Continue anyway?",
-                        "Run DiRT 2 as administrator?", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) = DialogResult.OK) Then
+                If Not CheckLaunchElevation(Environment.UserInteractive AndAlso Not args.Contains("--quiet"), args.Contains("--allow-elevated")) Then
                     Return CancelledLaunchExitCode
                 End If
                 Call (New Session(context, args.Contains("--lan-host"), Argument(args, "--lan-join", Nothing), Argument(args, "--replay", Nothing))).Run(Not args.Contains("--desktop"), args.Contains("--vr"))
@@ -108,6 +104,15 @@ Public Module Program
             End If
             Return 1
         End Try
+    End Function
+    Friend Function CheckLaunchElevation(interactive As Boolean, accepted As Boolean, Optional owner As IWin32Window = Nothing) As Boolean
+        Using identity = WindowsIdentity.GetCurrent()
+            Dim elevated = New WindowsPrincipal(identity).IsInRole(WindowsBuiltInRole.Administrator)
+            Return ConfirmElevatedLaunch(elevated, interactive, accepted,
+                Function() MessageBox.Show(owner, "DiRT2VR is running as administrator. Continuing will also give DiRT 2 and all mods it loads administrator access for this session." & Environment.NewLine & Environment.NewLine &
+                    "Normally only the separate file worker needs elevation." & Environment.NewLine & Environment.NewLine & "Continue anyway?",
+                    "Run DiRT 2 as administrator?", MessageBoxButtons.OKCancel, MessageBoxIcon.Warning, MessageBoxDefaultButton.Button2) = DialogResult.OK)
+        End Using
     End Function
     Public Function ConfirmElevatedLaunch(elevated As Boolean, interactive As Boolean, accepted As Boolean, confirm As Func(Of Boolean)) As Boolean
         If Not elevated OrElse accepted Then Return True

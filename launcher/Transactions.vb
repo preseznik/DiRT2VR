@@ -268,11 +268,12 @@ Public Class GraphicsTransaction
             Return File.Exists(journalPath)
         End Get
     End Property
-    Public Sub Prepare(Optional settings As VrSettings = Nothing)
+    Public Sub Prepare(Optional settings As VrSettings = Nothing, Optional forceDx11 As Boolean = False)
         settings = If(settings, New VrSettings())
         settings.Validate()
         Dim specs As New List(Of String) From {$"crowd|enabled|{If(settings.VrCrowds, "true", "false")}", "particles|enabled|false", $"shadows|enabled|{If(settings.VrShadows, "true", "false")}", "postprocess|quality|0", "cpu/threadStrategy|parallelUpdateRender|false", "dynamic_ambient_occ|enabled|false", $"graphics_card/resolution|width|{settings.RenderWidth}", $"graphics_card/resolution|height|{settings.RenderHeight}", "graphics_card/resolution|fullscreen|false", "graphics_card/resolution|vsync|0"}
         specs.Add("graphics_card/resolution|multisampling|" & settings.VrMsaaToken)
+        If forceDx11 Then specs.Add("graphics_card/directx|forcedx9|false")
         If settings.VrShadows AndAlso settings.VrShadowQuality > 0 Then
             ' Native Low / Medium / High presets. Off already supplies Ultra low's disabled shadows.
             specs.Add("shadows|size|" & {"768", "1024", "2048"}(settings.VrShadowQuality - 1))

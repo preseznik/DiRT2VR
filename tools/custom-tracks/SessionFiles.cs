@@ -27,12 +27,9 @@ public static class SessionFiles
             replacements.AddRange(session.Files.Select(f => File.ReadAllBytes(SafeFiles.Inside(game, f.InstalledPath))));
             if (pikesRaceStart is not null)
             {
-                if (pack != TrackPacks.Pikes || pikesRaceStart is not ("grid" or "staggered")) throw new IOException("Invalid Pikes Peak race start.");
-                string variant = pikesRaceStart == "grid" ? "grid-race" : "race";
-                foreach (string name in PikesRaceFiles)
+                if (pack != TrackPacks.Pikes) throw new IOException("Invalid Pikes Peak race start.");
+                foreach (var (path, owned) in PikesRacePaths(layoutId, pikesRaceStart))
                 {
-                    string path = $"tracks/usa/{pack.GetLayout(layoutId).Folder}/route_0/{name}";
-                    string owned = $"{pack.Support}/{layoutId}/{variant}/{name}";
                     var original = receipt.Files.Single(f => f.Path == path);
                     var race = receipt.Files.Single(f => f.Path == owned);
                     byte[] bytes = File.ReadAllBytes(SafeFiles.Inside(game, owned));
@@ -80,11 +77,11 @@ public static class SessionFiles
 
     // Direct uses a stock-only private game tree. Keep its transaction and
     // verified backups alongside that tree so stock inventory checks still apply.
-    internal static void PreparePrivateCircuit(string cache, IReadOnlyList<SessionReplacement> files)
+    internal static void PreparePrivateCircuit(string cache, TrackPack pack, IReadOnlyList<SessionReplacement> files)
     {
         SafeFiles.RequireClosed();
         RecoverPrivateCircuit(cache);
-        if (files.Any(f => !TrackPacks.Spa.SharedTargets.Contains(f.Path) || !SafeFiles.Digest(f.OriginalSha256)))
+        if (!TrackPacks.DirectCircuitPacks.Contains(pack) || files.Any(f => !pack.SharedTargets.Contains(f.Path) || !SafeFiles.Digest(f.OriginalSha256)))
             throw new IOException("Invalid private circuit replacements.");
         Apply(SafeFiles.Inside(cache, "game"), SafeFiles.Inside(cache, "circuit-session"),
             files.Select(f => new Entry(f.Path, f.OriginalSha256, Digest(f.Bytes))).ToList(),
@@ -119,6 +116,19 @@ public static class SessionFiles
     static string Digest(byte[] bytes) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes));
     static string ProgressTarget(Layout layout) => $"tracks/usa/{layout.Folder}/route_0/progress_track.xml";
     public static readonly string[] PikesRaceFiles = ["grids.pssg", "progress_track.xml", "ai_track.xml", "dev_ai_track.xml"];
+    internal static IEnumerable<(string Target, string Source)> PikesRacePaths(string layoutId, string start)
+    {
+        var pack = TrackPacks.Pikes;
+        var layout = pack.GetLayout(layoutId);
+        string variant = start switch
+        {
+            "grid" => "grid-race",
+            "staggered" => "race",
+            _ => throw new IOException("Invalid Pikes Peak race start.")
+        };
+        foreach (string name in PikesRaceFiles)
+            yield return ($"tracks/usa/{layout.Folder}/route_0/{name}", $"{pack.Support}/{layout.Id}/{variant}/{name}");
+    }
     static bool AllowedTarget(string path) => TrackPacks.SessionTargets.Contains(path) || CarTargets.Contains(path) ||
         TrackPacks.Nordschleife.Layouts.Any(l => path == ProgressTarget(l)) ||
         TrackPacks.Pikes.Layouts.Any(l => PikesRaceFiles.Any(n => path == $"tracks/usa/{l.Folder}/route_0/{n}"));
@@ -133,7 +143,8 @@ public static class SessionFiles
         var folder = SafeFiles.Inside(cache, "circuit-session");
         if (!File.Exists(SafeFiles.Inside(folder, "pending.json"))) return;
         SafeFiles.RequireClosed();
-        Recover(SafeFiles.Inside(cache, "game"), folder, path => TrackPacks.Spa.SharedTargets.Contains(path));
+        Recover(SafeFiles.Inside(cache, "game"), folder,
+            path => TrackPacks.DirectCircuitPacks.Any(pack => pack.SharedTargets.Contains(path)));
     }
 
     static void Recover(string game, string folder, Func<string,bool> allowedTarget)

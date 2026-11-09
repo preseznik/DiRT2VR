@@ -21,8 +21,11 @@ public sealed class DirectRoom : IDisposable
     CancellationTokenSource? layoutCheck;
     DirectLayout? verifiedGuestLayout;
     int checkedRevision = -1;
+    int firstCarRevision;
     public bool CheckingLayout => layoutCheck is { IsCancellationRequested: false };
     internal Func<DirectRace> CreateRace { get; init; } = () => new DirectRace();
+    readonly Func<Task<bool>> confirmLocalLaunch;
+    public Action<System.Diagnostics.ProcessStartInfo,string>? ConfigureLocalVr { get; set; }
     public bool RecordLapTelemetry { get; set; }
     public bool CanRequestReturn => Connected && onTrack && !localDone && !localReturn;
     public Grid Grid { get; private set; }
@@ -36,11 +39,12 @@ public sealed class DirectRoom : IDisposable
     public event Action<string>? Chat;
     public event Action? LocalGameClosed;
 
-    public DirectRoom(bool host,string gameRoot,string userRoot,string name,string packageRoot,string? layoutRoot = null)
+    public DirectRoom(bool host,string gameRoot,string userRoot,string name,string packageRoot,Func<Task<bool>> confirmLocalLaunch,string? layoutRoot = null)
     {
         if (!LobbyConnection.ValidText(name,32)) throw new ArgumentException("Enter a player name of 1 to 32 characters.");
         this.gameRoot=gameRoot; this.packageRoot=packageRoot; this.userRoot=userRoot; this.name=name;
         this.layoutRoot=layoutRoot ?? packageRoot;
+        this.confirmLocalLaunch=confirmLocalLaunch ?? throw new ArgumentNullException(nameof(confirmLocalLaunch));
         identity=DirectRace.PackageIdentity(packageRoot);
         ui = SynchronizationContext.Current ?? throw new InvalidOperationException("Open a Direct lobby from the launcher.");
         IsHost=host;
@@ -58,7 +62,10 @@ public sealed class DirectRoom : IDisposable
                 listener.Start(1);
                 var addresses = Dns.GetHostAddresses(Dns.GetHostName()).Where(LobbyConnection.IsPrivate);
                 SetStatus("Waiting for a player. Host IP: "+string.Join(", ",addresses));
-                socket=await listener.AcceptTcpClientAsync(stop.Token);
+                using var waiting = CancellationTokenSource.CreateLinkedTokenSource(stop.Token);
+                var advertise = DirectDiscovery.AdvertiseAsync(name, waiting.Token);
+                try { socket=await listener.AcceptTcpClientAsync(stop.Token); }
+                finally { waiting.Cancel(); await advertise; }
                 listener.Stop();
             }
             else
@@ -107,7 +114,11 @@ public sealed class DirectRoom : IDisposable
     public async Task SelectAsync(int car,int track)
     {
         LobbyOnly();
-        if (IsHost) { layoutCheck?.Cancel(); Grid=Grid.Select(true,car,track,track==0 ? Grid.Layout : null); await Publish(); }
+        if (IsHost)
+        {
+            layoutCheck?.Cancel();
+            await PublishSelection(Grid.Select(true,car,track,track==0 ? Grid.Layout : null));
+        }
         else await Send(new("select",Car:car,Revision:Grid.Revision));
     }
 
@@ -127,16 +138,16 @@ public sealed class DirectRoom : IDisposable
             var updated=Grid.Select(true,car,0,layout);
             if (updated==Grid && Grid.Agreement==LayoutAgreement.Different)
                 updated=Grid with { Agreement=LayoutAgreement.Pending, Revision=checked(Grid.Revision+1) };
-            Grid=updated;
-            await Publish();
+            await PublishSelection(updated);
         }
         finally { if (layoutCheck==check) { layoutCheck=null; Changed?.Invoke(); } }
     }
 
     async Task CheckGuestLayout(Grid selection)
     {
-        layoutCheck?.Cancel();
         checkedRevision=selection.Revision;
+        if (selection.Agreement==LayoutAgreement.Matching && verifiedGuestLayout==selection.Layout) return;
+        layoutCheck?.Cancel();
         verifiedGuestLayout=null;
         if (selection.Layout is not { } expected) return;
         using var check=CancellationTokenSource.CreateLinkedTokenSource(stop.Token);
@@ -161,6 +172,12 @@ public sealed class DirectRoom : IDisposable
         else await Send(new("ready",Ready:ready,Revision:Grid.Revision));
     }
     async Task Publish() { Changed?.Invoke(); await Send(new("grid",Grid:Grid)); }
+    Task PublishSelection(Grid updated)
+    {
+        if (updated.Track!=Grid.Track || updated.Layout!=Grid.Layout) firstCarRevision=updated.Revision;
+        Grid=updated;
+        return Publish();
+    }
     public async Task ChatAsync(string text)
     {
         text=text.Trim();
@@ -173,11 +190,23 @@ public sealed class DirectRoom : IDisposable
         if (CheckingLayout) throw new IOException("The selected layout is still being checked.");
         if (Grid.Layout!=null && Grid.Agreement!=LayoutAgreement.Matching)
             throw new IOException("Both PCs need matching files for the selected custom layout.");
-        if (!IsHost || !Grid.CanStart || (!force && !Grid.BothReady)) throw new IOException("Both players need different cars and must be ready for a normal start.");
-        launching=true;
-        Changed?.Invoke();
+        if (!IsHost || !Grid.CanStart || (!force && !Grid.BothReady)) throw new IOException("The host can start when both players are ready, or choose Force start with two players connected.");
+        if (!await AcceptLocalStart()) return;
         await Send(new("start",Grid:Grid));
-        BeginPreparation();
+    }
+    async Task<bool> AcceptLocalStart()
+    {
+        launching=true;
+        SetStatus("Waiting to start the race…");
+        string reason="Race start cancelled on this PC.";
+        try
+        {
+            if (await confirmLocalLaunch() && Connected && !stop.IsCancellationRequested) return true;
+        }
+        catch (Exception ex) { reason="Could not confirm this race start: "+ex.Message; }
+        launching=false;
+        SetStatus(reason);
+        return false;
     }
     public async Task ReturnAsync()
     {
@@ -198,7 +227,9 @@ public sealed class DirectRoom : IDisposable
                 Chat?.Invoke((IsHost?Grid.Guest!.Name:Grid.Host.Name)+": "+msg.Text);
                 break;
             case "select" when IsHost:
-                if (!launching && msg.Revision==Grid.Revision) Grid=Grid.Select(false,msg.Car,Grid.Track,Grid.Layout);
+                // Car picks are independent within a circuit and round. Ready marks still require an exact revision.
+                if (!launching && msg.Revision>=firstCarRevision && msg.Revision<=Grid.Revision)
+                    Grid=Grid.Select(false,msg.Car,Grid.Track,Grid.Layout);
                 if (!launching) await Publish();
                 break;
             case "ready" when IsHost:
@@ -216,9 +247,22 @@ public sealed class DirectRoom : IDisposable
                 }
                 break;
             case "start" when !IsHost && !launching && msg.Grid==Grid && Grid.CanStart && Grid.Layout==verifiedGuestLayout:
-                launching=true; BeginPreparation();
+                if (!await AcceptLocalStart())
+                {
+                    if (Connected && !stop.IsCancellationRequested) await Send(new("start-declined",Revision:Grid.Revision));
+                    break;
+                }
+                await Send(new("start-accepted",Revision:Grid.Revision));
+                BeginPreparation();
                 break;
-            case "prepared" when IsHost && launching && !guestPrepared:
+            case "start-accepted" when IsHost && launching && race==null && msg.Revision==Grid.Revision:
+                BeginPreparation();
+                break;
+            case "start-declined" when IsHost && launching && race==null && msg.Revision==Grid.Revision:
+                launching=false;
+                SetStatus("The other player cancelled this race start.");
+                break;
+            case "prepared" when IsHost && launching && race!=null && !guestPrepared:
                 guestPrepared=true; if (hostPrepared) race!.Launch(""); break;
             case "ticket" when !IsHost && launching && race!=null && DirectRace.ValidTicket(msg.Text):
                 race.Launch(msg.Text); break;
@@ -250,6 +294,7 @@ public sealed class DirectRoom : IDisposable
         race=CreateRace();
         var current=race;
         current.LayoutInstallRoot=layoutRoot;
+        current.ConfigureVr=ConfigureLocalVr;
         current.LocalResultReady=()=>Post(async ()=>{
             if (race!=current || localDone || localResultReady) return;
             localResultReady=true;
@@ -322,6 +367,7 @@ public sealed class DirectRoom : IDisposable
         resetting=true;
         Grid=Grid with {Host=Grid.Host with {Ready=false},Guest=Grid.Guest! with {Ready=false},
             Revision=checked(Grid.Revision+1),Agreement=LayoutAgreement.Pending};
+        firstCarRevision=Grid.Revision;
         await Send(new("reset",Grid:Grid)); Reset();
     }
     void Reset()

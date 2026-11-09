@@ -10,10 +10,11 @@ public enum LayoutAgreement { Pending, Matching, Different }
 public sealed record Grid(int Track, Player Host, Player? Guest, int Revision = 0,
                           DirectLayout? Layout = null, LayoutAgreement Agreement = LayoutAgreement.Pending)
 {
-    public bool CanStart => Guest != null && Guest.Car != Host.Car && (Layout == null || Agreement == LayoutAgreement.Matching);
+    public bool CanStart => Guest != null && (Layout == null || Agreement == LayoutAgreement.Matching);
     public bool BothReady => CanStart && Host.Ready && Guest!.Ready;
-    public static bool ValidCar(int id) => id is 85 or 88;
-    public static bool ValidTrack(int id) => id is 143 or 144;
+    internal int RequiredLaps => Layout is null || DiRT2VR.CustomTracks.TrackPacks.ForLayout(Layout.Id).GetLayout(Layout.Id).Circuit ? 3 : 1;
+    public static bool ValidCar(int id) => RallycrossCatalog.Cars.Any(car => car.Id == id);
+    public static bool ValidTrack(int id) => RallycrossCatalog.Tracks.Any(track => track.Id == id);
 
     public Grid Select(bool host, int car, int track, DirectLayout? layout = null)
     {
@@ -21,7 +22,7 @@ public sealed record Grid(int Track, Player Host, Player? Guest, int Revision = 
             throw new InvalidDataException("Invalid race selection.");
         if ((host ? Host : Guest!).Car == car && Track == track && layout == Layout) return this;
         return this with { Track = track, Revision = checked(Revision + 1),
-            Layout = layout, Agreement = LayoutAgreement.Pending,
+            Layout = layout, Agreement = layout == Layout && Agreement == LayoutAgreement.Matching ? Agreement : LayoutAgreement.Pending,
             Host = Host with { Car = host ? car : Host.Car, Ready = false },
             Guest = Guest == null ? null : Guest with { Car = host ? Guest.Car : car, Ready = false } };
     }

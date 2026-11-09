@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text.Json;
 using DiRT2VR.CustomTracks;
 
 namespace DiRT2VR.Multiplayer;
@@ -7,7 +8,8 @@ namespace DiRT2VR.Multiplayer;
 // files use the existing backup journal. The new track folder moves as a unit.
 internal static class PrivateCircuit
 {
-    static readonly string Route = "tracks/usa/" + TrackPacks.Spa.Layouts[0].Folder;
+    sealed record RouteReceipt(string LayoutId, PackFile[] Files);
+    static string Route(string id) => "tracks/usa/" + DirectLayout.Pack(id).GetLayout(id).Folder;
     const string Journal = "circuit-route.json";
     const string Retiring = "circuit-route-retiring";
 
@@ -16,7 +18,8 @@ internal static class PrivateCircuit
         SafeFiles.RequireClosed();
         Recover(cache);
         string game = SafeFiles.Inside(cache, "game");
-        string route = SafeFiles.Inside(game, Route);
+        string relative = Route(selection.Id);
+        string route = SafeFiles.Inside(game, relative);
         if (Path.Exists(route) || Path.Exists(SafeFiles.Inside(cache, Retiring)))
             throw new IOException("An existing private circuit folder must be preserved. Check the Direct cache.");
         string build = "circuit-build-" + Guid.NewGuid().ToString("N");
@@ -31,9 +34,9 @@ internal static class PrivateCircuit
             foreach (var file in prepared.Files)
             {
                 cancel.ThrowIfCancellationRequested();
-                if (file.Path.StartsWith(Route + "/", StringComparison.Ordinal))
+                if (file.Path.StartsWith(relative + "/", StringComparison.Ordinal))
                 {
-                    owned.Add(file with { Path = file.Path[(Route.Length + 1)..] });
+                    owned.Add(file with { Path = file.Path[(relative.Length + 1)..] });
                     continue;
                 }
                 var bytes = File.ReadAllBytes(SafeFiles.Inside(stage, file.Path));
@@ -41,11 +44,11 @@ internal static class PrivateCircuit
                     throw new IOException("The staged circuit changed: " + file.Path);
                 shared.Add(new(file.Path, stock[file.Path].sha256.ToUpperInvariant(), bytes));
             }
-            SessionFiles.PreparePrivateCircuit(cache, shared);
+            SessionFiles.PreparePrivateCircuit(cache, DirectLayout.Pack(selection.Id), shared);
             cancel.ThrowIfCancellationRequested();
-            SafeFiles.WriteJson(SafeFiles.Inside(cache, Journal), owned.ToArray());
+            SafeFiles.WriteJson(SafeFiles.Inside(cache, Journal), new RouteReceipt(selection.Id, owned.ToArray()));
             Directory.CreateDirectory(Path.GetDirectoryName(route)!);
-            Directory.Move(SafeFiles.Inside(stage, Route), route);
+            Directory.Move(SafeFiles.Inside(stage, relative), route);
             CheckRoute(route, owned, true, cancel);
             return prepared.Catalog;
         }
@@ -63,11 +66,15 @@ internal static class PrivateCircuit
         string journal = SafeFiles.Inside(cache, Journal);
         if (!File.Exists(journal)) return;
         SafeFiles.RequireClosed();
-        var owned = SafeFiles.ReadJson<PackFile[]>(journal);
-        if (owned.Length == 0 || owned.Any(f => f is null || !SafeFiles.Digest(f.Sha256) || f.Bytes < 0))
+        var record = SafeFiles.ReadJson<JsonElement>(journal);
+        // Earlier builds journalled only Spa's relative file list.
+        var receipt = record.ValueKind == JsonValueKind.Array
+            ? new RouteReceipt(DirectLayout.SpaId, record.Deserialize<PackFile[]>()!)
+            : record.Deserialize<RouteReceipt>();
+        if (receipt?.Files is not { Length: > 0 } owned || owned.Any(f => f is null || !SafeFiles.Digest(f.Sha256) || f.Bytes < 0))
             throw new IOException("Invalid private circuit recovery record.");
         foreach (var file in owned) SafeFiles.Relative(file.Path);
-        string route = SafeFiles.Inside(SafeFiles.Inside(cache, "game"), Route);
+        string route = SafeFiles.Inside(SafeFiles.Inside(cache, "game"), Route(receipt.LayoutId));
         string retiring = SafeFiles.Inside(cache, Retiring);
         if (File.Exists(route) || File.Exists(retiring))
             throw new IOException("A file occupies the private circuit recovery folder. Files preserved.");

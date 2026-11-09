@@ -1,4 +1,5 @@
 using DiRT2VR.CustomTracks;
+using System.Security.Cryptography;
 using System.Text.Json;
 
 namespace DiRT2VR.CustomCars;
@@ -37,6 +38,13 @@ public static class CarPack
         Validate(receipt);
         if (verify) Verify(game, receipt);
         return receipt;
+    }
+    // The same conversion may list its files in a different order on each PC.
+    public static string ContentId(CarReceipt receipt)
+    {
+        Validate(receipt);
+        var content = new { receipt.Schema, receipt.Code, receipt.Version, Files = receipt.Files.OrderBy(f => f.Path, StringComparer.Ordinal) };
+        return Convert.ToHexString(SHA256.HashData(JsonSerializer.SerializeToUtf8Bytes(content)));
     }
     public static void Validate(CarReceipt receipt)
     {

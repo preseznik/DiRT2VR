@@ -8,7 +8,9 @@ public static class DirectRaceLogs
     // Only copy known measurements. Other native records can contain a join
     // ticket, session addresses, private profile names, or filesystem paths.
     static readonly Regex NativeRecord = new(
-        @"^\[tick=(\d{1,20}) thread=\d+\] (RX_REQUEST|EVENT defaults|EVENT configured|LOBBY observe|ACT_GREEN original_return|DIRECT_RACE sample|DIRECT_RACE crossing|DIRECT_RACE distance) ");
+        @"^\[tick=(\d{1,20}) thread=\d+\] (RX_REQUEST|EVENT defaults|EVENT configured|LOBBY observe|ACT_GREEN original_return|DIRECT_RACE sample|DIRECT_RACE crossing|DIRECT_RACE distance|BOOT held native-frontend-job) ");
+    static readonly Regex FrontendMeasurement = new(
+        @"(?:^| )(calls=[0-9]{1,10}|original_called=[01])(?= |$)");
     static readonly Regex Measurement = new(
         @"(?:^| )((?:race|class|rounds|track|location|laps|collision|defaulted|native_race|native_class|active|ready|ack|result|local|session_state|player_state|config_laps|active_laps|report|completed|current|lap[123]_ms|policy_flag|policy_reason|clock_mode|clock_stopped|clock_laps|clock_listed|result_slot|result_status|result_kind)=-?[0-9]{1,10})(?= |$)");
     static readonly Regex ExitRecord = new(
@@ -50,7 +52,8 @@ public static class DirectRaceLogs
     {
         var record = NativeRecord.Match(line);
         if (!record.Success) return null;
-        var fields = Measurement.Matches(line, record.Length - 1).Select(m => m.Groups[1].Value).ToArray();
+        var allowed = record.Groups[2].Value == "BOOT held native-frontend-job" ? FrontendMeasurement : Measurement;
+        var fields = allowed.Matches(line, record.Length - 1).Select(m => m.Groups[1].Value).ToArray();
         return fields.Length == 0 ? null : $"[tick={record.Groups[1].Value}] {record.Groups[2].Value} {string.Join(' ', fields)}";
     }
 

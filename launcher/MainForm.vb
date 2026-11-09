@@ -367,8 +367,9 @@ Public Class MainForm
         Dim heading As New Label With {.Text = "LAN servers", .AutoSize = True, .Font = New Font(Font, FontStyle.Bold)}
         Dim experimental = BuildInfo.Channel = "Experimental"
         If experimental Then
-            multiplayerMode.Dock = DockStyle.None : multiplayerMode.Width = 220
+            multiplayerMode.Dock = DockStyle.None
             multiplayerMode.Items.AddRange({"XLLN (In-game LAN)", "Direct (Super Experimental)"})
+            FitChoiceToItems(multiplayerMode)
             multiplayerMode.SelectedIndex = 0
             Dim modes As New FlowLayoutPanel With {.AutoSize = True}
             modes.Controls.Add(multiplayerMode)

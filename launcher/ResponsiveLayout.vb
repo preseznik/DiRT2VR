@@ -5,6 +5,16 @@ Public Module LauncherLayout
     Public Function Px(control As Control, value As Integer) As Integer
         Return CInt(value * control.DeviceDpi / 96.0)
     End Function
+    Public Sub FitChoiceToItems(box As ComboBox)
+        Dim resize As Action = Sub()
+                                   Dim widest = box.Items.Cast(Of Object)().Max(Function(item) TextRenderer.MeasureText(box.GetItemText(item), box.Font).Width)
+                                   box.Width = widest + SystemInformation.GetVerticalScrollBarWidthForDpi(box.DeviceDpi) + Px(box, 12)
+                               End Sub
+        AddHandler box.HandleCreated, Sub() resize()
+        AddHandler box.FontChanged, Sub() resize()
+        AddHandler box.DpiChangedAfterParent, Sub() resize()
+        resize()
+    End Sub
     Public Function Stack() As VerticalStack
         Return New VerticalStack With {.Dock = DockStyle.Top, .Margin = New Padding(0)}
     End Function

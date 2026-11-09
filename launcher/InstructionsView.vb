@@ -176,7 +176,7 @@ JOIN
 Select an available host and choose Desktop or VR. Finish joining in the game's Multiplayer / LAN menu.
 
 Direct (Super Experimental)
-Two desktop players on the same LAN can race from the launcher. Select an existing career on Profile and allow about 12 GB per PC for a private game copy. Open Direct lobby, then host on one PC and join by its displayed IPv4 address on the other. Choose different Subarus. The host selects Battersea Bridge, Battersea Air or Spa-Francorchamps. Spa requires the same race-capable pack on both PCs.
+Two players on the same LAN can race from the launcher. Select an existing career on Profile and allow about 12 GB per PC for a private game copy. Open Direct lobby, then host on one PC and join by its displayed IPv4 address on the other. Each player can select Launch in VR on this PC or leave it unchecked for desktop. Connect your headset and start its runtime before choosing VR. Two-PC headset driving is still unverified. Each player chooses one of eleven stock Rallycross cars. Both can pick the same model. The host can select a stock circuit, Spa-Francorchamps or an installed Aspen, Smelter, Misty Loch or Nordschleife layout. Both PCs need the same race-capable custom layout.
 
 Mark both players ready and choose Start race. Two PCs have raced together on Battersea Air. Spa driving and automatic return after finishing still need a live two-PC check. If the games stay open after the finish, quit each one to return to the same lobby.
 

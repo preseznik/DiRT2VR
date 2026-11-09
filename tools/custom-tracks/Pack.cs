@@ -88,6 +88,8 @@ public static class TrackPacks
          new("pikes-peak-gravel-wet", "Gravel · Overcast · full course", "d2vr_pikes_gwet", "Overcast", "Rally", Circuit: false)],
         ["database/database.bin", "dx11/shaderpack/shaderpack.pssg", "dx11/shaderpack/postprocess.pssg", "postprocess/effects.xml"]);
     public static readonly TrackPack[] BuiltIn = [Aspen, Smelter, Nordschleife, Mizu, Misty, Spa, Pikes];
+    internal static readonly IReadOnlyList<TrackPack> DirectCircuitPacks =
+        Array.AsReadOnly(new[] { Spa, Aspen, Smelter, Misty, Nordschleife });
     static TrackPack[] external = [];
     public static TrackPack[] All => [..BuiltIn, ..external];
     public static ExternalPack[] External { get; private set; } = [];

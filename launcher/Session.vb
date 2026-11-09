@@ -319,6 +319,10 @@ Public Class Session
         ' Both factories clear inherited experiments before setting their explicit launch flags.
         Dim start = If(settings.LaunchMode = "lan", LanSession.StartInfo(context, settings.SkipIntroduction, joinTarget), DesktopStartInfo(context, Nothing, Nothing))
         CustomCarService.ConfigureProcess(start, settings)
+        ConfigureVrRenderer(start, settings, channel, logFolder, layerBypasses)
+        Return start
+    End Function
+    Friend Shared Sub ConfigureVrRenderer(start As ProcessStartInfo, settings As VrSettings, channel As String, logFolder As String, layerBypasses As IReadOnlyList(Of VrLayerBypass))
         For Each name In {"ACTIVE", "REPLAY_PROBE", "INNER_REPLAY", "CONTINUOUS_REPLAY", "HEADSET", "INTERACTIVE", "WIDE_VISIBILITY", "AUTO_COCKPIT"}
             start.Environment("DIRT2VR_" & name) = "1"
         Next
@@ -347,12 +351,11 @@ Public Class Session
         start.Environment("DIRT2VR_HUD_DISTANCE") = settings.HudDistance.ToString(Globalization.CultureInfo.InvariantCulture)
         start.Environment("DIRT2VR_HUD_HIDE") = settings.HiddenHudElements.ToString(Globalization.CultureInfo.InvariantCulture)
         ConfigureLogging(start, logFolder)
-        start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
+        If Not String.IsNullOrEmpty(channel) Then start.Environment("DIRT2VR_INPUT_CHANNEL") = channel
         start.Environment("DIRT2VR_KEYS") = $"{settings.ToggleKey}:{settings.ToggleModifiers},{settings.RecenterKey}:{settings.RecenterModifiers}"
         start.Environment("XR_RUNTIME_JSON") = settings.Runtime
         If layerBypasses IsNot Nothing Then VrApiLayers.Configure(start, layerBypasses)
-        Return start
-    End Function
+    End Sub
     ' Return to menus, or start the event chosen with Next event in the game.
     Private Sub PrepareReturn()
         customTrack = False
@@ -591,10 +594,7 @@ Public Class Session
         Files.SaveJson(IO.Path.Combine(context.UserRoot, "headset.json"), New HeadsetStatus With {.RefreshHz = If(match.Success, match.Groups(1).Value, ""), .EyeWidth = eye.Width, .EyeHeight = eye.Height})
     End Sub
     Private Function ProbeRuntime(logFolder As String, runtime As VrRuntimeInfo) As Boolean
-        Dim executable = IO.Path.Combine(context.ModRoot, "payload\xr_probe.exe")
-        Dim manifest = Files.ReadJson(Of PackageManifest)(IO.Path.Combine(context.ModRoot, "package.json"))
-        Const relative As String = "DiRT2VR/payload/xr_probe.exe"
-        If Not File.Exists(executable) OrElse Not manifest.Files.ContainsKey(relative) OrElse Files.Hash(executable) <> manifest.Files(relative) Then Throw New IOException("Headset preflight tool is missing or damaged. Extract the complete package again.")
+        Dim executable = VrPreflight.VerifiedProbe(context.GameRoot)
         Dim preflight As New VrPreflight(context, runtime, logFolder)
         preflight.Bypasses.AddRange(vrLayerBypasses)
         Dim confirm As Func(Of VrLayerRecoveryRequest, VrLayerRecoveryChoice) = Nothing

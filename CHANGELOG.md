@@ -6,13 +6,27 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Private Direct race preparation now uses the Landrush event and checks both cars against the selected track. Landrush driving support is still in development.
+
+- Direct keeps both car choices when players pick at the same time. Changing a car clears both ready marks and keeps an already verified custom track ready to use.
+
+- Saved Direct race logs now include front-end update counts to help diagnose a missing race HUD.
+
+- Direct now checks that both PCs have the same lobby build when joining. Older launchers with different race-start behavior could previously enter the same room.
+
+- Each Direct lobby player can choose **Launch in VR on this PC** before a race. Desktop is the default. Two-PC driving with one or two headsets still needs verification.
+
+- The Direct lobby opens with more room for chat. It remembers the last host you joined, saves favorite IPs and finds open local lobbies on opening or when you click **Refresh**. It offers eight stock Rallycross layouts, custom Spa and eleven stock Rallycross cars. Both players can select the same model. Installed race-capable Aspen, Smelter, Misty Loch and Nordschleife layouts also appear in the track list. Driving these additional layouts on two PCs still needs verification.
+
+- Direct now checks administrator launch consent on each PC before preparing a race. Either player can cancel and stay in the same lobby.
+
 - Elevated launches offer a warning with **OK** to continue and **Cancel** selected by default, instead of refusing to start. Acceptance applies only to that launch; DiRT 2 and its loaded mods inherit administrator access. Quiet command-line launches require explicit `--allow-elevated` consent. No game run has been performed for this change.
 
 - Direct practice retains personal-best improvements per car and grade. **Best times…** opens a selected track's history with a car filter; **Launcher → Leaderboards…** shows saved bests with track and car filters. Existing saved times are kept; previously unsaved laps cannot be recovered. These are local results, with track and car conversion versions kept separate.
 
 - Experimental desktop Direct practice shows the selected track and car class's world record in the game's **TARGET** time box, below the lap or stage time. Tracks without a matching record show no target. VR and replay playback retain their existing HUD. This integration still needs an in-game check.
 
-- Experimental builds add **Multiplayer → Direct (Super Experimental)** for two desktop players on the same LAN. Two players verified driving Battersea Air together and starting another race in the same lobby after quitting. The lobby shows recorded laps and times and offers **Save race logs…** for reporting early AI takeover. XLLN remains the default.
+- Experimental builds add **Multiplayer → Direct (Super Experimental)** for two players on the same LAN. Two desktop players verified driving Battersea Air together and starting another race in the same lobby after quitting. The lobby shows recorded laps and times and offers **Save race logs…** for reporting early AI takeover. XLLN remains the default.
 
 - The Experimental Direct lobby adds **Spa-Francorchamps (custom)** for players with matching race packs. Both PCs check their circuit files before enabling a start. Private game preparation and switching back to Battersea have been verified offline. A live two-PC Spa race remains unverified.
 

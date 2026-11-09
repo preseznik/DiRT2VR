@@ -34,6 +34,7 @@ internal static class PrivateGame
         var root = Path.Combine(cache, "game");
         PlainPath(root);
         Directory.CreateDirectory(root);
+        PrivateVrRenderer.Recover(cache);
         PrivateCircuit.Recover(cache);
         var assets = StockAssets();
         int wrapperIndex = assets.FindIndex(a => a.path == "dirt2.exe");

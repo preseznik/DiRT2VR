@@ -1,6 +1,8 @@
 using System.Security.Cryptography;
 using System.Text.Json;
+using System.Xml;
 using DiRT2VR.CustomTracks;
+using EgoEngineLibrary.Xml;
 
 namespace DiRT2VR.Multiplayer;
 
@@ -11,17 +13,20 @@ internal sealed record PreparedCircuit(CircuitCatalog Catalog, PackFile[] Files)
 public sealed record DirectLayout(string Id, string Digest)
 {
     public static string SpaId => TrackPacks.Spa.Layouts[0].Id;
-    internal static bool Known(string id) => id == SpaId;
+    internal static bool Known(string id) => TrackPacks.DirectCircuitPacks.Any(pack => pack.IsLayout(id));
+    internal static TrackPack Pack(string id) => TrackPacks.DirectCircuitPacks.SingleOrDefault(pack => pack.IsLayout(id))
+        ?? throw new IOException("This layout does not support a Direct circuit race.");
 
     internal static DirectLayout Read(string install, string id, CancellationToken cancel) =>
-        VerifyFiles(install, id, cancel, null);
+        VerifyRaceAssets(install, Pack(id), id, cancel, null);
 
     // The source pack is read-only. Publish the private layout directory only
     // after its bytes match the lobby selection and its race catalog is ready.
     internal PreparedCircuit Prepare(string install, string privateRun, CancellationToken cancel)
     {
-        if (!Known(Id))
-            throw new IOException("Private circuit preparation currently supports Spa.");
+        // Stage packs can be prepared privately before the lobby supports their event type.
+        var pack = TrackPacks.Mizu.IsLayout(Id) || TrackPacks.Pikes.IsLayout(Id) ? TrackPacks.ForLayout(Id) : Pack(Id);
+        var layout = pack.GetLayout(Id);
         cancel.ThrowIfCancellationRequested();
         string root = Path.GetFullPath(privateRun);
         string source = Path.TrimEndingDirectorySeparator(Path.GetFullPath(install));
@@ -37,30 +42,72 @@ public sealed record DirectLayout(string Id, string Digest)
         try
         {
             var inventory = new List<PackFile>();
-            if (VerifyFiles(source, Id, cancel, files, inventory) != this)
+            if (VerifyRaceAssets(source, pack, Id, cancel, files, inventory) != this)
                 throw new IOException("The custom circuit changed after the lobby checked it. Select it again.");
-            string schema = Path.Combine(work, "schema.xml");
-            using (var embedded = typeof(DirectLayout).Assembly.GetManifestResourceStream("DirectCircuitSchema")!)
-            using (var output = File.Open(schema, FileMode.CreateNew, FileAccess.Write))
-                embedded.CopyTo(output);
+            string schema = CircuitCatalog.WriteSchema(work);
             string database = SafeFiles.Inside(files, "database/database.bin");
-            var catalog = CircuitCatalog.Register(database, schema, TrackPacks.Spa.GetLayout(Id));
-            inventory[inventory.FindIndex(f => f.Path == "database/database.bin")] =
-                new("database/database.bin", new FileInfo(database).Length, SafeFiles.Hash(database, cancel));
+            var catalog = CircuitCatalog.Register(database, schema, layout);
+            RecordChange("database/database.bin");
+            if (pack == TrackPacks.Nordschleife || !layout.Circuit)
+            {
+                string relative = $"tracks/usa/{layout.Folder}/route_0/progress_track.xml";
+                string progress = SafeFiles.Inside(files, relative);
+                byte[] original = File.ReadAllBytes(progress);
+                byte[] corrected = layout.Circuit ? Nordschleife.CircuitProgress.Patch(original) : StageProgress(original);
+                SafeFiles.Atomic(progress, corrected);
+                RecordChange(relative);
+            }
             cancel.ThrowIfCancellationRequested();
             Directory.Move(files, destination);
             return new(catalog, inventory.ToArray());
+
+            void RecordChange(string relative)
+            {
+                string path = SafeFiles.Inside(files, relative);
+                int index = inventory.FindIndex(file => file.Path == relative);
+                if (index < 0) throw new IOException("Missing circuit file in the pack receipt: " + relative);
+                inventory[index] = new(relative, new FileInfo(path).Length, SafeFiles.Hash(path, cancel));
+            }
         }
         finally { SafeFiles.DeleteWorkTree(root, name); }
     }
 
-    static DirectLayout VerifyFiles(string install, string id, CancellationToken cancel, string? output,
+    // Normal Race uses its opening finish gate to initialize demo lap timing.
+    // Stock network Raid stages use distinct start, time and finish gates.
+    static byte[] StageProgress(byte[] original)
+    {
+        using var input = new MemoryStream(original);
+        var file = new XmlFile(input);
+        var data = file.Document;
+        var route = data.SelectSingleNode("/progress_track_data/routes[@num_routes='1']/route[@id='0']") as XmlElement;
+        var splits = route?.SelectNodes("split")?.Cast<XmlElement>().ToArray();
+        int gateCount = data.SelectNodes("/progress_track_data/gates/gate")!.Count;
+        if (data.SelectSingleNode("/progress_track_data/track/@type")?.Value != "point_to_point" ||
+            data.SelectNodes("/progress_track_data/routes/route")!.Count != 1 || splits is not { Length: >= 2 } ||
+            !int.TryParse(route!.GetAttribute("num_splits"), out int count) || count != splits.Length ||
+            splits[0].GetAttribute("gate") != "1" || splits[0].GetAttribute("type") is not ("start" or "finish") ||
+            splits[^1].GetAttribute("type") != "finish" || splits.Skip(1).SkipLast(1).Any(s => s.GetAttribute("type") != "time"))
+            throw new IOException("Unsupported point-to-point timing route.");
+        int previous = -1;
+        foreach (var split in splits)
+        {
+            if (!int.TryParse(split.GetAttribute("gate"), out int gate) || gate <= previous || gate >= gateCount)
+                throw new IOException("Unsupported point-to-point timing gate.");
+            previous = gate;
+        }
+        if (splits[0].GetAttribute("type") == "start") return original;
+        splits[0].SetAttribute("type", "start");
+        using var output = new MemoryStream();
+        file.Write(output, XmlType.BinXml);
+        return output.ToArray();
+    }
+
+    // Asset preparation is independent of the event types the Direct worker can run.
+    internal static DirectLayout VerifyRaceAssets(string install, TrackPack pack, string id, CancellationToken cancel, string? output,
                                     List<PackFile>? inventory = null)
     {
-        if (!Known(id)) throw new IOException("This layout does not support a Direct circuit race.");
-        var pack = TrackPacks.Spa;
         if (!File.Exists(SafeFiles.Inside(install, pack.Receipt)))
-            throw new IOException("Install Spa-Francorchamps on this PC using Manage → GRID 2 → Spa-Francorchamps.");
+            throw new IOException($"Install {pack.Name} on this PC using Manage.");
         var receipt = pack.Read(install, verify: false);
         if (!pack.SupportsRace(receipt, id))
             throw new IOException("Install the race-capable version of this layout.");
@@ -68,9 +115,12 @@ public sealed record DirectLayout(string Id, string Digest)
         var files = receipt.Files.ToDictionary(f => f.Path, StringComparer.Ordinal);
         string folder = $"tracks/usa/{pack.GetLayout(id).Folder}/";
         var selected = files.Values.Where(f => f.Path.StartsWith(folder, StringComparison.Ordinal))
-            .Select(f => (Target: f.Path, File: f))
-            .Concat(session.Files.Select(f => (Target: f.Path, File: files[f.InstalledPath])))
-            .OrderBy(f => f.Target, StringComparer.Ordinal);
+            .ToDictionary(f => f.Path, StringComparer.Ordinal);
+        if (pack == TrackPacks.Pikes)
+            foreach (var (target, source) in SessionFiles.PikesRacePaths(id, "grid"))
+                selected[target] = files[source];
+        foreach (var shared in session.Files)
+            selected.Add(shared.Path, files[shared.InstalledPath]);
         if (output != null)
         {
             var stock = PrivateGame.StockAssets().ToDictionary(a => a.path, StringComparer.OrdinalIgnoreCase);
@@ -82,7 +132,7 @@ public sealed record DirectLayout(string Id, string Digest)
                 throw new IOException("The custom circuit folder overlaps a stock track.");
         }
         var assets = new List<(string Target, string Hash)>();
-        foreach (var (target, file) in selected)
+        foreach (var (target, file) in selected.OrderBy(f => f.Key, StringComparer.Ordinal))
         {
             cancel.ThrowIfCancellationRequested();
             string path = SafeFiles.Inside(install, file.Path);

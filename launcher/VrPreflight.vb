@@ -22,6 +22,15 @@ Public Class VrPreflight
     Public Sub New(context As InstallContext, runtime As VrRuntimeInfo, logFolder As String)
         Me.context = context : Me.runtime = runtime : Me.logFolder = logFolder
     End Sub
+    Friend Shared Function VerifiedProbe(packageRoot As String) As String
+        Const relative As String = "DiRT2VR/payload/xr_probe.exe"
+        Dim executable = IO.Path.Combine(packageRoot, relative)
+        Dim receipt = IO.Path.Combine(packageRoot, "DiRT2VR", "package.json")
+        Files.NoLinks(receipt) : Files.NoLinks(executable)
+        Dim manifest = Files.ReadJson(Of PackageManifest)(receipt)
+        If Not File.Exists(executable) OrElse Not manifest.Files.ContainsKey(relative) OrElse Files.Hash(executable) <> manifest.Files(relative) Then Throw New IOException("Headset preflight tool is missing or damaged. Extract the complete package again.")
+        Return executable
+    End Function
     Public Shared Function ProbeStartInfo(executable As String, runtime As VrRuntimeInfo, layers As IReadOnlyList(Of VrLayerBypass)) As ProcessStartInfo
         Dim start As New ProcessStartInfo(executable) With {.UseShellExecute = False, .CreateNoWindow = True, .RedirectStandardOutput = True, .RedirectStandardError = True}
         runtime.Configure(start)

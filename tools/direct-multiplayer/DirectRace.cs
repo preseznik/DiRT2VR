@@ -3,6 +3,7 @@ using System.Net;
 using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+using EgoEngineLibrary.Data;
 
 namespace DiRT2VR.Multiplayer;
 
@@ -12,9 +13,10 @@ public class DirectRace
     private readonly TaskCompletionSource<string> start = new(TaskCreationOptions.RunContinuationsAsynchronously);
     private volatile bool returnRequested;
     private volatile bool resultReturn;
-    internal DirectRaceProgress Progress { get; } = new();
+    internal DirectRaceProgress Progress { get; private set; } = new();
     internal Action? LocalResultReady { get; set; }
     internal bool RecordLapTelemetry { get; set; }
+    internal Action<ProcessStartInfo,string>? ConfigureVr { get; set; }
     internal string? LayoutInstallRoot { get; set; }
     internal string? RunDirectory { get; set; }
     internal bool ReturnRequested => returnRequested;
@@ -26,24 +28,31 @@ public class DirectRace
     public static bool ValidTicket(string? value) => value != null && Ticket.IsMatch(value);
     public void Launch(string ticket) => start.TrySetResult(ticket);
 
-    public static string PackageIdentity(string install)
+    internal static string PayloadHash(string install, string name)
     {
         string manifest = Path.Combine(install, "DiRT2VR", "package.json");
         PrivateGame.PlainPath(manifest);
         using var json = JsonDocument.Parse(File.ReadAllText(manifest));
         var files = json.RootElement.GetProperty("Files");
+        if (!files.TryGetProperty("DiRT2VR/payload/"+name,out var entry) || entry.GetString() is not string hash || !Regex.IsMatch(hash, @"\A[0-9a-fA-F]{64}\z"))
+            throw new IOException("Install the complete Experimental package with Direct multiplayer.");
+        return hash.ToUpperInvariant();
+    }
+
+    public static string PackageIdentity(string install)
+    {
         var hashes = new List<string>();
         foreach (var role in new[] { "host", "client" })
         {
-            string key = $"DiRT2VR/payload/direct-{role}.dll";
-            if (!files.TryGetProperty(key,out var entry) || entry.GetString() is not string hash || !Regex.IsMatch(hash, @"\A[0-9a-fA-F]{64}\z"))
-                throw new IOException("Install the complete Experimental package with Direct multiplayer.");
-            var file = Path.Combine(install,key);
+            string name = $"direct-{role}.dll";
+            string hash = PayloadHash(install,name);
+            var file = Path.Combine(install,"DiRT2VR","payload",name);
             PrivateGame.PlainPath(file);
             if (!PrivateGame.Hash(file).Equals(hash,StringComparison.OrdinalIgnoreCase)) throw new IOException($"The Direct {role} library differs from this package.");
-            hashes.Add(hash.ToUpperInvariant());
+            hashes.Add(hash);
         }
-        return "D2DIRECT6/" + string.Join("/",hashes);
+        // Lobby messages can change between builds that use the same native race libraries.
+        return $"D2DIRECT13-{typeof(DirectRoom).Module.ModuleVersionId:N}/" + string.Join("/",hashes);
     }
 
     // A Windows mutex must be released on its acquiring thread. Keep it through
@@ -58,6 +67,7 @@ public class DirectRace
     {
         if (!grid.CanStart || !Grid.ValidSelection(grid.Track,grid.Layout) || !Grid.ValidCar(grid.Host.Car) || !Grid.ValidCar(grid.Guest!.Car) || !LobbyConnection.IsPrivate(peer))
             throw new IOException("The Direct starting grid is incomplete.");
+        Progress = new DirectRaceProgress(grid.RequiredLaps);
         using var guard = new Mutex(false,@"Global\DiRT2VR.Session");
         bool held;
         try { held = guard.WaitOne(0); } catch (AbandonedMutexException) { held = true; }
@@ -94,9 +104,6 @@ public class DirectRace
                 "xlive_net_disable = 0","xlive_xhv_engine_enabled = 0","xlln_debug_log_level = 0x00000000",
                 "xlln_network_instance_base_port = 39000",$"xlln_network_instance_port = {(host?39001:39002)}",
                 $"xlive_broadcast_address = {peer}:{(host?39002:39001)}","xlive_fps_limit = 60"]);
-            prepared();
-            string ticket = start.Task.WaitAsync(TimeSpan.FromMinutes(12),cancel).GetAwaiter().GetResult();
-            if (!host && !ValidTicket(ticket)) throw new IOException("Invalid Direct host ticket.");
             var exe = Path.Combine(gameRoot,"dirt2_game.exe");
             var log = Path.Combine(run,"direct.log");
             var psi = new ProcessStartInfo(Path.Combine(gameRoot,"dirt2.exe")) { WorkingDirectory=gameRoot,UseShellExecute=false };
@@ -105,10 +112,18 @@ public class DirectRace
             env["DIRT2VR_ACTIVE"]="0"; env["DIRT2VR_DIRECT_LAB_EXE"]=exe; env["DIRT2VR_LAN_CONFIG"]=config;
             env["DIRT2VR_PROFILE_ROOT"]=Path.Combine(run,"career"); env["DIRT2VR_LAN_DOCUMENTS"]=Path.Combine(run,"Documents");
             env["DIRT2VR_OUTPUT"]=run; env["DIRT2VR_ENGINE_EXPECTED_NAME"]=profile; env["DIRT2VR_ENGINE_CAREER_LOG"]=log;
-            env["DIRT2VR_ENGINE_VEHICLE_ID"]=(host?grid.Host.Car:grid.Guest.Car).ToString();
-            env["DIRT2VR_ENGINE_RX_REQUEST"]=JsonSerializer.Serialize(new {native_race=1,native_class=1,track_model=model});
+            ConfigureGrid(psi,grid,host,model,gameRoot,run);
             foreach (var key in new[]{"ACTIVATION_CANDIDATE","LOADED_ACK_CANDIDATE","FINALIZATION_CANDIDATE","INITIAL_LOAD","INITIAL_CONFIG","EVENT_PROBE","CAREER","BOOTSTRAP_HOLD"})
                 env["DIRT2VR_ENGINE_"+key]="1";
+            if (ConfigureVr != null)
+            {
+                PrivateVrRenderer.Prepare(cache,packageRoot);
+                ConfigureVr(psi,run);
+            }
+            cancel.ThrowIfCancellationRequested();
+            prepared();
+            string ticket = start.Task.WaitAsync(TimeSpan.FromMinutes(12),cancel).GetAwaiter().GetResult();
+            if (!host && !ValidTicket(ticket)) throw new IOException("Invalid Direct host ticket.");
             if (!host)
             {
                 var parts = ticket.Split(' ');
@@ -139,7 +154,11 @@ public class DirectRace
         }
         finally
         {
-            try { if (grid.Layout!=null) PrivateCircuit.Recover(cache); }
+            try
+            {
+                try { if (ConfigureVr!=null) PrivateVrRenderer.Recover(cache); }
+                finally { if (grid.Layout!=null) PrivateCircuit.Recover(cache); }
+            }
             finally { guard.ReleaseMutex(); }
         }
     }
@@ -155,6 +174,25 @@ public class DirectRace
         return (root,PrivateCircuit.Activate(cache,layoutRoot,grid.Layout,cancel).Model);
     }
 
+    internal static void ConfigureGrid(ProcessStartInfo start, Grid grid, bool host, int model, string gameRoot, string run)
+    {
+        var guest = grid.Guest ?? throw new IOException("The Direct starting grid needs two players.");
+        int race = 1, vehicleClass = 1;
+        bool customStage = grid.Layout != null && grid.RequiredLaps == 1;
+        if (customStage || (grid.Layout == null && !RallycrossCatalog.Tracks.Any(track => track.Id == model)))
+        {
+            string schema = CircuitCatalog.WriteSchema(run);
+            try
+            {
+                using var database = new DatabaseFile(Path.Combine(gameRoot, "database", "database.bin"), schema);
+                (race, vehicleClass) = CircuitCatalog.OffroadEvent(database, model, grid.Host.Car, guest.Car, customStage);
+            }
+            finally { File.Delete(schema); }
+        }
+        start.Environment["DIRT2VR_ENGINE_VEHICLE_ID"] = (host ? grid.Host.Car : guest.Car).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        start.Environment["DIRT2VR_ENGINE_RX_REQUEST"] = JsonSerializer.Serialize(new { native_race = race, native_class = vehicleClass, track_model = model });
+    }
+
     internal int? WaitForReturn(Process game,string run,Action<string> status,LapTelemetry? telemetry)
     {
         StreamWriter? record = null;
@@ -167,7 +205,7 @@ public class DirectRace
                 try { record?.WriteLine($"{DateTime.UtcNow:O} {line}"); }
                 catch (IOException) { /* Logging must never close a running game. */ }
             }
-            Write($"Green. Requested laps: 3. Lap telemetry: {(telemetry==null ? "off" : "on")}.");
+            Write($"Green. Requested laps: {Progress.RequiredLaps}. Lap telemetry: {(telemetry==null ? "off" : "on")}.");
             // We discovered the wrapper's child by PID. Process.ExitCode needs a
             // handle retained while it is alive, even after WaitForExit succeeds.
             try { _ = game.SafeHandle; }

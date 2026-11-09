@@ -11,11 +11,14 @@ Public Class DirectLobbyForm
     Private ReadOnly stockFolder As New Button With {.Name = "DirectStockFolder", .Text = "Stock game folder…", .AutoSize = True}
     Private ReadOnly playerName As New TextBox With {.Name = "DirectName", .MaxLength = 32, .Width = 150, .Text = Environment.MachineName}
     Private ReadOnly address As New TextBox With {.Name = "DirectAddress", .Width = 140, .PlaceholderText = "Host LAN IPv4"}
+    Private ReadOnly servers As DirectServers
+    Private joinedHostSaved As Boolean
     Private ReadOnly host As New Button With {.Name = "DirectHost", .Text = "Host lobby", .AutoSize = True}
     Private ReadOnly join As New Button With {.Name = "DirectJoin", .Text = "Join lobby", .AutoSize = True}
     Private ReadOnly status As New Label With {.AutoSize = True, .MaximumSize = New Size(610, 0)}
-    Private ReadOnly track As New ComboBox With {.Name = "DirectTrack", .DropDownStyle = ComboBoxStyle.DropDownList, .Width = 200}
-    Private ReadOnly car As New ComboBox With {.Name = "DirectCar", .DropDownStyle = ComboBoxStyle.DropDownList, .Width = 230}
+    Private ReadOnly track As New ComboBox With {.Name = "DirectTrack", .DropDownStyle = ComboBoxStyle.DropDownList}
+    Private remoteCircuit As RallycrossChoice
+    Private ReadOnly car As New ComboBox With {.Name = "DirectCar", .DropDownStyle = ComboBoxStyle.DropDownList}
     Private ReadOnly roster As New Label With {.Name = "DirectPlayers", .AutoSize = True}
     Private ReadOnly ready As New Button With {.Name = "DirectReady", .Text = "Ready", .AutoSize = True}
     Private ReadOnly start As New Button With {.Name = "DirectStart", .Text = "Start race", .AutoSize = True}
@@ -23,7 +26,8 @@ Public Class DirectLobbyForm
     Private ReadOnly returnButton As New Button With {.Name = "DirectReturn", .Text = "Return to lobby", .AutoSize = True}
     Private ReadOnly saveLogs As New Button With {.Name = "DirectSaveLogs", .Text = "Save race logs…", .AutoSize = True}
     Private ReadOnly lapLog As New CheckBox With {.Name = "DirectRecordLaps", .Text = "Record lap telemetry", .AutoSize = True}
-    Private ReadOnly log As New ListBox With {.Name = "DirectChatLog", .Dock = DockStyle.Fill, .HorizontalScrollbar = True}
+    Private ReadOnly vr As New CheckBox With {.Name = "DirectVr", .Text = "Launch in VR on this PC", .AutoSize = True}
+    Private ReadOnly log As New ListBox With {.Name = "DirectChatLog", .Dock = DockStyle.Fill, .HorizontalScrollbar = True, .IntegralHeight = False}
     Private ReadOnly message As New TextBox With {.Name = "DirectMessage", .MaxLength = 200, .Width = 375, .PlaceholderText = "Lobby chat"}
     Private ReadOnly send As New Button With {.Text = "Send", .AutoSize = True}
     Private room As DirectRoom
@@ -39,26 +43,33 @@ Public Class DirectLobbyForm
         stockRoot = context.GameRoot
         Text = "Direct multiplayer (Super Experimental)"
         StartPosition = FormStartPosition.CenterParent
-        ClientSize = New Size(680, 460)
+        ClientSize = New Size(980, 720)
         MinimumSize = New Size(540, 430)
-        Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .Padding = New Padding(12), .ColumnCount = 1, .RowCount = 8, .AutoScroll = True}
-        For i = 0 To 7
-            layout.RowStyles.Add(If(i = 6, New RowStyle(SizeType.Percent, 100), New RowStyle(SizeType.AutoSize)))
+        Dim layout As New TableLayoutPanel With {.Dock = DockStyle.Fill, .Padding = New Padding(12), .ColumnCount = 1, .RowCount = 9, .AutoScroll = True}
+        For i = 0 To 8
+            layout.RowStyles.Add(If(i = 7, New RowStyle(SizeType.Percent, 100), New RowStyle(SizeType.AutoSize)))
         Next
-        track.Items.AddRange({"London – Battersea Bridge", "London – Battersea Air", "Spa-Francorchamps (custom)"})
-        car.Items.AddRange({"Subaru Impreza STI Group N", "Subaru Impreza WRX STI"})
+        track.Items.AddRange(RallycrossCatalog.Tracks.Cast(Of Object)().ToArray())
+        track.Items.AddRange(RallycrossCatalog.InstalledCircuits(context.GameRoot).Cast(Of Object)().ToArray())
+        car.Items.AddRange(RallycrossCatalog.Cars.Cast(Of Object)().ToArray())
+        FitChoiceToItems(track) : FitChoiceToItems(car)
         track.SelectedIndex = 0 : car.SelectedIndex = 0
         layout.Controls.Add(Row(Caption("Player"), playerName, host, address, join), 0, 0)
-        layout.Controls.Add(status, 0, 1)
+        servers = New DirectServers(context, address)
+        layout.Controls.Add(servers, 0, 1)
+        layout.Controls.Add(status, 0, 2)
         Dim trackRow = Row(Caption("Rallycross · 3 laps requested"), track, lapLog)
         NewFeatures.MarkIfNew(trackRow, lapLog)
-        layout.Controls.Add(trackRow, 0, 2)
-        layout.Controls.Add(Row(Caption("Your car"), car, stockFolder), 0, 3)
-        layout.Controls.Add(roster, 0, 4)
-        layout.Controls.Add(Row(ready, start, force, returnButton, saveLogs), 0, 5)
-        layout.Controls.Add(log, 0, 6)
-        layout.Controls.Add(Row(message, send), 0, 7)
+        layout.Controls.Add(trackRow, 0, 3)
+        Dim playerRow = Row(Caption("Your car"), car, stockFolder, vr)
+        NewFeatures.MarkIfNew(playerRow, vr)
+        layout.Controls.Add(playerRow, 0, 4)
+        layout.Controls.Add(roster, 0, 5)
+        layout.Controls.Add(Row(ready, start, force, returnButton, saveLogs), 0, 6)
+        layout.Controls.Add(log, 0, 7)
+        layout.Controls.Add(Row(message, send), 0, 8)
         Controls.Add(layout)
+        AddHandler Shown, Async Sub() Await servers.SearchAsync()
         AddHandler host.Click, Async Sub() Await OpenRoom(True)
         AddHandler join.Click, Async Sub() Await OpenRoom(False)
         AddHandler stockFolder.Click, Sub()
@@ -88,6 +99,12 @@ Public Class DirectLobbyForm
         RefreshRoom()
     End Sub
 
+    Protected Overrides Sub OnLoad(e As EventArgs)
+        Dim available = Screen.FromControl(If(Owner, Me)).WorkingArea.Size
+        Size = New Size(Math.Min(Width, available.Width), Math.Min(Height, available.Height))
+        MyBase.OnLoad(e)
+    End Sub
+
     Private Shared Function Row(ParamArray children As Control()) As FlowLayoutPanel
         Dim panel As New FlowLayoutPanel With {.AutoSize = True, .Dock = DockStyle.Fill}
         panel.Controls.AddRange(children)
@@ -100,7 +117,7 @@ Public Class DirectLobbyForm
         Return If(room.IsHost, room.Grid.Host, room.Grid.Guest)
     End Function
     Private Shared Function PlayerLine(p As Player) As String
-        Dim model = If(p.Car = 88, "Subaru Impreza STI Group N", "Subaru Impreza WRX STI")
+        Dim model = RallycrossCatalog.Cars.Single(Function(choice) choice.Id = p.Car).Name
         Return $"{p.Name}   ·   {model}   ·   {If(p.Ready, "Ready", "Choosing")}"
     End Function
     Private Sub AddChat(line As String)
@@ -130,34 +147,48 @@ Public Class DirectLobbyForm
             Dim layoutReady = editable AndAlso Not checking AndAlso
                 (room.Grid.Layout Is Nothing OrElse room.Grid.Agreement = LayoutAgreement.Matching)
             host.Enabled = room Is Nothing : join.Enabled = host.Enabled
+            servers.Enabled = host.Enabled
+            If connected AndAlso Not room.IsHost AndAlso Not joinedHostSaved Then
+                joinedHostSaved = True
+                servers.RememberJoined(address.Text.Trim())
+            End If
             playerName.Enabled = host.Enabled : address.Enabled = host.Enabled
             stockFolder.Enabled = host.Enabled
             ready.Enabled = layoutReady : car.Enabled = editable AndAlso Not checking
             returnButton.Visible = connected AndAlso room.Starting
             returnButton.Enabled = connected AndAlso room.CanRequestReturn
             lapLog.Enabled = room Is Nothing OrElse editable
+            vr.Enabled = room Is Nothing OrElse Not room.Starting
             track.Enabled = editable AndAlso room.IsHost
             message.Enabled = connected : send.Enabled = connected
             start.Enabled = layoutReady AndAlso room.IsHost AndAlso room.Grid.BothReady
             force.Enabled = layoutReady AndAlso room.IsHost AndAlso room.Grid.CanStart AndAlso Not room.Grid.BothReady
             If room Is Nothing Then
-                If status.Text = "" Then status.Text = "Two desktop players on a private LAN. Allow 12 GB for the first game copy."
+                If status.Text = "" Then status.Text = "Two players on a private LAN. Allow 12 GB for the first game copy."
             Else
                 status.Text = room.Status
                 If connected Then
                     Dim grid = room.Grid
-                    If Not checking Then track.SelectedIndex = If(grid.Layout IsNot Nothing, 2, If(grid.Track = 143, 0, 1))
-                    car.SelectedIndex = If(LocalPlayer().Car = 88, 0, 1)
+                    If Not checking Then
+                        Dim choice = If(grid.Layout IsNot Nothing, RallycrossCatalog.Circuit(grid.Layout.Id),
+                                        RallycrossCatalog.Tracks.Single(Function(item) item.Id = grid.Track))
+                        If remoteCircuit IsNot Nothing AndAlso Not remoteCircuit.Equals(choice) Then
+                            track.Items.Remove(remoteCircuit) : remoteCircuit = Nothing
+                        End If
+                        If Not room.IsHost AndAlso Not track.Items.Contains(choice) Then
+                            remoteCircuit = choice : track.Items.Add(choice)
+                        End If
+                        track.SelectedItem = choice
+                    End If
+                    car.SelectedItem = RallycrossCatalog.Cars.Single(Function(choice) choice.Id = LocalPlayer().Car)
                     roster.Text = PlayerLine(grid.Host) & vbCrLf & PlayerLine(grid.Guest)
                     ready.Text = If(LocalPlayer().Ready, "Unready", "Ready")
                     If checking Then
-                        status.Text = "Checking this PC’s Spa files…"
+                        status.Text = "Checking this PC’s circuit files…"
                     ElseIf editable AndAlso grid.Layout IsNot Nothing AndAlso grid.Agreement = LayoutAgreement.Pending Then
-                        status.Text = "Checking that both PCs have the same Spa circuit…"
+                        status.Text = "Checking that both PCs have the same circuit files…"
                     ElseIf editable AndAlso grid.Layout IsNot Nothing AndAlso grid.Agreement = LayoutAgreement.Different Then
-                        status.Text = "Spa files differ or are missing. Install the same Spa pack on both PCs, then switch to Battersea and back to Spa."
-                    ElseIf editable AndAlso grid.Host.Car = grid.Guest.Car Then
-                        status.Text = "Choose different cars before starting."
+                        status.Text = RallycrossCatalog.Circuit(grid.Layout.Id).Name & " files differ or are missing. Install the same layout on both PCs, then select it again."
                     End If
                 End If
             End If
@@ -186,11 +217,25 @@ Public Class DirectLobbyForm
             End Try
         End Using
     End Function
+    Private Async Function ConfirmRoundAsync() As Task(Of Boolean)
+        Dim current = room
+        If current Is Nothing OrElse Not CheckLaunchElevation(Environment.UserInteractive, False, Me) Then Return False
+        If room IsNot current OrElse Not current.Connected Then Return False
+        current.ConfigureLocalVr = Nothing
+        If Not vr.Checked Then Return True
+        status.Text = "Checking this PC’s VR runtime and headset…"
+        Dim configure = Await DirectVrLaunch.ChooseAsync(Me, context, packageRoot)
+        If configure Is Nothing OrElse room IsNot current OrElse Not current.Connected Then Return False
+        current.ConfigureLocalVr = configure
+        Return True
+    End Function
     Private Async Function OpenRoom(asHost As Boolean) As Task
         If room IsNot Nothing Then Return
+        joinedHostSaved = False
         networkClosed = False
         Try
-            room = New DirectRoom(asHost, stockRoot, context.UserRoot, playerName.Text.Trim(), packageRoot, context.GameRoot)
+            room = New DirectRoom(asHost, stockRoot, context.UserRoot, playerName.Text.Trim(), packageRoot,
+                                  AddressOf ConfirmRoundAsync, context.GameRoot)
             room.RecordLapTelemetry = lapLog.Checked
             AddHandler room.Changed, AddressOf RefreshRoom
             AddHandler room.Chat, AddressOf AddChat
@@ -217,6 +262,10 @@ Public Class DirectLobbyForm
             RemoveHandler room.LocalGameClosed, AddressOf ShowLobbyAfterGame
             room.Dispose() : room = Nothing
         End If
+        If remoteCircuit IsNot Nothing Then
+            track.Items.Remove(remoteCircuit) : remoteCircuit = Nothing
+            track.SelectedIndex = 0
+        End If
         If Not IsDisposed Then
             roster.Text = ""
             RefreshRoom()
@@ -232,18 +281,23 @@ Public Class DirectLobbyForm
     End Function
     Private Async Sub SelectionChanged(sender As Object, e As EventArgs)
         If updating OrElse room Is Nothing OrElse Not room.Connected OrElse room.Starting Then Return
-        Dim selectedCar = If(car.SelectedIndex = 0, 88, 85)
-        If sender Is track AndAlso room.IsHost AndAlso track.SelectedIndex = 2 Then
+        Dim selectedCar = DirectCast(car.SelectedItem, RallycrossChoice).Id
+        If sender Is car Then
+            Await Command(Function() room.SelectAsync(selectedCar, room.Grid.Track))
+            Return
+        End If
+        Dim selection = TryCast(track.SelectedItem, RallycrossChoice)
+        If selection Is Nothing Then Return
+        If room.IsHost AndAlso selection.LayoutId IsNot Nothing Then
             Try
-                Await room.SelectLayoutAsync(selectedCar, DirectLayout.SpaId)
+                Await room.SelectLayoutAsync(selectedCar, selection.LayoutId)
             Catch ex As OperationCanceledException
                 ' A newer selection or a closed lobby cancelled this file check.
             Catch ex As Exception
                 If Not IsDisposed Then status.Text = ex.Message
             End Try
         Else
-            Dim model = If(track.SelectedIndex = 2, 0, If(track.SelectedIndex = 0, 143, 144))
-            Await Command(Function() room.SelectAsync(selectedCar, model))
+            Await Command(Function() room.SelectAsync(selectedCar, selection.Id))
         End If
     End Sub
     Private Async Function SendChat() As Task

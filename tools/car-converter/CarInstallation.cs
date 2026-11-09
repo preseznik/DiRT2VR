@@ -11,9 +11,14 @@ public static class CarInstallation
     sealed record Pending(int Schema, string Id, Entry[] Files, bool Committed);
     static string Current(string path) => File.Exists(path) ? SafeFiles.Hash(path) : "";
     public static void Install(string game, string staging)
+        => Install(game, staging, null);
+
+    public static void Install(string game, string staging, string? expectedContentId)
     {
         SafeFiles.RequireClosed(); SessionFiles.Recover(game); Recover(game);
         var after = CarPack.Read(staging);
+        if (expectedContentId is not null && CarPack.ContentId(after) != expectedContentId)
+            throw new IOException("The installed Ferrari F2004 differs from the one selected for this race.");
         Apply(game, staging, after);
     }
     public static void Uninstall(string game)
