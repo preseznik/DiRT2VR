@@ -295,7 +295,7 @@ extern "C" DWORD WINAPI StartBootstrap(void*) {
     char line[200]{};
     sprintf_s(line, "START pid=%lu setup_thread=%lu image=%08x menu_calls=0 race_calls=0\r\n", GetCurrentProcessId(), setupThread, base);
     Log(line);
-    sprintf_s(line,"RX_REQUEST race=1 class=1 rounds=1 track=%d location=%d laps=3 collision=0 defaulted=%u\r\n",RxRequest().selected.model,RxRequest().selected.location,unsigned(RxRequest().defaulted));Log(line);
+    sprintf_s(line,"RX_REQUEST race=1 class=1 rounds=1 track=%d location=%d laps=%d collision=0 defaulted=%u\r\n",RxRequest().selected.model,RxRequest().selected.location,RxLaps(),unsigned(RxRequest().defaulted));Log(line);
     sprintf_s(line,"CHOICE immutable request vehicle=%d defaulted=%u\r\n",vehicleRequest.vehicle,unsigned(vehicleRequest.defaulted));Log(line);
     if (MH_Initialize() != MH_OK || MH_CreateHook(reinterpret_cast<void*>(At(0x737CB0)), reinterpret_cast<void*>(BeforeUpdate), reinterpret_cast<void**>(&original)) != MH_OK) return 18;
     // Never unload the library or trampoline while native callbacks can run.

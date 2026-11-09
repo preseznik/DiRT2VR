@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Direct hosts can set the track, their car and **Laps** before a guest joins. The guest receives the prepared grid; circuits offer 1–20 laps and point-to-point routes use one run. Changing laps clears both ready marks. The selected distance is passed to both native race workers and finish handling. A live race with a changed lap count remains unverified.
+
 - Private Direct race preparation now uses the Landrush event and checks both cars against the selected track. Landrush driving support is still in development.
 
 - Direct keeps both car choices when players pick at the same time. Changing a car clears both ready marks and keeps an already verified custom track ready to use.

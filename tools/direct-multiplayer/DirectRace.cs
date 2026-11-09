@@ -65,7 +65,7 @@ public class DirectRace
     private int? Run(string stockRoot, string packageRoot, string userRoot, bool host, Grid grid, IPAddress peer,
                      Action<string> status, Action prepared, Action<string> ticketReady, CancellationToken cancel, Action? started)
     {
-        if (!grid.CanStart || !Grid.ValidSelection(grid.Track,grid.Layout) || !Grid.ValidCar(grid.Host.Car) || !Grid.ValidCar(grid.Guest!.Car) || !LobbyConnection.IsPrivate(peer))
+        if (!grid.CanStart || !Grid.ValidLaps(grid.Laps) || !Grid.ValidSelection(grid.Track,grid.Layout) || !Grid.ValidCar(grid.Host.Car) || !Grid.ValidCar(grid.Guest!.Car) || !LobbyConnection.IsPrivate(peer))
             throw new IOException("The Direct starting grid is incomplete.");
         Progress = new DirectRaceProgress(grid.RequiredLaps);
         using var guard = new Mutex(false,@"Global\DiRT2VR.Session");
@@ -166,7 +166,7 @@ public class DirectRace
     internal static (string Root, int Model) PrepareGame(string stockRoot, string cache, string layoutRoot,
         Grid grid, Action<string> status, CancellationToken cancel)
     {
-        if (!Grid.ValidSelection(grid.Track,grid.Layout) || (grid.Layout!=null && grid.Agreement!=LayoutAgreement.Matching))
+        if (!Grid.ValidLaps(grid.Laps) || !Grid.ValidSelection(grid.Track,grid.Layout) || (grid.Layout!=null && grid.Agreement!=LayoutAgreement.Matching))
             throw new IOException("Both PCs must agree on the selected circuit before preparation.");
         string root = PrivateGame.Prepare(stockRoot,cache,status,cancel);
         if (grid.Layout==null) return (root,grid.Track);
@@ -178,7 +178,7 @@ public class DirectRace
     {
         var guest = grid.Guest ?? throw new IOException("The Direct starting grid needs two players.");
         int race = 1, vehicleClass = 1;
-        bool customStage = grid.Layout != null && grid.RequiredLaps == 1;
+        bool customStage = grid.Layout != null && !grid.IsCircuit;
         if (customStage || (grid.Layout == null && !RallycrossCatalog.Tracks.Any(track => track.Id == model)))
         {
             string schema = CircuitCatalog.WriteSchema(run);
@@ -190,6 +190,7 @@ public class DirectRace
             finally { File.Delete(schema); }
         }
         start.Environment["DIRT2VR_ENGINE_VEHICLE_ID"] = (host ? grid.Host.Car : guest.Car).ToString(System.Globalization.CultureInfo.InvariantCulture);
+        start.Environment["DIRT2VR_ENGINE_LAPS"] = grid.RequiredLaps.ToString(System.Globalization.CultureInfo.InvariantCulture);
         start.Environment["DIRT2VR_ENGINE_RX_REQUEST"] = JsonSerializer.Serialize(new { native_race = race, native_class = vehicleClass, track_model = model });
     }
 

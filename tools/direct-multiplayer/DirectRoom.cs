@@ -31,6 +31,7 @@ public sealed class DirectRoom : IDisposable
     public Grid Grid { get; private set; }
     public bool IsHost { get; }
     public bool Connected { get; private set; }
+    public bool CanConfigure => IsHost && !launching && !disposed && !stop.IsCancellationRequested;
     public bool Starting => launching;
     public bool WorkerActive { get; private set; }
     public string? LastRunDirectory => race?.RunDirectory ?? previousRunDirectory;
@@ -88,10 +89,24 @@ public sealed class DirectRoom : IDisposable
                 await connection.SendAsync(new("name",name),timeout.Token);
                 var other=await connection.ReceiveAsync(timeout.Token);
                 if (other.Kind!="name" || !LobbyConnection.ValidText(other.Text,32)) throw new IOException("Invalid Direct player name.");
-                Grid=IsHost?new(143,new(name,88),new(other.Text,85)):new(143,new(other.Text,88),new(name,85));
+                if (IsHost)
+                {
+                    Grid=Grid with { Host=Grid.Host with { Ready=false }, Guest=new(other.Text,85),
+                        Agreement=LayoutAgreement.Pending, Revision=checked(Grid.Revision+1) };
+                    await connection.SendAsync(new("grid",Grid:Grid),timeout.Token);
+                }
+                else
+                {
+                    var initial=await connection.ReceiveAsync(timeout.Token);
+                    if (initial.Kind!="grid" || !ValidGrid(initial.Grid) || initial.Grid!.Host.Name!=other.Text || initial.Grid.Guest!.Name!=name)
+                        throw new IOException("Invalid initial Direct grid.");
+                    Grid=initial.Grid;
+                }
             }
             Connected=true;
+            if (IsHost) await Publish(); // Include edits made while the initial handshake was in flight.
             SetStatus("Lobby open. Choose your cars and mark yourselves ready.");
+            if (!IsHost) _=CheckGuestLayout(Grid);
             while (!stop.IsCancellationRequested) await Receive(await connection.ReceiveAsync(stop.Token));
         }
         catch(Exception ex) when (ex is IOException or InvalidDataException or SocketException or OperationCanceledException or System.Text.Json.JsonException or ObjectDisposedException)
@@ -111,9 +126,14 @@ public sealed class DirectRoom : IDisposable
     {
         if (!Connected || launching) throw new IOException("The lobby is unavailable.");
     }
+    void SelectionOnly()
+    {
+        if (IsHost && CanConfigure) return;
+        LobbyOnly();
+    }
     public async Task SelectAsync(int car,int track)
     {
-        LobbyOnly();
+        SelectionOnly();
         if (IsHost)
         {
             layoutCheck?.Cancel();
@@ -124,7 +144,7 @@ public sealed class DirectRoom : IDisposable
 
     public async Task SelectLayoutAsync(int car,string id)
     {
-        LobbyOnly();
+        SelectionOnly();
         if (!IsHost) throw new IOException("Only the host can select the track.");
         layoutCheck?.Cancel();
         using var check=CancellationTokenSource.CreateLinkedTokenSource(stop.Token);
@@ -134,13 +154,20 @@ public sealed class DirectRoom : IDisposable
         {
             var layout=await Task.Run(()=>DirectLayout.Read(layoutRoot,id,check.Token),check.Token);
             check.Token.ThrowIfCancellationRequested();
-            LobbyOnly();
+            SelectionOnly();
             var updated=Grid.Select(true,car,0,layout);
             if (updated==Grid && Grid.Agreement==LayoutAgreement.Different)
                 updated=Grid with { Agreement=LayoutAgreement.Pending, Revision=checked(Grid.Revision+1) };
             await PublishSelection(updated);
         }
         finally { if (layoutCheck==check) { layoutCheck=null; Changed?.Invoke(); } }
+    }
+
+    public Task SetLapsAsync(int laps)
+    {
+        SelectionOnly();
+        if (!IsHost) throw new IOException("Only the host can set the laps.");
+        return PublishSelection(Grid.SetLaps(laps));
     }
 
     async Task CheckGuestLayout(Grid selection)
@@ -171,7 +198,7 @@ public sealed class DirectRoom : IDisposable
         if (IsHost) { Grid=Grid.SetReady(true,ready,Grid.Revision); await Publish(); }
         else await Send(new("ready",Ready:ready,Revision:Grid.Revision));
     }
-    async Task Publish() { Changed?.Invoke(); await Send(new("grid",Grid:Grid)); }
+    async Task Publish() { Changed?.Invoke(); if (Connected) await Send(new("grid",Grid:Grid)); }
     Task PublishSelection(Grid updated)
     {
         if (updated.Track!=Grid.Track || updated.Layout!=Grid.Layout) firstCarRevision=updated.Revision;
@@ -217,7 +244,7 @@ public sealed class DirectRoom : IDisposable
         if (remoteReturn || remoteDone) race?.RequestReturn();
     }
     static bool ValidGrid(Grid? g) => g?.Guest != null && g.Host != null && Enum.IsDefined(g.Agreement) &&
-        (g.Layout!=null || g.Agreement==LayoutAgreement.Pending) && Grid.ValidSelection(g.Track,g.Layout) && Grid.ValidCar(g.Host.Car) &&
+        Grid.ValidLaps(g.Laps) && (g.Layout!=null || g.Agreement==LayoutAgreement.Pending) && Grid.ValidSelection(g.Track,g.Layout) && Grid.ValidCar(g.Host.Car) &&
         Grid.ValidCar(g.Guest.Car) && LobbyConnection.ValidText(g.Host.Name,32) && LobbyConnection.ValidText(g.Guest.Name,32) && g.Revision >= 0;
     async Task Receive(LobbyMessage msg)
     {

@@ -115,7 +115,7 @@ bool Configuration(bool capture) {
     if(!(Read(At(0x147DE98))&1) || !(Read(At(0x147FC70))&1) || Read(s.event)!=At(0x13366EC) || Read(s.event+0x58)!=Read(s.data+0x64) || Read(s.event+0x5C)!=s.network+0x1010 || Read(s.event+0x1B4)!=key ||
        (Read(s.event+0x64)^key)!=1 || (Read(s.event+0x68)^key)!=1 || (Read(s.event+0x74)^key)!=1 || Read(round)!=At(0x1333840) || Read(round+4)!=s.event ||
        (Read(round+8)^key)!=1 || config_abi::DecodeTrack(static_cast<unsigned short>(Read(round+0xC)),static_cast<unsigned short>(shortKey))!=RxRequest().selected.model ||
-       (Read(round+0x10)^key)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^key)!=3)return false;
+       (Read(round+0x10)^key)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^key)!=static_cast<U32>(RxLaps()))return false;
     ConfigRef again(0x132A450);
     return reinterpret_cast<config_abi::AcquireConfig>(At(0x733D30))(reinterpret_cast<void*>(s.service),&again.ref)==&again.ref && again.Valid() && again.ref.pointer==s.config && Owners(false);
 }

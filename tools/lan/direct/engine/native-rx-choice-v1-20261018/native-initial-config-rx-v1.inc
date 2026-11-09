@@ -101,7 +101,7 @@ void NativeInitialConfigTick(void* self,U32 container,U32 holder,U32 session,U32
     !(Read(At(0x147DE98))&1) || !(Read(At(0x147FC70))&1) || Read(event+0x1B4)!=integerKey || (Read(event+0x64)^integerKey)!=1 ||
     (Read(event+0x68)^integerKey)!=1 || (Read(event+0x74)^integerKey)!=1 || (Read(event+0x78)^integerKey)!=0 || (Read(round+8)^integerKey)!=1 ||
     config_abi::DecodeTrack(static_cast<unsigned short>(Read(round+0xC)),static_cast<unsigned short>(shortKey))!=RxRequest().selected.model ||
-    (Read(round+0x10)^integerKey)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^integerKey)!=3) {Log("CONFIG REJECT fixed event/round\r\n");return;}
+    (Read(round+0x10)^integerKey)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^integerKey)!=static_cast<U32>(RxLaps())) {Log("CONFIG REJECT fixed event/round\r\n");return;}
  const U32 manager=Read(owner+0x2E88),service=Read(manager+0x34),databaseService=Read(owner+0x2E84),database=Read(databaseService+0xC);
  if(Read(manager)!=At(0x132B1CC) || Read(manager+8)!=At(0x132B1B8) || Read(service)!=At(0x132AC70) || Read(service+0x38)!=database ||
     database<0x10000 || !(Read(databaseService+0x20)&0xff) || Read(manager+0xAC0)>8){Log("CONFIG REJECT kind1/database ownership\r\n");return;}
@@ -123,7 +123,7 @@ void NativeInitialConfigTick(void* self,U32 container,U32 holder,U32 session,U32
  const auto configResult=reinterpret_cast<config_abi::AcquireConfig>(At(0x733D30))(reinterpret_cast<void*>(service),&config.ref);
  const U32 entryBegin=Read(config.ref.pointer+0x20),entryEnd=Read(config.ref.pointer+0x24);
  if(entryBegin<0x10000 || entryBegin>0x7ffffff7 || entryEnd!=entryBegin+8){Log("CONFIG REJECT entry vector range\r\n");return;}
- if(configResult!=&config.ref || !config.Valid() || Read(config.ref.pointer+0x3C)!=database || Read(service+0x3C)!=static_cast<U32>(RxRequest().selected.model) ||
+ if(configResult!=&config.ref || !config.Valid() || Read(config.ref.pointer+0x3C)!=database || Read(config.ref.pointer+0x44)!=static_cast<U32>(RxLaps()) || Read(service+0x3C)!=static_cast<U32>(RxRequest().selected.model) ||
     reinterpret_cast<config_abi::EntryCount>(At(0x773000))(reinterpret_cast<void*>(config.ref.pointer))!=2){Log("CONFIG REJECT entry count/database/track\r\n");return;}
  int track{};const U32 trackRow=Read(config.ref.pointer+0x78);
  if(!ConfigRowId(database,"track_model",trackRow,track) || track!=RxRequest().selected.model){Log("CONFIG REJECT track_model schema id\r\n");return;}
@@ -157,7 +157,7 @@ void NativeInitialConfigTick(void* self,U32 container,U32 holder,U32 session,U32
     Read(owner+0x2E88)!=manager || Read(owner+0x2E84)!=databaseService || (Read(session+0x28)&0xff)!=localId ||
     native_components::Find(Read,tree,At(0x14906B0))!=event || native_components::Find(Read,tree,At(0x1490868))!=roster ||
     Read(event+0x1B4)!=integerKey || Read(event+0x5C)!=network+0x1010 || (Read(event+0x64)^integerKey)!=1 || (Read(event+0x68)^integerKey)!=1 ||
-    (Read(event+0x74)^integerKey)!=1 || (Read(event+0x78)^integerKey)!=0 || (Read(round+8)^integerKey)!=1 || (Read(round+0x10)^integerKey)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^integerKey)!=3 ||
+    (Read(event+0x74)^integerKey)!=1 || (Read(event+0x78)^integerKey)!=0 || (Read(round+8)^integerKey)!=1 || (Read(round+0x10)^integerKey)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^integerKey)!=static_cast<U32>(RxLaps()) ||
     config_abi::DecodeTrack(static_cast<unsigned short>(Read(round+0xC)),static_cast<unsigned short>(shortKey))!=RxRequest().selected.model) {Log("CONFIG REJECT current session/event graph changed\r\n");return;}
  ConfigPlayer after[2]{};
  if(!RevalidateLocalChoice() || !ConfigPlayers(data,roster,database,after) || memcmp(players,after,sizeof(players)) || Read(At(0x147DE90))!=integerKey || Read(At(0x147FC68))!=shortKey ||

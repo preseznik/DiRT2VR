@@ -1,5 +1,6 @@
 #pragma once
 #include "rx-request-v1.h"
+#include "../direct-bootstrap/direct-laps.h"
 #include <cstddef>
 #include <cstdint>
 #include <limits>
@@ -109,7 +110,7 @@ enum class PrepareResult {
 inline PrepareResult PrepareLanHost(const Manifest& m,const NativeEventSnapshot& n,HostDescriptors& out) {
     out={};
     if(m.joinCurrentRace)return PrepareResult::CurrentRaceJoinUnproven;
-    if(m.nativeRaceEnum!=1||m.nativeClassEnum!=1||m.rounds!=1||!rx_choice_v1::Supported(m.trackModel,m.location)||m.laps!=3)
+    if(m.nativeRaceEnum!=1||m.nativeClassEnum!=1||m.rounds!=1||!rx_choice_v1::Supported(m.trackModel,m.location)||!direct_laps::Valid(m.laps))
         return PrepareResult::UnsupportedManifest;
     const I32 required[]{n.race,n.vehicleClass,n.rounds,n.currentRound,n.location,n.trackModel,
         n.laps,n.collision,n.team,n.event70,n.event78,n.event84,n.event88,n.event8C,n.event90,n.event98};

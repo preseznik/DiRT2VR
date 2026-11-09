@@ -56,7 +56,7 @@ bool NativeLoadedConfiguration(bool afterAck=false) {
     (Read(l.event+0x6C)^key)!=0 || (Read(l.event+0x74)^key)!=1 ||
     Read(round)!=At(0x1333840) || Read(round+4)!=l.event || (Read(round+8)^key)!=1 ||
     config_abi::DecodeTrack(static_cast<unsigned short>(Read(round+0xC)),static_cast<unsigned short>(shortKey))!=RxRequest().selected.model ||
-    (Read(round+0x10)^key)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^key)!=3 || (Read(round+0x1C)^key)!=0)return false;
+    (Read(round+0x10)^key)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^key)!=static_cast<U32>(RxLaps()) || (Read(round+0x1C)^key)!=0)return false;
  ConfigPlayer players[2]{};if(!NativeLoadedRosterPlayers(players,afterAck))return false;
  for(unsigned i=0;i<2;++i) {
   const auto& p=players[i];const U32 entry=l.entries[i],records=Read(entry+0x40);int liveryId{};

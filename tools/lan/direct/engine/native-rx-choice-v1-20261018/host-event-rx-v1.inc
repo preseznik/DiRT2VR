@@ -76,13 +76,13 @@ void NativeEventTick(void* self) {
  using SetRound=void(__thiscall*)(void*,int);
  const U32 eventMethods[]{0x854640,0x854680,0x8546C0,0x854700};const int eventValues[]{1,1,0,1};
  for(unsigned i=0;i<4;++i) reinterpret_cast<SetEvent>(At(eventMethods[i]))(reinterpret_cast<void*>(event),eventValues[i],false);
- const U32 roundMethods[]{0x5F94C0,0x5F94E0,0x5F9500,0x5F9520,0x5F9540};const int roundValues[]{1,RxRequest().selected.model,RxRequest().selected.location,3,0};
+ const U32 roundMethods[]{0x5F94C0,0x5F94E0,0x5F9500,0x5F9520,0x5F9540};const int roundValues[]{1,RxRequest().selected.model,RxRequest().selected.location,RxLaps(),0};
  for(unsigned i=0;i<5;++i) reinterpret_cast<SetRound>(At(roundMethods[i]))(reinterpret_cast<void*>(round),roundValues[i]);
  if(integer(event+0x64)!=1 || integer(event+0x68)!=1 || integer(event+0x6C)!=0 || integer(event+0x74)!=1 || integer(round+8)!=1 ||
-    static_cast<short>((Read(round+0xC)^Read(At(0x147FC68)))&0xffff)!=RxRequest().selected.model || integer(round+0x10)!=RxRequest().selected.location || integer(round+0x18)!=3 || integer(round+0x1C)!=0) {Log("EVENT REJECT native setter readback\r\n");return;}
+    static_cast<short>((Read(round+0xC)^Read(At(0x147FC68)))&0xffff)!=RxRequest().selected.model || integer(round+0x10)!=RxRequest().selected.location || integer(round+0x18)!=RxLaps() || integer(round+0x1C)!=0) {Log("EVENT REJECT native setter readback\r\n");return;}
  if(!RxEventMatches(event) || !RxCatalogBound(owner,false)) {Log("EVENT REJECT frozen RX postconditions\r\n");return;}
  reinterpret_cast<void(__thiscall*)(void*)>(At(0x83F710))(reinterpret_cast<void*>(event));
- sprintf_s(line,"EVENT configured native_race=%d native_class=%d rounds=%d track=%d location=%d laps=3 collision=0 notified=1 session_created=0 race_started=0\r\n",integer(event+0x64),integer(event+0x74),integer(event+0x68),RxRequest().selected.model,RxRequest().selected.location);Log(line);
+ sprintf_s(line,"EVENT configured native_race=%d native_class=%d rounds=%d track=%d location=%d laps=%d collision=0 notified=1 session_created=0 race_started=0\r\n",integer(event+0x64),integer(event+0x74),integer(event+0x68),RxRequest().selected.model,RxRequest().selected.location,RxLaps());Log(line);
  configuredEvent=event;configuredNetwork=network;eventConfigured=true;
 
 }

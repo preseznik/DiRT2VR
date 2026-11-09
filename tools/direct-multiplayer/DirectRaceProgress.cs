@@ -12,7 +12,7 @@ internal sealed class DirectRaceProgress
 
     internal DirectRaceProgress(int requiredLaps = 3)
     {
-        if (requiredLaps is not (1 or 3)) throw new ArgumentOutOfRangeException(nameof(requiredLaps));
+        if (!Grid.ValidLaps(requiredLaps)) throw new ArgumentOutOfRangeException(nameof(requiredLaps));
         RequiredLaps = requiredLaps;
         Local = new Driver(requiredLaps);
         Peer = new Driver(requiredLaps);
@@ -23,7 +23,7 @@ internal sealed class DirectRaceProgress
         int timedLaps = -1;
         internal int Completed => ClockFinish ? requiredLaps : timedLaps;
         readonly int[] times = new int[3];
-        bool sawDriving, leftEarly, sawThree, inconsistentTarget, policy, timedFinish;
+        bool sawDriving, leftEarly, sawDistance, inconsistentTarget, policy, timedFinish;
         (int Session, int Player) sampleState, resultState;
         bool matchingTarget, endedShort, clockFinish, clockDnf;
         int flag = -1, reason = -1;
@@ -50,17 +50,17 @@ internal sealed class DirectRaceProgress
                 if (report == 1 && completed >= 0) timedLaps = 0;
                 return;
             }
-            if (!leftEarly && report == 1 && completed is >= 0 and <= 3)
+            if (!leftEarly && report == 1 && completed >= 0 && completed <= requiredLaps)
             {
                 timedLaps = Math.Max(timedLaps, completed);
                 if (completed >= 1 && first > 0) times[0] = first;
                 if (completed >= 2 && second > 0) times[1] = second;
-                if (completed == 3 && third > 0) times[2] = third;
-                if (sawDriving && completed == 3 && times.All(t => t > 0)) sawThree = true;
+                if (completed >= 3 && third > 0) times[2] = third;
+                if (sawDriving && requiredLaps <= times.Length && completed == requiredLaps && times.Take(requiredLaps).All(t => t > 0)) sawDistance = true;
             }
-            if (player is 2 or 3 or 4 && sawDriving && !sawThree)
+            if (player is 2 or 3 or 4 && sawDriving && !sawDistance)
                 leftEarly = true;
-            if (sawThree && !leftEarly && !policy && !inconsistentTarget && policyFlag == 0 &&
+            if (sawDistance && !leftEarly && !policy && !inconsistentTarget && policyFlag == 0 &&
                 matchingTarget && player is 3 or 4 && session is 3 or 4 or 5 or 7)
                 timedFinish = true;
         }
@@ -91,7 +91,7 @@ internal sealed class DirectRaceProgress
                 $"{t / 60000}:{t / 1000 % 60:00}.{t % 1000:000}");
             string timing = string.Join(" / ", laps);
             string outcome = Finished ? "Finished. " : StationaryDnf ? "Disqualified for standing still. " : "";
-            return $"{name} — {outcome}{Completed} of 3 laps recorded" + (timing.Length == 0 ? "." : $" ({timing}).");
+            return $"{name} — {outcome}{Completed} of {requiredLaps} laps recorded" + (timing.Length == 0 ? "." : $" ({timing}).");
         }
     }
 

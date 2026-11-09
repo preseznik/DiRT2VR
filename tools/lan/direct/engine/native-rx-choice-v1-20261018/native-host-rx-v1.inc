@@ -36,7 +36,7 @@ void NativeHostTick(void* self) {
   n.event8C=integer(event+0x8C);n.event90=integer(event+0x90);n.event98=integer(event+0x98);n.currentRound=integer(event+0x1B4);
   n.location=integer(round+0x10);n.laps=integer(round+0x18);n.collision=integer(round+0x1C);
   n.trackModel=static_cast<short>((Read(round+0xC)^Read(At(0x147FC68)))&0xffff);
-  dirt2_engine_bootstrap::Manifest manifest{};manifest.trackModel=RxRequest().selected.model;manifest.location=RxRequest().selected.location;
+  dirt2_engine_bootstrap::Manifest manifest{};manifest.trackModel=RxRequest().selected.model;manifest.location=RxRequest().selected.location;manifest.laps=RxLaps();
   if(!RxEventMatches(event)){hostObservationStopped=true;Log("HOST REJECT frozen RX event\r\n");return;}
   const auto prepared=dirt2_engine_bootstrap::PrepareLanHost(manifest,n,hostDescriptors);
   // The offline helper deliberately remains non-executable. This isolated

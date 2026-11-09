@@ -8,11 +8,13 @@ namespace DiRT2VR.Multiplayer;
 public sealed record Player(string Name, int Car, bool Ready = false);
 public enum LayoutAgreement { Pending, Matching, Different }
 public sealed record Grid(int Track, Player Host, Player? Guest, int Revision = 0,
-                          DirectLayout? Layout = null, LayoutAgreement Agreement = LayoutAgreement.Pending)
+                          DirectLayout? Layout = null, LayoutAgreement Agreement = LayoutAgreement.Pending, int Laps = 3)
 {
     public bool CanStart => Guest != null && (Layout == null || Agreement == LayoutAgreement.Matching);
     public bool BothReady => CanStart && Host.Ready && Guest!.Ready;
-    internal int RequiredLaps => Layout is null || DiRT2VR.CustomTracks.TrackPacks.ForLayout(Layout.Id).GetLayout(Layout.Id).Circuit ? 3 : 1;
+    public bool IsCircuit => Layout is null || DiRT2VR.CustomTracks.TrackPacks.ForLayout(Layout.Id).GetLayout(Layout.Id).Circuit;
+    public int RequiredLaps => IsCircuit ? Laps : 1;
+    public static bool ValidLaps(int laps) => laps is >= 1 and <= 20;
     public static bool ValidCar(int id) => RallycrossCatalog.Cars.Any(car => car.Id == id);
     public static bool ValidTrack(int id) => RallycrossCatalog.Tracks.Any(track => track.Id == id);
 
@@ -32,6 +34,14 @@ public sealed record Grid(int Track, Player Host, Player? Guest, int Revision = 
         if (revision != Revision || Guest == null || (ready && Layout != null && Agreement != LayoutAgreement.Matching)) return this;
         return host ? this with { Host = Host with { Ready = ready } }
                     : this with { Guest = Guest with { Ready = ready } };
+    }
+
+    public Grid SetLaps(int laps)
+    {
+        if (!ValidLaps(laps)) throw new InvalidDataException("Choose 1 to 20 laps.");
+        if (Laps == laps) return this;
+        return this with { Laps = laps, Revision = checked(Revision + 1), Host = Host with { Ready = false },
+            Guest = Guest is null ? null : Guest with { Ready = false } };
     }
 
     internal static bool ValidSelection(int track, DirectLayout? layout) => layout == null ? ValidTrack(track)
