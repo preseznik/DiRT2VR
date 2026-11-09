@@ -30,6 +30,8 @@ public sealed class ExternalPack
     public bool Ready => Problem.Length == 0;
     public string Support => $"DiRT2VR/custom-{Kind}s/external/{FolderId}";
     public string Receipt => Support + "/manifest.json";
+    internal bool BelongsToInstallation(string game) =>
+        StringComparer.OrdinalIgnoreCase.Equals(Path.GetFullPath(Root), SafeFiles.Inside(game, Support));
     internal ExternalPack(string root, string kind, string id, ExternalManifest? manifest, string hash, string problem)
         => (Root, Kind, FolderId, Manifest, ManifestHash, Problem) = (root, kind, id, manifest, hash, problem);
     public string LayoutId(ExternalLayout layout) => Id + "/" + layout.Id;

@@ -1,4 +1,4 @@
-// Frozen single-round RX request. Native defaults remain the exact RX143 baseline.
+// Initialize the chosen game discipline before applying the lobby's single round.
 volatile LONG eventObserved{};
 bool eventConfigured{};
 U32 configuredEvent{},configuredNetwork{};
@@ -56,29 +56,36 @@ void NativeEventTick(void* self) {
  // Validate numeric domains through the game's own DB mapping before setters.
  using Mapping= int(__thiscall*)(void*,int);
  if(Read(At(0x1333BA8)+0x48)!=At(0x80FFE0) || Read(At(0x1333BA8)+0x5C)!=At(0x82EE70)) {Log("EVENT REJECT mapping dispatch\r\n");return;}
- const int raceRow=reinterpret_cast<Mapping>(At(0x80FFE0))(reinterpret_cast<void*>(mapping),1);
- const int classRow=reinterpret_cast<Mapping>(At(0x82EE70))(reinterpret_cast<void*>(mapping),1);
+ const auto& request=RxRequest();
+ const int raceRow=reinterpret_cast<Mapping>(At(0x80FFE0))(reinterpret_cast<void*>(mapping),request.race);
+ const int classRow=reinterpret_cast<Mapping>(At(0x82EE70))(reinterpret_cast<void*>(mapping),request.vehicleClass);
  const bool rootRules=reinterpret_cast<bool(__thiscall*)(void*,U32)>(At(0xEB9CF0))(reinterpret_cast<void*>(type),At(0x1490600));
  const U32 rules=rootRules?provider:reinterpret_cast<U32(__thiscall*)(void*,U32)>(At(0x590380))(reinterpret_cast<void*>(provider),1);
- sprintf_s(line,"EVENT mapping race_enum=1 race_row=%d class_enum=1 class_row=%d rules=%08x rules_vt=%08x\r\n",raceRow,classRow,rules,Read(rules));Log(line);
- if(raceRow!=2 || classRow!=17 || rules<0x10000 || Read(rules)<base || Read(rules)>=At(0x1470000)) {Log("EVENT REJECT native mapping/rules\r\n");return;}
+ sprintf_s(line,"EVENT mapping race_enum=%d race_row=%d class_enum=%d class_row=%d rules=%08x rules_vt=%08x\r\n",request.race,raceRow,request.vehicleClass,classRow,rules,Read(rules));Log(line);
+ if(raceRow!=request.race+1 || classRow!=rx_choice_v1::Classes[request.vehicleClass].event || rules<0x10000 || Read(rules)<base || Read(rules)>=At(0x1470000)) {Log("EVENT REJECT native mapping/rules\r\n");return;}
  if(!(Read(At(0x147DE98))&1) || !(Read(At(0x147FC70))&1) || !(Read(At(0x147E2C8))&1) ||
     ((Read(event+0x60)^(Read(At(0x147E2C0))&1))&0xff)!=0 || (Read(event+0x1B4)^Read(At(0x147DE90)))!=0) {Log("EVENT REJECT event state\r\n");return;}
  if(!RxCatalogBound(owner,true)) {Log("EVENT REJECT native RX catalog relationship\r\n");return;}
- Log("EVENT CALL native defaults race=1 class=-1; no menu callback\r\n");
- reinterpret_cast<void(__thiscall*)(void*,bool,int,int)>(At(0x84A8C0))(reinterpret_cast<void*>(event),true,1,-1);
+ reinterpret_cast<void(__thiscall*)(void*,bool,int,int)>(At(0x84A8C0))(reinterpret_cast<void*>(event),true,request.race,-1);
  const U32 round=event+0xA4,key=Read(At(0x147DE90));
  const auto integer=[&](U32 ptr){return static_cast<int>(Read(ptr)^key);};
  const int track=static_cast<short>((Read(round+0xC)^Read(At(0x147FC68)))&0xffff);
  sprintf_s(line,"EVENT defaults race=%d track=%d location=%d laps=%d collision=%d\r\n",integer(round+8),track,integer(round+0x10),integer(round+0x18),integer(round+0x1C));Log(line);
- if(integer(round+8)!=1 || track!=143 || integer(round+0x10)!=4 || integer(round+0x18)!=3 || integer(round+0x1C)!=0) {Log("EVENT REJECT native defaults differ from fixed validated RX manifest\r\n");return;}
+ // First rounds from the stock net_event_default table in native discipline order.
+ struct DefaultRound {int model, location, laps;};
+ constexpr DefaultRound defaults[]{{137,1,0},{143,4,3},{161,8,0},{151,7,3},{132,2,0}};
+ const auto first=defaults[request.race];
+ if(integer(round+8)!=request.race || track!=first.model || integer(round+0x10)!=first.location ||
+    (integer(round+0x18)!=first.laps && !(first.laps==0 && integer(round+0x18)==1)) || integer(round+0x1C)!=0) {
+  Log("EVENT REJECT native defaults differ from selected discipline\r\n");return;
+ }
  using SetEvent=void(__thiscall*)(void*,int,bool);
  using SetRound=void(__thiscall*)(void*,int);
- const U32 eventMethods[]{0x854640,0x854680,0x8546C0,0x854700};const int eventValues[]{1,1,0,1};
+ const U32 eventMethods[]{0x854640,0x854680,0x8546C0,0x854700};const int eventValues[]{request.race,1,0,request.vehicleClass};
  for(unsigned i=0;i<4;++i) reinterpret_cast<SetEvent>(At(eventMethods[i]))(reinterpret_cast<void*>(event),eventValues[i],false);
- const U32 roundMethods[]{0x5F94C0,0x5F94E0,0x5F9500,0x5F9520,0x5F9540};const int roundValues[]{1,RxRequest().selected.model,RxRequest().selected.location,RxLaps(),0};
+ const U32 roundMethods[]{0x5F94C0,0x5F94E0,0x5F9500,0x5F9520,0x5F9540};const int roundValues[]{request.race,request.selected.model,request.selected.location,RxLaps(),0};
  for(unsigned i=0;i<5;++i) reinterpret_cast<SetRound>(At(roundMethods[i]))(reinterpret_cast<void*>(round),roundValues[i]);
- if(integer(event+0x64)!=1 || integer(event+0x68)!=1 || integer(event+0x6C)!=0 || integer(event+0x74)!=1 || integer(round+8)!=1 ||
+ if(integer(event+0x64)!=request.race || integer(event+0x68)!=1 || integer(event+0x6C)!=0 || integer(event+0x74)!=request.vehicleClass || integer(round+8)!=request.race ||
     static_cast<short>((Read(round+0xC)^Read(At(0x147FC68)))&0xffff)!=RxRequest().selected.model || integer(round+0x10)!=RxRequest().selected.location || integer(round+0x18)!=RxLaps() || integer(round+0x1C)!=0) {Log("EVENT REJECT native setter readback\r\n");return;}
  if(!RxEventMatches(event) || !RxCatalogBound(owner,false)) {Log("EVENT REJECT frozen RX postconditions\r\n");return;}
  reinterpret_cast<void(__thiscall*)(void*)>(At(0x83F710))(reinterpret_cast<void*>(event));

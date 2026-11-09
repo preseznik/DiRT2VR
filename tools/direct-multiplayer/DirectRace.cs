@@ -19,6 +19,7 @@ public class DirectRace
     internal Action<ProcessStartInfo,string>? ConfigureVr { get; set; }
     internal string? LayoutInstallRoot { get; set; }
     internal string? RunDirectory { get; set; }
+    internal string? PreparedGrid { get; set; }
     internal bool ReturnRequested => returnRequested;
     internal void RequestReturn(bool result = false)
     {
@@ -52,7 +53,7 @@ public class DirectRace
             hashes.Add(hash);
         }
         // Lobby messages can change between builds that use the same native race libraries.
-        return $"D2DIRECT13-{typeof(DirectRoom).Module.ModuleVersionId:N}/" + string.Join("/",hashes);
+        return $"D2DIRECT14-{typeof(DirectRoom).Module.ModuleVersionId:N}/" + string.Join("/",hashes);
     }
 
     // A Windows mutex must be released on its acquiring thread. Keep it through
@@ -65,7 +66,7 @@ public class DirectRace
     private int? Run(string stockRoot, string packageRoot, string userRoot, bool host, Grid grid, IPAddress peer,
                      Action<string> status, Action prepared, Action<string> ticketReady, CancellationToken cancel, Action? started)
     {
-        if (!grid.CanStart || !Grid.ValidLaps(grid.Laps) || !Grid.ValidSelection(grid.Track,grid.Layout) || !Grid.ValidCar(grid.Host.Car) || !Grid.ValidCar(grid.Guest!.Car) || !LobbyConnection.IsPrivate(peer))
+        if (!grid.CanStart || !Grid.ValidLaps(grid.Laps) || !LobbyConnection.IsPrivate(peer))
             throw new IOException("The Direct starting grid is incomplete.");
         Progress = new DirectRaceProgress(grid.RequiredLaps);
         using var guard = new Mutex(false,@"Global\DiRT2VR.Session");
@@ -82,7 +83,7 @@ public class DirectRace
                 if (games.Length > 0) throw new IOException("Close DiRT 2 before starting Direct.");
             }
             var identity = PackageIdentity(packageRoot).Split('/');
-            var (gameRoot, model) = PrepareGame(stockRoot,cache,LayoutInstallRoot ?? packageRoot,grid,status,cancel);
+            var (gameRoot, model) = PrepareGame(stockRoot,cache,LayoutInstallRoot ?? packageRoot,grid,status,cancel,ConfigureVr != null);
             var role = host ? "host" : "client";
             var run = Path.Combine(cache,"runs", role+"-"+Guid.NewGuid().ToString("N"));
             PrivateGame.PlainPath(run);
@@ -112,7 +113,7 @@ public class DirectRace
             env["DIRT2VR_ACTIVE"]="0"; env["DIRT2VR_DIRECT_LAB_EXE"]=exe; env["DIRT2VR_LAN_CONFIG"]=config;
             env["DIRT2VR_PROFILE_ROOT"]=Path.Combine(run,"career"); env["DIRT2VR_LAN_DOCUMENTS"]=Path.Combine(run,"Documents");
             env["DIRT2VR_OUTPUT"]=run; env["DIRT2VR_ENGINE_EXPECTED_NAME"]=profile; env["DIRT2VR_ENGINE_CAREER_LOG"]=log;
-            ConfigureGrid(psi,grid,host,model,gameRoot,run);
+            PreparedGrid = ConfigureGrid(psi,grid,host,model,gameRoot,run);
             foreach (var key in new[]{"ACTIVATION_CANDIDATE","LOADED_ACK_CANDIDATE","FINALIZATION_CANDIDATE","INITIAL_LOAD","INITIAL_CONFIG","EVENT_PROBE","CAREER","BOOTSTRAP_HOLD"})
                 env["DIRT2VR_ENGINE_"+key]="1";
             if (ConfigureVr != null)
@@ -157,46 +158,82 @@ public class DirectRace
             try
             {
                 try { if (ConfigureVr!=null) PrivateVrRenderer.Recover(cache); }
-                finally { if (grid.Layout!=null) PrivateCircuit.Recover(cache); }
+                finally
+                {
+                    if (grid.HasCustomCars) PrivateCars.Recover(cache);
+                    if (grid.Layout!=null) PrivateCircuit.Recover(cache);
+                }
             }
             finally { guard.ReleaseMutex(); }
         }
     }
 
     internal static (string Root, int Model) PrepareGame(string stockRoot, string cache, string layoutRoot,
-        Grid grid, Action<string> status, CancellationToken cancel)
+        Grid grid, Action<string> status, CancellationToken cancel, bool vr = false)
     {
         if (!Grid.ValidLaps(grid.Laps) || !Grid.ValidSelection(grid.Track,grid.Layout) || (grid.Layout!=null && grid.Agreement!=LayoutAgreement.Matching))
             throw new IOException("Both PCs must agree on the selected circuit before preparation.");
         string root = PrivateGame.Prepare(stockRoot,cache,status,cancel);
-        if (grid.Layout==null) return (root,grid.Track);
-        status("Preparing the selected circuit in the private game folder…");
-        return (root,PrivateCircuit.Activate(cache,layoutRoot,grid.Layout,cancel).Model);
+        int model = grid.Track;
+        if (grid.Layout!=null)
+        {
+            status("Preparing the selected layout in the private game folder…");
+            model = PrivateCircuit.Activate(cache,layoutRoot,grid.Layout,cancel,vr).Model;
+        }
+        if (grid.HasCustomCars)
+        {
+            status("Preparing the selected cars in the private game folder…");
+            try { PrivateCars.Activate(cache,layoutRoot,stockRoot,grid,vr,cancel); }
+            catch
+            {
+                PrivateCars.Recover(cache);
+                if (grid.Layout!=null) PrivateCircuit.Recover(cache);
+                throw;
+            }
+        }
+        return (root,model);
     }
 
-    internal static void ConfigureGrid(ProcessStartInfo start, Grid grid, bool host, int model, string gameRoot, string run)
+    internal static string ConfigureGrid(ProcessStartInfo start, Grid grid, bool host, int model, string gameRoot, string run)
     {
         var guest = grid.Guest ?? throw new IOException("The Direct starting grid needs two players.");
         if (grid.Layout == null && model != grid.Track)
             throw new IOException("The prepared track does not match the lobby selection.");
-        int race = 1, vehicleClass = 1;
-        if (!RallycrossCatalog.Supports(grid))
+        if (!grid.CanStart || !Grid.ValidLaps(grid.Laps))
+            throw new IOException("Both players need compatible cars and a matching race layout.");
+        string schema = CircuitCatalog.WriteSchema(run);
+        try
         {
-            if (grid.Layout?.ExternalCircuit != null || grid.Track == DirectStockCatalog.PrototypeId ||
-                grid.Host.CustomCar != null || guest.CustomCar != null)
-                throw new IOException("The selected custom content has no Direct race setup.");
-            string schema = CircuitCatalog.WriteSchema(run);
-            try
+            using var database = new DatabaseFile(Path.Combine(gameRoot, "database", "database.bin"), schema);
+            var route = CircuitCatalog.ReadTrack(database, model);
+            string? discipline = null;
+            if (grid.Layout is { } pack)
             {
-                using var database = new DatabaseFile(Path.Combine(gameRoot, "database", "database.bin"), schema);
-                string? discipline = grid.Layout == null ? null : grid.IsCircuit ? "rallycross" : "raid";
-                (race, vehicleClass) = CircuitCatalog.RaceEvent(database, model, grid.Host.Car, guest.Car, discipline);
+                var layout = DirectLayout.Pack(pack.Id).GetLayout(pack.Id);
+                if (CircuitCatalog.ReadLayout(database, layout) != route)
+                    throw new IOException("The prepared route differs from the selected layout.");
+                discipline = CircuitCatalog.Discipline(layout, pack.ExternalCircuit.HasValue);
             }
-            finally { File.Delete(schema); }
+            int hostCar = CircuitCatalog.VehicleId(database, grid.Host);
+            int guestCar = CircuitCatalog.VehicleId(database, guest);
+            var (race, vehicleClass) = CircuitCatalog.RaceEvent(database, model, hostCar, guestCar, discipline,
+                alternateRallycross: grid.Layout is { ExternalCircuit: null } && grid.IsCircuit);
+            WriteRaceRequest(start, grid.RequiredLaps, race, vehicleClass, route, host ? hostCar : guestCar, host ? guestCar : hostCar);
+            return FormattableString.Invariant($"{race}/{vehicleClass}/{route.Model}/{route.Track}/{route.Location}/{grid.RequiredLaps}/{hostCar}/{guestCar}");
         }
-        start.Environment["DIRT2VR_ENGINE_VEHICLE_ID"] = (host ? grid.Host.Car : guest.Car).ToString(System.Globalization.CultureInfo.InvariantCulture);
-        start.Environment["DIRT2VR_ENGINE_LAPS"] = grid.RequiredLaps.ToString(System.Globalization.CultureInfo.InvariantCulture);
-        start.Environment["DIRT2VR_ENGINE_RX_REQUEST"] = JsonSerializer.Serialize(new { native_race = race, native_class = vehicleClass, track_model = model });
+        finally { File.Delete(schema); }
+    }
+
+    internal static void WriteRaceRequest(ProcessStartInfo start, int laps, int race, int vehicleClass, CircuitCatalog route, int local, int peer)
+    {
+        if (!Grid.ValidLaps(laps) || new[] { route.Model, route.Track, route.Location, local, peer }.Any(id => id is <= 0 or > short.MaxValue))
+            throw new IOException("The selected cars or layout are outside the game's supported range.");
+        start.Environment["DIRT2VR_ENGINE_VEHICLE_ID"] = local.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        start.Environment["DIRT2VR_ENGINE_LAPS"] = laps.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        start.Environment["DIRT2VR_ENGINE_RX_REQUEST"] = JsonSerializer.Serialize(new {
+            native_race = race, native_class = vehicleClass, track_model = route.Model, track_id = route.Track,
+            location_id = route.Location, local_car = local, peer_car = peer
+        });
     }
 
     internal int? WaitForReturn(Process game,string run,Action<string> status,LapTelemetry? telemetry)

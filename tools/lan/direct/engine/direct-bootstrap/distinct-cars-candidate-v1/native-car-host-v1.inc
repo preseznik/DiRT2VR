@@ -29,7 +29,7 @@ void NativeCarTick(void* self) {
  const U32 event=native_components::Find(Read,tree,At(0x14906B0));
  const U32 provider=Read(event+0x5C),key=Read(At(0x147DE90));
  if(Read(event)!=At(0x13366EC) || Read(event+0x58)!=Read(data+0x64) || provider!=Read(data+0x68) || provider!=network+0x1010 ||
-    Read(event+0x74)!=(key^1) || Read(event+0x1B4)!=key || ((Read(event+0x60)^(Read(At(0x147E2C0))&1))&0xff)!=1) {Log("CAR REJECT replicated event\r\n");return;}
+    Read(event+0x74)!=(key^static_cast<U32>(RxRequest().vehicleClass)) || Read(event+0x1B4)!=key || ((Read(event+0x60)^(Read(At(0x147E2C0))&1))&0xff)!=1) {Log("CAR REJECT replicated event\r\n");return;}
  const U32 context=Read(Read(owner+0x2250)+8),dbIndex=Read(At(0x147F3D4)),ownerIndex=Read(At(0x147F3D8)),availabilityIndex=Read(At(0x147F404));
  if(context!=loadContext || dbIndex>=512 || ownerIndex>=512 || availabilityIndex>=512 || Read(context+ownerIndex*4)!=owner || Read(context+dbIndex*4)!=Read(owner+0x2E84)) {Log("CAR REJECT service context\r\n");return;}
  const U32 availability=Read(context+availabilityIndex*4),selections=Read(owner+0x2288);
@@ -42,19 +42,13 @@ void NativeCarTick(void* self) {
  const U32 mapping=reinterpret_cast<U32(__thiscall*)(void*,U32)>(At(0x533130))(reinterpret_cast<void*>(provider),1);
  if(Read(mapping)!=At(0x1333BA8) || Read(mapping+4)!=owner) {Log("CAR REJECT native mapping\r\n");return;}
  using Map=int(__thiscall*)(void*,int);
- const int a=reinterpret_cast<Map>(At(0x82EB70))(reinterpret_cast<void*>(mapping),1),b=reinterpret_cast<Map>(At(0x82ECF0))(reinterpret_cast<void*>(mapping),1);
+ const auto classes=rx_choice_v1::Classes[RxRequest().vehicleClass];
+ const int a=reinterpret_cast<Map>(At(0x82EB70))(reinterpret_cast<void*>(mapping),RxRequest().vehicleClass),b=reinterpret_cast<Map>(At(0x82ECF0))(reinterpret_cast<void*>(mapping),RxRequest().vehicleClass);
  const int grade=static_cast<int>(Read(event+0x78)^key),threshold=(grade==-1 || grade==0)?0:(grade==1?1:2);
  sprintf_s(line,"CAR native-class first=%d second=%d event_grade=%d grade_threshold=%d\r\n",a,b,grade,threshold);Log(line);
- if(a!=17 || b!=17 || grade!=0) {Log("CAR REJECT fixed RX class/grade mapping\r\n");return;}
+ if(!((a==classes.first && b==classes.second) || (a==classes.second && b==classes.first)) || grade!=0) {Log("CAR REJECT event class/grade mapping\r\n");return;}
  using Init=void(__thiscall*)(void*);
  const auto init=reinterpret_cast<Init>(At(0xAECFB0));init(&nativeClass.view);
- if(!reinterpret_cast<bool(__thiscall*)(void*,void*,int)>(At(0x50DE00))(&nativeClass,reinterpret_cast<void*>(context),a)) {Log("CAR REJECT DB class\r\n");return;}
- int candidates[12]{};
- const int count=reinterpret_cast<int(__thiscall*)(void*,int*,int,int,int,int)>(At(0x517720))(&nativeClass,candidates,12,1,threshold,0);
- if(count<0 || count>12) {Log("CAR REJECT native candidate count\r\n");return;}
- bool found=false;
- for(int i=0;i<count;++i) {sprintf_s(line,"CAR native-filter candidate=%d vehicle_id=%d\r\n",i,candidates[i]);Log(line);if(candidates[i]==vehicleRequest.vehicle)found=true;}
- if(!found) {Log("CAR REJECT requested vehicle absent from native candidate set\r\n");return;}
  init(&nativeVehicle.vehicle);init(&nativeVehicle.model);init(&nativeVehicle.vehicleClass);
  const bool vehicle=reinterpret_cast<native_event_contract::ResolveVehicleFn>(At(0x50DF80))(&nativeVehicle,reinterpret_cast<void*>(context),vehicleRequest.vehicle);
  const bool available=vehicle && reinterpret_cast<bool(__thiscall*)(void*)>(At(0x50E3D0))(&nativeVehicle);
@@ -63,7 +57,12 @@ void NativeCarTick(void* self) {
  init(&nativeLivery.livery);
  if(!reinterpret_cast<native_event_contract::ResolveLiveryFn>(At(0x50E850))(&nativeLivery,reinterpret_cast<void*>(context),livery)) {Log("CAR REJECT native livery DB row\r\n");return;}
  distinct_cars::Choice actual{};ChoiceRule afterRule{};
- if(!InspectChoice(rule,livery,actual) || !distinct_cars::LocalEligible(vehicleRequest.vehicle,candidates,count,vehicle,available,livery,actual) ||
+ if(!InspectChoice(rule,livery,actual)){Log("CAR REJECT selected class/livery\r\n");return;}
+ if(!reinterpret_cast<bool(__thiscall*)(void*,void*,int)>(At(0x50DE00))(&nativeClass,reinterpret_cast<void*>(context),actual.carClass)) {Log("CAR REJECT DB class\r\n");return;}
+ int candidates[32]{};
+ const int count=reinterpret_cast<int(__thiscall*)(void*,int*,int,int,int,int)>(At(0x517720))(&nativeClass,candidates,static_cast<int>(std::size(candidates)),1,threshold,0);
+ if(count<0 || count>static_cast<int>(std::size(candidates))) {Log("CAR REJECT native candidate count\r\n");return;}
+ if(!distinct_cars::LocalEligible(vehicleRequest.vehicle,candidates,count,vehicle,available,livery,actual,RxRequest().vehicleClass) ||
     nativeVehicle.vehicle.opaque[0]!=actual.rows[1].row || nativeVehicle.vehicle.opaque[1]!=actual.rows[1].table ||
     !CaptureChoiceRule(owner,event,afterRule) || !(afterRule==rule)){Log("CAR REJECT livery schema or changed rule/profile\r\n");return;}
  localChoice={rule,actual,true};

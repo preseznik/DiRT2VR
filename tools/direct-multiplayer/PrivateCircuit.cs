@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using System.Text.Json;
 using DiRT2VR.CustomTracks;
+using EgoEngineLibrary.Data;
 
 namespace DiRT2VR.Multiplayer;
 
@@ -16,12 +17,14 @@ internal static class PrivateCircuit
     }
     const string Journal = "circuit-route.json";
     const string Retiring = "circuit-route-retiring";
+    const string ExternalFolder = "external-track-session";
 
-    internal static CircuitCatalog Activate(string cache, string install, DirectLayout selection, CancellationToken cancel)
+    internal static CircuitCatalog Activate(string cache, string install, DirectLayout selection, CancellationToken cancel, bool vr = false)
     {
         SafeFiles.RequireClosed();
         Recover(cache);
         string game = SafeFiles.Inside(cache, "game");
+        if (selection.ExternalCircuit.HasValue) return ActivateExternal(cache, game, install, selection, vr, cancel);
         string relative = Route(selection.Id);
         string route = SafeFiles.Inside(game, relative);
         if (Path.Exists(route) || Path.Exists(SafeFiles.Inside(cache, Retiring)))
@@ -64,8 +67,49 @@ internal static class PrivateCircuit
         finally { SafeFiles.DeleteWorkTree(cache, build); }
     }
 
+    static void ValidateExternal(ExternalSession.Journal journal) => ExternalSession.Validate(journal, 4096,
+        path => TrackPacks.SessionTargets.Contains(path), ExternalPacks.AssetPath);
+
+    static CircuitCatalog ActivateExternal(string cache, string game, string install, DirectLayout selection, bool vr, CancellationToken cancel)
+    {
+        var definition = DirectLayout.Pack(selection.Id);
+        var layout = definition.GetLayout(selection.Id);
+        if (definition.External is not { } pack || !pack.BelongsToInstallation(install) ||
+            selection.Digest != pack.ManifestHash || selection.ExternalCircuit != layout.Circuit)
+            throw new IOException("The selected external track changed. Refresh the lobby and choose the layout again.");
+        if (vr && !definition.Modes.Contains("vr-race")) throw new IOException("This external track does not support VR races.");
+        var writes = ExternalSession.TrackWrites(game, pack, selection.Id, true, "grid", cancel).ToList();
+        string folder = SafeFiles.Inside(cache, ExternalFolder);
+        string temporary = "external-track-" + Guid.NewGuid().ToString("N");
+        string work = SafeFiles.Inside(cache, temporary);
+        try
+        {
+            Directory.CreateDirectory(work);
+            string schema = CircuitCatalog.WriteSchema(work);
+            int index = writes.FindIndex(write => write.Entry.Path == "database/database.bin");
+            if (index < 0) throw new IOException("The external layout has no race database.");
+            var source = writes[index];
+            string privateDatabase = SafeFiles.Inside(work, "database.bin");
+            File.Copy(source.Source, privateDatabase);
+            File.SetAttributes(privateDatabase, FileAttributes.Normal);
+            if (SafeFiles.Hash(privateDatabase, cancel) != source.Entry.Applied)
+                throw new IOException("The external track database changed during preparation.");
+            var selected = CircuitCatalog.Register(privateDatabase, schema, layout, external: true);
+            writes[index] = (source.Entry with { Applied = SafeFiles.Hash(privateDatabase, cancel) }, privateDatabase);
+            ExternalSession.Apply(game, folder, writes, ValidateExternal, null, cancel);
+            return selected;
+        }
+        catch
+        {
+            ExternalSession.Recover(game, folder, ValidateExternal);
+            throw;
+        }
+        finally { SafeFiles.DeleteWorkTree(cache, temporary); }
+    }
+
     internal static void Recover(string cache)
     {
+        ExternalSession.Recover(SafeFiles.Inside(cache, "game"), SafeFiles.Inside(cache, ExternalFolder), ValidateExternal);
         SessionFiles.RecoverPrivateCircuit(cache);
         string journal = SafeFiles.Inside(cache, Journal);
         if (!File.Exists(journal)) return;

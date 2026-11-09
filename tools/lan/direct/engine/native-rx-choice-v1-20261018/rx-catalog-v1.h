@@ -21,9 +21,9 @@ template<class Ops> bool Find(Ops& ops,U32 database,const char* tableName,const 
   distinct_cars::Stable(ops,out) && ops.Table(database,tableName)==table;
 }
 template<class Ops> bool Stable(Ops& ops,const rx_choice_v1::Request& request,const Binding& b){
- const auto& t=request.selected;const char* fields[]{"id","id","id","net_race_type_id","net_race_type","net_vehicle_class_id"};
- const int values[]{t.model,t.track,t.location,2,2,17};
  if(!rx_choice_v1::Valid(request) || !b.database)return false;
+ const auto& t=request.selected;const char* fields[]{"id","id","id","net_race_type_id","net_race_type","net_vehicle_class_id"};
+ const int values[]{t.model,t.track,t.location,request.race+1,request.race+1,rx_choice_v1::Classes[request.vehicleClass].event};
  for(unsigned i=0;i<6;++i){int value{};
   if(b.rows[i].database!=b.database || ops.Table(b.database,Names[i])!=b.rows[i].table ||
      !distinct_cars::Integer(ops,b.rows[i],fields[i],value) || value!=values[i])return false;
@@ -31,7 +31,7 @@ template<class Ops> bool Stable(Ops& ops,const rx_choice_v1::Request& request,co
  int value{};distinct_cars::Row track{},location{};
  if(!distinct_cars::Linked(ops,b.rows[0],"track_id",b.rows[1].table,track) || !(track==b.rows[1]) ||
     !distinct_cars::Linked(ops,b.rows[1],"location_id",b.rows[2].table,location) || !(location==b.rows[2]) ||
-    !distinct_cars::Integer(ops,b.rows[3],"net_vehicle_class_id",value) || value!=17 ||
+    !distinct_cars::Integer(ops,b.rows[3],"net_vehicle_class_id",value) || value!=rx_choice_v1::Classes[request.vehicleClass].event ||
     !distinct_cars::Integer(ops,b.rows[4],"track_model_id",value) || value!=t.model ||
     !distinct_cars::Integer(ops,b.rows[5],"track_model_id",value) || value!=t.model)return false;
  for(const auto& row:b.rows)if(!distinct_cars::Stable(ops,row))return false;
@@ -43,9 +43,9 @@ template<class Ops> bool Capture(Ops& ops,const rx_choice_v1::Request& request,U
     !Find(ops,database,Names[0],"id",t.model,nullptr,0,b.rows[0]) ||
     !Find(ops,database,Names[1],"id",t.track,nullptr,0,b.rows[1]) ||
     !Find(ops,database,Names[2],"id",t.location,nullptr,0,b.rows[2]) ||
-    !Find(ops,database,Names[3],"net_race_type_id",2,"net_vehicle_class_id",17,b.rows[3]) ||
-    !Find(ops,database,Names[4],"net_race_type",2,"track_model_id",t.model,b.rows[4]) ||
-    !Find(ops,database,Names[5],"net_vehicle_class_id",17,"track_model_id",t.model,b.rows[5]) ||
+    !Find(ops,database,Names[3],"net_race_type_id",request.race+1,"net_vehicle_class_id",rx_choice_v1::Classes[request.vehicleClass].event,b.rows[3]) ||
+    !Find(ops,database,Names[4],"net_race_type",request.race+1,"track_model_id",t.model,b.rows[4]) ||
+    !Find(ops,database,Names[5],"net_vehicle_class_id",rx_choice_v1::Classes[request.vehicleClass].event,"track_model_id",t.model,b.rows[5]) ||
     !Stable(ops,request,b))return false;
  out=b;return true;
 }

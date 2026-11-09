@@ -52,9 +52,9 @@ bool NativeLoadedConfiguration(bool afterAck=false) {
  const U32 key=Read(At(0x147DE90)),shortKey=Read(At(0x147FC68)),round=l.event+0xA4;
  if(!(Read(At(0x147DE98))&1) || !(Read(At(0x147FC70))&1) || Read(l.event)!=At(0x13366EC) ||
     Read(l.event+0x58)!=Read(l.data+0x64) || Read(l.event+0x5C)!=l.network+0x1010 ||
-    Read(l.event+0x1B4)!=key || (Read(l.event+0x64)^key)!=1 || (Read(l.event+0x68)^key)!=1 ||
-    (Read(l.event+0x6C)^key)!=0 || (Read(l.event+0x74)^key)!=1 ||
-    Read(round)!=At(0x1333840) || Read(round+4)!=l.event || (Read(round+8)^key)!=1 ||
+    Read(l.event+0x1B4)!=key || (Read(l.event+0x64)^key)!=static_cast<U32>(RxRequest().race) || (Read(l.event+0x68)^key)!=1 ||
+    (Read(l.event+0x6C)^key)!=0 || (Read(l.event+0x74)^key)!=static_cast<U32>(RxRequest().vehicleClass) ||
+    Read(round)!=At(0x1333840) || Read(round+4)!=l.event || (Read(round+8)^key)!=static_cast<U32>(RxRequest().race) ||
     config_abi::DecodeTrack(static_cast<unsigned short>(Read(round+0xC)),static_cast<unsigned short>(shortKey))!=RxRequest().selected.model ||
     (Read(round+0x10)^key)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^key)!=static_cast<U32>(RxLaps()) || (Read(round+0x1C)^key)!=0)return false;
  ConfigPlayer players[2]{};if(!NativeLoadedRosterPlayers(players,afterAck))return false;

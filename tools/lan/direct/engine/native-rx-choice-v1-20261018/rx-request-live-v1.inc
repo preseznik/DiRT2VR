@@ -21,9 +21,9 @@ bool RxEventMatches(U32 event){
     Read(event)!=At(0x13366EC))return false;
  const U32 key=Read(At(0x147DE90)),round=event+0xA4;
  const auto value=[&](U32 address){return static_cast<int>(Read(address)^key);};
- return value(event+0x64)==rx_choice_v1::Race && value(event+0x68)==rx_choice_v1::Rounds &&
-  value(event+0x6C)==rx_choice_v1::Teams && value(event+0x74)==rx_choice_v1::Class && value(event+0x78)==rx_choice_v1::Grade &&
-  value(event+0x1B4)==0 && Read(round)==At(0x1333840) && Read(round+4)==event && value(round+8)==rx_choice_v1::Race &&
+ return value(event+0x64)==RxRequest().race && value(event+0x68)==rx_choice_v1::Rounds &&
+  value(event+0x6C)==rx_choice_v1::Teams && value(event+0x74)==RxRequest().vehicleClass && value(event+0x78)==rx_choice_v1::Grade &&
+  value(event+0x1B4)==0 && Read(round)==At(0x1333840) && Read(round+4)==event && value(round+8)==RxRequest().race &&
   static_cast<short>((Read(round+0xC)^Read(At(0x147FC68)))&0xffff)==RxRequest().selected.model &&
   value(round+0x10)==RxRequest().selected.location && value(round+0x18)==RxLaps() && value(round+0x1C)==rx_choice_v1::Collision;
 }

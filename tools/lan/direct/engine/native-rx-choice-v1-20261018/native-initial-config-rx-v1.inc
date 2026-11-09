@@ -27,6 +27,8 @@ bool ConfigPlayers(U32 data,U32 roster,U32 database,ConfigPlayer (&out)[2]) {
   auto& player=out[i];player.root=Read(array+4*i);
   player.identity=native_components::Find(Read,player.root,At(0x149077C));player.vehicle=native_components::Find(Read,player.root,At(0x1490784));
   if(Read(player.identity)!=At(0x1334B8C) || Read(At(0x1334B8C)+0x18)!=At(0x87CA10) || !ReadStoredLivery(player.vehicle,player.livery) || player.livery<=0 || database!=localChoice.rule.database || !InspectChoice(localChoice.rule,player.livery,player.choice))return false;
+  const int expectedCar=player.root==committedPlayer?RxRequest().localCar:RxRequest().peerCar;
+  if(expectedCar && player.choice.vehicle!=expectedCar){Log("CONFIG REJECT replicated car differs from lobby selection\r\n");return false;}
   player.nativeId=Read(player.identity+4)&0xff;
   unsigned rosterMatches{},recordMatches{};
   for(U32 j=0;j<2;++j) {
@@ -51,7 +53,7 @@ bool ConfigPlayers(U32 data,U32 roster,U32 database,ConfigPlayer (&out)[2]) {
  }
  if(Read(data+0x1274)!=facade || Read(facade+0x6C)!=mapping || Read(mapping+0x58)!=data || Read(mapping+0x60)!=records || Read(mapping+0x68)!=recordCount)return false;
  const U32 rosterIds[]{Read(ids),Read(ids+4)};
- return localCount==1 && distinct_cars::Participants(out,rosterIds,committedPlayer,committedVehicleOwner,localChoice.actual) && Read(data+0x1060)==array && Read(data+0x1068)==count && Read(roster+0x5C)==ids && Read(roster+0x64)==2;
+ return localCount==1 && distinct_cars::Participants(out,rosterIds,committedPlayer,committedVehicleOwner,localChoice.actual,RxRequest().vehicleClass) && Read(data+0x1060)==array && Read(data+0x1068)==count && Read(roster+0x5C)==ids && Read(roster+0x64)==2;
 }
 // Preserve the existing loader/finalizer signature. It must be called inside
 // a validated native allocator scope; InspectChoice fails closed otherwise.
@@ -98,8 +100,8 @@ void NativeInitialConfigTick(void* self,U32 container,U32 holder,U32 session,U32
  const U32 event=native_components::Find(Read,tree,At(0x14906B0)),roster=native_components::Find(Read,tree,At(0x1490868));
  const U32 integerKey=Read(At(0x147DE90)),shortKey=Read(At(0x147FC68)),round=event+0xA4;
  if(Read(event)!=At(0x13366EC) || Read(event+0x58)!=Read(data+0x64) || Read(event+0x5C)!=network+0x1010 || Read(round)!=At(0x1333840) || Read(round+4)!=event ||
-    !(Read(At(0x147DE98))&1) || !(Read(At(0x147FC70))&1) || Read(event+0x1B4)!=integerKey || (Read(event+0x64)^integerKey)!=1 ||
-    (Read(event+0x68)^integerKey)!=1 || (Read(event+0x74)^integerKey)!=1 || (Read(event+0x78)^integerKey)!=0 || (Read(round+8)^integerKey)!=1 ||
+    !(Read(At(0x147DE98))&1) || !(Read(At(0x147FC70))&1) || Read(event+0x1B4)!=integerKey || (Read(event+0x64)^integerKey)!=static_cast<U32>(RxRequest().race) ||
+    (Read(event+0x68)^integerKey)!=1 || (Read(event+0x74)^integerKey)!=static_cast<U32>(RxRequest().vehicleClass) || (Read(event+0x78)^integerKey)!=0 || (Read(round+8)^integerKey)!=static_cast<U32>(RxRequest().race) ||
     config_abi::DecodeTrack(static_cast<unsigned short>(Read(round+0xC)),static_cast<unsigned short>(shortKey))!=RxRequest().selected.model ||
     (Read(round+0x10)^integerKey)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^integerKey)!=static_cast<U32>(RxLaps())) {Log("CONFIG REJECT fixed event/round\r\n");return;}
  const U32 manager=Read(owner+0x2E88),service=Read(manager+0x34),databaseService=Read(owner+0x2E84),database=Read(databaseService+0xC);
@@ -156,8 +158,8 @@ void NativeInitialConfigTick(void* self,U32 container,U32 holder,U32 session,U32
     Read(data+0x1024)!=tree || Read(data+0x1028)!=committedPlayer || Read(data+0x64)!=Read(network+0x1004) || Read(data+0x68)!=network+0x1010 ||
     Read(owner+0x2E88)!=manager || Read(owner+0x2E84)!=databaseService || (Read(session+0x28)&0xff)!=localId ||
     native_components::Find(Read,tree,At(0x14906B0))!=event || native_components::Find(Read,tree,At(0x1490868))!=roster ||
-    Read(event+0x1B4)!=integerKey || Read(event+0x5C)!=network+0x1010 || (Read(event+0x64)^integerKey)!=1 || (Read(event+0x68)^integerKey)!=1 ||
-    (Read(event+0x74)^integerKey)!=1 || (Read(event+0x78)^integerKey)!=0 || (Read(round+8)^integerKey)!=1 || (Read(round+0x10)^integerKey)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^integerKey)!=static_cast<U32>(RxLaps()) ||
+    Read(event+0x1B4)!=integerKey || Read(event+0x5C)!=network+0x1010 || (Read(event+0x64)^integerKey)!=static_cast<U32>(RxRequest().race) || (Read(event+0x68)^integerKey)!=1 ||
+    (Read(event+0x74)^integerKey)!=static_cast<U32>(RxRequest().vehicleClass) || (Read(event+0x78)^integerKey)!=0 || (Read(round+8)^integerKey)!=static_cast<U32>(RxRequest().race) || (Read(round+0x10)^integerKey)!=static_cast<U32>(RxRequest().selected.location) || (Read(round+0x18)^integerKey)!=static_cast<U32>(RxLaps()) ||
     config_abi::DecodeTrack(static_cast<unsigned short>(Read(round+0xC)),static_cast<unsigned short>(shortKey))!=RxRequest().selected.model) {Log("CONFIG REJECT current session/event graph changed\r\n");return;}
  ConfigPlayer after[2]{};
  if(!RevalidateLocalChoice() || !ConfigPlayers(data,roster,database,after) || memcmp(players,after,sizeof(players)) || Read(At(0x147DE90))!=integerKey || Read(At(0x147FC68))!=shortKey ||

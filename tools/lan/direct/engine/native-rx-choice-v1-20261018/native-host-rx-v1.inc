@@ -37,8 +37,9 @@ void NativeHostTick(void* self) {
   n.location=integer(round+0x10);n.laps=integer(round+0x18);n.collision=integer(round+0x1C);
   n.trackModel=static_cast<short>((Read(round+0xC)^Read(At(0x147FC68)))&0xffff);
   dirt2_engine_bootstrap::Manifest manifest{};manifest.trackModel=RxRequest().selected.model;manifest.location=RxRequest().selected.location;manifest.laps=RxLaps();
+  manifest.nativeRaceEnum=RxRequest().race;manifest.nativeClassEnum=RxRequest().vehicleClass;
   if(!RxEventMatches(event)){hostObservationStopped=true;Log("HOST REJECT frozen RX event\r\n");return;}
-  const auto prepared=dirt2_engine_bootstrap::PrepareLanHost(manifest,n,hostDescriptors);
+  const auto prepared=dirt2_engine_bootstrap::PrepareLanHost(manifest,n,hostDescriptors,&RxRequest());
   // The offline helper deliberately remains non-executable. This isolated
   // adapter adds the live ownership/career/thread/event/allocator guards.
   if(prepared!=dirt2_engine_bootstrap::PrepareResult::PreparedExecutionBlocked) {
@@ -47,7 +48,7 @@ void NativeHostTick(void* self) {
   const U32 allocator=Read(network+0x100C);NativeAllocationScope scope(allocator);
   if(!scope.Valid(allocator) || !RxCatalogBound(owner,false)) {hostObservationStopped=true;Log("HOST REJECT allocator\r\n");return;}
   hostContainer=container;hostHolder=holder;hostBegan=GetTickCount64();
-  char line[300]{};sprintf_s(line,"HOST CALL native-create container=%08x holder=%08x holder_vt=%08x thread=%lu race=1 class=1 track=%d menu_calls=0\r\n",container,holder,Read(holder),GetCurrentThreadId(),RxRequest().selected.model);Log(line);
+  char line[300]{};sprintf_s(line,"HOST CALL native-create container=%08x holder=%08x holder_vt=%08x thread=%lu race=%d class=%d track=%d menu_calls=0\r\n",container,holder,Read(holder),GetCurrentThreadId(),manifest.nativeRaceEnum,manifest.nativeClassEnum,manifest.trackModel);Log(line);
   const auto result=reinterpret_cast<dirt2_engine_bootstrap::CreateAbi>(At(0x864A90))(reinterpret_cast<void*>(container),&hostDescriptors.session,&hostDescriptors.event,&hostDescriptors.round,hostName,hostSecondary);
   hostAccepted=result!=0;
   sprintf_s(line,"HOST initiation al=%u state=%d session=%08x transport=%08x completed=0\r\n",result,static_cast<int>(Read(holder+8)),Read(holder+0x18),Read(holder+0x24));Log(line);

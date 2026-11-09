@@ -11,6 +11,7 @@ public static class DirectStockCatalog
     public static IReadOnlyDictionary<int, RallycrossChoice> Tracks { get; }
     public static IReadOnlyDictionary<int, RallycrossChoice> Cars { get; }
     internal static IReadOnlySet<string> StockCarCodes { get; }
+    internal static IReadOnlyDictionary<string, string> CarDisciplines { get; }
 
     static DirectStockCatalog()
     {
@@ -29,14 +30,17 @@ public static class DirectStockCatalog
                 continue;
             }
             int id = int.Parse(key, NumberStyles.None, CultureInfo.InvariantCulture);
-            tracks.Add(id, new(id, label, Circuit: circuit));
+            tracks.Add(id, new(id, label, Circuit: circuit, Discipline: entry.GetProperty("Event").GetString()));
         }
         Prototype = prototype ?? throw new InvalidDataException("Missing prototype layout in the Race/Practice catalog.");
         Tracks = tracks;
         var cars = catalog.RootElement.GetProperty("Cars");
-        StockCarCodes = cars.EnumerateArray().Select(entry => entry.GetProperty("Code").GetString()!).ToHashSet(StringComparer.Ordinal);
+        CarDisciplines = cars.EnumerateArray().ToDictionary(entry => entry.GetProperty("Code").GetString()!,
+            entry => entry.GetProperty("Event").GetString()!, StringComparer.Ordinal);
+        StockCarCodes = CarDisciplines.Keys.ToHashSet(StringComparer.Ordinal);
         Cars = cars.EnumerateArray()
-            .Select(entry => new RallycrossChoice(entry.GetProperty("VehicleId").GetInt32(), entry.GetProperty("Label").GetString()!))
+            .Select(entry => new RallycrossChoice(entry.GetProperty("VehicleId").GetInt32(), entry.GetProperty("Label").GetString()!,
+                Discipline: entry.GetProperty("Event").GetString()))
             .ToDictionary(car => car.Id);
     }
 

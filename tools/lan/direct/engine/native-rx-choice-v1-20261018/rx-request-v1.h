@@ -17,15 +17,29 @@ inline constexpr bool Supported(int model,int location) {
 struct Request {
  Track selected=Baseline;
  bool defaulted=true;
+ int race=Race, vehicleClass=Class, localCar{}, peerCar{};
  bool operator==(const Request&) const=default;
 };
+// Game event enums and their database class rows. Mixed events admit only
+// their two physical classes. Both role libraries check the live database too.
+struct ClassRows {int event, first, second;};
+inline constexpr ClassRows Classes[]{{16,16,16},{17,17,17},{18,18,18},{21,21,21},{19,19,19},
+                                    {20,20,20},{22,22,22},{23,19,20},{24,21,22}};
+inline constexpr bool EventClass(int race,int cls) {
+ return race>=0 && race<=4 && cls>=0 && cls<=8 && (race<3 ? race==cls : cls>=3);
+}
+inline constexpr bool Id(int value){return value>0 && value<=32767;}
 inline constexpr bool Valid(const Request& request){
+ if(!EventClass(request.race,request.vehicleClass))return false;
+ if(request.localCar || request.peerCar)
+  return Id(request.localCar) && Id(request.peerCar) && Id(request.selected.model) &&
+         Id(request.selected.track) && Id(request.selected.location);
+ if(request.race!=Race || request.vehicleClass!=Class)return false;
  for(const auto& track:Tracks)if(track.model==request.selected.model)
   return track.track==request.selected.track && track.location==request.selected.location;
  return false;
 }
-// Deliberately accepts a small strict JSON subset: the three known integer keys,
-// in any order. No escaped keys, coercion, signed/float values or unknown fields.
+// Legacy requests contain three fields. A prepared grid supplies all seven.
 class Parser {
  const wchar_t* text_;std::size_t size_,at_{};
  void Space(){while(at_<size_ && (text_[at_]==L' ' || text_[at_]==L'\t' || text_[at_]==L'\r' || text_[at_]==L'\n'))++at_;}
@@ -36,8 +50,8 @@ class Parser {
   while(at_<size_ && text_[at_]!=L'"'){if(text_[at_]<L'a' || text_[at_]>L'z'){if(text_[at_]!=L'_')return -1;}++at_;}
   if(at_==size_)return -1;
   const auto count=at_++-start;
-  constexpr const wchar_t* names[]{L"native_race",L"native_class",L"track_model"};
-  for(int i=0;i<3;++i){std::size_t n{};while(names[i][n])++n;if(n!=count)continue;
+  constexpr const wchar_t* names[]{L"native_race",L"native_class",L"track_model",L"track_id",L"location_id",L"local_car",L"peer_car"};
+  for(int i=0;i<7;++i){std::size_t n{};while(names[i][n])++n;if(n!=count)continue;
    std::size_t j{};while(j<count && text_[start+j]==names[i][j])++j;if(j==count)return i;}
   return -1;
  }
@@ -55,13 +69,19 @@ public:
  Parser(const wchar_t* text,std::size_t size):text_(text),size_(size){}
  bool Parse(Request& out){
   if(!text_ || !size_ || size_>512 || !Take(L'{'))return false;
-  int values[3]{};unsigned seen{};
-  for(unsigned n=0;n<3;++n){const int key=Key();
+  int values[7]{};unsigned seen{};
+  do {const int key=Key();
    if(key<0 || (seen&(1u<<key)) || !Take(L':') || !Number(values[key]))return false;
-   seen|=1u<<key;if(n<2 && !Take(L','))return false;
-  }
+   seen|=1u<<key;
+  } while(Take(L','));
   if(!Take(L'}'))return false;Space();
-  if(at_!=size_ || seen!=7 || values[0]!=Race || values[1]!=Class)return false;
+  if(at_!=size_)return false;
+  if(seen==127){
+   Request request{{values[2],values[3],values[4]},false,values[0],values[1],values[5],values[6]};
+   if(!Id(request.localCar) || !Valid(request))return false;
+   out=request;return true;
+  }
+  if(seen!=7 || values[0]!=Race || values[1]!=Class)return false;
   for(const auto& track:Tracks)if(track.model==values[2]){out={track,false};return true;}
   return false;
  }

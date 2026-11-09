@@ -14,7 +14,8 @@ public sealed class DirectRoom : IDisposable
     LobbyConnection? connection;
     DirectRace? race;
     string? previousRunDirectory;
-    bool hostPrepared, guestPrepared, localDone, remoteDone, launching, resetting, disposed;
+    bool hostPrepared, localDone, remoteDone, launching, resetting, disposed;
+    string? guestPreparedGrid;
     bool onTrack, localReturn, remoteReturn;
     bool localResultReady, remoteResultReady;
     readonly string layoutRoot;
@@ -155,7 +156,7 @@ public sealed class DirectRoom : IDisposable
         Changed?.Invoke();
         try
         {
-            var layout=await Task.Run(()=>DirectLayout.Read(layoutRoot,id,check.Token),check.Token);
+            var layout=await Task.Run(()=>DirectLayout.Read(layoutRoot,id,check.Token,gameRoot),check.Token);
             check.Token.ThrowIfCancellationRequested();
             SelectionOnly();
             var updated=Grid.Select(true,car,0,layout,customCar);
@@ -185,7 +186,7 @@ public sealed class DirectRoom : IDisposable
         try
         {
             DirectLayout? localLayout;
-            try { localLayout=await Task.Run(()=>DirectLayout.Read(layoutRoot,expected.Id,check.Token),check.Token); }
+            try { localLayout=await Task.Run(()=>DirectLayout.Read(layoutRoot,expected.Id,check.Token,gameRoot),check.Token); }
             catch(Exception ex) when (ex is IOException or UnauthorizedAccessException) { localLayout=null; }
             if (check.IsCancellationRequested || Grid.Revision!=selection.Revision) return;
             if (localLayout==expected) verifiedGuestLayout=localLayout;
@@ -218,8 +219,8 @@ public sealed class DirectRoom : IDisposable
             try
             {
                 match = await Task.Run(() =>
-                    (cars.Host?.Matches(layoutRoot, check.Token) ?? true) &&
-                    (cars.Guest == cars.Host || (cars.Guest?.Matches(layoutRoot, check.Token) ?? true)), check.Token);
+                    (cars.Host?.Matches(layoutRoot, gameRoot, check.Token) ?? true) &&
+                    (cars.Guest == cars.Host || (cars.Guest?.Matches(layoutRoot, gameRoot, check.Token) ?? true)), check.Token);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException)
             { match = false; }
@@ -343,8 +344,8 @@ public sealed class DirectRoom : IDisposable
                 launching=false;
                 SetStatus("The other player cancelled this race start.");
                 break;
-            case "prepared" when IsHost && launching && race!=null && !guestPrepared:
-                guestPrepared=true; if (hostPrepared) race!.Launch(""); break;
+            case "prepared" when IsHost && launching && race!=null && guestPreparedGrid==null && LobbyConnection.ValidText(msg.Text,80):
+                guestPreparedGrid=msg.Text; StartPreparedHost(race); break;
             case "ticket" when !IsHost && launching && race!=null && DirectRace.ValidTicket(msg.Text):
                 race.Launch(msg.Text); break;
             case "return" when launching:
@@ -402,8 +403,9 @@ public sealed class DirectRoom : IDisposable
                 s=>Post(()=>{if (race==current && !localDone) SetStatus(s);return Task.CompletedTask;}),
                 ()=>Post(async ()=>{
                     SetStatus("Game files ready. Waiting for the other PC…");
-                    if (IsHost) { hostPrepared=true; if (guestPrepared) current.Launch(""); }
-                    else await Send(new("prepared"));
+                    if (race!=current || current.PreparedGrid==null) throw new IOException("The local race grid was not prepared.");
+                    if (IsHost) { hostPrepared=true; StartPreparedHost(current); }
+                    else await Send(new("prepared",current.PreparedGrid));
                 }),
                 ticket=>Post(()=>Send(new("ticket",ticket))),stop.Token,()=>Post(()=>{
                     if (race==current && !localDone)
@@ -442,6 +444,13 @@ public sealed class DirectRoom : IDisposable
             Changed?.Invoke();
         }
     }
+    void StartPreparedHost(DirectRace current)
+    {
+        if (!hostPrepared || guestPreparedGrid==null) return;
+        if (guestPreparedGrid!=current.PreparedGrid)
+            throw new IOException("The two PCs prepared different race settings. Check the cars and layout on both PCs.");
+        current.Launch("");
+    }
     async Task FinishWhenBothDone()
     {
         if (!IsHost || !localDone || !remoteDone || resetting) return;
@@ -454,7 +463,7 @@ public sealed class DirectRoom : IDisposable
     }
     void Reset()
     {
-        launching=resetting=hostPrepared=guestPrepared=localDone=remoteDone=false; race=null;
+        launching=resetting=hostPrepared=localDone=remoteDone=false; guestPreparedGrid=null; race=null;
         onTrack=localReturn=remoteReturn=localResultReady=remoteResultReady=false;
         _=CheckCars();
         SetStatus("Both players returned. Choose cars for the next race.");

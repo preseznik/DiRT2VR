@@ -2,16 +2,35 @@ using DiRT2VR.CustomTracks;
 
 namespace DiRT2VR.Multiplayer;
 
-public sealed record RallycrossChoice(int Id, string Name, string? LayoutId = null, bool Circuit = true, DirectCustomCar? CustomCar = null)
+public sealed record RallycrossChoice(int Id, string Name, string? LayoutId = null, bool Circuit = true, DirectCustomCar? CustomCar = null, string? Discipline = null)
 {
     public override string ToString() => Name;
 }
 
 public static class RallycrossCatalog
 {
-    internal static bool Supports(Grid grid) =>
-        (grid.Layout == null ? Tracks.Any(track => track.Id == grid.Track) : grid.Layout.ExternalCircuit == null && grid.IsCircuit) &&
-        Cars.Any(car => car.Id == grid.Host.Car) && (grid.Guest == null || Cars.Any(car => car.Id == grid.Guest.Car));
+    internal static bool Supports(Grid grid)
+    {
+        if (!Grid.ValidSelection(grid.Track, grid.Layout) || grid.Track == DirectStockCatalog.PrototypeId ||
+            !Grid.ValidCar(grid.Host.Car, grid.Host.CustomCar) ||
+            grid.Guest is { } guest && !Grid.ValidCar(guest.Car, guest.CustomCar)) return false;
+        static string? Group(Player? player) => player is null ? null : player.CustomCar is { } car
+            ? car.Discipline() : DirectStockCatalog.Cars[player.Car].Discipline;
+        string? left = Group(grid.Host), right = Group(grid.Guest);
+        if (left != null && right != null && left != right) return false;
+        string? cars = left ?? right;
+        if (cars == null) return true; // Imported car classes come from the prepared database.
+        string? race;
+        if (grid.Layout is { } pack)
+        {
+            if (!TrackPacks.IsLayout(pack.Id)) return pack.ExternalCircuit.HasValue;
+            var layout = DirectLayout.Pack(pack.Id).GetLayout(pack.Id);
+            race = CircuitCatalog.Discipline(layout, pack.ExternalCircuit.HasValue);
+            if (!pack.ExternalCircuit.HasValue && layout.Circuit && cars == "Rallycross") return true;
+        }
+        else race = DirectStockCatalog.Tracks[grid.Track].Discipline!.ToLowerInvariant();
+        return race is "landrush" or "raid" ? cars is "Landrush" or "Raid" : string.Equals(race, cars, StringComparison.OrdinalIgnoreCase);
+    }
 
     // Stock model IDs accepted by the Direct Rallycross event. Custom layouts use their pack digest.
     public static IReadOnlyList<RallycrossChoice> Tracks { get; } = Array.AsReadOnly<RallycrossChoice>([
@@ -49,8 +68,9 @@ public static class RallycrossCatalog
             foreach (var layout in pack.ReceiptLayouts(receipt))
                 if (pack.SupportsRace(receipt,layout.Id)) yield return Circuit(layout.Id);
         }
-        foreach (var pack in TrackPacks.All.Where(p => p.External != null))
-            foreach (var layout in pack.Layouts) yield return Circuit(layout.Id);
+        foreach (var pack in TrackPacks.All.Where(p => p.External?.BelongsToInstallation(game) == true && p.Modes.Contains("desktop-race")))
+            foreach (var layout in pack.Layouts)
+                if (pack.SupportsGridRace(layout.Id)) yield return Circuit(layout.Id);
     }
 
     // One entry per stock Rallycross model with a default livery.

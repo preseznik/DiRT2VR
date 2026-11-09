@@ -8,8 +8,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Direct now requests the game's race HUD on each PC after the native race start, respecting the saved overall HUD preference. In-game timing, lap, position and gauge visibility still need the queued two-PC check.
 
-- The Direct lobby now lists all 41 stock Race/Practice layouts and 50 stock cars. It also lists installed Mizu Mountain and Pikes Peak layouts, the imported Ferrari F2004 and compatible external car and track packs. Hosts can prepare a point-to-point route as a single run. Race starts still require a supported Rallycross combination.
+- The Direct lobby now lists all 41 stock Race/Practice layouts and 50 stock cars. It also lists installed Mizu Mountain and Pikes Peak layouts, the imported Ferrari F2004 and compatible external car and track packs. Hosts can prepare a point-to-point route as a single run. The host and guest race workers now use the selected layout, multiplayer discipline and both drivers' cars. Two-PC driving on the expanded selection is pending.
 - Both PCs check the selected custom car files and the Direct lobby shows which player needs a matching pack.
+- Direct checks imported packs in the mod installation and their required original files in the stock game folder you choose. The track list follows the active installation when switching between game copies.
+- Private Direct races prepare both players' installed car packs and the selected layout together. Aspen and Smelter Landrush circuits also accept Rallycross cars. External tracks require a race-capable standing grid.
 
 - Direct hosts can set the track, their car and **Laps** before a guest joins. The guest receives the prepared grid; circuits offer 1–20 laps and point-to-point routes use one run. Changing laps clears both ready marks. The selected distance is passed to both native race workers and finish handling. A live race with a changed lap count remains unverified.
 
@@ -23,7 +25,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Each Direct lobby player can choose **Launch in VR on this PC** before a race. Desktop is the default. Two-PC driving with one or two headsets still needs verification.
 
-- The Direct lobby opens with more room for chat. It remembers the last host you joined, saves favorite IPs and finds open local lobbies on opening or when you click **Refresh**. It offers eight stock Rallycross layouts, custom Spa and eleven stock Rallycross cars. Both players can select the same model. Installed race-capable Aspen, Smelter, Misty Loch and Nordschleife layouts also appear in the track list. Driving these additional layouts on two PCs still needs verification.
+- The Direct lobby opens with more room for chat. It remembers the last host you joined, saves favorite IPs and finds open local lobbies on opening or when you click **Refresh**. Both players can select the same car.
 
 - Direct now checks administrator launch consent on each PC before preparing a race. Either player can cancel and stay in the same lobby.
 

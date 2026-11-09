@@ -14,7 +14,8 @@ bool InitializeVehicleRequest() {
  wchar_t value[12]{};SetLastError(ERROR_SUCCESS);
  const DWORD length=GetEnvironmentVariableW(L"DIRT2VR_ENGINE_VEHICLE_ID",value,12),error=GetLastError();
  if(length>=12)return false;
- return vehicleRequest.Initialize(value,length!=0 || error!=ERROR_ENVVAR_NOT_FOUND);
+ return vehicleRequest.Initialize(value,length!=0 || error!=ERROR_ENVVAR_NOT_FOUND) &&
+        (!RxRequest().localCar || vehicleRequest.vehicle==RxRequest().localCar);
 }
 bool ChoiceRead(U32 address,U32& out) {
  if(address<0x10000 || address>0x7ffffffb)return false;
@@ -53,7 +54,7 @@ bool CaptureChoiceRule(U32 owner,U32 event,ChoiceRule& out) {
     Read(availability+0x20)!=At(0x132AD00) || Read(availability+0xE0)!=databaseService || Read(availability+0x104)!=network ||
     Read(selections)!=At(0x1324EA0) || Read(selections+4)!=At(0x1324EB4) || Read(event)!=At(0x13366EC) ||
     Read(event+0x5C)!=network+0x1010 || !(Read(At(0x147DE98))&1) || Read(event+0x1B4)!=key ||
-    (Read(event+0x64)^key)!=1 || (Read(event+0x68)^key)!=1 || (Read(event+0x74)^key)!=1 || (Read(event+0x78)^key)!=0 ||
+    (Read(event+0x64)^key)!=static_cast<U32>(RxRequest().race) || (Read(event+0x68)^key)!=1 || (Read(event+0x74)^key)!=static_cast<U32>(RxRequest().vehicleClass) || (Read(event+0x78)^key)!=0 ||
     Read(network)!=At(0x1336604) || Read(container)!=At(0x13364EC) ||
     Read(holder)!=At(0x133549C) || (Read(holder+0x800)&0xff) || Read(session)!=At(0x1335844) || (Read(session+0x6C)&0xff)!=1 ||
     Read(data)!=At(0x1336248) || Read(tree)!=At(0x1335B88) || Read(event+0x58)!=Read(data+0x64) ||
@@ -71,7 +72,7 @@ bool InspectChoice(const ChoiceRule& rule,int livery,distinct_cars::Choice& out)
  ChoiceRule current{};
  if(!ChoiceScope(rule) || !CaptureChoiceRule(rule.owner,rule.event,current) || !(current==rule))return false;
  NativeChoiceOps ops{};
- return distinct_cars::Inspect(ops,rule.context,rule.database,livery,out) &&
+ return distinct_cars::Inspect(ops,rule.context,rule.database,livery,out,RxRequest().vehicleClass) &&
         CaptureChoiceRule(rule.owner,rule.event,current) && current==rule && ChoiceScope(rule);
 }
 bool RevalidateLocalChoice() {

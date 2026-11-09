@@ -135,7 +135,7 @@ Public Class DirectLobbyForm
         Dim missing As New List(Of String)
         If grid.HostCarsMatch.HasValue AndAlso Not grid.HostCarsMatch.Value Then missing.Add(grid.Host.Name)
         If grid.GuestCarsMatch.HasValue AndAlso Not grid.GuestCarsMatch.Value Then missing.Add(grid.Guest.Name)
-        If missing.Count > 0 Then Return "Check the custom car files for " & String.Join(" and ", missing) & ". Install matching packs and reopen the lobby."
+        If missing.Count > 0 Then Return "Check the car pack and Stock game folder for " & String.Join(" and ", missing) & ", then reopen the lobby."
         If grid.HostCarsMatch.HasValue AndAlso grid.GuestCarsMatch.HasValue Then Return "Both PCs have matching custom car files."
         Return "Checking the selected custom car files on both PCs…"
     End Function
@@ -209,9 +209,10 @@ Public Class DirectLobbyForm
                     ElseIf connected AndAlso editable AndAlso grid.Layout IsNot Nothing AndAlso grid.Agreement = LayoutAgreement.Pending Then
                         status.Text = "Checking that both PCs have the same track files…"
                     ElseIf editable AndAlso grid.Layout IsNot Nothing AndAlso grid.Agreement = LayoutAgreement.Different Then
-                        status.Text = RallycrossCatalog.Circuit(grid.Layout).Name & " files differ or are missing. Install the same layout on both PCs, then select it again."
+                        status.Text = RallycrossCatalog.Circuit(grid.Layout).Name & " files differ or are missing. Check the track pack and Stock game folder on both PCs, then select the layout again."
                     ElseIf editable AndAlso Not grid.SupportsRace Then
-                        status.Text = "To start a race, choose a supported Rallycross circuit and a Rallycross car for each player."
+                        status.Text = If(grid.Track = DirectStockCatalog.PrototypeId, "The prototype supports desktop solo driving only.",
+                            "Choose two cars that can race together in the selected layout’s discipline.")
                     End If
                 End If
             End If

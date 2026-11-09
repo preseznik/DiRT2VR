@@ -16,12 +16,14 @@ public sealed record DirectLayout(string Id, string Digest, bool? ExternalCircui
     internal static bool Known(string id) => TrackPacks.DirectRacePacks.Any(pack => pack.IsLayout(id));
     internal static TrackPack Pack(string id) => TrackPacks.ForLayout(id);
 
-    internal static DirectLayout Read(string install, string id, CancellationToken cancel)
+    internal static DirectLayout Read(string install, string id, CancellationToken cancel, string? stockRoot = null)
     {
         var pack = Pack(id);
         if (pack.External is not { } external) return VerifyRaceAssets(install, pack, id, cancel, null);
+        if (!external.BelongsToInstallation(install))
+            throw new IOException("This track pack belongs to a different DiRT 2 installation. Refresh the content list.");
         external.Verify(cancel);
-        external.RequireDependencies(install, cancel);
+        external.RequireDependencies(stockRoot ?? install, cancel);
         return new(id, external.ManifestHash, external.Layout(id).Circuit);
     }
 
@@ -30,7 +32,7 @@ public sealed record DirectLayout(string Id, string Digest, bool? ExternalCircui
     internal PreparedCircuit Prepare(string install, string privateRun, CancellationToken cancel)
     {
         var pack = Pack(Id);
-        if (pack.External != null) throw new IOException("The Direct race worker cannot start external tracks yet.");
+        if (pack.External != null) throw new IOException("External track preparation requires its pack manifest.");
         var layout = pack.GetLayout(Id);
         cancel.ThrowIfCancellationRequested();
         string root = Path.GetFullPath(privateRun);
