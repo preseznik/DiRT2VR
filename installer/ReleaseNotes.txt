@@ -1,20 +1,21 @@
-DiRT2VR 0.18.10 — Experimental
+DiRT2VR 0.18.11 — Experimental
 
-LATEST CHANGES (since 0.18.9)
+LATEST CHANGES (since 0.18.10)
 
-- Wheel buttons in Next event and the seat panel: on a wheel such as the Logitech G920, only the D-pad worked in the Next event panel and the seat panel. A wheel now confirms and cancels with the buttons you assigned to Menu Select and Menu Back in Configure driving controls, as Xbox controllers use A and B. Seat panel buttons you assigned yourself still take precedence.
-- Wheel D-pad binds with a shifter gear engaged: with a gear engaged on an H-shifter, the binding wizard could take the shifter's gear button instead of a light D-pad press. Menu, gear, view, horn and pause actions now take the D-pad.
-- Desktop puddle flicker: on desktop, water puddles could flicker or shift briefly when you first reached them. The fix VR already had now applies on desktop too.
-- VR trackside shadows stay put: with a long Shadow distance, shadows of trackside props such as the start-line gantry at Tanamera Falls could switch on and off. VR now draws enough of them for the longer ranges.
-
-After updating: no track rebuild is needed. Existing settings and best laps are kept.
-
-Still to check: the wheel buttons and D-pad on a wheel, desktop puddles while driving, and the trackside shadows in a headset. Please report any problems.
+- Open Multiplayer → Direct (Super Experimental) to host or join a two-player LAN race. The host can choose the layout and circuit lap count before the guest joins. Each driver picks a car and can choose Desktop or VR independently.
+- The lobby lists 41 stock layouts, 50 stock cars and compatible installed packs. Both PCs need the same launcher build and matching selected packs. Circuits allow 1–20 laps. Point-to-point routes use one run.
+- Two desktop players have raced together on Battersea Air. Driving on the expanded selection, in-game HUD visibility and headset play still need player testing. If a race goes wrong, use Save race logs on both PCs before the next start.
+- In Direct practice, use Best times to view your personal bests by car and grade. Desktop practice can also show the world-record target for the selected track and car class.
+- In-game LAN now uses your graphics filters, Bloom setting and desktop cockpit adjustments. The launcher keeps Apply bindings in view, and scrolling a settings page leaves control values alone.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.10 — Experimental (changes since 0.18.9)
+
+- Wheel menu buttons and D-pad binding improvements, desktop puddle flicker fix and steadier trackside shadows in VR.
 
 0.18.9 — Experimental (changes since 0.18.8)
 
