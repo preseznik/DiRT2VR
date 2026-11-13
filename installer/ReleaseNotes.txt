@@ -1,17 +1,18 @@
-DiRT2VR 0.18.11 — Experimental
+DiRT2VR 0.18.12 — Experimental
 
-LATEST CHANGES (since 0.18.10)
+LATEST CHANGES (since 0.18.11)
 
-- Open Multiplayer → Direct (Super Experimental) to host or join a two-player LAN race. The host can choose the layout and circuit lap count before the guest joins. Each driver picks a car and can choose Desktop or VR independently.
-- The lobby lists 41 stock layouts, 50 stock cars and compatible installed packs. Both PCs need the same launcher build and matching selected packs. Circuits allow 1–20 laps. Point-to-point routes use one run.
-- Two desktop players have raced together on Battersea Air. Driving on the expanded selection, in-game HUD visibility and headset play still need player testing. If a race goes wrong, use Save race logs on both PCs before the next start.
-- In Direct practice, use Best times to view your personal bests by car and grade. Desktop practice can also show the world-record target for the selected track and car class.
-- In-game LAN now uses your graphics filters, Bloom setting and desktop cockpit adjustments. The launcher keeps Apply bindings in view, and scrolling a settings page leaves control values alone.
+- External tracks can now include moving scenery: wind-turbine rotors that turn and trains that run along their own railway, in desktop and VR. A track pack has to mark these parts; packs without them look as before.
+- Moving scenery has been checked in desktop and simulated-headset sessions. Real-headset and multiplayer play still need player testing.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.11 — Experimental (changes since 0.18.10)
+
+- Direct (Super Experimental) two-player LAN races with a 41-layout, 50-car lobby, Best times in Direct practice, and graphics filters in in-game LAN.
 
 0.18.10 — Experimental (changes since 0.18.9)
 

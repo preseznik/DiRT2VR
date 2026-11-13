@@ -6,7 +6,15 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.12 — 2026-11-13 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.12)
+
 - External tracks can now include moving scenery: wind-turbine rotors that turn and trains that follow their own railway. Track packs mark these parts and DiRT2VR moves them in every view, including shadows. A desktop lab session moved all parts of a Bahía Roja test build; headset and multiplayer checks are pending.
+
+## 0.18.11 — 2026-11-09 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.11)
 
 - Direct now requests the game's race HUD on each PC after the native race start, respecting the saved overall HUD preference. In-game timing, lap, position and gauge visibility still need the queued two-PC check.
 
