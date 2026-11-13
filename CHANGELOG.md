@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- External tracks can now include moving scenery: wind-turbine rotors that turn and trains that follow their own railway. Track packs mark these parts and DiRT2VR moves them in every view, including shadows. A desktop lab session moved all parts of a Bahía Roja test build; headset and multiplayer checks are pending.
+
 - Direct now requests the game's race HUD on each PC after the native race start, respecting the saved overall HUD preference. In-game timing, lap, position and gauge visibility still need the queued two-PC check.
 
 - The Direct lobby now lists all 41 stock Race/Practice layouts and 50 stock cars. It also lists installed Mizu Mountain and Pikes Peak layouts, the imported Ferrari F2004 and compatible external car and track packs. Hosts can prepare a point-to-point route as a single run. The host and guest race workers now use the selected layout, multiplayer discipline and both drivers' cars. Two-PC driving on the expanded selection is pending.

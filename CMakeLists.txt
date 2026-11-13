@@ -40,6 +40,7 @@ target_sources(d3d11 PRIVATE src/shadow_distance.cpp)
 target_sources(d3d11 PRIVATE src/trailer_background.cpp)
 
 target_sources(d3d11 PRIVATE src/sky_sun.cpp)
+target_sources(d3d11 PRIVATE src/scenery_motion.cpp)
 target_sources(d3d11 PRIVATE src/menu_motion_blur.cpp)
 target_sources(d3d11 PRIVATE src/water_ripples.cpp)
 target_include_directories(d3d11 PRIVATE "${CMAKE_BINARY_DIR}" src)

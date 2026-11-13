@@ -34,6 +34,7 @@
 #include "trailer_background.h"
 #include "paddock_zoom.h"
 #include "sky_sun.h"
+#include "scenery_motion.h"
 #include "menu_motion_blur.h"
 #include "direct_menus.h"
 #include "gfwl_compat.h"
@@ -1673,6 +1674,7 @@ void Stack(const char* event) {
 
 HRESULT STDMETHODCALLTYPE Map(ID3D11DeviceContext* c,ID3D11Resource* resource,UINT sub,D3D11_MAP mode,UINT flags,D3D11_MAPPED_SUBRESOURCE* mapped) {
     HRESULT hr=realMap(c,resource,sub,mode,flags,mapped);
+    if(SUCCEEDED(hr))SceneryMotionMapped(resource,mode,mapped);
     static const bool exposureProbe=[] {wchar_t v[8]{};return GetEnvironmentVariableW(L"DIRT2VR_EXPOSURE_PROBE",v,8)==1 && v[0]==L'1';}();
     if(exposureProbe && LoggingEnabled() && mode==D3D11_MAP_READ && sub==0) {
         const auto base=reinterpret_cast<uintptr_t>(GetModuleHandleW(nullptr));
@@ -1707,6 +1709,7 @@ HRESULT STDMETHODCALLTYPE Map(ID3D11DeviceContext* c,ID3D11Resource* resource,UI
     return hr;
 }
 void STDMETHODCALLTYPE Unmap(ID3D11DeviceContext* c,ID3D11Resource* resource,UINT sub) {
+    SceneryMotionUnmapped(resource);
     auto it=cameraMaps.find(resource);
     if(it!=cameraMaps.end()) {
         static std::atomic<unsigned> index{};
@@ -2008,7 +2011,7 @@ void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT 
             return;
         }
     }
-    realDrawIndexed(c,n,start,base);
+    if(!SceneryMotionDraw(c,[&]{realDrawIndexed(c,n,start,base);}))realDrawIndexed(c,n,start,base);
     if(captureShader)TraceLightingStage(c,captureShader,frame.load(),lightingEye,true);
 }
 void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* c,UINT n,UINT start) {
@@ -2146,6 +2149,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         EnablePikesCockpit();
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
+        AttachSceneryMotion(device,context,true);
         if(swapchain && (LoggingEnabled() || PhotoModeRequested() || DesktopSeatRequested() || (RequestedCapturesEnabled() && PikesScope())))
             Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;
@@ -2167,6 +2171,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
     Hook(context,21,reinterpret_cast<void*>(DrawInstanced),realDrawInstanced);
     Hook(context,41,reinterpret_cast<void*>(Dispatch),realDispatch);
     Hook(context,33,reinterpret_cast<void*>(Targets),realTargets);
+    AttachSceneryMotion(device,context,false);
     if(swapchain) {
         gameSwapchain=swapchain;
         if(HeadsetEnabled()) {
