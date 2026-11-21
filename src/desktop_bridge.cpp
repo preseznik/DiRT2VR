@@ -66,7 +66,7 @@ bool DesktopBridge::Start(ID3D11Texture2D* frame,const D3D11_TEXTURE2D_DESC& des
     if(!shared_) return Fail("unavailable: session mapping could not be opened");
     new(shared_) bridge::Shared{};
     shared_->parent=GetCurrentProcessId(); shared_->adapter=adapterDesc.AdapterLuid;
-    shared_->width=desc.Width; shared_->height=desc.Height; shared_->format=desc.Format;
+    shared_->width=desc.Width; shared_->height=desc.Height; shared_->format=desc.Format; shared_->neural=neural_;
     shared_->inputHandle=reinterpret_cast<uintptr_t>(inHandle); shared_->outputHandle=reinterpret_cast<uintptr_t>(outHandle);
     request_=CreateEventW(nullptr,FALSE,FALSE,(base+L"-request").c_str());
     done_=CreateEventW(nullptr,FALSE,FALSE,(base+L"-done").c_str());

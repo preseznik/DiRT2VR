@@ -11,6 +11,7 @@ Public Module NewFeatures
     Private ReadOnly addedAfter As New Dictionary(Of String, String) From {
         {"NeuralRuntimeFolder", "0.18.11"}, {"NeuralWhileDriving", "0.18.11"}, {"NeuralStyle", "0.18.11"}, {"NeuralStrength", "0.18.11"},
         {"NeuralTone", "0.18.11"}, {"NeuralDetail", "0.18.11"}, {"NeuralPasses", "0.18.11"}, {"NeuralMix", "0.18.11"},
+        {"NeuralResolution", "0.18.11"}, {"NeuralFoveation", "0.18.11"},
         {"BestTimes", "0.18.10"}, {"CustomBestTimes", "0.18.10"}, {"Leaderboards", "0.18.10"},
         {"MultiplayerMode", "0.18.10"}, {"DirectRecordLaps", "0.18.10"}, {"DirectVr", "0.18.10"}, {"DirectLaps", "0.18.10"},
         {"VrRenderScale", "0.18.8"}, {"ForceFeedbackOn", "0.18.6"}, {"SeatMode", "0.18.4"}, {"ExtendedGrass", "0.18.0"}, {"DesktopCockpitFov", "0.18.0"}, {"VrPerformanceDisplay", "0.18.0"}, {"VrPaddockZoom", "0.18.0"}, {"DrivingTransmission", "0.18.0"},

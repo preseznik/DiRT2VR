@@ -1,5 +1,7 @@
 #pragma once
 #include <array>
+#include <string>
+#include <vector>
 
 struct IDXGISwapChain;
 namespace vr {
@@ -21,8 +23,20 @@ inline constexpr std::array<PhotoLook,9> PhotoLooks{{
     {L"Cinematic",{1,1,1},1.05f,1.1f,1,0,.1f,.25f,.15f},
 }};
 inline constexpr std::array<float,3> PhotoLetterboxes{0,2.39f,1.85f}; // Off, then target aspect ratios.
+// A look made from one of the player's DiRT2VR filter presets (Graphics > Filters):
+// only its colour adjustments, approximated on the finished frame.
+struct PhotoUserLook {
+    std::wstring name;
+    float brightness{},contrast{1},saturation{1},gamma{1};
+    std::array<float,3> tint{1,1,1}; float tintAmount{};
+};
+// Loaded once from the launcher's list (DIRT2VR_PHOTO_LOOKS); empty without one.
+const std::vector<PhotoUserLook>& PhotoUserLooks();
+// Built-in looks first, then the player's.
+int PhotoLookCount();
+std::wstring PhotoLookName(int look);
 struct PhotoFilterSettings {
-    int look{};       // Index into PhotoLooks.
+    int look{};       // Index into PhotoLooks, then PhotoUserLooks.
     float exposure{}; // Stops, -2..2.
     int letterbox{};  // Index into PhotoLetterboxes.
     bool grid{};      // Rule-of-thirds guide: on screen only, never in photos.

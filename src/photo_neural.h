@@ -1,5 +1,8 @@
 #pragma once
 #include "desktop_bridge_protocol.h"
+#include "photo_overlay.h"
+#include <utility>
+#include <vector>
 struct IDXGISwapChain;
 struct ID3D11Texture2D;
 namespace vr {
@@ -14,7 +17,13 @@ PhotoNeuralState PhotoNeuralApply(IDXGISwapChain* swapchain,bool wanted);
 // through the same helper. False while the helper starts or after it fails.
 bool PhotoNeuralProcessLive(ID3D11Texture2D* frame);
 // The look used for both Photo Mode and driving: launcher defaults
-// (DIRT2VR_NEURAL_STYLE/STRENGTH/TONE/DETAIL/PASSES/MIX), changed in-game for the session.
+// (DIRT2VR_NEURAL_STYLE/STRENGTH/TONE/DETAIL/PASSES/MIX/RESOLUTION/FOVEATION), changed in-game for the session.
 bridge::NeuralSettings PhotoNeuralSettings();
 void PhotoNeuralSetSettings(const bridge::NeuralSettings& settings);
+// The option rows shared by the Photo panel and the driving panel (each adds its own
+// on/off row first); dimmed while neural rendering is off.
+enum class NeuralOption { Style,Strength,Tone,Detail,Passes,Mix,Resolution,Foveation };
+std::vector<std::pair<NeuralOption,PhotoMenuRow>> NeuralOptionRows(bool enabled);
+// Left/right on one of those rows.
+void NeuralOptionAdjust(NeuralOption option,int direction);
 }

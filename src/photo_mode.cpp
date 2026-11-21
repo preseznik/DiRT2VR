@@ -58,8 +58,7 @@ struct Repeat {
         return false;
     }
 } menuUpKey,menuDownKey,menuLeftKey,menuRightKey;
-enum class Setting { FieldOfView,Tilt,Speed,DepthOfField,Autofocus,Distance,Blur,Look,Brightness,Letterbox,Grid,
-    Neural,NeuralStyle,NeuralStrength,NeuralTone,NeuralDetail,NeuralPasses,NeuralMix };
+enum class Setting { FieldOfView,Tilt,Speed,DepthOfField,Autofocus,Distance,Blur,Look,Brightness,Letterbox,Grid,Neural,NeuralOption };
 std::wstring KeyLabel(unsigned scan) {
     wchar_t name[32]{};
     return GetKeyNameTextW(LONG(scan<<16),name,32)>0?name:L"";
@@ -298,11 +297,13 @@ void PhotoModePauseChanged(bool paused) {
     savedValid=false; // A kept shot belongs to the pause it was taken in.
 }
 namespace {
+// One Photo panel row and what it changes.
+struct MenuEntry { Setting id; NeuralOption option{}; PhotoMenuRow row; };
 // The Photo panel's rows from the current settings (desktop).
-std::vector<std::pair<Setting,PhotoMenuRow>> MenuRows(ULONGLONG now) {
-    std::vector<std::pair<Setting,PhotoMenuRow>> rows;
+std::vector<MenuEntry> MenuRows(ULONGLONG now) {
+    std::vector<MenuEntry> rows;
     const auto add=[&](Setting id,const wchar_t* section,const wchar_t* label,std::wstring value,std::wstring key={},bool dim=false,bool warn=false) {
-        rows.push_back({id,PhotoMenuRow{section,label,std::move(value),std::move(key),dim,warn}});
+        rows.push_back({id,{},PhotoMenuRow{section,label,std::move(value),std::move(key),dim,warn}});
     };
     const auto record=camera.Record();
     add(Setting::FieldOfView,L"CAMERA",L"Field of view",Format(L"%.0f\u00b0",record[20]*57.2957795));
@@ -315,29 +316,23 @@ std::vector<std::pair<Setting,PhotoMenuRow>> MenuRows(ULONGLONG now) {
     add(Setting::Distance,L"",L"Focus distance",distance<=0?std::wstring(L"\u2014"):distance>=4000?std::wstring(L"Far"):
         Format(distance<10?L"%.1f m":L"%.0f m",distance),KeyLabel(0x02)+L"/"+KeyLabel(0x03),!dofEnabled);
     add(Setting::Blur,L"",L"Blur",Format(L"%.0f",dof.blur),KeyLabel(0x04)+L"/"+KeyLabel(0x05),!dofEnabled);
-    add(Setting::Look,L"LOOK",L"Filter",PhotoLooks[filter.look].name,L"G");
+    add(Setting::Look,L"LOOK",L"Filter",PhotoLookName(filter.look),L"G");
     add(Setting::Brightness,L"",L"Brightness",Format(L"%+.1f",filter.exposure),KeyLabel(0x06)+L"/"+KeyLabel(0x07));
     add(Setting::Letterbox,L"",L"Letterbox",filter.letterbox==1?L"2.39:1":filter.letterbox==2?L"1.85:1":L"Off",L"L");
     add(Setting::Grid,L"",L"Thirds grid",filter.grid?L"On":L"Off",L"T");
     if(PhotoNeuralConfigured()) {
-        const auto n=PhotoNeuralSettings();
         const wchar_t* state=!neuralEnabled?L"Off":neuralState==PhotoNeuralState::Starting?L"Starting\u2026":
             neuralState==PhotoNeuralState::Failed?L"Unavailable":L"On";
         add(Setting::Neural,L"DLSS 5 NEURAL RENDERING",L"Neural rendering",state,L"N",false,neuralEnabled && neuralState==PhotoNeuralState::Failed);
-        add(Setting::NeuralStyle,L"",L"Style",n.style==2?L"Cinematic":n.style==0?L"Standard":L"Natural",L"",!neuralEnabled);
-        add(Setting::NeuralStrength,L"",L"Strength",Format(L"%.0f%%",n.intensity*100),L"",!neuralEnabled);
-        add(Setting::NeuralTone,L"",L"Local tone",Format(L"%.0f%%",n.tone*100),L"",!neuralEnabled);
-        add(Setting::NeuralDetail,L"",L"Local detail",Format(L"%.0f%%",n.structure*100),L"",!neuralEnabled);
-        add(Setting::NeuralPasses,L"",L"Passes",Format(L"%.0f",n.passes),L"",!neuralEnabled);
-        add(Setting::NeuralMix,L"",L"Mix with original",Format(L"%.0f%%",n.mix*100),L"",!neuralEnabled);
+        for(auto& [option,row]:NeuralOptionRows(neuralEnabled))rows.push_back({Setting::NeuralOption,option,std::move(row)});
     }
     return rows;
 }
 // Left/right on a Photo panel row.
-void Adjust(Setting id,int direction,ULONGLONG now) {
+void Adjust(const MenuEntry& entry,int direction,ULONGLONG now) {
     PhotoInput change;
-    auto neural=PhotoNeuralSettings();
-    switch(id) {
+    const int looks=PhotoLookCount();
+    switch(entry.id) {
     case Setting::FieldOfView:change.zoom=-.08f*direction;camera.Move(change,0);break;
     case Setting::Tilt:change.roll=.0349066f*direction;camera.Move(change,0);break;
     case Setting::Speed:speedLevel=std::clamp(speedLevel+direction,0,4);break;
@@ -352,26 +347,12 @@ void Adjust(Setting id,int direction,ULONGLONG now) {
         }
         dof.focus=std::clamp(dof.focus*std::exp(.1f*direction),.5f,2000.f);break;
     case Setting::Blur:if(dofEnabled)dof.blur=std::clamp(dof.blur+direction,1,10);break;
-    case Setting::Look:filter.look=(filter.look+direction+int(PhotoLooks.size()))%int(PhotoLooks.size());break;
+    case Setting::Look:filter.look=(filter.look+direction+looks)%looks;Log("photo filter: look=%d",filter.look);break;
     case Setting::Brightness:filter.exposure=std::clamp(std::round((filter.exposure+.1f*direction)*10)/10,-2.f,2.f);break;
     case Setting::Letterbox:filter.letterbox=(filter.letterbox+direction+int(PhotoLetterboxes.size()))%int(PhotoLetterboxes.size());break;
     case Setting::Grid:filter.grid=!filter.grid;break;
     case Setting::Neural:neuralEnabled=!neuralEnabled;Log("photo neural rendering: enabled=%d",neuralEnabled);break;
-    default:
-        if(!neuralEnabled)break;
-        if(id==Setting::NeuralStyle) {
-            constexpr int order[]{1,0,2}; // Natural, Standard, Cinematic
-            int at=0;for(int i=0;i<3;++i)if(order[i]==neural.style)at=i;
-            neural.style=order[(at+direction+3)%3];
-        }
-        const auto step=[&](float& value,float low,float high){value=std::clamp(std::round((value+.1f*direction)*10)/10,low,high);};
-        if(id==Setting::NeuralStrength)step(neural.intensity,0,2);
-        if(id==Setting::NeuralTone)step(neural.tone,0,2);
-        if(id==Setting::NeuralDetail)step(neural.structure,0,2);
-        if(id==Setting::NeuralPasses)neural.passes=std::clamp(neural.passes+direction,1,3);
-        if(id==Setting::NeuralMix)step(neural.mix,0,1);
-        PhotoNeuralSetSettings(neural);
-        break;
+    case Setting::NeuralOption:if(neuralEnabled)NeuralOptionAdjust(entry.option,direction);break;
     }
 }
 }
@@ -405,7 +386,7 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             // H or the controller's View button shows or hides the panel.
             if((movement.panel && !panelHeld) || (movement.padView && !padViewHeld))panelVisible=!panelVisible;
             // Direct keys (also listed in the panel).
-            const int looks=int(PhotoLooks.size());
+            const int looks=PhotoLookCount();
             if(movement.look && !lookHeld) {
                 filter.look=(filter.look+(movement.fast?-1:1)+looks)%looks; // Shift+G goes back.
                 Log("photo filter: look=%d",filter.look);
@@ -442,10 +423,10 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
                 if(menuUpKey.Step(movement.menuUp,now))menuSelected=(menuSelected+count-1)%count;
                 if(menuDownKey.Step(movement.menuDown,now))menuSelected=(menuSelected+1)%count;
                 const int direction=menuRightKey.Step(movement.menuRight,now)?1:menuLeftKey.Step(movement.menuLeft,now)?-1:0;
-                if(direction){Adjust(rows[menuSelected].first,direction,now);rows=MenuRows(now);}
+                if(direction){Adjust(rows[menuSelected],direction,now);rows=MenuRows(now);}
             }
             overlay.panel=panelVisible;overlay.controller=lastController;overlay.selected=menuSelected;
-            for(auto& row:rows)overlay.rows.push_back(std::move(row.second));
+            for(auto& entry:rows)overlay.rows.push_back(std::move(entry.row));
             dofState=!dofEnabled?0:(now-dofSince>1000 && now-dofDrawn>1000)?2:1;
             neuralWanted=neuralEnabled;
             show=true;

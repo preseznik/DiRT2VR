@@ -131,6 +131,8 @@ Public Class VrSettings
     Public Property NeuralDetail As Integer = 100
     Public Property NeuralPasses As Integer = 1
     Public Property NeuralMix As Integer = 100
+    Public Property NeuralResolution As Integer = 100
+    Public Property NeuralFoveation As Integer = 0
     Public Property VrBloom As Boolean = True
     Public Property DesktopAnisotropy As Integer = 0
     Public Property DesktopShadowDistance As Integer = 0

@@ -63,6 +63,8 @@ Public Class MainForm
     Private ReadOnly neuralDetail As New ValueSlider("NeuralDetail", 0, 200, 100, "%", recommendedValue:=100)
     Private ReadOnly neuralPasses As New ValueSlider("NeuralPasses", 1, 3, 1)
     Private ReadOnly neuralMix As New ValueSlider("NeuralMix", 0, 100, 100, "%")
+    Private ReadOnly neuralResolution As New ValueSlider("NeuralResolution", 5, 10, 10, valueLabels:={"50%", "60%", "70%", "80%", "90%", "100%"})
+    Private ReadOnly neuralFoveation As New ValueSlider("NeuralFoveation", 0, 6, 0, valueLabels:={"Off", "30%", "40%", "50%", "60%", "70%", "80%"})
     Private ReadOnly neuralWhileDriving As New CheckBox With {.Text = "On", .Name = "NeuralWhileDriving", .AccessibleName = "DLSS 5 while driving", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
@@ -812,20 +814,24 @@ Public Class MainForm
         photo.Controls.Add(neuralStatus)
         neuralWhileDriving.Checked = settings.NeuralWhileDriving
         Field(photo, "Also while driving (Experimental)", neuralWhileDriving)
-        Tip(neuralWhileDriving, "Also applies DLSS 5 Neural Rendering while you drive, on desktop. The HUD is drawn on top unprocessed, so it stays sharp." & vbCrLf & "Heavy on the GPU and adds one frame of delay. Needs the runtime folder above. Save and relaunch to apply.")
+        Tip(neuralWhileDriving, "Also applies DLSS 5 Neural Rendering while you drive, on desktop. The HUD is drawn on top unprocessed, so it stays sharp. Press F8 while driving to change the settings in-game." & vbCrLf & "Heavy on the GPU and adds one frame of delay. Needs the runtime folder above. Save and relaunch to apply.")
         neuralStyle.Value = Math.Clamp(settings.NeuralStyle, 0, 2) : Field(photo, "Style", neuralStyle)
         neuralStrength.Value = Math.Clamp(settings.NeuralStrength, 0, 200) : Field(photo, "Strength", neuralStrength)
         neuralTone.Value = Math.Clamp(settings.NeuralTone, 0, 200) : Field(photo, "Local tone", neuralTone)
         neuralDetail.Value = Math.Clamp(settings.NeuralDetail, 0, 200) : Field(photo, "Local detail", neuralDetail)
         neuralPasses.Value = Math.Clamp(settings.NeuralPasses, 1, 3) : Field(photo, "Passes", neuralPasses)
         neuralMix.Value = Math.Clamp(settings.NeuralMix, 0, 100) : Field(photo, "Mix with original", neuralMix)
+        neuralResolution.Value = Math.Clamp((settings.NeuralResolution + 5) \ 10, 5, 10) : Field(photo, "Resolution", neuralResolution)
+        neuralFoveation.Value = If(settings.NeuralFoveation <= 0, 0, Math.Clamp((settings.NeuralFoveation - 15) \ 10, 1, 6)) : Field(photo, "Foveated centre", neuralFoveation)
         Tip(neuralStyle, "The overall look. Natural keeps the game's colours closest; Cinematic is muted and filmic. You can also change this in the Photo panel.")
         Tip(neuralStrength, "How strongly the effect is applied (100% is the runtime's default).")
         Tip(neuralTone, "Local contrast in shadows and highlights.")
         Tip(neuralDetail, "Fine detail on surfaces such as gravel, grass and fabric.")
         Tip(neuralPasses, "Runs the effect again on its own result for a stronger, more refined look. Each extra pass costs about as much as the first.")
         Tip(neuralMix, "Blends the result with the original picture; 100% shows only the neural rendering.")
-        Dim neuralOptions As Control() = {neuralStyle, neuralStrength, neuralTone, neuralDetail, neuralPasses, neuralMix}
+        Tip(neuralResolution, "Runs the effect on a smaller picture and adds its changes to the full-resolution frame, so the picture stays sharp." & vbCrLf & "Lower is faster but the neural look is softer. With a foveated centre, this is the resolution of the edges.")
+        Tip(neuralFoveation, "Keeps the centre of the picture at full resolution and lowers the edges, like CSP's foveated option." & vbCrLf & "Only works with Resolution below 100%. It adds a second, smaller pass, so it helps most at high resolutions.")
+        Dim neuralOptions As Control() = {neuralStyle, neuralStrength, neuralTone, neuralDetail, neuralPasses, neuralMix, neuralResolution, neuralFoveation}
         refreshNeural = Sub()
                             neuralStatus.Text = NeuralRendering.Describe(neuralRuntime.Text)
                             Dim valid = NeuralRendering.Valid(neuralRuntime.Text)
@@ -1194,6 +1200,7 @@ Public Class MainForm
         settings.NeuralStyle = CInt(neuralStyle.Value) : settings.NeuralStrength = CInt(neuralStrength.Value)
         settings.NeuralTone = CInt(neuralTone.Value) : settings.NeuralDetail = CInt(neuralDetail.Value)
         settings.NeuralPasses = CInt(neuralPasses.Value) : settings.NeuralMix = CInt(neuralMix.Value)
+        settings.NeuralResolution = CInt(neuralResolution.Value) * 10 : settings.NeuralFoveation = If(CInt(neuralFoveation.Value) = 0, 0, 20 + CInt(neuralFoveation.Value) * 10)
         settings.VrPerformanceDisplay = performanceDisplay.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked
         settings.SteeringObserveOnly = steeringObserve.Checked

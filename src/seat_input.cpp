@@ -4,6 +4,7 @@
 #include "gfwl_compat.h"
 #include "common.h"
 #include "photo_mode.h"
+#include "live_neural.h"
 #include <dinput.h>
 #include <xinput.h>
 #include <MinHook.h>
@@ -50,14 +51,14 @@ bool GameCaller(void* caller) {
 }
 SHORT WINAPI AsyncKey(int key) {
     auto value=asyncKey(key);
-    return GameCaller(_ReturnAddress()) && (PhotoModeBlocksInput() || TestMessageBlocksKey(unsigned(key)) || SeatBlocksKey(unsigned(key))) ? 0 : value;
+    return GameCaller(_ReturnAddress()) && (PhotoModeBlocksInput() || TestMessageBlocksKey(unsigned(key)) || SeatBlocksKey(unsigned(key)) || LiveNeuralBlocksKey(unsigned(key))) ? 0 : value;
 }
 void FilterInput(Device& device,DWORD offset,DWORD type,void* value,DWORD size) {
     if(device.keyboard && size==1) {
         const auto scan=DIDFT_GETINSTANCE(type);
         const auto code=(scan&0x80)?0xe000u|(scan&0x7f):scan;
         const auto key=MapVirtualKeyW(code,MAPVK_VSC_TO_VK_EX);
-        if(TestMessageBlocksKey(key)){*static_cast<BYTE*>(value)=0;return;}
+        if(TestMessageBlocksKey(key) || LiveNeuralBlocksKey(key)){*static_cast<BYTE*>(value)=0;return;}
     }
     SeatFilterController(device.id,device.keyboard,offset,type,value,size);
 }
@@ -196,7 +197,10 @@ template<unsigned I> DWORD WINAPI Xbox(DWORD slot,XINPUT_STATE* output) {
     const auto result=xbox[I](slot,output);
     if(result==ERROR_SUCCESS && output) {
         if(GameCaller(_ReturnAddress()) && PhotoModeBlocksInput())output->Gamepad={};
-        else SeatFilterXbox(slot,output->Gamepad.wButtons);
+        else {
+            SeatFilterXbox(slot,output->Gamepad.wButtons);
+            if(GameCaller(_ReturnAddress()))LiveNeuralFilterPad(output->Gamepad.wButtons);
+        }
     }
     return result;
 }

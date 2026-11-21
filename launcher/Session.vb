@@ -502,6 +502,7 @@ Public Class Session
         Dim headsetLaunch = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
         Dim photoLaunch = PhotoModeLaunch.Eligible(context, settings, headsetLaunch, replayId IsNot Nothing)
         PhotoModeLaunch.Configure(start, photoLaunch)
+        If photoLaunch AndAlso Not headsetLaunch Then PhotoModeLaunch.ConfigureLooks(start, context)
         NeuralRendering.Configure(start, context, settings, photoLaunch, headsetLaunch)
         replayControls.ConfigureZoom(start)
         WorldRecords.ConfigureTarget(context, start, settings, replayId IsNot Nothing)

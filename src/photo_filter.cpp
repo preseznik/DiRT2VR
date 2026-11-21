@@ -7,6 +7,8 @@
 #include <cmath>
 #include <cstring>
 #include <mutex>
+#include <cwchar>
+#include <cwctype>
 
 namespace vr {
 namespace {
@@ -20,6 +22,8 @@ cbuffer Filter : register(b0) {
     float fade,vignette,grain,seed;
     float bar,aspect,grid,mode;                // bar = letterbox height fraction; mode 1 = grid overlay
     float2 texel; float2 pad;
+    float4 userTint;                           // Player filter: tint colour, w = amount
+    float offset,gammaPower,pad2,pad3;         // Player filter: brightness offset, display gamma
 }
 Texture2D colour : register(t0);
 SamplerState pointClamp : register(s0);
@@ -40,6 +44,8 @@ float4 ps(V v):SV_Target {
     float luma=dot(c,float3(0.299,0.587,0.114));
     c=lerp(luma.xxx,c,saturation);
     c=(c-0.5)*contrast+0.5;
+    c=lerp(c,c*userTint.rgb,userTint.w);
+    c=pow(saturate(c+offset),gammaPower);
     // Cinematic split toning: teal shadows, warm highlights.
     c+=splitTone*lerp(float3(-0.04,0.02,0.05),float3(0.06,0.02,-0.05),smoothstep(0.2,0.8,luma));
     float3 toned=float3(dot(c,float3(0.393,0.769,0.189)),dot(c,float3(0.349,0.686,0.168)),dot(c,float3(0.272,0.534,0.131)));
@@ -60,6 +66,8 @@ struct Constants {
     float fade,vignette,grain,seed;
     float bar,aspect,grid,mode;
     float texel[2],pad[2];
+    float userTint[4];
+    float offset,gammaPower,pad2,pad3;
 };
 std::mutex mutex;
 struct Pass {
@@ -151,15 +159,72 @@ float Bar(IDXGISwapChain* swapchain,int letterbox) {
 }
 }
 
+const std::vector<PhotoUserLook>& PhotoUserLooks() {
+    static const std::vector<PhotoUserLook> looks=[] {
+        std::vector<PhotoUserLook> result;
+        wchar_t path[MAX_PATH]{};
+        const auto length=GetEnvironmentVariableW(L"DIRT2VR_PHOTO_LOOKS",path,MAX_PATH);
+        if(!length || length>=MAX_PATH)return result;
+        const HANDLE file=CreateFileW(path,GENERIC_READ,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);
+        if(file==INVALID_HANDLE_VALUE){Log("photo filter: player looks unreadable");return result;}
+        std::string bytes(64*1024,'\0');DWORD read{};
+        const bool ok=ReadFile(file,bytes.data(),DWORD(bytes.size()),&read,nullptr);CloseHandle(file);
+        if(!ok)return result;
+        bytes.resize(read);
+        std::wstring text(size_t(MultiByteToWideChar(CP_UTF8,0,bytes.data(),int(bytes.size()),nullptr,0)),L'\0');
+        MultiByteToWideChar(CP_UTF8,0,bytes.data(),int(bytes.size()),text.data(),int(text.size()));
+        const auto same=[](const std::wstring& a,const wchar_t* b) {
+            return a.size()==std::wcslen(b) && std::equal(a.begin(),a.end(),b,[](wchar_t x,wchar_t y){return std::towlower(x)==std::towlower(y);});
+        };
+        size_t start=0;
+        while(start<text.size() && result.size()<64) {
+            auto end=text.find(L'\n',start);if(end==std::wstring::npos)end=text.size();
+            std::vector<std::wstring> fields;size_t at=start;
+            while(at<=end){auto tab=text.find(L'\t',at);if(tab==std::wstring::npos || tab>end)tab=end;fields.push_back(text.substr(at,tab-at));at=tab+1;}
+            start=end+1;
+            if(fields.size()!=7 || fields[0].empty() || fields[0].size()>64 || fields[5].size()!=6)continue;
+            const auto number=[](const std::wstring& s,int low,int high,int& out){wchar_t* e{};const long v=std::wcstol(s.c_str(),&e,10);out=int(v);return e && !*e && !s.empty() && v>=low && v<=high;};
+            int brightness{},contrast{},saturation{},gamma{},strength{};
+            wchar_t* hexEnd{};const unsigned long rgb=std::wcstoul(fields[5].c_str(),&hexEnd,16);
+            if(!number(fields[1],-100,100,brightness) || !number(fields[2],0,200,contrast) || !number(fields[3],0,200,saturation) ||
+               !number(fields[4],50,200,gamma) || !number(fields[6],0,100,strength) || !hexEnd || *hexEnd)continue;
+            PhotoUserLook look;look.name=fields[0];
+            for(const auto& builtIn:PhotoLooks)if(same(look.name,builtIn.name)){look.name+=L" (DiRT2VR)";break;}
+            look.brightness=brightness/1000.f;look.contrast=contrast/100.f;look.saturation=saturation/100.f;look.gamma=gamma/100.f;
+            look.tint={((rgb>>16)&255)/255.f,((rgb>>8)&255)/255.f,(rgb&255)/255.f};look.tintAmount=strength/100.f;
+            result.push_back(std::move(look));
+        }
+        Log("photo filter: player looks=%u",unsigned(result.size()));
+        return result;
+    }();
+    return looks;
+}
+int PhotoLookCount(){return int(PhotoLooks.size()+PhotoUserLooks().size());}
+std::wstring PhotoLookName(int look) {
+    look=std::clamp(look,0,PhotoLookCount()-1);
+    return look<int(PhotoLooks.size())?std::wstring(PhotoLooks[look].name):PhotoUserLooks()[look-PhotoLooks.size()].name;
+}
+
 bool PhotoFilterApply(IDXGISwapChain* swapchain,const PhotoFilterSettings& settings,unsigned frame) {
-    const auto& look=PhotoLooks[std::clamp(settings.look,0,int(PhotoLooks.size())-1)];
+    const int index=std::clamp(settings.look,0,PhotoLookCount()-1);
     const float exposure=std::clamp(settings.exposure,-2.f,2.f);
     const float bar=Bar(swapchain,settings.letterbox);
-    if(settings.look==0 && std::abs(exposure)<.01f && bar==0)return true; // Nothing to change.
+    if(index==0 && std::abs(exposure)<.01f && bar==0)return true; // Nothing to change.
     Constants c{};
-    c.tintExposure[0]=look.tint[0];c.tintExposure[1]=look.tint[1];c.tintExposure[2]=look.tint[2];c.tintExposure[3]=std::exp2(exposure);
-    c.saturation=look.saturation;c.contrast=look.contrast;c.splitTone=look.splitTone;c.sepia=look.sepia;
-    c.fade=look.fade;c.vignette=look.vignette;c.grain=look.grain;c.seed=float(frame%997);
+    c.tintExposure[0]=c.tintExposure[1]=c.tintExposure[2]=1;c.tintExposure[3]=std::exp2(exposure);
+    c.saturation=c.contrast=c.gammaPower=1;
+    if(index<int(PhotoLooks.size())) {
+        const auto& look=PhotoLooks[index];
+        c.tintExposure[0]=look.tint[0];c.tintExposure[1]=look.tint[1];c.tintExposure[2]=look.tint[2];
+        c.saturation=look.saturation;c.contrast=look.contrast;c.splitTone=look.splitTone;c.sepia=look.sepia;
+        c.fade=look.fade;c.vignette=look.vignette;c.grain=look.grain;
+    } else {
+        // The player's filter, applied on top of the picture as the game drew it.
+        const auto& look=PhotoUserLooks()[index-PhotoLooks.size()];
+        c.saturation=look.saturation;c.contrast=look.contrast;c.offset=look.brightness;c.gammaPower=1/look.gamma;
+        c.userTint[0]=look.tint[0];c.userTint[1]=look.tint[1];c.userTint[2]=look.tint[2];c.userTint[3]=look.tintAmount;
+    }
+    c.seed=float(frame%997);
     c.bar=bar;
     std::lock_guard lock(mutex);
     return Draw(swapchain,c);

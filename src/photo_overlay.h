@@ -17,6 +17,8 @@ struct PhotoPanelState {
     bool controller{}; // Hint bar for the Xbox controller instead of keyboard and mouse.
     std::vector<PhotoMenuRow> rows;
     int selected{};
+    std::wstring title=L"PHOTO MODE"; // Panel heading.
+    std::wstring hints;               // Hint bar text; empty: the Photo Mode controls.
 };
 
 // Copies the finished frame now and writes it as a PNG in the background

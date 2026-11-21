@@ -17,7 +17,7 @@ Public NotInheritable Class NeuralRendering
     End Function
     ' Desktop Photo Mode only; VR and LAN sessions never get these variables.
     Public Shared Sub Configure(start As ProcessStartInfo, context As InstallContext, settings As VrSettings, photoMode As Boolean, headset As Boolean)
-        For Each name In {"RUNTIME", "HELPER", "LIVE", "STYLE", "STRENGTH", "TONE", "DETAIL", "PASSES", "MIX"}
+        For Each name In {"RUNTIME", "HELPER", "LIVE", "STYLE", "STRENGTH", "TONE", "DETAIL", "PASSES", "MIX", "RESOLUTION", "FOVEATION"}
             start.Environment.Remove("DIRT2VR_NEURAL_" & name)
         Next
         If Not photoMode OrElse headset OrElse settings.LaunchMode = "lan" OrElse Not Valid(settings.NeuralRuntimeFolder) Then Return
@@ -33,5 +33,7 @@ Public NotInheritable Class NeuralRendering
         start.Environment("DIRT2VR_NEURAL_DETAIL") = Math.Clamp(settings.NeuralDetail, 0, 200).ToString(invariant)
         start.Environment("DIRT2VR_NEURAL_PASSES") = Math.Clamp(settings.NeuralPasses, 1, 3).ToString(invariant)
         start.Environment("DIRT2VR_NEURAL_MIX") = Math.Clamp(settings.NeuralMix, 0, 100).ToString(invariant)
+        start.Environment("DIRT2VR_NEURAL_RESOLUTION") = Math.Clamp(settings.NeuralResolution, 50, 100).ToString(invariant)
+        start.Environment("DIRT2VR_NEURAL_FOVEATION") = If(settings.NeuralFoveation <= 0, 0, Math.Clamp(settings.NeuralFoveation, 30, 80)).ToString(invariant)
     End Sub
 End Class

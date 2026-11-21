@@ -5,6 +5,9 @@
 #include <memory>
 #include <mutex>
 #include <string>
+#include <algorithm>
+#include <cmath>
+#include <cwchar>
 
 namespace vr {
 namespace {
@@ -19,7 +22,8 @@ int EnvironmentNumber(const wchar_t* name,int fallback) {
 bridge::NeuralSettings settings=bridge::Clamped({
     EnvironmentNumber(L"DIRT2VR_NEURAL_STYLE",1),EnvironmentNumber(L"DIRT2VR_NEURAL_PASSES",1),
     EnvironmentNumber(L"DIRT2VR_NEURAL_STRENGTH",100)/100.f,EnvironmentNumber(L"DIRT2VR_NEURAL_TONE",100)/100.f,
-    EnvironmentNumber(L"DIRT2VR_NEURAL_DETAIL",100)/100.f,EnvironmentNumber(L"DIRT2VR_NEURAL_MIX",100)/100.f});
+    EnvironmentNumber(L"DIRT2VR_NEURAL_DETAIL",100)/100.f,EnvironmentNumber(L"DIRT2VR_NEURAL_MIX",100)/100.f,
+    EnvironmentNumber(L"DIRT2VR_NEURAL_RESOLUTION",100),EnvironmentNumber(L"DIRT2VR_NEURAL_FOVEATION",0)});
 // Paused scenes tolerate slow frames; live frames wait at most this long for the
 // previous result before showing the original frame.
 constexpr DWORD WaitMilliseconds=250;
@@ -60,14 +64,54 @@ DesktopBridge& Helper(const Paths& paths) {
 }
 
 bool PhotoNeuralConfigured(){return Configured().valid;}
+std::vector<std::pair<NeuralOption,PhotoMenuRow>> NeuralOptionRows(bool enabled) {
+    const auto s=PhotoNeuralSettings();
+    const auto percent=[](float value){wchar_t text[16]{};swprintf_s(text,L"%.0f%%",value*100);return std::wstring(text);};
+    const auto whole=[](int value,const wchar_t* suffix){return std::to_wstring(value)+suffix;};
+    const bool foveated=s.foveation>0 && s.resolution<100;
+    std::vector<std::pair<NeuralOption,PhotoMenuRow>> rows;
+    const auto add=[&](NeuralOption option,const wchar_t* label,std::wstring value,bool dim=false) {
+        rows.push_back({option,PhotoMenuRow{L"",label,std::move(value),L"",!enabled || dim,false}});
+    };
+    add(NeuralOption::Style,L"Style",s.style==2?L"Cinematic":s.style==0?L"Standard":L"Natural");
+    add(NeuralOption::Strength,L"Strength",percent(s.intensity));
+    add(NeuralOption::Tone,L"Local tone",percent(s.tone));
+    add(NeuralOption::Detail,L"Local detail",percent(s.structure));
+    add(NeuralOption::Passes,L"Passes",std::to_wstring(s.passes));
+    add(NeuralOption::Mix,L"Mix with original",percent(s.mix));
+    add(NeuralOption::Resolution,foveated?L"Edge resolution":L"Resolution",whole(s.resolution,L"%"));
+    // A foveated centre only matters when the rest of the picture is reduced.
+    add(NeuralOption::Foveation,L"Foveated centre",s.foveation?whole(s.foveation,L"%"):std::wstring(L"Off"),s.resolution>=100);
+    return rows;
+}
+void NeuralOptionAdjust(NeuralOption option,int direction) {
+    auto s=PhotoNeuralSettings();
+    const auto step=[&](float& value,float low,float high){value=std::clamp(std::round((value+.1f*direction)*10)/10,low,high);};
+    switch(option) {
+    case NeuralOption::Style: {
+        constexpr int order[]{1,0,2}; // Natural, Standard, Cinematic
+        int at=0;for(int i=0;i<3;++i)if(order[i]==s.style)at=i;
+        s.style=order[(at+direction+3)%3];break;
+    }
+    case NeuralOption::Strength:step(s.intensity,0,2);break;
+    case NeuralOption::Tone:step(s.tone,0,2);break;
+    case NeuralOption::Detail:step(s.structure,0,2);break;
+    case NeuralOption::Passes:s.passes=std::clamp(s.passes+direction,1,3);break;
+    case NeuralOption::Mix:step(s.mix,0,1);break;
+    case NeuralOption::Resolution:s.resolution=std::clamp(s.resolution+10*direction,50,100);break;
+    case NeuralOption::Foveation:
+        s.foveation=s.foveation==0?(direction>0?30:0):s.foveation==30 && direction<0?0:std::clamp(s.foveation+10*direction,30,80);break;
+    }
+    PhotoNeuralSetSettings(s);
+}
 bridge::NeuralSettings PhotoNeuralSettings() {
     std::lock_guard lock(mutex);return settings;
 }
 void PhotoNeuralSetSettings(const bridge::NeuralSettings& value) {
     std::lock_guard lock(mutex);
     settings=bridge::Clamped(value);
-    Log("neural rendering: style=%d passes=%d strength=%.2f tone=%.2f detail=%.2f mix=%.2f",
-        settings.style,settings.passes,settings.intensity,settings.tone,settings.structure,settings.mix);
+    Log("neural rendering: style=%d passes=%d strength=%.2f tone=%.2f detail=%.2f mix=%.2f resolution=%d foveation=%d",
+        settings.style,settings.passes,settings.intensity,settings.tone,settings.structure,settings.mix,settings.resolution,settings.foveation);
 }
 
 PhotoNeuralState PhotoNeuralApply(IDXGISwapChain* swapchain,bool wanted) {

@@ -206,7 +206,7 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
         // Settings: one row per option, grouped, the selected row highlighted.
         constexpr int width=760,header=92,rowHeight=54,sectionHeight=50,bottom=22;
         int height=header+bottom;
-        std::wstring signature=std::to_wstring(state.selected);
+        std::wstring signature=state.title+L"|"+std::to_wstring(state.selected);
         for(size_t i=0;i<state.rows.size();++i) {
             const auto& row=state.rows[i];
             if(!row.section.empty())height+=sectionHeight;
@@ -222,10 +222,11 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
                 label(&family,28,Gdiplus::FontStyleRegular,Gdiplus::UnitPixel),value(&family,28,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),
                 key(&family,20,Gdiplus::FontStyleBold,Gdiplus::UnitPixel);
             Gdiplus::StringFormat right;right.SetAlignment(Gdiplus::StringAlignmentFar);right.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+            right.SetFormatFlags(Gdiplus::StringFormatFlagsNoWrap);right.SetTrimming(Gdiplus::StringTrimmingEllipsisCharacter); // Long filter names.
             Gdiplus::StringFormat left;left.SetLineAlignment(Gdiplus::StringAlignmentCenter);
             Gdiplus::StringFormat centre;centre.SetAlignment(Gdiplus::StringAlignmentCenter);centre.SetLineAlignment(Gdiplus::StringAlignmentCenter);
             g.FillRectangle(&accentBrush,32.f,34.f,8.f,30.f);
-            g.DrawString(L"PHOTO MODE",-1,&title,Gdiplus::RectF(52,22,600,54),&left,&whiteBrush);
+            g.DrawString(state.title.c_str(),-1,&title,Gdiplus::RectF(52,22,600,54),&left,&whiteBrush);
             float y=float(header);
             for(size_t i=0;i<state.rows.size();++i) {
                 const auto& row=state.rows[i];
@@ -246,7 +247,7 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
                 if(selected && !row.dim) {
                     // The left arrow sits just before the value.
                     Gdiplus::RectF size;g.MeasureString(row.value.c_str(),-1,&value,Gdiplus::PointF(0,0),&size);
-                    g.DrawString(L"\u2039",-1,&value,Gdiplus::RectF(valueBox.GetRight()-size.Width-34,y,30,float(rowHeight)),&centre,&accentBrush);
+                    g.DrawString(L"\u2039",-1,&value,Gdiplus::RectF(std::max(valueBox.X-30,valueBox.GetRight()-size.Width-34),y,30,float(rowHeight)),&centre,&accentBrush);
                 }
                 g.DrawString(row.value.c_str(),-1,&value,valueBox,&right,&valueBrush);
                 if(selected && !row.dim)
@@ -260,7 +261,7 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
             }
         },float(desc.Width)-margin-width*scale,margin,width*scale,height*scale);
         // Hint bar: only the essentials; everything else is in the panel.
-        const std::wstring hints=state.controller?
+        const std::wstring hints=!state.hints.empty()?state.hints:state.controller?
             L"LS  Move     RS  Look     RT / LT  Up / Down     D-pad  Select / Change     A  Photo     View  Hide     B  Back":
             L"WASD  Move     Mouse  Look     E / Q  Up / Down     \u2191\u2193  Select     \u2190\u2192  Change     P  Photo     H  Hide     Esc  Back";
         constexpr int hintWidth=1800,hintHeight=64;
