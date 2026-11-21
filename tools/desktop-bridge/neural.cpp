@@ -154,7 +154,7 @@ public:
             Barrier(stage.color12.Get(),D3D12_RESOURCE_STATE_COMMON,D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
             Barrier(stage.output12.Get(),D3D12_RESOURCE_STATE_COMMON,D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
             Bind(stage);
-            params_->Set("DLSSNR.Reset",1); // Still frames: no temporal history.
+            params_->Set("DLSSNR.Reset",1); // Independent frames; temporal smoothing is done in Compose.
             for(int pass=0;pass<settings.passes;++pass) {
                 if(pass) {
                     // Chain: this pass starts from the previous pass's result.
@@ -182,6 +182,7 @@ public:
         Check(context4_->Signal(completion_.Get(),sequence_),"signal completion");context11_->Flush();
         Check(completion_->SetEventOnCompletion(sequence_,event_),"completion event");
         if(WaitForSingleObject(event_,4000)!=WAIT_OBJECT_0)throw std::runtime_error("neural GPU timeout");
+        Diagnose();
         // Frame cost (CPU wait for the whole round trip): the first frames after a change, then every 600.
         LARGE_INTEGER end{},frequency{};QueryPerformanceCounter(&end);QueryPerformanceFrequency(&frequency);
         const double ms=double(end.QuadPart-start.QuadPart)*1000/double(frequency.QuadPart);
@@ -200,6 +201,37 @@ private:
         ngx::Handle* feature{};
     };
     void Note(const char* text) {if(log_){std::fprintf(log_,"%s\n",text);std::fflush(log_);}}
+    // %LOCALAPPDATA%\DiRT2VR\neural-diag.flag (lab only): checksums of each frame's input and output and the output's
+    // change from the previous frame, to tell game-side changes from model flicker.
+    void Diagnose() {
+        static const bool enabled=[]{wchar_t path[MAX_PATH]{};return ExpandEnvironmentStringsW(L"%LOCALAPPDATA%\\DiRT2VR\\neural-diag.flag",path,MAX_PATH) && GetFileAttributesW(path)!=INVALID_FILE_ATTRIBUTES;}();
+        if(!enabled || diagFrames_>=2400)return;
+        ++diagFrames_;
+        const auto read=[&](ID3D11Texture2D* texture,std::vector<unsigned char>& out) {
+            auto d=Describe(width_,height_,format_,0,0);d.Usage=D3D11_USAGE_STAGING;d.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
+            if(!diagStaging_)Check(device11_->CreateTexture2D(&d,nullptr,&diagStaging_),"diag staging");
+            context11_->CopyResource(diagStaging_.Get(),texture);
+            D3D11_MAPPED_SUBRESOURCE m{};Check(context11_->Map(diagStaging_.Get(),0,D3D11_MAP_READ,0,&m),"diag map");
+            out.resize(size_t(width_)*height_*4);
+            for(UINT y=0;y<height_;++y)std::memcpy(out.data()+size_t(y)*width_*4,static_cast<unsigned char*>(m.pData)+size_t(y)*m.RowPitch,size_t(width_)*4);
+            context11_->Unmap(diagStaging_.Get(),0);
+        };
+        const auto hash=[](const std::vector<unsigned char>& v,bool rgbOnly){uint64_t h=1469598103934665603ull;for(size_t i=0;i<v.size();++i){if(rgbOnly && i%4==3)continue;h=(h^v[i])*1099511628211ull;}return h;};
+        std::vector<unsigned char> input,output;read(input8_.Get(),input);read(output8_.Get(),output);
+        double change=0;size_t moved=0;
+        if(diagPrevious_.size()==output.size())for(size_t i=0;i<output.size();i+=4) {
+            int e=0;for(int c=0;c<3;++c){const int v=std::abs(int(output[i+c])-int(diagPrevious_[i+c]));change+=v;e=std::max(e,v);}
+            if(e>=4)++moved;
+        }
+        char line[200]{};std::snprintf(line,sizeof(line),"diag frame=%u input_rgb=%016llx input_alpha_differs=%d output=%016llx change=%.3f moved4=%.4f",diagFrames_,
+            static_cast<unsigned long long>(hash(input,true)),hash(input,false)!=hash(input,true) && diagInputAll_!=0 && diagInputAll_!=hash(input,false),
+            static_cast<unsigned long long>(hash(output,true)),change/(double(width_)*height_*3),double(moved)/(double(width_)*height_));
+        diagInputAll_=hash(input,false);
+        const uint64_t inHash=hash(input,true),outHash=hash(output,true);
+        if(diagFrames_<=3 || diagFrames_%240==0 || inHash!=diagLastIn_ || outHash!=diagLastOut_)Note(line);
+        diagLastIn_=inHash;diagLastOut_=outHash;diagPrevious_=std::move(output);
+    }
+    unsigned diagFrames_{};uint64_t diagInputAll_{},diagLastIn_{},diagLastOut_{};std::vector<unsigned char> diagPrevious_;ComPtr<ID3D11Texture2D> diagStaging_;
     void Devices(LUID adapterId) {
         ComPtr<IDXGIFactory4> factory;Check(CreateDXGIFactory1(IID_PPV_ARGS(&factory)),"dxgi factory");
         Check(factory->EnumAdapterByLuid(adapterId,IID_PPV_ARGS(&adapter_)),"game adapter");
@@ -267,9 +299,43 @@ private:
                         d=lerp(d,centre,smoothstep(0,options.z,edge));
                     }
                 }
+                return float4(d,1);
+            }
+            // Box average of the change over options.x full-resolution texels (bilinear taps); options.zw = texel.
+            float4 DownPS(V v):SV_Target {
+                float3 sum=0;
+                const int k=int(options.x)/2-1;float n=0;
+                for(int y=-k;y<=k;y+=2) for(int x=-k;x<=k;x+=2){sum+=image.SampleLevel(linearClamp,v.uv+float2(x,y)*options.zw,0).rgb;++n;}
+                return float4(sum/n,1);
+            }
+            // History towards the current low-frequency change; options.y = weight of the current frame.
+            float4 BlendPS(V v):SV_Target { return lerp(image.Load(int3(int2(v.position.xy),0)),fullOut.Load(int3(int2(v.position.xy),0)),options.y); }
+            // Original + change, with the change's low frequencies taken from the smoothed history.
+            float4 FinalPS(V v):SV_Target {
+                int3 p=int3(int2(v.position.xy),0);
+                float3 o=image.Load(p).rgb;
+                float3 d=fullOut.Load(p).rgb-fullSource.SampleLevel(linearClamp,v.uv,0).rgb+centreOut.SampleLevel(linearClamp,v.uv,0).rgb;
                 return float4(lerp(o,saturate(o+d),options.x),1);
             })";
-        ComPtr<ID3DBlob> vertex,crop,compose;
+        ComPtr<ID3DBlob> vertex,crop,compose,down,blend,final;
+        Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"DownPS","ps_5_0",0,0,&down,nullptr),"compile down");
+        Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"BlendPS","ps_5_0",0,0,&blend,nullptr),"compile blend");
+        Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"FinalPS","ps_5_0",0,0,&final,nullptr),"compile final");
+        Check(device11_->CreatePixelShader(down->GetBufferPointer(),down->GetBufferSize(),nullptr,&downPs_),"down ps");
+        Check(device11_->CreatePixelShader(blend->GetBufferPointer(),blend->GetBufferSize(),nullptr,&blendPs_),"blend ps");
+        Check(device11_->CreatePixelShader(final->GetBufferPointer(),final->GetBufferSize(),nullptr,&finalPs_),"final ps");
+        // Change at full resolution, and its 1/4-resolution average: current and two history buffers.
+        auto delta=Describe(width_,height_,DXGI_FORMAT_R16G16B16A16_FLOAT,D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET,0);
+        Check(device11_->CreateTexture2D(&delta,nullptr,&delta11_),"delta");
+        Check(device11_->CreateShaderResourceView(delta11_.Get(),nullptr,&deltaView_),"delta view");
+        Check(device11_->CreateRenderTargetView(delta11_.Get(),nullptr,&deltaTarget_),"delta target");
+        lowWidth_=std::max<UINT>(1,(width_+LowScale()-1)/LowScale());lowHeight_=std::max<UINT>(1,(height_+LowScale()-1)/LowScale());
+        auto low=Describe(lowWidth_,lowHeight_,DXGI_FORMAT_R16G16B16A16_FLOAT,D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET,0);
+        for(int i=0;i<3;++i) {
+            Check(device11_->CreateTexture2D(&low,nullptr,&low11_[i]),"low");
+            Check(device11_->CreateShaderResourceView(low11_[i].Get(),nullptr,&lowView_[i]),"low view");
+            Check(device11_->CreateRenderTargetView(low11_[i].Get(),nullptr,&lowTarget_[i]),"low target");
+        }
         Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"VS","vs_5_0",0,0,&vertex,nullptr),"compile vs");
         Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"CropPS","ps_5_0",0,0,&crop,nullptr),"compile crop");
         Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"ComposePS","ps_5_0",0,0,&compose,nullptr),"compile compose");
@@ -317,7 +383,7 @@ private:
             stages_.push_back(std::move(centre));
         }
         for(auto& stage:stages_){StageResources(stage);Create(stage,settings.style);}
-        style_=settings.style;resolution_=settings.resolution;foveation_=foveation;timeSum_=0;timeFrames_=0;
+        style_=settings.style;resolution_=settings.resolution;foveation_=foveation;timeSum_=0;timeFrames_=0;historyValid_=false;
         char line[200]{};std::snprintf(line,sizeof(line),"neural ready %ux%u format=%u style=%d resolution=%d%% stage=%ux%u foveation=%d%%%s",
             width_,height_,unsigned(format_),style_,resolution_,stages_[0].width,stages_[0].height,foveation_,foveation_?"":" (off)");
         Note(line);
@@ -392,14 +458,31 @@ private:
         Draw(cropPs_.Get(),constants,views,1,target,stage.width,stage.height);
     }
     // Original frame plus each stage's change, then blended with the original by mix.
+    // DLSS 5 decides its local tone afresh every frame and amplifies tiny input
+    // differences (a few one-level pixels shifted whole patches of the picture), which
+    // flickers. The change's low frequencies (1/4 resolution) are therefore averaged
+    // over a few frames; fine detail stays from the current frame, so motion keeps no trails.
     void Compose(float mix) {
         const auto& full=stages_[0];
         const Stage* centre=stages_.size()>1?&stages_[1]:nullptr;
-        float constants[8]{0,0,1,1,mix,centre?1.f:0.f,.12f,0};
+        float constants[8]{0,0,1,1,1,centre?1.f:0.f,.12f,0};
         if(centre)std::memcpy(constants,centre->rect,sizeof(centre->rect));
         ID3D11ShaderResourceView* views[]{inputView_.Get(),full.outputView.Get(),full.sourceView.Get(),
             centre?centre->outputView.Get():full.outputView.Get(),centre?centre->sourceView.Get():full.sourceView.Get()};
-        Draw(composePs_.Get(),constants,views,5,output8Target_.Get(),width_,height_);
+        Draw(composePs_.Get(),constants,views,5,deltaTarget_.Get(),width_,height_);
+        const float down[8]{0,0,0,0,float(LowScale()),0,1.f/float(width_),1.f/float(height_)};
+        ID3D11ShaderResourceView* deltaOnly[]{deltaView_.Get()};
+        Draw(downPs_.Get(),down,deltaOnly,1,lowTarget_[0].Get(),lowWidth_,lowHeight_);
+        const int next=3-history_; // History ping-pongs between buffers 1 and 2.
+        if(historyValid_) {
+            const float blend[8]{0,0,0,0,0,LowWeight(),0,0};
+            ID3D11ShaderResourceView* pair[]{lowView_[history_].Get(),lowView_[0].Get()};
+            Draw(blendPs_.Get(),blend,pair,2,lowTarget_[next].Get(),lowWidth_,lowHeight_);
+        } else context11_->CopyResource(low11_[next].Get(),low11_[0].Get());
+        history_=next;historyValid_=true;
+        const float final[8]{0,0,0,0,mix,0,0,0};
+        ID3D11ShaderResourceView* finalViews[]{inputView_.Get(),deltaView_.Get(),lowView_[0].Get(),lowView_[history_].Get()};
+        Draw(finalPs_.Get(),final,finalViews,4,output8Target_.Get(),width_,height_);
     }
     void Barrier(ID3D12Resource* resource,D3D12_RESOURCE_STATES before,D3D12_RESOURCE_STATES after) {
         D3D12_RESOURCE_BARRIER b{};b.Type=D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -414,6 +497,15 @@ private:
     ComPtr<ID3D11VertexShader> vs_;ComPtr<ID3D11PixelShader> cropPs_,composePs_;ComPtr<ID3D11Buffer> constants_;ComPtr<ID3D11SamplerState> sampler_;
     std::vector<Stage> stages_;
     int style_{-1},resolution_{},foveation_{},lastPasses_{};float lastMix_{-1};double timeSum_{};unsigned timeFrames_{};
+    // Temporal smoothing of the change's low frequencies (see Compose).
+    ComPtr<ID3D11Texture2D> delta11_,low11_[3];ComPtr<ID3D11ShaderResourceView> deltaView_,lowView_[3];
+    ComPtr<ID3D11RenderTargetView> deltaTarget_,lowTarget_[3];ComPtr<ID3D11PixelShader> downPs_,blendPs_,finalPs_;
+    UINT lowWidth_{},lowHeight_{};int history_{1};bool historyValid_{};
+    // Smoothing: texels per history texel and weight of the current frame. In a smoke test
+    // with the game's kind of input noise, 4 cut visibly changed pixels about tenfold
+    // (8 about fivefold); the weight mattered little.
+    static constexpr UINT LowScale(){return 4;}
+    static constexpr float LowWeight(){return .25f;}
     ComPtr<ID3D12Fence> inputFence12_,outputFence12_;ComPtr<ID3D11Fence> inputFence11_,outputFence11_,completion_;
     HANDLE event_{};UINT64 sequence_{};
     HMODULE coreModule_{},runtimeModule_{},shimModule_{};

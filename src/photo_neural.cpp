@@ -8,6 +8,8 @@
 #include <algorithm>
 #include <cmath>
 #include <cwchar>
+#include <cstring>
+#include <d3d11.h>
 
 namespace vr {
 namespace {
@@ -114,8 +116,20 @@ void PhotoNeuralSetSettings(const bridge::NeuralSettings& value) {
         settings.style,settings.passes,settings.intensity,settings.tone,settings.structure,settings.mix,settings.resolution,settings.foveation);
 }
 
-PhotoNeuralState PhotoNeuralApply(IDXGISwapChain* swapchain,bool wanted) {
-    if(!wanted || !swapchain)return PhotoNeuralState::Off;
+namespace {
+// The last processed Photo Mode frame and what it was made from.
+Microsoft::WRL::ComPtr<ID3D11Texture2D> still;
+D3D11_TEXTURE2D_DESC stillDesc{};
+uint64_t stillKey{},lastKey{};
+bridge::NeuralSettings stillSettings{};
+bool stillValid{},stillSettled{};
+bool SameSettings(const bridge::NeuralSettings& a,const bridge::NeuralSettings& b) {
+    return a.style==b.style && a.passes==b.passes && a.intensity==b.intensity && a.tone==b.tone && a.structure==b.structure &&
+        a.mix==b.mix && a.resolution==b.resolution && a.foveation==b.foveation;
+}
+}
+PhotoNeuralState PhotoNeuralApply(IDXGISwapChain* swapchain,bool wanted,uint64_t sceneKey) {
+    if(!wanted || !swapchain){stillValid=false;return PhotoNeuralState::Off;}
     const auto& paths=Configured();
     if(!paths.valid)return PhotoNeuralState::Failed;
     std::lock_guard lock(mutex);
@@ -123,7 +137,26 @@ PhotoNeuralState PhotoNeuralApply(IDXGISwapChain* swapchain,bool wanted) {
     if(bridge.Disabled())return PhotoNeuralState::Failed;
     Microsoft::WRL::ComPtr<ID3D11Texture2D> frame;
     if(FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&frame))))return PhotoNeuralState::Failed;
-    if(bridge.Transfer(frame.Get()))return PhotoNeuralState::On;
+    D3D11_TEXTURE2D_DESC desc{};frame->GetDesc(&desc);
+    Microsoft::WRL::ComPtr<ID3D11Device> device;frame->GetDevice(&device);
+    Microsoft::WRL::ComPtr<ID3D11DeviceContext> context;device->GetImmediateContext(&context);
+    // The frame shown now can be one camera step behind the key, so only a result made
+    // after the camera had already stopped for a frame is reused.
+    const bool settled=sceneKey==lastKey;lastKey=sceneKey;
+    if(stillValid && stillSettled && settled && stillKey==sceneKey && SameSettings(stillSettings,settings) && !std::memcmp(&desc,&stillDesc,sizeof(desc))) {
+        context->CopyResource(frame.Get(),still.Get()); // Unchanged view: the same picture again.
+        return PhotoNeuralState::On;
+    }
+    if(bridge.Transfer(frame.Get())) {
+        if(!still || std::memcmp(&desc,&stillDesc,sizeof(desc))) {
+            still.Reset();auto copy=desc;copy.BindFlags=0;copy.MiscFlags=0;copy.CPUAccessFlags=0;copy.Usage=D3D11_USAGE_DEFAULT;
+            if(FAILED(device->CreateTexture2D(&copy,nullptr,&still))){still.Reset();stillValid=false;return PhotoNeuralState::On;}
+            stillDesc=desc;
+        }
+        context->CopyResource(still.Get(),frame.Get());
+        stillKey=sceneKey;stillSettings=settings;stillValid=true;stillSettled=settled;
+        return PhotoNeuralState::On;
+    }
     if(bridge.Disabled())return PhotoNeuralState::Failed;
     return bridge.Completed()?PhotoNeuralState::On:PhotoNeuralState::Starting;
 }

@@ -16,6 +16,7 @@
 #include <atomic>
 #include <cstring>
 #include <mutex>
+#include <span>
 
 namespace vr {
 namespace {
@@ -360,7 +361,7 @@ void Adjust(const MenuEntry& entry,int direction,ULONGLONG now) {
 void PhotoModeFrame(IDXGISwapChain* swapchain) {
     if(!PhotoModeRequested())return;
     PhotoPanelState overlay;
-    bool show{},capture{},neuralWanted{};int dofState{};
+    bool show{},capture{},neuralWanted{};int dofState{};uint64_t sceneKey{};
     {
         std::lock_guard lock(mutex);
         if(!active) {
@@ -429,6 +430,9 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             for(auto& entry:rows)overlay.rows.push_back(std::move(entry.row));
             dofState=!dofEnabled?0:(now-dofSince>1000 && now-dofDrawn>1000)?2:1;
             neuralWanted=neuralEnabled;
+            // The camera as it will be drawn: unchanged means the same picture.
+            const auto view=camera.Record();sceneKey=1469598103934665603ull;
+            for(const auto byte:std::span(reinterpret_cast<const unsigned char*>(view.data()),sizeof(view)))sceneKey=(sceneKey^byte)*1099511628211ull;
             show=true;
         }
         neuralHeld=movement.neural;lookHeld=movement.look;letterboxHeld=movement.letterbox;gridHeld=movement.grid;
@@ -440,7 +444,7 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
     if(!show)return;
     // Neural rendering first (on the game's own frame), then blur, filters and saving;
     // photos include all of these but never the panel.
-    const auto state=PhotoNeuralApply(swapchain,neuralWanted);
+    const auto state=PhotoNeuralApply(swapchain,neuralWanted,sceneKey);
     {std::lock_guard lock(mutex);neuralState=state;}
     if(dofState && PhotoDofApply(swapchain,dof)) {
         std::lock_guard lock(mutex);dofDrawn=GetTickCount64();
