@@ -13,6 +13,10 @@ struct PhotoPanelState {
     bool autoFocus{};
     float focus{};     // Metres; negative when not yet known.
     int blur{};
+    const wchar_t* look=L"Off";
+    float exposure{};  // Stops.
+    float letterbox{}; // Aspect ratio; 0 off.
+    bool grid{};
 };
 // Copies the finished frame now and writes it as a PNG in the background
 // (Pictures\DiRT2VR). Call before drawing the panel so the photo stays clean.

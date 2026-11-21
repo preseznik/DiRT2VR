@@ -7,7 +7,9 @@
 #include <shlobj.h>
 #include <atomic>
 #include <cstdio>
+#include <cmath>
 #include <cstring>
+#include <cwchar>
 #include <functional>
 #include <memory>
 #include <mutex>
@@ -108,7 +110,7 @@ public:
         return blit_.Draw(0,texture_.Get(),target,w,h,true,x,y);
     }
 };
-PanelImage fullPanel(960,520),toastPanel(960,80);
+PanelImage fullPanel(960,600),toastPanel(960,80);
 
 std::wstring KeyName(unsigned scan) {
     wchar_t name[32]{};
@@ -188,7 +190,7 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
     ComPtr<ID3D11RenderTargetView> target;
     if(FAILED(device->CreateRenderTargetView(back.Get(),nullptr,&target)))return;
     const Gdiplus::Color white(255,245,245,245),green(255,183,235,25),grey(255,160,164,168),orange(255,255,170,60);
-    const unsigned height=desc.Height*32/100,width=unsigned(float(height)/fullPanel.Aspect());
+    const unsigned height=desc.Height*37/100,width=unsigned(float(height)/fullPanel.Aspect());
     const float margin=float(desc.Height/40);
     static bool reported{};
     bool drawn{};
@@ -204,18 +206,24 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
         if(state.dof==0)swprintf_s(depth,L"Depth of field off");
         else if(state.dof==2)swprintf_s(depth,L"Depth of field unavailable in this view");
         else swprintf_s(depth,L"Depth of field    Focus %s    Blur %d",focus,state.blur);
+        wchar_t look[128]{};
+        const bool lookActive=std::wcscmp(state.look,L"Off") || std::abs(state.exposure)>=.05f || state.letterbox>0 || state.grid;
+        swprintf_s(look,L"Filter %s    Brightness %+.1f%s%s",state.look,state.exposure,
+            state.letterbox>2?L"    Letterbox 2.39:1":state.letterbox>0?L"    Letterbox 1.85:1":L"",state.grid?L"    Grid":L"");
         const auto tilt=KeyName(0x2c)+L"/"+KeyName(0x2e);
         const std::wstring keyboard[]={L"WASD move  \u00b7  Mouse look  \u00b7  E/Q up/down",L"Shift faster  \u00b7  Ctrl slower",
             L"Wheel or PgUp/PgDn zoom  \u00b7  "+tilt+L" tilt",L"Middle button: clear zoom and tilt",
             L"F depth of field  \u00b7  "+KeyName(0x02)+L"/"+KeyName(0x03)+L" focus  \u00b7  "+KeyName(0x04)+L"/"+KeyName(0x05)+L" blur  \u00b7  Right click: autofocus",
+            L"G filter (Shift+G back)  \u00b7  "+KeyName(0x06)+L"/"+KeyName(0x07)+L" brightness  \u00b7  L letterbox  \u00b7  T grid",
             L"R start view  \u00b7  P save photo",L"H hide panel  \u00b7  Esc back to the pause menu"};
         const std::wstring pad[]={L"Left stick move  \u00b7  Right stick look  \u00b7  RT/LT up/down",L"RB faster  \u00b7  LB slower",
             L"D-pad up/down zoom  \u00b7  left/right tilt",L"Right-stick click: clear zoom and tilt",
             L"X depth of field  \u00b7  Hold X + D-pad: focus/blur  \u00b7  L3: autofocus",
+            L"Hold View + D-pad: filter (left/right) / brightness (up/down)",
             L"Y start view  \u00b7  A save photo",L"View button: hide panel  \u00b7  B back to the pause menu"};
         const auto& help=state.controller?pad:keyboard;
         const std::wstring footer=recent?text:L"Photos are saved to Pictures\\DiRT2VR";
-        std::wstring signature=std::wstring(status)+depth+footer+(error?L"!":L"");
+        std::wstring signature=std::wstring(status)+depth+look+footer+(error?L"!":L"")+(lookActive?L"+":L"");
         for(const auto& line:help)signature+=line;
         drawn=fullPanel.Draw(target.Get(),signature,[&](Gdiplus::Graphics& g) {
             Gdiplus::Font title(L"Segoe UI",44,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),bold(L"Segoe UI",30,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),
@@ -224,7 +232,8 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
             g.DrawString(L"PHOTO MODE",-1,&title,Gdiplus::PointF(32,18),&whiteBrush);
             g.DrawString(status,-1,&bold,Gdiplus::PointF(34,80),&greenBrush);
             g.DrawString(depth,-1,&bold,Gdiplus::PointF(34,120),state.dof==2?&orangeBrush:state.dof?&greenBrush:&greyBrush);
-            float y=172;
+            g.DrawString(look,-1,&bold,Gdiplus::PointF(34,160),lookActive?&greenBrush:&greyBrush);
+            float y=212;
             for(const auto& line:help){g.DrawString(line.c_str(),-1,&normal,Gdiplus::PointF(34,y),&whiteBrush);y+=40;}
             g.DrawString(footer.c_str(),-1,&normal,Gdiplus::PointF(34,y+8),recent?(error?&orangeBrush:&greenBrush):&greyBrush);
         },width,height,margin,margin);

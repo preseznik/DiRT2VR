@@ -3,6 +3,7 @@
 #include "photo_camera.h"
 #include "photo_overlay.h"
 #include "photo_dof.h"
+#include "photo_filter.h"
 #include "scene_camera.h"
 #include "game_pause.h"
 #include "chase_cursor.h"
@@ -37,6 +38,11 @@ bool dofEnabled{},dofKeyHeld{},padXHeld{},padXUsed{};
 int blurHeld{};
 PhotoDofSettings dof;
 ULONGLONG dofSince{},dofDrawn{};
+// Desktop filters; kept for the rest of the session.
+PhotoFilterSettings filter;
+bool lookHeld{},letterboxHeld{},gridHeld{},padViewHeld{},padViewUsed{};
+int lookStepHeld{};
+unsigned filterFrame{};
 IDirectInput8W* input{};
 IDirectInputDevice8W* mouse{};
 HWND mouseWindow{};
@@ -128,6 +134,10 @@ PhotoInput Poll(float dt,bool movement) {
         result.dof=Key('F');
         result.focus=(float(held(farther))-float(held(nearer)))*dt;
         result.blur=int(held(more))-int(held(less));
+        // Filters: G look (Shift+G back), top-row 5/6 brightness, L letterbox, T thirds grid.
+        static const int darker=row(0x06),brighter=row(0x07);
+        result.look=Key('G');result.letterbox=Key('L');result.grid=Key('T');
+        result.exposure=(float(held(brighter))-float(held(darker)))*dt;
     }
     const auto window=Focus();
     if(movement && mouseWindow!=window) {
@@ -149,7 +159,8 @@ PhotoInput Poll(float dt,bool movement) {
     }
     result.keyboard=result.right!=0 || result.forward!=0 || result.up!=0 || result.yaw!=0 || result.pitch!=0 ||
         result.zoom!=0 || result.roll!=0 || result.fast || result.slow || result.restart || result.level || result.photo || result.panel ||
-        result.dof || result.focus!=0 || result.blur!=0 || result.autofocus;
+        result.dof || result.focus!=0 || result.blur!=0 || result.autofocus ||
+        result.look || result.letterbox || result.grid || result.exposure!=0;
     if(!xbox) {
         auto module=LoadLibraryExW(L"xinput1_4.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32);
         if(module)xbox=reinterpret_cast<XboxFn>(GetProcAddress(module,"XInputGetState"));
@@ -172,21 +183,25 @@ PhotoInput Poll(float dt,bool movement) {
             const auto pressed=[&](WORD button){return (pad.wButtons&button)?1.f:0.f;};
             const float vertical=pressed(XINPUT_GAMEPAD_DPAD_UP)-pressed(XINPUT_GAMEPAD_DPAD_DOWN);
             const float horizontal=pressed(XINPUT_GAMEPAD_DPAD_RIGHT)-pressed(XINPUT_GAMEPAD_DPAD_LEFT);
-            // Holding X turns the D-pad into focus (up/down) and blur (left/right).
-            const bool x=(pad.wButtons&XINPUT_GAMEPAD_X)!=0;
-            result.padX|=x;
-            if(x){result.focus+=vertical*dt;result.blur+=int(horizontal);}
+            // Holding X turns the D-pad into focus (up/down) and blur (left/right);
+            // holding View turns it into brightness (up/down) and look (left/right).
+            const bool x=(pad.wButtons&XINPUT_GAMEPAD_X)!=0,view=(pad.wButtons&XINPUT_GAMEPAD_BACK)!=0;
+            result.padX|=x;result.padView|=view;
+            if(view){result.exposure+=vertical*dt;result.lookStep+=int(horizontal);}
+            else if(x){result.focus+=vertical*dt;result.blur+=int(horizontal);}
             else{result.zoom+=vertical*.8f*dt;result.roll+=horizontal*.5f*dt;}
             result.autofocus|=(pad.wButtons&XINPUT_GAMEPAD_LEFT_THUMB)!=0;
             result.restart|=(pad.wButtons&XINPUT_GAMEPAD_Y)!=0;
             result.level|=(pad.wButtons&XINPUT_GAMEPAD_RIGHT_THUMB)!=0;
             result.photo|=(pad.wButtons&XINPUT_GAMEPAD_A)!=0;
-            result.panel|=(pad.wButtons&XINPUT_GAMEPAD_BACK)!=0;
             result.controller|=used;
         }
     }
-    if(result.slow){result.zoom*=.25f;result.roll*=.25f;result.focus*=.25f;}
-    if(Headset()){result.zoom=result.roll=result.focus=0;result.level=result.dof=result.padX=result.autofocus=false;result.blur=0;}
+    if(result.slow){result.zoom*=.25f;result.roll*=.25f;result.focus*=.25f;result.exposure*=.25f;}
+    if(Headset()) {
+        result.zoom=result.roll=result.focus=result.exposure=0;result.blur=result.lookStep=0;
+        result.level=result.dof=result.padX=result.autofocus=result.look=result.letterbox=result.grid=result.padView=false;
+    }
     return result;
 }
 void End(const char* reason) {
@@ -280,7 +295,21 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
         if(!Headset() && camera.Ready()) {
             if(movement.controller)lastController=true;
             else if(movement.keyboard)lastController=false;
-            if(movement.panel && !panelHeld)panelVisible=!panelVisible;
+            // H toggles the panel on press; controller View toggles it on release unless it
+            // was held to change the look or brightness.
+            bool panelToggle=movement.panel && !panelHeld;
+            if(movement.padView){if(movement.lookStep!=0 || movement.exposure!=0)padViewUsed=true;}
+            else if(padViewHeld){panelToggle|=!padViewUsed;padViewUsed=false;}
+            if(panelToggle)panelVisible=!panelVisible;
+            const int looks=int(PhotoLooks.size());
+            int step=movement.lookStep!=lookStepHeld && movement.lookStep!=0 ? (movement.lookStep>0?1:-1) : 0;
+            if(movement.look && !lookHeld)step=movement.fast?-1:1; // Shift+G goes back.
+            if(step){filter.look=(filter.look+step+looks)%looks;Log("photo filter: look=%d",filter.look);}
+            if(movement.exposure!=0)filter.exposure=std::clamp(filter.exposure+movement.exposure,-2.f,2.f);
+            if(movement.letterbox && !letterboxHeld)filter.letterbox=(filter.letterbox+1)%int(PhotoLetterboxes.size());
+            if(movement.grid && !gridHeld)filter.grid=!filter.grid;
+            lookHeld=movement.look;letterboxHeld=movement.letterbox;gridHeld=movement.grid;
+            lookStepHeld=movement.lookStep;padViewHeld=movement.padView;
             capture=movement.photo && !photoHeld;
             // F toggles on press; controller X toggles on release unless it was held to adjust focus/blur.
             bool toggle=movement.dof && !dofKeyHeld;
@@ -310,6 +339,8 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             overlay.dof=!dofEnabled?0:(now-dofSince>1000 && now-dofDrawn>1000)?2:1;
             overlay.autoFocus=dof.autoFocus;overlay.blur=dof.blur;
             overlay.focus=dof.autoFocus?PhotoDofCentre():dof.focus;
+            overlay.look=PhotoLooks[filter.look].name;overlay.exposure=filter.exposure;
+            overlay.letterbox=PhotoLetterboxes[filter.letterbox];overlay.grid=filter.grid;
             show=true;
         }
         PhotoDofWanted(show && dofEnabled);
@@ -322,7 +353,13 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
         std::lock_guard lock(mutex);dofDrawn=GetTickCount64();
         if(overlay.dof==2)overlay.dof=1;
     }
+    // Filters after depth of field (so blur works on the original colours); the grid is on screen only.
+    PhotoFilterSettings look;
+    {std::lock_guard lock(mutex);look=filter;}
+    static bool filterReported{};
+    if(!PhotoFilterApply(swapchain,look,filterFrame++) && !filterReported){filterReported=true;Log("photo filter: draw failed");}
     if(capture){Log("photo capture requested");PhotoCapture(swapchain);}
+    PhotoGridDraw(swapchain,look);
     PhotoPanelDraw(swapchain,overlay);
 }
 float* PhotoModeExport(void* owner,float* native) {
@@ -350,9 +387,9 @@ float* PhotoModeExport(void* owner,float* native) {
     }
     exported=camera.Record();exportTick=GetTickCount64();
     if(LoggingEnabled() && exportTick-sampleTick>=1000) {
-        Log("photo sample: wall_ms=%llu scheduler=9 race_time=%.9f native_p=%.6f,%.6f,%.6f camera_p=%.6f,%.6f,%.6f fov=%.6f roll=%.6f dof=%d auto=%d focus=%.3f blur=%d centre=%.3f",
+        Log("photo sample: wall_ms=%llu scheduler=9 race_time=%.9f native_p=%.6f,%.6f,%.6f camera_p=%.6f,%.6f,%.6f fov=%.6f roll=%.6f dof=%d auto=%d focus=%.3f blur=%d centre=%.3f look=%d exposure=%.3f letterbox=%d grid=%d",
             exportTick,frozenTime,source[16],source[17],source[18],exported[16],exported[17],exported[18],exported[20],camera.Roll(),
-            dofEnabled,dof.autoFocus,dof.focus,dof.blur,PhotoDofCentre());
+            dofEnabled,dof.autoFocus,dof.focus,dof.blur,PhotoDofCentre(),filter.look,filter.exposure,filter.letterbox,filter.grid);
         sampleTick=exportTick;
     }
     alignas(16) thread_local std::array<float,28> output;

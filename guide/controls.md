@@ -98,6 +98,10 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 | Focus nearer / farther | 1 / 2 (top row) | Hold X + D-pad down / up |
 | Less / more blur | 3 / 4 (top row) | Hold X + D-pad left / right |
 | Autofocus on the picture centre | Right mouse button | Left-stick click |
+| Next / previous filter (desktop) | G / Shift+G | Hold View + D-pad right / left |
+| Darker / brighter | 5 / 6 (top row) | Hold View + D-pad down / up |
+| Letterbox: off, 2.39:1, 1.85:1 | L | — |
+| Rule-of-thirds grid | T | — |
 | Return to the pause menu | Esc | B or Start |
 
 On desktop, a **Photo panel** in the top-left corner shows the current view angle, tilt and speed with a short list of controls. It shows keyboard or controller help depending on what you used last. Press **H** (or **View**) to hide it for a clear view; it stays hidden until you show it again.
@@ -105,6 +109,8 @@ On desktop, a **Photo panel** in the top-left corner shows the current view angl
 **Saving photos:** press **P** (or **A**) to save the current picture as a PNG at the game's full rendering resolution. The Photo panel and messages are never included in the photo. Photos go to **Pictures\DiRT2VR** with the date and time in the file name; a short message confirms the save. Photo saving and the panel are desktop-only for now.
 
 **Depth of field:** press **F** (or tap **X**) to blur what is nearer or farther than the focus point, like a camera lens. It starts with autofocus on whatever is at the centre of the picture, so aim at your subject. Use **1 / 2** to set the focus distance yourself and **3 / 4** to change the amount of blur (1–10); the Photo panel shows the current focus distance and blur. The right mouse button (or left-stick click) returns to autofocus. Saved photos include the blur. Depth of field uses the game's shadow pass to find distances, so it needs in-game shadows switched on; the panel says when it is unavailable. It is desktop-only.
+
+**Filters:** press **G** (Shift+G to go back) to choose a look: Vivid, Warm, Cool, Black & white, Sepia, Film, Noir or Cinematic; **Off** shows the original picture. **5 / 6** adjust brightness. **L** adds cinema letterbox bars (2.39:1, then 1.85:1, then off), and **T** shows a rule-of-thirds grid to help framing. Filters, brightness and letterbox are saved in your photos; the grid is only on screen. With a controller, hold **View** and use the D-pad: left/right for the filter, up/down for brightness; a short tap on View still hides the panel. Filters are desktop-only.
 
 Looking slows down while zoomed in, so close-up framing stays steady. On desktop the camera eases in and out of movement. Slower mode also makes zoom and tilt finer.
 

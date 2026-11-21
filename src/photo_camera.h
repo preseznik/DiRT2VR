@@ -19,6 +19,11 @@ struct PhotoInput {
     bool dof{},padX{},autofocus{};
     float focus{};
     int blur{};
+    // Filters, also read by Photo Mode: G, L and T held, controller View held,
+    // brightness change in stops, look step direction held (controller).
+    bool look{},letterbox{},grid{},padView{};
+    float exposure{};
+    int lookStep{};
 };
 
 // EGO records contain up, left, forward and position as padded float4 rows.
