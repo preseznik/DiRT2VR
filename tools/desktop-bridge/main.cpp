@@ -1,4 +1,5 @@
 #include "../../src/desktop_bridge_protocol.h"
+#include "neural.h"
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <string>
@@ -76,9 +77,14 @@ int Run(Shared& shared,HANDLE request,HANDLE done,HANDLE stop) {
     }
     InterlockedExchange(&shared.status,static_cast<LONG>(Status::Stopped)); return 0;
 }
+// Usage: --transport <session>
+//        --neural <session> <runtime folder> [log file]
 int wmain(int argc,wchar_t** argv) {
-    if(argc!=3 || wcscmp(argv[1],L"--transport")!=0 || wcsncmp(argv[2],L"Local\\DiRT2VR-bridge-",21)!=0) {
-        std::puts("Transport-only helper. Neural Rendering and Super Resolution are not implemented."); return 2;
+    const bool neural=argc>=4 && argc<=5 && wcscmp(argv[1],L"--neural")==0;
+    const bool transport=argc==3 && wcscmp(argv[1],L"--transport")==0;
+    if((!neural && !transport) || wcsncmp(argv[2],L"Local\\DiRT2VR-bridge-",21)!=0 ||
+       (neural && !std::filesystem::path(argv[3]).is_absolute())) {
+        std::puts("DiRT2VR desktop bridge helper: --transport <session> | --neural <session> <runtime folder> [log file]"); return 2;
     }
     const std::wstring name=argv[2];
     Handle mapping{OpenFileMappingW(FILE_MAP_ALL_ACCESS,FALSE,name.c_str())};
@@ -88,6 +94,9 @@ int wmain(int argc,wchar_t** argv) {
     if(!mapping.value || !request.value || !done.value || !stop.value) return 2;
     auto shared=static_cast<Shared*>(MapViewOfFile(mapping.value,FILE_MAP_ALL_ACCESS,0,0,sizeof(Shared)));
     if(!shared) return 2;
-    const int result=Run(*shared,request.value,done.value,stop.value);
+    FILE* log{};
+    if(neural && argc==5)_wfopen_s(&log,argv[4],L"w");
+    const int result=neural?RunNeural(*shared,request.value,done.value,stop.value,argv[3],log):Run(*shared,request.value,done.value,stop.value);
+    if(log)std::fclose(log);
     UnmapViewOfFile(shared); return result;
 }

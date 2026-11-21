@@ -17,6 +17,8 @@ struct PhotoPanelState {
     float exposure{};  // Stops.
     float letterbox{}; // Aspect ratio; 0 off.
     bool grid{};
+    bool neuralConfigured{}; // Launcher set a DLSS 5 runtime folder.
+    int neural{};            // 0 off, 1 on, 2 starting, 3 failed.
 };
 // Copies the finished frame now and writes it as a PNG in the background
 // (Pictures\DiRT2VR). Call before drawing the panel so the photo stays clean.

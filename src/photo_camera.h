@@ -22,6 +22,7 @@ struct PhotoInput {
     // Filters, also read by Photo Mode: G, L and T held, controller View held,
     // brightness change in stops, look step direction held (controller).
     bool look{},letterbox{},grid{},padView{};
+    bool neural{}; // N held: DLSS 5 Neural Rendering toggle, read by Photo Mode.
     float exposure{};
     int lookStep{};
 };

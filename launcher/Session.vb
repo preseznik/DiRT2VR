@@ -499,7 +499,10 @@ Public Class Session
         GrassLaunch.Configure(start, settings)
         DesktopShadows.Configure(start, settings)
         ReplayCameraLaunch.Configure(start, settings)
-        PhotoModeLaunch.Configure(start, PhotoModeLaunch.Eligible(context, settings, start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1", replayId IsNot Nothing))
+        Dim headsetLaunch = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
+        Dim photoLaunch = PhotoModeLaunch.Eligible(context, settings, headsetLaunch, replayId IsNot Nothing)
+        PhotoModeLaunch.Configure(start, photoLaunch)
+        NeuralRendering.Configure(start, context, settings, photoLaunch, headsetLaunch)
         replayControls.ConfigureZoom(start)
         WorldRecords.ConfigureTarget(context, start, settings, replayId IsNot Nothing)
         Dim borderless = If(desktopBounds.HasValue, New BorderlessWindow(context, desktopBounds.GetValueOrDefault()), Nothing)

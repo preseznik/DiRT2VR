@@ -4,6 +4,7 @@
 #include "photo_overlay.h"
 #include "photo_dof.h"
 #include "photo_filter.h"
+#include "photo_neural.h"
 #include "scene_camera.h"
 #include "game_pause.h"
 #include "chase_cursor.h"
@@ -43,6 +44,8 @@ PhotoFilterSettings filter;
 bool lookHeld{},letterboxHeld{},gridHeld{},padViewHeld{},padViewUsed{};
 int lookStepHeld{};
 unsigned filterFrame{};
+// DLSS 5 Neural Rendering (desktop, needs the launcher's runtime folder); kept for the session.
+bool neuralEnabled{},neuralHeld{};
 IDirectInput8W* input{};
 IDirectInputDevice8W* mouse{};
 HWND mouseWindow{};
@@ -137,6 +140,7 @@ PhotoInput Poll(float dt,bool movement) {
         // Filters: G look (Shift+G back), top-row 5/6 brightness, L letterbox, T thirds grid.
         static const int darker=row(0x06),brighter=row(0x07);
         result.look=Key('G');result.letterbox=Key('L');result.grid=Key('T');
+        result.neural=Key('N');
         result.exposure=(float(held(brighter))-float(held(darker)))*dt;
     }
     const auto window=Focus();
@@ -160,7 +164,7 @@ PhotoInput Poll(float dt,bool movement) {
     result.keyboard=result.right!=0 || result.forward!=0 || result.up!=0 || result.yaw!=0 || result.pitch!=0 ||
         result.zoom!=0 || result.roll!=0 || result.fast || result.slow || result.restart || result.level || result.photo || result.panel ||
         result.dof || result.focus!=0 || result.blur!=0 || result.autofocus ||
-        result.look || result.letterbox || result.grid || result.exposure!=0;
+        result.look || result.letterbox || result.grid || result.exposure!=0 || result.neural;
     if(!xbox) {
         auto module=LoadLibraryExW(L"xinput1_4.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32);
         if(module)xbox=reinterpret_cast<XboxFn>(GetProcAddress(module,"XInputGetState"));
@@ -200,7 +204,7 @@ PhotoInput Poll(float dt,bool movement) {
     if(result.slow){result.zoom*=.25f;result.roll*=.25f;result.focus*=.25f;result.exposure*=.25f;}
     if(Headset()) {
         result.zoom=result.roll=result.focus=result.exposure=0;result.blur=result.lookStep=0;
-        result.level=result.dof=result.padX=result.autofocus=result.look=result.letterbox=result.grid=result.padView=false;
+        result.level=result.dof=result.padX=result.autofocus=result.look=result.letterbox=result.grid=result.padView=result.neural=false;
     }
     return result;
 }
@@ -308,6 +312,10 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             if(movement.exposure!=0)filter.exposure=std::clamp(filter.exposure+movement.exposure,-2.f,2.f);
             if(movement.letterbox && !letterboxHeld)filter.letterbox=(filter.letterbox+1)%int(PhotoLetterboxes.size());
             if(movement.grid && !gridHeld)filter.grid=!filter.grid;
+            if(movement.neural && !neuralHeld && PhotoNeuralConfigured()) {
+                neuralEnabled=!neuralEnabled;Log("photo neural rendering: enabled=%d",neuralEnabled);
+            }
+            neuralHeld=movement.neural;
             lookHeld=movement.look;letterboxHeld=movement.letterbox;gridHeld=movement.grid;
             lookStepHeld=movement.lookStep;padViewHeld=movement.padView;
             capture=movement.photo && !photoHeld;
@@ -341,6 +349,7 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             overlay.focus=dof.autoFocus?PhotoDofCentre():dof.focus;
             overlay.look=PhotoLooks[filter.look].name;overlay.exposure=filter.exposure;
             overlay.letterbox=PhotoLetterboxes[filter.letterbox];overlay.grid=filter.grid;
+            overlay.neuralConfigured=PhotoNeuralConfigured();overlay.neural=neuralEnabled?1:0;
             show=true;
         }
         PhotoDofWanted(show && dofEnabled);
@@ -348,7 +357,14 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
     }
     // Outside the lock: GPU copies must not hold up the camera export on another thread.
     if(!show)return;
-    // Blur first, then save, then draw the panel: photos include depth of field but never the panel.
+    // Neural rendering first (on the game's own frame), then blur, filters and saving;
+    // photos include all of these but never the panel.
+    switch(PhotoNeuralApply(swapchain,overlay.neural!=0)) {
+    case PhotoNeuralState::Off:break;
+    case PhotoNeuralState::Starting:overlay.neural=2;break;
+    case PhotoNeuralState::On:overlay.neural=1;break;
+    case PhotoNeuralState::Failed:overlay.neural=3;break;
+    }
     if(overlay.dof && PhotoDofApply(swapchain,dof)) {
         std::lock_guard lock(mutex);dofDrawn=GetTickCount64();
         if(overlay.dof==2)overlay.dof=1;

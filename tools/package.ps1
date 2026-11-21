@@ -89,6 +89,8 @@ if (!$SkipNativeBuild) {
     }
     & (Join-Path $PSScriptRoot 'driving-input/build.cmd')
     if ($LASTEXITCODE) { throw 'Driving input helper build failed' }
+    & (Join-Path $PSScriptRoot 'desktop-bridge/build.cmd')
+    if ($LASTEXITCODE) { throw 'Desktop bridge (DLSS 5) helper build failed' }
 }
 $output=Join-Path $root ('artifacts\packages\'+$version+'-'+(Get-Date -Format 'yyyyMMdd-HHmmss'))
 $stage=Join-Path $output 'stage'
@@ -101,6 +103,8 @@ Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
 & (Join-Path $PSScriptRoot 'stage-aspen-licenses.ps1') -LicenseDirectory (Join-Path $stage 'DiRT2VR/licenses')
 Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
 Copy-Item -LiteralPath 'build\driving-input\driving_input.dll' -Destination "$stage\DiRT2VR\payload"
+# x64 helper for Photo Mode's DLSS 5 Neural Rendering; the NVIDIA runtime itself is never shipped.
+Copy-Item -LiteralPath 'build\desktop-bridge\dirt2vr-desktop-bridge.exe','build\desktop-bridge\nvngx.dll_dirt2vr.dll' -Destination "$stage\DiRT2VR\payload"
 $sourceStage=Join-Path $output 'lan-source'
 & (Join-Path $PSScriptRoot 'lan/Stage-LauncherPayload.ps1') -Stage $stage -SourceStage $sourceStage -Version $version -Direct:$includeDirect
 $sourceName="DiRT2VR-$version-LAN-source.zip"
@@ -187,6 +191,8 @@ Copy-Item -LiteralPath '.deps\minhook\LICENSE.txt' -Destination "$stage\DiRT2VR\
 Copy-Item -LiteralPath '.deps\OpenXR-SDK\LICENSE' -Destination "$stage\DiRT2VR\licenses\OpenXR-Apache-2.0.txt"
 Copy-Item -LiteralPath '.deps\OpenXR-SDK\src\external\jsoncpp\LICENSE' -Destination "$stage\DiRT2VR\licenses\JsonCpp.txt"
 Copy-Item -LiteralPath 'licenses\MiscUtil.txt' -Destination "$stage\DiRT2VR\licenses\MiscUtil.txt"
+Copy-Item -LiteralPath 'tools\desktop-bridge\third_party\nr-caller\LICENSE' -Destination "$stage\DiRT2VR\licenses\DLSS5-NR-caller-MIT.txt"
+Copy-Item -LiteralPath 'tools\desktop-bridge\THIRD_PARTY_NOTICES.md' -Destination "$stage\DiRT2VR\licenses\DLSS5-helper-NOTICES.md"
 # Single-file publishing does not copy runtime license files into publish/.
 # Use the exact runtime packs selected by restore, not the newest installed SDK.
 $assets=Get-Content -LiteralPath 'launcher\obj\project.assets.json' -Raw | ConvertFrom-Json

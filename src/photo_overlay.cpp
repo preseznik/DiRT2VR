@@ -110,7 +110,7 @@ public:
         return blit_.Draw(0,texture_.Get(),target,w,h,true,x,y);
     }
 };
-PanelImage fullPanel(960,600),toastPanel(960,80);
+PanelImage fullPanel(960,600),neuralPanel(960,680),toastPanel(960,80);
 
 std::wstring KeyName(unsigned scan) {
     wchar_t name[32]{};
@@ -223,9 +223,16 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
             L"Y start view  \u00b7  A save photo",L"View button: hide panel  \u00b7  B back to the pause menu"};
         const auto& help=state.controller?pad:keyboard;
         const std::wstring footer=recent?text:L"Photos are saved to Pictures\\DiRT2VR";
-        std::wstring signature=std::wstring(status)+depth+look+footer+(error?L"!":L"")+(lookActive?L"+":L"");
+        // DLSS 5 lines only when the launcher has a runtime folder set.
+        const bool neural=state.neuralConfigured;
+        const wchar_t* neuralStatus=state.neural==1?L"Neural rendering (DLSS 5) on":state.neural==2?L"Neural rendering (DLSS 5) starting\u2026":
+            state.neural==3?L"Neural rendering (DLSS 5) unavailable: see the guide":L"Neural rendering (DLSS 5) off";
+        const std::wstring neuralHelp=state.controller?L"Neural rendering: N on the keyboard":L"N neural rendering (DLSS 5, slow)";
+        std::wstring signature=std::wstring(status)+depth+look+footer+(error?L"!":L"")+(lookActive?L"+":L"")+(neural?neuralStatus+neuralHelp:L"");
         for(const auto& line:help)signature+=line;
-        drawn=fullPanel.Draw(target.Get(),signature,[&](Gdiplus::Graphics& g) {
+        auto& panel=neural?neuralPanel:fullPanel;
+        const unsigned panelHeight=unsigned(float(width)*panel.Aspect());
+        drawn=panel.Draw(target.Get(),signature,[&](Gdiplus::Graphics& g) {
             Gdiplus::Font title(L"Segoe UI",44,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),bold(L"Segoe UI",30,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),
                 normal(L"Segoe UI",28,Gdiplus::FontStyleRegular,Gdiplus::UnitPixel);
             Gdiplus::SolidBrush whiteBrush(white),greenBrush(green),greyBrush(grey),orangeBrush(orange);
@@ -234,9 +241,14 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
             g.DrawString(depth,-1,&bold,Gdiplus::PointF(34,120),state.dof==2?&orangeBrush:state.dof?&greenBrush:&greyBrush);
             g.DrawString(look,-1,&bold,Gdiplus::PointF(34,160),lookActive?&greenBrush:&greyBrush);
             float y=212;
+            if(neural) {
+                g.DrawString(neuralStatus,-1,&bold,Gdiplus::PointF(34,200),state.neural==3?&orangeBrush:state.neural?&greenBrush:&greyBrush);
+                y=252;
+            }
             for(const auto& line:help){g.DrawString(line.c_str(),-1,&normal,Gdiplus::PointF(34,y),&whiteBrush);y+=40;}
+            if(neural){g.DrawString(neuralHelp.c_str(),-1,&normal,Gdiplus::PointF(34,y),&whiteBrush);y+=40;}
             g.DrawString(footer.c_str(),-1,&normal,Gdiplus::PointF(34,y+8),recent?(error?&orangeBrush:&greenBrush):&greyBrush);
-        },width,height,margin,margin);
+        },width,panelHeight,margin,margin);
     } else {
         drawn=toastPanel.Draw(target.Get(),text+(error?L"!":L""),[&](Gdiplus::Graphics& g) {
             Gdiplus::Font normal(L"Segoe UI",30,Gdiplus::FontStyleBold,Gdiplus::UnitPixel);

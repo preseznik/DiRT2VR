@@ -112,6 +112,13 @@ On desktop, a **Photo panel** in the top-left corner shows the current view angl
 
 **Filters:** press **G** (Shift+G to go back) to choose a look: Vivid, Warm, Cool, Black & white, Sepia, Film, Noir or Cinematic; **Off** shows the original picture. **5 / 6** adjust brightness. **L** adds cinema letterbox bars (2.39:1, then 1.85:1, then off), and **T** shows a rule-of-thirds grid to help framing. Filters, brightness and letterbox are saved in your photos; the grid is only on screen. With a controller, hold **View** and use the D-pad: left/right for the filter, up/down for brightness; a short tap on View still hides the panel. Filters are desktop-only.
 
+**Neural rendering (DLSS 5, experimental):** if you have your own copy of NVIDIA's DLSS 5 Neural Rendering runtime (`nvngx_dlssnr.dll`), you can use it for a neural-rendered look in Photo Mode.
+- **Setup:** set its folder under **Graphics → Photo Mode (desktop) → DLSS 5 runtime folder**, save, and relaunch. The launcher shows whether it found the file.
+- **Using it:** in Photo Mode press **N** to turn it on or off. The panel shows "starting…" for a moment, then "on". Depth of field, filters and saved photos all build on the neural-rendered picture.
+- **Requirements:** an NVIDIA RTX graphics card with a current driver, and DX11. Each frame takes extra time, so Photo Mode may feel slower while it is on.
+- **Not included:** DiRT2VR does not include or download the runtime. Desktop only, and not available in VR, LAN or replays.
+- **If the panel says "unavailable":** the runtime could not start on your graphics card or driver. Turn on diagnostic logging and check `neural-helper.log` in the session log folder.
+
 Looking slows down while zoomed in, so close-up framing stays steady. On desktop the camera eases in and out of movement. Slower mode also makes zoom and tilt finer.
 
 Choose Continue in the pause menu to resume driving. Moving the camera does not move your car. Switching away from the game returns to the pause menu too. If you choose **PHOTO MODE** again before resuming the race, the camera continues from your last shot; once you resume driving, the next Photo Mode starts behind the car again.

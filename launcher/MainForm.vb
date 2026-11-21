@@ -56,6 +56,7 @@ Public Class MainForm
     Private ReadOnly desktopVSync As New CheckBox With {.Text = "On", .Name = "DesktopVSync", .AutoSize = True}
     Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
     Private ReadOnly trackDepthOfField As New CheckBox With {.Text = "On", .Name = "TrackDepthOfField", .AutoSize = True}
+    Private ReadOnly neuralRuntime As New TextBox With {.Name = "NeuralRuntimeFolder", .AccessibleName = "DLSS 5 runtime folder", .Width = 320}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
     Private ReadOnly desktopShadowDistance As New ValueSlider("DesktopShadowDistance", 0, 7, 0, valueLabels:={"Game", "160 m", "240 m", "320 m", "400 m", "480 m", "560 m", "640 m"})
@@ -786,6 +787,23 @@ Public Class MainForm
         trackDepthOfField.Checked = settings.TrackDepthOfField
         Field(trackEffects, "Depth of field", trackDepthOfField)
         Tip(trackDepthOfField, "Enable distance blur on supported tracks (currently Pikes Peak)." & vbCrLf & "Applies to every car. Other tracks keep their original effects. Save and relaunch to apply.")
+        Dim photo = Section(columns.First, "Photo Mode (desktop)")
+        Dim neuralRow As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True}
+        neuralRow.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100)) : neuralRow.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
+        neuralRuntime.Text = settings.NeuralRuntimeFolder : neuralRow.Controls.Add(neuralRuntime)
+        Dim neuralBrowse As New Button With {.Text = "Browse…", .AutoSize = True, .Name = "NeuralRuntimeBrowse"}
+        Dim neuralStatus As New Label With {.AutoSize = True, .MaximumSize = New Size(460, 0), .Name = "NeuralRuntimeStatus"}
+        Dim refreshNeural As Action = Sub() neuralStatus.Text = NeuralRendering.Describe(neuralRuntime.Text)
+        AddHandler neuralBrowse.Click, Sub()
+                                           Using picker As New FolderBrowserDialog With {.Description = "Choose the folder that contains nvngx_dlssnr.dll.", .UseDescriptionForTitle = True, .SelectedPath = neuralRuntime.Text}
+                                               If picker.ShowDialog(Me) = DialogResult.OK Then neuralRuntime.Text = picker.SelectedPath
+                                           End Using
+                                       End Sub
+        AddHandler neuralRuntime.TextChanged, Sub() refreshNeural()
+        neuralRow.Controls.Add(neuralBrowse)
+        Field(photo, "DLSS 5 runtime folder (Experimental)", neuralRow)
+        photo.Controls.Add(neuralStatus) : refreshNeural()
+        Tip(neuralRow, "Optional. A folder containing your own copy of NVIDIA's DLSS 5 Neural Rendering runtime (nvngx_dlssnr.dll). DiRT2VR does not include or download it." & vbCrLf & "Then press N in Photo Mode for a neural-rendered look. Needs an NVIDIA RTX GPU and DX11. Leave empty to turn it off. Save and relaunch to apply.")
         Dim render = Section(columns.First, "VR rendering")
         renderScale.Value = settings.VrRenderScale : fieldOfView.Value = settings.FieldOfView
         mirrors.Items.AddRange({"Game setting", "On", "Off"})
@@ -1141,6 +1159,7 @@ Public Class MainForm
         settings.VrTrailerMenus = trailerMenus.Checked
         settings.VrPaddockZoom = paddockZoom.Checked
         settings.ExtendedGrass = extendedGrass.Checked
+        settings.NeuralRuntimeFolder = neuralRuntime.Text.Trim()
         settings.VrPerformanceDisplay = performanceDisplay.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked
         settings.SteeringObserveOnly = steeringObserve.Checked

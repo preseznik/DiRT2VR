@@ -4,10 +4,13 @@
 #include <new>
 #include <cstdio>
 #include <chrono>
+#include <algorithm>
 
 namespace vr {
 using Microsoft::WRL::ComPtr;
-DesktopBridge::DesktopBridge(std::wstring helper,Report report,DWORD waitMilliseconds):helper_(std::move(helper)),report_(report),waitMilliseconds_(waitMilliseconds==32?32:8) {}
+DesktopBridge::DesktopBridge(std::wstring helper,Report report,DWORD waitMilliseconds,std::wstring mode,std::wstring arguments):
+    helper_(std::move(helper)),mode_(std::move(mode)),arguments_(std::move(arguments)),report_(report),
+    waitMilliseconds_(std::clamp<DWORD>(waitMilliseconds,1,2000)) {}
 DesktopBridge::~DesktopBridge() { Stop(); }
 void DesktopBridge::Note(const char* message) const { if(report_) report_(message); }
 void DesktopBridge::Stop() {
@@ -74,7 +77,7 @@ bool DesktopBridge::Start(ID3D11Texture2D* frame,const D3D11_TEXTURE2D_DESC& des
     if(!request_ || !done_ || !stop_ || !job_ ||
        !SetInformationJobObject(job_,JobObjectExtendedLimitInformation,&limits,sizeof(limits)))
         return Fail("unavailable: helper lifecycle setup failed");
-    std::wstring command=L"\""+helper_+L"\" --transport \""+base+L"\"";
+    std::wstring command=L"\""+helper_+L"\" "+mode_+L" \""+base+L"\""+(arguments_.empty()?L"":L" "+arguments_);
     STARTUPINFOW startup{}; startup.cb=sizeof(startup); PROCESS_INFORMATION pi{};
     if(!CreateProcessW(helper_.c_str(),command.data(),nullptr,nullptr,FALSE,CREATE_NO_WINDOW|CREATE_SUSPENDED,
                        nullptr,nullptr,&startup,&pi)) return Fail("unavailable: helper launch failed");
@@ -86,7 +89,8 @@ bool DesktopBridge::Start(ID3D11Texture2D* frame,const D3D11_TEXTURE2D_DESC& des
     const bool resumed=ResumeThread(pi.hThread)!=static_cast<DWORD>(-1); CloseHandle(pi.hThread);
     if(!resumed) return Fail("unavailable: helper could not start");
     desc_=desc; started_=GetTickCount64();
-    Note(waitMilliseconds_==32?"starting x64 GPU transport with diagnostic 32 ms wait budget":"starting x64 GPU transport with 8 ms wait budget"); return true;
+    char started[96]{};sprintf_s(started,"starting x64 helper (%ls) with %lu ms wait budget",mode_.c_str(),waitMilliseconds_);
+    Note(started); return true;
 }
 bool DesktopBridge::Transfer(ID3D11Texture2D* frame) {
     if(disabled_ || !frame) return false;
@@ -98,12 +102,12 @@ bool DesktopBridge::Transfer(ID3D11Texture2D* frame) {
     if(WaitForSingleObject(process_,0)!=WAIT_TIMEOUT) return Fail("disabled: helper exited; original frame retained");
     const auto status=static_cast<bridge::Status>(InterlockedCompareExchange(&shared_->status,0,0));
     if(status==bridge::Status::Starting) {
-        if(GetTickCount64()-started_>5000) return Fail("disabled: helper startup timed out; original frame retained");
+        if(GetTickCount64()-started_>StartupLimit()) return Fail("disabled: helper startup timed out; original frame retained");
         return false;
     }
     if(status!=bridge::Status::Ready) return Fail("disabled: helper reported failure; original frame retained");
     if(pending_) {
-        if(GetTickCount64()-pendingSince_>1000) return Fail("disabled: helper stalled; original frame retained");
+        if(GetTickCount64()-pendingSince_>StallLimit()) return Fail("disabled: helper stalled; original frame retained");
         pendingReady_=pendingReady_ || WaitForSingleObject(done_,0)==WAIT_OBJECT_0;
         if(!pendingReady_) return false;
         if(shared_->completed!=sequence_) return Fail("disabled: mismatched late frame; original frame retained");

@@ -9,7 +9,9 @@ namespace vr {
 class DesktopBridge {
 public:
     using Report=void(*)(const char*);
-    explicit DesktopBridge(std::wstring helper,Report report=nullptr,DWORD waitMilliseconds=8);
+    // mode: "--transport" or "--neural"; arguments follow the session name on the helper's command line.
+    explicit DesktopBridge(std::wstring helper,Report report=nullptr,DWORD waitMilliseconds=8,
+                           std::wstring mode=L"--transport",std::wstring arguments={});
     ~DesktopBridge();
     DesktopBridge(const DesktopBridge&)=delete;
     DesktopBridge& operator=(const DesktopBridge&)=delete;
@@ -24,7 +26,10 @@ private:
     bool Fail(const char* message);
     void Stop();
     void Note(const char* message) const;
-    std::wstring helper_;
+    // Neural Rendering loads a model at startup and can be slow on its first frame.
+    ULONGLONG StartupLimit() const { return mode_==L"--neural" ? 30000 : 5000; }
+    ULONGLONG StallLimit() const { return mode_==L"--neural" ? 10000 : 1000; }
+    std::wstring helper_,mode_,arguments_;
     Report report_{};
     DWORD waitMilliseconds_{8};
     bool disabled_{};

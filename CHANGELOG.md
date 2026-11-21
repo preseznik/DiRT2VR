@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Photo Mode on desktop can use DLSS 5 Neural Rendering for a neural-rendered look (N), with a runtime you supply yourself: set its folder under Graphics → Photo Mode (desktop) → DLSS 5 runtime folder. DiRT2VR ships only a small 64-bit helper that loads your runtime and the NVIDIA driver's NGX core; it contains no NVIDIA SDK code and never includes or downloads the runtime. Depth of field, filters and saved photos build on the result. A scripted desktop lab run with a community runtime on an RTX 4080 SUPER passed; other GPUs, runtimes and the Xbox controller are not covered.
+
 - Groundwork for DLSS 5 neural rendering: an optional desktop GPU transport that hands finished frames to a separate 64-bit helper and back, with the original frame kept on any delay or failure. It is built only with `-DDIRT2VR_DESKTOP_BRIDGE=ON` and needs developer environment variables, so normal builds and players see no change.
 
 - Photo Mode on desktop has filters: nine looks (Off, Vivid, Warm, Cool, Black & white, Sepia, Film, Noir, Cinematic) with G or View + D-pad, brightness (5/6 or View + D-pad up/down), 2.39:1 and 1.85:1 letterbox bars (L) and a rule-of-thirds grid (T, on screen only). Filters, brightness and letterbox are included in saved photos. The controller's View button now hides the panel on a short tap. A scripted desktop lab run (keyboard and mouse) passed; the Xbox controller is not covered yet.
