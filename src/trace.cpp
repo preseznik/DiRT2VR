@@ -13,6 +13,9 @@
 #include "game_pause.h"
 #include "photo_mode.h"
 #include "photo_dof.h"
+#ifdef DIRT2VR_DESKTOP_BRIDGE
+#include "desktop_bridge.h"
+#endif
 #include "game_xr.h"
 #include "hud_capture.h"
 #include "hud_elements.h"
@@ -1888,6 +1891,10 @@ bool ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
 HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST)return realPresent(swapchain,interval,flags);
     graphics::SampleVideoMemory(swapchain);
+#ifdef DIRT2VR_DESKTOP_BRIDGE
+    // Before Photo Mode, so later processing sees the unmodified game frame.
+    DesktopBridgePresent(swapchain,frame.load());
+#endif
     PhotoModeFrame(swapchain);
     SeatDesktopFrame(swapchain);
     const auto f=frame.fetch_add(1);

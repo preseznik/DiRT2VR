@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Groundwork for DLSS 5 neural rendering: an optional desktop GPU transport that hands finished frames to a separate 64-bit helper and back, with the original frame kept on any delay or failure. It is built only with `-DDIRT2VR_DESKTOP_BRIDGE=ON` and needs developer environment variables, so normal builds and players see no change.
+
 - Photo Mode on desktop has filters: nine looks (Off, Vivid, Warm, Cool, Black & white, Sepia, Film, Noir, Cinematic) with G or View + D-pad, brightness (5/6 or View + D-pad up/down), 2.39:1 and 1.85:1 letterbox bars (L) and a rule-of-thirds grid (T, on screen only). Filters, brightness and letterbox are included in saved photos. The controller's View button now hides the panel on a short tap. A scripted desktop lab run (keyboard and mouse) passed; the Xbox controller is not covered yet.
 
 - Photo Mode on desktop has depth of field: F (or X) blurs what is nearer or farther than the focus point, with autofocus on the picture centre (right mouse button or left-stick click), manual focus (1/2, or X + D-pad up/down) and blur strength 1–10 (3/4, or X + D-pad left/right). Saved photos include it. It reads distances from the game's shadow pass, so it needs in-game shadows on. A scripted desktop lab run (keyboard and mouse) passed; Xbox controller and other tracks are not covered yet. Photo Mode's middle and right mouse buttons are now read more reliably.
