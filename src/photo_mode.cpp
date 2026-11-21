@@ -1,6 +1,7 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include "photo_mode.h"
 #include "photo_camera.h"
+#include "photo_overlay.h"
 #include "scene_camera.h"
 #include "game_pause.h"
 #include "chase_cursor.h"
@@ -28,6 +29,8 @@ PhotoCamera saved;
 bool savedValid{};
 void* savedManager{};
 double savedTime{};
+// Desktop panel: shown by default, H/View toggles it for the rest of the session.
+bool panelVisible=true,panelHeld{},photoHeld{},lastController{};
 IDirectInput8W* input{};
 IDirectInputDevice8W* mouse{};
 HWND mouseWindow{};
@@ -108,6 +111,7 @@ PhotoInput Poll(float dt,bool movement) {
         result.roll=(float(tiltRight && Key(tiltRight))-float(tiltLeft && Key(tiltLeft)))*.5f*dt;
         result.zoom=(float(Key(VK_PRIOR))-float(Key(VK_NEXT)))*.8f*dt;
         result.restart=Key('R');
+        result.photo=Key('P');result.panel=Key('H');
         result.zoom+=float(TakePhotoWheel())/WHEEL_DELTA*.1f; // Wheel away from you zooms in.
     }
     const auto window=Focus();
@@ -129,6 +133,8 @@ PhotoInput Poll(float dt,bool movement) {
             result.level|=(state.rgbButtons[2]&0x80)!=0;
         } else mouse->Acquire(); // Discard reacquisition deltas.
     }
+    result.keyboard=result.right!=0 || result.forward!=0 || result.up!=0 || result.yaw!=0 || result.pitch!=0 ||
+        result.zoom!=0 || result.roll!=0 || result.fast || result.slow || result.restart || result.level || result.photo || result.panel;
     if(!xbox) {
         auto module=LoadLibraryExW(L"xinput1_4.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32);
         if(module)xbox=reinterpret_cast<XboxFn>(GetProcAddress(module,"XInputGetState"));
@@ -153,6 +159,9 @@ PhotoInput Poll(float dt,bool movement) {
             result.roll+=(pressed(XINPUT_GAMEPAD_DPAD_RIGHT)-pressed(XINPUT_GAMEPAD_DPAD_LEFT))*.5f*dt;
             result.restart|=(pad.wButtons&XINPUT_GAMEPAD_Y)!=0;
             result.level|=(pad.wButtons&XINPUT_GAMEPAD_RIGHT_THUMB)!=0;
+            result.photo|=(pad.wButtons&XINPUT_GAMEPAD_A)!=0;
+            result.panel|=(pad.wButtons&XINPUT_GAMEPAD_BACK)!=0;
+            result.controller|=used;
         }
     }
     if(result.slow){result.zoom*=.25f;result.roll*=.25f;}
@@ -224,24 +233,43 @@ void PhotoModePauseChanged(bool paused) {
     if(active)End("native-unpause");
     savedValid=false; // A kept shot belongs to the pause it was taken in.
 }
-void PhotoModeFrame() {
+void PhotoModeFrame(IDXGISwapChain* swapchain) {
     if(!PhotoModeRequested())return;
-    std::lock_guard lock(mutex);
-    if(!active) {
-        if(blocking && !Poll(0,false).exit)blocking=false;
-        return;
+    PhotoPanelState overlay;
+    bool show{},capture{};
+    {
+        std::lock_guard lock(mutex);
+        if(!active) {
+            if(blocking && !Poll(0,false).exit)blocking=false;
+            return;
+        }
+        const auto now=GetTickCount64();const auto window=Focus();
+        if(focusLost.exchange(false) || !window) {End("focus-lost");return;}
+        if(!SameManager() || !NativePaused(menuState)) {End("scene-changed");return;}
+        double time{};
+        if(!RaceClock(menuState,time) || std::abs(time-frozenTime)>.000001) {End("race-time-changed");return;}
+        const float dt=float(now-tick)*.001f;tick=now;
+        auto movement=Poll(dt,true);
+        if(!armed) {if(!movement.exit)armed=true;movement={};}
+        if(movement.exit){End("back");return;}
+        camera.Move(movement,dt);
+        UpdatePhotoCursor(window,true);
+        // The panel and photos use the desktop frame; VR shows the headset view instead.
+        if(!Headset() && camera.Ready()) {
+            if(movement.controller)lastController=true;
+            else if(movement.keyboard)lastController=false;
+            if(movement.panel && !panelHeld)panelVisible=!panelVisible;
+            capture=movement.photo && !photoHeld;
+            const auto record=camera.Record();
+            overlay={panelVisible,lastController,record[20]*57.2957795f,camera.Roll()*57.2957795f,movement.fast?1:movement.slow?-1:0};
+            show=true;
+        }
+        panelHeld=movement.panel;photoHeld=movement.photo;
     }
-    const auto now=GetTickCount64();const auto window=Focus();
-    if(focusLost.exchange(false) || !window) {End("focus-lost");return;}
-    if(!SameManager() || !NativePaused(menuState)) {End("scene-changed");return;}
-    double time{};
-    if(!RaceClock(menuState,time) || std::abs(time-frozenTime)>.000001) {End("race-time-changed");return;}
-    const float dt=float(now-tick)*.001f;tick=now;
-    auto movement=Poll(dt,true);
-    if(!armed) {if(!movement.exit)armed=true;movement={};}
-    if(movement.exit){End("back");return;}
-    camera.Move(movement,dt);
-    UpdatePhotoCursor(window,true);
+    // Outside the lock: GPU copies must not hold up the camera export on another thread.
+    if(!show)return;
+    if(capture){Log("photo capture requested");PhotoCapture(swapchain);} // Before the panel, so the photo is clean.
+    PhotoPanelDraw(swapchain,overlay);
 }
 float* PhotoModeExport(void* owner,float* native) {
     if(!active.load())return nullptr;

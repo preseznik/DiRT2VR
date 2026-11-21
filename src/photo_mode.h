@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+struct IDXGISwapChain;
 namespace vr {
 bool PhotoModeRequested();
 bool EnablePhotoMode();
@@ -8,7 +9,8 @@ bool PhotoModeBlocksInput();
 void PhotoSelectCamera(void* manager);
 // The shared native menu check calls this after its original update.
 bool PhotoModeMenu(void* state,void* result);
-void PhotoModeFrame();
+// Present-time update; on desktop it may save a photo and draw the Photo panel.
+void PhotoModeFrame(IDXGISwapChain* swapchain);
 void PhotoModePauseChanged(bool paused);
 // Queue window-thread cancellation; native camera restoration stays on an update thread.
 void PhotoModeFocusLost();

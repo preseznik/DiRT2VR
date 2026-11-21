@@ -1887,7 +1887,7 @@ bool ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
 HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST)return realPresent(swapchain,interval,flags);
     graphics::SampleVideoMemory(swapchain);
-    PhotoModeFrame();
+    PhotoModeFrame(swapchain);
     SeatDesktopFrame(swapchain);
     const auto f=frame.fetch_add(1);
     if(TakeCaptureRequest(f,false)) {
@@ -1899,7 +1899,7 @@ HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT i
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
     graphics::SampleVideoMemory(swapchain);
-    PhotoModeFrame();
+    PhotoModeFrame(swapchain);
     if(!HeadsetEnabled() && (requestedCaptureFrame==frame.load() || TakeCaptureRequest(frame.load(),false))) {
         Screenshot(swapchain,frame.load());requestedCaptureFrame=~uint64_t{};
     }

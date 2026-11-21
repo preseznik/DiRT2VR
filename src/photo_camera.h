@@ -11,6 +11,9 @@ struct PhotoInput {
     bool fast{},slow{},exit{};
     bool restart{}; // Return to the pose, zoom and roll Photo Mode started with.
     bool level{};   // Clear zoom and roll; keep position and heading.
+    // Read by Photo Mode, not the camera: held state of the photo and panel buttons,
+    // and which device was used this frame (for the panel's help text).
+    bool photo{},panel{},controller{},keyboard{};
 };
 
 // EGO records contain up, left, forward and position as padded float4 rows.

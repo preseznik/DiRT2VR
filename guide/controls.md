@@ -92,7 +92,13 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 | Tilt the camera left / right (desktop) | Z / C, the keys either side of X (Y / C on German-style keyboards) | D-pad left / right |
 | Clear zoom and tilt | Middle mouse button | Right-stick click |
 | Back to the starting view | R | Y |
+| Save a photo (desktop) | P | A |
+| Hide / show the Photo panel (desktop) | H | View (Back) |
 | Return to the pause menu | Esc | B or Start |
+
+On desktop, a **Photo panel** in the top-left corner shows the current view angle, tilt and speed with a short list of controls. It shows keyboard or controller help depending on what you used last. Press **H** (or **View**) to hide it for a clear view; it stays hidden until you show it again.
+
+**Saving photos:** press **P** (or **A**) to save the current picture as a PNG at the game's full rendering resolution. The Photo panel and messages are never included in the photo. Photos go to **Pictures\DiRT2VR** with the date and time in the file name; a short message confirms the save. Photo saving and the panel are desktop-only for now.
 
 Looking slows down while zoomed in, so close-up framing stays steady. On desktop the camera eases in and out of movement. Slower mode also makes zoom and tilt finer.
 
