@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Photo Mode camera controls: zoom (mouse wheel, Page Up/Page Down or D-pad up/down), tilt the camera (Z/C, the keys either side of X, or D-pad left/right), precise slow movement (Ctrl or LB), back to the starting view (R or Y) and clear zoom and tilt (middle mouse button or right-stick click). Looking slows down while zoomed in, and on desktop the camera now eases in and out of movement. Choosing Photo Mode again during the same pause resumes your last shot. Zoom, tilt and easing are desktop-only; VR keeps the headset's view. A scripted desktop lab run (keyboard and mouse) passed; Xbox controller and headset checks are pending.
+
 ## 0.18.12 — 2026-11-13 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.12)

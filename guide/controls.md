@@ -81,13 +81,26 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 
 **Photo Mode (experimental):** pause an offline race or practice session and choose **PHOTO MODE** to move a free camera while the race stays frozen. It requires DX11 and is unavailable in network races and replay playback. It works independently of chase-camera Free look and the extended VR views settings.
 
-- **Keyboard/mouse:** WASD moves, the mouse looks, E/Q rises/descends, and Shift moves faster.
-- **Xbox controller:** left stick moves, right stick looks, right/left trigger rises/descends, and right bumper moves faster.
-- **Esc**, controller **B** or **Start** returns to the pause menu. Choose Continue to resume driving. Moving the camera does not move your car. Switching away from the game returns to the pause menu too.
+| Action | Keyboard/mouse | Xbox controller |
+|---|---|---|
+| Move | WASD | Left stick |
+| Look | Mouse | Right stick |
+| Rise / descend | E / Q | Right / left trigger |
+| Faster | Shift | Right bumper |
+| Slower, for precise framing | Ctrl | Left bumper |
+| Zoom in / out (desktop) | Mouse wheel, Page Up / Page Down | D-pad up / down |
+| Tilt the camera left / right (desktop) | Z / C, the keys either side of X (Y / C on German-style keyboards) | D-pad left / right |
+| Clear zoom and tilt | Middle mouse button | Right-stick click |
+| Back to the starting view | R | Y |
+| Return to the pause menu | Esc | B or Start |
+
+Looking slows down while zoomed in, so close-up framing stays steady. On desktop the camera eases in and out of movement. Slower mode also makes zoom and tilt finer.
+
+Choose Continue in the pause menu to resume driving. Moving the camera does not move your car. Switching away from the game returns to the pause menu too. If you choose **PHOTO MODE** again before resuming the race, the camera continues from your last shot; once you resume driving, the next Photo Mode starts behind the car again.
 
 The camera has no collision, so you can fly through scenery.
 
-VR Photo Mode uses stereo rendering, independent head tracking and smooth mouse/stick turning. Leaving it restores your driving view and seated reference. Desktop practice and AI Race, plus headset/controller practice, have passed bounded checks. Broader track coverage remains experimental.
+VR Photo Mode uses stereo rendering, independent head tracking and smooth mouse/stick turning. Zoom and tilt are not available in VR, where your headset sets the view, and movement starts and stops immediately for comfort. Leaving it restores your driving view and seated reference. Desktop practice and AI Race, plus headset/controller practice, have passed bounded checks. Broader track coverage remains experimental.
 
 ## Replay controls
 

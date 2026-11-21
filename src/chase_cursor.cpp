@@ -10,6 +10,7 @@ HWND attached{};
 WNDPROC previous{};
 std::atomic<ULONGLONG> activeTick{};
 std::atomic<ULONGLONG> photoTick{};
+std::atomic<int> photoWheel{};
 // These are only accessed by the window thread.
 HCURSOR savedCursor{};
 bool hidden{};
@@ -70,6 +71,8 @@ LRESULT CALLBACK WindowProc(HWND window,UINT message,WPARAM key,LPARAM flags) {
         return 0;
     }
     if(message==WM_TIMER && timer && key==timer) {Refresh(window);return 0;}
+    // DirectInput drops wheel notches here; window messages deliver every one.
+    if(message==WM_MOUSEWHEEL && photoTick.load()) {photoWheel+=GET_WHEEL_DELTA_WPARAM(key);return 0;}
     if(message==WM_SETCURSOR && timer) {
         if(LOWORD(flags)==HTCLIENT && Refresh(window))return TRUE;
         Restore();
@@ -121,4 +124,5 @@ void UpdateCursor(HWND window,bool active,bool photo) {
 }
 void UpdateChaseCursor(HWND window,bool active){UpdateCursor(window,active,false);}
 void UpdatePhotoCursor(HWND window,bool active){UpdateCursor(window,active,true);}
+int TakePhotoWheel(){return photoWheel.exchange(0);}
 }

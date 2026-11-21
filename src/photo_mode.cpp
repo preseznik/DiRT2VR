@@ -23,6 +23,11 @@ unsigned begin{},end{},previous{},external{};
 bool finished{},armed{};
 ULONGLONG tick{};
 PhotoCamera camera;
+// The last shot of this pause, resumed when Photo Mode is chosen again.
+PhotoCamera saved;
+bool savedValid{};
+void* savedManager{};
+double savedTime{};
 IDirectInput8W* input{};
 IDirectInputDevice8W* mouse{};
 HWND mouseWindow{};
@@ -79,6 +84,12 @@ bool SelectedSeed(void* owner,std::array<float,28>& record) {
     return true;
 }
 bool Key(int key){return (GetAsyncKeyState(key)&0x8000)!=0;}
+// Zoom, roll and smooth acceleration are desktop-only: the headset sets the
+// field of view, and a tilted horizon or eased motion is uncomfortable in VR.
+bool Headset() {
+    static const bool enabled=[] {wchar_t value[8]{};return GetEnvironmentVariableW(L"DIRT2VR_HEADSET",value,8)==1 && value[0]==L'1';}();
+    return enabled;
+}
 float Stick(SHORT value) {
     const float v=std::clamp(float(value)/32767.f,-1.f,1.f);
     return std::abs(v)<=.2f?0.f:std::copysign((std::abs(v)-.2f)/.8f,v);
@@ -91,6 +102,13 @@ PhotoInput Poll(float dt,bool movement) {
         result.forward=float(Key('W'))-float(Key('S'));
         result.up=float(Key('E'))-float(Key('Q'));
         result.fast=Key(VK_SHIFT);
+        result.slow=Key(VK_CONTROL);
+        // Tilt uses the physical keys either side of X (Z/C on QWERTY, Y/C on QWERTZ).
+        static const int tiltLeft=int(MapVirtualKeyW(0x2c,MAPVK_VSC_TO_VK)),tiltRight=int(MapVirtualKeyW(0x2e,MAPVK_VSC_TO_VK));
+        result.roll=(float(tiltRight && Key(tiltRight))-float(tiltLeft && Key(tiltLeft)))*.5f*dt;
+        result.zoom=(float(Key(VK_PRIOR))-float(Key(VK_NEXT)))*.8f*dt;
+        result.restart=Key('R');
+        result.zoom+=float(TakePhotoWheel())/WHEEL_DELTA*.1f; // Wheel away from you zooms in.
     }
     const auto window=Focus();
     if(movement && mouseWindow!=window) {
@@ -108,6 +126,7 @@ PhotoInput Poll(float dt,bool movement) {
         DIMOUSESTATE2 state{};
         if(SUCCEEDED(mouse->GetDeviceState(sizeof(state),&state))) {
             result.yaw=float(state.lX)*.003f;result.pitch=-float(state.lY)*.003f;
+            result.level|=(state.rgbButtons[2]&0x80)!=0;
         } else mouse->Acquire(); // Discard reacquisition deltas.
     }
     if(!xbox) {
@@ -128,8 +147,16 @@ PhotoInput Poll(float dt,bool movement) {
             result.yaw+=Stick(pad.sThumbRX)*2.5f*dt;result.pitch+=Stick(pad.sThumbRY)*1.5f*dt;
             result.up+=(std::max(0,int(pad.bRightTrigger)-30)-std::max(0,int(pad.bLeftTrigger)-30))/225.f;
             result.fast|=(pad.wButtons&XINPUT_GAMEPAD_RIGHT_SHOULDER)!=0;
+            result.slow|=(pad.wButtons&XINPUT_GAMEPAD_LEFT_SHOULDER)!=0;
+            const auto pressed=[&](WORD button){return (pad.wButtons&button)?1.f:0.f;};
+            result.zoom+=(pressed(XINPUT_GAMEPAD_DPAD_UP)-pressed(XINPUT_GAMEPAD_DPAD_DOWN))*.8f*dt;
+            result.roll+=(pressed(XINPUT_GAMEPAD_DPAD_RIGHT)-pressed(XINPUT_GAMEPAD_DPAD_LEFT))*.5f*dt;
+            result.restart|=(pad.wButtons&XINPUT_GAMEPAD_Y)!=0;
+            result.level|=(pad.wButtons&XINPUT_GAMEPAD_RIGHT_THUMB)!=0;
         }
     }
+    if(result.slow){result.zoom*=.25f;result.roll*=.25f;}
+    if(Headset()){result.zoom=result.roll=0;result.level=false;}
     return result;
 }
 void End(const char* reason) {
@@ -143,6 +170,7 @@ void End(const char* reason) {
         }
         Log("photo mode: exit reason=%s native_pause=%d camera_restored=%d",reason,GamePaused(),restore);
     }
+    if(camera.Ready()){saved=camera;savedValid=true;savedManager=manager;savedTime=frozenTime;}
     camera.Reset();exportTick=0;finished=true;armed=false;
     UpdatePhotoCursor(Focus(),false);
 }
@@ -161,7 +189,7 @@ bool Begin(void* state) {
     if(!PhotoWorldVisible(true)) {
         reinterpret_cast<Set>(Base()+0x72f840)(manager,int(previous));return false;
     }
-    camera.Reset();exportTick=0;sampleTick=0;tick=GetTickCount64();armed=false;slot=4;
+    camera.Reset();camera.SetSmoothing(!Headset());TakePhotoWheel();exportTick=0;sampleTick=0;tick=GetTickCount64();armed=false;slot=4;
     focusLost=false;active=true;blocking=true;
     Log("photo mode: enter state=%p camera=%u->%u scheduler=9 race_time=%.9f",state,previous,external,frozenTime);
     return true;
@@ -191,8 +219,10 @@ bool PhotoModeMenu(void* state,void* result) {
     return true;
 }
 void PhotoModePauseChanged(bool paused) {
-    if(paused || !active.load())return;
-    std::lock_guard lock(mutex);End("native-unpause");
+    if(paused)return;
+    std::lock_guard lock(mutex);
+    if(active)End("native-unpause");
+    savedValid=false; // A kept shot belongs to the pause it was taken in.
 }
 void PhotoModeFrame() {
     if(!PhotoModeRequested())return;
@@ -225,11 +255,21 @@ float* PhotoModeExport(void* owner,float* native) {
         Log("photo native basis: up=%.6f,%.6f,%.6f left=%.6f,%.6f,%.6f forward=%.6f,%.6f,%.6f fov=%.6f near=%.6f far=%.6f",
             source[4],source[5],source[6],source[8],source[9],source[10],source[12],source[13],source[14],source[20],source[21],source[22]);
         if(!camera.Begin(source.data())){End("invalid-camera");return nullptr;}
+        // Resume the kept shot only for the same frozen scene and starting view.
+        const auto& start=camera.Start();const auto& previousStart=saved.Start();
+        if(savedValid && savedManager==manager && savedTime==frozenTime &&
+           std::abs(start[16]-previousStart[16])<.01f && std::abs(start[17]-previousStart[17])<.01f &&
+           std::abs(start[18]-previousStart[18])<.01f) {
+            camera=saved;camera.SetSmoothing(!Headset());
+            const auto resumed=camera.Record();
+            Log("photo camera resumed: p=%.6f,%.6f,%.6f fov=%.6f roll=%.6f",resumed[16],resumed[17],resumed[18],resumed[20],camera.Roll());
+        }
+        savedValid=false;
     }
     exported=camera.Record();exportTick=GetTickCount64();
     if(LoggingEnabled() && exportTick-sampleTick>=1000) {
-        Log("photo sample: wall_ms=%llu scheduler=9 race_time=%.9f native_p=%.6f,%.6f,%.6f camera_p=%.6f,%.6f,%.6f",
-            exportTick,frozenTime,source[16],source[17],source[18],exported[16],exported[17],exported[18]);
+        Log("photo sample: wall_ms=%llu scheduler=9 race_time=%.9f native_p=%.6f,%.6f,%.6f camera_p=%.6f,%.6f,%.6f fov=%.6f roll=%.6f",
+            exportTick,frozenTime,source[16],source[17],source[18],exported[16],exported[17],exported[18],exported[20],camera.Roll());
         sampleTick=exportTick;
     }
     alignas(16) thread_local std::array<float,28> output;
