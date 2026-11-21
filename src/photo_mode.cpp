@@ -2,6 +2,7 @@
 #include "photo_mode.h"
 #include "photo_camera.h"
 #include "photo_overlay.h"
+#include "photo_dof.h"
 #include "scene_camera.h"
 #include "game_pause.h"
 #include "chase_cursor.h"
@@ -31,6 +32,11 @@ void* savedManager{};
 double savedTime{};
 // Desktop panel: shown by default, H/View toggles it for the rest of the session.
 bool panelVisible=true,panelHeld{},photoHeld{},lastController{};
+// Desktop depth of field; kept for the rest of the session.
+bool dofEnabled{},dofKeyHeld{},padXHeld{},padXUsed{};
+int blurHeld{};
+PhotoDofSettings dof;
+ULONGLONG dofSince{},dofDrawn{};
 IDirectInput8W* input{};
 IDirectInputDevice8W* mouse{};
 HWND mouseWindow{};
@@ -111,8 +117,17 @@ PhotoInput Poll(float dt,bool movement) {
         result.roll=(float(tiltRight && Key(tiltRight))-float(tiltLeft && Key(tiltLeft)))*.5f*dt;
         result.zoom=(float(Key(VK_PRIOR))-float(Key(VK_NEXT)))*.8f*dt;
         result.restart=Key('R');
+        // Buttons from the window's input state: DirectInput polling missed short clicks.
+        result.level=Key(VK_MBUTTON);result.autofocus=Key(VK_RBUTTON);
         result.photo=Key('P');result.panel=Key('H');
         result.zoom+=float(TakePhotoWheel())/WHEEL_DELTA*.1f; // Wheel away from you zooms in.
+        // Depth of field: F, and the top-row keys 1-4 by position (focus nearer/farther, less/more blur).
+        static const auto row=[](unsigned scan){return int(MapVirtualKeyW(scan,MAPVK_VSC_TO_VK));};
+        static const int nearer=row(0x02),farther=row(0x03),less=row(0x04),more=row(0x05);
+        const auto held=[](int key){return key && Key(key);};
+        result.dof=Key('F');
+        result.focus=(float(held(farther))-float(held(nearer)))*dt;
+        result.blur=int(held(more))-int(held(less));
     }
     const auto window=Focus();
     if(movement && mouseWindow!=window) {
@@ -130,11 +145,11 @@ PhotoInput Poll(float dt,bool movement) {
         DIMOUSESTATE2 state{};
         if(SUCCEEDED(mouse->GetDeviceState(sizeof(state),&state))) {
             result.yaw=float(state.lX)*.003f;result.pitch=-float(state.lY)*.003f;
-            result.level|=(state.rgbButtons[2]&0x80)!=0;
         } else mouse->Acquire(); // Discard reacquisition deltas.
     }
     result.keyboard=result.right!=0 || result.forward!=0 || result.up!=0 || result.yaw!=0 || result.pitch!=0 ||
-        result.zoom!=0 || result.roll!=0 || result.fast || result.slow || result.restart || result.level || result.photo || result.panel;
+        result.zoom!=0 || result.roll!=0 || result.fast || result.slow || result.restart || result.level || result.photo || result.panel ||
+        result.dof || result.focus!=0 || result.blur!=0 || result.autofocus;
     if(!xbox) {
         auto module=LoadLibraryExW(L"xinput1_4.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32);
         if(module)xbox=reinterpret_cast<XboxFn>(GetProcAddress(module,"XInputGetState"));
@@ -155,8 +170,14 @@ PhotoInput Poll(float dt,bool movement) {
             result.fast|=(pad.wButtons&XINPUT_GAMEPAD_RIGHT_SHOULDER)!=0;
             result.slow|=(pad.wButtons&XINPUT_GAMEPAD_LEFT_SHOULDER)!=0;
             const auto pressed=[&](WORD button){return (pad.wButtons&button)?1.f:0.f;};
-            result.zoom+=(pressed(XINPUT_GAMEPAD_DPAD_UP)-pressed(XINPUT_GAMEPAD_DPAD_DOWN))*.8f*dt;
-            result.roll+=(pressed(XINPUT_GAMEPAD_DPAD_RIGHT)-pressed(XINPUT_GAMEPAD_DPAD_LEFT))*.5f*dt;
+            const float vertical=pressed(XINPUT_GAMEPAD_DPAD_UP)-pressed(XINPUT_GAMEPAD_DPAD_DOWN);
+            const float horizontal=pressed(XINPUT_GAMEPAD_DPAD_RIGHT)-pressed(XINPUT_GAMEPAD_DPAD_LEFT);
+            // Holding X turns the D-pad into focus (up/down) and blur (left/right).
+            const bool x=(pad.wButtons&XINPUT_GAMEPAD_X)!=0;
+            result.padX|=x;
+            if(x){result.focus+=vertical*dt;result.blur+=int(horizontal);}
+            else{result.zoom+=vertical*.8f*dt;result.roll+=horizontal*.5f*dt;}
+            result.autofocus|=(pad.wButtons&XINPUT_GAMEPAD_LEFT_THUMB)!=0;
             result.restart|=(pad.wButtons&XINPUT_GAMEPAD_Y)!=0;
             result.level|=(pad.wButtons&XINPUT_GAMEPAD_RIGHT_THUMB)!=0;
             result.photo|=(pad.wButtons&XINPUT_GAMEPAD_A)!=0;
@@ -164,8 +185,8 @@ PhotoInput Poll(float dt,bool movement) {
             result.controller|=used;
         }
     }
-    if(result.slow){result.zoom*=.25f;result.roll*=.25f;}
-    if(Headset()){result.zoom=result.roll=0;result.level=false;}
+    if(result.slow){result.zoom*=.25f;result.roll*=.25f;result.focus*=.25f;}
+    if(Headset()){result.zoom=result.roll=result.focus=0;result.level=result.dof=result.padX=result.autofocus=false;result.blur=0;}
     return result;
 }
 void End(const char* reason) {
@@ -181,6 +202,7 @@ void End(const char* reason) {
     }
     if(camera.Ready()){saved=camera;savedValid=true;savedManager=manager;savedTime=frozenTime;}
     camera.Reset();exportTick=0;finished=true;armed=false;
+    PhotoDofWanted(false);
     UpdatePhotoCursor(Focus(),false);
 }
 bool Begin(void* state) {
@@ -260,15 +282,47 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             else if(movement.keyboard)lastController=false;
             if(movement.panel && !panelHeld)panelVisible=!panelVisible;
             capture=movement.photo && !photoHeld;
+            // F toggles on press; controller X toggles on release unless it was held to adjust focus/blur.
+            bool toggle=movement.dof && !dofKeyHeld;
+            if(movement.padX){if(movement.focus!=0 || movement.blur!=0)padXUsed=true;}
+            else if(padXHeld){toggle|=!padXUsed;padXUsed=false;}
+            if(toggle) {
+                dofEnabled=!dofEnabled;dofSince=now;
+                Log("photo depth of field: enabled=%d",dofEnabled);
+            }
+            if(dofEnabled) {
+                if(movement.autofocus)dof.autoFocus=true;
+                if(movement.focus!=0) {
+                    if(dof.autoFocus) {
+                        // Start manual focus where autofocus was.
+                        const float centre=PhotoDofCentre();
+                        if(centre>.3f && centre<5000)dof.focus=centre;
+                        dof.autoFocus=false;
+                    }
+                    dof.focus=std::clamp(dof.focus*std::exp(movement.focus),.5f,2000.f);
+                }
+                if(movement.blur!=0 && movement.blur!=blurHeld)dof.blur=std::clamp(dof.blur+(movement.blur>0?1:-1),1,10);
+            }
+            blurHeld=movement.blur;dofKeyHeld=movement.dof;padXHeld=movement.padX;
             const auto record=camera.Record();
             overlay={panelVisible,lastController,record[20]*57.2957795f,camera.Roll()*57.2957795f,movement.fast?1:movement.slow?-1:0};
+            // Unavailable once enabled for a second without any scene depth (e.g. game shadows off).
+            overlay.dof=!dofEnabled?0:(now-dofSince>1000 && now-dofDrawn>1000)?2:1;
+            overlay.autoFocus=dof.autoFocus;overlay.blur=dof.blur;
+            overlay.focus=dof.autoFocus?PhotoDofCentre():dof.focus;
             show=true;
         }
+        PhotoDofWanted(show && dofEnabled);
         panelHeld=movement.panel;photoHeld=movement.photo;
     }
     // Outside the lock: GPU copies must not hold up the camera export on another thread.
     if(!show)return;
-    if(capture){Log("photo capture requested");PhotoCapture(swapchain);} // Before the panel, so the photo is clean.
+    // Blur first, then save, then draw the panel: photos include depth of field but never the panel.
+    if(overlay.dof && PhotoDofApply(swapchain,dof)) {
+        std::lock_guard lock(mutex);dofDrawn=GetTickCount64();
+        if(overlay.dof==2)overlay.dof=1;
+    }
+    if(capture){Log("photo capture requested");PhotoCapture(swapchain);}
     PhotoPanelDraw(swapchain,overlay);
 }
 float* PhotoModeExport(void* owner,float* native) {
@@ -296,8 +350,9 @@ float* PhotoModeExport(void* owner,float* native) {
     }
     exported=camera.Record();exportTick=GetTickCount64();
     if(LoggingEnabled() && exportTick-sampleTick>=1000) {
-        Log("photo sample: wall_ms=%llu scheduler=9 race_time=%.9f native_p=%.6f,%.6f,%.6f camera_p=%.6f,%.6f,%.6f fov=%.6f roll=%.6f",
-            exportTick,frozenTime,source[16],source[17],source[18],exported[16],exported[17],exported[18],exported[20],camera.Roll());
+        Log("photo sample: wall_ms=%llu scheduler=9 race_time=%.9f native_p=%.6f,%.6f,%.6f camera_p=%.6f,%.6f,%.6f fov=%.6f roll=%.6f dof=%d auto=%d focus=%.3f blur=%d centre=%.3f",
+            exportTick,frozenTime,source[16],source[17],source[18],exported[16],exported[17],exported[18],exported[20],camera.Roll(),
+            dofEnabled,dof.autoFocus,dof.focus,dof.blur,PhotoDofCentre());
         sampleTick=exportTick;
     }
     alignas(16) thread_local std::array<float,28> output;

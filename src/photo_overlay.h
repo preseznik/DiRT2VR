@@ -9,6 +9,10 @@ struct PhotoPanelState {
     bool controller{}; // Show Xbox controller help instead of keyboard/mouse help.
     float viewDegrees{},tiltDegrees{};
     int speed{};       // -1 slower, 0 normal, 1 faster.
+    int dof{};         // Depth of field: 0 off, 1 on, 2 on but no scene depth available.
+    bool autoFocus{};
+    float focus{};     // Metres; negative when not yet known.
+    int blur{};
 };
 // Copies the finished frame now and writes it as a PNG in the background
 // (Pictures\DiRT2VR). Call before drawing the panel so the photo stays clean.

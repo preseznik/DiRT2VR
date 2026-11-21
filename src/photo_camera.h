@@ -14,6 +14,11 @@ struct PhotoInput {
     // Read by Photo Mode, not the camera: held state of the photo and panel buttons,
     // and which device was used this frame (for the panel's help text).
     bool photo{},panel{},controller{},keyboard{};
+    // Depth of field, also read by Photo Mode: F held, controller X held, focus change
+    // (natural-log steps, positive = farther), blur direction held, autofocus held.
+    bool dof{},padX{},autofocus{};
+    float focus{};
+    int blur{};
 };
 
 // EGO records contain up, left, forward and position as padded float4 rows.

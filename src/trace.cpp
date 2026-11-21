@@ -12,6 +12,7 @@
 #include "replay_camera.h"
 #include "game_pause.h"
 #include "photo_mode.h"
+#include "photo_dof.h"
 #include "game_xr.h"
 #include "hud_capture.h"
 #include "hud_elements.h"
@@ -2150,6 +2151,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
         AttachSceneryMotion(device,context,true);
+        if(PhotoModeRequested()) AttachPhotoDof(device,context);
         if(swapchain && (LoggingEnabled() || PhotoModeRequested() || DesktopSeatRequested() || (RequestedCapturesEnabled() && PikesScope())))
             Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;
