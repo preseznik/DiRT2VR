@@ -283,6 +283,7 @@ private:
             Texture2D<float4> fullSource:register(t2);
             Texture2D<float4> centreOut:register(t3);
             Texture2D<float4> centreSource:register(t4);
+            Texture2D<float4> extra:register(t5);
             SamplerState linearClamp:register(s0);
             cbuffer Constants:register(b0) { float4 rect; float4 options; } // options: mix, centre on, feather
             struct V { float4 position:SV_Position; float2 uv:TEXCOORD0; };
@@ -308,22 +309,58 @@ private:
                 for(int y=-k;y<=k;y+=2) for(int x=-k;x<=k;x+=2){sum+=image.SampleLevel(linearClamp,v.uv+float2(x,y)*options.zw,0).rgb;++n;}
                 return float4(sum/n,1);
             }
-            // History towards the current low-frequency change; options.y = weight of the current frame.
-            float4 BlendPS(V v):SV_Target { return lerp(image.Load(int3(int2(v.position.xy),0)),fullOut.Load(int3(int2(v.position.xy),0)),options.y); }
-            // Original + change, with the change's low frequencies taken from the smoothed history.
-            float4 FinalPS(V v):SV_Target {
+            // History towards the current low-frequency change: image = history, fullOut = current change,
+            // fullSource/centreOut = this/previous frame at the same low resolution. Blocks whose picture
+            // changed take the current change (no halos behind moving edges). options: y = still weight, zw = motion range.
+            float4 BlendPS(V v):SV_Target {
                 int3 p=int3(int2(v.position.xy),0);
-                float3 o=image.Load(p).rgb;
+                float motion=0;
+                [unroll] for(int y=-1;y<=1;++y) [unroll] for(int x=-1;x<=1;++x) {
+                    int3 q=p+int3(x,y,0);float3 e=abs(fullSource.Load(q).rgb-centreOut.Load(q).rgb);
+                    motion=max(motion,max(e.r,max(e.g,e.b)));
+                }
+                return lerp(image.Load(p),fullOut.Load(p),lerp(options.y,1,smoothstep(options.z,options.w,motion)));
+            }
+            // The change with its low frequencies from the smoothed history, then kept over frames
+            // where the game's own picture did not move (no motion vectors, so moving areas use
+            // the current frame and leave no trails). image = this frame, fullOut = change,
+            // fullSource/centreOut = current/smoothed low frequencies, centreSource = previous frame,
+            // extra = previous result. options: x = still weight, y = history valid, zw = motion range.
+            float4 TemporalPS(V v):SV_Target {
+                int3 p=int3(int2(v.position.xy),0);
                 float3 d=fullOut.Load(p).rgb-fullSource.SampleLevel(linearClamp,v.uv,0).rgb+centreOut.SampleLevel(linearClamp,v.uv,0).rgb;
-                return float4(lerp(o,saturate(o+d),options.x),1);
+                if(options.y<0.5) return float4(d,1);
+                float motion=0;
+                [unroll] for(int y=-1;y<=1;++y) [unroll] for(int x=-1;x<=1;++x) {
+                    int3 q=p+int3(x,y,0);float3 e=abs(image.Load(q).rgb-centreSource.Load(q).rgb);
+                    motion=max(motion,max(e.r,max(e.g,e.b)));
+                }
+                return float4(lerp(extra.Load(p).rgb,d,lerp(options.x,1,smoothstep(options.z,options.w,motion))),1);
+            }
+            // Original + change, blended with the original by mix (options.x).
+            float4 ApplyPS(V v):SV_Target {
+                int3 p=int3(int2(v.position.xy),0);float3 o=image.Load(p).rgb;
+                return float4(lerp(o,saturate(o+fullOut.Load(p).rgb),options.x),1);
             })";
-        ComPtr<ID3DBlob> vertex,crop,compose,down,blend,final;
+        ComPtr<ID3DBlob> vertex,crop,compose,down,blend,temporal,apply;
         Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"DownPS","ps_5_0",0,0,&down,nullptr),"compile down");
         Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"BlendPS","ps_5_0",0,0,&blend,nullptr),"compile blend");
-        Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"FinalPS","ps_5_0",0,0,&final,nullptr),"compile final");
+        Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"TemporalPS","ps_5_0",0,0,&temporal,nullptr),"compile temporal");
+        Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"ApplyPS","ps_5_0",0,0,&apply,nullptr),"compile apply");
         Check(device11_->CreatePixelShader(down->GetBufferPointer(),down->GetBufferSize(),nullptr,&downPs_),"down ps");
         Check(device11_->CreatePixelShader(blend->GetBufferPointer(),blend->GetBufferSize(),nullptr,&blendPs_),"blend ps");
-        Check(device11_->CreatePixelShader(final->GetBufferPointer(),final->GetBufferSize(),nullptr,&finalPs_),"final ps");
+        Check(device11_->CreatePixelShader(temporal->GetBufferPointer(),temporal->GetBufferSize(),nullptr,&temporalPs_),"temporal ps");
+        Check(device11_->CreatePixelShader(apply->GetBufferPointer(),apply->GetBufferSize(),nullptr,&applyPs_),"apply ps");
+        // Previous game frame and two full-resolution results for the still-area history.
+        auto previous=Describe(width_,height_,format_,D3D11_BIND_SHADER_RESOURCE,0);
+        Check(device11_->CreateTexture2D(&previous,nullptr,&previous8_),"previous");
+        Check(device11_->CreateShaderResourceView(previous8_.Get(),nullptr,&previousView_),"previous view");
+        auto result=Describe(width_,height_,DXGI_FORMAT_R16G16B16A16_FLOAT,D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET,0);
+        for(int i=0;i<2;++i) {
+            Check(device11_->CreateTexture2D(&result,nullptr,&result11_[i]),"result");
+            Check(device11_->CreateShaderResourceView(result11_[i].Get(),nullptr,&resultView_[i]),"result view");
+            Check(device11_->CreateRenderTargetView(result11_[i].Get(),nullptr,&resultTarget_[i]),"result target");
+        }
         // Change at full resolution, and its 1/4-resolution average: current and two history buffers.
         auto delta=Describe(width_,height_,DXGI_FORMAT_R16G16B16A16_FLOAT,D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET,0);
         Check(device11_->CreateTexture2D(&delta,nullptr,&delta11_),"delta");
@@ -331,6 +368,11 @@ private:
         Check(device11_->CreateRenderTargetView(delta11_.Get(),nullptr,&deltaTarget_),"delta target");
         lowWidth_=std::max<UINT>(1,(width_+LowScale()-1)/LowScale());lowHeight_=std::max<UINT>(1,(height_+LowScale()-1)/LowScale());
         auto low=Describe(lowWidth_,lowHeight_,DXGI_FORMAT_R16G16B16A16_FLOAT,D3D11_BIND_SHADER_RESOURCE|D3D11_BIND_RENDER_TARGET,0);
+        for(int i=0;i<2;++i) {
+            Check(device11_->CreateTexture2D(&low,nullptr,&lowInput11_[i]),"low input");
+            Check(device11_->CreateShaderResourceView(lowInput11_[i].Get(),nullptr,&lowInputView_[i]),"low input view");
+            Check(device11_->CreateRenderTargetView(lowInput11_[i].Get(),nullptr,&lowInputTarget_[i]),"low input target");
+        }
         for(int i=0;i<3;++i) {
             Check(device11_->CreateTexture2D(&low,nullptr,&low11_[i]),"low");
             Check(device11_->CreateShaderResourceView(low11_[i].Get(),nullptr,&lowView_[i]),"low view");
@@ -383,7 +425,7 @@ private:
             stages_.push_back(std::move(centre));
         }
         for(auto& stage:stages_){StageResources(stage);Create(stage,settings.style);}
-        style_=settings.style;resolution_=settings.resolution;foveation_=foveation;timeSum_=0;timeFrames_=0;historyValid_=false;
+        style_=settings.style;resolution_=settings.resolution;foveation_=foveation;timeSum_=0;timeFrames_=0;historyValid_=resultValid_=false;
         char line[200]{};std::snprintf(line,sizeof(line),"neural ready %ux%u format=%u style=%d resolution=%d%% stage=%ux%u foveation=%d%%%s",
             width_,height_,unsigned(format_),style_,resolution_,stages_[0].width,stages_[0].height,foveation_,foveation_?"":" (off)");
         Note(line);
@@ -473,16 +515,28 @@ private:
         const float down[8]{0,0,0,0,float(LowScale()),0,1.f/float(width_),1.f/float(height_)};
         ID3D11ShaderResourceView* deltaOnly[]{deltaView_.Get()};
         Draw(downPs_.Get(),down,deltaOnly,1,lowTarget_[0].Get(),lowWidth_,lowHeight_);
+        // The game's own frame at the same low resolution, to see which blocks moved.
+        const int nextInput=1-lowInput_;
+        ID3D11ShaderResourceView* inputOnly[]{inputView_.Get()};
+        Draw(downPs_.Get(),down,inputOnly,1,lowInputTarget_[nextInput].Get(),lowWidth_,lowHeight_);
         const int next=3-history_; // History ping-pongs between buffers 1 and 2.
         if(historyValid_) {
-            const float blend[8]{0,0,0,0,0,LowWeight(),0,0};
-            ID3D11ShaderResourceView* pair[]{lowView_[history_].Get(),lowView_[0].Get()};
-            Draw(blendPs_.Get(),blend,pair,2,lowTarget_[next].Get(),lowWidth_,lowHeight_);
+            const float blend[8]{0,0,0,0,0,LowWeight(),1.f/255,4.f/255};
+            ID3D11ShaderResourceView* views[]{lowView_[history_].Get(),lowView_[0].Get(),lowInputView_[nextInput].Get(),lowInputView_[lowInput_].Get()};
+            Draw(blendPs_.Get(),blend,views,4,lowTarget_[next].Get(),lowWidth_,lowHeight_);
         } else context11_->CopyResource(low11_[next].Get(),low11_[0].Get());
+        lowInput_=nextInput;
         history_=next;historyValid_=true;
-        const float final[8]{0,0,0,0,mix,0,0,0};
-        ID3D11ShaderResourceView* finalViews[]{inputView_.Get(),deltaView_.Get(),lowView_[0].Get(),lowView_[history_].Get()};
-        Draw(finalPs_.Get(),final,finalViews,4,output8Target_.Get(),width_,height_);
+        const int nextResult=1-result_;
+        const float temporal[8]{0,0,0,0,StillWeight(),resultValid_?1.f:0.f,1.5f/255,6.f/255};
+        ID3D11ShaderResourceView* temporalViews[]{inputView_.Get(),deltaView_.Get(),lowView_[0].Get(),lowView_[history_].Get(),
+            previousView_.Get(),resultView_[result_].Get()};
+        Draw(temporalPs_.Get(),temporal,temporalViews,6,resultTarget_[nextResult].Get(),width_,height_);
+        result_=nextResult;resultValid_=true;
+        const float apply[8]{0,0,0,0,mix,0,0,0};
+        ID3D11ShaderResourceView* applyViews[]{inputView_.Get(),resultView_[result_].Get()};
+        Draw(applyPs_.Get(),apply,applyViews,2,output8Target_.Get(),width_,height_);
+        context11_->CopyResource(previous8_.Get(),input8_.Get());
     }
     void Barrier(ID3D12Resource* resource,D3D12_RESOURCE_STATES before,D3D12_RESOURCE_STATES after) {
         D3D12_RESOURCE_BARRIER b{};b.Type=D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
@@ -499,13 +553,18 @@ private:
     int style_{-1},resolution_{},foveation_{},lastPasses_{};float lastMix_{-1};double timeSum_{};unsigned timeFrames_{};
     // Temporal smoothing of the change's low frequencies (see Compose).
     ComPtr<ID3D11Texture2D> delta11_,low11_[3];ComPtr<ID3D11ShaderResourceView> deltaView_,lowView_[3];
-    ComPtr<ID3D11RenderTargetView> deltaTarget_,lowTarget_[3];ComPtr<ID3D11PixelShader> downPs_,blendPs_,finalPs_;
+    ComPtr<ID3D11RenderTargetView> deltaTarget_,lowTarget_[3];ComPtr<ID3D11PixelShader> downPs_,blendPs_,temporalPs_,applyPs_;
+    ComPtr<ID3D11Texture2D> previous8_,result11_[2];ComPtr<ID3D11ShaderResourceView> previousView_,resultView_[2];ComPtr<ID3D11RenderTargetView> resultTarget_[2];
+    int result_{},lowInput_{};bool resultValid_{};
+    ComPtr<ID3D11Texture2D> lowInput11_[2];ComPtr<ID3D11ShaderResourceView> lowInputView_[2];ComPtr<ID3D11RenderTargetView> lowInputTarget_[2];
     UINT lowWidth_{},lowHeight_{};int history_{1};bool historyValid_{};
     // Smoothing: texels per history texel and weight of the current frame. In a smoke test
     // with the game's kind of input noise, 4 cut visibly changed pixels about tenfold
     // (8 about fivefold); the weight mattered little.
     static constexpr UINT LowScale(){return 4;}
     static constexpr float LowWeight(){return .25f;}
+    // Weight of the current frame where the picture is still (about a 5-frame average).
+    static constexpr float StillWeight(){return .2f;}
     ComPtr<ID3D12Fence> inputFence12_,outputFence12_;ComPtr<ID3D11Fence> inputFence11_,outputFence11_,completion_;
     HANDLE event_{};UINT64 sequence_{};
     HMODULE coreModule_{},runtimeModule_{},shimModule_{};
