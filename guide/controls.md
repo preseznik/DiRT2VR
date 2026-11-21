@@ -117,6 +117,7 @@ On desktop, a **Photo panel** in the top-left corner shows the current view angl
 - **Using it:** in Photo Mode press **N** to turn it on or off. The panel shows "starting…" for a moment, then "on". Depth of field, filters and saved photos all build on the neural-rendered picture.
 - **Requirements:** an NVIDIA RTX graphics card with a current driver, and DX11. Each frame takes extra time, so Photo Mode may feel slower while it is on.
 - **Not included:** DiRT2VR does not include or download the runtime. Desktop only, and not available in VR, LAN or replays.
+- **While driving (experimental):** tick **Also while driving** under the runtime folder to apply it during races too. The HUD is processed along with the picture, so it may look slightly textured. It is heavy on the graphics card, lowers frame rate and adds one frame of delay, so try it on a fast RTX card and turn it off if driving feels sluggish. Desktop only.
 - **If the panel says "unavailable":** the runtime could not start on your graphics card or driver. Turn on diagnostic logging and check `neural-helper.log` in the session log folder.
 
 Looking slows down while zoomed in, so close-up framing stays steady. On desktop the camera eases in and out of movement. Slower mode also makes zoom and tilt finer.

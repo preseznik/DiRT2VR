@@ -121,6 +121,8 @@ Public Class VrSettings
     Public Property TrackDepthOfField As Boolean = True
     ' Folder with the player's own nvngx_dlssnr.dll for Photo Mode's DLSS 5 Neural Rendering; empty = off.
     Public Property NeuralRuntimeFolder As String = ""
+    ' Also process frames while driving (desktop, experimental), HUD included.
+    Public Property NeuralWhileDriving As Boolean = False
     Public Property VrBloom As Boolean = True
     Public Property DesktopAnisotropy As Integer = 0
     Public Property DesktopShadowDistance As Integer = 0

@@ -57,6 +57,7 @@ Public Class MainForm
     Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
     Private ReadOnly trackDepthOfField As New CheckBox With {.Text = "On", .Name = "TrackDepthOfField", .AutoSize = True}
     Private ReadOnly neuralRuntime As New TextBox With {.Name = "NeuralRuntimeFolder", .AccessibleName = "DLSS 5 runtime folder", .Width = 320}
+    Private ReadOnly neuralWhileDriving As New CheckBox With {.Text = "On", .Name = "NeuralWhileDriving", .AccessibleName = "DLSS 5 while driving", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
     Private ReadOnly desktopShadowDistance As New ValueSlider("DesktopShadowDistance", 0, 7, 0, valueLabels:={"Game", "160 m", "240 m", "320 m", "400 m", "480 m", "560 m", "640 m"})
@@ -802,7 +803,15 @@ Public Class MainForm
         AddHandler neuralRuntime.TextChanged, Sub() refreshNeural()
         neuralRow.Controls.Add(neuralBrowse)
         Field(photo, "DLSS 5 runtime folder (Experimental)", neuralRow)
-        photo.Controls.Add(neuralStatus) : refreshNeural()
+        photo.Controls.Add(neuralStatus)
+        neuralWhileDriving.Checked = settings.NeuralWhileDriving
+        Field(photo, "Also while driving (Experimental)", neuralWhileDriving)
+        Tip(neuralWhileDriving, "Also applies DLSS 5 Neural Rendering while you drive, on desktop. The HUD is processed too, so it may look slightly textured." & vbCrLf & "Heavy on the GPU and adds one frame of delay. Needs the runtime folder above. Save and relaunch to apply.")
+        refreshNeural = Sub()
+                            neuralStatus.Text = NeuralRendering.Describe(neuralRuntime.Text)
+                            neuralWhileDriving.Enabled = NeuralRendering.Valid(neuralRuntime.Text)
+                        End Sub
+        refreshNeural()
         Tip(neuralRow, "Optional. A folder containing your own copy of NVIDIA's DLSS 5 Neural Rendering runtime (nvngx_dlssnr.dll). DiRT2VR does not include or download it." & vbCrLf & "Then press N in Photo Mode for a neural-rendered look. Needs an NVIDIA RTX GPU and DX11. Leave empty to turn it off. Save and relaunch to apply.")
         Dim render = Section(columns.First, "VR rendering")
         renderScale.Value = settings.VrRenderScale : fieldOfView.Value = settings.FieldOfView
@@ -1160,6 +1169,7 @@ Public Class MainForm
         settings.VrPaddockZoom = paddockZoom.Checked
         settings.ExtendedGrass = extendedGrass.Checked
         settings.NeuralRuntimeFolder = neuralRuntime.Text.Trim()
+        settings.NeuralWhileDriving = neuralWhileDriving.Checked
         settings.VrPerformanceDisplay = performanceDisplay.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked
         settings.SteeringObserveOnly = steeringObserve.Checked

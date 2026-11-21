@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- DLSS 5 Neural Rendering can also apply while driving on desktop (Graphics → Photo Mode (desktop) → Also while driving, experimental). Each frame shows the previous processed one (one frame of delay) so pacing stays even; the HUD is processed along with the picture. In a scripted desktop lab run (1280×720, RTX 4080 SUPER, community runtime) frame pacing matched the run without it; faster displays, higher resolutions and other GPUs are not covered.
+
 - Photo Mode on desktop can use DLSS 5 Neural Rendering for a neural-rendered look (N), with a runtime you supply yourself: set its folder under Graphics → Photo Mode (desktop) → DLSS 5 runtime folder. DiRT2VR ships only a small 64-bit helper that loads your runtime and the NVIDIA driver's NGX core; it contains no NVIDIA SDK code and never includes or downloads the runtime. Depth of field, filters and saved photos build on the result. A scripted desktop lab run with a community runtime on an RTX 4080 SUPER passed; other GPUs, runtimes and the Xbox controller are not covered.
 
 - Groundwork for DLSS 5 neural rendering: an optional desktop GPU transport that hands finished frames to a separate 64-bit helper and back, with the original frame kept on any delay or failure. It is built only with `-DDIRT2VR_DESKTOP_BRIDGE=ON` and needs developer environment variables, so normal builds and players see no change.

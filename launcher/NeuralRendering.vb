@@ -17,11 +17,12 @@ Public NotInheritable Class NeuralRendering
     End Function
     ' Desktop Photo Mode only; VR and LAN sessions never get these variables.
     Public Shared Sub Configure(start As ProcessStartInfo, context As InstallContext, settings As VrSettings, photoMode As Boolean, headset As Boolean)
-        start.Environment.Remove("DIRT2VR_NEURAL_RUNTIME") : start.Environment.Remove("DIRT2VR_NEURAL_HELPER")
+        start.Environment.Remove("DIRT2VR_NEURAL_RUNTIME") : start.Environment.Remove("DIRT2VR_NEURAL_HELPER") : start.Environment.Remove("DIRT2VR_NEURAL_LIVE")
         If Not photoMode OrElse headset OrElse settings.LaunchMode = "lan" OrElse Not Valid(settings.NeuralRuntimeFolder) Then Return
         Dim exe = Helper(context)
         If Not File.Exists(exe) OrElse Not File.Exists(IO.Path.Combine(context.ModRoot, "payload", "nvngx.dll_dirt2vr.dll")) Then Return
         start.Environment("DIRT2VR_NEURAL_RUNTIME") = settings.NeuralRuntimeFolder.Trim()
         start.Environment("DIRT2VR_NEURAL_HELPER") = exe
+        If settings.NeuralWhileDriving Then start.Environment("DIRT2VR_NEURAL_LIVE") = "1"
     End Sub
 End Class

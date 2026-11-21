@@ -13,6 +13,7 @@
 #include "game_pause.h"
 #include "photo_mode.h"
 #include "photo_dof.h"
+#include "live_neural.h"
 #ifdef DIRT2VR_DESKTOP_BRIDGE
 #include "desktop_bridge.h"
 #endif
@@ -1895,6 +1896,7 @@ HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT i
     // Before Photo Mode, so later processing sees the unmodified game frame.
     DesktopBridgePresent(swapchain,frame.load());
 #endif
+    LiveNeuralPresent(swapchain);
     PhotoModeFrame(swapchain);
     SeatDesktopFrame(swapchain);
     const auto f=frame.fetch_add(1);
@@ -2159,7 +2161,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
         AttachSceneryMotion(device,context,true);
         if(PhotoModeRequested()) AttachPhotoDof(device,context);
-        if(swapchain && (LoggingEnabled() || PhotoModeRequested() || DesktopSeatRequested() || (RequestedCapturesEnabled() && PikesScope())))
+        if(swapchain && (LoggingEnabled() || PhotoModeRequested() || LiveNeuralRequested() || DesktopSeatRequested() || (RequestedCapturesEnabled() && PikesScope())))
             Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;
     }

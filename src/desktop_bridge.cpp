@@ -14,7 +14,7 @@ DesktopBridge::DesktopBridge(std::wstring helper,Report report,DWORD waitMillise
 DesktopBridge::~DesktopBridge() { Stop(); }
 void DesktopBridge::Note(const char* message) const { if(report_) report_(message); }
 void DesktopBridge::Stop() {
-    pending_=pendingReady_=false;
+    pending_=pendingReady_=inFlight_=false;
     if(stop_) SetEvent(stop_);
     // The job owns only the helper we created; closing it never touches the game.
     if(job_) CloseHandle(job_);
@@ -92,9 +92,8 @@ bool DesktopBridge::Start(ID3D11Texture2D* frame,const D3D11_TEXTURE2D_DESC& des
     char started[96]{};sprintf_s(started,"starting x64 helper (%ls) with %lu ms wait budget",mode_.c_str(),waitMilliseconds_);
     Note(started); return true;
 }
-bool DesktopBridge::Transfer(ID3D11Texture2D* frame) {
-    if(disabled_ || !frame) return false;
-    D3D11_TEXTURE2D_DESC desc{}; frame->GetDesc(&desc);
+// Shared checks: (re)start the helper for this frame shape; true once it is ready.
+bool DesktopBridge::Ready(ID3D11Texture2D* frame,const D3D11_TEXTURE2D_DESC& desc) {
     ComPtr<ID3D11Device> device; frame->GetDevice(&device);
     if(shared_ && (device.Get()!=device_.Get() || desc.Width!=desc_.Width || desc.Height!=desc_.Height ||
                    desc.Format!=desc_.Format || desc.SampleDesc.Count!=desc_.SampleDesc.Count)) Stop();
@@ -106,6 +105,66 @@ bool DesktopBridge::Transfer(ID3D11Texture2D* frame) {
         return false;
     }
     if(status!=bridge::Status::Ready) return Fail("disabled: helper reported failure; original frame retained");
+    return true;
+}
+// Finishes an outstanding pipelined request and discards its result.
+bool DesktopBridge::Drain() {
+    if(!inFlight_) return true;
+    HANDLE waits[]{stop_,process_,done_};
+    if(WaitForMultipleObjects(3,waits,FALSE,DWORD(StallLimit()))!=WAIT_OBJECT_0+2) return Fail("disabled: helper stalled; original frame retained");
+    if(outputLock_->AcquireSync(1,100)!=S_OK || outputLock_->ReleaseSync(0)!=S_OK) return Fail("disabled: output ownership failed");
+    inFlight_=false; return true;
+}
+bool DesktopBridge::TransferPipelined(ID3D11Texture2D* frame) {
+    if(disabled_ || !frame) return false;
+    D3D11_TEXTURE2D_DESC desc{}; frame->GetDesc(&desc);
+    if(!Ready(frame,desc)) return false;
+    if(pending_) {
+        // A late synchronous (Photo Mode) frame: let it finish and discard it.
+        HANDLE waits[]{stop_,process_,done_};
+        if(!pendingReady_ && WaitForMultipleObjects(3,waits,FALSE,DWORD(StallLimit()))!=WAIT_OBJECT_0+2)
+            return Fail("disabled: helper stalled; original frame retained");
+        if(outputLock_->AcquireSync(1,100)!=S_OK || outputLock_->ReleaseSync(0)!=S_OK) return Fail("disabled: late output ownership failed");
+        pending_=pendingReady_=false;
+    }
+    bool previous=false;
+    if(inFlight_) {
+        // The helper had a whole frame; waiting here paces the game to the helper.
+        HANDLE waits[]{stop_,process_,done_};
+        const auto waited=WaitForMultipleObjects(3,waits,FALSE,waitMilliseconds_);
+        if(waited==WAIT_TIMEOUT) {
+            ++dropped_;
+            if(GetTickCount64()-pendingSince_>StallLimit()) return Fail("disabled: helper stalled; original frame retained");
+            return false;
+        }
+        if(waited!=WAIT_OBJECT_0+2) return Fail("disabled: helper exited; original frame retained");
+        if(InterlockedCompareExchange(&shared_->status,0,0)!=static_cast<LONG>(bridge::Status::Ready) ||
+           shared_->completed!=sequence_) return Fail("disabled: mismatched frame; original frame retained");
+        if(outputLock_->AcquireSync(1,100)!=S_OK) return Fail("disabled: output ownership unavailable; original frame retained");
+        previous=true;
+    }
+    // Send this frame before replacing it with the previous result.
+    if(inputLock_->AcquireSync(0,100)!=S_OK) {
+        if(previous) outputLock_->ReleaseSync(0);
+        return Fail("disabled: input ownership unavailable; original frame retained");
+    }
+    context_->CopyResource(input_.Get(),frame);
+    if(inputLock_->ReleaseSync(1)!=S_OK) return Fail("disabled: input ownership release failed");
+    if(previous) {
+        context_->CopyResource(frame,output_.Get());
+        if(outputLock_->ReleaseSync(0)!=S_OK) return Fail("disabled: output ownership release failed");
+        ++completed_;
+        if(completed_==1) Note("pipelined neural frames active (one frame of latency)");
+    }
+    context_->Flush();
+    shared_->requested=++sequence_; pendingSince_=GetTickCount64();
+    ResetEvent(done_); SetEvent(request_); inFlight_=true;
+    return previous;
+}
+bool DesktopBridge::Transfer(ID3D11Texture2D* frame) {
+    if(disabled_ || !frame) return false;
+    D3D11_TEXTURE2D_DESC desc{}; frame->GetDesc(&desc);
+    if(!Ready(frame,desc) || !Drain()) return false;
     if(pending_) {
         if(GetTickCount64()-pendingSince_>StallLimit()) return Fail("disabled: helper stalled; original frame retained");
         pendingReady_=pendingReady_ || WaitForSingleObject(done_,0)==WAIT_OBJECT_0;
