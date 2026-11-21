@@ -158,7 +158,7 @@ bool DesktopBridge::TransferPipelined(ID3D11Texture2D* frame) {
     }
     context_->Flush();
     shared_->requested=++sequence_; pendingSince_=GetTickCount64();
-    ResetEvent(done_); SetEvent(request_); inFlight_=true;
+    shared_->neural=neural_; ResetEvent(done_); SetEvent(request_); inFlight_=true;
     return previous;
 }
 bool DesktopBridge::Transfer(ID3D11Texture2D* frame) {
@@ -188,7 +188,7 @@ bool DesktopBridge::Transfer(ID3D11Texture2D* frame) {
     if(inputLock_->ReleaseSync(1)!=S_OK) return Fail("disabled: input ownership release failed");
     const auto requested=++sequence_; shared_->requested=requested;
     pendingSince_=GetTickCount64();
-    ResetEvent(done_); SetEvent(request_);
+    shared_->neural=neural_; ResetEvent(done_); SetEvent(request_);
     HANDLE waits[]{stop_,process_,done_};
     const auto remaining=[&]() {
         const auto left=deadline-std::chrono::steady_clock::now();

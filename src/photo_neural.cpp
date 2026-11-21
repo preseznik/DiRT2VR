@@ -10,6 +10,16 @@ namespace vr {
 namespace {
 std::mutex mutex;
 std::unique_ptr<DesktopBridge> helper;
+int EnvironmentNumber(const wchar_t* name,int fallback) {
+    wchar_t value[16]{};
+    const auto length=GetEnvironmentVariableW(name,value,16);
+    return length && length<16 ? _wtoi(value) : fallback;
+}
+// Launcher defaults; percentages for the float settings.
+bridge::NeuralSettings settings=bridge::Clamped({
+    EnvironmentNumber(L"DIRT2VR_NEURAL_STYLE",1),EnvironmentNumber(L"DIRT2VR_NEURAL_PASSES",1),
+    EnvironmentNumber(L"DIRT2VR_NEURAL_STRENGTH",100)/100.f,EnvironmentNumber(L"DIRT2VR_NEURAL_TONE",100)/100.f,
+    EnvironmentNumber(L"DIRT2VR_NEURAL_DETAIL",100)/100.f,EnvironmentNumber(L"DIRT2VR_NEURAL_MIX",100)/100.f});
 // Paused scenes tolerate slow frames; live frames wait at most this long for the
 // previous result before showing the original frame.
 constexpr DWORD WaitMilliseconds=250;
@@ -44,11 +54,21 @@ DesktopBridge& Helper(const Paths& paths) {
         helper=std::make_unique<DesktopBridge>(paths.helper,[](const char* message){Log("neural rendering: %s",message);},
             WaitMilliseconds,L"--neural",arguments);
     }
+    helper->Neural(settings);
     return *helper;
 }
 }
 
 bool PhotoNeuralConfigured(){return Configured().valid;}
+bridge::NeuralSettings PhotoNeuralSettings() {
+    std::lock_guard lock(mutex);return settings;
+}
+void PhotoNeuralSetSettings(const bridge::NeuralSettings& value) {
+    std::lock_guard lock(mutex);
+    settings=bridge::Clamped(value);
+    Log("neural rendering: style=%d passes=%d strength=%.2f tone=%.2f detail=%.2f mix=%.2f",
+        settings.style,settings.passes,settings.intensity,settings.tone,settings.structure,settings.mix);
+}
 
 PhotoNeuralState PhotoNeuralApply(IDXGISwapChain* swapchain,bool wanted) {
     if(!wanted || !swapchain)return PhotoNeuralState::Off;

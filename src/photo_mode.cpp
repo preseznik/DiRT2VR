@@ -35,17 +35,38 @@ double savedTime{};
 // Desktop panel: shown by default, H/View toggles it for the rest of the session.
 bool panelVisible=true,panelHeld{},photoHeld{},lastController{};
 // Desktop depth of field; kept for the rest of the session.
-bool dofEnabled{},dofKeyHeld{},padXHeld{},padXUsed{};
+bool dofEnabled{},dofKeyHeld{},padXHeld{};
 int blurHeld{};
 PhotoDofSettings dof;
 ULONGLONG dofSince{},dofDrawn{};
 // Desktop filters; kept for the rest of the session.
 PhotoFilterSettings filter;
-bool lookHeld{},letterboxHeld{},gridHeld{},padViewHeld{},padViewUsed{};
-int lookStepHeld{};
+bool lookHeld{},letterboxHeld{},gridHeld{},padViewHeld{};
 unsigned filterFrame{};
 // DLSS 5 Neural Rendering (desktop, needs the launcher's runtime folder); kept for the session.
 bool neuralEnabled{},neuralHeld{};
+PhotoNeuralState neuralState{};
+// Photo panel: selected row, base move speed and held-key auto-repeat.
+int menuSelected{},speedLevel=2;
+constexpr float SpeedScales[]{.25f,.5f,1.f,2.f,4.f};
+struct Repeat {
+    bool held{};ULONGLONG next{};
+    bool Step(bool down,ULONGLONG now) {
+        if(!down){held=false;return false;}
+        if(!held){held=true;next=now+350;return true;}
+        if(now>=next){next=now+70;return true;}
+        return false;
+    }
+} menuUpKey,menuDownKey,menuLeftKey,menuRightKey;
+enum class Setting { FieldOfView,Tilt,Speed,DepthOfField,Autofocus,Distance,Blur,Look,Brightness,Letterbox,Grid,
+    Neural,NeuralStyle,NeuralStrength,NeuralTone,NeuralDetail,NeuralPasses,NeuralMix };
+std::wstring KeyLabel(unsigned scan) {
+    wchar_t name[32]{};
+    return GetKeyNameTextW(LONG(scan<<16),name,32)>0?name:L"";
+}
+std::wstring Format(const wchar_t* format,double value) {
+    wchar_t text[64]{};swprintf_s(text,format,value);return text;
+}
 IDirectInput8W* input{};
 IDirectInputDevice8W* mouse{};
 HWND mouseWindow{};
@@ -141,6 +162,7 @@ PhotoInput Poll(float dt,bool movement) {
         static const int darker=row(0x06),brighter=row(0x07);
         result.look=Key('G');result.letterbox=Key('L');result.grid=Key('T');
         result.neural=Key('N');
+        result.menuUp=Key(VK_UP);result.menuDown=Key(VK_DOWN);result.menuLeft=Key(VK_LEFT);result.menuRight=Key(VK_RIGHT);
         result.exposure=(float(held(brighter))-float(held(darker)))*dt;
     }
     const auto window=Focus();
@@ -164,7 +186,8 @@ PhotoInput Poll(float dt,bool movement) {
     result.keyboard=result.right!=0 || result.forward!=0 || result.up!=0 || result.yaw!=0 || result.pitch!=0 ||
         result.zoom!=0 || result.roll!=0 || result.fast || result.slow || result.restart || result.level || result.photo || result.panel ||
         result.dof || result.focus!=0 || result.blur!=0 || result.autofocus ||
-        result.look || result.letterbox || result.grid || result.exposure!=0 || result.neural;
+        result.look || result.letterbox || result.grid || result.exposure!=0 || result.neural ||
+        result.menuUp || result.menuDown || result.menuLeft || result.menuRight;
     if(!xbox) {
         auto module=LoadLibraryExW(L"xinput1_4.dll",nullptr,LOAD_LIBRARY_SEARCH_SYSTEM32);
         if(module)xbox=reinterpret_cast<XboxFn>(GetProcAddress(module,"XInputGetState"));
@@ -187,13 +210,13 @@ PhotoInput Poll(float dt,bool movement) {
             const auto pressed=[&](WORD button){return (pad.wButtons&button)?1.f:0.f;};
             const float vertical=pressed(XINPUT_GAMEPAD_DPAD_UP)-pressed(XINPUT_GAMEPAD_DPAD_DOWN);
             const float horizontal=pressed(XINPUT_GAMEPAD_DPAD_RIGHT)-pressed(XINPUT_GAMEPAD_DPAD_LEFT);
-            // Holding X turns the D-pad into focus (up/down) and blur (left/right);
-            // holding View turns it into brightness (up/down) and look (left/right).
+            // X toggles depth of field and View hides the panel (both taps).
             const bool x=(pad.wButtons&XINPUT_GAMEPAD_X)!=0,view=(pad.wButtons&XINPUT_GAMEPAD_BACK)!=0;
             result.padX|=x;result.padView|=view;
-            if(view){result.exposure+=vertical*dt;result.lookStep+=int(horizontal);}
-            else if(x){result.focus+=vertical*dt;result.blur+=int(horizontal);}
-            else{result.zoom+=vertical*.8f*dt;result.roll+=horizontal*.5f*dt;}
+            if(panelVisible && !Headset()) {
+                // The D-pad selects and changes settings while the Photo panel is shown.
+                result.menuUp|=vertical>0;result.menuDown|=vertical<0;result.menuLeft|=horizontal<0;result.menuRight|=horizontal>0;
+            } else {result.zoom+=vertical*.8f*dt;result.roll+=horizontal*.5f*dt;}
             result.autofocus|=(pad.wButtons&XINPUT_GAMEPAD_LEFT_THUMB)!=0;
             result.restart|=(pad.wButtons&XINPUT_GAMEPAD_Y)!=0;
             result.level|=(pad.wButtons&XINPUT_GAMEPAD_RIGHT_THUMB)!=0;
@@ -274,10 +297,89 @@ void PhotoModePauseChanged(bool paused) {
     if(active)End("native-unpause");
     savedValid=false; // A kept shot belongs to the pause it was taken in.
 }
+namespace {
+// The Photo panel's rows from the current settings (desktop).
+std::vector<std::pair<Setting,PhotoMenuRow>> MenuRows(ULONGLONG now) {
+    std::vector<std::pair<Setting,PhotoMenuRow>> rows;
+    const auto add=[&](Setting id,const wchar_t* section,const wchar_t* label,std::wstring value,std::wstring key={},bool dim=false,bool warn=false) {
+        rows.push_back({id,PhotoMenuRow{section,label,std::move(value),std::move(key),dim,warn}});
+    };
+    const auto record=camera.Record();
+    add(Setting::FieldOfView,L"CAMERA",L"Field of view",Format(L"%.0f\u00b0",record[20]*57.2957795));
+    add(Setting::Tilt,L"",L"Tilt",Format(L"%+.0f\u00b0",camera.Roll()*57.2957795),KeyLabel(0x2c)+L"/"+KeyLabel(0x2e));
+    add(Setting::Speed,L"",L"Move speed",Format(L"%.0f m/s",8.0*SpeedScales[speedLevel]));
+    const bool unavailable=dofEnabled && now-dofSince>1000 && now-dofDrawn>1000;
+    add(Setting::DepthOfField,L"DEPTH OF FIELD",L"Depth of field",!dofEnabled?L"Off":unavailable?L"Unavailable":L"On",L"F",false,unavailable);
+    add(Setting::Autofocus,L"",L"Autofocus",dof.autoFocus?L"On":L"Off",L"",!dofEnabled);
+    const float distance=dof.autoFocus?PhotoDofCentre():dof.focus;
+    add(Setting::Distance,L"",L"Focus distance",distance<=0?std::wstring(L"\u2014"):distance>=4000?std::wstring(L"Far"):
+        Format(distance<10?L"%.1f m":L"%.0f m",distance),KeyLabel(0x02)+L"/"+KeyLabel(0x03),!dofEnabled);
+    add(Setting::Blur,L"",L"Blur",Format(L"%.0f",dof.blur),KeyLabel(0x04)+L"/"+KeyLabel(0x05),!dofEnabled);
+    add(Setting::Look,L"LOOK",L"Filter",PhotoLooks[filter.look].name,L"G");
+    add(Setting::Brightness,L"",L"Brightness",Format(L"%+.1f",filter.exposure),KeyLabel(0x06)+L"/"+KeyLabel(0x07));
+    add(Setting::Letterbox,L"",L"Letterbox",filter.letterbox==1?L"2.39:1":filter.letterbox==2?L"1.85:1":L"Off",L"L");
+    add(Setting::Grid,L"",L"Thirds grid",filter.grid?L"On":L"Off",L"T");
+    if(PhotoNeuralConfigured()) {
+        const auto n=PhotoNeuralSettings();
+        const wchar_t* state=!neuralEnabled?L"Off":neuralState==PhotoNeuralState::Starting?L"Starting\u2026":
+            neuralState==PhotoNeuralState::Failed?L"Unavailable":L"On";
+        add(Setting::Neural,L"DLSS 5 NEURAL RENDERING",L"Neural rendering",state,L"N",false,neuralEnabled && neuralState==PhotoNeuralState::Failed);
+        add(Setting::NeuralStyle,L"",L"Style",n.style==2?L"Cinematic":n.style==0?L"Standard":L"Natural",L"",!neuralEnabled);
+        add(Setting::NeuralStrength,L"",L"Strength",Format(L"%.0f%%",n.intensity*100),L"",!neuralEnabled);
+        add(Setting::NeuralTone,L"",L"Local tone",Format(L"%.0f%%",n.tone*100),L"",!neuralEnabled);
+        add(Setting::NeuralDetail,L"",L"Local detail",Format(L"%.0f%%",n.structure*100),L"",!neuralEnabled);
+        add(Setting::NeuralPasses,L"",L"Passes",Format(L"%.0f",n.passes),L"",!neuralEnabled);
+        add(Setting::NeuralMix,L"",L"Mix with original",Format(L"%.0f%%",n.mix*100),L"",!neuralEnabled);
+    }
+    return rows;
+}
+// Left/right on a Photo panel row.
+void Adjust(Setting id,int direction,ULONGLONG now) {
+    PhotoInput change;
+    auto neural=PhotoNeuralSettings();
+    switch(id) {
+    case Setting::FieldOfView:change.zoom=-.08f*direction;camera.Move(change,0);break;
+    case Setting::Tilt:change.roll=.0349066f*direction;camera.Move(change,0);break;
+    case Setting::Speed:speedLevel=std::clamp(speedLevel+direction,0,4);break;
+    case Setting::DepthOfField:dofEnabled=!dofEnabled;dofSince=now;Log("photo depth of field: enabled=%d",dofEnabled);break;
+    case Setting::Autofocus:if(dofEnabled)dof.autoFocus=!dof.autoFocus;break;
+    case Setting::Distance:
+        if(!dofEnabled)break;
+        if(dof.autoFocus) {
+            const float centre=PhotoDofCentre();
+            if(centre>.3f && centre<5000)dof.focus=centre;
+            dof.autoFocus=false;
+        }
+        dof.focus=std::clamp(dof.focus*std::exp(.1f*direction),.5f,2000.f);break;
+    case Setting::Blur:if(dofEnabled)dof.blur=std::clamp(dof.blur+direction,1,10);break;
+    case Setting::Look:filter.look=(filter.look+direction+int(PhotoLooks.size()))%int(PhotoLooks.size());break;
+    case Setting::Brightness:filter.exposure=std::clamp(std::round((filter.exposure+.1f*direction)*10)/10,-2.f,2.f);break;
+    case Setting::Letterbox:filter.letterbox=(filter.letterbox+direction+int(PhotoLetterboxes.size()))%int(PhotoLetterboxes.size());break;
+    case Setting::Grid:filter.grid=!filter.grid;break;
+    case Setting::Neural:neuralEnabled=!neuralEnabled;Log("photo neural rendering: enabled=%d",neuralEnabled);break;
+    default:
+        if(!neuralEnabled)break;
+        if(id==Setting::NeuralStyle) {
+            constexpr int order[]{1,0,2}; // Natural, Standard, Cinematic
+            int at=0;for(int i=0;i<3;++i)if(order[i]==neural.style)at=i;
+            neural.style=order[(at+direction+3)%3];
+        }
+        const auto step=[&](float& value,float low,float high){value=std::clamp(std::round((value+.1f*direction)*10)/10,low,high);};
+        if(id==Setting::NeuralStrength)step(neural.intensity,0,2);
+        if(id==Setting::NeuralTone)step(neural.tone,0,2);
+        if(id==Setting::NeuralDetail)step(neural.structure,0,2);
+        if(id==Setting::NeuralPasses)neural.passes=std::clamp(neural.passes+direction,1,3);
+        if(id==Setting::NeuralMix)step(neural.mix,0,1);
+        PhotoNeuralSetSettings(neural);
+        break;
+    }
+}
+}
+
 void PhotoModeFrame(IDXGISwapChain* swapchain) {
     if(!PhotoModeRequested())return;
     PhotoPanelState overlay;
-    bool show{},capture{};
+    bool show{},capture{},neuralWanted{};int dofState{};
     {
         std::lock_guard lock(mutex);
         if(!active) {
@@ -293,37 +395,29 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
         auto movement=Poll(dt,true);
         if(!armed) {if(!movement.exit)armed=true;movement={};}
         if(movement.exit){End("back");return;}
+        movement.speedScale=SpeedScales[speedLevel];
         camera.Move(movement,dt);
         UpdatePhotoCursor(window,true);
         // The panel and photos use the desktop frame; VR shows the headset view instead.
         if(!Headset() && camera.Ready()) {
             if(movement.controller)lastController=true;
             else if(movement.keyboard)lastController=false;
-            // H toggles the panel on press; controller View toggles it on release unless it
-            // was held to change the look or brightness.
-            bool panelToggle=movement.panel && !panelHeld;
-            if(movement.padView){if(movement.lookStep!=0 || movement.exposure!=0)padViewUsed=true;}
-            else if(padViewHeld){panelToggle|=!padViewUsed;padViewUsed=false;}
-            if(panelToggle)panelVisible=!panelVisible;
+            // H or the controller's View button shows or hides the panel.
+            if((movement.panel && !panelHeld) || (movement.padView && !padViewHeld))panelVisible=!panelVisible;
+            // Direct keys (also listed in the panel).
             const int looks=int(PhotoLooks.size());
-            int step=movement.lookStep!=lookStepHeld && movement.lookStep!=0 ? (movement.lookStep>0?1:-1) : 0;
-            if(movement.look && !lookHeld)step=movement.fast?-1:1; // Shift+G goes back.
-            if(step){filter.look=(filter.look+step+looks)%looks;Log("photo filter: look=%d",filter.look);}
+            if(movement.look && !lookHeld) {
+                filter.look=(filter.look+(movement.fast?-1:1)+looks)%looks; // Shift+G goes back.
+                Log("photo filter: look=%d",filter.look);
+            }
             if(movement.exposure!=0)filter.exposure=std::clamp(filter.exposure+movement.exposure,-2.f,2.f);
             if(movement.letterbox && !letterboxHeld)filter.letterbox=(filter.letterbox+1)%int(PhotoLetterboxes.size());
             if(movement.grid && !gridHeld)filter.grid=!filter.grid;
             if(movement.neural && !neuralHeld && PhotoNeuralConfigured()) {
                 neuralEnabled=!neuralEnabled;Log("photo neural rendering: enabled=%d",neuralEnabled);
             }
-            neuralHeld=movement.neural;
-            lookHeld=movement.look;letterboxHeld=movement.letterbox;gridHeld=movement.grid;
-            lookStepHeld=movement.lookStep;padViewHeld=movement.padView;
             capture=movement.photo && !photoHeld;
-            // F toggles on press; controller X toggles on release unless it was held to adjust focus/blur.
-            bool toggle=movement.dof && !dofKeyHeld;
-            if(movement.padX){if(movement.focus!=0 || movement.blur!=0)padXUsed=true;}
-            else if(padXHeld){toggle|=!padXUsed;padXUsed=false;}
-            if(toggle) {
+            if((movement.dof && !dofKeyHeld) || (movement.padX && !padXHeld)) {
                 dofEnabled=!dofEnabled;dofSince=now;
                 Log("photo depth of field: enabled=%d",dofEnabled);
             }
@@ -340,18 +434,24 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
                 }
                 if(movement.blur!=0 && movement.blur!=blurHeld)dof.blur=std::clamp(dof.blur+(movement.blur>0?1:-1),1,10);
             }
-            blurHeld=movement.blur;dofKeyHeld=movement.dof;padXHeld=movement.padX;
-            const auto record=camera.Record();
-            overlay={panelVisible,lastController,record[20]*57.2957795f,camera.Roll()*57.2957795f,movement.fast?1:movement.slow?-1:0};
-            // Unavailable once enabled for a second without any scene depth (e.g. game shadows off).
-            overlay.dof=!dofEnabled?0:(now-dofSince>1000 && now-dofDrawn>1000)?2:1;
-            overlay.autoFocus=dof.autoFocus;overlay.blur=dof.blur;
-            overlay.focus=dof.autoFocus?PhotoDofCentre():dof.focus;
-            overlay.look=PhotoLooks[filter.look].name;overlay.exposure=filter.exposure;
-            overlay.letterbox=PhotoLetterboxes[filter.letterbox];overlay.grid=filter.grid;
-            overlay.neuralConfigured=PhotoNeuralConfigured();overlay.neural=neuralEnabled?1:0;
+            // Photo panel: up/down select a setting, left/right change it.
+            auto rows=MenuRows(now);
+            const int count=int(rows.size());
+            if(panelVisible && count) {
+                menuSelected=std::clamp(menuSelected,0,count-1);
+                if(menuUpKey.Step(movement.menuUp,now))menuSelected=(menuSelected+count-1)%count;
+                if(menuDownKey.Step(movement.menuDown,now))menuSelected=(menuSelected+1)%count;
+                const int direction=menuRightKey.Step(movement.menuRight,now)?1:menuLeftKey.Step(movement.menuLeft,now)?-1:0;
+                if(direction){Adjust(rows[menuSelected].first,direction,now);rows=MenuRows(now);}
+            }
+            overlay.panel=panelVisible;overlay.controller=lastController;overlay.selected=menuSelected;
+            for(auto& row:rows)overlay.rows.push_back(std::move(row.second));
+            dofState=!dofEnabled?0:(now-dofSince>1000 && now-dofDrawn>1000)?2:1;
+            neuralWanted=neuralEnabled;
             show=true;
         }
+        neuralHeld=movement.neural;lookHeld=movement.look;letterboxHeld=movement.letterbox;gridHeld=movement.grid;
+        padViewHeld=movement.padView;blurHeld=movement.blur;dofKeyHeld=movement.dof;padXHeld=movement.padX;
         PhotoDofWanted(show && dofEnabled);
         panelHeld=movement.panel;photoHeld=movement.photo;
     }
@@ -359,15 +459,10 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
     if(!show)return;
     // Neural rendering first (on the game's own frame), then blur, filters and saving;
     // photos include all of these but never the panel.
-    switch(PhotoNeuralApply(swapchain,overlay.neural!=0)) {
-    case PhotoNeuralState::Off:break;
-    case PhotoNeuralState::Starting:overlay.neural=2;break;
-    case PhotoNeuralState::On:overlay.neural=1;break;
-    case PhotoNeuralState::Failed:overlay.neural=3;break;
-    }
-    if(overlay.dof && PhotoDofApply(swapchain,dof)) {
+    const auto state=PhotoNeuralApply(swapchain,neuralWanted);
+    {std::lock_guard lock(mutex);neuralState=state;}
+    if(dofState && PhotoDofApply(swapchain,dof)) {
         std::lock_guard lock(mutex);dofDrawn=GetTickCount64();
-        if(overlay.dof==2)overlay.dof=1;
     }
     // Filters after depth of field (so blur works on the original colours); the grid is on screen only.
     PhotoFilterSettings look;

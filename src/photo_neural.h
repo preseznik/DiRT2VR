@@ -1,4 +1,5 @@
 #pragma once
+#include "desktop_bridge_protocol.h"
 struct IDXGISwapChain;
 struct ID3D11Texture2D;
 namespace vr {
@@ -12,4 +13,8 @@ PhotoNeuralState PhotoNeuralApply(IDXGISwapChain* swapchain,bool wanted);
 // Live driving: sends this frame and replaces it with the previous processed frame,
 // through the same helper. False while the helper starts or after it fails.
 bool PhotoNeuralProcessLive(ID3D11Texture2D* frame);
+// The look used for both Photo Mode and driving: launcher defaults
+// (DIRT2VR_NEURAL_STYLE/STRENGTH/TONE/DETAIL/PASSES/MIX), changed in-game for the session.
+bridge::NeuralSettings PhotoNeuralSettings();
+void PhotoNeuralSetSettings(const bridge::NeuralSettings& settings);
 }

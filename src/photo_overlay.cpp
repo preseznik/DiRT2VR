@@ -1,11 +1,12 @@
 #include "photo_overlay.h"
-#include "eye_blit.h"
+#include "overlay_blit.h"
 #include "common.h"
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <gdiplus.h>
 #include <shlobj.h>
 #include <atomic>
+#include <algorithm>
 #include <cstdio>
 #include <cmath>
 #include <cstring>
@@ -70,34 +71,34 @@ void Encode(std::vector<unsigned char> pixels,unsigned width,unsigned height) {
 }
 
 // A GDI+ painted image copied onto the frame, redrawn only when its text changes.
+// A GDI+ painted (premultiplied) image, redrawn only when its content changes and
+// blended onto the frame, so the scene shows through.
 class PanelImage {
     ComPtr<ID3D11Device> device_;
     ComPtr<ID3D11Texture2D> texture_;
-    EyeBlit blit_;
+    OverlayBlit blit_;
     std::unique_ptr<Gdiplus::Bitmap> bitmap_;
     std::wstring last_;
-    unsigned width_,height_;
+    unsigned width_{},height_{};
 public:
-    PanelImage(unsigned width,unsigned height):width_(width),height_(height) {}
-    float Aspect() const {return float(height_)/float(width_);}
-    bool Draw(ID3D11RenderTargetView* target,const std::wstring& signature,const std::function<void(Gdiplus::Graphics&)>& paint,
-              unsigned w,unsigned h,float x,float y) {
+    bool Draw(ID3D11RenderTargetView* target,unsigned width,unsigned height,const std::wstring& signature,
+              const std::function<void(Gdiplus::Graphics&)>& paint,float x,float y,float w,float h) {
         ComPtr<ID3D11Device> device;target->GetDevice(&device);
-        if(device_.Get()!=device.Get()) {
-            device_=device;texture_.Reset();blit_=EyeBlit{};last_.clear();
-            if(!StartGdiplus() || !blit_.Initialize(device.Get()))return false;
-            D3D11_TEXTURE2D_DESC d{};d.Width=width_;d.Height=height_;d.MipLevels=d.ArraySize=1;
+        if(!StartGdiplus())return false;
+        if(device_.Get()!=device.Get() || width!=width_ || height!=height_) {
+            device_=device;texture_.Reset();bitmap_.reset();last_.clear();width_=width;height_=height;
+            D3D11_TEXTURE2D_DESC d{};d.Width=width;d.Height=height;d.MipLevels=d.ArraySize=1;
             d.Format=DXGI_FORMAT_B8G8R8A8_UNORM;d.SampleDesc.Count=1;d.Usage=D3D11_USAGE_DEFAULT;d.BindFlags=D3D11_BIND_SHADER_RESOURCE;
             if(FAILED(device->CreateTexture2D(&d,nullptr,&texture_)))return false;
+            bitmap_=std::make_unique<Gdiplus::Bitmap>(int(width),int(height),PixelFormat32bppPARGB);
         }
         if(!texture_)return false;
         if(signature!=last_) {
-            if(!bitmap_)bitmap_=std::make_unique<Gdiplus::Bitmap>(int(width_),int(height_),PixelFormat32bppPARGB);
             {
                 Gdiplus::Graphics g(bitmap_.get());
                 g.SetSmoothingMode(Gdiplus::SmoothingModeAntiAlias);
                 g.SetTextRenderingHint(Gdiplus::TextRenderingHintAntiAliasGridFit);
-                g.Clear(Gdiplus::Color(235,25,27,29));
+                g.Clear(Gdiplus::Color(0,0,0,0));
                 paint(g);
             }
             Gdiplus::BitmapData data{};Gdiplus::Rect rect(0,0,int(width_),int(height_));
@@ -107,10 +108,17 @@ public:
             bitmap_->UnlockBits(&data);
             last_=signature;
         }
-        return blit_.Draw(0,texture_.Get(),target,w,h,true,x,y);
+        return blit_.Draw(target,texture_.Get(),x,y,w,h);
     }
 };
-PanelImage fullPanel(960,600),neuralPanel(960,680),toastPanel(960,80);
+PanelImage settingsPanel,hintBar,toastPanel;
+
+void RoundedRect(Gdiplus::Graphics& g,const Gdiplus::Brush& brush,float x,float y,float w,float h,float r) {
+    Gdiplus::GraphicsPath path;
+    path.AddArc(x,y,2*r,2*r,180,90);path.AddArc(x+w-2*r,y,2*r,2*r,270,90);
+    path.AddArc(x+w-2*r,y+h-2*r,2*r,2*r,0,90);path.AddArc(x,y+h-2*r,2*r,2*r,90,90);
+    path.CloseFigure();g.FillPath(&brush,&path);
+}
 
 std::wstring KeyName(unsigned scan) {
     wchar_t name[32]{};
@@ -189,73 +197,96 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
     D3D11_TEXTURE2D_DESC desc{};back->GetDesc(&desc);
     ComPtr<ID3D11RenderTargetView> target;
     if(FAILED(device->CreateRenderTargetView(back.Get(),nullptr,&target)))return;
-    const Gdiplus::Color white(255,245,245,245),green(255,183,235,25),grey(255,160,164,168),orange(255,255,170,60);
-    const unsigned height=desc.Height*37/100,width=unsigned(float(height)/fullPanel.Aspect());
-    const float margin=float(desc.Height/40);
-    static bool reported{};
-    bool drawn{};
+    // Panel artwork is drawn for a 1800-pixel-high screen and scaled to the frame.
+    const float scale=float(desc.Height)/1800.f,margin=float(desc.Height)/30.f;
+    const Gdiplus::Color white(255,240,242,244),dim(255,120,126,132),grey(255,150,156,162),accent(255,183,235,25),orange(255,255,170,60);
+    bool drawn=true;
+    float hintTop=float(desc.Height);
     if(state.panel) {
-        wchar_t status[96]{};
-        swprintf_s(status,L"View %.0f\u00b0    Tilt %+.0f\u00b0    Speed %s",state.viewDegrees,state.tiltDegrees,
-            state.speed<0?L"slower":state.speed>0?L"faster":L"normal");
-        wchar_t focus[48]{};
-        if(state.focus<=0)swprintf_s(focus,L"%s",state.autoFocus?L"auto":L"\u2014");
-        else if(state.focus>=4000)swprintf_s(focus,state.autoFocus?L"auto (far)":L"far");
-        else swprintf_s(focus,state.autoFocus?L"auto (%.*f m)":L"%.*f m",state.focus<10?1:0,state.focus);
-        wchar_t depth[96]{};
-        if(state.dof==0)swprintf_s(depth,L"Depth of field off");
-        else if(state.dof==2)swprintf_s(depth,L"Depth of field unavailable in this view");
-        else swprintf_s(depth,L"Depth of field    Focus %s    Blur %d",focus,state.blur);
-        wchar_t look[128]{};
-        const bool lookActive=std::wcscmp(state.look,L"Off") || std::abs(state.exposure)>=.05f || state.letterbox>0 || state.grid;
-        swprintf_s(look,L"Filter %s    Brightness %+.1f%s%s",state.look,state.exposure,
-            state.letterbox>2?L"    Letterbox 2.39:1":state.letterbox>0?L"    Letterbox 1.85:1":L"",state.grid?L"    Grid":L"");
-        const auto tilt=KeyName(0x2c)+L"/"+KeyName(0x2e);
-        const std::wstring keyboard[]={L"WASD move  \u00b7  Mouse look  \u00b7  E/Q up/down",L"Shift faster  \u00b7  Ctrl slower",
-            L"Wheel or PgUp/PgDn zoom  \u00b7  "+tilt+L" tilt",L"Middle button: clear zoom and tilt",
-            L"F depth of field  \u00b7  "+KeyName(0x02)+L"/"+KeyName(0x03)+L" focus  \u00b7  "+KeyName(0x04)+L"/"+KeyName(0x05)+L" blur  \u00b7  Right click: autofocus",
-            L"G filter (Shift+G back)  \u00b7  "+KeyName(0x06)+L"/"+KeyName(0x07)+L" brightness  \u00b7  L letterbox  \u00b7  T grid",
-            L"R start view  \u00b7  P save photo",L"H hide panel  \u00b7  Esc back to the pause menu"};
-        const std::wstring pad[]={L"Left stick move  \u00b7  Right stick look  \u00b7  RT/LT up/down",L"RB faster  \u00b7  LB slower",
-            L"D-pad up/down zoom  \u00b7  left/right tilt",L"Right-stick click: clear zoom and tilt",
-            L"X depth of field  \u00b7  Hold X + D-pad: focus/blur  \u00b7  L3: autofocus",
-            L"Hold View + D-pad: filter (left/right) / brightness (up/down)",
-            L"Y start view  \u00b7  A save photo",L"View button: hide panel  \u00b7  B back to the pause menu"};
-        const auto& help=state.controller?pad:keyboard;
-        const std::wstring footer=recent?text:L"Photos are saved to Pictures\\DiRT2VR";
-        // DLSS 5 lines only when the launcher has a runtime folder set.
-        const bool neural=state.neuralConfigured;
-        const wchar_t* neuralStatus=state.neural==1?L"Neural rendering (DLSS 5) on":state.neural==2?L"Neural rendering (DLSS 5) starting\u2026":
-            state.neural==3?L"Neural rendering (DLSS 5) unavailable: see the guide":L"Neural rendering (DLSS 5) off";
-        const std::wstring neuralHelp=state.controller?L"Neural rendering: N on the keyboard":L"N neural rendering (DLSS 5, slow)";
-        std::wstring signature=std::wstring(status)+depth+look+footer+(error?L"!":L"")+(lookActive?L"+":L"")+(neural?neuralStatus+neuralHelp:L"");
-        for(const auto& line:help)signature+=line;
-        auto& panel=neural?neuralPanel:fullPanel;
-        const unsigned panelHeight=unsigned(float(width)*panel.Aspect());
-        drawn=panel.Draw(target.Get(),signature,[&](Gdiplus::Graphics& g) {
-            Gdiplus::Font title(L"Segoe UI",44,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),bold(L"Segoe UI",30,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),
-                normal(L"Segoe UI",28,Gdiplus::FontStyleRegular,Gdiplus::UnitPixel);
-            Gdiplus::SolidBrush whiteBrush(white),greenBrush(green),greyBrush(grey),orangeBrush(orange);
-            g.DrawString(L"PHOTO MODE",-1,&title,Gdiplus::PointF(32,18),&whiteBrush);
-            g.DrawString(status,-1,&bold,Gdiplus::PointF(34,80),&greenBrush);
-            g.DrawString(depth,-1,&bold,Gdiplus::PointF(34,120),state.dof==2?&orangeBrush:state.dof?&greenBrush:&greyBrush);
-            g.DrawString(look,-1,&bold,Gdiplus::PointF(34,160),lookActive?&greenBrush:&greyBrush);
-            float y=212;
-            if(neural) {
-                g.DrawString(neuralStatus,-1,&bold,Gdiplus::PointF(34,200),state.neural==3?&orangeBrush:state.neural?&greenBrush:&greyBrush);
-                y=252;
+        // Settings: one row per option, grouped, the selected row highlighted.
+        constexpr int width=760,header=92,rowHeight=54,sectionHeight=50,bottom=22;
+        int height=header+bottom;
+        std::wstring signature=std::to_wstring(state.selected);
+        for(size_t i=0;i<state.rows.size();++i) {
+            const auto& row=state.rows[i];
+            if(!row.section.empty())height+=sectionHeight;
+            height+=rowHeight;
+            signature+=row.section+L"|"+row.label+L"|"+row.value+L"|"+row.key+(row.dim?L"d":L"")+(row.warn?L"w":L"");
+        }
+        drawn&=settingsPanel.Draw(target.Get(),width,unsigned(height),signature,[&](Gdiplus::Graphics& g) {
+            Gdiplus::SolidBrush background(Gdiplus::Color(210,14,16,18)),highlight(Gdiplus::Color(56,255,255,255));
+            Gdiplus::SolidBrush whiteBrush(white),dimBrush(dim),greyBrush(grey),accentBrush(accent),orangeBrush(orange);
+            RoundedRect(g,background,0,0,float(width),float(height),22);
+            Gdiplus::FontFamily family(L"Segoe UI");
+            Gdiplus::Font title(&family,34,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),section(&family,21,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),
+                label(&family,28,Gdiplus::FontStyleRegular,Gdiplus::UnitPixel),value(&family,28,Gdiplus::FontStyleBold,Gdiplus::UnitPixel),
+                key(&family,20,Gdiplus::FontStyleBold,Gdiplus::UnitPixel);
+            Gdiplus::StringFormat right;right.SetAlignment(Gdiplus::StringAlignmentFar);right.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+            Gdiplus::StringFormat left;left.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+            Gdiplus::StringFormat centre;centre.SetAlignment(Gdiplus::StringAlignmentCenter);centre.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+            g.FillRectangle(&accentBrush,32.f,34.f,8.f,30.f);
+            g.DrawString(L"PHOTO MODE",-1,&title,Gdiplus::RectF(52,22,600,54),&left,&whiteBrush);
+            float y=float(header);
+            for(size_t i=0;i<state.rows.size();++i) {
+                const auto& row=state.rows[i];
+                if(!row.section.empty()) {
+                    g.DrawString(row.section.c_str(),-1,&section,Gdiplus::RectF(32,y+8,width-64.f,sectionHeight-8.f),&left,&greyBrush);
+                    y+=sectionHeight;
+                }
+                const bool selected=int(i)==state.selected;
+                if(selected) {
+                    RoundedRect(g,highlight,14,y+2,width-28.f,rowHeight-4.f,10);
+                    g.FillRectangle(&accentBrush,14.f,y+10,6.f,rowHeight-20.f);
+                }
+                const auto& labelBrush=row.dim?dimBrush:whiteBrush;
+                const auto& valueBrush=row.warn?orangeBrush:row.dim?dimBrush:selected?accentBrush:whiteBrush;
+                g.DrawString(row.label.c_str(),-1,&label,Gdiplus::RectF(36,y,360,float(rowHeight)),&left,&labelBrush);
+                const float keyWidth=row.key.empty()?0.f:66.f;
+                const Gdiplus::RectF valueBox(410,y,width-450.f-keyWidth,float(rowHeight));
+                if(selected && !row.dim) {
+                    // The left arrow sits just before the value.
+                    Gdiplus::RectF size;g.MeasureString(row.value.c_str(),-1,&value,Gdiplus::PointF(0,0),&size);
+                    g.DrawString(L"\u2039",-1,&value,Gdiplus::RectF(valueBox.GetRight()-size.Width-34,y,30,float(rowHeight)),&centre,&accentBrush);
+                }
+                g.DrawString(row.value.c_str(),-1,&value,valueBox,&right,&valueBrush);
+                if(selected && !row.dim)
+                    g.DrawString(L"\u203a",-1,&value,Gdiplus::RectF(width-44.f-keyWidth,y,30,float(rowHeight)),&centre,&accentBrush);
+                if(!row.key.empty()) {
+                    Gdiplus::SolidBrush cap(Gdiplus::Color(60,255,255,255));
+                    RoundedRect(g,cap,width-30.f-keyWidth+8,y+12,keyWidth-8,rowHeight-24.f,6);
+                    g.DrawString(row.key.c_str(),-1,&key,Gdiplus::RectF(width-30.f-keyWidth+8,y,keyWidth-8,float(rowHeight)),&centre,&greyBrush);
+                }
+                y+=rowHeight;
             }
-            for(const auto& line:help){g.DrawString(line.c_str(),-1,&normal,Gdiplus::PointF(34,y),&whiteBrush);y+=40;}
-            if(neural){g.DrawString(neuralHelp.c_str(),-1,&normal,Gdiplus::PointF(34,y),&whiteBrush);y+=40;}
-            g.DrawString(footer.c_str(),-1,&normal,Gdiplus::PointF(34,y+8),recent?(error?&orangeBrush:&greenBrush):&greyBrush);
-        },width,panelHeight,margin,margin);
-    } else {
-        drawn=toastPanel.Draw(target.Get(),text+(error?L"!":L""),[&](Gdiplus::Graphics& g) {
-            Gdiplus::Font normal(L"Segoe UI",30,Gdiplus::FontStyleBold,Gdiplus::UnitPixel);
-            Gdiplus::SolidBrush brush(error?orange:green);
-            g.DrawString(text.c_str(),-1,&normal,Gdiplus::PointF(34,20),&brush);
-        },width,unsigned(float(width)*toastPanel.Aspect()),margin,margin);
+        },float(desc.Width)-margin-width*scale,margin,width*scale,height*scale);
+        // Hint bar: only the essentials; everything else is in the panel.
+        const std::wstring hints=state.controller?
+            L"LS  Move     RS  Look     RT / LT  Up / Down     D-pad  Select / Change     A  Photo     View  Hide     B  Back":
+            L"WASD  Move     Mouse  Look     E / Q  Up / Down     \u2191\u2193  Select     \u2190\u2192  Change     P  Photo     H  Hide     Esc  Back";
+        constexpr int hintWidth=1800,hintHeight=64;
+        const float w=std::min(hintWidth*scale,float(desc.Width)-2*margin),h=w*hintHeight/hintWidth;
+        hintTop=float(desc.Height)-margin-h;
+        drawn&=hintBar.Draw(target.Get(),hintWidth,hintHeight,hints,[&](Gdiplus::Graphics& g) {
+            Gdiplus::SolidBrush background(Gdiplus::Color(190,14,16,18)),whiteBrush(white);
+            RoundedRect(g,background,0,0,float(hintWidth),float(hintHeight),hintHeight/2.f);
+            Gdiplus::Font font(L"Segoe UI",25,Gdiplus::FontStyleRegular,Gdiplus::UnitPixel);
+            Gdiplus::StringFormat centre;centre.SetAlignment(Gdiplus::StringAlignmentCenter);centre.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+            g.DrawString(hints.c_str(),-1,&font,Gdiplus::RectF(0,0,float(hintWidth),float(hintHeight)),&centre,&whiteBrush);
+        },(float(desc.Width)-w)/2,hintTop,w,h);
     }
+    if(recent) {
+        // Messages (photo saved) above the hint bar, centred.
+        constexpr int toastWidth=1300,toastHeight=70;
+        const float w=std::min(toastWidth*scale,float(desc.Width)-2*margin),h=w*toastHeight/toastWidth;
+        drawn&=toastPanel.Draw(target.Get(),toastWidth,toastHeight,text+(error?L"!":L""),[&](Gdiplus::Graphics& g) {
+            Gdiplus::SolidBrush background(Gdiplus::Color(210,14,16,18)),brush(error?orange:accent);
+            RoundedRect(g,background,0,0,float(toastWidth),float(toastHeight),18);
+            Gdiplus::Font font(L"Segoe UI",27,Gdiplus::FontStyleBold,Gdiplus::UnitPixel);
+            Gdiplus::StringFormat centre;centre.SetAlignment(Gdiplus::StringAlignmentCenter);centre.SetLineAlignment(Gdiplus::StringAlignmentCenter);
+            g.DrawString(text.c_str(),-1,&font,Gdiplus::RectF(0,0,float(toastWidth),float(toastHeight)),&centre,&brush);
+        },(float(desc.Width)-w)/2,(state.panel?hintTop:float(desc.Height)-margin)-h*1.4f,w,h);
+    }
+    static bool reported{};
     if(!drawn && !reported){reported=true;Log("photo panel: draw failed");}
 }
 }

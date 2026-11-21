@@ -1,4 +1,5 @@
 #include "scenery_motion.h"
+#include "live_neural.h"
 #include "common.h"
 #include <MinHook.h>
 #include <wrl/client.h>
@@ -224,6 +225,8 @@ HRESULT STDMETHODCALLTYPE OwnMap(ID3D11DeviceContext* c,ID3D11Resource* r,UINT s
 }
 void STDMETHODCALLTYPE OwnUnmap(ID3D11DeviceContext* c,ID3D11Resource* r,UINT sub) { SceneryMotionUnmapped(r);realUnmap(c,r,sub); }
 void STDMETHODCALLTYPE OwnDrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT base) {
+    // Desktop live neural rendering takes HUD draws into its own texture.
+    if(LiveNeuralHudDraw(c,[&]{realDrawIndexed(c,n,start,base);}))return;
     if(!SceneryMotionDraw(c,[&]{realDrawIndexed(c,n,start,base);}))realDrawIndexed(c,n,start,base);
 }
 

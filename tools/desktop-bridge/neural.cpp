@@ -117,7 +117,8 @@ public:
         Devices(shared.adapter);
         Modules(runtime,shim);
         Resources();
-        Feature(runtime);
+        Initialize(runtime);
+        Create(1);
     }
     ~Neural() {
         if(feature_ && release_)shimRelease_(release_,feature_);
@@ -126,7 +127,17 @@ public:
         for(auto m:{shimModule_,runtimeModule_,coreModule_})if(m)FreeLibrary(m);
     }
     ID3D11Device* Device11() const {return device11_.Get();}
-    void Process(ID3D11Texture2D* input,ID3D11Texture2D* output) {
+    void Process(ID3D11Texture2D* input,ID3D11Texture2D* output,vr::bridge::NeuralSettings settings) {
+        settings=vr::bridge::Clamped(settings);
+        if(settings.style!=style_) {
+            // Style is fixed per NGX feature: release it and create a new one.
+            if(shimRelease_(release_,feature_)!=ngx::Success)throw std::runtime_error("neural release");
+            feature_=nullptr;Create(settings.style);
+        }
+        if(settings.passes!=lastPasses_ || settings.mix!=lastMix_) {
+            char line[96]{};std::snprintf(line,sizeof(line),"neural passes=%d mix=%.2f style=%d",settings.passes,settings.mix,settings.style);Note(line);
+            lastPasses_=settings.passes;lastMix_=settings.mix;
+        }
         ++sequence_;
         context11_->CopyResource(input8_.Get(),input);
         Convert(inputView_.Get(),colorTarget_.Get());
@@ -137,14 +148,28 @@ public:
         Barrier(color12_.Get(),D3D12_RESOURCE_STATE_COMMON,D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
         Barrier(output12_.Get(),D3D12_RESOURCE_STATE_COMMON,D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
         params_->Set("DLSSNR.Reset",1); // Still frames: no temporal history.
-        if(shimEvaluate_(evaluate_,list_.Get(),feature_,params_,nullptr)!=ngx::Success)throw std::runtime_error("neural evaluate");
+        for(int pass=0;pass<settings.passes;++pass) {
+            if(pass) {
+                // Chain: this pass starts from the previous pass's result.
+                Barrier(output12_.Get(),D3D12_RESOURCE_STATE_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_COPY_SOURCE);
+                Barrier(color12_.Get(),D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,D3D12_RESOURCE_STATE_COPY_DEST);
+                list_->CopyResource(color12_.Get(),output12_.Get());
+                Barrier(color12_.Get(),D3D12_RESOURCE_STATE_COPY_DEST,D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE);
+                Barrier(output12_.Get(),D3D12_RESOURCE_STATE_COPY_SOURCE,D3D12_RESOURCE_STATE_UNORDERED_ACCESS);
+            }
+            // Later passes refine without applying the look twice (community multi-pass practice).
+            params_->Set("DLSSNR.Intensity",pass?1.0f:settings.intensity);
+            params_->Set("DLSSNR.LocalToneStrength",pass?0.0f:settings.tone);
+            params_->Set("DLSSNR.LocalStructureStrength",pass?(settings.structure<1?settings.structure:1.0f):settings.structure);
+            if(shimEvaluate_(evaluate_,list_.Get(),feature_,params_,nullptr)!=ngx::Success)throw std::runtime_error("neural evaluate");
+        }
         Barrier(color12_.Get(),D3D12_RESOURCE_STATE_NON_PIXEL_SHADER_RESOURCE,D3D12_RESOURCE_STATE_COMMON);
         Barrier(output12_.Get(),D3D12_RESOURCE_STATE_UNORDERED_ACCESS,D3D12_RESOURCE_STATE_COMMON);
         Check(list_->Close(),"list close");
         ID3D12CommandList* lists[]{list_.Get()};queue_->ExecuteCommandLists(1,lists);
         Check(queue_->Signal(outputFence12_.Get(),sequence_),"signal output");
         Check(context4_->Wait(outputFence11_.Get(),sequence_),"wait output");
-        Convert(outputView_.Get(),output8Target_.Get());
+        Mix(settings.mix);
         context11_->CopyResource(output,output8_.Get());
         Check(context4_->Signal(completion_.Get(),sequence_),"signal completion");context11_->Flush();
         Check(completion_->SetEventOnCompletion(sequence_,event_),"completion event");
@@ -208,18 +233,28 @@ private:
         const char* shader=R"(
             Texture2D<float4> image:register(t0);
             float4 VS(uint id:SV_VertexID):SV_Position { float2 uv=float2((id<<1)&2,id&2); return float4(uv*float2(2,-2)+float2(-1,1),0,1); }
-            float4 PS(float4 position:SV_Position):SV_Target { return image.Load(int3(int2(position.xy),0)); })";
-        ComPtr<ID3DBlob> vertex,pixel;
+            float4 PS(float4 position:SV_Position):SV_Target { return image.Load(int3(int2(position.xy),0)); }
+            Texture2D<float4> original:register(t1);
+            cbuffer Mix:register(b0) { float4 amount; }
+            float4 MixPS(float4 position:SV_Position):SV_Target {
+                int3 p=int3(int2(position.xy),0);
+                return float4(lerp(original.Load(p).rgb,saturate(image.Load(p).rgb),amount.x),1);
+            })";
+        ComPtr<ID3DBlob> vertex,pixel,mix;
         Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"VS","vs_5_0",0,0,&vertex,nullptr),"compile vs");
         Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"PS","ps_5_0",0,0,&pixel,nullptr),"compile ps");
+        Check(D3DCompile(shader,std::strlen(shader),nullptr,nullptr,nullptr,"MixPS","ps_5_0",0,0,&mix,nullptr),"compile mix");
         Check(device11_->CreateVertexShader(vertex->GetBufferPointer(),vertex->GetBufferSize(),nullptr,&vs_),"vs");
         Check(device11_->CreatePixelShader(pixel->GetBufferPointer(),pixel->GetBufferSize(),nullptr,&ps_),"ps");
+        Check(device11_->CreatePixelShader(mix->GetBufferPointer(),mix->GetBufferSize(),nullptr,&mixPs_),"mix ps");
+        D3D11_BUFFER_DESC constants{};constants.ByteWidth=16;constants.Usage=D3D11_USAGE_DEFAULT;constants.BindFlags=D3D11_BIND_CONSTANT_BUFFER;
+        Check(device11_->CreateBuffer(&constants,nullptr,&mixConstants_),"mix constants");
         ShareFence(inputFence12_,inputFence11_);ShareFence(outputFence12_,outputFence11_);
         Check(device5_->CreateFence(0,D3D11_FENCE_FLAG_NONE,IID_PPV_ARGS(&completion_)),"completion fence");
         event_=CreateEventW(nullptr,FALSE,FALSE,nullptr);
         if(!event_)throw std::runtime_error("completion event");
     }
-    void Feature(const std::filesystem::path& runtime) {
+    void Initialize(const std::filesystem::path& runtime) {
         const std::wstring folder=runtime.wstring();
         const wchar_t* paths[]{folder.c_str()};
         ngx::CommonInfo common{};common.paths={paths,1};
@@ -232,9 +267,11 @@ private:
         if(shimInit_(init_,ngx::Application,folder.c_str(),device12_.Get(),0x15,&common)!=ngx::Success)
             throw std::runtime_error("Neural Rendering runtime initialization failed (unsupported GPU or runtime?)");
         if(allocate_(&params_)!=ngx::Success || !params_)throw std::runtime_error("NGX parameters");
+    }
+    void Create(int style) {
         const auto w=width_,h=height_;
         params_->Set("DLSSNR.Width",w);params_->Set("DLSSNR.Height",h);params_->Set("DLSSNR.Enabled",1);
-        params_->Set("DLSSNR.Reset",1);params_->Set("DLSSNR.Style",1);params_->Set("DLSSNR.Hint.Render.Preset",3);
+        params_->Set("DLSSNR.Reset",1);params_->Set("DLSSNR.Style",style);params_->Set("DLSSNR.Hint.Render.Preset",3);
         params_->Set("DLSSNR.Intensity",1.0f);params_->Set("DLSSNR.LocalToneStrength",1.0f);params_->Set("DLSSNR.LocalStructureStrength",1.0f);
         params_->Set("DLSSNR.SkinStructureStrength",-1.0f);params_->Set("DLSSNR.UseAutoMask",0);params_->Set("DLSSNR.UICorrection",0);
         params_->Set("DLSSNR.ScalingRatio",1.0f);params_->Set("DLSSNR.Upscaling",0);
@@ -251,7 +288,8 @@ private:
         Handle wait{CreateEventW(nullptr,FALSE,FALSE,nullptr)};
         Check(queue_->Signal(fence.Get(),1),"create signal");Check(fence->SetEventOnCompletion(1,wait.value),"create wait");
         if(WaitForSingleObject(wait.value,10000)!=WAIT_OBJECT_0)throw std::runtime_error("feature creation timeout");
-        char line[160]{};std::snprintf(line,sizeof(line),"neural ready %ux%u format=%u",width_,height_,unsigned(format_));Note(line);
+        style_=style;
+        char line[160]{};std::snprintf(line,sizeof(line),"neural ready %ux%u format=%u style=%d",width_,height_,unsigned(format_),style);Note(line);
     }
     void Share(ID3D11Texture2D* texture,ComPtr<ID3D12Resource>& shared) {
         ComPtr<IDXGIResource1> resource;Check(texture->QueryInterface(IID_PPV_ARGS(&resource)),"dxgi resource");
@@ -270,6 +308,17 @@ private:
         context11_->PSSetShaderResources(0,1,&source);context11_->OMSetRenderTargets(1,&target,nullptr);
         context11_->Draw(3,0);context11_->ClearState();
     }
+    // Processed result blended with the original frame (both display values).
+    void Mix(float amount) {
+        const float constants[4]{amount,0,0,0};context11_->UpdateSubresource(mixConstants_.Get(),0,nullptr,constants,0,0);
+        D3D11_VIEWPORT viewport{0,0,float(width_),float(height_),0,1};context11_->RSSetViewports(1,&viewport);
+        context11_->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+        context11_->VSSetShader(vs_.Get(),nullptr,0);context11_->PSSetShader(mixPs_.Get(),nullptr,0);
+        ID3D11ShaderResourceView* views[]{outputView_.Get(),inputView_.Get()};context11_->PSSetShaderResources(0,2,views);
+        auto* buffer=mixConstants_.Get();context11_->PSSetConstantBuffers(0,1,&buffer);
+        auto* target=output8Target_.Get();context11_->OMSetRenderTargets(1,&target,nullptr);
+        context11_->Draw(3,0);context11_->ClearState();
+    }
     void Barrier(ID3D12Resource* resource,D3D12_RESOURCE_STATES before,D3D12_RESOURCE_STATES after) {
         D3D12_RESOURCE_BARRIER b{};b.Type=D3D12_RESOURCE_BARRIER_TYPE_TRANSITION;
         b.Transition={resource,D3D12_RESOURCE_BARRIER_ALL_SUBRESOURCES,before,after};list_->ResourceBarrier(1,&b);
@@ -280,7 +329,8 @@ private:
     ComPtr<ID3D11Device> device11_;ComPtr<ID3D11DeviceContext> context11_;ComPtr<ID3D11Device5> device5_;ComPtr<ID3D11DeviceContext4> context4_;
     ComPtr<ID3D11Texture2D> input8_,output8_,color11_,output11_;ComPtr<ID3D12Resource> color12_,output12_;
     ComPtr<ID3D11ShaderResourceView> inputView_,outputView_;ComPtr<ID3D11RenderTargetView> colorTarget_,outputTarget_,output8Target_;
-    ComPtr<ID3D11VertexShader> vs_;ComPtr<ID3D11PixelShader> ps_;
+    ComPtr<ID3D11VertexShader> vs_;ComPtr<ID3D11PixelShader> ps_,mixPs_;ComPtr<ID3D11Buffer> mixConstants_;
+    int style_{-1},lastPasses_{};float lastMix_{-1};
     ComPtr<ID3D12Fence> inputFence12_,outputFence12_;ComPtr<ID3D11Fence> inputFence11_,outputFence11_,completion_;
     HANDLE event_{};UINT64 sequence_{};
     HMODULE coreModule_{},runtimeModule_{},shimModule_{};
@@ -317,7 +367,7 @@ int RunNeural(vr::bridge::Shared& shared,HANDLE request,HANDLE done,HANDLE stop,
             if(sequence<=previous)return fail("non-increasing request",E_INVALIDARG);
             if(inputLock->AcquireSync(1,100)!=S_OK)return fail("input ownership",DXGI_ERROR_WAIT_TIMEOUT);
             if(outputLock->AcquireSync(0,100)!=S_OK){inputLock->ReleaseSync(0);return fail("output ownership",DXGI_ERROR_WAIT_TIMEOUT);}
-            neural.Process(input.Get(),output.Get());
+            neural.Process(input.Get(),output.Get(),shared.neural);
             if(outputLock->ReleaseSync(1)!=S_OK || inputLock->ReleaseSync(0)!=S_OK)return fail("ownership release",E_FAIL);
             previous=sequence;shared.completed=sequence;SetEvent(done);
         }

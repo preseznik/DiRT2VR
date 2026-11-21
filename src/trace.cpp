@@ -2160,7 +2160,7 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
         AttachSceneryMotion(device,context,true);
-        if(PhotoModeRequested()) AttachPhotoDof(device,context);
+        if(PhotoModeRequested() || LiveNeuralRequested()) AttachPhotoDof(device,context);
         if(swapchain && (LoggingEnabled() || PhotoModeRequested() || LiveNeuralRequested() || DesktopSeatRequested() || (RequestedCapturesEnabled() && PikesScope())))
             Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;

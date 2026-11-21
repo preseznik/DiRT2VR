@@ -1,4 +1,5 @@
 #include "photo_dof.h"
+#include "live_neural.h"
 #include "common.h"
 #include <d3d11_1.h>
 #include <d3dcompiler.h>
@@ -78,7 +79,13 @@ std::atomic<bool> wanted{};
 std::atomic<float> centreDistance{-1};
 using CreatePsFn=HRESULT(STDMETHODCALLTYPE*)(ID3D11Device*,const void*,SIZE_T,ID3D11ClassLinkage*,ID3D11PixelShader**);
 using DrawFn=void(STDMETHODCALLTYPE*)(ID3D11DeviceContext*,UINT,UINT);
+using DrawInstancedFn=void(STDMETHODCALLTYPE*)(ID3D11DeviceContext*,UINT,UINT,UINT,UINT);
+using DrawIndexedInstancedFn=void(STDMETHODCALLTYPE*)(ID3D11DeviceContext*,UINT,UINT,UINT,INT,UINT);
+using CreateVsFn=HRESULT(STDMETHODCALLTYPE*)(ID3D11Device*,const void*,SIZE_T,ID3D11ClassLinkage*,ID3D11VertexShader**);
 CreatePsFn realCreatePs{};
+CreateVsFn realCreateVs{};
+DrawInstancedFn realDrawInstanced{};
+DrawIndexedInstancedFn realDrawIndexedInstanced{};
 DrawFn realDraw{};
 std::set<ID3D11PixelShader*> maskShaders;
 // Captured this frame.
@@ -165,9 +172,25 @@ void Observe(ID3D11DeviceContext* context) {
     context->CopyResource(globalsCopy.Get(),globals.Get());
     copied=true;
 }
+// Live neural rendering: recognise the HUD vertex shaders and move HUD draws
+// (instanced UI quads among them) into their own texture.
+HRESULT STDMETHODCALLTYPE CreateVs(ID3D11Device* device,const void* bytes,SIZE_T length,ID3D11ClassLinkage* linkage,ID3D11VertexShader** shader) {
+    const auto hr=realCreateVs(device,bytes,length,linkage,shader);
+    if(SUCCEEDED(hr) && shader && *shader && bytes)LiveNeuralVertexShader(*shader,Fnv(bytes,length));
+    return hr;
+}
+void STDMETHODCALLTYPE DrawInstanced(ID3D11DeviceContext* context,UINT vertices,UINT instances,UINT start,UINT first) {
+    const auto draw=[&]{realDrawInstanced(context,vertices,instances,start,first);};
+    if(!LiveNeuralHudDraw(context,draw))draw();
+}
+void STDMETHODCALLTYPE DrawIndexedInstanced(ID3D11DeviceContext* context,UINT indices,UINT instances,UINT start,INT base,UINT first) {
+    const auto draw=[&]{realDrawIndexedInstanced(context,indices,instances,start,base,first);};
+    if(!LiveNeuralHudDraw(context,draw))draw();
+}
 void STDMETHODCALLTYPE Draw(ID3D11DeviceContext* context,UINT count,UINT start) {
     if(count==4 && wanted.load(std::memory_order_relaxed) && context->GetType()==D3D11_DEVICE_CONTEXT_IMMEDIATE)Observe(context);
-    realDraw(context,count,start);
+    const auto draw=[&]{realDraw(context,count,start);};
+    if(!LiveNeuralHudDraw(context,draw))draw();
 }
 bool Hook(void* object,unsigned index,void* replacement,void** original) {
     auto target=(*static_cast<void***>(object))[index];
@@ -221,6 +244,11 @@ void AttachPhotoDof(ID3D11Device* device,ID3D11DeviceContext* context) {
         ComPtr<ID3D11DeviceContext> owned;
         if(!context){device->GetImmediateContext(&owned);context=owned.Get();}
         Hook(device,15,reinterpret_cast<void*>(CreatePs),reinterpret_cast<void**>(&realCreatePs));
+        if(LiveNeuralRequested()) {
+            Hook(device,12,reinterpret_cast<void*>(CreateVs),reinterpret_cast<void**>(&realCreateVs));
+            Hook(context,20,reinterpret_cast<void*>(DrawIndexedInstanced),reinterpret_cast<void**>(&realDrawIndexedInstanced));
+            Hook(context,21,reinterpret_cast<void*>(DrawInstanced),reinterpret_cast<void**>(&realDrawInstanced));
+        }
         Hook(context,13,reinterpret_cast<void*>(Draw),reinterpret_cast<void**>(&realDraw));
     });
 }

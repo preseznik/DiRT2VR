@@ -57,6 +57,12 @@ Public Class MainForm
     Private ReadOnly desktopBloom As New CheckBox With {.Text = "On", .Name = "DesktopBloom", .AutoSize = True}
     Private ReadOnly trackDepthOfField As New CheckBox With {.Text = "On", .Name = "TrackDepthOfField", .AutoSize = True}
     Private ReadOnly neuralRuntime As New TextBox With {.Name = "NeuralRuntimeFolder", .AccessibleName = "DLSS 5 runtime folder", .Width = 320}
+    Private ReadOnly neuralStyle As New ValueSlider("NeuralStyle", 0, 2, 1, valueLabels:={"Standard", "Natural", "Cinematic"})
+    Private ReadOnly neuralStrength As New ValueSlider("NeuralStrength", 0, 200, 100, "%", recommendedValue:=100)
+    Private ReadOnly neuralTone As New ValueSlider("NeuralTone", 0, 200, 100, "%", recommendedValue:=100)
+    Private ReadOnly neuralDetail As New ValueSlider("NeuralDetail", 0, 200, 100, "%", recommendedValue:=100)
+    Private ReadOnly neuralPasses As New ValueSlider("NeuralPasses", 1, 3, 1)
+    Private ReadOnly neuralMix As New ValueSlider("NeuralMix", 0, 100, 100, "%")
     Private ReadOnly neuralWhileDriving As New CheckBox With {.Text = "On", .Name = "NeuralWhileDriving", .AccessibleName = "DLSS 5 while driving", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
@@ -788,7 +794,7 @@ Public Class MainForm
         trackDepthOfField.Checked = settings.TrackDepthOfField
         Field(trackEffects, "Depth of field", trackDepthOfField)
         Tip(trackDepthOfField, "Enable distance blur on supported tracks (currently Pikes Peak)." & vbCrLf & "Applies to every car. Other tracks keep their original effects. Save and relaunch to apply.")
-        Dim photo = Section(columns.First, "Photo Mode (desktop)")
+        Dim photo = Section(columns.First, "DLSS 5 neural rendering (desktop)")
         Dim neuralRow As New TableLayoutPanel With {.ColumnCount = 2, .AutoSize = True}
         neuralRow.ColumnStyles.Add(New ColumnStyle(SizeType.Percent, 100)) : neuralRow.ColumnStyles.Add(New ColumnStyle(SizeType.AutoSize))
         neuralRuntime.Text = settings.NeuralRuntimeFolder : neuralRow.Controls.Add(neuralRuntime)
@@ -806,10 +812,25 @@ Public Class MainForm
         photo.Controls.Add(neuralStatus)
         neuralWhileDriving.Checked = settings.NeuralWhileDriving
         Field(photo, "Also while driving (Experimental)", neuralWhileDriving)
-        Tip(neuralWhileDriving, "Also applies DLSS 5 Neural Rendering while you drive, on desktop. The HUD is processed too, so it may look slightly textured." & vbCrLf & "Heavy on the GPU and adds one frame of delay. Needs the runtime folder above. Save and relaunch to apply.")
+        Tip(neuralWhileDriving, "Also applies DLSS 5 Neural Rendering while you drive, on desktop. The HUD is drawn on top unprocessed, so it stays sharp." & vbCrLf & "Heavy on the GPU and adds one frame of delay. Needs the runtime folder above. Save and relaunch to apply.")
+        neuralStyle.Value = Math.Clamp(settings.NeuralStyle, 0, 2) : Field(photo, "Style", neuralStyle)
+        neuralStrength.Value = Math.Clamp(settings.NeuralStrength, 0, 200) : Field(photo, "Strength", neuralStrength)
+        neuralTone.Value = Math.Clamp(settings.NeuralTone, 0, 200) : Field(photo, "Local tone", neuralTone)
+        neuralDetail.Value = Math.Clamp(settings.NeuralDetail, 0, 200) : Field(photo, "Local detail", neuralDetail)
+        neuralPasses.Value = Math.Clamp(settings.NeuralPasses, 1, 3) : Field(photo, "Passes", neuralPasses)
+        neuralMix.Value = Math.Clamp(settings.NeuralMix, 0, 100) : Field(photo, "Mix with original", neuralMix)
+        Tip(neuralStyle, "The overall look. Natural keeps the game's colours closest; Cinematic is muted and filmic. You can also change this in the Photo panel.")
+        Tip(neuralStrength, "How strongly the effect is applied (100% is the runtime's default).")
+        Tip(neuralTone, "Local contrast in shadows and highlights.")
+        Tip(neuralDetail, "Fine detail on surfaces such as gravel, grass and fabric.")
+        Tip(neuralPasses, "Runs the effect again on its own result for a stronger, more refined look. Each extra pass costs about as much as the first.")
+        Tip(neuralMix, "Blends the result with the original picture; 100% shows only the neural rendering.")
+        Dim neuralOptions As Control() = {neuralStyle, neuralStrength, neuralTone, neuralDetail, neuralPasses, neuralMix}
         refreshNeural = Sub()
                             neuralStatus.Text = NeuralRendering.Describe(neuralRuntime.Text)
-                            neuralWhileDriving.Enabled = NeuralRendering.Valid(neuralRuntime.Text)
+                            Dim valid = NeuralRendering.Valid(neuralRuntime.Text)
+                            neuralWhileDriving.Enabled = valid
+                            For Each control In neuralOptions : control.Enabled = valid : Next
                         End Sub
         refreshNeural()
         Tip(neuralRow, "Optional. A folder containing your own copy of NVIDIA's DLSS 5 Neural Rendering runtime (nvngx_dlssnr.dll). DiRT2VR does not include or download it." & vbCrLf & "Then press N in Photo Mode for a neural-rendered look. Needs an NVIDIA RTX GPU and DX11. Leave empty to turn it off. Save and relaunch to apply.")
@@ -1170,6 +1191,9 @@ Public Class MainForm
         settings.ExtendedGrass = extendedGrass.Checked
         settings.NeuralRuntimeFolder = neuralRuntime.Text.Trim()
         settings.NeuralWhileDriving = neuralWhileDriving.Checked
+        settings.NeuralStyle = CInt(neuralStyle.Value) : settings.NeuralStrength = CInt(neuralStrength.Value)
+        settings.NeuralTone = CInt(neuralTone.Value) : settings.NeuralDetail = CInt(neuralDetail.Value)
+        settings.NeuralPasses = CInt(neuralPasses.Value) : settings.NeuralMix = CInt(neuralMix.Value)
         settings.VrPerformanceDisplay = performanceDisplay.Checked
         settings.VrSteeringAnimation = steeringAnimation.Checked
         settings.SteeringObserveOnly = steeringObserve.Checked

@@ -20,6 +20,8 @@ public:
     // Pipelined: sends this frame and replaces it with the previous frame's result
     // (one frame of latency, so the GPU work overlaps the game's next frame).
     bool TransferPipelined(ID3D11Texture2D* frame);
+    // Neural Rendering look for the following frames (written before each request).
+    void Neural(const bridge::NeuralSettings& settings) { neural_=settings; }
     bool Disabled() const { return disabled_; }
     uint64_t Completed() const { return completed_; }
     uint64_t Dropped() const { return dropped_; }
@@ -46,6 +48,7 @@ private:
     ULONGLONG started_{},pendingSince_{};
     uint64_t sequence_{},completed_{},dropped_{};
     D3D11_TEXTURE2D_DESC desc_{};
+    bridge::NeuralSettings neural_{};
     Microsoft::WRL::ComPtr<ID3D11Device> device_;
     Microsoft::WRL::ComPtr<ID3D11DeviceContext> context_;
     Microsoft::WRL::ComPtr<ID3D11Texture2D> input_,output_;

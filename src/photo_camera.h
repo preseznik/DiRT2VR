@@ -9,6 +9,7 @@ struct PhotoInput {
     float zoom{}; // Natural-log steps; positive narrows the field of view.
     float roll{}; // Radians; positive tilts the camera's up toward its right.
     bool fast{},slow{},exit{};
+    float speedScale=1; // Base speed multiplier from the Photo panel (8 m/s at 1).
     bool restart{}; // Return to the pose, zoom and roll Photo Mode started with.
     bool level{};   // Clear zoom and roll; keep position and heading.
     // Read by Photo Mode, not the camera: held state of the photo and panel buttons,
@@ -23,6 +24,8 @@ struct PhotoInput {
     // brightness change in stops, look step direction held (controller).
     bool look{},letterbox{},grid{},padView{};
     bool neural{}; // N held: DLSS 5 Neural Rendering toggle, read by Photo Mode.
+    // Photo panel navigation held (arrow keys, or the D-pad while the panel is shown).
+    bool menuUp{},menuDown{},menuLeft{},menuRight{};
     float exposure{};
     int lookStep{};
 };
@@ -76,7 +79,7 @@ public:
         if(input.yaw!=0 || pitch!=pitch_)Orthonormalize();
         pitch_=pitch;
         const float length=std::max(1.f,std::hypot(input.right,input.forward,input.up));
-        const float speed=(input.fast?40.f:input.slow?1.5f:8.f)/length;
+        const float speed=(input.fast?40.f:input.slow?1.5f:8.f)*(input.speedScale>0?input.speedScale:1.f)/length;
         std::array<float,3> target{};
         for(unsigned i=0;i<3;++i)
             target[i]=speed*(-record_[8+i]*input.right+record_[12+i]*input.forward+(i==1?input.up:0));

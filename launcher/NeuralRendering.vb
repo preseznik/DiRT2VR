@@ -17,12 +17,21 @@ Public NotInheritable Class NeuralRendering
     End Function
     ' Desktop Photo Mode only; VR and LAN sessions never get these variables.
     Public Shared Sub Configure(start As ProcessStartInfo, context As InstallContext, settings As VrSettings, photoMode As Boolean, headset As Boolean)
-        start.Environment.Remove("DIRT2VR_NEURAL_RUNTIME") : start.Environment.Remove("DIRT2VR_NEURAL_HELPER") : start.Environment.Remove("DIRT2VR_NEURAL_LIVE")
+        For Each name In {"RUNTIME", "HELPER", "LIVE", "STYLE", "STRENGTH", "TONE", "DETAIL", "PASSES", "MIX"}
+            start.Environment.Remove("DIRT2VR_NEURAL_" & name)
+        Next
         If Not photoMode OrElse headset OrElse settings.LaunchMode = "lan" OrElse Not Valid(settings.NeuralRuntimeFolder) Then Return
         Dim exe = Helper(context)
         If Not File.Exists(exe) OrElse Not File.Exists(IO.Path.Combine(context.ModRoot, "payload", "nvngx.dll_dirt2vr.dll")) Then Return
         start.Environment("DIRT2VR_NEURAL_RUNTIME") = settings.NeuralRuntimeFolder.Trim()
         start.Environment("DIRT2VR_NEURAL_HELPER") = exe
         If settings.NeuralWhileDriving Then start.Environment("DIRT2VR_NEURAL_LIVE") = "1"
+        Dim invariant = Globalization.CultureInfo.InvariantCulture
+        start.Environment("DIRT2VR_NEURAL_STYLE") = Math.Clamp(settings.NeuralStyle, 0, 2).ToString(invariant)
+        start.Environment("DIRT2VR_NEURAL_STRENGTH") = Math.Clamp(settings.NeuralStrength, 0, 200).ToString(invariant)
+        start.Environment("DIRT2VR_NEURAL_TONE") = Math.Clamp(settings.NeuralTone, 0, 200).ToString(invariant)
+        start.Environment("DIRT2VR_NEURAL_DETAIL") = Math.Clamp(settings.NeuralDetail, 0, 200).ToString(invariant)
+        start.Environment("DIRT2VR_NEURAL_PASSES") = Math.Clamp(settings.NeuralPasses, 1, 3).ToString(invariant)
+        start.Environment("DIRT2VR_NEURAL_MIX") = Math.Clamp(settings.NeuralMix, 0, 100).ToString(invariant)
     End Sub
 End Class

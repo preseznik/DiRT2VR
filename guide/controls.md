@@ -88,36 +88,44 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 | Rise / descend | E / Q | Right / left trigger |
 | Faster | Shift | Right bumper |
 | Slower, for precise framing | Ctrl | Left bumper |
-| Zoom in / out (desktop) | Mouse wheel, Page Up / Page Down | D-pad up / down |
-| Tilt the camera left / right (desktop) | Z / C, the keys either side of X (Y / C on German-style keyboards) | D-pad left / right |
+| Zoom in / out (desktop) | Mouse wheel, Page Up / Page Down | D-pad up / down (panel hidden) |
+| Tilt the camera left / right (desktop) | Z / C, the keys either side of X (Y / C on German-style keyboards) | D-pad left / right (panel hidden) |
 | Clear zoom and tilt | Middle mouse button | Right-stick click |
 | Back to the starting view | R | Y |
 | Save a photo (desktop) | P | A |
+| Choose a setting in the Photo panel (desktop) | Up / Down arrows | D-pad up / down |
+| Change the chosen setting | Left / Right arrows | D-pad left / right |
 | Hide / show the Photo panel (desktop) | H | View (Back) |
-| Depth of field on / off (desktop) | F | X (tap) |
-| Focus nearer / farther | 1 / 2 (top row) | Hold X + D-pad down / up |
-| Less / more blur | 3 / 4 (top row) | Hold X + D-pad left / right |
+| Depth of field on / off (desktop) | F | X |
+| Focus nearer / farther | 1 / 2 (top row) | Photo panel |
+| Less / more blur | 3 / 4 (top row) | Photo panel |
 | Autofocus on the picture centre | Right mouse button | Left-stick click |
-| Next / previous filter (desktop) | G / Shift+G | Hold View + D-pad right / left |
-| Darker / brighter | 5 / 6 (top row) | Hold View + D-pad down / up |
-| Letterbox: off, 2.39:1, 1.85:1 | L | — |
-| Rule-of-thirds grid | T | — |
+| Next / previous filter (desktop) | G / Shift+G | Photo panel |
+| Darker / brighter | 5 / 6 (top row) | Photo panel |
+| Letterbox: off, 2.39:1, 1.85:1 | L | Photo panel |
+| Rule-of-thirds grid | T | Photo panel |
 | Return to the pause menu | Esc | B or Start |
 
-On desktop, a **Photo panel** in the top-left corner shows the current view angle, tilt and speed with a short list of controls. It shows keyboard or controller help depending on what you used last. Press **H** (or **View**) to hide it for a clear view; it stays hidden until you show it again.
+On desktop, the **Photo panel** on the right lists every Photo Mode setting: camera (field of view, tilt, move speed), depth of field, look and, when set up, DLSS 5. Use the **arrow keys** (or the **D-pad**) to choose a setting and change it; the shortcut key for each setting is shown next to it. **Move speed** sets how fast the camera travels before Shift or Ctrl. A bar along the bottom lists the main controls for your keyboard or controller, depending on what you used last. Press **H** (or **View**) to hide the panel and the bar for a clear view; they stay hidden until you show them again. While the panel is hidden, the D-pad zooms and tilts.
 
 **Saving photos:** press **P** (or **A**) to save the current picture as a PNG at the game's full rendering resolution. The Photo panel and messages are never included in the photo. Photos go to **Pictures\DiRT2VR** with the date and time in the file name; a short message confirms the save. Photo saving and the panel are desktop-only for now.
 
-**Depth of field:** press **F** (or tap **X**) to blur what is nearer or farther than the focus point, like a camera lens. It starts with autofocus on whatever is at the centre of the picture, so aim at your subject. Use **1 / 2** to set the focus distance yourself and **3 / 4** to change the amount of blur (1–10); the Photo panel shows the current focus distance and blur. The right mouse button (or left-stick click) returns to autofocus. Saved photos include the blur. Depth of field uses the game's shadow pass to find distances, so it needs in-game shadows switched on; the panel says when it is unavailable. It is desktop-only.
+**Depth of field:** press **F** (or tap **X**) to blur what is nearer or farther than the focus point, like a camera lens. It starts with autofocus on whatever is at the centre of the picture, so aim at your subject. Use **1 / 2** to set the focus distance yourself and **3 / 4** to change the amount of blur (1–10), or change them in the Photo panel, which also shows the current focus distance. The right mouse button (or left-stick click) returns to autofocus. Saved photos include the blur. Depth of field uses the game's shadow pass to find distances, so it needs in-game shadows switched on; the panel says when it is unavailable. It is desktop-only.
 
-**Filters:** press **G** (Shift+G to go back) to choose a look: Vivid, Warm, Cool, Black & white, Sepia, Film, Noir or Cinematic; **Off** shows the original picture. **5 / 6** adjust brightness. **L** adds cinema letterbox bars (2.39:1, then 1.85:1, then off), and **T** shows a rule-of-thirds grid to help framing. Filters, brightness and letterbox are saved in your photos; the grid is only on screen. With a controller, hold **View** and use the D-pad: left/right for the filter, up/down for brightness; a short tap on View still hides the panel. Filters are desktop-only.
+**Filters:** press **G** (Shift+G to go back) to choose a look: Vivid, Warm, Cool, Black & white, Sepia, Film, Noir or Cinematic; **Off** shows the original picture. **5 / 6** adjust brightness. **L** adds cinema letterbox bars (2.39:1, then 1.85:1, then off), and **T** shows a rule-of-thirds grid to help framing. Filters, brightness and letterbox are saved in your photos; the grid is only on screen. With a controller, change them in the Photo panel. Filters are desktop-only.
 
 **Neural rendering (DLSS 5, experimental):** if you have your own copy of NVIDIA's DLSS 5 Neural Rendering runtime (`nvngx_dlssnr.dll`), you can use it for a neural-rendered look in Photo Mode.
-- **Setup:** set its folder under **Graphics → Photo Mode (desktop) → DLSS 5 runtime folder**, save, and relaunch. The launcher shows whether it found the file.
-- **Using it:** in Photo Mode press **N** to turn it on or off. The panel shows "starting…" for a moment, then "on". Depth of field, filters and saved photos all build on the neural-rendered picture.
+- **Setup:** set its folder under **Graphics → DLSS 5 neural rendering (desktop) → DLSS 5 runtime folder**, save, and relaunch. The launcher shows whether it found the file.
+- **Using it:** in Photo Mode press **N** (or choose **Neural rendering** in the Photo panel) to turn it on or off. The panel shows "Starting…" for a moment, then "On". Depth of field, filters and saved photos all build on the neural-rendered picture.
+- **Options:** the launcher section and the Photo panel offer the same settings. Changes in the Photo panel last until you quit the game; the launcher sets the starting values, which are also used while driving.
+  - **Style:** Natural (default), Standard or Cinematic. Changing it restarts the effect, which takes a moment.
+  - **Strength:** how strongly the neural look is applied (0–200%).
+  - **Local tone** and **Local detail:** local contrast and lighting changes, and fine texture detail (0–200%).
+  - **Passes:** 1–3. Each extra pass runs the effect again on its own result for a stronger, more stylised look, and costs another full pass of GPU time.
+  - **Mix with original:** blends the result with the game's own picture; lower it for a subtler look.
 - **Requirements:** an NVIDIA RTX graphics card with a current driver, and DX11. Each frame takes extra time, so Photo Mode may feel slower while it is on.
 - **Not included:** DiRT2VR does not include or download the runtime. Desktop only, and not available in VR, LAN or replays.
-- **While driving (experimental):** tick **Also while driving** under the runtime folder to apply it during races too. The HUD is processed along with the picture, so it may look slightly textured. It is heavy on the graphics card, lowers frame rate and adds one frame of delay, so try it on a fast RTX card and turn it off if driving feels sluggish. Desktop only.
+- **While driving (experimental):** tick **Also while driving** under the runtime folder to apply it during races too. The HUD is drawn on top unprocessed, so it stays sharp. It is heavy on the graphics card, lowers frame rate and adds one frame of delay, so try it on a fast RTX card and turn it off if driving feels sluggish. Desktop only.
 - **If the panel says "unavailable":** the runtime could not start on your graphics card or driver. Turn on diagnostic logging and check `neural-helper.log` in the session log folder.
 
 Looking slows down while zoomed in, so close-up framing stays steady. On desktop the camera eases in and out of movement. Slower mode also makes zoom and tilt finer.
