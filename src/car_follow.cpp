@@ -4,6 +4,7 @@
 #include "photo_overlay.h"
 #include "replay_camera.h"
 #include "scene_camera.h"
+#include <algorithm>
 #include <atomic>
 #include <cmath>
 #include <cstdio>
@@ -21,6 +22,8 @@ ULONGLONG lostSince{};
 std::unordered_map<int,float> facing;
 // Smoothed chase view, so small body movements and track noise do not shake the camera.
 bool smoothed{};float position[3]{},direction[3]{};ULONGLONG smoothTick{};
+// The views last handed to rendering, to recognise them there (the export can run more than once a frame).
+std::array<std::array<float,28>,4> exported{};unsigned exportNext{};ULONGLONG exportTick{};
 
 bool Focused() {
     DWORD process{};GetWindowThreadProcessId(GetForegroundWindow(),&process);
@@ -75,7 +78,7 @@ void CarFollowPresent(IDXGISwapChain* swapchain) {
     bool show=false;int index=0,count=0;
     {
         std::lock_guard lock(mutex);
-        if(!replay){followed=0;smoothed=false;held5=f5;held6=f6;}
+        if(!replay){followed=0;smoothed=false;exportTick=0;held5=f5;held6=f6;}
         else if((f5 && !held5) || (f6 && !held6)) {
             const auto cars=TrackedCars();
             if(f6) { // Next car; after the last one, the replay's own cameras.
@@ -133,6 +136,21 @@ float* CarFollowExport(void* owner,const float* native) {
     const float sign=(chase[4]*(direction[1]*right[2]-direction[2]*right[1])+chase[5]*(direction[2]*right[0]-direction[0]*right[2])+chase[6]*(direction[0]*right[1]-direction[1]*right[0]))>=0?1.f:-1.f;
     const float up[3]{sign*(direction[1]*right[2]-direction[2]*right[1]),sign*(direction[2]*right[0]-direction[0]*right[2]),sign*(direction[0]*right[1]-direction[1]*right[0])};
     for(int i=0;i<3;++i){output[4+i]=up[i];output[8+i]=-right[i];output[12+i]=direction[i];output[16+i]=position[i];}
+    exported[exportNext++%exported.size()]=output;exportTick=now;
     return output.data();
+}
+
+bool MatchingFollowCamera(const float* a,const float* b) {
+    std::lock_guard lock(mutex);
+    const auto now=GetTickCount64();
+    if(!followed || !exportTick || now-exportTick>=250)return false;
+    for(const auto& view:exported)if(MatchingSceneCamera(a,view.data()) && MatchingSceneCamera(b,view.data()))return true;
+    static ULONGLONG reported{};
+    if(now-reported>=1000) {
+        reported=now;float nearest=1e9f;
+        for(const auto& view:exported){const float dx=a[16]-view[16],dy=a[17]-view[17],dz=a[18]-view[18];nearest=std::min(nearest,std::sqrt(dx*dx+dy*dy+dz*dz));}
+        Log("car follow: render camera does not match the follow view (nearest %.3f m, export %llu ms ago)",nearest,now-exportTick);
+    }
+    return false;
 }
 }

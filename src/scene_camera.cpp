@@ -4,6 +4,7 @@
 #include "gfwl_compat.h"
 #include "replay_camera.h"
 #include "photo_mode.h"
+#include "car_follow.h"
 #include <intrin.h>
 #include <MinHook.h>
 #include <array>
@@ -178,7 +179,8 @@ SceneCamera IdentifySceneCamera(const float* a,const float* b,uint64_t frame) {
     if(MatchingPhotoCamera(a,b))return SceneCamera::Photo;
     if(MatchingTrailerCamera(a,b))return SceneCamera::Frontend;
     if(ReplayCamerasEnabled() && ObservedReplayPlayback().Available(GetTickCount64())) {
-        return ReplayStereoEnabled() && MatchingReplayChaseCamera(a,b) ? SceneCamera::ReplayChase : SceneCamera::Unknown;
+        // The replay's own chase camera, or our chase view behind a followed car (F5/F6).
+        return ReplayStereoEnabled() && (MatchingReplayChaseCamera(a,b) || MatchingFollowCamera(a,b)) ? SceneCamera::ReplayChase : SceneCamera::Unknown;
     }
     if(ExtendedViewsEnabled() && !LiveDrivingCameraState())return SceneCamera::Unknown;
     static const float cockpitNear=[] {
