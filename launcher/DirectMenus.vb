@@ -91,22 +91,7 @@ Public Class DirectMenus
                     ' The replay screen owns its input and presentation. Release that
                     ' screen before showing a pause screen; nesting the two hides the
                     ' menu and traps playback. Resume re-enters without replay_begin.
-                    Dim replayPlay = If(first, "119", "27l")
-                    Dim replayExit = If(first, "11a", "27m")
-                    Dim replayScope = finish.ParentNode
-                    Dim replayPause = Node(replayScope, "d2vr_replay_pause_" & group.Item1, "set_replay_system_pause")
-                    Dim replayMenu = Node(replayScope, "d2vr_replay_menu_" & group.Item1, "d2vr_replay_menu")
-                    Dim replayRearm = Node(replayScope, "d2vr_replay_rearm_" & group.Item1, "d2vr_replay_rearm")
-                    Dim replayResume = Node(replayScope, "d2vr_replay_resume_" & group.Item1, "set_replay_system_play")
-                    One(document, "//node[@id='" & replayPlay & "']/link[@id='next']").SetAttribute("target", replayPause.GetAttribute("id"))
-                    Link(replayPause, "next", replayMenu.GetAttribute("id"))
-                    Link(replayMenu, "back", replayRearm.GetAttribute("id"))
-                    Link(replayRearm, "enabled", replayResume.GetAttribute("id"))
-                    Link(replayRearm, "disabled", replayExit)
-                    Link(replayResume, "next", replayPlay)
-                    Link(replayMenu, "view_replay", If(first, "10V", "276"))
-                    Link(replayMenu, "exit_replay", replayExit)
-                    Link(replayMenu, "quit_game", quit.GetAttribute("id"))
+                    AddReplayPause(document, finish.ParentNode, If(first, "119", "27l"), If(first, "11a", "27m"), If(first, "10V", "276"), quit.GetAttribute("id"), group.Item1)
                     ' Replay exit resumes its native playback clock, even when the
                     ' pause-decorated finish menu is visible. Pause that clock after
                     ' render cleanup; replay_begin resets it when watching again.
@@ -136,6 +121,29 @@ Public Class DirectMenus
                     Link(record, "enabled", native.GetAttribute("id")) : Link(record, "disabled", native.GetAttribute("id"))
                 Next
                 If savedReplay Then PrepareSavedPlayback(document)
+            ElseIf flow AndAlso photoMode Then
+                ' Normal launch: Esc during a native full replay opens the same paused replay
+                ' menu as Direct sessions (Continue, Photo Mode, Full Replay, Exit replay, Quit)
+                ' instead of leaving the replay. Exit replay keeps the native exit.
+                Dim quit = Node(One(document, "//node[@id='S']"), "d2vr_quit", "exit_game")
+                For Each player In {("119", "11a", "10V", "11e"), ("27l", "27m", "276", "27q"), ("1fE", "1fF", "1fq", ""), ("2mP", "2mQ", "2mB", "")}
+                    ' Keep the menu outside the replay screen, where its input and presentation
+                    ' would hide it: beside the results (as in Direct sessions) or the screen.
+                    Dim scope As XmlNode
+                    If player.Item4 <> "" Then
+                        scope = One(document, "//node[@id='" & player.Item4 & "']").ParentNode
+                    Else
+                        scope = One(document, "//node[@id='" & player.Item1 & "']/ancestor::node[@state='post_race_replay_interface']").ParentNode
+                    End If
+                    AddReplayPause(document, scope, player.Item1, player.Item2, player.Item3, quit.GetAttribute("id"), player.Item1)
+                Next
+            ElseIf Not directSession AndAlso Not flow AndAlso photoMode Then
+                Dim rearm = DirectCast(One(document, "//StateReplayEnabledCheck[@id='replay_enabled_check']").CloneNode(True), XmlElement)
+                rearm.SetAttribute("id", "d2vr_replay_rearm") : document.DocumentElement.AppendChild(rearm)
+                Dim pause = One(document, "//ScreenPauseDecorator[@id='benchmark_pause_menu']")
+                Dim replayMenu = DirectCast(pause.CloneNode(True), XmlElement)
+                replayMenu.SetAttribute("id", "d2vr_replay_menu") : pause.ParentNode.AppendChild(replayMenu)
+                BuildMenu(replayMenu, True, True, True)
             ElseIf directSession Then
                 Dim replayCheck = DirectCast(One(document, "//StateReplayEnabledCheck[@id='replay_enabled_check']").CloneNode(True), XmlElement)
                 replayCheck.SetAttribute("id", "d2vr_full_replay_check") : document.DocumentElement.AppendChild(replayCheck)
@@ -173,6 +181,24 @@ Public Class DirectMenus
             End Using
         End Using
     End Function
+    ' The replay screen owns its input and presentation. Release that screen before
+    ' showing the pause menu (nesting the two hides the menu and traps playback);
+    ' resume re-enters the native player without replay_begin.
+    Private Shared Sub AddReplayPause(document As XmlDocument, scope As XmlNode, replayPlay As String, replayExit As String, restart As String, quit As String, suffix As String)
+        Dim replayPause = Node(scope, "d2vr_replay_pause_" & suffix, "set_replay_system_pause")
+        Dim replayMenu = Node(scope, "d2vr_replay_menu_" & suffix, "d2vr_replay_menu")
+        Dim replayRearm = Node(scope, "d2vr_replay_rearm_" & suffix, "d2vr_replay_rearm")
+        Dim replayResume = Node(scope, "d2vr_replay_resume_" & suffix, "set_replay_system_play")
+        One(document, "//node[@id='" & replayPlay & "']/link[@id='next']").SetAttribute("target", replayPause.GetAttribute("id"))
+        Link(replayPause, "next", replayMenu.GetAttribute("id"))
+        Link(replayMenu, "back", replayRearm.GetAttribute("id"))
+        Link(replayRearm, "enabled", replayResume.GetAttribute("id"))
+        Link(replayRearm, "disabled", replayExit)
+        Link(replayResume, "next", replayPlay)
+        Link(replayMenu, "view_replay", restart)
+        Link(replayMenu, "exit_replay", replayExit)
+        Link(replayMenu, "quit_game", quit)
+    End Sub
     Private Shared Sub RemoveRestart(screen As XmlElement)
         Dim generic = One(screen.OwnerDocument, "//*[@id='" & screen.GetAttribute("id") & "']/ScreenGeneric")
         For Each item As XmlElement In generic.SelectNodes("Item[IBSelectableSimple/@link='restart_race']")
