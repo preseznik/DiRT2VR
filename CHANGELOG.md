@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.15 — 2026-11-22 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.15)
+
 - Photo Mode in replays also works after a normal launch (game menus). With Photo Mode enabled, Esc while watching a race replay opens a replay menu (Continue, PHOTO MODE, Full Replay, Exit replay, Quit) instead of leaving the replay straight away; Exit replay leaves it as before. Saved replays keep their previous camera preparation in VR. Graph checks of the patched game menus pass, but a normal-launch replay has not been played in the lab yet.
 
 ## 0.18.14 — 2026-11-22 — Experimental
