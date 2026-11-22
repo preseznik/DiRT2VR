@@ -83,6 +83,10 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 
 **In replays:** while watching a full replay (from **Launcher → Replays**, or **Full Replay** after a race), press **Esc** and choose **PHOTO MODE** in the replay menu. The replay stays frozen at that moment and the camera starts from the view you were watching, including the trackside cameras. The replay controls are hidden in Photo Mode and in your photos. **Esc** returns to the replay menu, and **Continue** plays on from the same moment. After a normal launch (game menus), Esc while watching a race replay opens the same replay menu instead of leaving the replay straight away; **Exit replay** leaves it as before.
 
+**Following other cars in replays:** while a replay plays, press **F6** to follow the next car with a chase camera, and **F5** for the previous one. After the last car, the replay's own cameras return. A short message shows which car you follow. Only cars that have been on screen recently can be chosen: DiRT2VR finds cars from what the game draws, so a car far out of view is not on the list until it appears. If the followed car leaves the picture, the replay's cameras return. Desktop only.
+
+**Jump to car:** in Photo Mode, the **Jump to car** row in the Camera section puts the camera behind a car; left/right picks the next or previous one. The same rule applies: in a replay the cars seen recently, in a paused race the cars that were on screen while you drove.
+
 | Action | Keyboard/mouse | Xbox controller |
 |---|---|---|
 | Move | WASD | Left stick |

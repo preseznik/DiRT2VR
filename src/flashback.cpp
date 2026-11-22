@@ -1,3 +1,4 @@
+#include "photo_mode.h"
 #include "common.h"
 #include "replay_sample_clock.h"
 #include "scene_camera.h"
@@ -84,7 +85,8 @@ void __fastcall Update(void* root, void*, const double* dt) {
     activeRecorder=static_cast<unsigned char*>(root)+0x10;
     if(ReplayCamerasEnabled())BeginReplayCameraFrame();
     ReplayStorageUpdate(update, root, dt);
-    if(ReplayCamerasEnabled()) {
+    // Replay cameras, and Photo Mode's replay car tracking, read the playback state.
+    if(ReplayCamerasEnabled() || PhotoModeRequested()) {
         std::lock_guard lock(playbackMutex);
         playback={Field<int>(root,0xa60),playback.frame+1,GetTickCount64(),
             Field<double>(static_cast<unsigned char*>(root)+0x10,0x1b8),dt?*dt:0.0};
@@ -136,7 +138,7 @@ bool EnableFlashback() {
     sample60=GetEnvironmentVariableW(L"DIRT2VR_FLASHBACK60",enabled,8)==1 && enabled[0]==L'1';
     disableFullRecording=GetEnvironmentVariableW(L"DIRT2VR_RECORD_FULL_REPLAY",enabled,8)==1 && enabled[0]==L'0';
     const bool interceptSerialization=sample60 || disableFullRecording;
-    if(!interceptSerialization && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled() && !ReplayStorageRequested() && !ForceFeedbackRequested()) return true;
+    if(!interceptSerialization && !ExtendedViewsEnabled() && !SteeringAnimationRequested() && !ChaseCameraRequested() && !ReplayCamerasEnabled() && !ReplayStorageRequested() && !ForceFeedbackRequested() && !PhotoModeRequested()) return true;
     if(update && (!interceptSerialization || serialize)) return true;
     if(!SupportedHost()) return false;
     auto base=reinterpret_cast<unsigned char*>(GetModuleHandleW(nullptr));

@@ -26,6 +26,8 @@ struct PhotoPanelState {
 void PhotoCapture(IDXGISwapChain* swapchain);
 // Draws the panel and/or the latest save message onto the frame.
 void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state);
+// A short message above the hint bar, drawn by the next PhotoPanelDraw calls for a few seconds.
+void PhotoShowMessage(const std::wstring& text,bool error=false);
 // Pure file-name helper, shared with the tests.
 std::wstring PhotoFileName(int year,int month,int day,int hour,int minute,int second,int millisecond);
 }

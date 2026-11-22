@@ -183,6 +183,7 @@ void PhotoCapture(IDXGISwapChain* swapchain) {
     catch(const std::exception&){fail("thread");}
 }
 
+void PhotoShowMessage(const std::wstring& text,bool error){SetMessage(text,error);}
 void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
     std::wstring text;bool error{},recent{};
     {

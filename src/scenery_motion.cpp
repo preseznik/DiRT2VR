@@ -1,4 +1,5 @@
 #include "scenery_motion.h"
+#include "car_tracker.h"
 #include "live_neural.h"
 #include "common.h"
 #include <MinHook.h>
@@ -213,8 +214,9 @@ bool Constant(ID3D11Resource* resource,UINT& size) {
 }
 void STDMETHODCALLTYPE Update(ID3D11DeviceContext* context,ID3D11Resource* resource,UINT sub,const D3D11_BOX* box,const void* data,UINT pitch,UINT depth) {
     UINT size{};
-    if(active && !box && data && Constant(resource,size)) {
-        std::lock_guard lock(mutex);auto& s=shadows[resource];std::memcpy(s.data.data(),data,size);s.size=size;
+    if(!box && data && (active || CarTrackerActive()) && Constant(resource,size)) {
+        if(active){std::lock_guard lock(mutex);auto& s=shadows[resource];std::memcpy(s.data.data(),data,size);s.size=size;}
+        CarTrackerConstant(resource,data,size);
     }
     realUpdate(context,resource,sub,box,data,pitch,depth);
 }
@@ -227,6 +229,7 @@ void STDMETHODCALLTYPE OwnUnmap(ID3D11DeviceContext* c,ID3D11Resource* r,UINT su
 void STDMETHODCALLTYPE OwnDrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT base) {
     // Desktop live neural rendering takes HUD draws into its own texture.
     if(LiveNeuralHudDraw(c,[&]{realDrawIndexed(c,n,start,base);}))return;
+    CarTrackerDraw(c,n);
     if(!SceneryMotionDraw(c,[&]{realDrawIndexed(c,n,start,base);}))realDrawIndexed(c,n,start,base);
 }
 
@@ -260,15 +263,16 @@ void AttachSceneryMotion(ID3D11Device* device,ID3D11DeviceContext* context,bool 
 
 void SceneryMotionMapped(ID3D11Resource* resource,D3D11_MAP mode,const D3D11_MAPPED_SUBRESOURCE* mapped) {
     UINT size{};
-    if(writingOwn || !active || !mapped || !mapped->pData || (mode!=D3D11_MAP_WRITE_DISCARD && mode!=D3D11_MAP_WRITE_NO_OVERWRITE) || !Constant(resource,size))return;
+    if(writingOwn || !(active || CarTrackerActive()) || !mapped || !mapped->pData || (mode!=D3D11_MAP_WRITE_DISCARD && mode!=D3D11_MAP_WRITE_NO_OVERWRITE) || !Constant(resource,size))return;
     std::lock_guard lock(mutex);pending[resource]={mapped->pData,size};
 }
 void SceneryMotionUnmapped(ID3D11Resource* resource) {
-    if(writingOwn || !active)return;
+    if(writingOwn || !(active || CarTrackerActive()))return;
     std::lock_guard lock(mutex);
     const auto found=pending.find(resource);
     if(found==pending.end())return;
-    auto& s=shadows[resource];std::memcpy(s.data.data(),found->second.first,found->second.second);s.size=found->second.second;
+    if(active){auto& s=shadows[resource];std::memcpy(s.data.data(),found->second.first,found->second.second);s.size=found->second.second;}
+    CarTrackerConstant(resource,found->second.first,found->second.second);
     pending.erase(found);
 }
 

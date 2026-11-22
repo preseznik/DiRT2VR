@@ -18,6 +18,7 @@ ActiveFn activeCamera{};
 ActiveFn displayCamera{};
 std::atomic<void*> displayed{};
 std::atomic<ULONGLONG> displayTick{};
+std::atomic<void*> displayManager{};
 std::mutex mutex;
 struct Sample { char name[48]{}; void* object{}; void* manager{}; ULONGLONG tick{}; };
 std::array<Sample,16> samples{};unsigned nextSample{};
@@ -30,7 +31,7 @@ void* __fastcall DisplayCamera(void* manager,void*,bool force) {
     // The scene renderer checks the chosen view here before applying its view-
     // specific rendering rules. Other callers also query inactive camera owners.
     if(_ReturnAddress()==base+0x2d3163) {
-        displayed.store(object);displayTick.store(GetTickCount64());
+        displayed.store(object);displayManager.store(manager);displayTick.store(GetTickCount64());
         thread_local void* previous{};
         if(ReplayCameraProbe() && previous!=object) {
             char name[48]{};
@@ -103,6 +104,9 @@ void* __fastcall ActiveCamera(void* manager,void*,bool force) {
     if(ReplayCameraProbe() && strcmp(slot->name,next.name))Log("extended owner manager=%p name=%s",manager,next.name);
     *slot=next;return result;
 }
+}
+void* ObservedDisplayManager() {
+    return GetTickCount64()-displayTick.load()<250?displayManager.load():nullptr;
 }
 void* ObservedDisplayCamera() {
     return GetTickCount64()-displayTick.load()<250?displayed.load():nullptr;

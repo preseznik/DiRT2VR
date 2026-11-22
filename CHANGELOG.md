@@ -6,6 +6,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Replays can follow other cars: F6 and F5 switch a chase camera to the next or previous car, and past the last car the replay's own cameras return. Photo Mode has a Jump to car row that puts the camera behind a car. Cars are found from what the game draws (their world positions as they are rendered), so only cars that have been on screen recently can be chosen. This costs about 0.05 ms of CPU per frame while a replay plays, Photo Mode is open or you drive with Photo Mode enabled. A scripted desktop lab run with a two-car Direct replay followed each car and returned to the replay cameras, and Photo Mode jumped behind both cars; frame pacing was unchanged. Replays with many cars, normal-launch replays, the controller and VR are not covered.
+
 ## 0.18.15 — 2026-11-22 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.15)

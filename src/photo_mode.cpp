@@ -7,6 +7,8 @@
 #include "photo_neural.h"
 #include "scene_camera.h"
 #include "replay_camera.h"
+#include "car_tracker.h"
+#include "car_follow.h"
 #include "game_pause.h"
 #include "chase_cursor.h"
 #include "seat_adjustment.h"
@@ -17,6 +19,7 @@
 #include <atomic>
 #include <cstring>
 #include <mutex>
+#include <string>
 #include <span>
 
 namespace vr {
@@ -56,6 +59,8 @@ bool neuralEnabled{},neuralHeld{};
 PhotoNeuralState neuralState{};
 // Photo panel: selected row, base move speed and held-key auto-repeat.
 int menuSelected{},speedLevel=2;
+// The car the camera last jumped behind (1-based among the cars on screen; 0 = none yet).
+int jumpCar{};
 constexpr float SpeedScales[]{.25f,.5f,1.f,2.f,4.f};
 struct Repeat {
     bool held{};ULONGLONG next{};
@@ -66,7 +71,7 @@ struct Repeat {
         return false;
     }
 } menuUpKey,menuDownKey,menuLeftKey,menuRightKey;
-enum class Setting { FieldOfView,Tilt,Speed,DepthOfField,Autofocus,Distance,Blur,Look,Brightness,Letterbox,Grid,Neural,NeuralOption };
+enum class Setting { FieldOfView,Tilt,Speed,Car,DepthOfField,Autofocus,Distance,Blur,Look,Brightness,Letterbox,Grid,Neural,NeuralOption };
 std::wstring KeyLabel(unsigned scan) {
     wchar_t name[32]{};
     return GetKeyNameTextW(LONG(scan<<16),name,32)>0?name:L"";
@@ -311,7 +316,8 @@ bool Begin(void* state,bool replay) {
         Log("photo mode: replay view shown=%p name=%s seed=%d p=%.3f,%.3f,%.3f fov=%.4f",
             shown,shownName,replaySeedValid,replaySeed[16],replaySeed[17],replaySeed[18],replaySeed[20]);
     }
-    camera.Reset();camera.SetSmoothing(!Headset());TakePhotoWheel();exportTick=0;sampleTick=0;tick=GetTickCount64();armed=false;slot=4;
+    jumpCar=0;
+        camera.Reset();camera.SetSmoothing(!Headset());TakePhotoWheel();exportTick=0;sampleTick=0;tick=GetTickCount64();armed=false;slot=4;
     focusLost=false;active=true;blocking=true;
     Log("photo mode: enter state=%p camera=%u->%u replay=%d time=%.9f",state,previous,external,replay,frozenTime);
     return true;
@@ -361,6 +367,9 @@ std::vector<MenuEntry> MenuRows(ULONGLONG now) {
     add(Setting::FieldOfView,L"CAMERA",L"Field of view",Format(L"%.0f\u00b0",record[20]*57.2957795));
     add(Setting::Tilt,L"",L"Tilt",Format(L"%+.0f\u00b0",camera.Roll()*57.2957795),KeyLabel(0x2c)+L"/"+KeyLabel(0x2e));
     add(Setting::Speed,L"",L"Move speed",Format(L"%.0f m/s",8.0*SpeedScales[speedLevel]));
+    const int cars=int(TrackedCars().size());
+    add(Setting::Car,L"",L"Jump to car",!cars?std::wstring(L"None in view"):jumpCar && jumpCar<=cars?
+        Format(L"Car %.0f",jumpCar)+Format(L" of %.0f",cars):Format(L"%.0f in view",cars),L"",!cars);
     const bool unavailable=dofEnabled && now-dofSince>1000 && now-dofDrawn>1000;
     add(Setting::DepthOfField,L"DEPTH OF FIELD",L"Depth of field",!dofEnabled?L"Off":unavailable?L"Unavailable":L"On",L"F",false,unavailable);
     add(Setting::Autofocus,L"",L"Autofocus",dof.autoFocus?L"On":L"Off",L"",!dofEnabled);
@@ -388,6 +397,17 @@ void Adjust(const MenuEntry& entry,int direction,ULONGLONG now) {
     case Setting::FieldOfView:change.zoom=-.08f*direction;camera.Move(change,0);break;
     case Setting::Tilt:change.roll=.0349066f*direction;camera.Move(change,0);break;
     case Setting::Speed:speedLevel=std::clamp(speedLevel+direction,0,4);break;
+    case Setting::Car: {
+        // Behind the next car seen in the picture (cars only count once they have moved).
+        const auto cars=TrackedCars();
+        if(cars.empty())break;
+        const int count=int(cars.size());
+        jumpCar=jumpCar<1 || jumpCar>count?(direction>0?1:count):(jumpCar-1+direction+count)%count+1;
+        std::array<float,28> chase;const auto current=camera.Record();
+        if(CarChaseRecord(cars[jumpCar-1],current.data(),chase) && camera.Begin(chase.data()))
+            Log("photo camera: jumped to car %d of %d p=%.2f,%.2f,%.2f",jumpCar,count,chase[16],chase[17],chase[18]);
+        break;
+    }
     case Setting::DepthOfField:dofEnabled=!dofEnabled;dofSince=now;Log("photo depth of field: enabled=%d",dofEnabled);break;
     case Setting::Autofocus:if(dofEnabled)dof.autoFocus=!dof.autoFocus;break;
     case Setting::Distance:

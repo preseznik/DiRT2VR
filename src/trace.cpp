@@ -14,6 +14,8 @@
 #include "photo_mode.h"
 #include "photo_dof.h"
 #include "live_neural.h"
+#include "car_tracker.h"
+#include "car_follow.h"
 #ifdef DIRT2VR_DESKTOP_BRIDGE
 #include "desktop_bridge.h"
 #endif
@@ -1889,15 +1891,25 @@ bool ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
     return saved;
 }
 
+// Car positions for replay car switching and Photo Mode's jump to a car: while a replay
+// plays, Photo Mode is open, or (desktop) while driving, so a paused race knows its cars.
+void TrackCarsAtPresent(bool desktop) {
+    if(!PhotoModeRequested())return;
+    const auto playback=ObservedReplayPlayback();const bool replay=playback.Available(GetTickCount64());
+    const bool driving=desktop && LiveDrivingCameraState();
+    CarTrackerFrame(replay || PhotoModeActive() || driving,!PhotoModeActive() && ((replay && playback.Forward()) || driving));
+}
 HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST)return realPresent(swapchain,interval,flags);
     graphics::SampleVideoMemory(swapchain);
+    TrackCarsAtPresent(true);
 #ifdef DIRT2VR_DESKTOP_BRIDGE
     // Before Photo Mode, so later processing sees the unmodified game frame.
     DesktopBridgePresent(swapchain,frame.load());
 #endif
     LiveNeuralPresent(swapchain);
     PhotoModeFrame(swapchain);
+    CarFollowPresent(swapchain);
     SeatDesktopFrame(swapchain);
     const auto f=frame.fetch_add(1);
     if(TakeCaptureRequest(f,false)) {
@@ -1909,6 +1921,7 @@ HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT i
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
     graphics::SampleVideoMemory(swapchain);
+    TrackCarsAtPresent(false);
     PhotoModeFrame(swapchain);
     if(!HeadsetEnabled() && (requestedCaptureFrame==frame.load() || TakeCaptureRequest(frame.load(),false))) {
         Screenshot(swapchain,frame.load());requestedCaptureFrame=~uint64_t{};
@@ -2021,6 +2034,7 @@ void STDMETHODCALLTYPE DrawIndexed(ID3D11DeviceContext* c,UINT n,UINT start,INT 
             return;
         }
     }
+    CarTrackerDraw(c,n);
     if(!SceneryMotionDraw(c,[&]{realDrawIndexed(c,n,start,base);}))realDrawIndexed(c,n,start,base);
     if(captureShader)TraceLightingStage(c,captureShader,frame.load(),lightingEye,true);
 }

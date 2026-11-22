@@ -46,5 +46,7 @@ bool ExtendedViewsEnabled();
 bool EnableSceneCameraObserver(bool required=false);
 SceneCamera ObservedSceneCamera(void* manager);
 void* ObservedCameraObject(void* manager);
+// The camera manager whose view the scene renderer used last (while it is current).
+void* ObservedDisplayManager();
 SceneCamera IdentifySceneCamera(const float* a,const float* b,uint64_t frame);
 }
