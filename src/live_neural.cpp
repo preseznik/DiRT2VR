@@ -151,10 +151,14 @@ void LiveNeuralVertexShader(void* shader,uint64_t hash) {
     std::lock_guard lock(mutex);hudShaders.insert(shader);
 }
 bool LiveNeuralHudDraw(ID3D11DeviceContext* context,const std::function<void()>& draw) {
-    if(presenting || !LiveNeuralRequested() || context->GetType()!=D3D11_DEVICE_CONTEXT_IMMEDIATE)return false;
+    if(presenting || context->GetType()!=D3D11_DEVICE_CONTEXT_IMMEDIATE)return false;
+    const bool hide=PhotoModeHidesHud();
+    if(!hide && !LiveNeuralRequested())return false;
     ComPtr<ID3D11VertexShader> shader;context->VSGetShader(&shader,nullptr,nullptr);
     if(!shader)return false;
     std::lock_guard lock(mutex);
+    // Photo Mode in a replay: skip the replay HUD entirely (it is not part of the picture).
+    if(hide)return hudShaders.contains(shader.Get());
     // Only HUD drawn straight onto the frame is redirected (HudCapture checks the target).
     return capturing && hudShaders.contains(shader.Get()) && hud.Draw(context,draw,true);
 }

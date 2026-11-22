@@ -167,7 +167,7 @@ Public Class DirectMenus
                     Next
                 End If
             End If
-            If photoMode AndAlso Not savedReplay Then PhotoMenus.Patch(document, flow)
+            If photoMode Then PhotoMenus.Patch(document, flow)
             Using output As New MemoryStream()
                 binary.Write(output, XmlType.BinXml) : Return output.ToArray()
             End Using

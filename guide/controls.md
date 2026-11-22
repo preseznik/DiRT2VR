@@ -79,7 +79,9 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 
 ## Photo Mode
 
-**Photo Mode (experimental):** pause an offline race or practice session and choose **PHOTO MODE** to move a free camera while the race stays frozen. It requires DX11 and is unavailable in network races and replay playback. It works independently of chase-camera Free look and the extended VR views settings.
+**Photo Mode (experimental):** pause an offline race or practice session and choose **PHOTO MODE** to move a free camera while the race stays frozen. It requires DX11 and is unavailable in network races. It works independently of chase-camera Free look and the extended VR views settings.
+
+**In replays:** while watching a full replay (from **Launcher → Replays**, or **Full Replay** after a race), press **Esc** and choose **PHOTO MODE** in the replay menu. The replay stays frozen at that moment and the camera starts from the view you were watching, including the trackside cameras. The replay controls are hidden in Photo Mode and in your photos. **Esc** returns to the replay menu, and **Continue** plays on from the same moment. This works for replays launched by DiRT2VR; replays opened from the game's own menus after a normal launch do not offer it yet.
 
 | Action | Keyboard/mouse | Xbox controller |
 |---|---|---|

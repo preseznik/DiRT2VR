@@ -1,5 +1,6 @@
 #include "photo_dof.h"
 #include "live_neural.h"
+#include "photo_mode.h"
 #include "common.h"
 #include <d3d11_1.h>
 #include <d3dcompiler.h>
@@ -244,7 +245,8 @@ void AttachPhotoDof(ID3D11Device* device,ID3D11DeviceContext* context) {
         ComPtr<ID3D11DeviceContext> owned;
         if(!context){device->GetImmediateContext(&owned);context=owned.Get();}
         Hook(device,15,reinterpret_cast<void*>(CreatePs),reinterpret_cast<void**>(&realCreatePs));
-        if(LiveNeuralRequested()) {
+        // HUD draws: captured for live neural rendering, hidden in replay Photo Mode.
+        if(LiveNeuralRequested() || PhotoModeRequested()) {
             Hook(device,12,reinterpret_cast<void*>(CreateVs),reinterpret_cast<void**>(&realCreateVs));
             Hook(context,20,reinterpret_cast<void*>(DrawIndexedInstanced),reinterpret_cast<void**>(&realDrawIndexedInstanced));
             Hook(context,21,reinterpret_cast<void*>(DrawInstanced),reinterpret_cast<void**>(&realDrawInstanced));

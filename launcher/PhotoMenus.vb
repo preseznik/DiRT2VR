@@ -1,6 +1,8 @@
 Imports System.Xml
 
 ' The callback replaces a screen inside StatePause; it never unpauses the race.
+' Direct replay playback has its own paused menu (d2vr_replay_menu): Photo Mode
+' gets a separate callback there, so the game side checks the paused replay instead.
 Public NotInheritable Class PhotoMenus
     Private Shared ReadOnly Screens As String() = {"default_pause_menu", "career_event_pause_menu", "challenge_pause_menu", "single_race_pause_menu", "time_trial_pause_menu", "benchmark_pause_menu"}
 
@@ -20,6 +22,14 @@ Public NotInheritable Class PhotoMenus
                     leave.SetAttribute("type", "back")
                 Next
             Next
+            For Each source In document.SelectNodes("//node[@state='d2vr_replay_menu']").Cast(Of XmlElement)().ToArray()
+                Dim id = "d2vr_photo_" & source.GetAttribute("id")
+                Dim photo = document.CreateElement("node")
+                photo.SetAttribute("id", id) : photo.SetAttribute("state", "d2vr_photo_replay")
+                source.ParentNode.AppendChild(photo)
+                AddLink(source, "photo_mode", id)
+                AddLink(photo, "disabled", source.GetAttribute("id")).SetAttribute("type", "back")
+            Next
         Else
             Dim template = One(document, "//StateReplayEnabledCheck[@id='replay_enabled_check']")
             Dim callback = DirectCast(template.CloneNode(True), XmlElement)
@@ -27,6 +37,12 @@ Public NotInheritable Class PhotoMenus
             For Each screen In Screens
                 AddItem(One(document, "//ScreenPauseDecorator[@id='" & screen & "']/ScreenGeneric"))
             Next
+            Dim replayMenus = document.SelectNodes("//ScreenPauseDecorator[@id='d2vr_replay_menu']/ScreenGeneric")
+            If replayMenus.Count = 1 Then
+                Dim replay = DirectCast(template.CloneNode(True), XmlElement)
+                replay.SetAttribute("id", "d2vr_photo_replay") : document.DocumentElement.AppendChild(replay)
+                AddItem(DirectCast(replayMenus(0), XmlElement))
+            End If
         End If
     End Sub
 

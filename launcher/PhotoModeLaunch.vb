@@ -2,7 +2,8 @@ Imports DiRT2VR.CustomTracks
 
 Public NotInheritable Class PhotoModeLaunch
     Public Shared Function Eligible(context As InstallContext, settings As VrSettings, vr As Boolean, Optional savedReplay As Boolean = False) As Boolean
-        If settings.LaunchMode = "lan" OrElse savedReplay Then Return False
+        ' Saved replays get Photo Mode in their paused replay menu (Direct playback).
+        If settings.LaunchMode = "lan" Then Return False
         If vr Then Return True
         If Not File.Exists(context.GraphicsPath) Then Return False
         Dim document = XmlPatches.Read(File.ReadAllBytes(context.GraphicsPath))

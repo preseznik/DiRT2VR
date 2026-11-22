@@ -6,6 +6,7 @@
 #include "photo_filter.h"
 #include "photo_neural.h"
 #include "scene_camera.h"
+#include "replay_camera.h"
 #include "game_pause.h"
 #include "chase_cursor.h"
 #include "seat_adjustment.h"
@@ -26,6 +27,12 @@ std::atomic<bool> active{},blocking{},focusLost{};
 void* menuState{};void* manager{};
 unsigned begin{},end{},previous{},external{};
 bool finished{},armed{};
+// Entered from the paused Direct replay menu rather than the race's pause menu.
+bool replayMode{};int replayState{};
+// The replay's own view when Photo Mode began: the free camera starts there.
+alignas(16) std::array<float,28> replaySeed{};bool replaySeedValid{};
+// The camera owner whose export showed that view (the replay's cinematic camera).
+void* replayOwner{};std::array<void*,8> replaySeen{};
 ULONGLONG tick{};
 PhotoCamera camera;
 // The last shot of this pause, resumed when Photo Mode is chosen again.
@@ -97,6 +104,23 @@ bool RaceClock(void* state,double& time) {
         Read(registry,index*sizeof(void*),game) && Read(game,0x229c,root) &&
         Read(root,0x1c8,time) && std::isfinite(time) && time>=0 && time<1e8;
 }
+// Paused replay: the replay clock (not the race clock) and the playback state.
+bool ReplayClock(void* state,double& time,int& playback) {
+    void** registry{};unsigned index{};void* game{};unsigned char* root{};
+    return Read(state,0x28,registry) && Read(Base(),0x107f3d8,index) && index<4096 &&
+        Read(registry,index*sizeof(void*),game) && Read(game,0x229c,root) && root &&
+        Read(root+0x10,0x1b8,time) && Read(root,0xa60,playback) && std::isfinite(time) && time>=0 && time<1e8;
+}
+// The scene stays as it was when Photo Mode began.
+bool StillPaused(void* state) {
+    if(!replayMode)return NativePaused(state);
+    double time{};int playback{};
+    return ReplayClock(state,time,playback) && playback==replayState;
+}
+bool FrozenClock(void* state,double& time) {
+    int playback{};
+    return replayMode?ReplayClock(state,time,playback):RaceClock(state,time);
+}
 bool SameManager() {
     unsigned first{},last{};
     return manager && selected.load()==manager && Read(manager,4,first) && Read(manager,8,last) &&
@@ -116,7 +140,7 @@ bool SelectedSeed(void* owner,std::array<float,28>& record) {
         readable,owner,entry,object,current,cached,overrideView,lookback,allViews,blended,
         pose[0],pose[1],pose[2],pose[3],pose[4],pose[5],pose[6],pose[12],pose[13],record[16],record[17],record[18],record[20],record[21]);
     double time{};
-    if(!readable || !NativePaused(menuState) || !RaceClock(menuState,time) || std::abs(time-frozenTime)>.000001 ||
+    if(!readable || !StillPaused(menuState) || !FrozenClock(menuState,time) || std::abs(time-frozenTime)>.000001 ||
        !SeedPhotoCamera(record,pose))return false;
     Log("photo seed after: source=selected-entry entry=%p scheduler=9 race_time=%.9f p=%.6f,%.6f,%.6f fov=%.6f near=%.6f bridge_cached=%u bridge_override=%u blended=%u",
         entry,time,record[16],record[17],record[18],record[20],record[21],cached,overrideView,blended);
@@ -247,9 +271,21 @@ void End(const char* reason) {
     PhotoDofWanted(false);
     UpdatePhotoCursor(Focus(),false);
 }
-bool Begin(void* state) {
+bool Begin(void* state,bool replay) {
     manager=selected.load();unsigned current{};
-    if(!GamePaused() || !NativePaused(state) || !RaceClock(state,frozenTime) || !Read(manager,4,begin) || !Read(manager,8,end) ||
+    replayMode=replay;
+    if(replay) {
+        // The replay menu follows set_replay_system_pause; the race pause states do not apply.
+        double time{};int playback{};const bool clock=ReplayClock(state,time,playback);
+        unsigned char* scheduler{};int value{};void** registry{};void* wrapper{};unsigned schedulerIndex{};
+        const bool read=Read(state,0x28,registry) && Read(Base(),0x107dd30,schedulerIndex) && schedulerIndex<4096 &&
+            Read(registry,schedulerIndex*sizeof(void*),wrapper) && Read(wrapper,4,scheduler) && Read(scheduler,0x9a58,value);
+        Log("photo mode: replay entry clock=%d time=%.6f playback=%d world_paused=%d scheduler=%d(%d) manager=%p",
+            clock,time,playback,GamePaused(),read?value:-1,read,manager);
+        if(!clock)return false;
+        frozenTime=time;replayState=playback;
+    }
+    if((!replay && (!GamePaused() || !NativePaused(state) || !RaceClock(state,frozenTime))) || !Read(manager,4,begin) || !Read(manager,8,end) ||
        !Read(manager,0x128,current) || !begin || end<begin || (end-begin)%0x270 ||
        (end-begin)/0x270>64 || current>=(end-begin)/0x270)return false;
     using Find=int(__thiscall*)(void*,const char*);
@@ -259,12 +295,25 @@ bool Begin(void* state) {
     previous=current;external=unsigned(index);
     using Set=void(__thiscall*)(void*,int);
     reinterpret_cast<Set>(Base()+0x72f840)(manager,index);
-    if(!PhotoWorldVisible(true)) {
+    // A paused replay may not hold the world pause; then its menu simply is not shown.
+    if(!PhotoWorldVisible(true) && !replay) {
         reinterpret_cast<Set>(Base()+0x72f840)(manager,int(previous));return false;
+    }
+    replaySeedValid=false;
+    if(replay) {
+        // Replays usually show their own (cinematic) cameras. Start from that view and
+        // hand the renderer the car's chase camera, whose export Photo Mode replaces.
+        void* shown=ObservedDisplayCamera();char shownName[48]{};
+        replaySeedValid=shown && Read(shown,0x80,shownName) && std::memchr(shownName,0,sizeof(shownName)) &&
+            ReadProcessMemory(GetCurrentProcess(),static_cast<char*>(shown)+0x10,replaySeed.data()+4,96,nullptr) &&
+            std::isfinite(replaySeed[16]) && std::isfinite(replaySeed[20]) && replaySeed[20]>.05f && replaySeed[20]<3.f;
+        replayOwner=nullptr;replaySeen={};
+        Log("photo mode: replay view shown=%p name=%s seed=%d p=%.3f,%.3f,%.3f fov=%.4f",
+            shown,shownName,replaySeedValid,replaySeed[16],replaySeed[17],replaySeed[18],replaySeed[20]);
     }
     camera.Reset();camera.SetSmoothing(!Headset());TakePhotoWheel();exportTick=0;sampleTick=0;tick=GetTickCount64();armed=false;slot=4;
     focusLost=false;active=true;blocking=true;
-    Log("photo mode: enter state=%p camera=%u->%u scheduler=9 race_time=%.9f",state,previous,external,frozenTime);
+    Log("photo mode: enter state=%p camera=%u->%u replay=%d time=%.9f",state,previous,external,replay,frozenTime);
     return true;
 }
 }
@@ -274,18 +323,20 @@ bool PhotoModeRequested() {
 }
 bool PhotoModeActive(){return active.load();}
 bool PhotoModeBlocksInput(){return blocking.load();}
+bool PhotoModeHidesHud(){return active.load() && replayMode;}
 void PhotoModeFocusLost(){if(active.load())focusLost=true;}
 void PhotoSelectCamera(void* value){selected=value;}
 bool PhotoModeMenu(void* state,void* result) {
-    if(!PhotoModeRequested() || std::memcmp(static_cast<const char*>(state)+4,"d2vr_photo_mode",sizeof("d2vr_photo_mode")))return false;
+    const bool replay=!std::memcmp(static_cast<const char*>(state)+4,"d2vr_photo_replay",sizeof("d2vr_photo_replay"));
+    if(!PhotoModeRequested() || (!replay && std::memcmp(static_cast<const char*>(state)+4,"d2vr_photo_mode",sizeof("d2vr_photo_mode"))))return false;
     std::lock_guard lock(mutex);
     if(menuState!=state) {
         if(active)End("state-replaced");
         menuState=state;finished=false;
-        if(!Begin(state)){finished=true;Log("photo mode: entry refused; native pause/camera unavailable");}
+        if(!Begin(state,replay)){finished=true;Log("photo mode: entry refused; native pause/camera unavailable replay=%d",replay);}
     }
     if(active && focusLost.exchange(false))End("focus-lost");
-    if(active && !NativePaused(state))End("pause-lost");
+    if(active && !StillPaused(state))End("pause-lost");
     using Assign=void(__thiscall*)(void*,const char*);
     reinterpret_cast<Assign>(Base()+0x6d4830)(result,finished?"disabled":"");
     if(finished)menuState=nullptr;
@@ -370,9 +421,9 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
         }
         const auto now=GetTickCount64();const auto window=Focus();
         if(focusLost.exchange(false) || !window) {End("focus-lost");return;}
-        if(!SameManager() || !NativePaused(menuState)) {End("scene-changed");return;}
+        if(!SameManager() || !StillPaused(menuState)) {End("scene-changed");return;}
         double time{};
-        if(!RaceClock(menuState,time) || std::abs(time-frozenTime)>.000001) {End("race-time-changed");return;}
+        if(!FrozenClock(menuState,time) || std::abs(time-frozenTime)>.000001) {End("race-time-changed");return;}
         const float dt=float(now-tick)*.001f;tick=now;
         auto movement=Poll(dt,true);
         if(!armed) {if(!movement.exit)armed=true;movement={};}
@@ -462,11 +513,27 @@ float* PhotoModeExport(void* owner,float* native) {
     if(!active.load())return nullptr;
     std::lock_guard lock(mutex);
     void* ownerManager{};
-    if(!active || !Read(owner,0x24,ownerManager) || ownerManager!=manager || !SameManager())return nullptr;
     std::array<float,28> source{};
-    if(!Read(native,0,source))return nullptr;
+    if(!active || !Read(owner,0x24,ownerManager) || !Read(native,0,source))return nullptr;
+    if(replayMode) {
+        // The replay's own camera: the owner whose export is the view shown at entry.
+        if(!replayOwner) {
+            const bool fresh=std::find(replaySeen.begin(),replaySeen.end(),owner)==replaySeen.end();
+            if(fresh)for(auto& slot:replaySeen)if(!slot){slot=owner;break;}
+            const bool match=replaySeedValid && std::abs(source[16]-replaySeed[16])<.05f && std::abs(source[17]-replaySeed[17])<.05f &&
+                std::abs(source[18]-replaySeed[18])<.05f && std::abs(source[20]-replaySeed[20])<.01f;
+            if(fresh)Log("photo mode: replay export owner=%p manager=%p p=%.3f,%.3f,%.3f fov=%.4f match=%d",owner,ownerManager,source[16],source[17],source[18],source[20],match);
+            if(!match)return nullptr;
+            replayOwner=owner;
+        }
+        if(owner!=replayOwner)return nullptr;
+    } else if(ownerManager!=manager || !SameManager())return nullptr;
     if(!camera.Ready()) {
-        if(!SelectedSeed(owner,source)){End("selected-camera-unavailable");return nullptr;}
+        if(replayMode) {
+            if(!replaySeedValid){End("replay-view-unavailable");return nullptr;}
+            std::memcpy(source.data()+4,replaySeed.data()+4,96);
+            Log("photo seed: source=replay-view p=%.6f,%.6f,%.6f fov=%.6f near=%.6f",source[16],source[17],source[18],source[20],source[21]);
+        } else if(!SelectedSeed(owner,source)){End("selected-camera-unavailable");return nullptr;}
         Log("photo native basis: up=%.6f,%.6f,%.6f left=%.6f,%.6f,%.6f forward=%.6f,%.6f,%.6f fov=%.6f near=%.6f far=%.6f",
             source[4],source[5],source[6],source[8],source[9],source[10],source[12],source[13],source[14],source[20],source[21],source[22]);
         if(!camera.Begin(source.data())){End("invalid-camera");return nullptr;}
