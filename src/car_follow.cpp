@@ -17,7 +17,7 @@ namespace {
 std::mutex mutex;
 int followed{};                 // Tracked car id; 0 = the replay's own cameras.
 bool held5{},held6{};
-ULONGLONG lostSince{};
+ULONGLONG lostSince{},followStart{};
 // Which way each car faces along its matrix's third row (+1 or -1), learned from its motion.
 std::unordered_map<int,float> facing;
 // Smoothed chase view, so small body movements and track noise do not shake the camera.
@@ -43,6 +43,13 @@ void Forward(const TrackedCar& car,float* out) {
     }
     for(int i=0;i<3;++i)out[i]=car.matrix[8+i]*sign;
     Normalize(out);
+}
+// Cars that can be followed: seen in the last few seconds, so their position is still known.
+std::vector<TrackedCar> Followable() {
+    auto cars=TrackedCars();
+    // Out of sight for long only when another car's trail tells where it is (cars behind it on the road).
+    std::erase_if(cars,[](const TrackedCar& c){return c.unseenMs>8000 && !c.guessFromTrail;});
+    return cars;
 }
 void Message(int index,int count) {
     wchar_t text[96]{};
@@ -80,16 +87,13 @@ void CarFollowPresent(IDXGISwapChain* swapchain) {
         std::lock_guard lock(mutex);
         if(!replay){followed=0;smoothed=false;exportTick=0;held5=f5;held6=f6;}
         else if((f5 && !held5) || (f6 && !held6)) {
-            const auto cars=TrackedCars();
-            if(f6) { // Next car; after the last one, the replay's own cameras.
-                int next=0;for(const auto& car:cars)if(car.id>followed){next=car.id;break;}
-                followed=next;
-            } else { // Previous car; from the replay's cameras, the last car.
-                int previous=0;for(const auto& car:cars)if(followed==0 || car.id<followed)previous=car.id;
-                followed=previous;
-            }
-            smoothed=false;lostSince=0;count=int(cars.size());
-            for(int i=0;i<count;++i)if(cars[i].id==followed)index=i+1;
+            // In car-number order; past either end, the replay's own cameras.
+            const auto cars=Followable();count=int(cars.size());
+            int at=-1;for(int i=0;i<count;++i)if(cars[i].id==followed)at=i;
+            if(f6)at=at<0?0:at+1;
+            else at=at<0?count-1:at-1;
+            followed=at>=0 && at<count?cars[at].id:0;
+            smoothed=false;lostSince=0;followStart=GetTickCount64();index=followed?at+1:0;
             show=true;
             Log("car follow: followed=%d (%d of %d)",followed,index,count);
         }
@@ -106,17 +110,28 @@ float* CarFollowExport(void* owner,const float* native) {
     void* manager{};SIZE_T read{};
     if(!ReadProcessMemory(GetCurrentProcess(),static_cast<char*>(owner)+0x24,&manager,sizeof manager,&read) || !manager || manager!=ObservedDisplayManager())return nullptr;
     const auto cars=TrackedCars();
-    const TrackedCar* car{};for(const auto& c:cars)if(c.id==id)car=&c;
+    const TrackedCar* found{};for(const auto& c:cars)if(c.id==id)found=&c;
     const auto now=GetTickCount64();
-    if(!car) {
-        // Lost from view (the camera cut away or the car left the picture): back to the replay's cameras.
+    ULONGLONG started{};{std::lock_guard lock(mutex);started=followStart;}
+    // Out of sight for a while (the replay cut away, or the car is hidden): back to the replay's cameras.
+    // A car chosen while out of the picture gets a few seconds to come into view.
+    if(!found || (found->unseenMs>1500 && now-started>3000)) {
         std::lock_guard lock(mutex);
-        if(!lostSince)lostSince=now;
-        if(now-lostSince>800){followed=0;lostSince=0;Log("car follow: car %d lost; replay cameras",id);}
+        if(followed==id) {
+            followed=0;lostSince=0;exportTick=0;
+            Log("car follow: car %d out of sight; replay cameras",found?found->number:0);
+            PhotoShowMessage(L"The car is out of sight   \u00b7   replay cameras   \u00b7   F5 / F6 to follow a car");
+        }
         return nullptr;
     }
+    // While it is out of the picture: where it probably is by now, heading along the road.
+    TrackedCar car=*found;
+    if(car.unseenMs>100) {
+        const float speed=std::sqrt(car.velocity[0]*car.velocity[0]+car.velocity[1]*car.velocity[1]+car.velocity[2]*car.velocity[2]);
+        for(int i=0;i<3;++i){car.matrix[12+i]=car.guess[i];car.matrix[8+i]=car.guessForward[i];car.velocity[i]=car.guessForward[i]*speed;}
+    }
     std::array<float,28> chase;
-    if(!CarChaseRecord(*car,native,chase))return nullptr;
+    if(!CarChaseRecord(car,native,chase))return nullptr;
     alignas(16) thread_local std::array<float,28> output;
     std::lock_guard lock(mutex);
     lostSince=0;

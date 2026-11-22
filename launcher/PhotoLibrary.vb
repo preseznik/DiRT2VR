@@ -64,8 +64,15 @@ Public NotInheritable Class PhotoLibrary
             End Using
         End Using
     End Function
+    ' A VR photo's view (-SBS.json, for the 3D viewer) goes with it.
+    Public Shared Function ViewFile(path As String) As String
+        Return IO.Path.ChangeExtension(path, ".json")
+    End Function
     Public Shared Sub Recycle(path As String)
         Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(path, Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin)
+        If IsStereo(path) AndAlso File.Exists(ViewFile(path)) Then
+            Microsoft.VisualBasic.FileIO.FileSystem.DeleteFile(ViewFile(path), Microsoft.VisualBasic.FileIO.UIOption.OnlyErrorDialogs, Microsoft.VisualBasic.FileIO.RecycleOption.SendToRecycleBin)
+        End If
     End Sub
 End Class
 
@@ -86,6 +93,9 @@ Public Class PhotoPanel
     Private ReadOnly detail As New Label With {.AutoSize = True, .UseMnemonic = False, .Name = "PhotoDetails"}
     Private ReadOnly message As New Label With {.AutoSize = True, .UseMnemonic = False, .Name = "PhotoStatus"}
     Private ReadOnly viewButton As New Button With {.Text = "View", .AutoSize = True, .Name = "ViewPhoto"}
+    Private ReadOnly vrButton As New Button With {.Text = "View in VR", .AutoSize = True, .Name = "ViewPhotoInVr"}
+    ' Shows photos in the headset (set by the launcher window): the list and the one to start with.
+    Public ShowInVr As Action(Of List(Of String), Integer)
     Private ReadOnly openButton As New Button With {.Text = "Open", .AutoSize = True, .Name = "OpenPhoto"}
     Private ReadOnly showButton As New Button With {.Text = "Show in folder", .AutoSize = True, .Name = "ShowPhoto"}
     Private ReadOnly copyButton As New Button With {.Text = "Copy", .AutoSize = True, .Name = "CopyPhoto"}
@@ -95,13 +105,13 @@ Public Class PhotoPanel
     Public Sub New()
         Name = "PhotoLibrary" : Margin = New Padding(0)
         Controls.Add(New Label With {.Text = "Photos", .AutoSize = True, .Font = New Font("Segoe UI", 12, FontStyle.Bold)})
-        Controls.Add(New Label With {.Text = "Photos you save in Photo Mode (P, or A on a controller) are kept in Pictures\DiRT2VR. Photos taken in VR are saved side by side (SBS, left eye on the left); the viewer can show them side by side, one eye at a time, or swapped for cross-eyed viewing.", .AutoSize = True})
+        Controls.Add(New Label With {.Text = "Photos you save in Photo Mode (P, or A on a controller) are kept in Pictures\DiRT2VR. Photos taken in VR are saved side by side (SBS, left eye on the left); the viewer can show them side by side, one eye at a time, or swapped for cross-eyed viewing, and View in VR shows them in 3D in your headset.", .AutoSize = True})
         grid.LargeImageList = images
         Controls.Add(grid) : Controls.Add(detail)
         Dim actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True, .Margin = New Padding(0, 8, 0, 8)}
         Dim refresh As New Button With {.Text = "Refresh", .AutoSize = True, .Name = "RefreshPhotos"}
         Dim folder As New Button With {.Text = "Open folder", .AutoSize = True, .Name = "OpenPhotoFolder"}
-        actions.Controls.AddRange({viewButton, openButton, showButton, copyButton, deleteButton, refresh, folder}) : Controls.Add(actions)
+        actions.Controls.AddRange({viewButton, vrButton, openButton, showButton, copyButton, deleteButton, refresh, folder}) : Controls.Add(actions)
         Controls.Add(message)
         AddHandler grid.SelectedIndexChanged, Sub() Details()
         AddHandler grid.ItemActivate, Sub() ShowViewer()
@@ -109,6 +119,10 @@ Public Class PhotoPanel
                                      If e.KeyCode = Keys.Delete Then DeleteSelected() : e.Handled = True
                                  End Sub
         AddHandler viewButton.Click, Sub() ShowViewer()
+        AddHandler vrButton.Click, Sub()
+                                       Dim all = grid.Items.Cast(Of ListViewItem)().Select(Function(i) CStr(i.Tag)).ToList()
+                                       If Selected.Count > 0 AndAlso ShowInVr IsNot Nothing Then ShowInVr.Invoke(all, all.IndexOf(Selected.First()))
+                                   End Sub
         AddHandler openButton.Click, Sub() Run(Sub() Process.Start(New ProcessStartInfo(Selected.First()) With {.UseShellExecute = True}))
         AddHandler showButton.Click, Sub() Run(Sub() Process.Start("explorer.exe", "/select,""" & Selected.First() & """"))
         AddHandler copyButton.Click, Sub() Run(Sub()
@@ -186,7 +200,7 @@ Public Class PhotoPanel
     Private Sub Details()
         Dim paths = Selected
         Dim one = paths.Count = 1
-        viewButton.Enabled = paths.Count > 0 : openButton.Enabled = one : showButton.Enabled = one : copyButton.Enabled = one
+        viewButton.Enabled = paths.Count > 0 : vrButton.Enabled = paths.Count > 0 AndAlso ShowInVr IsNot Nothing : openButton.Enabled = one : showButton.Enabled = one : copyButton.Enabled = one
         deleteButton.Enabled = paths.Count > 0
         If paths.Count = 0 Then
             detail.Text = "Choose a photo."
@@ -210,7 +224,7 @@ Public Class PhotoPanel
     Private Sub ShowViewer()
         Dim paths = grid.Items.Cast(Of ListViewItem)().Select(Function(i) CStr(i.Tag)).ToList()
         If Selected.Count = 0 OrElse paths.Count = 0 Then Return
-        Using viewer As New PhotoViewer(paths, paths.IndexOf(Selected.First()))
+        Using viewer As New PhotoViewer(paths, paths.IndexOf(Selected.First())) With {.ShowInVr = ShowInVr}
             viewer.ShowDialog(FindForm())
             If viewer.Deleted Then
                 Dim reload = ReloadAsync()
@@ -253,6 +267,7 @@ Public Class PhotoViewer
     Private ReadOnly paths As List(Of String)
     Private index As Integer
     Private photo As Bitmap
+    Public ShowInVr As Action(Of List(Of String), Integer)
     Private ReadOnly picture As New PictureBox With {.Dock = DockStyle.Fill, .SizeMode = PictureBoxSizeMode.Zoom, .BackColor = Color.Black, .Name = "PhotoView"}
     Private ReadOnly stereo As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .Width = 210, .Name = "StereoView", .AccessibleName = "Stereo view"}
     Private ReadOnly caption As New Label With {.AutoSize = True, .UseMnemonic = False, .Margin = New Padding(12, 8, 12, 0), .Name = "PhotoCaption"}
@@ -267,9 +282,10 @@ Public Class PhotoViewer
         Dim [next] As New Button With {.Text = "Next ›", .AutoSize = True, .Name = "NextPhoto"}
         Dim full As New Button With {.Text = "Full screen", .AutoSize = True, .Name = "FullScreenPhoto"}
         Dim open As New Button With {.Text = "Open", .AutoSize = True}
+        Dim vr As New Button With {.Text = "View in VR", .AutoSize = True, .Name = "ViewInVr"}
         Dim delete As New Button With {.Text = "Delete…", .AutoSize = True}
         Dim close As New Button With {.Text = "Close", .AutoSize = True}
-        bar.Controls.AddRange({previous, [next], stereo, full, open, delete, close, caption})
+        bar.Controls.AddRange({previous, [next], stereo, full, vr, open, delete, close, caption})
         Controls.Add(picture) : Controls.Add(bar)
         LauncherAppearance.Apply(bar)
         AddHandler previous.Click, Sub() Turn(-1)
@@ -277,6 +293,9 @@ Public Class PhotoViewer
         AddHandler stereo.SelectedIndexChanged, Sub() ShowCurrent(False)
         AddHandler full.Click, Sub() ToggleFullScreen()
         AddHandler open.Click, Sub() Process.Start(New ProcessStartInfo(paths(index)) With {.UseShellExecute = True})
+        AddHandler vr.Click, Sub()
+                                 If ShowInVr IsNot Nothing AndAlso paths.Count > 0 Then ShowInVr.Invoke(paths, index)
+                             End Sub
         AddHandler delete.Click, Sub() DeleteCurrent()
         AddHandler close.Click, Sub() Me.Close()
         AddHandler picture.DoubleClick, Sub() ToggleFullScreen()

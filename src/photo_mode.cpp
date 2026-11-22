@@ -256,8 +256,9 @@ PhotoInput Poll(float dt,bool movement) {
     }
     if(result.slow){result.zoom*=.25f;result.roll*=.25f;result.focus*=.25f;result.exposure*=.25f;}
     if(Headset()) {
-        result.zoom=result.roll=result.focus=result.exposure=0;result.blur=result.lookStep=0;
-        result.level=result.dof=result.padX=result.autofocus=result.look=result.letterbox=result.grid=result.neural=false;
+        // The headset sets the view (no zoom or tilt); depth of field, the grid and DLSS 5 are desktop-only.
+        result.zoom=result.roll=result.focus=0;result.blur=result.lookStep=0;
+        result.level=result.grid=result.neural=result.dof=result.padX=result.autofocus=false;
     }
     return result;
 }
@@ -371,8 +372,8 @@ std::vector<MenuEntry> MenuRows(ULONGLONG now) {
     add(Setting::Tilt,L"",L"Tilt",Format(L"%+.0f\u00b0",camera.Roll()*57.2957795),KeyLabel(0x2c)+L"/"+KeyLabel(0x2e));
     add(Setting::Speed,L"",L"Move speed",Format(L"%.0f m/s",8.0*SpeedScales[speedLevel]));
     const int cars=int(TrackedCars().size());
-    add(Setting::Car,L"",L"Jump to car",!cars?std::wstring(L"None in view"):jumpCar && jumpCar<=cars?
-        Format(L"Car %.0f",jumpCar)+Format(L" of %.0f",cars):Format(L"%.0f in view",cars),L"",!cars);
+    add(Setting::Car,L"",L"Jump to car",!cars?std::wstring(L"None found"):jumpCar && jumpCar<=cars?
+        Format(L"Car %.0f",jumpCar)+Format(L" of %.0f",cars):Format(L"%.0f found",cars),L"",!cars);
     const bool unavailable=dofEnabled && now-dofSince>1000 && now-dofDrawn>1000;
     add(Setting::DepthOfField,L"DEPTH OF FIELD",L"Depth of field",!dofEnabled?L"Off":unavailable?L"Unavailable":L"On",L"F",false,unavailable);
     add(Setting::Autofocus,L"",L"Autofocus",dof.autoFocus?L"On":L"Off",L"",!dofEnabled);
@@ -392,10 +393,14 @@ std::vector<MenuEntry> MenuRows(ULONGLONG now) {
     }
     return rows;
 }
-// VR: the rows that apply in the headset (it sets the view; the image effects are desktop-only).
+// VR: the rows that apply in the headset. It sets the view (no field of view or tilt); depth of field
+// (its depth comes from the desktop picture), the thirds grid and DLSS 5 are desktop-only.
 std::vector<MenuEntry> HeadsetRows(ULONGLONG now) {
     std::vector<MenuEntry> rows;
-    for(auto& entry:MenuRows(now))if(entry.id==Setting::Speed || entry.id==Setting::Car)rows.push_back(std::move(entry));
+    for(auto& entry:MenuRows(now))
+        if(entry.id!=Setting::FieldOfView && entry.id!=Setting::Tilt && entry.id!=Setting::Grid &&
+           entry.id!=Setting::Neural && entry.id!=Setting::NeuralOption && entry.id!=Setting::DepthOfField &&
+           entry.id!=Setting::Autofocus && entry.id!=Setting::Distance && entry.id!=Setting::Blur)rows.push_back(std::move(entry));
     if(!rows.empty())rows.front().row.section=L"CAMERA";
     return rows;
 }
@@ -481,8 +486,10 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
         movement.speedScale=SpeedScales[speedLevel];
         camera.Move(movement,dt);
         UpdatePhotoCursor(window,true);
-        // The panel and photos use the desktop frame; VR shows the headset view instead.
-        if(!Headset() && camera.Ready()) {
+        // Desktop: the panel and effects use the frame. VR: the effects are applied to each eye
+        // (PhotoEyeEffects) and the panel is shown on a layer in front of you.
+        const bool vr=Headset();
+        if(camera.Ready()) {
             if(movement.controller)lastController=true;
             else if(movement.keyboard)lastController=false;
             // H or the controller's View button shows or hides the panel.
@@ -495,11 +502,11 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             }
             if(movement.exposure!=0)filter.exposure=std::clamp(filter.exposure+movement.exposure,-2.f,2.f);
             if(movement.letterbox && !letterboxHeld)filter.letterbox=(filter.letterbox+1)%int(PhotoLetterboxes.size());
-            if(movement.grid && !gridHeld)filter.grid=!filter.grid;
-            if(movement.neural && !neuralHeld && PhotoNeuralConfigured()) {
+            if(movement.grid && !gridHeld && !vr)filter.grid=!filter.grid;
+            if(movement.neural && !neuralHeld && PhotoNeuralConfigured() && !vr) {
                 neuralEnabled=!neuralEnabled;Log("photo neural rendering: enabled=%d",neuralEnabled);
             }
-            capture=movement.photo && !photoHeld;
+            capture=movement.photo && !photoHeld && !vr;
             if((movement.dof && !dofKeyHeld) || (movement.padX && !padXHeld)) {
                 dofEnabled=!dofEnabled;dofSince=now;
                 Log("photo depth of field: enabled=%d",dofEnabled);
@@ -518,32 +525,24 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
                 if(movement.blur!=0 && movement.blur!=blurHeld)dof.blur=std::clamp(dof.blur+(movement.blur>0?1:-1),1,10);
             }
             // Photo panel: up/down select a setting, left/right change it.
-            auto rows=MenuRows(now);
-            if(panelVisible)Navigate(rows,movement,now,MenuRows);
-            overlay.panel=panelVisible;overlay.controller=lastController;overlay.selected=menuSelected;
-            for(auto& entry:rows)overlay.rows.push_back(std::move(entry.row));
+            const auto build=vr?HeadsetRows:MenuRows;
+            auto rows=build(now);
+            if(panelVisible)Navigate(rows,movement,now,build);
+            auto& panel=vr?headset:overlay;
+            panel.panel=panelVisible;panel.controller=lastController;panel.selected=vr?headsetSelected:menuSelected;
+            for(auto& entry:rows)panel.rows.push_back(std::move(entry.row));
             dofState=!dofEnabled?0:(now-dofSince>1000 && now-dofDrawn>1000)?2:1;
             neuralWanted=neuralEnabled;
             // The camera as it will be drawn: unchanged means the same picture.
             const auto view=camera.Record();sceneKey=1469598103934665603ull;
             for(const auto byte:std::span(reinterpret_cast<const unsigned char*>(view.data()),sizeof(view)))sceneKey=(sceneKey^byte)*1099511628211ull;
-            show=true;
-        } else if(Headset() && camera.Ready()) {
-            // VR: the same panel on a layer in front of you; never in the photos.
-            if(movement.controller)lastController=true;
-            else if(movement.keyboard)lastController=false;
-            if((movement.panel && !panelHeld) || (movement.padView && !padViewHeld))panelVisible=!panelVisible;
-            auto rows=HeadsetRows(now);
-            if(panelVisible)Navigate(rows,movement,now,HeadsetRows);
-            headset.panel=panelVisible;headset.controller=lastController;headset.selected=headsetSelected;
-            for(auto& entry:rows)headset.rows.push_back(std::move(entry.row));
-            headsetShown=true;
+            show=!vr;headsetShown=vr;
         }
         // VR: the headset view is saved as a side-by-side stereo photo by the eye renderer.
         if(Headset() && camera.Ready() && movement.photo && !photoHeld){stereoRequested=true;Log("photo capture requested: stereo");}
         neuralHeld=movement.neural;lookHeld=movement.look;letterboxHeld=movement.letterbox;gridHeld=movement.grid;
         padViewHeld=movement.padView;blurHeld=movement.blur;dofKeyHeld=movement.dof;padXHeld=movement.padX;
-        PhotoDofWanted(show && dofEnabled);
+        PhotoDofWanted((show || headsetShown) && dofEnabled);
         panelHeld=movement.panel;photoHeld=movement.photo;
     }
     // Outside the lock: GPU copies must not hold up the camera export on another thread.
@@ -563,6 +562,15 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
     if(capture){Log("photo capture requested");PhotoCapture(swapchain);}
     PhotoGridDraw(swapchain,look);
     PhotoPanelDraw(swapchain,overlay);
+}
+void PhotoEyeEffects(IDXGISwapChain* swapchain) {
+    if(!Headset() || !active.load())return;
+    PhotoDofSettings depth;PhotoFilterSettings look;bool blur{};
+    {std::lock_guard lock(mutex);depth=dof;look=filter;blur=dofEnabled;}
+    if(blur && PhotoDofApply(swapchain,depth)){std::lock_guard lock(mutex);dofDrawn=GetTickCount64();}
+    look.grid=false;
+    static bool reported{};
+    if(!PhotoFilterApply(swapchain,look,filterFrame++) && !reported){reported=true;Log("photo filter: eye draw failed");}
 }
 float* PhotoModeExport(void* owner,float* native) {
     if(!active.load())return nullptr;

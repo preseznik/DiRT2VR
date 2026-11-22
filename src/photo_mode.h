@@ -20,5 +20,7 @@ void PhotoModePauseChanged(bool paused);
 void PhotoModeFocusLost();
 // Return an isolated record before the engine builds visibility, LOD and lighting.
 float* PhotoModeExport(void* owner,float* native);
+// VR: depth of field, filter, brightness and letterbox on the eye just rendered into the frame.
+void PhotoEyeEffects(IDXGISwapChain* swapchain);
 bool MatchingPhotoCamera(const float* a,const float* b);
 }

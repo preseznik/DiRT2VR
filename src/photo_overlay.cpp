@@ -56,7 +56,7 @@ std::wstring PhotoFolder() {
     return folder;
 }
 // Runs on its own thread so PNG compression never stalls the game.
-void Encode(std::vector<unsigned char> pixels,unsigned width,unsigned height,bool stereo) {
+void Encode(std::vector<unsigned char> pixels,unsigned width,unsigned height,bool stereo,PhotoStereoView view) {
     SYSTEMTIME t{};GetLocalTime(&t);
     auto name=PhotoFileName(t.wYear,t.wMonth,t.wDay,t.wHour,t.wMinute,t.wSecond,t.wMilliseconds);
     // Side-by-side stereo (left eye on the left), marked in the name for viewers and the launcher.
@@ -66,6 +66,17 @@ void Encode(std::vector<unsigned char> pixels,unsigned width,unsigned height,boo
     if(!folder.empty() && StartGdiplus() && PngEncoder(png)) {
         Gdiplus::Bitmap bitmap(int(width),int(height),int(width*4),PixelFormat32bppRGB,pixels.data());
         saved=bitmap.GetLastStatus()==Gdiplus::Ok && bitmap.Save((folder+L"\\"+name).c_str(),&png,nullptr)==Gdiplus::Ok;
+    }
+    if(saved && stereo && view.valid) {
+        // The view beside the photo: the 3D viewer shows each eye with the field of view it was taken with.
+        char json[512]{};
+        std::snprintf(json,sizeof json,"{\"format\":\"dirt2vr-sbs\",\"version\":1,\"eyeDistance\":%.5f,"
+            "\"left\":[%.6f,%.6f,%.6f,%.6f],\"right\":[%.6f,%.6f,%.6f,%.6f]}\n",view.eyeDistance,
+            view.tangents[0][0],view.tangents[0][1],view.tangents[0][2],view.tangents[0][3],
+            view.tangents[1][0],view.tangents[1][1],view.tangents[1][2],view.tangents[1][3]);
+        auto sidecar=folder+L"\\"+name;sidecar.replace(sidecar.size()-4,4,L".json");
+        const HANDLE file=CreateFileW(sidecar.c_str(),GENERIC_WRITE,0,nullptr,CREATE_NEW,FILE_ATTRIBUTE_NORMAL,nullptr);
+        if(file!=INVALID_HANDLE_VALUE){DWORD written{};WriteFile(file,json,DWORD(std::strlen(json)),&written,nullptr);CloseHandle(file);}
     }
     Log("photo capture: saved=%d size=%ux%u stereo=%d folder_ready=%d",saved,width,height,stereo,!folder.empty());
     if(stereo)MessageBeep(saved?MB_OK:MB_ICONHAND); // No panel in the headset: a sound confirms the save.
@@ -181,9 +192,9 @@ bool ReadPixels(ID3D11Texture2D* texture,std::vector<unsigned char>& pixels,UINT
     context->Unmap(staging.Get(),0);
     width=desc.Width;height=desc.Height;return true;
 }
-void StartEncode(std::vector<unsigned char> pixels,unsigned width,unsigned height,bool stereo) {
+void StartEncode(std::vector<unsigned char> pixels,unsigned width,unsigned height,bool stereo,const PhotoStereoView& view={}) {
     SetMessage(L"Saving photo\u2026",false);
-    try{std::thread(Encode,std::move(pixels),width,height,stereo).detach();}
+    try{std::thread(Encode,std::move(pixels),width,height,stereo,view).detach();}
     catch(const std::exception&){Log("photo capture failed: thread");SetMessage(L"The photo could not be saved.",true);saving=false;}
 }
 }
@@ -200,7 +211,7 @@ void PhotoCapture(IDXGISwapChain* swapchain) {
     StartEncode(std::move(pixels),width,height,false);
 }
 
-void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right) {
+void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right,const PhotoStereoView& view) {
     if(!left || !right)return;
     if(saving.exchange(true)){Log("photo capture: still saving");MessageBeep(MB_ICONHAND);return;}
     const auto fail=[](const char* why){Log("photo capture failed: %s",why);MessageBeep(MB_ICONHAND);saving=false;};
@@ -214,7 +225,7 @@ void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right) {
         std::memcpy(pixels.data()+size_t(y)*(wa+wb)*4,a.data()+size_t(y)*wa*4,size_t(wa)*4);
         std::memcpy(pixels.data()+(size_t(y)*(wa+wb)+wa)*4,b.data()+size_t(y)*wb*4,size_t(wb)*4);
     }
-    StartEncode(std::move(pixels),wa+wb,ha,true);
+    StartEncode(std::move(pixels),wa+wb,ha,true,view);
 }
 void PhotoShowMessage(const std::wstring& text,bool error){SetMessage(text,error);}
 namespace {
@@ -229,7 +240,7 @@ bool DrawOverlay(ID3D11RenderTargetView* target,float frameWidth,float frameHeig
                  bool recent,const std::wstring& text,bool error,bool headset) {
     // Panel artwork is drawn for a 1800-pixel-high screen and scaled to the frame. In the
     // headset it is larger and further from the edges, which are hard to read there.
-    const float scale=frameHeight/(headset?1000.f:1800.f),margin=frameHeight/(headset?14.f:30.f);
+    const float scale=frameHeight/(headset?1400.f:1800.f),margin=frameHeight/(headset?14.f:30.f);
     auto& settingsPanel=headset?headsetPanel:vr::settingsPanel;auto& hintBar=headset?headsetHints:vr::hintBar;
     auto& toastPanel=headset?headsetToast:vr::toastPanel;
     const Gdiplus::Color white(255,240,242,244),dim(255,120,126,132),grey(255,150,156,162),accent(255,183,235,25),orange(255,255,170,60);

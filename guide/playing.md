@@ -88,6 +88,8 @@ This first experimental player supports recordings made by the same installation
 
 Photos taken in VR are marked **SBS**: both eyes side by side, left eye on the left. Their thumbnail shows the left eye, and the viewer can show them **Side by side**, as the **Left eye** or **Right eye** only, or **Cross-eyed (swapped)** for viewing them in 3D without a headset. Side-by-side photos also work with 3D photo viewers and VR media players that support SBS. The list shows up to 400 of the newest photos; older ones stay in the folder.
 
+**View in VR** (in the list and in the viewer) shows your photos in your headset. A side-by-side photo is shown to each eye as it was taken, at its real size and depth, straight ahead of where you look when it opens; desktop photos appear on a large screen in front of you. Use **Left / Right** (or the controller's **D-pad** or **LB / RB**) for the previous or next photo, **R** (or **Y**) to bring the photo in front of you again, and **Esc** (or **B**) to close. A small window on the desktop shows the current photo and these keys. It uses the VR runtime chosen in **Settings → VR runtime**, so start your headset software first. VR photos saved since this version keep their field of view in a small **.json** file beside them (deleted with the photo); older VR photos are shown with a 90° field of view.
+
 Some older recordings lack data needed to restore particle effects in a new game process. If playback reports an unsupported native record and closes, record a new run with the updated launcher; the missing information cannot be recovered from that recording.
 
 ## Profiles (Experimental)

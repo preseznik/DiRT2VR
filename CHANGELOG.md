@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+- Following cars (F5/F6, Jump to car) is more reliable: cars keep a number in the order they were first seen, so switching always goes through them in the same order; smaller moving objects and parked look-alikes no longer count as cars; a car that comes back into view keeps its number instead of appearing as a new car; a car out of sight is remembered for a while, and one behind another car is found again along that car's path; a car chosen while out of the picture gets a few seconds to appear before the replay cameras return. A desktop lab replay of a two-car race switched car 1, car 2, replay cameras twice in the same order, and a fake-headset VR replay kept exactly two cars; a car far ahead that has not been on screen for a while still cannot be chosen until it is seen again.
+- VR Photo Mode has filters, brightness and letterbox: the panel offers Filter (including your own), Brightness and Letterbox besides Move speed and Jump to car, applied to both eyes and saved in VR photos; G, 5 / 6 and L work too. Depth of field stays desktop-only (in the lab it found no depth in VR, also with VR shadows on). A fake-headset lab run showed Black & white and the letterbox in both eyes.
+- Launcher → Photos → View in VR shows photos in the headset with a small viewer (photo_viewer.exe in the package): side-by-side photos give each eye its own picture with the field of view it was taken with, so they are seen in 3D at their real size; other photos appear on a large screen. VR photos now save their view (field of view and eye distance) in a -SBS.json beside them, recycled together with the photo; older ones are shown at 90°. A fake-headset lab run showed a saved-view SBS photo, one without a view file and a desktop photo, and stepped between them. A real headset is not covered.
+
 ## 0.18.18 — 2026-11-22 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.18)

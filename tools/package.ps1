@@ -101,7 +101,7 @@ $buildUtc=[DateTime]::UtcNow.ToString('yyyy-MM-ddTHH:mm:ssZ')
 if ($LASTEXITCODE) { throw 'Launcher publish failed' }
 Copy-Item -LiteralPath "$publish\DiRT2VR.exe" -Destination $stage
 & (Join-Path $PSScriptRoot 'stage-aspen-licenses.ps1') -LicenseDirectory (Join-Path $stage 'DiRT2VR/licenses')
-Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe' -Destination "$stage\DiRT2VR\payload"
+Copy-Item -LiteralPath 'build\distribution\bin\d3d11.dll','build\distribution\bin\xr_probe.exe','build\distribution\bin\photo_viewer.exe' -Destination "$stage\DiRT2VR\payload"
 Copy-Item -LiteralPath 'build\driving-input\driving_input.dll' -Destination "$stage\DiRT2VR\payload"
 # x64 helper for Photo Mode's DLSS 5 Neural Rendering; the NVIDIA runtime itself is never shipped.
 Copy-Item -LiteralPath 'build\desktop-bridge\dirt2vr-desktop-bridge.exe','build\desktop-bridge\nvngx.dll_dirt2vr.dll' -Destination "$stage\DiRT2VR\payload"

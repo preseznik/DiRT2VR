@@ -26,8 +26,12 @@ struct PhotoPanelState {
 // Copies the finished frame now and writes it as a PNG in the background
 // (Pictures\DiRT2VR). Call before drawing the panel so the photo stays clean.
 void PhotoCapture(IDXGISwapChain* swapchain);
-// VR: both eyes' finished pictures saved side by side (left eye on the left), name ending -SBS.png.
-void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right);
+// How a stereo photo was seen: each eye's field of view (tangents of the left, right, up and
+// down angles, left and up negative/positive as in OpenXR) and the distance between the eyes in metres.
+struct PhotoStereoView { float tangents[2][4]{}; float eyeDistance{}; bool valid{}; };
+// VR: both eyes' finished pictures saved side by side (left eye on the left), name ending -SBS.png,
+// with a small -SBS.json beside it describing the view for the launcher's 3D viewer.
+void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right,const PhotoStereoView& view={});
 // Draws the panel and/or the latest save message onto the frame.
 void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state);
 // VR: the Photo panel for the headset layer, set each frame while Photo Mode is open (active=false hides it).

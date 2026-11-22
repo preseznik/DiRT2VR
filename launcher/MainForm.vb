@@ -482,6 +482,14 @@ Public Class MainForm
         Dim photoPage As New TabPage("Photos") With {.AutoScroll = True, .UseVisualStyleBackColor = False}
         Dim photoContent As New VerticalStack With {.Dock = DockStyle.Top, .Padding = content.Padding}
         Dim photos As New PhotoPanel()
+        photos.ShowInVr = Sub(list, index)
+                              Try
+                                  SaveSettings()
+                                  PhotoVrViewer.Show(context, settings, list, index)
+                              Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.ComponentModel.Win32Exception
+                                  MessageBox.Show(Me, ex.Message, "View in VR", MessageBoxButtons.OK, MessageBoxIcon.Warning)
+                              End Try
+                          End Sub
         photoContent.Controls.Add(photos) : photoPage.Controls.Add(photoContent)
         AddHandler photoPage.Enter, Async Sub() Await photos.ReloadAsync()
         mainPage.Controls.Add(content) : launchTabs.TabPages.AddRange({mainPage, replayPage, photoPage}) : page.Controls.Add(launchTabs)

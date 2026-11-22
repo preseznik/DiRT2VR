@@ -57,6 +57,12 @@ add_executable(xr_probe src/xr_probe.cpp src/xr_frames.cpp src/xr_render_probe.c
 target_include_directories(xr_probe PRIVATE .deps/OpenXR-SDK/src/common)
 target_link_libraries(xr_probe PRIVATE openxr_loader d3d11.lib dxgi d3dcompiler)
 target_compile_definitions(xr_probe PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX XR_USE_PLATFORM_WIN32 XR_USE_GRAPHICS_API_D3D11)
+# Launcher -> Photos: shows saved photos in the headset (side-by-side photos in 3D).
+add_executable(photo_viewer WIN32 src/photo_viewer.cpp)
+target_include_directories(photo_viewer PRIVATE src)
+target_link_libraries(photo_viewer PRIVATE openxr_loader d3d11.lib dxgi windowscodecs ole32 user32 gdi32 shell32)
+target_compile_definitions(photo_viewer PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX UNICODE _UNICODE XR_USE_PLATFORM_WIN32 XR_USE_GRAPHICS_API_D3D11)
+target_compile_options(photo_viewer PRIVATE /W4 /EHsc)
 # Local development checks are optional and not part of the public source.
 if(EXISTS "${CMAKE_SOURCE_DIR}/tests/NativeTests.cmake")
   include("${CMAKE_SOURCE_DIR}/tests/NativeTests.cmake")
