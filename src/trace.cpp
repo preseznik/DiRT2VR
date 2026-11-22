@@ -1203,13 +1203,29 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
     const float paddockZoom=PaddockZoomDistance(trailer && *reinterpret_cast<const unsigned*>(renderer+0x960)==0,static_cast<const float*>(cameraA));
     const bool photo=camera==SceneCamera::Photo;
     const bool captureHud=!photo && hudCapture.Begin(back.Get(),f,trailer?0:HiddenHudElements(),trailer);
+    // Photo Mode's panel, or a message (such as the car being followed) when the game shows no HUD.
+    const bool photoLayer=photo || (!captureHud && PhotoMessageShown());
     static const float hudDistance=GraphicsScale(L"DIRT2VR_HUD_DISTANCE",1.f,1.f,20.f);
     const float panelDistance=trailer?2.f:hudDistance;
     // Preserve the angular size of the existing 4 m wide, 4 m distant panel.
-    hud.size={panelDistance,panelDistance/hudCapture.Aspect()};
+    D3D11_TEXTURE2D_DESC backDesc{}; back->GetDesc(&backDesc);
+    hud.size={panelDistance,panelDistance*(photoLayer ? float(backDesc.Height)/std::max(1u,backDesc.Width) : 1.f/hudCapture.Aspect())};
     hud.draw=[&](unsigned,const XrView&,ID3D11RenderTargetView* target,uint32_t w,uint32_t h) {
+        if(photoLayer) {
+            ComPtr<ID3D11Device> device; back->GetDevice(&device);
+            // Drawn at the game's frame size: the layer has the frame's shape (its swapchain need not).
+            if(auto image=PhotoHeadsetImage(device.Get(),backDesc.Width,backDesc.Height,photo)) {
+                if(requestedCapture)ScreenshotTexture(image,940000+f%1000,true); // Diagnostics: the headset layer image.
+                if(!gameXr->CopyEye(2,image,target,w,h,true)) throw std::runtime_error("Photo Mode panel presentation");
+            } else {
+                ComPtr<ID3D11DeviceContext> immediate; device->GetImmediateContext(&immediate);
+                const float clear[4]{}; immediate->ClearRenderTargetView(target,clear);
+            }
+            return;
+        }
         hudCapture.End(true);
         if(auto image=hudCapture.Current(f)) {
+            PhotoMessageOver(image);
             if(!gameXr->CopyEye(2,image,target,w,h,true)) throw std::runtime_error("HUD presentation");
         } else {
             ComPtr<ID3D11Device> device; back->GetDevice(&device);
@@ -1266,9 +1282,9 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         if(cockpit || EventPickerOpen()) SeatPrepare(views);
         SteeringCockpitView(cockpit && gameXr->Visible());
         static const bool follow=GraphicsScale(L"DIRT2VR_HUD_FOLLOW",0.f,0.f,1.f)==1.f;
-        hud.pose=ScreenPose(follow && !trailer ? CenterPose(views) : headsetReference,panelDistance);
+        hud.pose=ScreenPose(follow && !trailer ? CenterPose(views) : photo ? photoReference : headsetReference,panelDistance);
         if(!follow && cockpit) hud.pose=SeatHudPose(hud.pose,headsetReference);
-    },nullptr,captureHud ? &hud : nullptr,cockpit || EventPickerOpen() ? SeatOverlay() : nullptr);
+    },nullptr,captureHud || photoLayer ? &hud : nullptr,cockpit || EventPickerOpen() ? SeatOverlay() : nullptr);
     steeringFrame.Complete(cockpit && submitted && gameXr->Visible());
     if(!submitted) SeatInactive();
     hudEye=0;
@@ -1895,12 +1911,13 @@ bool ScreenshotTexture(ID3D11Texture2D* back,unsigned long long number,bool alph
 }
 
 // Car positions for replay car switching and Photo Mode's jump to a car: while a replay
-// plays, Photo Mode is open, or (desktop) while driving, so a paused race knows its cars.
-void TrackCarsAtPresent(bool desktop) {
+// plays, Photo Mode is open, or while driving, so a paused race knows its cars.
+void TrackCarsAtPresent(bool whileDriving) {
     if(!PhotoModeRequested())return;
     const auto playback=ObservedReplayPlayback();const bool replay=playback.Available(GetTickCount64());
-    const bool driving=desktop && LiveDrivingCameraState();
-    CarTrackerFrame(replay || PhotoModeActive() || driving,!PhotoModeActive() && ((replay && playback.Forward()) || driving));
+    const bool driving=whileDriving && LiveDrivingCameraState();
+    // A paused race keeps the cars seen while driving, for Photo Mode's Jump to car.
+    CarTrackerFrame(replay || PhotoModeActive() || driving || (whileDriving && GamePaused()),!PhotoModeActive() && ((replay && playback.Forward()) || driving));
 }
 HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST)return realPresent(swapchain,interval,flags);
@@ -1924,8 +1941,9 @@ HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT i
 HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT flags) {
     if(flags & DXGI_PRESENT_TEST) return realPresent(swapchain,interval,flags);
     graphics::SampleVideoMemory(swapchain);
-    TrackCarsAtPresent(false);
+    TrackCarsAtPresent(true);
     PhotoModeFrame(swapchain);
+    CarFollowPresent(swapchain); // Keys and messages; the headset shows them on its HUD layer.
     if(!HeadsetEnabled() && (requestedCaptureFrame==frame.load() || TakeCaptureRequest(frame.load(),false))) {
         Screenshot(swapchain,frame.load());requestedCaptureFrame=~uint64_t{};
     }

@@ -18,6 +18,7 @@
 #include <xinput.h>
 #include <atomic>
 #include <cstring>
+#include <functional>
 #include <mutex>
 #include <string>
 #include <span>
@@ -58,7 +59,7 @@ unsigned filterFrame{};
 bool neuralEnabled{},neuralHeld{};
 PhotoNeuralState neuralState{};
 // Photo panel: selected row, base move speed and held-key auto-repeat.
-int menuSelected{},speedLevel=2;
+int menuSelected{},headsetSelected{},speedLevel=2;
 // The car the camera last jumped behind (1-based among the cars on screen; 0 = none yet).
 int jumpCar{};
 constexpr float SpeedScales[]{.25f,.5f,1.f,2.f,4.f};
@@ -242,7 +243,7 @@ PhotoInput Poll(float dt,bool movement) {
             // X toggles depth of field and View hides the panel (both taps).
             const bool x=(pad.wButtons&XINPUT_GAMEPAD_X)!=0,view=(pad.wButtons&XINPUT_GAMEPAD_BACK)!=0;
             result.padX|=x;result.padView|=view;
-            if(panelVisible && !Headset()) {
+            if(panelVisible) {
                 // The D-pad selects and changes settings while the Photo panel is shown.
                 result.menuUp|=vertical>0;result.menuDown|=vertical<0;result.menuLeft|=horizontal<0;result.menuRight|=horizontal>0;
             } else {result.zoom+=vertical*.8f*dt;result.roll+=horizontal*.5f*dt;}
@@ -256,7 +257,7 @@ PhotoInput Poll(float dt,bool movement) {
     if(result.slow){result.zoom*=.25f;result.roll*=.25f;result.focus*=.25f;result.exposure*=.25f;}
     if(Headset()) {
         result.zoom=result.roll=result.focus=result.exposure=0;result.blur=result.lookStep=0;
-        result.level=result.dof=result.padX=result.autofocus=result.look=result.letterbox=result.grid=result.padView=result.neural=false;
+        result.level=result.dof=result.padX=result.autofocus=result.look=result.letterbox=result.grid=result.neural=false;
     }
     return result;
 }
@@ -391,6 +392,15 @@ std::vector<MenuEntry> MenuRows(ULONGLONG now) {
     }
     return rows;
 }
+// VR: the rows that apply in the headset (it sets the view; the image effects are desktop-only).
+std::vector<MenuEntry> HeadsetRows(ULONGLONG now) {
+    std::vector<MenuEntry> rows;
+    for(auto& entry:MenuRows(now))if(entry.id==Setting::Speed || entry.id==Setting::Car)rows.push_back(std::move(entry));
+    if(!rows.empty())rows.front().row.section=L"CAMERA";
+    return rows;
+}
+// Up/down selects a row, left/right changes it.
+void Navigate(std::vector<MenuEntry>& rows,const PhotoInput& movement,ULONGLONG now,const std::function<std::vector<MenuEntry>(ULONGLONG)>& refresh);
 // Left/right on a Photo panel row.
 void Adjust(const MenuEntry& entry,int direction,ULONGLONG now) {
     PhotoInput change;
@@ -408,6 +418,7 @@ void Adjust(const MenuEntry& entry,int direction,ULONGLONG now) {
         std::array<float,28> chase;const auto current=camera.Record();
         if(CarChaseRecord(cars[jumpCar-1],current.data(),chase) && camera.Begin(chase.data()))
             Log("photo camera: jumped to car %d of %d p=%.2f,%.2f,%.2f",jumpCar,count,chase[16],chase[17],chase[18]);
+        else Log("photo camera: jump to car %d of %d refused",jumpCar,count);
         break;
     }
     case Setting::DepthOfField:dofEnabled=!dofEnabled;dofSince=now;Log("photo depth of field: enabled=%d",dofEnabled);break;
@@ -429,12 +440,29 @@ void Adjust(const MenuEntry& entry,int direction,ULONGLONG now) {
     case Setting::NeuralOption:if(neuralEnabled)NeuralOptionAdjust(entry.option,direction);break;
     }
 }
+void Navigate(std::vector<MenuEntry>& rows,const PhotoInput& movement,ULONGLONG now,const std::function<std::vector<MenuEntry>(ULONGLONG)>& refresh) {
+    const int count=int(rows.size());
+    if(!count)return;
+    int& selected=Headset()?headsetSelected:menuSelected;
+    selected=std::clamp(selected,0,count-1);
+    const int before=selected;
+    if(menuUpKey.Step(movement.menuUp,now))selected=(selected+count-1)%count;
+    if(menuDownKey.Step(movement.menuDown,now))selected=(selected+1)%count;
+    if(selected!=before)Log("photo panel: row=%d of %d",selected,count);
+    const int direction=menuRightKey.Step(movement.menuRight,now)?1:menuLeftKey.Step(movement.menuLeft,now)?-1:0;
+    if(direction){Log("photo panel: row=%d change=%+d",selected,direction);Adjust(rows[selected],direction,now);rows=refresh(now);}
+}
 }
 
 void PhotoModeFrame(IDXGISwapChain* swapchain) {
     if(!PhotoModeRequested())return;
-    PhotoPanelState overlay;
-    bool show{},capture{},neuralWanted{};int dofState{};uint64_t sceneKey{};
+    PhotoPanelState overlay,headset;
+    bool show{},capture{},neuralWanted{},headsetShown{};int dofState{};uint64_t sceneKey{};
+    // VR: the headset layer shows this frame's panel, or nothing once Photo Mode has ended.
+    struct Publish {
+        const PhotoPanelState& state;const bool& shown;
+        ~Publish(){if(Headset())PhotoHeadsetState(state,shown);}
+    } publish{headset,headsetShown};
     {
         std::lock_guard lock(mutex);
         if(!active) {
@@ -491,14 +519,7 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             }
             // Photo panel: up/down select a setting, left/right change it.
             auto rows=MenuRows(now);
-            const int count=int(rows.size());
-            if(panelVisible && count) {
-                menuSelected=std::clamp(menuSelected,0,count-1);
-                if(menuUpKey.Step(movement.menuUp,now))menuSelected=(menuSelected+count-1)%count;
-                if(menuDownKey.Step(movement.menuDown,now))menuSelected=(menuSelected+1)%count;
-                const int direction=menuRightKey.Step(movement.menuRight,now)?1:menuLeftKey.Step(movement.menuLeft,now)?-1:0;
-                if(direction){Adjust(rows[menuSelected],direction,now);rows=MenuRows(now);}
-            }
+            if(panelVisible)Navigate(rows,movement,now,MenuRows);
             overlay.panel=panelVisible;overlay.controller=lastController;overlay.selected=menuSelected;
             for(auto& entry:rows)overlay.rows.push_back(std::move(entry.row));
             dofState=!dofEnabled?0:(now-dofSince>1000 && now-dofDrawn>1000)?2:1;
@@ -507,6 +528,16 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             const auto view=camera.Record();sceneKey=1469598103934665603ull;
             for(const auto byte:std::span(reinterpret_cast<const unsigned char*>(view.data()),sizeof(view)))sceneKey=(sceneKey^byte)*1099511628211ull;
             show=true;
+        } else if(Headset() && camera.Ready()) {
+            // VR: the same panel on a layer in front of you; never in the photos.
+            if(movement.controller)lastController=true;
+            else if(movement.keyboard)lastController=false;
+            if((movement.panel && !panelHeld) || (movement.padView && !padViewHeld))panelVisible=!panelVisible;
+            auto rows=HeadsetRows(now);
+            if(panelVisible)Navigate(rows,movement,now,HeadsetRows);
+            headset.panel=panelVisible;headset.controller=lastController;headset.selected=headsetSelected;
+            for(auto& entry:rows)headset.rows.push_back(std::move(entry.row));
+            headsetShown=true;
         }
         // VR: the headset view is saved as a side-by-side stereo photo by the eye renderer.
         if(Headset() && camera.Ready() && movement.photo && !photoHeld){stereoRequested=true;Log("photo capture requested: stereo");}

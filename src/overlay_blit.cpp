@@ -6,7 +6,7 @@ namespace vr {
 using Microsoft::WRL::ComPtr;
 bool OverlayBlit::Prepare(ID3D11Device* device) {
     if(device_.Get()!=device) {
-        *this=OverlayBlit{};device_=device;
+        *this=OverlayBlit{coverage_};device_=device; // A new device: start again, same blending.
     }
     if(attempted_)return ready_;
     attempted_=true;
@@ -25,10 +25,10 @@ bool OverlayBlit::Prepare(ID3D11Device* device) {
        FAILED(D3DCompile(source,std::strlen(source),nullptr,nullptr,nullptr,"ps","ps_5_0",0,0,&pixel,nullptr)) ||
        FAILED(device->CreateVertexShader(vertex->GetBufferPointer(),vertex->GetBufferSize(),nullptr,&vs_)) ||
        FAILED(device->CreatePixelShader(pixel->GetBufferPointer(),pixel->GetBufferSize(),nullptr,&ps_)))return false;
-    // Premultiplied colour over the frame; the frame's alpha is left as it was.
+    // Premultiplied colour over the frame; the frame's alpha is kept, or built up for a transparent layer.
     D3D11_BLEND_DESC blend{};auto& rt=blend.RenderTarget[0];
     rt.BlendEnable=TRUE;rt.SrcBlend=D3D11_BLEND_ONE;rt.DestBlend=D3D11_BLEND_INV_SRC_ALPHA;rt.BlendOp=D3D11_BLEND_OP_ADD;
-    rt.SrcBlendAlpha=D3D11_BLEND_ZERO;rt.DestBlendAlpha=D3D11_BLEND_ONE;rt.BlendOpAlpha=D3D11_BLEND_OP_ADD;
+    rt.SrcBlendAlpha=coverage_?D3D11_BLEND_ONE:D3D11_BLEND_ZERO;rt.DestBlendAlpha=coverage_?D3D11_BLEND_INV_SRC_ALPHA:D3D11_BLEND_ONE;rt.BlendOpAlpha=D3D11_BLEND_OP_ADD;
     rt.RenderTargetWriteMask=D3D11_COLOR_WRITE_ENABLE_ALL;
     D3D11_RASTERIZER_DESC raster{};raster.FillMode=D3D11_FILL_SOLID;raster.CullMode=D3D11_CULL_NONE;raster.DepthClipEnable=TRUE;
     D3D11_DEPTH_STENCIL_DESC depth{};depth.DepthFunc=D3D11_COMPARISON_ALWAYS;

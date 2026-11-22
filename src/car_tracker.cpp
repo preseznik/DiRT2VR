@@ -101,8 +101,9 @@ void CarTrackerFrame(bool on,bool playing) {
         }
         t.m=place.m;t.p[0]=place.m[12];t.p[1]=place.m[13];t.p[2]=place.m[14];t.seen=now;t.size=std::max(t.size,place.indices);
     }
-    // Forget places not drawn for a while (cars off-screen keep their last pose briefly).
-    std::erase_if(tracks,[&](const Track& t){return now-t.seen>(t.travelled>20?5000ull:1000ull);});
+    // Forget places not drawn for a while (cars off-screen keep their last pose briefly). While time
+    // stands still (a paused race or replay, Photo Mode) the cars stay where they were.
+    if(playing)std::erase_if(tracks,[&](const Track& t){return now-t.seen>(t.travelled>20?5000ull:1000ull);});
     if(tracks.size()>256)tracks.resize(256);
     spent+=Now()-frameStart;++spentFrames;
     static ULONGLONG reported{};

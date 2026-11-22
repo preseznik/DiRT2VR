@@ -7,6 +7,9 @@ namespace vr {
 // scaled into a rectangle, without disturbing the game's pipeline state.
 class OverlayBlit {
 public:
+    // coverage: also build up the target's alpha (for a transparent layer drawn
+    // later with its own alpha); otherwise the frame's alpha is left as it was.
+    explicit OverlayBlit(bool coverage=false):coverage_(coverage) {}
     bool Draw(ID3D11RenderTargetView* target,ID3D11Texture2D* image,float x,float y,float width,float height);
 private:
     bool Prepare(ID3D11Device* device);
@@ -21,6 +24,6 @@ private:
     Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler_;
     Microsoft::WRL::ComPtr<ID3D11Texture2D> source_;
     Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> view_;
-    bool ready_{},attempted_{};
+    bool ready_{},attempted_{},coverage_{};
 };
 }

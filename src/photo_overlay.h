@@ -1,6 +1,7 @@
 #pragma once
 #include <dxgi.h>
 struct ID3D11Texture2D;
+struct ID3D11Device;
 #include <string>
 #include <vector>
 
@@ -29,6 +30,15 @@ void PhotoCapture(IDXGISwapChain* swapchain);
 void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right);
 // Draws the panel and/or the latest save message onto the frame.
 void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state);
+// VR: the Photo panel for the headset layer, set each frame while Photo Mode is open (active=false hides it).
+void PhotoHeadsetState(const PhotoPanelState& state,bool active);
+// True while a message (photo saved, car followed) is shown.
+bool PhotoMessageShown();
+// VR: the headset Photo Mode layer (panel=true) or only the current message, drawn into a
+// transparent image of this size with premultiplied alpha; null when there is nothing to show.
+ID3D11Texture2D* PhotoHeadsetImage(ID3D11Device* device,unsigned width,unsigned height,bool panel);
+// VR: the current message on top of the game's captured HUD image (render target, premultiplied alpha).
+void PhotoMessageOver(ID3D11Texture2D* hud);
 // A short message above the hint bar, drawn by the next PhotoPanelDraw calls for a few seconds.
 void PhotoShowMessage(const std::wstring& text,bool error=false);
 // Pure file-name helper, shared with the tests.

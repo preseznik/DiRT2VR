@@ -83,7 +83,7 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 
 **In replays:** while watching a full replay (from **Launcher → Replays**, or **Full Replay** after a race), press **Esc** and choose **PHOTO MODE** in the replay menu. The replay stays frozen at that moment and the camera starts from the view you were watching, including the trackside cameras. The replay controls are hidden in Photo Mode and in your photos. **Esc** returns to the replay menu, and **Continue** plays on from the same moment. After a normal launch (game menus), Esc while watching a race replay opens the same replay menu instead of leaving the replay straight away; **Exit replay** leaves it as before.
 
-**Following other cars in replays:** while a replay plays, press **F6** to follow the next car with a chase camera, and **F5** for the previous one. After the last car, the replay's own cameras return. A short message shows which car you follow. Only cars that have been on screen recently can be chosen: DiRT2VR finds cars from what the game draws, so a car far out of view is not on the list until it appears. If the followed car leaves the picture, the replay's cameras return. Desktop only.
+**Following other cars in replays:** while a replay plays, press **F6** to follow the next car with a chase camera, and **F5** for the previous one. After the last car, the replay's own cameras return. A short message shows which car you follow, also in VR. Only cars that have been on screen recently can be chosen: DiRT2VR finds cars from what the game draws, so a car far out of view is not on the list until it appears. If the followed car leaves the picture, the replay's cameras return.
 
 **Jump to car:** in Photo Mode, the **Jump to car** row in the Camera section puts the camera behind a car; left/right picks the next or previous one. The same rule applies: in a replay the cars seen recently, in a paused race the cars that were on screen while you drove.
 
@@ -99,9 +99,9 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 | Clear zoom and tilt | Middle mouse button | Right-stick click |
 | Back to the starting view | R | Y |
 | Save a photo | P | A |
-| Choose a setting in the Photo panel (desktop) | Up / Down arrows | D-pad up / down |
+| Choose a setting in the Photo panel | Up / Down arrows | D-pad up / down |
 | Change the chosen setting | Left / Right arrows | D-pad left / right |
-| Hide / show the Photo panel (desktop) | H | View (Back) |
+| Hide / show the Photo panel | H | View (Back) |
 | Depth of field on / off (desktop) | F | X |
 | Focus nearer / farther | 1 / 2 (top row) | Photo panel |
 | Less / more blur | 3 / 4 (top row) | Photo panel |
@@ -114,7 +114,7 @@ Your angle stays while stopped. When moving, the camera smoothly returns behind 
 
 On desktop, the **Photo panel** on the right lists every Photo Mode setting: camera (field of view, tilt, move speed), depth of field, look and, when set up, DLSS 5. Use the **arrow keys** (or the **D-pad**) to choose a setting and change it; the shortcut key for each setting is shown next to it. **Move speed** sets how fast the camera travels before Shift or Ctrl. A bar along the bottom lists the main controls for your keyboard or controller, depending on what you used last. Press **H** (or **View**) to hide the panel and the bar for a clear view; they stay hidden until you show them again. While the panel is hidden, the D-pad zooms and tilts.
 
-**Saving photos:** press **P** (or **A**) to save the current picture as a PNG at the game's full rendering resolution. The Photo panel and messages are never included in the photo. Photos go to **Pictures\DiRT2VR** with the date and time in the file name; a short message confirms the save. In VR, **P** (or **A**) saves both eyes side by side (SBS, left eye on the left) in one PNG whose name ends in **-SBS**, at the headset's rendering resolution, and a short sound confirms the save. Browse, view and manage your photos in [Launcher → Photos](playing.md#saved-photos). The Photo panel is desktop-only for now.
+**Saving photos:** press **P** (or **A**) to save the current picture as a PNG at the game's full rendering resolution. The Photo panel and messages are never included in the photo. Photos go to **Pictures\DiRT2VR** with the date and time in the file name; a short message confirms the save. In VR, **P** (or **A**) saves both eyes side by side (SBS, left eye on the left) in one PNG whose name ends in **-SBS**, at the headset's rendering resolution; a short sound and message confirm the save. Browse, view and manage your photos in [Launcher → Photos](playing.md#saved-photos).
 
 **Depth of field:** press **F** (or tap **X**) to blur what is nearer or farther than the focus point, like a camera lens. It starts with autofocus on whatever is at the centre of the picture, so aim at your subject. Use **1 / 2** to set the focus distance yourself and **3 / 4** to change the amount of blur (1–10), or change them in the Photo panel, which also shows the current focus distance. The right mouse button (or left-stick click) returns to autofocus. Saved photos include the blur. Depth of field uses the game's shadow pass to find distances, so it needs in-game shadows switched on; the panel says when it is unavailable. It is desktop-only.
 
@@ -145,7 +145,7 @@ Choose Continue in the pause menu to resume driving. Moving the camera does not 
 
 The camera has no collision, so you can fly through scenery.
 
-VR Photo Mode uses stereo rendering, independent head tracking and smooth mouse/stick turning. Zoom and tilt are not available in VR, where your headset sets the view, and movement starts and stops immediately for comfort. Leaving it restores your driving view and seated reference. **P** (or **A**) saves a side-by-side stereo photo. Desktop practice and AI Race, plus headset/controller practice, have passed bounded checks. Broader track coverage remains experimental.
+VR Photo Mode uses stereo rendering, independent head tracking and smooth mouse/stick turning. Zoom and tilt are not available in VR, where your headset sets the view, and movement starts and stops immediately for comfort. Leaving it restores your driving view and seated reference. **P** (or **A**) saves a side-by-side stereo photo. The Photo panel, the controls bar and messages float in front of you; in VR the panel offers **Move speed** and **Jump to car** (depth of field, filters and DLSS 5 are desktop-only). **H** (or **View**) hides them for a clear view; they are never in your photos. Desktop practice and AI Race, plus headset/controller practice, have passed bounded checks. Broader track coverage remains experimental.
 
 ## Replay controls
 

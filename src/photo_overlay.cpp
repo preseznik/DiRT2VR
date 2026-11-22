@@ -84,6 +84,7 @@ class PanelImage {
     std::wstring last_;
     unsigned width_{},height_{};
 public:
+    explicit PanelImage(bool coverage=false):blit_(coverage) {}
     bool Draw(ID3D11RenderTargetView* target,unsigned width,unsigned height,const std::wstring& signature,
               const std::function<void(Gdiplus::Graphics&)>& paint,float x,float y,float w,float h) {
         ComPtr<ID3D11Device> device;target->GetDevice(&device);
@@ -115,6 +116,8 @@ public:
     }
 };
 PanelImage settingsPanel,hintBar,toastPanel;
+// VR: the same artwork on the headset's transparent layer, keeping its alpha.
+PanelImage headsetPanel{true},headsetHints{true},headsetToast{true};
 
 void RoundedRect(Gdiplus::Graphics& g,const Gdiplus::Brush& brush,float x,float y,float w,float h,float r) {
     Gdiplus::GraphicsPath path;
@@ -214,25 +217,24 @@ void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right) {
     StartEncode(std::move(pixels),wa+wb,ha,true);
 }
 void PhotoShowMessage(const std::wstring& text,bool error){SetMessage(text,error);}
-void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
-    std::wstring text;bool error{},recent{};
-    {
-        std::lock_guard lock(messageMutex);
-        recent=!message.empty() && GetTickCount64()-messageTick<MessageMs;
-        if(recent){text=message;error=messageError;}
-    }
-    if(!state.panel && !recent)return;
-    ComPtr<ID3D11Texture2D> back;
-    if(!swapchain || FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back))))return;
-    ComPtr<ID3D11Device> device;back->GetDevice(&device);
-    D3D11_TEXTURE2D_DESC desc{};back->GetDesc(&desc);
-    ComPtr<ID3D11RenderTargetView> target;
-    if(FAILED(device->CreateRenderTargetView(back.Get(),nullptr,&target)))return;
-    // Panel artwork is drawn for a 1800-pixel-high screen and scaled to the frame.
-    const float scale=float(desc.Height)/1800.f,margin=float(desc.Height)/30.f;
+namespace {
+// The latest message, if it is still shown.
+bool CurrentMessage(std::wstring& text,bool& error) {
+    std::lock_guard lock(messageMutex);
+    if(message.empty() || GetTickCount64()-messageTick>=MessageMs)return false;
+    text=message;error=messageError;return true;
+}
+// Panel, hint bar and message on a target of this size (desktop frame or the headset layer).
+bool DrawOverlay(ID3D11RenderTargetView* target,float frameWidth,float frameHeight,const PhotoPanelState& state,
+                 bool recent,const std::wstring& text,bool error,bool headset) {
+    // Panel artwork is drawn for a 1800-pixel-high screen and scaled to the frame. In the
+    // headset it is larger and further from the edges, which are hard to read there.
+    const float scale=frameHeight/(headset?1000.f:1800.f),margin=frameHeight/(headset?14.f:30.f);
+    auto& settingsPanel=headset?headsetPanel:vr::settingsPanel;auto& hintBar=headset?headsetHints:vr::hintBar;
+    auto& toastPanel=headset?headsetToast:vr::toastPanel;
     const Gdiplus::Color white(255,240,242,244),dim(255,120,126,132),grey(255,150,156,162),accent(255,183,235,25),orange(255,255,170,60);
     bool drawn=true;
-    float hintTop=float(desc.Height);
+    float hintTop=frameHeight;
     if(state.panel) {
         // Settings: one row per option, grouped, the selected row highlighted.
         constexpr int width=760,header=92,rowHeight=54,sectionHeight=50,bottom=22;
@@ -244,7 +246,7 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
             height+=rowHeight;
             signature+=row.section+L"|"+row.label+L"|"+row.value+L"|"+row.key+(row.dim?L"d":L"")+(row.warn?L"w":L"");
         }
-        drawn&=settingsPanel.Draw(target.Get(),width,unsigned(height),signature,[&](Gdiplus::Graphics& g) {
+        drawn&=settingsPanel.Draw(target,width,unsigned(height),signature,[&](Gdiplus::Graphics& g) {
             Gdiplus::SolidBrush background(Gdiplus::Color(210,14,16,18)),highlight(Gdiplus::Color(56,255,255,255));
             Gdiplus::SolidBrush whiteBrush(white),dimBrush(dim),greyBrush(grey),accentBrush(accent),orangeBrush(orange);
             RoundedRect(g,background,0,0,float(width),float(height),22);
@@ -290,35 +292,100 @@ void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
                 }
                 y+=rowHeight;
             }
-        },float(desc.Width)-margin-width*scale,margin,width*scale,height*scale);
+        },frameWidth-margin-width*scale,margin,width*scale,height*scale);
         // Hint bar: only the essentials; everything else is in the panel.
         const std::wstring hints=!state.hints.empty()?state.hints:state.controller?
             L"LS  Move     RS  Look     RT / LT  Up / Down     D-pad  Select / Change     A  Photo     View  Hide     B  Back":
             L"WASD  Move     Mouse  Look     E / Q  Up / Down     \u2191\u2193  Select     \u2190\u2192  Change     P  Photo     H  Hide     Esc  Back";
         constexpr int hintWidth=1800,hintHeight=64;
-        const float w=std::min(hintWidth*scale,float(desc.Width)-2*margin),h=w*hintHeight/hintWidth;
-        hintTop=float(desc.Height)-margin-h;
-        drawn&=hintBar.Draw(target.Get(),hintWidth,hintHeight,hints,[&](Gdiplus::Graphics& g) {
+        const float w=std::min(hintWidth*scale,frameWidth-2*margin),h=w*hintHeight/hintWidth;
+        hintTop=frameHeight-margin-h;
+        drawn&=hintBar.Draw(target,hintWidth,hintHeight,hints,[&](Gdiplus::Graphics& g) {
             Gdiplus::SolidBrush background(Gdiplus::Color(190,14,16,18)),whiteBrush(white);
             RoundedRect(g,background,0,0,float(hintWidth),float(hintHeight),hintHeight/2.f);
             Gdiplus::Font font(L"Segoe UI",25,Gdiplus::FontStyleRegular,Gdiplus::UnitPixel);
             Gdiplus::StringFormat centre;centre.SetAlignment(Gdiplus::StringAlignmentCenter);centre.SetLineAlignment(Gdiplus::StringAlignmentCenter);
             g.DrawString(hints.c_str(),-1,&font,Gdiplus::RectF(0,0,float(hintWidth),float(hintHeight)),&centre,&whiteBrush);
-        },(float(desc.Width)-w)/2,hintTop,w,h);
+        },(frameWidth-w)/2,hintTop,w,h);
     }
     if(recent) {
         // Messages (photo saved) above the hint bar, centred.
         constexpr int toastWidth=1300,toastHeight=70;
-        const float w=std::min(toastWidth*scale,float(desc.Width)-2*margin),h=w*toastHeight/toastWidth;
-        drawn&=toastPanel.Draw(target.Get(),toastWidth,toastHeight,text+(error?L"!":L""),[&](Gdiplus::Graphics& g) {
+        const float w=std::min(toastWidth*scale,frameWidth-2*margin),h=w*toastHeight/toastWidth;
+        drawn&=toastPanel.Draw(target,toastWidth,toastHeight,text+(error?L"!":L""),[&](Gdiplus::Graphics& g) {
             Gdiplus::SolidBrush background(Gdiplus::Color(210,14,16,18)),brush(error?orange:accent);
             RoundedRect(g,background,0,0,float(toastWidth),float(toastHeight),18);
             Gdiplus::Font font(L"Segoe UI",27,Gdiplus::FontStyleBold,Gdiplus::UnitPixel);
             Gdiplus::StringFormat centre;centre.SetAlignment(Gdiplus::StringAlignmentCenter);centre.SetLineAlignment(Gdiplus::StringAlignmentCenter);
             g.DrawString(text.c_str(),-1,&font,Gdiplus::RectF(0,0,float(toastWidth),float(toastHeight)),&centre,&brush);
-        },(float(desc.Width)-w)/2,(state.panel?hintTop:float(desc.Height)-margin)-h*1.4f,w,h);
+        },(frameWidth-w)/2,(state.panel?hintTop:frameHeight-margin)-h*1.4f,w,h);
     }
+    return drawn;
+}
+std::mutex headsetMutex;
+PhotoPanelState headsetState;
+bool headsetPanelShown{};
+ComPtr<ID3D11Texture2D> headsetImage;
+ComPtr<ID3D11RenderTargetView> headsetTarget;
+ID3D11Texture2D* messageOwner{};
+ComPtr<ID3D11RenderTargetView> messageTarget;
+void ReportFailure(bool drawn) {
     static bool reported{};
     if(!drawn && !reported){reported=true;Log("photo panel: draw failed");}
+}
+}
+
+void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
+    std::wstring text;bool error{};
+    const bool recent=CurrentMessage(text,error);
+    if(!state.panel && !recent)return;
+    ComPtr<ID3D11Texture2D> back;
+    if(!swapchain || FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back))))return;
+    ComPtr<ID3D11Device> device;back->GetDevice(&device);
+    D3D11_TEXTURE2D_DESC desc{};back->GetDesc(&desc);
+    ComPtr<ID3D11RenderTargetView> target;
+    if(FAILED(device->CreateRenderTargetView(back.Get(),nullptr,&target)))return;
+    ReportFailure(DrawOverlay(target.Get(),float(desc.Width),float(desc.Height),state,recent,text,error,false));
+}
+
+void PhotoHeadsetState(const PhotoPanelState& state,bool active) {
+    std::lock_guard lock(headsetMutex);headsetState=state;headsetPanelShown=active;
+}
+bool PhotoMessageShown() {
+    std::wstring text;bool error{};return CurrentMessage(text,error);
+}
+ID3D11Texture2D* PhotoHeadsetImage(ID3D11Device* device,unsigned width,unsigned height,bool panel) {
+    PhotoPanelState state;
+    if(panel){std::lock_guard lock(headsetMutex);if(headsetPanelShown)state=headsetState;}
+    std::wstring text;bool error{};
+    const bool recent=CurrentMessage(text,error);
+    if(!state.panel && !recent)return nullptr;
+    D3D11_TEXTURE2D_DESC desc{};
+    if(headsetImage)headsetImage->GetDesc(&desc);
+    if(!headsetImage || desc.Width!=width || desc.Height!=height) {
+        headsetImage.Reset();headsetTarget.Reset();
+        desc={};desc.Width=width;desc.Height=height;desc.MipLevels=desc.ArraySize=1;desc.Format=DXGI_FORMAT_B8G8R8A8_UNORM;
+        desc.SampleDesc.Count=1;desc.Usage=D3D11_USAGE_DEFAULT;desc.BindFlags=D3D11_BIND_RENDER_TARGET|D3D11_BIND_SHADER_RESOURCE;
+        if(FAILED(device->CreateTexture2D(&desc,nullptr,&headsetImage)) ||
+           FAILED(device->CreateRenderTargetView(headsetImage.Get(),nullptr,&headsetTarget))){headsetImage.Reset();ReportFailure(false);return nullptr;}
+    }
+    ComPtr<ID3D11DeviceContext> context;device->GetImmediateContext(&context);
+    const float clear[4]{};context->ClearRenderTargetView(headsetTarget.Get(),clear);
+    const bool drawn=DrawOverlay(headsetTarget.Get(),float(width),float(height),state,recent,text,error,true);ReportFailure(drawn);
+    static unsigned reported{};const unsigned kind=1+state.panel*2+recent*4;
+    if(reported!=kind){reported=kind;Log("photo headset layer: %ux%u panel=%d rows=%zu message=%d drawn=%d",width,height,state.panel,state.rows.size(),recent,drawn);}
+    return headsetImage.Get();
+}
+void PhotoMessageOver(ID3D11Texture2D* hud) {
+    std::wstring text;bool error{};
+    if(!hud || !CurrentMessage(text,error))return;
+    if(messageOwner!=hud) {
+        messageTarget.Reset();messageOwner=nullptr;
+        ComPtr<ID3D11Device> device;hud->GetDevice(&device);
+        if(FAILED(device->CreateRenderTargetView(hud,nullptr,&messageTarget)))return;
+        messageOwner=hud;
+    }
+    D3D11_TEXTURE2D_DESC desc{};hud->GetDesc(&desc);
+    ReportFailure(DrawOverlay(messageTarget.Get(),float(desc.Width),float(desc.Height),PhotoPanelState{},true,text,error,true));
 }
 }
