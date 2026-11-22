@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.16 — 2026-11-22 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.16)
+
 - VR Photo Mode saves photos: P (or A) saves both eyes side by side (left eye on the left) in one PNG ending -SBS, at the headset's rendering resolution, with a short sound to confirm. A fake-headset lab run (SteamVR null driver, 2016×2240 per eye) saved two 4908×1840 SBS photos, with the panel shown and hidden, and the eyes in the right order. A real headset has not been checked.
 - Launcher → Photos: a new tab next to Replays lists saved photos with thumbnails, newest first, and opens them in a viewer (previous/next, full screen). VR side-by-side photos can be viewed side by side, as either eye, or swapped for cross-eyed viewing. Photos can be opened, shown in their folder, copied or moved to the Recycle Bin. Checked with launcher tests over 17 desktop photos and synthetic SBS photos.
 - Replays can follow other cars: F6 and F5 switch a chase camera to the next or previous car, and past the last car the replay's own cameras return. Photo Mode has a Jump to car row that puts the camera behind a car. Cars are found from what the game draws (their world positions as they are rendered), so only cars that have been on screen recently can be chosen. This costs about 0.05 ms of CPU per frame while a replay plays, Photo Mode is open or you drive with Photo Mode enabled. A scripted desktop lab run with a two-car Direct replay followed each car and returned to the replay cameras, and Photo Mode jumped behind both cars; frame pacing was unchanged. Replays with many cars, normal-launch replays, the controller and VR are not covered.
