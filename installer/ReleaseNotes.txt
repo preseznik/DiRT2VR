@@ -1,11 +1,11 @@
-DiRT2VR 0.18.16 — Experimental
+DiRT2VR 0.18.17 — Experimental
 
 LATEST CHANGES (since 0.18.11)
 
 - Photo Mode on desktop: zoom and tilt, slow precise movement, depth of field, filters (including your own filter presets), letterbox, a thirds grid, photo saving, and a redesigned settings panel you can use with the arrow keys or the D-pad.
 - Photo Mode in replays, including after a normal launch: press Esc while watching a replay and choose PHOTO MODE. The replay freezes and the camera starts from the view you were watching, without the replay controls.
-- Follow other cars in replays: F6 and F5 switch a chase camera to the next or previous car; past the last car the replay's own cameras return. In Photo Mode, the Jump to car row puts the camera behind a car. Only cars that have been on screen recently can be chosen.
-- VR photos: in VR Photo Mode, P (or A) saves both eyes side by side (SBS, left eye on the left), with a short sound to confirm.
+- Follow other cars in replays: F6 and F5 switch a chase camera to the next or previous car; past the last car the replay's own cameras return. Also in VR. In Photo Mode, the Jump to car row puts the camera behind a car, also after pausing a race. Only cars that have been on screen recently can be chosen.
+- VR Photo Mode: the Photo panel, controls bar and messages now show in the headset (never in your photos), with Move speed and Jump to car; H or View hides them. P (or A) saves both eyes side by side (SBS, left eye on the left).
 - New Photos tab next to Replays: browse your saved photos with thumbnails, view them (VR photos side by side, one eye, or swapped for cross-eyed viewing), open, copy, show in folder or delete them.
 - Optional DLSS 5 Neural Rendering on desktop, with your own copy of NVIDIA's runtime (not included): in Photo Mode, and optionally while driving with the HUD kept sharp. Style, strength, tone, detail, extra passes, mix, lower resolution and a foveated centre, set in the launcher, in the Photo panel, or with F8 while driving. Needs an NVIDIA RTX graphics card.
 - External tracks can now include moving scenery: wind-turbine rotors that turn and trains that run along their own railway, in desktop and VR. A track pack has to mark these parts; packs without them look as before.

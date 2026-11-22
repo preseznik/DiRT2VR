@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.17 — 2026-11-22 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.17)
+
 - VR Photo Mode shows its Photo panel, controls bar and messages in the headset, on a layer in front of you that is never in your photos. The VR panel offers Move speed and Jump to car (depth of field, filters and DLSS 5 stay desktop-only); H or View hides it. F5/F6 car following is now also active in VR replays, with its message in the headset. Jump to car in a paused race works again: pausing no longer forgets the cars seen while driving (desktop and VR). VR now also tracks cars while you drive, at about 0.12 ms of CPU per frame. A fake-headset lab run (SteamVR null driver) showed the panel, the saved message and the hidden panel in the headset mirror, jumped behind the player's car and saved clean side-by-side photos. VR replays with F5/F6, a real headset and the controller are not covered.
 
 ## 0.18.16 — 2026-11-22 — Experimental
