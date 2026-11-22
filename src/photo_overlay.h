@@ -1,5 +1,6 @@
 #pragma once
 #include <dxgi.h>
+struct ID3D11Texture2D;
 #include <string>
 #include <vector>
 
@@ -24,6 +25,8 @@ struct PhotoPanelState {
 // Copies the finished frame now and writes it as a PNG in the background
 // (Pictures\DiRT2VR). Call before drawing the panel so the photo stays clean.
 void PhotoCapture(IDXGISwapChain* swapchain);
+// VR: both eyes' finished pictures saved side by side (left eye on the left), name ending -SBS.png.
+void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right);
 // Draws the panel and/or the latest save message onto the frame.
 void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state);
 // A short message above the hint bar, drawn by the next PhotoPanelDraw calls for a few seconds.

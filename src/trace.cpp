@@ -16,6 +16,7 @@
 #include "live_neural.h"
 #include "car_tracker.h"
 #include "car_follow.h"
+#include "photo_overlay.h"
 #ifdef DIRT2VR_DESKTOP_BRIDGE
 #include "desktop_bridge.h"
 #endif
@@ -1241,6 +1242,8 @@ bool HeadsetScene(void* self,void* lists,void* cameraA,void* cameraB,void* conte
         if(!projectionUploads[eye]) throw std::runtime_error("eye projection was not uploaded");
         if(FAILED(eyes.Capture(back.Get(),eye,f))) throw std::runtime_error("eye capture");
         if(!gameXr->CopyEye(eye,eyes.Texture(eye),target,w,h)) throw std::runtime_error("eye presentation");
+        // Photo Mode: both eyes are finished now (the HUD is a separate layer, never in the photo).
+        if(eye==1 && photo && PhotoTakeStereoRequest()) PhotoCaptureStereo(eyes.Texture(0),eyes.Texture(1));
         if(eye==1) gpu.End();
     },[&](const std::array<XrView,2>& views) {
         for(const auto& view:views) {

@@ -330,6 +330,8 @@ bool PhotoModeRequested() {
 bool PhotoModeActive(){return active.load();}
 bool PhotoModeBlocksInput(){return blocking.load();}
 bool PhotoModeHidesHud(){return active.load() && replayMode;}
+std::atomic<bool> stereoRequested{};
+bool PhotoTakeStereoRequest(){return stereoRequested.exchange(false);}
 void PhotoModeFocusLost(){if(active.load())focusLost=true;}
 void PhotoSelectCamera(void* value){selected=value;}
 bool PhotoModeMenu(void* state,void* result) {
@@ -506,6 +508,8 @@ void PhotoModeFrame(IDXGISwapChain* swapchain) {
             for(const auto byte:std::span(reinterpret_cast<const unsigned char*>(view.data()),sizeof(view)))sceneKey=(sceneKey^byte)*1099511628211ull;
             show=true;
         }
+        // VR: the headset view is saved as a side-by-side stereo photo by the eye renderer.
+        if(Headset() && camera.Ready() && movement.photo && !photoHeld){stereoRequested=true;Log("photo capture requested: stereo");}
         neuralHeld=movement.neural;lookHeld=movement.look;letterboxHeld=movement.letterbox;gridHeld=movement.grid;
         padViewHeld=movement.padView;blurHeld=movement.blur;dofKeyHeld=movement.dof;padXHeld=movement.padX;
         PhotoDofWanted(show && dofEnabled);

@@ -8,6 +8,8 @@ bool PhotoModeActive();
 bool PhotoModeBlocksInput();
 // Photo Mode in a replay: the replay's HUD (controls, REPLAY, logo) is not drawn.
 bool PhotoModeHidesHud();
+// VR: P or A was pressed in Photo Mode; the renderer saves the next stereo pair (true once).
+bool PhotoTakeStereoRequest();
 void PhotoSelectCamera(void* manager);
 // The shared native menu check calls this after its original update.
 bool PhotoModeMenu(void* state,void* result);

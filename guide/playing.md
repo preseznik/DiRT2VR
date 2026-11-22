@@ -2,7 +2,7 @@
 
 [← Back to README](../README.md)
 
-This guide covers the **Launcher**, **Profile** and **Replays** tabs: launch modes, Direct practice, Race, car choices, saved replays, careers and CUSTOM cars. For building tracks, see [Custom tracks](custom-tracks.md).
+This guide covers the **Launcher**, **Profile**, **Replays** and **Photos** tabs: launch modes, Direct practice, Race, car choices, saved replays, saved photos, careers and CUSTOM cars. For building tracks, see [Custom tracks](custom-tracks.md).
 
 ## Launching
 
@@ -81,6 +81,12 @@ Choose a recording and select **Play** or **Play in VR**. The launcher checks th
 Recordings are compressed automatically and unpacked temporarily for playback. **Open folder** opens this installation's `Replays` folder in your local DiRT2VR user-data directory. Tested recordings of about one minute took 43–58 MB at high frame rates; size varies with frame rate, duration and the race. Auto-save has no storage limit, so use **Delete…** to remove recordings you no longer want. When auto-save is off, each completed run replaces the unsaved last replay; recordings already saved in the library remain.
 
 This first experimental player supports recordings made by the same installation. Replay sharing/import and recordings from Normal Launch are not supported yet. Careers are unchanged.
+
+## Saved photos
+
+**Launcher → Photos** lists the photos you saved in Photo Mode (see [Controls → Photo Mode](controls.md#photo-mode)), newest first, with a thumbnail and the date. Select a photo to see its file name, size and resolution. **View** (or double-click) opens the viewer: **Previous / Next** or the **Left / Right** arrow keys step through your photos, **Full screen** (F11 or double-click) fills the screen, and **Esc** closes it. **Open** shows the photo in your usual image app, **Show in folder** selects it in File Explorer, **Copy** puts it on the clipboard, and **Delete…** (or the Delete key) moves the selected photos to the Recycle Bin after asking. **Open folder** opens **Pictures\DiRT2VR**; **Refresh** picks up new photos.
+
+Photos taken in VR are marked **SBS**: both eyes side by side, left eye on the left. Their thumbnail shows the left eye, and the viewer can show them **Side by side**, as the **Left eye** or **Right eye** only, or **Cross-eyed (swapped)** for viewing them in 3D without a headset. Side-by-side photos also work with 3D photo viewers and VR media players that support SBS. The list shows up to 400 of the newest photos; older ones stay in the folder.
 
 Some older recordings lack data needed to restore particle effects in a new game process. If playback reports an unsupported native record and closes, record a new run with the updated launcher; the missing information cannot be recovered from that recording.
 

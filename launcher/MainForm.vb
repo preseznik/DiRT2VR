@@ -479,7 +479,12 @@ Public Class MainForm
         replays = New ReplayPanel(context)
         AddHandler replays.SelectionChanged, Sub() RefreshRoadSheenSupport()
         replayContent.Controls.Add(replays) : replayPage.Controls.Add(replayContent)
-        mainPage.Controls.Add(content) : launchTabs.TabPages.AddRange({mainPage, replayPage}) : page.Controls.Add(launchTabs)
+        Dim photoPage As New TabPage("Photos") With {.AutoScroll = True, .UseVisualStyleBackColor = False}
+        Dim photoContent As New VerticalStack With {.Dock = DockStyle.Top, .Padding = content.Padding}
+        Dim photos As New PhotoPanel()
+        photoContent.Controls.Add(photos) : photoPage.Controls.Add(photoContent)
+        AddHandler photoPage.Enter, Async Sub() Await photos.ReloadAsync()
+        mainPage.Controls.Add(content) : launchTabs.TabPages.AddRange({mainPage, replayPage, photoPage}) : page.Controls.Add(launchTabs)
         AddHandler launchTabs.SelectedIndexChanged, Sub()
                                                        replayLibrarySelected = launchTabs.SelectedIndex = 1
                                                        RefreshRoadSheenSupport()

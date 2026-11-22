@@ -56,16 +56,19 @@ std::wstring PhotoFolder() {
     return folder;
 }
 // Runs on its own thread so PNG compression never stalls the game.
-void Encode(std::vector<unsigned char> pixels,unsigned width,unsigned height) {
+void Encode(std::vector<unsigned char> pixels,unsigned width,unsigned height,bool stereo) {
     SYSTEMTIME t{};GetLocalTime(&t);
-    const auto name=PhotoFileName(t.wYear,t.wMonth,t.wDay,t.wHour,t.wMinute,t.wSecond,t.wMilliseconds);
+    auto name=PhotoFileName(t.wYear,t.wMonth,t.wDay,t.wHour,t.wMinute,t.wSecond,t.wMilliseconds);
+    // Side-by-side stereo (left eye on the left), marked in the name for viewers and the launcher.
+    if(stereo)name.insert(name.size()-4,L"-SBS");
     bool saved=false;CLSID png{};
     const auto folder=PhotoFolder();
     if(!folder.empty() && StartGdiplus() && PngEncoder(png)) {
         Gdiplus::Bitmap bitmap(int(width),int(height),int(width*4),PixelFormat32bppRGB,pixels.data());
         saved=bitmap.GetLastStatus()==Gdiplus::Ok && bitmap.Save((folder+L"\\"+name).c_str(),&png,nullptr)==Gdiplus::Ok;
     }
-    Log("photo capture: saved=%d size=%ux%u folder_ready=%d",saved,width,height,!folder.empty());
+    Log("photo capture: saved=%d size=%ux%u stereo=%d folder_ready=%d",saved,width,height,stereo,!folder.empty());
+    if(stereo)MessageBeep(saved?MB_OK:MB_ICONHAND); // No panel in the headset: a sound confirms the save.
     SetMessage(saved?L"Photo saved: Pictures\\DiRT2VR\\"+name:L"The photo could not be saved.",!saved);
     saving=false;
 }
@@ -132,37 +135,32 @@ std::wstring PhotoFileName(int year,int month,int day,int hour,int minute,int se
     return name;
 }
 
-void PhotoCapture(IDXGISwapChain* swapchain) {
-    if(saving.exchange(true)){SetMessage(L"Still saving the previous photo\u2026",true);return;}
-    const auto fail=[](const char* why) {
-        Log("photo capture failed: %s",why);SetMessage(L"The photo could not be saved.",true);saving=false;
-    };
-    ComPtr<ID3D11Texture2D> back;
-    if(!swapchain || FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back))))return fail("back buffer");
-    ComPtr<ID3D11Device> device;back->GetDevice(&device);
+namespace {
+// The texture's picture as 32-bit BGRX rows; false with the reason in why.
+bool ReadPixels(ID3D11Texture2D* texture,std::vector<unsigned char>& pixels,UINT& width,UINT& height,const char*& why) {
+    ComPtr<ID3D11Device> device;texture->GetDevice(&device);
     ComPtr<ID3D11DeviceContext> context;device->GetImmediateContext(&context);
-    D3D11_TEXTURE2D_DESC desc{};back->GetDesc(&desc);
+    D3D11_TEXTURE2D_DESC desc{};texture->GetDesc(&desc);
     const auto format=desc.Format;
     const bool rgba=format==DXGI_FORMAT_R8G8B8A8_UNORM || format==DXGI_FORMAT_R8G8B8A8_UNORM_SRGB;
     const bool bgra=format==DXGI_FORMAT_B8G8R8A8_UNORM || format==DXGI_FORMAT_B8G8R8A8_UNORM_SRGB ||
         format==DXGI_FORMAT_B8G8R8X8_UNORM || format==DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
     const bool tenBit=format==DXGI_FORMAT_R10G10B10A2_UNORM;
-    if(!rgba && !bgra && !tenBit){Log("photo capture: unsupported format=%u",unsigned(format));return fail("format");}
-    ComPtr<ID3D11Texture2D> source=back,staging;
+    if(!rgba && !bgra && !tenBit){Log("photo capture: unsupported format=%u",unsigned(format));why="format";return false;}
+    ComPtr<ID3D11Texture2D> source=texture,staging;
     auto copy=desc;copy.SampleDesc={1,0};copy.BindFlags=0;copy.MiscFlags=0;copy.MipLevels=1;copy.ArraySize=1;
     if(desc.SampleDesc.Count>1) {
         copy.Usage=D3D11_USAGE_DEFAULT;copy.CPUAccessFlags=0;
-        if(FAILED(device->CreateTexture2D(&copy,nullptr,&source)))return fail("resolve texture");
-        context->ResolveSubresource(source.Get(),0,back.Get(),0,format);
+        if(FAILED(device->CreateTexture2D(&copy,nullptr,&source))){why="resolve texture";return false;}
+        context->ResolveSubresource(source.Get(),0,texture,0,format);
     }
     copy.Usage=D3D11_USAGE_STAGING;copy.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
-    if(FAILED(device->CreateTexture2D(&copy,nullptr,&staging)))return fail("staging texture");
+    if(FAILED(device->CreateTexture2D(&copy,nullptr,&staging))){why="staging texture";return false;}
     context->CopySubresourceRegion(staging.Get(),0,0,0,0,source.Get(),0,nullptr);
     D3D11_MAPPED_SUBRESOURCE mapped{};
-    if(FAILED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped)))return fail("map");
-    std::vector<unsigned char> pixels;
+    if(FAILED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped))){why="map";return false;}
     try{pixels.resize(size_t(desc.Width)*desc.Height*4);}
-    catch(const std::bad_alloc&){context->Unmap(staging.Get(),0);return fail("memory");}
+    catch(const std::bad_alloc&){context->Unmap(staging.Get(),0);why="memory";return false;}
     for(UINT y=0;y<desc.Height;++y) {
         const auto* in=static_cast<const unsigned char*>(mapped.pData)+size_t(y)*mapped.RowPitch;
         auto* out=pixels.data()+size_t(y)*desc.Width*4;
@@ -178,11 +176,43 @@ void PhotoCapture(IDXGISwapChain* swapchain) {
         }
     }
     context->Unmap(staging.Get(),0);
+    width=desc.Width;height=desc.Height;return true;
+}
+void StartEncode(std::vector<unsigned char> pixels,unsigned width,unsigned height,bool stereo) {
     SetMessage(L"Saving photo\u2026",false);
-    try{std::thread(Encode,std::move(pixels),unsigned(desc.Width),unsigned(desc.Height)).detach();}
-    catch(const std::exception&){fail("thread");}
+    try{std::thread(Encode,std::move(pixels),width,height,stereo).detach();}
+    catch(const std::exception&){Log("photo capture failed: thread");SetMessage(L"The photo could not be saved.",true);saving=false;}
+}
 }
 
+void PhotoCapture(IDXGISwapChain* swapchain) {
+    if(saving.exchange(true)){SetMessage(L"Still saving the previous photo\u2026",true);return;}
+    const auto fail=[](const char* why) {
+        Log("photo capture failed: %s",why);SetMessage(L"The photo could not be saved.",true);saving=false;
+    };
+    ComPtr<ID3D11Texture2D> back;
+    if(!swapchain || FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back))))return fail("back buffer");
+    std::vector<unsigned char> pixels;UINT width{},height{};const char* why="";
+    if(!ReadPixels(back.Get(),pixels,width,height,why))return fail(why);
+    StartEncode(std::move(pixels),width,height,false);
+}
+
+void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right) {
+    if(!left || !right)return;
+    if(saving.exchange(true)){Log("photo capture: still saving");MessageBeep(MB_ICONHAND);return;}
+    const auto fail=[](const char* why){Log("photo capture failed: %s",why);MessageBeep(MB_ICONHAND);saving=false;};
+    std::vector<unsigned char> a,b;UINT wa{},ha{},wb{},hb{};const char* why="";
+    if(!ReadPixels(left,a,wa,ha,why) || !ReadPixels(right,b,wb,hb,why))return fail(why);
+    if(ha!=hb)return fail("eye sizes");
+    // Left eye on the left, right eye on the right (parallel viewing).
+    std::vector<unsigned char> pixels;
+    try{pixels.resize(size_t(wa+wb)*ha*4);}catch(const std::bad_alloc&){return fail("memory");}
+    for(UINT y=0;y<ha;++y) {
+        std::memcpy(pixels.data()+size_t(y)*(wa+wb)*4,a.data()+size_t(y)*wa*4,size_t(wa)*4);
+        std::memcpy(pixels.data()+(size_t(y)*(wa+wb)+wa)*4,b.data()+size_t(y)*wb*4,size_t(wb)*4);
+    }
+    StartEncode(std::move(pixels),wa+wb,ha,true);
+}
 void PhotoShowMessage(const std::wstring& text,bool error){SetMessage(text,error);}
 void PhotoPanelDraw(IDXGISwapChain* swapchain,const PhotoPanelState& state) {
     std::wstring text;bool error{},recent{};
