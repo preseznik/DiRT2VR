@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.20 — 2026-11-22 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.20)
+
 Changes since 0.18.11, the last published release. They were tried in the Experimental test builds 0.18.12 to 0.18.19, which were not published; their entries are combined here, and later fixes replace earlier observations.
 
 ### Photo Mode
