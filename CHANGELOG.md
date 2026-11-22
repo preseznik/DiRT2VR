@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.18 — 2026-11-22 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.18)
+
 - VR replays: with 3D chase replays on, the car you follow with F5/F6 is shown in 3D with head tracking, like the replay's own chase views, instead of on the flat virtual screen; the follow message is shown over the replay HUD. In a fake-headset VR replay of a two-car race, following each car stayed in 3D without dropping to the flat screen, and when the replay cut away the replay cameras returned as before. A desktop replay check (following cars, Photo Mode, resume) is unchanged. A real headset is not covered.
 
 ## 0.18.17 — 2026-11-22 — Experimental
