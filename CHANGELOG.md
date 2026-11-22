@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.14 — 2026-11-22 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.14)
+
 - Photo Mode works in replays. While watching a full replay from Launcher → Replays, or Full Replay after a race, press Esc and choose PHOTO MODE in the replay menu. The replay freezes at that moment, the free camera starts from the view you were watching (trackside cameras included), and the replay controls are hidden on screen and in photos. A scripted desktop lab run with a saved Direct replay entered Photo Mode from a trackside camera, moved the camera, saved a photo without the replay HUD and returned to the replay menu, and Continue resumed playback from the same moment with the replay HUD and cameras back. VR and replays opened from the game's own menus after a normal launch are not covered.
 
 ## 0.18.13 — 2026-11-21 — Experimental
