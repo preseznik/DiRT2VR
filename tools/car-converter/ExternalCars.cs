@@ -39,7 +39,7 @@ public static class ExternalCars
                 original = File.ReadAllBytes(SafeFiles.Inside(externalTrack.Root, file.Path)); hash = file.Sha256;
             }
             if (path == "database/database.bin") databaseInput = original;
-            files.Add(new(path, hash, path == "database/database.bin" ? original : CarRegistration.Shared(path, original, car.Code, car.Donor)));
+            files.Add(new(path, hash, path == "database/database.bin" ? original : CarRegistration.Shared(path, original, car.Code, car.Donor, audio: car.Audio)));
         }
         if (trackPack is not null && externalTrack is null)
         {

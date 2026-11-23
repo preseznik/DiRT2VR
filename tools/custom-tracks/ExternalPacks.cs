@@ -11,7 +11,11 @@ public sealed record ExternalLayout(string Id, string Name, string Folder, strin
     string Discipline, bool Circuit, int MaximumOpponents, ExternalReplacement[] Session,
     string RaceStart = "grid", ExternalReplacement[]? RaceSession = null,
     int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null);
-public sealed record ExternalCar(string Code, string Donor, string ClassName);
+// Optional own engine sound: DiRT 2 ramp-engine samples in payload/audio/dictionaries/d2ve_<code>/
+// (NESSamples.dic and <Bank>.wip) played through payload/audio/cars/<code>engine.ini.
+// Samples is the ramp length in frames; Turbo false silences the donor's turbo layer.
+public sealed record ExternalCarAudio(string Bank, int Samples, bool Turbo);
+public sealed record ExternalCar(string Code, string Donor, string ClassName, ExternalCarAudio? Audio = null);
 public sealed record ExternalManifest(int Schema, string Kind, string Id, string Name, string Author,
     string Version, string MinimumLauncher, string Description, string[] Modes, bool Replay,
     ExternalFile[] Files, ExternalDependency[] Dependencies, ExternalLayout[] Layouts, ExternalCar? Car);
@@ -77,7 +81,19 @@ public static class ExternalPacks
     internal static bool CarAssetPath(string path)
     {
         var parts = path.Split('/');
-        return parts.Length >= 3 && parts[0] is "cars" or "interiors" && AvailableCarCode(parts[1]) && DataExtension(path);
+        if (parts.Length >= 3 && parts[0] is "cars" or "interiors" && AvailableCarCode(parts[1]) && DataExtension(path)) return true;
+        return CarAudioPath(path);
+    }
+    // audio/cars/<code>engine.ini files the game ships, including codes that are not stock car codes.
+    static readonly string[] StockEngineAudioCodes = ["111", "350", "bmw", "bow", "cr4", "dej", "drb", "drt", "e9r", "ecl", "hh3", "hon", "hsb", "ick", "kin", "lan", "mer", "n12", "p92", "pfl", "por", "prc", "sor", "sti", "tfj", "tst"];
+    public static string CarAudioFolder(string code) => "audio/dictionaries/d2ve_" + code;
+    public static string CarEngineIni(string code) => "audio/cars/" + code + "engine.ini";
+    static bool CarAudioPath(string path)
+    {
+        var match = Regex.Match(path, @"^audio/dictionaries/d2ve_([a-z0-9]{3})/[A-Za-z0-9_]{1,15}\.(dic|wip)$");
+        if (match.Success) return AvailableCarCode(match.Groups[1].Value);
+        match = Regex.Match(path, @"^audio/cars/([a-z0-9]{3})engine\.ini$");
+        return match.Success && AvailableCarCode(match.Groups[1].Value) && !StockEngineAudioCodes.Contains(match.Groups[1].Value);
     }
     public static string RelativeFolder(string kind) => kind is "track" or "car"
         ? "DiRT2VR/custom-" + kind + "s/external" : throw new IOException("Unknown external content kind.");
@@ -187,6 +203,15 @@ public static class ExternalPacks
             if (m.Car is null || !AvailableCarCode(m.Car.Code ?? "") || !StockCarCodes.Contains(m.Car.Donor) || m.Car.Code == m.Car.Donor || !Text(m.Car.ClassName, 80) || m.Layouts is null || m.Layouts.Length != 0)
                 throw new IOException("Invalid external car description.");
             string[] roots = [$"payload/cars/{m.Car.Code}/", $"payload/interiors/{m.Car.Code}/"];
+            if (m.Car.Audio is { } audio)
+            {
+                string code = m.Car.Code!; // a valid car code, checked above
+                if (audio.Bank != "eng_" + code || audio.Samples is < 32000 or > 1048576) throw new IOException("Invalid external car audio.");
+                roots = [.. roots, $"payload/{CarAudioFolder(code)}/", $"payload/{CarEngineIni(code)}"];
+                foreach (string required in new[] { CarEngineIni(code), $"{CarAudioFolder(code)}/NESSamples.dic", $"{CarAudioFolder(code)}/{audio.Bank}.wip" })
+                    if (!m.Files.Any(f => f.Path == "payload/" + required)) throw new IOException("Incomplete external car audio: " + required);
+                if (m.Files.Any(f => f.Path.StartsWith("payload/audio/", StringComparison.Ordinal) && !CarAudioPath(f.Path["payload/".Length..]))) throw new IOException("Invalid external car audio file name.");
+            }
             if (m.Files.Any(f => !roots.Any(root => f.Path.StartsWith(root, StringComparison.Ordinal))))
                 throw new IOException("External car payload is outside its own car or interior folders.");
             foreach (string required in new[] { $"cars/{m.Car.Code}/cameras.xml", $"cars/{m.Car.Code}/{m.Car.Code}.ctf", $"cars/{m.Car.Code}/{m.Car.Code}.nd2", $"cars/{m.Car.Code}/{m.Car.Code}_highLOD.pssg", $"cars/{m.Car.Code}/{m.Car.Code}_lowLOD.pssg", $"interiors/{m.Car.Code}/int_{m.Car.Code}.pssg", $"interiors/{m.Car.Code}/int_{m.Car.Code}.xml" })

@@ -24,6 +24,11 @@ public static class ExternalSession
             string code = car.Manifest!.Car!.Code;
             foreach (string prefix in new[] { "cars/", "interiors/" })
                 RequireEmptyAssetFolder(game, prefix + code);
+            if (car.Manifest.Car.Audio is not null)
+            {
+                RequireEmptyAssetFolder(game, ExternalPacks.CarAudioFolder(code));
+                RequireEmptyAssetFolder(game, ExternalPacks.CarEngineIni(code));
+            }
             foreach (var file in car.Manifest.Files)
             {
                 string target = file.Path["payload/".Length..];

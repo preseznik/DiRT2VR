@@ -69,8 +69,9 @@ public static class CarRegistration
         finally { foreach (var path in new[] { input, schema, output }) if (File.Exists(path)) SafeFiles.DeleteOwned(path); Directory.Delete(folder); }
     }
     public static byte[] Shared(string path, byte[] original) => Shared(path, original, CarPack.Code, "prc", true);
-    public static byte[] Shared(string path, byte[] original, string code, string donorCode, bool ferrariAudio = false)
+    public static byte[] Shared(string path, byte[] original, string code, string donorCode, bool ferrariAudio = false, ExternalCarAudio? audio = null)
     {
+        if (ferrariAudio && audio is not null) throw new IOException("One car audio source only.");
         RequireCodes(code, donorCode);
         if (path == "database/database.bin") return Database(original, code, donorCode);
         if (path == "cars/class_mappings.xml")
@@ -85,10 +86,11 @@ public static class CarRegistration
         using var stream = new MemoryStream(original, false); var binary = new XmlFile(stream); var xml = binary.Document;
         if (path == "audio/dictionaries.bin")
         {
-            if (!ferrariAudio) return original; // External cars reuse the installed donor audio.
+            if (!ferrariAudio && audio is null) return original; // External cars without own audio reuse the installed donor audio.
+            string folder = ferrariAudio ? "audio/dictionaries/d2vr_f04/" : ExternalPacks.CarAudioFolder(code) + "/";
             var dictionaries = xml.SelectSingleNode("/Dictionaries") ?? throw new IOException("Missing native dictionaries.");
-            if (dictionaries.SelectSingleNode("Dictionary[@path='audio/dictionaries/d2vr_f04/']") is not null) throw new IOException("f04 dictionary already exists.");
-            var item = xml.CreateElement("Dictionary"); item.SetAttribute("path", "audio/dictionaries/d2vr_f04/"); dictionaries.AppendChild(item);
+            if (dictionaries.SelectSingleNode($"Dictionary[@path='{folder}']") is not null) throw new IOException(code + " dictionary already exists.");
+            var item = xml.CreateElement("Dictionary"); item.SetAttribute("path", folder); dictionaries.AppendChild(item);
         }
         else if (path is "audio/carsetup.bin" or "audio/carsetup_ai.bin")
         {
@@ -105,6 +107,17 @@ public static class CarRegistration
                 engine.SetAttribute("throttleLength", "320000"); engine.SetAttribute("idleLength", "320000");
                 var mechanical = (XmlElement)car.SelectSingleNode("SplitMech")!; mechanical.SetAttribute("Clunk", "mec_f04_shift"); mechanical.SetAttribute("Exhaust", "mec_f04_exh");
                 var trims = (XmlElement)car.SelectSingleNode("VolumeTrims")!; trims.SetAttribute("engine", "0.75"); trims.SetAttribute("exhaust", "1.15"); trims.SetAttribute("WhineSpeedTrim", "-7.5"); trims.SetAttribute("WhineRPMTrim", "-8.5");
+            }
+            if (!ai && audio is not null)
+            {
+                // The pack's ramp engine (as the F2004's), replacing the donor's EGO engine bank.
+                ((XmlElement)car.SelectSingleNode("EngineIniFile")!).SetAttribute("value", ExternalPacks.CarEngineIni(code));
+                var engine = (XmlElement)car.SelectSingleNode("EngineBank")!; engine.SetAttribute("value", audio.Bank); engine.SetAttribute("egoEngineSound", "0");
+                string length = audio.Samples.ToString(System.Globalization.CultureInfo.InvariantCulture);
+                engine.SetAttribute("throttleLength", length); engine.SetAttribute("idleLength", length);
+                if (!audio.Turbo)
+                    foreach (string name in new[] { "Turbo/HissVol", "Turbo/SpindleVol" })
+                        if (car.SelectSingleNode(name) is XmlElement volume) { volume.SetAttribute("min", "-48"); volume.SetAttribute("max", "-48"); }
             }
             cars.AppendChild(car);
         }
