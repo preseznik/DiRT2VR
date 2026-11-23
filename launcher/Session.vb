@@ -527,6 +527,10 @@ Public Class Session
                 Worker.Invoke(context, "prepare-pikes", trackId:=settings.TrackId)
             End If
             Dim focus As New StartupFocus(context, vr)
+            If ShaderCache.Oversized(ShaderCache.Folders()).Count > 0 Then
+                Progress("Clearing DiRT 2's oversized NVIDIA shader cache…")
+                ShaderCache.Clear(ShaderCache.Folders())
+            End If
             Progress("Starting the game…")
             Using child = Process.Start(start)
                 Progress("Waiting for the game window…", "Running")

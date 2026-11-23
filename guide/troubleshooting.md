@@ -22,6 +22,8 @@
 
 **No VR / shortcuts do nothing:** select cockpit view, focus the game window, and use Toggle VR. Check connected-device indicators and saved bindings. Other camera views use the virtual screen unless **Advanced → Graphics → 3D beyond the cockpit** is enabled; that option supports bonnet, bumper and chase views.
 
+**Game closes while loading, with no error (NVIDIA):** once NVIDIA's shader cache for DiRT 2 grows to 512 MB, the game closes during loading. The launcher removes that cache file before each launch, and the driver rebuilds it, so the first minutes of driving can stutter while shaders compile again. If the launcher reports that it could not remove the file, close DiRT 2 and delete the named file in `%LOCALAPPDATA%\NVIDIA\DXCache`, or clear the shader cache with the NVIDIA app. Other games' caches are not touched.
+
 **Unsupported executable or foreign proxy:** use the supported game build and resolve the reported conflict. Do not bypass compatibility checks or download replacement game executables from an untrusted source.
 
 **Launcher won't open: "Object reference not set to an instance of an object":** in 0.18.5 to 0.18.7, a section collapsed in the Graphics tab (for example **Desktop**) can stop the launcher opening on the next start. Update to a newer build, or delete `collapsed-sections.json` from your installation's folder under `%LOCALAPPDATA%\DiRT2VR`; the launcher then opens with every section expanded.

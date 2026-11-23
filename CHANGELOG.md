@@ -10,6 +10,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 - Distance blur (Experimental, desktop): Graphics → Main → Desktop → Distance blur softens far scenery and the sky while you drive, at Slight, Medium or Strong; the road, cars, near landscape and HUD stay sharp. It uses the same depth as Photo Mode's depth of field, so it needs DX11 and in-game shadows. Off by default; not in VR.
 
+### Compatibility
+
+- NVIDIA shader cache: DiRT 2 closed while loading, with no error, once NVIDIA's shader cache file for the game reached 512 MB. The driver maps the whole file into the 32-bit game, leaving no room for the sound engine. The launcher now removes an oversized DiRT 2 cache file before each launch (other programs' caches are left alone), and the first minutes after that can stutter while the cache rebuilds. Verified in a desktop lab launch: with the 512 MB file put back, the launcher removed it and the game loaded normally. Not yet checked with a VR launch or on AMD/Intel graphics (they keep their caches elsewhere and are not checked).
+
 ## 0.18.20 — 2026-11-22 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.20)
