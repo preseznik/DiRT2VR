@@ -128,6 +128,14 @@ def main(policy_path, out):
         return any((px - x) ** 2 + (pz - z) ** 2 <= reach * reach
                    for di in (-1, 0, 1) for dj in (-1, 0, 1) for px, pz in near.get((i + di, j + dj), ()))
 
+    # Optional open-ground grass beyond the placements: within 'reach' metres of the course where the
+    # ground's colour byte 'weightByte' averages at least 'minWeight' (0-1), e.g. a lush-meadow weight.
+    meadow = policy.get('meadow')
+
+    def is_meadow(x, z, colours):
+        return (meadow is not None and field(x, z) <= meadow['reach']
+                and sum(col[meadow['weightByte']] for col in colours) / 765 >= meadow.get('minWeight', 0))
+
     max_slope = math.cos(math.radians(policy.get('maxSlopeDegrees', 40)))
     chosen, rejected = [], {'weight': 0, 'corridor': 0, 'near': 0, 'slope': 0, 'degenerate': 0}
     for material, tri in source:
@@ -139,7 +147,7 @@ def main(policy_path, out):
         cx, cz = (a[0] + b[0] + c[0]) / 3, (a[2] + b[2] + c[2]) / 3
         if field(cx, cz) > corridor:
             rejected['corridor'] += 1; continue
-        if near is not None and not is_near(cx, cz):
+        if near is not None and not is_near(cx, cz) and not is_meadow(cx, cz, (ca, cb, cc)):
             rejected['near'] += 1; continue
         u = [b[k] - a[k] for k in range(3)]; v = [c[k] - a[k] for k in range(3)]
         n = (u[1] * v[2] - u[2] * v[1], u[2] * v[0] - u[0] * v[2], u[0] * v[1] - u[1] * v[0])
@@ -200,6 +208,8 @@ def main(policy_path, out):
         'Terrain': {p: sha256(p) for p in policy['terrain']}, 'Policy': policy,
     }
     report['Budget'] = budget(check, road)
+    if 'drawDistance' in policy:
+        report['BudgetAtDrawDistance'] = budget(check, road, policy['drawDistance'])
     json.dump(report, open(os.path.join(out, 'grass-report.json'), 'w'), indent=2)
     draw_map(check, road, os.path.join(out, 'grass-map.png'))
     print(json.dumps({k: report[k] for k in ('Cells', 'Triangles', 'Vertices', 'MaxCellTriangles', 'MaxPositionErrorMetres', 'GrassAreaM2', 'PrimaryTypeAreaM2', 'Rejected', 'Budget', 'Bytes')}, indent=1))
@@ -236,9 +246,10 @@ def budget(grass, road, radius=150, step=25):
         areas.append(area); counts.append(len(cells))
     areas.sort(); counts.sort()
     n = len(areas)
-    return {'CourseSamples': n, 'AreaWithin150mP50': round(areas[n // 2]), 'AreaWithin150mP90': round(areas[n * 9 // 10]),
-            'AreaWithin150mMax': round(areas[-1]), 'CellsWithin150mP50': counts[n // 2], 'CellsWithin150mP90': counts[n * 9 // 10],
-            'CellsWithin150mMax': counts[-1]}
+    r = f'Within{radius:g}m'
+    return {'CourseSamples': n, f'Area{r}P50': round(areas[n // 2]), f'Area{r}P90': round(areas[n * 9 // 10]),
+            f'Area{r}Max': round(areas[-1]), f'Cells{r}P50': counts[n // 2], f'Cells{r}P90': counts[n * 9 // 10],
+            f'Cells{r}Max': counts[-1]}
 
 
 COLOURS = [(230, 60, 60), (80, 220, 80), (60, 140, 255), (240, 220, 40), (230, 60, 230), (40, 220, 220), (255, 150, 30), (255, 255, 255)]
