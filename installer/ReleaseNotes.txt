@@ -1,20 +1,21 @@
-DiRT2VR 0.18.20 — Experimental
+DiRT2VR 0.18.22 — Experimental
 
-LATEST CHANGES (since 0.18.11)
+LATEST CHANGES (since 0.18.20)
 
-- Photo Mode on desktop: zoom and tilt, slow precise movement, depth of field, filters (including your own filter presets), brightness, letterbox and a thirds grid. Save photos with P (or A) to Pictures\DiRT2VR; a settings panel works with the arrow keys or the D-pad.
-- Photo Mode in replays: press Esc while watching a replay (from Launcher → Replays, Full Replay after a race, or a race replay in the game's own menus) and choose PHOTO MODE. The replay freezes and the camera starts from the view you were watching, without the replay controls.
-- Follow other cars in replays: F6 and F5 switch a chase camera to the next or previous car, always in the same order; past the last car the replay's own cameras return. In VR with 3D chase replays on, the followed car is shown in 3D. Jump to car in Photo Mode puts the camera behind a car. A car far out of sight can be chosen again once it is back on screen.
-- VR Photo Mode: the Photo panel, controls and messages show in the headset (never in your photos), with Move speed, Jump to car, filters, brightness and letterbox. P (or A) saves both eyes side by side (SBS).
-- New Photos tab next to Replays: browse, view, copy, open or delete your photos. VR photos can be viewed side by side, as one eye or cross-eyed, and View in VR shows them in 3D in your headset.
-- Optional DLSS 5 Neural Rendering on desktop, with your own copy of NVIDIA's runtime (not included): in Photo Mode, and optionally while driving with the HUD kept sharp. Style, strength, tone, detail, extra passes, mix, lower resolution and a sharp foveated centre, set in the launcher, in the Photo panel, or with F8 while driving. Needs an NVIDIA RTX graphics card.
-- External tracks can now include moving scenery: wind-turbine rotors that turn and trains that run along their own railway, in desktop and VR. A track pack has to mark these parts; packs without them look as before.
-- These features were checked in scripted desktop sessions and with a simulated headset. Real headsets, the Xbox controller, other graphics cards and multiplayer still need player testing.
+- Fix for DiRT 2 closing while loading, with no error, on NVIDIA graphics cards: this happened once NVIDIA's shader cache file for the game grew to 512 MB. The launcher now removes an oversized DiRT 2 cache file before each launch (other programs' caches are left alone). The first minutes after that can stutter while the cache rebuilds.
+- Distance blur (desktop): Graphics → Main → Desktop → Distance blur softens far scenery and the sky while you drive, at Slight, Medium or Strong; the road, cars, near landscape and HUD stay sharp. Needs DX11 and in-game shadows. Off by default; not in VR.
+- External track packs can now use your own DiRT 2 files instead of shipping copies of them: they borrow the original venue files, add their track to the game's database and language files, and fill in parts of their files from yours, all for the session only. Your files are restored afterwards. Packs made this way are smaller and contain no game assets; upcoming track packs need this version.
+- External car packs can bring their own engine sound for your car (AI cars keep the original sounds).
+- These changes were checked in scripted desktop sessions. VR, multiplayer with the new track packs, and other graphics cards still need player testing.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.20 — Experimental (changes since 0.18.11)
+
+- Photo Mode on desktop and in replays, following other cars in replays, VR Photo Mode, a Photos tab, optional DLSS 5 Neural Rendering and moving scenery on External tracks.
 
 0.18.11 — Experimental (changes since 0.18.10)
 

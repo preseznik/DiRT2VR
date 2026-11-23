@@ -6,6 +6,12 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.22 — 2026-11-23 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.22)
+
+Changes since 0.18.20, the last published release. Distance blur was first tried in the Experimental test build 0.18.21, which was not published.
+
 ### Custom cars
 
 - External car packs can bring their own engine sound: an optional `Audio` entry in the car's manifest, with a ramp-engine sound bank and engine INI under `payload/audio/` (see EXTERNAL_PACKS.md). The launcher registers them for the player's car for the session and restores the shared audio files afterwards; gear, exhaust and AI car sounds stay the donor's. Checked in a desktop lab race (GoRacer Kestrel pack, Marina): the game played the pack's engine sound and the audio setup files were restored. Not yet checked in VR or by ear by a player.
