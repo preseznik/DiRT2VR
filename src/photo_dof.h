@@ -9,6 +9,9 @@ struct PhotoDofSettings {
     bool autoFocus=true; // Focus on whatever is at the centre of the picture.
     float focus=10;      // Manual focus distance in metres.
     int blur=5;          // 1..10.
+    // Distance blur while driving (DistanceBlur): when farStart > 0, pixels nearer than farStart metres stay sharp
+    // and blur grows to full strength at farFull; focus and autofocus are not used.
+    float farStart=0,farFull=0;
 };
 // Blur radius in pixels at 1080p for a pixel at `distance` metres. Pixels within
 // 7.5% of the focus distance, and at least 1.5 m (so a whole car stays sharp),

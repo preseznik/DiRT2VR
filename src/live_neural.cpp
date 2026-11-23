@@ -1,4 +1,5 @@
 #include "live_neural.h"
+#include "distance_blur.h"
 #include "photo_neural.h"
 #include "photo_mode.h"
 #include "hud_capture.h"
@@ -153,7 +154,7 @@ void LiveNeuralVertexShader(void* shader,uint64_t hash) {
 bool LiveNeuralHudDraw(ID3D11DeviceContext* context,const std::function<void()>& draw) {
     if(presenting || context->GetType()!=D3D11_DEVICE_CONTEXT_IMMEDIATE)return false;
     const bool hide=PhotoModeHidesHud();
-    if(!hide && !LiveNeuralRequested())return false;
+    if(!hide && !LiveNeuralRequested() && !DistanceBlurRequested())return false;
     ComPtr<ID3D11VertexShader> shader;context->VSGetShader(&shader,nullptr,nullptr);
     if(!shader)return false;
     std::lock_guard lock(mutex);
@@ -187,9 +188,12 @@ void LiveNeuralPresent(IDXGISwapChain* swapchain) {
             intervals.clear();
         }
     }
-    if(!LiveNeuralRequested() || !swapchain)return;
-    static const bool input=[]{const bool ready=EnableSeatInput();Log("live neural rendering: panel input hooks=%d key=%u",ready,PanelKey());return ready;}();
-    (void)input;
+    const bool neural=LiveNeuralRequested(),blur=DistanceBlurRequested();
+    if((!neural && !blur) || !swapchain)return;
+    if(neural) {
+        static const bool input=[]{const bool ready=EnableSeatInput();Log("live neural rendering: panel input hooks=%d key=%u",ready,PanelKey());return ready;}();
+        (void)input;
+    }
     ComPtr<ID3D11Texture2D> frame;
     if(FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&frame))))return;
     std::lock_guard lock(mutex);
@@ -202,16 +206,18 @@ void LiveNeuralPresent(IDXGISwapChain* swapchain) {
     }
     // Photo Mode has its own path; its HUD is hidden anyway.
     if(!PhotoModeActive()) {
-        if(liveEnabled && PhotoNeuralProcessLive(frame.Get())){++applied;lastApplied=GetTickCount64();}
+        // Distance blur on the scene first (the HUD is not in the frame yet), then neural rendering.
+        if(blur)DistanceBlurApply(swapchain);
+        if(neural && liveEnabled && PhotoNeuralProcessLive(frame.Get())){++applied;lastApplied=GetTickCount64();}
         if(overlay && Composite(frame.Get(),overlay))++hudFrames;
         // The driving panel goes on top of everything, after the HUD.
-        PhotoPanelDraw(swapchain,PanelFrame());
+        if(neural)PhotoPanelDraw(swapchain,PanelFrame());
     } else {
         panelOpen=false;
         if(overlay) Composite(frame.Get(),overlay);
     }
     ++frames;
-    if(frames%600==0)Log("live neural rendering: frames=%llu applied=%llu hud_composited=%llu",frames,applied,hudFrames);
+    if(neural && frames%600==0)Log("live neural rendering: frames=%llu applied=%llu hud_composited=%llu",frames,applied,hudFrames);
     // Capture the next frame's HUD (HudCapture clears its texture here).
     capturing=hud.Begin(frame.Get(),frames,0,false);
 }

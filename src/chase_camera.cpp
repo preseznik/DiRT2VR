@@ -1,5 +1,6 @@
 #define DIRECTINPUT_VERSION 0x0800
 #include "car_follow.h"
+#include "lab_camera.h"
 #include "chase_camera.h"
 #include "chase_transform.h"
 #include "chase_mouse.h"
@@ -363,6 +364,7 @@ float* __fastcall ExportCamera(void* owner,void*) {
  auto result=exportCamera(owner);
  if(auto photo=PhotoModeExport(owner,result))return photo;
  if(auto follow=CarFollowExport(owner,result))return follow;
+ if(auto lab=LabCameraExport(owner,result))return lab;
  DisplayPose latest;void* manager{};
  if(!Read(owner,0x24,manager) || manager!=selected.load())return result;
  const auto camera=ObservedDisplayCamera();

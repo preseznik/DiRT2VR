@@ -12,6 +12,8 @@
 #include "replay_camera.h"
 #include "game_pause.h"
 #include "photo_mode.h"
+#include "lab_camera.h"
+#include "distance_blur.h"
 #include "photo_dof.h"
 #include "live_neural.h"
 #include "car_tracker.h"
@@ -850,7 +852,8 @@ bool RequestedCapturesEnabled() {
 uint64_t requestedCaptureFrame=~uint64_t{};
 unsigned requestedCaptureCount{};
 bool TakeCaptureRequest(uint64_t f,bool cockpit) {
-    if(!RequestedCapturesEnabled() || requestedCaptureCount>=4 || f%60) return false;
+    // Lab camera views (camera.request) are scripted aerial checks: more than the usual four.
+    if(!RequestedCapturesEnabled() || requestedCaptureCount>=(LabCameraActive()?64u:4u) || f%60) return false;
     if(TestMessageTyping())return false;
     std::error_code error;
     const auto request=Output()/"capture.request";
@@ -1943,6 +1946,7 @@ HRESULT STDMETHODCALLTYPE DesktopCapturePresent(IDXGISwapChain* swapchain,UINT i
     LiveNeuralPresent(swapchain);
     PhotoModeFrame(swapchain);
     CarFollowPresent(swapchain);
+    LabCameraPoll();
     SeatDesktopFrame(swapchain);
     const auto f=frame.fetch_add(1);
     if(TakeCaptureRequest(f,false)) {
@@ -1956,6 +1960,7 @@ HRESULT STDMETHODCALLTYPE Present(IDXGISwapChain* swapchain,UINT interval,UINT f
     graphics::SampleVideoMemory(swapchain);
     TrackCarsAtPresent(true);
     PhotoModeFrame(swapchain);
+    LabCameraPoll();
     CarFollowPresent(swapchain); // Keys and messages; the headset shows them on its HUD layer.
     if(!HeadsetEnabled() && (requestedCaptureFrame==frame.load() || TakeCaptureRequest(frame.load(),false))) {
         Screenshot(swapchain,frame.load());requestedCaptureFrame=~uint64_t{};
@@ -2208,8 +2213,8 @@ void AttachTrace(ID3D11Device* device,ID3D11DeviceContext* context,IDXGISwapChai
         if(!EnableF04Camera()) { Log("f04 desktop camera initialization failed"); ExitProcess(ERROR_BAD_EXE_FORMAT); }
         Log("desktop session: optional camera/texture filtering; no VR hotkeys or OpenXR initialization");
         AttachSceneryMotion(device,context,true);
-        if(PhotoModeRequested() || LiveNeuralRequested()) AttachPhotoDof(device,context);
-        if(swapchain && (LoggingEnabled() || PhotoModeRequested() || LiveNeuralRequested() || DesktopSeatRequested() || (RequestedCapturesEnabled() && PikesScope())))
+        if(PhotoModeRequested() || LiveNeuralRequested() || DistanceBlurRequested()) AttachPhotoDof(device,context);
+        if(swapchain && (LoggingEnabled() || PhotoModeRequested() || LiveNeuralRequested() || DistanceBlurRequested() || DesktopSeatRequested() || (RequestedCapturesEnabled() && PikesScope())))
             Hook(swapchain,8,reinterpret_cast<void*>(DesktopCapturePresent),realPresent);
         return;
     }

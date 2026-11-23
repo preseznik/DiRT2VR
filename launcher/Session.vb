@@ -498,6 +498,7 @@ Public Class Session
         AnisotropicFiltering.Configure(start, settings)
         GrassLaunch.Configure(start, settings)
         DesktopShadows.Configure(start, settings)
+        DistanceBlur.Configure(start, settings)
         ReplayCameraLaunch.Configure(start, settings)
         Dim headsetLaunch = start.Environment.ContainsKey("DIRT2VR_HEADSET") AndAlso start.Environment("DIRT2VR_HEADSET") = "1"
         Dim photoLaunch = PhotoModeLaunch.Eligible(context, settings, headsetLaunch, replayId IsNot Nothing)

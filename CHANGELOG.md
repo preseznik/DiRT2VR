@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+### Graphics
+
+- Distance blur (Experimental, desktop): Graphics → Main → Desktop → Distance blur softens far scenery and the sky while you drive, at Slight, Medium or Strong; the road, cars, near landscape and HUD stay sharp. It uses the same depth as Photo Mode's depth of field, so it needs DX11 and in-game shadows. Off by default; not in VR.
+
 ## 0.18.20 — 2026-11-22 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.20)

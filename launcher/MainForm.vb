@@ -68,6 +68,7 @@ Public Class MainForm
     Private ReadOnly neuralWhileDriving As New CheckBox With {.Text = "On", .Name = "NeuralWhileDriving", .AccessibleName = "DLSS 5 while driving", .AutoSize = True}
     Private ReadOnly vrBloom As New CheckBox With {.Text = "On", .Name = "VrBloom", .AutoSize = True}
     Private ReadOnly desktopAnisotropy As New ValueSlider("DesktopAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
+    Private ReadOnly distanceBlurSlider As New ValueSlider("DistanceBlur", 0, 3, 0, valueLabels:=DistanceBlur.Labels)
     Private ReadOnly desktopShadowDistance As New ValueSlider("DesktopShadowDistance", 0, 7, 0, valueLabels:={"Game", "160 m", "240 m", "320 m", "400 m", "480 m", "560 m", "640 m"})
     Private ReadOnly desktopShadowDistanceInVr As New CheckBox With {.Name = "DesktopShadowDistanceInVr", .Text = "Also apply in VR", .AutoSize = True}
     Private ReadOnly vrAnisotropy As New ValueSlider("VrAnisotropy", 0, 5, 0, valueLabels:={"Game", "Off", "2×", "4×", "8×", "16×"})
@@ -805,6 +806,9 @@ Public Class MainForm
         Tip(desktopShadowDistanceInVr, "Use this shadow distance in VR too. Requires VR Shadows to be on. Detailed distance stays separate. Save and relaunch to apply.")
         desktopRoadSheen.UseTrackDefault = settings.DesktopRoadSheenDefault : desktopRoadSheen.Percent = settings.DesktopRoadSheen
         Field(desktop, "Road sheen (Experimental)", desktopRoadSheen)
+        distanceBlurSlider.Value = Math.Clamp(settings.DistanceBlur, 0, 3)
+        Field(desktop, "Distance blur (Experimental)", distanceBlurSlider)
+        Tip(distanceBlurSlider, "Softens far scenery and the sky while you drive, like a camera focused on the road. The road, cars and HUD stay sharp." & vbCrLf & "Desktop only; needs DX11 and shadows on. Save and relaunch to apply.")
         Dim trackEffects = Section(columns.First, "Supported track effects")
         trackDepthOfField.Checked = settings.TrackDepthOfField
         Field(trackEffects, "Depth of field", trackDepthOfField)
@@ -914,6 +918,7 @@ Public Class MainForm
                                        desktopAnisotropy.Value = 0 : vrAnisotropy.Value = 0
                                        desktopShadowDistance.Value = 0
                                        desktopShadowDistanceInVr.Checked = False
+                                       distanceBlurSlider.Value = 0
                                        desktopRoadSheen.UseTrackDefault = True : vrRoadSheen.UseTrackDefault = True
                                        desktopRoadSheen.Percent = 25 : vrRoadSheen.Percent = 25
                                        filters.ResetSelections()
@@ -1232,6 +1237,7 @@ Public Class MainForm
         settings.TrackDepthOfField = trackDepthOfField.Checked
         settings.DesktopAnisotropy = AnisotropicFiltering.Levels(desktopAnisotropy.Value)
         settings.DesktopShadowDistance = DesktopShadows.Distances(desktopShadowDistance.Value)
+        settings.DistanceBlur = CInt(distanceBlurSlider.Value)
         settings.DesktopShadowDistanceInVr = desktopShadowDistanceInVr.Checked
         settings.DesktopCockpitFov = desktopCockpitFov.Value
         settings.VrAnisotropy = AnisotropicFiltering.Levels(vrAnisotropy.Value)

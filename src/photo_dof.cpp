@@ -1,5 +1,6 @@
 #include "photo_dof.h"
 #include "live_neural.h"
+#include "distance_blur.h"
 #include "photo_mode.h"
 #include "common.h"
 #include <d3d11_1.h>
@@ -20,7 +21,7 @@ using Microsoft::WRL::ComPtr;
 // projection terms (cb0 offset 192, screenProj). Copy both for the Photo Mode blur.
 constexpr char source[]=R"(
 cbuffer Game : register(b0) { float4 gameRows[12]; float4 screenProj; }
-cbuffer Dof : register(b1) { float focus; float maxRadius; float autoFocus; float radiusStep; float2 texel; float2 depthSize; }
+cbuffer Dof : register(b1) { float focus; float maxRadius; float autoFocus; float radiusStep; float2 texel; float2 depthSize; float2 farRange; float2 unused; }
 Texture2D colour : register(t0);
 #ifdef MULTISAMPLE
 Texture2DMS<float> depthMap : register(t1);
@@ -39,7 +40,12 @@ float Distance(float2 uv) {
     float den=-screenProj.z-d;
     return d<1 && den>1e-6 ? screenProj.w/den : 1e6;
 }
-float Circle(float distance,float f) { return maxRadius*saturate((abs(distance-f)-max(0.075*f,1.5))/f); }
+float Circle(float distance,float f) {
+    // Distance blur: sharp up to farRange.x, full strength from farRange.y. The sky (cleared depth) stays as it is:
+    // it is smooth anyway, and crowds and other late draws seen against it are not in the depth copy.
+    if(farRange.x>0) return distance>=1e5 ? 0 : maxRadius*smoothstep(farRange.x,farRange.y,distance);
+    return maxRadius*saturate((abs(distance-f)-max(0.075*f,1.5))/f);
+}
 float Focus() { return clamp(autoFocus>0.5 ? Distance(float2(0.5,0.5)) : focus,0.3,5000); }
 struct V { float4 position:SV_Position; float2 uv:TEXCOORD0; };
 V vs(uint id:SV_VertexID) { V v; v.uv=float2((id<<1)&2,id&2); v.position=float4(v.uv*float2(2,-2)+float2(-1,1),0,1); return v; }
@@ -73,7 +79,7 @@ float4 centre(V v):SV_Target {
     return float4(d,screenProj.z,screenProj.w,Distance(uv));
 }
 )";
-struct Constants { float focus,maxRadius,autoFocus,radiusStep; float texel[2],depthSize[2]; };
+struct Constants { float focus,maxRadius,autoFocus,radiusStep; float texel[2],depthSize[2]; float farRange[2],unused[2]; };
 
 std::mutex mutex;
 std::atomic<bool> wanted{};
@@ -246,7 +252,7 @@ void AttachPhotoDof(ID3D11Device* device,ID3D11DeviceContext* context) {
         if(!context){device->GetImmediateContext(&owned);context=owned.Get();}
         Hook(device,15,reinterpret_cast<void*>(CreatePs),reinterpret_cast<void**>(&realCreatePs));
         // HUD draws: captured for live neural rendering, hidden in replay Photo Mode.
-        if(LiveNeuralRequested() || PhotoModeRequested()) {
+        if(LiveNeuralRequested() || PhotoModeRequested() || DistanceBlurRequested()) {
             Hook(device,12,reinterpret_cast<void*>(CreateVs),reinterpret_cast<void**>(&realCreateVs));
             Hook(context,20,reinterpret_cast<void*>(DrawIndexedInstanced),reinterpret_cast<void**>(&realDrawIndexedInstanced));
             Hook(context,21,reinterpret_cast<void*>(DrawInstanced),reinterpret_cast<void**>(&realDrawInstanced));
@@ -291,6 +297,7 @@ bool PhotoDofApply(IDXGISwapChain* swapchain,const PhotoDofSettings& settings) {
     c.radiusStep=std::max(.5f,c.maxRadius*c.maxRadius/300.f); // About 150 taps at most.
     c.texel[0]=1.f/float(desc.Width);c.texel[1]=1.f/float(desc.Height);
     c.depthSize[0]=float(depthDesc.Width);c.depthSize[1]=float(depthDesc.Height);
+    c.farRange[0]=std::max(0.f,settings.farStart);c.farRange[1]=std::max(c.farRange[0]+1.f,settings.farFull);
     ComPtr<ID3DDeviceContextState> previous;
     context->SwapDeviceContextState(pass.state.Get(),&previous);
     context->UpdateSubresource(pass.constants.Get(),0,nullptr,&c,0,0);

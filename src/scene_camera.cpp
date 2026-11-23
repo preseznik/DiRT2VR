@@ -1,4 +1,5 @@
 #include "scene_camera.h"
+#include "lab_camera.h"
 #include "common.h"
 #include "camera_math.h"
 #include "gfwl_compat.h"
@@ -176,7 +177,7 @@ bool EnableSceneCameraObserver(bool required) {
 }
 SceneCamera IdentifySceneCamera(const float* a,const float* b,uint64_t frame) {
     if(!a || !b)return SceneCamera::Unknown;
-    if(MatchingPhotoCamera(a,b))return SceneCamera::Photo;
+    if(MatchingPhotoCamera(a,b) || MatchingLabCamera(a,b))return SceneCamera::Photo;
     if(MatchingTrailerCamera(a,b))return SceneCamera::Frontend;
     if(ReplayCamerasEnabled() && ObservedReplayPlayback().Available(GetTickCount64())) {
         // The replay's own chase camera, or our chase view behind a followed car (F5/F6).
