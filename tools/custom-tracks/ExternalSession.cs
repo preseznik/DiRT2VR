@@ -91,6 +91,28 @@ public static class ExternalSession
             if (File.Exists(SafeFiles.Inside(game, target))) throw new IOException("External track destination already exists; it was preserved: " + target);
             var replacement = race ? raceSession?.SingleOrDefault(s => s.Target == target) : null;
             var applied = replacement is null ? file : pack.Manifest.Files.Single(f => f.Path == replacement.File);
+            var splices = layout.Splice?.Where(s => s.Target == target).ToArray() ?? [];
+            if (splices.Length > 0)
+            {
+                // The packed file completed with ranges of the player's own pinned stock files, staged for the journal.
+                if (stage is null) throw new IOException("External spliced files need a staging folder.");
+                byte[] bytes = File.ReadAllBytes(SafeFiles.Inside(pack.Root, applied.Path));
+                if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)) != applied.Sha256) throw new IOException("External pack file changed: " + applied.Path);
+                foreach (var splice in splices)
+                {
+                    var dependency = pack.Manifest.Dependencies.Single(d => d.Path == splice.Source);
+                    byte[] source = File.ReadAllBytes(SafeFiles.Inside(game, splice.Source));
+                    if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(source)) != dependency.Sha256)
+                        throw new IOException("External pack needs a different or missing game dependency: " + splice.Source);
+                    if (splice.Offset + splice.Length > source.Length || splice.Offset + splice.Length > bytes.Length) throw new IOException("External spliced range is outside its source: " + splice.Source);
+                    Array.Copy(source, splice.Offset, bytes, splice.Offset, splice.Length);
+                }
+                SafeFiles.NoLinks(stage); Directory.CreateDirectory(stage);
+                string staged = Path.Combine(stage, "splice-" + target.Replace('/', '_'));
+                File.WriteAllBytes(staged, bytes);
+                yield return (new(target, null, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(bytes)), null), staged);
+                continue;
+            }
             yield return (new(target, null, applied.Sha256, null), SafeFiles.Inside(pack.Root, applied.Path));
         }
         // Stock files from the player's own game (pinned and checked above), staged and recovered like packed files.

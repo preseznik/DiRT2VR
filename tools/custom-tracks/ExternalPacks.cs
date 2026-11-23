@@ -10,11 +10,14 @@ public sealed record ExternalReplacement(string Target, string File);
 // A stock game file copied from the player's own installation into the layout's track folder for the
 // session, so a pack can use venue resources without redistributing them. Source must be a pinned dependency.
 public sealed record ExternalBorrow(string Target, string Source);
+// Bytes [Offset, Offset + Length) of a pinned stock Source copied over the same range of one of the layout's own
+// packed files for the session (e.g. a grass file's type library), so the pack ships that range blank.
+public sealed record ExternalSplice(string Target, string Source, long Offset, int Length);
 public sealed record ExternalLayout(string Id, string Name, string Folder, string Condition,
     string Discipline, bool Circuit, int MaximumOpponents, ExternalReplacement[] Session,
     string RaceStart = "grid", ExternalReplacement[]? RaceSession = null,
     int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null, ExternalBorrow[]? Borrow = null,
-    ExternalRegistration? Registration = null);
+    ExternalRegistration? Registration = null, ExternalSplice[]? Splice = null);
 // Optional own engine sound: DiRT 2 ramp-engine samples in payload/audio/dictionaries/d2ve_<code>/
 // (NESSamples.dic and <Bank>.wip) played through payload/audio/cars/<code>engine.ini.
 // Samples is the ramp length in frames; Turbo false silences the donor's turbo layer.
@@ -313,6 +316,23 @@ public static class ExternalPacks
                         borrow.Source.StartsWith("tracks/usa/d2ve_", StringComparison.OrdinalIgnoreCase) || TrackPacks.SessionTargets.Contains(borrow.Source))
                         throw new IOException("External borrowed file is outside its layout folder or not a pinned stock file: " + borrow.Target);
                 }
+            }
+            if (layout.Splice is not null)
+            {
+                if (layout.Splice.Length > 16 || layout.Splice.Any(s => s is null)) throw new IOException("Invalid external spliced ranges.");
+                foreach (var splice in layout.Splice)
+                {
+                    SafeFiles.Relative(splice.Target); SafeFiles.Relative(splice.Source);
+                    var packed = m.Files.SingleOrDefault(f => f.Path == "payload/" + splice.Target);
+                    // Into one of the layout's own packed files, from a pinned stock file, within the packed file's size.
+                    if (packed is null || !splice.Target.StartsWith(prefix["payload/".Length..], StringComparison.Ordinal) ||
+                        !m.Dependencies.Any(d => d.Path == splice.Source) || !DataExtension(splice.Source) ||
+                        splice.Source.StartsWith("tracks/usa/d2ve_", StringComparison.OrdinalIgnoreCase) || TrackPacks.SessionTargets.Contains(splice.Source) ||
+                        splice.Offset < 0 || splice.Length is < 1 or > 65536 || splice.Offset + splice.Length > packed.Bytes)
+                        throw new IOException("External spliced range is outside its layout's packed file or not from a pinned stock file: " + splice.Target);
+                }
+                if (layout.Splice.GroupBy(s => s.Target).Any(g => g.OrderBy(s => s.Offset).Zip(g.OrderBy(s => s.Offset).Skip(1)).Any(p => p.First.Offset + p.First.Length > p.Second.Offset)))
+                    throw new IOException("External spliced ranges overlap.");
             }
         }
         if (used.Count != m.Files.Length) throw new IOException("External inventory contains unreferenced files or unsupported destinations.");
