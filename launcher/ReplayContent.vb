@@ -166,8 +166,10 @@ Public Module ReplayContent
             Dim path = SafeFiles.Inside(context.GameRoot, relative)
             If external IsNot Nothing AndAlso relative.StartsWith(trackRoot, StringComparison.Ordinal) Then
                 Dim packed = external.Manifest.Files.FirstOrDefault(Function(f) f.Path = "payload/" & relative)
-                If packed Is Nothing Then Throw New IOException("External replay refers to a file outside the prepared pack: " & relative)
-                path = SafeFiles.Inside(external.Root, packed.Path)
+                ' A borrowed stock file comes from the player's own installation (its hash is pinned).
+                Dim borrowed = external.Layout(requirement.TrackId).Borrow?.FirstOrDefault(Function(b) b.Target = relative)
+                If packed Is Nothing AndAlso borrowed Is Nothing Then Throw New IOException("External replay refers to a file outside the prepared pack: " & relative)
+                path = If(packed IsNot Nothing, SafeFiles.Inside(external.Root, packed.Path), SafeFiles.Inside(context.GameRoot, borrowed.Source))
             End If
             For Each item In requirement.ExternalCars
                 If relative.StartsWith("cars/" & item.Code & "/", StringComparison.Ordinal) Then

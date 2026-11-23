@@ -10,6 +10,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 - External car packs can bring their own engine sound: an optional `Audio` entry in the car's manifest, with a ramp-engine sound bank and engine INI under `payload/audio/` (see EXTERNAL_PACKS.md). The launcher registers them for the player's car for the session and restores the shared audio files afterwards; gear, exhaust and AI car sounds stay the donor's. Checked in a desktop lab race (GoRacer Kestrel pack, Marina): the game played the pack's engine sound and the audio setup files were restored. Not yet checked in VR or by ear by a player.
 
+### Custom tracks
+
+- External track packs can borrow original venue files instead of shipping copies: a layout's optional `Borrow` list names files from the player's own game (pinned in `Dependencies`) to copy into its track folder for the session; they are removed afterwards with the rest of the track (see EXTERNAL_PACKS.md). This keeps packs from redistributing game assets and makes them smaller. Checked in desktop lab launches of a lab Polhov Gradec pack (practice and a Rally (staggered) race; Full Replay recording on): the borrowed files were in place during the session and removed afterwards. Not yet checked in VR.
+
 ### Graphics
 
 - Distance blur (Experimental, desktop): Graphics → Main → Desktop → Distance blur softens far scenery and the sky while you drive, at Slight, Medium or Strong; the road, cars, near landscape and HUD stay sharp. It uses the same depth as Photo Mode's depth of field, so it needs DX11 and in-game shadows. Off by default; not in VR.

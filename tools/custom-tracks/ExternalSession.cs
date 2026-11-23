@@ -68,6 +68,14 @@ public static class ExternalSession
             var applied = replacement is null ? file : pack.Manifest.Files.Single(f => f.Path == replacement.File);
             yield return (new(target, null, applied.Sha256, null), SafeFiles.Inside(pack.Root, applied.Path));
         }
+        // Stock files from the player's own game (pinned and checked above), staged and recovered like packed files.
+        foreach (var borrow in layout.Borrow ?? [])
+        {
+            cancel.ThrowIfCancellationRequested();
+            if (File.Exists(SafeFiles.Inside(game, borrow.Target))) throw new IOException("External track destination already exists; it was preserved: " + borrow.Target);
+            var dependency = pack.Manifest.Dependencies.Single(d => d.Path == borrow.Source);
+            yield return (new(borrow.Target, null, dependency.Sha256, null), SafeFiles.Inside(game, borrow.Source));
+        }
         foreach (var item in layout.Session)
         {
             var file = pack.Manifest.Files.Single(f => f.Path == item.File);

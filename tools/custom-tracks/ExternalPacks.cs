@@ -7,10 +7,13 @@ namespace DiRT2VR.CustomTracks;
 public sealed record ExternalFile(string Path, long Bytes, string Sha256);
 public sealed record ExternalDependency(string Path, string Sha256);
 public sealed record ExternalReplacement(string Target, string File);
+// A stock game file copied from the player's own installation into the layout's track folder for the
+// session, so a pack can use venue resources without redistributing them. Source must be a pinned dependency.
+public sealed record ExternalBorrow(string Target, string Source);
 public sealed record ExternalLayout(string Id, string Name, string Folder, string Condition,
     string Discipline, bool Circuit, int MaximumOpponents, ExternalReplacement[] Session,
     string RaceStart = "grid", ExternalReplacement[]? RaceSession = null,
-    int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null);
+    int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null, ExternalBorrow[]? Borrow = null);
 // Optional own engine sound: DiRT 2 ramp-engine samples in payload/audio/dictionaries/d2ve_<code>/
 // (NESSamples.dic and <Bank>.wip) played through payload/audio/cars/<code>engine.ini.
 // Samples is the ramp length in frames; Turbo false silences the donor's turbo layer.
@@ -285,6 +288,21 @@ public static class ExternalPacks
                 used.Add(replace.File);
             }
             if (!layout.Session.Any(s => s.Target == "database/database.bin")) throw new IOException("External track needs its prepared database registration.");
+            if (layout.Borrow is not null)
+            {
+                if (layout.Borrow.Length > 256 || layout.Borrow.Any(b => b is null) || layout.Borrow.Select(b => b.Target).Distinct(StringComparer.OrdinalIgnoreCase).Count() != layout.Borrow.Length)
+                    throw new IOException("Invalid external borrowed files.");
+                foreach (var borrow in layout.Borrow)
+                {
+                    SafeFiles.Relative(borrow.Target); SafeFiles.Relative(borrow.Source);
+                    // Into the layout's own new folder, from a pinned stock file; never over a packed file or out of another pack.
+                    if (!borrow.Target.StartsWith(prefix["payload/".Length..], StringComparison.Ordinal) || !DataExtension(borrow.Target) ||
+                        m.Files.Any(f => string.Equals(f.Path, "payload/" + borrow.Target, StringComparison.OrdinalIgnoreCase)) ||
+                        !m.Dependencies.Any(d => d.Path == borrow.Source) || !DataExtension(borrow.Source) ||
+                        borrow.Source.StartsWith("tracks/usa/d2ve_", StringComparison.OrdinalIgnoreCase) || TrackPacks.SessionTargets.Contains(borrow.Source))
+                        throw new IOException("External borrowed file is outside its layout folder or not a pinned stock file: " + borrow.Target);
+                }
+            }
         }
         if (used.Count != m.Files.Length) throw new IOException("External inventory contains unreferenced files or unsupported destinations.");
     }
