@@ -11,7 +11,20 @@ Public Module WorldRecords
         If Not TrackPacks.IsLayout(trackId) Then Return IO.Path.Combine(context.GameRoot, "database", "database.bin")
         Dim pack = TrackPacks.ForLayout(trackId)
         If pack.External IsNot Nothing Then
-            Dim replacement = pack.External.Layout(trackId).Session.SingleOrDefault(Function(s) s.Target = "database/database.bin")
+            Dim layout = pack.External.Layout(trackId)
+            If layout.Registration IsNot Nothing Then
+                ' Registered at launch: the same rows on the player's own pinned database, built once per pack version.
+                Dim registered = IO.Path.Combine(context.UserRoot, "external-registrations", pack.External.FolderId & "-" & layout.Id & "-" & pack.External.ManifestHash.Substring(0, 16) & ".bin")
+                If Not File.Exists(registered) Then
+                    Dim dependency = pack.External.Manifest.Dependencies.Single(Function(d) d.Path = TrackRegistration.Database)
+                    Dim original = File.ReadAllBytes(IO.Path.Combine(context.GameRoot, "database", "database.bin"))
+                    If Convert.ToHexString(Security.Cryptography.SHA256.HashData(original)) <> dependency.Sha256 Then Throw New IOException("The game database differs from the one this external track registers with.")
+                    Directory.CreateDirectory(IO.Path.GetDirectoryName(registered))
+                    Files.AtomicWrite(registered, TrackRegistration.Shared(TrackRegistration.Database, original, layout.Registration, layout.Folder))
+                End If
+                Return registered
+            End If
+            Dim replacement = layout.Session.SingleOrDefault(Function(s) s.Target = "database/database.bin")
             If replacement Is Nothing Then Throw New IOException("External layout has no session database.")
             Return SafeFiles.Inside(pack.External.Root, replacement.File)
         End If

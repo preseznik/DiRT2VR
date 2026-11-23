@@ -22,7 +22,13 @@ public static class CarSession
             byte[] original = File.ReadAllBytes(target);
             if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(original)) != hash) throw new IOException("Custom car needs the original shared file: " + path + ". External edits were preserved.");
             var replacement = external?.Layout(track).Session.SingleOrDefault(s => s.Target == path);
-            if (replacement is not null)
+            // A registered external layout: the car composes on the database the track session will install.
+            if (external?.Layout(track).Registration is { } registration && path == TrackRegistration.Database)
+            {
+                original = TrackRegistration.Shared(path, original, registration, external.Layout(track).Folder);
+                hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(original));
+            }
+            else if (replacement is not null)
             {
                 if (path != "database/database.bin") throw new IOException("This external track and Ferrari replace the same shared file: " + path);
                 var file = external!.Manifest!.Files.Single(f => f.Path == replacement.File);

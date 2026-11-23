@@ -32,7 +32,13 @@ public static class ExternalCars
             byte[] original = File.ReadAllBytes(SafeFiles.Inside(game, path));
             string hash = pack.Manifest.Dependencies.Single(d => d.Path == path).Sha256;
             var trackReplacement = externalTrack?.Layout(track).Session.SingleOrDefault(s => s.Target == path);
-            if (trackReplacement is not null)
+            // A registered external layout: the car composes on the database the track session will install.
+            if (externalTrack?.Layout(track).Registration is { } registration && path == TrackRegistration.Database)
+            {
+                original = TrackRegistration.Shared(path, original, registration, externalTrack.Layout(track).Folder);
+                hash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(original));
+            }
+            else if (trackReplacement is not null)
             {
                 if (path != "database/database.bin") throw new IOException("This external track and car replace the same shared file: " + path);
                 var file = externalTrack!.Manifest!.Files.Single(f => f.Path == trackReplacement.File);

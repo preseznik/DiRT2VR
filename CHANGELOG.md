@@ -12,6 +12,7 @@ Version headings identify distribution builds; published packages include a GitH
 
 ### Custom tracks
 
+- External track packs can register their layout in the player's own game files instead of shipping modified copies of the game database, language files and tree settings: a layout's optional `Registration` describes the location, track and track model to clone from stock rows, the names to add and an optional tree budget style (see EXTERNAL_PACKS.md). The launcher applies it for the session and restores the original files afterwards; External cars, Direct multiplayer and the launcher's world-record display use the registered database. Checked in desktop lab launches of a lab Polhov Gradec pack (practice and a Rally (staggered) race): the registered database matched the previously shipped copy byte for byte and the original files were restored. Not yet checked in VR, with an External car, or in Direct multiplayer.
 - External track packs can borrow original venue files instead of shipping copies: a layout's optional `Borrow` list names files from the player's own game (pinned in `Dependencies`) to copy into its track folder for the session; they are removed afterwards with the rest of the track (see EXTERNAL_PACKS.md). This keeps packs from redistributing game assets and makes them smaller. Checked in desktop lab launches of a lab Polhov Gradec pack (practice and a Rally (staggered) race; Full Replay recording on): the borrowed files were in place during the session and removed afterwards. Not yet checked in VR.
 
 ### Graphics

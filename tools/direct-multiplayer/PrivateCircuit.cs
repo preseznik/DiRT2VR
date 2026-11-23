@@ -78,13 +78,14 @@ internal static class PrivateCircuit
             selection.Digest != pack.ManifestHash || selection.ExternalCircuit != layout.Circuit)
             throw new IOException("The selected external track changed. Refresh the lobby and choose the layout again.");
         if (vr && !definition.Modes.Contains("vr-race")) throw new IOException("This external track does not support VR races.");
-        var writes = ExternalSession.TrackWrites(game, pack, selection.Id, true, "grid", cancel).ToList();
         string folder = SafeFiles.Inside(cache, ExternalFolder);
         string temporary = "external-track-" + Guid.NewGuid().ToString("N");
         string work = SafeFiles.Inside(cache, temporary);
         try
         {
             Directory.CreateDirectory(work);
+            // A registered layout's database and names are generated into the work folder from the game's own files.
+            var writes = ExternalSession.TrackWrites(game, pack, selection.Id, true, "grid", cancel, Path.Combine(work, "registered")).ToList();
             string schema = CircuitCatalog.WriteSchema(work);
             int index = writes.FindIndex(write => write.Entry.Path == "database/database.bin");
             if (index < 0) throw new IOException("The external layout has no race database.");

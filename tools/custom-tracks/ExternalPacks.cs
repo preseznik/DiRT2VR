@@ -13,7 +13,8 @@ public sealed record ExternalBorrow(string Target, string Source);
 public sealed record ExternalLayout(string Id, string Name, string Folder, string Condition,
     string Discipline, bool Circuit, int MaximumOpponents, ExternalReplacement[] Session,
     string RaceStart = "grid", ExternalReplacement[]? RaceSession = null,
-    int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null, ExternalBorrow[]? Borrow = null);
+    int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null, ExternalBorrow[]? Borrow = null,
+    ExternalRegistration? Registration = null);
 // Optional own engine sound: DiRT 2 ramp-engine samples in payload/audio/dictionaries/d2ve_<code>/
 // (NESSamples.dic and <Bank>.wip) played through payload/audio/cars/<code>engine.ini.
 // Samples is the ramp length in frames; Turbo false silences the donor's turbo layer.
@@ -278,7 +279,9 @@ public static class ExternalPacks
                     used.Add(item.File);
                 }
             }
-            if (layout.Session is null || layout.Session.Length is < 1 or > 32 || layout.Session.Any(s => s is null) || layout.Session.Select(s => s.Target).Distinct().Count() != layout.Session.Length)
+            // A registered layout may ship no session replacements at all.
+            if (layout.Session is null || layout.Session.Length is > 32 || (layout.Session.Length == 0 && layout.Registration is null) ||
+                layout.Session.Any(s => s is null) || layout.Session.Select(s => s.Target).Distinct().Count() != layout.Session.Length)
                 throw new IOException("Invalid external session replacements.");
             foreach (var replace in layout.Session)
             {
@@ -287,7 +290,15 @@ public static class ExternalPacks
                     throw new IOException("External session replacement is outside supported game targets.");
                 used.Add(replace.File);
             }
-            if (!layout.Session.Any(s => s.Target == "database/database.bin")) throw new IOException("External track needs its prepared database registration.");
+            if (layout.Registration is not null)
+            {
+                // Registered in the player's own pinned files at launch, never also replaced by a shipped copy.
+                TrackRegistration.Validate(layout.Registration);
+                foreach (string target in TrackRegistration.Targets(layout.Registration))
+                    if (layout.Session.Any(s => s.Target == target) || !m.Dependencies.Any(d => d.Path == target))
+                        throw new IOException("External track registration needs the pinned original, and no shipped copy, of " + target);
+            }
+            else if (!layout.Session.Any(s => s.Target == "database/database.bin")) throw new IOException("External track needs its prepared database registration.");
             if (layout.Borrow is not null)
             {
                 if (layout.Borrow.Length > 256 || layout.Borrow.Any(b => b is null) || layout.Borrow.Select(b => b.Target).Distinct(StringComparer.OrdinalIgnoreCase).Count() != layout.Borrow.Length)

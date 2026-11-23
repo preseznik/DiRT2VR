@@ -4,4 +4,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
+  <ItemGroup>
+    <!-- External track registration (TrackRegistration.cs) edits the player's database, language and tree settings files. -->
+    <ProjectReference Include="../../.deps/Ego-Engine-Modding/src/EgoEngineLibrary/EgoEngineLibrary.csproj" />
+    <EmbeddedResource Include="../../.deps/Ego-Engine-Modding/src/EgoDatabaseEditor/schema/schemaDirt2.xml" LogicalName="track-schemaDirt2.xml" />
+  </ItemGroup>
 </Project>

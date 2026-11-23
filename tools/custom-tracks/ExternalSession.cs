@@ -17,7 +17,10 @@ public static class ExternalSession
         SafeFiles.RequireClosed();
         if (Pending(game)) throw new IOException("External content recovery is pending.");
         var writes = new List<(Entry Entry, string Source)>();
-        if (pack is not null) writes.AddRange(TrackWrites(game, pack, layoutId!, race, raceStart, default));
+        string stage = Path.Combine(Path.GetTempPath(), "DiRT2VR-track-registration-" + Guid.NewGuid().ToString("N"));
+        try
+        {
+        if (pack is not null) writes.AddRange(TrackWrites(game, pack, layoutId!, race, raceStart, default, stage));
         if (car is not null)
         {
             car.Verify(); car.RequireDependencies(game);
@@ -36,6 +39,28 @@ public static class ExternalSession
             }
         }
         Apply(game, SafeFiles.Inside(game, Folder), writes, ValidateExternal, afterWrite, default);
+        }
+        finally { if (Directory.Exists(stage)) Directory.Delete(stage, true); }
+    }
+
+    // A registered layout's shared files, generated from the player's own pinned originals into stage.
+    internal static IEnumerable<(Entry Entry, string Source)> RegisteredWrites(string game, ExternalPack pack, ExternalLayout layout, string stage, CancellationToken cancel)
+    {
+        if (layout.Registration is not { } registration) yield break;
+        SafeFiles.NoLinks(stage); Directory.CreateDirectory(stage);
+        foreach (string target in TrackRegistration.Targets(registration))
+        {
+            cancel.ThrowIfCancellationRequested();
+            var dependency = pack.Manifest!.Dependencies.Single(d => d.Path == target);
+            string path = SafeFiles.Inside(game, target);
+            byte[] original = File.ReadAllBytes(path);
+            if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(original)) != dependency.Sha256)
+                throw new IOException("External pack needs a different or missing game dependency: " + target);
+            byte[] registered = TrackRegistration.Shared(target, original, registration, layout.Folder);
+            string staged = Path.Combine(stage, target.Replace('/', '_'));
+            File.WriteAllBytes(staged, registered);
+            yield return (new(target, dependency.Sha256, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(registered)), File.GetAttributes(path)), staged);
+        }
     }
 
     internal static void RequireEmptyAssetFolder(string game, string relative)
@@ -46,7 +71,7 @@ public static class ExternalSession
     }
 
     internal static IEnumerable<(Entry Entry, string Source)> TrackWrites(string game, ExternalPack pack,
-        string layoutId, bool race, string raceStart, CancellationToken cancel)
+        string layoutId, bool race, string raceStart, CancellationToken cancel, string? stage = null)
     {
         pack.Verify(cancel);
         pack.RequireDependencies(game, cancel);
@@ -75,6 +100,11 @@ public static class ExternalSession
             if (File.Exists(SafeFiles.Inside(game, borrow.Target))) throw new IOException("External track destination already exists; it was preserved: " + borrow.Target);
             var dependency = pack.Manifest.Dependencies.Single(d => d.Path == borrow.Source);
             yield return (new(borrow.Target, null, dependency.Sha256, null), SafeFiles.Inside(game, borrow.Source));
+        }
+        if (layout.Registration is not null)
+        {
+            if (stage is null) throw new IOException("External track registration needs a staging folder.");
+            foreach (var write in RegisteredWrites(game, pack, layout, stage, cancel)) yield return write;
         }
         foreach (var item in layout.Session)
         {
