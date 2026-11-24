@@ -1,2 +1,2 @@
 #pragma once
-namespace vr { bool EnableF04Audio(); }
+namespace vr { bool EnableLegacyEngineAudio(); }

@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+### Custom cars
+
+- An external car pack's own engine sound now follows the engine revs. In 0.18.22 the game played the pack's engine sweep without its rev-based playback, so the sound rose and restarted on its own whatever the revs; DiRT2VR now selects the game's legacy engine controller for that car, as it already did for the converted F2004. Build each sweep with its pitch rising in proportion to the revs (see EXTERNAL_PACKS.md). Checked in desktop lab practice with the GoRacer Kestrel rallycross pack: the engine's firing tone stayed within 5 % of the frequency the revs give in 85 % of frames (13 % before), and it sounded right by ear. Lab races and replays with both Kestrel packs recorded, played back and restored the audio setup files. In a simulated-headset VR race the controller was active, every frame was shown and memory matched the previous pack; not yet heard in a real headset.
+
 ## 0.18.22 — 2026-11-23 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.22)

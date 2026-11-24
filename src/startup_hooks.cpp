@@ -32,7 +32,7 @@ bool EnableStartupHooks(bool headset, bool cockpit, bool direct) {
     if(!EnableFlashback()) { Log("flashback: incompatible process"); return false; }
     if(!EnableBackgroundPlay()) { Log("background play: incompatible process"); return false; }
     if(!EnableDrivingControls()) { Log("driving controls: incompatible process"); return false; }
-    if(!EnableF04Audio()) { Log("f04 audio: incompatible process"); return false; }
+    if(!EnableLegacyEngineAudio()) { Log("engine audio: incompatible process"); return false; }
     if(!EnableTransmission()) { Log("transmission: incompatible process"); return false; }
     // Unlike the overrides above, the game's own FFB default is a safe fallback.
     if(!EnableForceFeedback()) Log("force feedback: keep-on unavailable; game default kept");
