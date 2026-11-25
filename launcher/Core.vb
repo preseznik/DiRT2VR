@@ -200,6 +200,9 @@ Public Class VrSettings
     Public Property TrackId As String = "127"
     Public Property CarCode As String = "sti"
     Public Property CarGrade As String = "rookie"
+    ' This launch's livery: the car's saved choice (custom-cars.json) or a saved replay's.
+    <Serialization.JsonIgnore>
+    Public Property CarLivery As String = ""
     Public Property Opponents As Integer = 7
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1

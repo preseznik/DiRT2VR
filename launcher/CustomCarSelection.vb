@@ -7,6 +7,7 @@ Public Class CustomCarSelection
     Private ReadOnly context As InstallContext
     Private ReadOnly cars As ComboBox
     Private ReadOnly carClass As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .AccessibleName = "Car class filter"}
+    Private ReadOnly livery As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .AccessibleName = "Livery"}
     Private ReadOnly toggle As New CheckBox With {.Text = "CUSTOM cars (Experimental)", .AutoSize = True}
     Private ReadOnly status As New TrackStatusLabel With {.AutoSize = True, .UseMnemonic = False}
     Private ReadOnly actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
@@ -39,6 +40,12 @@ Public Class CustomCarSelection
     Public ReadOnly Property ClassFilter As ComboBox
         Get
             Return carClass
+        End Get
+    End Property
+    ' Likewise the livery: the player's car only, remembered for each stock car.
+    Public ReadOnly Property LiveryChoice As ComboBox
+        Get
+            Return livery
         End Get
     End Property
     ' Height that centres a host caption on the model dropdown line.
@@ -80,8 +87,8 @@ Public Class CustomCarSelection
         Me.context = context : Me.cars = cars : Me.key = key
         Name = "CustomCarSelection" & If(key = "stock", "Stock", "Track") : toggle.Name = Name & "Toggle"
         build.Name = Name & "Build" : manage.Name = Name & "Manage" : stopBuild.Name = Name & "Cancel" : status.Name = Name & "Status"
-        carClass.Name = Name & "Class"
-        StyleChoice(carClass, Me)
+        carClass.Name = Name & "Class" : livery.Name = Name & "Livery"
+        StyleChoice(carClass, Me) : StyleChoice(livery, Me)
         carClass.Items.Add("All")
         carClass.Items.AddRange(RaceCatalog.Current.Cars.Select(Function(c) c.ClassName).Distinct().Order().Cast(Of Object).ToArray())
         carClass.SelectedIndex = 0
@@ -92,6 +99,7 @@ Public Class CustomCarSelection
         AddHandler cars.EnabledChanged, Sub()
                                             Grades.Enabled = cars.Enabled
                                             carClass.Enabled = cars.Enabled AndAlso Not CustomEnabled
+                                            livery.Enabled = cars.Enabled AndAlso Not CustomEnabled
                                         End Sub
         AddHandler SizeChanged, Sub() status.MaximumSize = New Drawing.Size(Math.Max(1, ClientSize.Width - status.Margin.Horizontal), 0)
         Controls.Add(row) : Controls.Add(toggle) : Controls.Add(status) : actions.Controls.AddRange({build, manage, stopBuild, bar}) : Controls.Add(actions)
@@ -119,7 +127,17 @@ Public Class CustomCarSelection
                                                  Dim selected = TryCast(cars.SelectedItem, PracticeCar)
                                                  If selected Is Nothing OrElse CarPack.IsCustom(selected.Code) Then Return
                                                  SaveStockSelection(selected.Code)
+                                                 RefreshLiveries(CustomCarPreferences.Load(context))
                                              End Sub
+        AddHandler livery.SelectedIndexChanged, Sub()
+                                                   Dim choice = TryCast(livery.SelectedItem, PracticeLivery)
+                                                   If loading OrElse CustomEnabled OrElse choice Is Nothing Then Return
+                                                   Dim saved = CustomCarPreferences.Load(context)
+                                                   If choice.Code = CarLiveries.GameLivery(stockCode) Then saved.Liveries.Remove(stockCode) Else saved.Liveries(stockCode) = choice.Code
+                                                   saved.Save(context)
+                                                   ' The other car picker (stock or CUSTOM tracks) shows the same car's livery.
+                                                   If IsHandleCreated Then BeginInvoke(Sub() CustomCarService.Notify(context))
+                                               End Sub
         AddHandler build.Click, Async Sub() Await BuildCar()
         AddHandler stopBuild.Click, Sub() cancellation?.Cancel()
         AddHandler manage.Click, Sub() ShowManage()
@@ -208,6 +226,7 @@ Public Class CustomCarSelection
             Next
             toggle.Enabled = Not CustomCarService.Building : cars.Enabled = Not CustomCarService.Building
             carClass.Enabled = cars.Enabled AndAlso Not CustomEnabled
+            RefreshLiveries(preferences)
             build.Visible = preferences.SelectedId = CarPack.Code
             build.Enabled = Not CustomCarService.Building : manage.Enabled = Not CustomCarService.Building
             If CustomCarService.Building Then status.Text = "Building Ferrari F2004…"
@@ -216,6 +235,27 @@ Public Class CustomCarSelection
             loading = False
         End Try
         RaiseEvent Changed(Me, EventArgs.Empty)
+    End Sub
+    ' CUSTOM and external cars keep their own livery; stock cars list theirs in the game's order.
+    Private Sub RefreshLiveries(preferences As CustomCarPreferences)
+        Dim wasLoading = loading
+        loading = True
+        Try
+            livery.Items.Clear()
+            If CustomEnabled Then
+                livery.Items.Add("Pack livery")
+                livery.SelectedIndex = 0
+            Else
+                Dim choices = CarLiveries.Choices(stockCode)
+                livery.Items.AddRange(choices.Cast(Of Object).ToArray())
+                Dim saved As String = Nothing
+                preferences.Liveries.TryGetValue(stockCode, saved)
+                livery.SelectedItem = If(choices.FirstOrDefault(Function(l) l.Code = saved), choices.FirstOrDefault(Function(l) l.Code = CarLiveries.GameLivery(stockCode)))
+            End If
+            livery.Enabled = cars.Enabled AndAlso Not CustomEnabled
+        Finally
+            loading = wasLoading
+        End Try
     End Sub
     Private Function PickSource() As String
         Using picker As New FolderBrowserDialog With {.Description = "Choose the Ferrari F2004 car folder or Assetto Corsa installation.", .SelectedPath = CustomCarService.SourceFolder(context), .UseDescriptionForTitle = True}

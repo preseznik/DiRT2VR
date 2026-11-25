@@ -21,6 +21,9 @@ Public Class ReplayManifest
     ' Older recordings were always grid races. Never reinterpret them as Automatic.
     Public Property RaceStart As String = "grid"
     Public Property CarGrade As String = "rookie"
+    ' The player's chosen livery; absent for the game's own, so older launchers still read those.
+    <JsonIgnore(Condition:=JsonIgnoreCondition.WhenWritingNull)>
+    Public Property CarLivery As String
     Public Property LaunchConfig As String = ""
     Public Property Content As ReplayContentRequirement
     Public Property RecordingBytes As Long
@@ -66,6 +69,7 @@ Public Class ReplayManifest
             Throw New IOException("Invalid saved replay details.")
         End If
         EventConfig()
+        If CarLivery IsNot Nothing AndAlso (Content.Cars.Count = 0 OrElse CarLiveries.Find(Content.Cars(0), CarLivery) Is Nothing) Then Throw New IOException("Invalid saved replay livery.")
     End Sub
 End Class
 

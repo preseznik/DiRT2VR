@@ -9,7 +9,7 @@ Public Module NewFeatures
     Public Property LastPublished As String = "0.18.20"
     ' Control name -> the published release it was added after.
     Private ReadOnly addedAfter As New Dictionary(Of String, String) From {
-        {"DistanceBlur", "0.18.20"},
+        {"DistanceBlur", "0.18.20"}, {"CustomCarSelectionStockLivery", "0.18.20"}, {"CustomCarSelectionTrackLivery", "0.18.20"},
         {"NeuralRuntimeFolder", "0.18.11"}, {"NeuralWhileDriving", "0.18.11"}, {"NeuralStyle", "0.18.11"}, {"NeuralStrength", "0.18.11"},
         {"NeuralTone", "0.18.11"}, {"NeuralDetail", "0.18.11"}, {"NeuralPasses", "0.18.11"}, {"NeuralMix", "0.18.11"},
         {"NeuralResolution", "0.18.11"}, {"NeuralFoveation", "0.18.11"},

@@ -23,6 +23,7 @@ Public Class PracticeCar
     Public Property PackId As String = ""
     Public Property ClassId As String = ""
     Public Property ClassName As String = ""
+    Public Property Liveries As New List(Of PracticeLivery)
     Public Overrides Function ToString() As String
         Return Label
     End Function

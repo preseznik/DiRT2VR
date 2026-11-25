@@ -58,6 +58,7 @@
 #include "race_difficulty.h"
 #include "car_setup.h"
 #include "car_grade.h"
+#include "car_livery.h"
 #include "race_drivers.h"
 #include <MinHook.h>
 #include <d3dcompiler.h>
@@ -254,6 +255,10 @@ void EnableDirectPractice() {
             }
             if(!EnableCarGrade()) {
                 Log("direct car grade: validation failed; stopping launch");
+                ExitProcess(ERROR_BAD_EXE_FORMAT);
+            }
+            if(!EnableCarLivery()) {
+                Log("direct car livery: validation failed; stopping launch");
                 ExitProcess(ERROR_BAD_EXE_FORMAT);
             }
             if(!EnableCarSetup()) {

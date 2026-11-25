@@ -533,7 +533,9 @@ Public Class MainForm
             StyleChoice(choices(i), Me)
             If i = 3 Then Field(selection, "Class", customCars.ClassFilter)
             Field(If(i = 4, race, selection), labels(i), If(i = 3, CType(customCars, Control), choices(i)))
+            If i = 3 Then Field(selection, "Livery", customCars.LiveryChoice)
         Next
+        Tip(customCars.LiveryChoice, "Your car's livery in Direct practice and Race. Opponents keep the game's liveries." & vbCrLf & "Saved replays keep the livery they were recorded with. CUSTOM cars use their own livery.")
         Dim setupButton As New Button With {.Text = "Vehicle setup…", .Name = "VehicleSetup", .AutoSize = True}
         selection.Controls.Add(setupButton)
         selection.Controls.Add(bestTime)

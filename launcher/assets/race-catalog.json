@@ -386,7 +386,17 @@
       "Event": "Rallycross",
       "Label": "Subaru Impreza WRX STI - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "stx_00", "Id": 450, "Label": "Eibach" },
+        { "Code": "stx_04", "Id": 456, "Label": "KMC Wheels" },
+        { "Code": "stx_05", "Id": 457, "Label": "Shoei" },
+        { "Code": "stx_06", "Id": 745, "Label": "Eibach (2)" },
+        { "Code": "stx_03", "Id": 455, "Label": "Skyjacker" },
+        { "Code": "stx_02", "Id": 454, "Label": "Travis Pastrana" },
+        { "Code": "stx_01", "Id": 452, "Label": "Ken Block" },
+        { "Code": "stx_07", "Id": 751, "Label": "Pre-Order Bonus" }
+      ]
     },
     {
       "Code": "stt",
@@ -394,7 +404,17 @@
       "Event": "Trailblazer",
       "Label": "Subaru Impreza WRX STI - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "stt_00", "Id": 501, "Label": "Eibach" },
+        { "Code": "stt_04", "Id": 506, "Label": "KMC Wheels" },
+        { "Code": "stt_05", "Id": 507, "Label": "Shoei" },
+        { "Code": "stt_06", "Id": 508, "Label": "Eibach (2)" },
+        { "Code": "stt_03", "Id": 505, "Label": "Skyjacker" },
+        { "Code": "stt_02", "Id": 504, "Label": "Travis Pastrana" },
+        { "Code": "stt_01", "Id": 503, "Label": "Ken Block" },
+        { "Code": "stt_07", "Id": 756, "Label": "Pre-Order Bonus" }
+      ]
     },
     {
       "Code": "n12",
@@ -402,7 +422,17 @@
       "Event": "Rally",
       "Label": "Subaru Impreza STI Group N - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "n12_01", "Id": 409, "Label": "No Fear - Black" },
+        { "Code": "n12_00", "Id": 408, "Label": "No Fear - Gold" },
+        { "Code": "n12_08", "Id": 743, "Label": "Ravenwest" },
+        { "Code": "n12_06", "Id": 414, "Label": "Slime" },
+        { "Code": "n12_07", "Id": 415, "Label": "Red Line Oil" },
+        { "Code": "n12_05", "Id": 413, "Label": "Bilstein" },
+        { "Code": "n12_04", "Id": 412, "Label": "Skyjacker" },
+        { "Code": "n12_02", "Id": 410, "Label": "Dave Mirra" }
+      ]
     },
     {
       "Code": "n1x",
@@ -410,7 +440,18 @@
       "Event": "Rallycross",
       "Label": "Subaru Impreza STI Group N - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "n1x_00", "Id": 459, "Label": "No Fear - Black" },
+        { "Code": "n1x_08", "Id": 744, "Label": "No Fear - Gold" },
+        { "Code": "n1x_07", "Id": 468, "Label": "Ravenwest" },
+        { "Code": "n1x_05", "Id": 466, "Label": "Slime" },
+        { "Code": "n1x_06", "Id": 467, "Label": "Red Line Oil" },
+        { "Code": "n1x_04", "Id": 465, "Label": "Bilstein" },
+        { "Code": "n1x_03", "Id": 464, "Label": "Skyjacker" },
+        { "Code": "n1x_01", "Id": 460, "Label": "Dave Mirra" },
+        { "Code": "n1x_02", "Id": 463, "Label": "Tanner Foust Racing" }
+      ]
     },
     {
       "Code": "n1t",
@@ -418,7 +459,17 @@
       "Event": "Trailblazer",
       "Label": "Subaru Impreza STI Group N - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "n1t_00", "Id": 509, "Label": "No Fear - Black" },
+        { "Code": "n1t_07", "Id": 517, "Label": "No Fear - Gold" },
+        { "Code": "n1t_06", "Id": 516, "Label": "Ravenwest" },
+        { "Code": "n1t_04", "Id": 514, "Label": "Slime" },
+        { "Code": "n1t_05", "Id": 515, "Label": "Red Line Oil" },
+        { "Code": "n1t_03", "Id": 512, "Label": "Bilstein" },
+        { "Code": "n1t_02", "Id": 511, "Label": "Skyjacker" },
+        { "Code": "n1t_01", "Id": 510, "Label": "Dave Mirra" }
+      ]
     },
     {
       "Code": "hhx",
@@ -426,7 +477,17 @@
       "Event": "Raid",
       "Label": "Hummer HX - Stock Baja",
       "ClassId": "stock_baja",
-      "ClassName": "Stock Baja"
+      "ClassName": "Stock Baja",
+      "Liveries": [
+        { "Code": "hhx_00", "Id": 576, "Label": "Hummer Racing" },
+        { "Code": "hhx_05", "Id": 580, "Label": "Ironclad" },
+        { "Code": "hhx_06", "Id": 581, "Label": "Shoei" },
+        { "Code": "hhx_04", "Id": 579, "Label": "Skyjacker" },
+        { "Code": "hhx_02", "Id": 577, "Label": "Breed" },
+        { "Code": "hhx_03", "Id": 578, "Label": "DC Shoes" },
+        { "Code": "hhx_01", "Id": 582, "Label": "Skin Industries" },
+        { "Code": "hhx_07", "Id": 758, "Label": "Mohammed Ben Sulayem" }
+      ]
     },
     {
       "Code": "tfj",
@@ -434,7 +495,16 @@
       "Event": "Raid",
       "Label": "Toyota FJ Cruiser - Stock Baja",
       "ClassId": "stock_baja",
-      "ClassName": "Stock Baja"
+      "ClassName": "Stock Baja",
+      "Liveries": [
+        { "Code": "tfj_00", "Id": 583, "Label": "Icon Vehicle Dynamics" },
+        { "Code": "tfj_05", "Id": 588, "Label": "Superdry" },
+        { "Code": "tfj_06", "Id": 589, "Label": "Beard Seats" },
+        { "Code": "tfj_03", "Id": 586, "Label": "Skyjacker" },
+        { "Code": "tfj_04", "Id": 587, "Label": "Flip" },
+        { "Code": "tfj_01", "Id": 584, "Label": "Flip (2)" },
+        { "Code": "tfj_02", "Id": 585, "Label": "DC Shoes" }
+      ]
     },
     {
       "Code": "hon",
@@ -442,7 +512,16 @@
       "Event": "Raid",
       "Label": "Honda Ridgeline - Stock Baja",
       "ClassId": "stock_baja",
-      "ClassName": "Stock Baja"
+      "ClassName": "Stock Baja",
+      "Liveries": [
+        { "Code": "hon_00", "Id": 590, "Label": "Ridgeline Racing - Red" },
+        { "Code": "hon_01", "Id": 591, "Label": "Ridgeline Racing - White" },
+        { "Code": "hon_04", "Id": 594, "Label": "Bilstein" },
+        { "Code": "hon_03", "Id": 593, "Label": "Koni" },
+        { "Code": "hon_02", "Id": 592, "Label": "Koni (2)" },
+        { "Code": "hon_06", "Id": 596, "Label": "King Racing Shocks" },
+        { "Code": "hon_05", "Id": 595, "Label": "Koni (3)" }
+      ]
     },
     {
       "Code": "hsb",
@@ -450,7 +529,17 @@
       "Event": "Landrush",
       "Label": "Herbst Smithbuilt Buggy - Class 1 Buggies",
       "ClassId": "class_1_buggies",
-      "ClassName": "Class 1 Buggies"
+      "ClassName": "Class 1 Buggies",
+      "Liveries": [
+        { "Code": "hsb_00", "Id": 634, "Label": "Terrible Herbst Motorsports" },
+        { "Code": "hsb_07", "Id": 742, "Label": "Red Line Oil" },
+        { "Code": "hsb_05", "Id": 639, "Label": "Shoei" },
+        { "Code": "hsb_04", "Id": 638, "Label": "Breed" },
+        { "Code": "hsb_06", "Id": 640, "Label": "Shoei (2)" },
+        { "Code": "hsb_03", "Id": 637, "Label": "Slime" },
+        { "Code": "hsb_02", "Id": 636, "Label": "Breed (2)" },
+        { "Code": "hsb_01", "Id": 635, "Label": "Jayde Taylor" }
+      ]
     },
     {
       "Code": "prc",
@@ -458,7 +547,17 @@
       "Event": "Landrush",
       "Label": "PRC-1 Buggy - Class 1 Buggies",
       "ClassId": "class_1_buggies",
-      "ClassName": "Class 1 Buggies"
+      "ClassName": "Class 1 Buggies",
+      "Liveries": [
+        { "Code": "prc_00", "Id": 641, "Label": "Porter Race Cars" },
+        { "Code": "prc_05", "Id": 646, "Label": "Eibach" },
+        { "Code": "prc_06", "Id": 647, "Label": "Beard Seats" },
+        { "Code": "prc_04", "Id": 645, "Label": "Skyjacker" },
+        { "Code": "prc_03", "Id": 644, "Label": "Kicker" },
+        { "Code": "prc_02", "Id": 643, "Label": "DC Shoes" },
+        { "Code": "prc_01", "Id": 642, "Label": "Skin Industries" },
+        { "Code": "prc_07", "Id": 759, "Label": "Mohammed Ben Sulayem" }
+      ]
     },
     {
       "Code": "dej",
@@ -466,7 +565,16 @@
       "Event": "Landrush",
       "Label": "DeJong MXR - Class 1 Buggies",
       "ClassId": "class_1_buggies",
-      "ClassName": "Class 1 Buggies"
+      "ClassName": "Class 1 Buggies",
+      "Liveries": [
+        { "Code": "dej_00", "Id": 648, "Label": "DeJong" },
+        { "Code": "dej_02", "Id": 650, "Label": "Koni" },
+        { "Code": "dej_03", "Id": 651, "Label": "Skyjacker" },
+        { "Code": "dej_04", "Id": 652, "Label": "Flip" },
+        { "Code": "dej_06", "Id": 654, "Label": "Smartpunk" },
+        { "Code": "dej_01", "Id": 649, "Label": "Dave Mirra" },
+        { "Code": "dej_05", "Id": 653, "Label": "Koni (2)" }
+      ]
     },
     {
       "Code": "ick",
@@ -474,7 +582,15 @@
       "Event": "Landrush",
       "Label": "Brian Ickler Buggy - Class 1 Buggies",
       "ClassId": "class_1_buggies",
-      "ClassName": "Class 1 Buggies"
+      "ClassName": "Class 1 Buggies",
+      "Liveries": [
+        { "Code": "ick_00", "Id": 655, "Label": "Ickler Motorsports" },
+        { "Code": "ick_02", "Id": 657, "Label": "Carhartt" },
+        { "Code": "ick_04", "Id": 659, "Label": "Bilstein" },
+        { "Code": "ick_03", "Id": 658, "Label": "Koni" },
+        { "Code": "ick_01", "Id": 656, "Label": "Flip" },
+        { "Code": "ick_05", "Id": 660, "Label": "Ogio" }
+      ]
     },
     {
       "Code": "lan",
@@ -482,7 +598,16 @@
       "Event": "Raid",
       "Label": "Mitsubishi Racing Lancer - Raid T1",
       "ClassId": "raid_t1",
-      "ClassName": "Raid T1"
+      "ClassName": "Raid T1",
+      "Liveries": [
+        { "Code": "lan_00", "Id": 546, "Label": "Team Repsol Mitsubishi Ralliart" },
+        { "Code": "lan_07", "Id": 553, "Label": "Red Line Oil" },
+        { "Code": "lan_02", "Id": 548, "Label": "KMC Wheels" },
+        { "Code": "lan_03", "Id": 549, "Label": "Arai" },
+        { "Code": "lan_04", "Id": 550, "Label": "Alpinestars" },
+        { "Code": "lan_05", "Id": 551, "Label": "Scott" },
+        { "Code": "lan_01", "Id": 547, "Label": "Dave Mirra" }
+      ]
     },
     {
       "Code": "vwt",
@@ -490,7 +615,17 @@
       "Event": "Raid",
       "Label": "VW Race Touareg 2 - Raid T1",
       "ClassId": "raid_t1",
-      "ClassName": "Raid T1"
+      "ClassName": "Raid T1",
+      "Liveries": [
+        { "Code": "vwt_00", "Id": 554, "Label": "VW Motorsports" },
+        { "Code": "vwt_05", "Id": 559, "Label": "Fabtech" },
+        { "Code": "vwt_03", "Id": 557, "Label": "Monster Energy" },
+        { "Code": "vwt_06", "Id": 560, "Label": "Smartpunk" },
+        { "Code": "vwt_02", "Id": 556, "Label": "Zoo York" },
+        { "Code": "vwt_07", "Id": 561, "Label": "Eibach" },
+        { "Code": "vwt_01", "Id": 555, "Label": "Tanner Foust Racing" },
+        { "Code": "vwt_04", "Id": 558, "Label": "Katie Justice" }
+      ]
     },
     {
       "Code": "bow",
@@ -498,7 +633,16 @@
       "Event": "Raid",
       "Label": "Bowler Nemesis - Raid T1",
       "ClassId": "raid_t1",
-      "ClassName": "Raid T1"
+      "ClassName": "Raid T1",
+      "Liveries": [
+        { "Code": "bow_00", "Id": 562, "Label": "Bowler Off-Road" },
+        { "Code": "bow_05", "Id": 567, "Label": "Eibach" },
+        { "Code": "bow_06", "Id": 761, "Label": "Shoei" },
+        { "Code": "bow_04", "Id": 566, "Label": "Monster Energy" },
+        { "Code": "bow_03", "Id": 565, "Label": "Slime" },
+        { "Code": "bow_02", "Id": 564, "Label": "Alpinestars" },
+        { "Code": "bow_01", "Id": 563, "Label": "Ken Block" }
+      ]
     },
     {
       "Code": "hh3",
@@ -506,7 +650,16 @@
       "Event": "Raid",
       "Label": "Hummer H3 - Raid T1",
       "ClassId": "raid_t1",
-      "ClassName": "Raid T1"
+      "ClassName": "Raid T1",
+      "Liveries": [
+        { "Code": "hh3_00", "Id": 569, "Label": "Robby Gordon Motorsports" },
+        { "Code": "hh3_06", "Id": 575, "Label": "Slime" },
+        { "Code": "hh3_05", "Id": 574, "Label": "Shoei" },
+        { "Code": "hh3_04", "Id": 573, "Label": "Breed" },
+        { "Code": "hh3_02", "Id": 571, "Label": "Skyjacker" },
+        { "Code": "hh3_03", "Id": 572, "Label": "Kicker" },
+        { "Code": "hh3_01", "Id": 570, "Label": "Travis Pastrana" }
+      ]
     },
     {
       "Code": "350",
@@ -514,7 +667,15 @@
       "Event": "Rally",
       "Label": "Nissan 350Z - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "350_00", "Id": 416, "Label": "Oakley" },
+        { "Code": "350_01", "Id": 417, "Label": "Carhartt" },
+        { "Code": "350_03", "Id": 419, "Label": "Koni" },
+        { "Code": "350_02", "Id": 418, "Label": "Arai" },
+        { "Code": "350_04", "Id": 420, "Label": "Ironclad" },
+        { "Code": "350_06", "Id": 738, "Label": "Mohammed Ben Sulayem" }
+      ]
     },
     {
       "Code": "35x",
@@ -522,7 +683,15 @@
       "Event": "Rallycross",
       "Label": "Nissan 350Z - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "35x_00", "Id": 469, "Label": "Oakley" },
+        { "Code": "35x_01", "Id": 470, "Label": "Carhartt" },
+        { "Code": "35x_03", "Id": 472, "Label": "Koni" },
+        { "Code": "35x_02", "Id": 471, "Label": "Arai" },
+        { "Code": "35x_04", "Id": 473, "Label": "Ironclad" },
+        { "Code": "35x_06", "Id": 739, "Label": "Mohammed Ben Sulayem" }
+      ]
     },
     {
       "Code": "35t",
@@ -530,7 +699,16 @@
       "Event": "Trailblazer",
       "Label": "Nissan 350Z - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "35t_00", "Id": 518, "Label": "Oakley" },
+        { "Code": "35t_03", "Id": 522, "Label": "Carhartt" },
+        { "Code": "35t_05", "Id": 523, "Label": "Koni" },
+        { "Code": "35t_04", "Id": 520, "Label": "Arai" },
+        { "Code": "35t_06", "Id": 524, "Label": "Ironclad" },
+        { "Code": "35t_01", "Id": 519, "Label": "Skin Industries" },
+        { "Code": "35t_08", "Id": 740, "Label": "Mohammed Ben Sulayem" }
+      ]
     },
     {
       "Code": "sor",
@@ -538,7 +716,15 @@
       "Event": "Rally",
       "Label": "Pontiac Solstice GXP - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "sor_00", "Id": 422, "Label": "Balls Deep" },
+        { "Code": "sor_02", "Id": 424, "Label": "Koni" },
+        { "Code": "sor_04", "Id": 426, "Label": "Superdry" },
+        { "Code": "sor_03", "Id": 425, "Label": "Flip" },
+        { "Code": "sor_05", "Id": 427, "Label": "Koni (2)" },
+        { "Code": "sor_01", "Id": 423, "Label": "Jayde Taylor" }
+      ]
     },
     {
       "Code": "sox",
@@ -546,7 +732,15 @@
       "Event": "Rallycross",
       "Label": "Pontiac Solstice GXP - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "sox_00", "Id": 475, "Label": "Balls Deep" },
+        { "Code": "sox_02", "Id": 477, "Label": "Koni" },
+        { "Code": "sox_04", "Id": 479, "Label": "Superdry" },
+        { "Code": "sox_03", "Id": 478, "Label": "Flip" },
+        { "Code": "sox_05", "Id": 480, "Label": "Koni (2)" },
+        { "Code": "sox_01", "Id": 476, "Label": "Jayde Taylor" }
+      ]
     },
     {
       "Code": "sot",
@@ -554,7 +748,15 @@
       "Event": "Trailblazer",
       "Label": "Pontiac Solstice GXP - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "sot_00", "Id": 526, "Label": "Rhys Millen Racing" },
+        { "Code": "sot_02", "Id": 528, "Label": "Koni" },
+        { "Code": "sot_04", "Id": 530, "Label": "Superdry" },
+        { "Code": "sot_03", "Id": 529, "Label": "Flip" },
+        { "Code": "sot_05", "Id": 531, "Label": "Koni (2)" },
+        { "Code": "sot_01", "Id": 527, "Label": "Jayde Taylor" }
+      ]
     },
     {
       "Code": "bmw",
@@ -562,7 +764,15 @@
       "Event": "Rally",
       "Label": "BMW Z4 M Coupe Motorsport  - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "bmw_00", "Id": 428, "Label": "Puma" },
+        { "Code": "bmw_04", "Id": 432, "Label": "Shoei" },
+        { "Code": "bmw_02", "Id": 430, "Label": "Monster Energy" },
+        { "Code": "bmw_03", "Id": 431, "Label": "Skyjacker" },
+        { "Code": "bmw_01", "Id": 429, "Label": "Breed" },
+        { "Code": "bmw_05", "Id": 433, "Label": "Ogio" }
+      ]
     },
     {
       "Code": "bmx",
@@ -570,7 +780,15 @@
       "Event": "Rallycross",
       "Label": "BMW Z4 M Coupe Motorsport  - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "bmx_00", "Id": 481, "Label": "Puma" },
+        { "Code": "bmx_04", "Id": 485, "Label": "Shoei" },
+        { "Code": "bmx_02", "Id": 483, "Label": "Monster Energy" },
+        { "Code": "bmx_03", "Id": 484, "Label": "Skyjacker" },
+        { "Code": "bmx_01", "Id": 482, "Label": "Breed" },
+        { "Code": "bmx_05", "Id": 486, "Label": "Ogio" }
+      ]
     },
     {
       "Code": "bmt",
@@ -578,7 +796,16 @@
       "Event": "Trailblazer",
       "Label": "BMW Z4 M Coupe Motorsport  - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "bmt_00", "Id": 532, "Label": "BMW Motorsport" },
+        { "Code": "bmt_05", "Id": 537, "Label": "Shoei" },
+        { "Code": "bmt_03", "Id": 535, "Label": "Monster Energy" },
+        { "Code": "bmt_04", "Id": 536, "Label": "Skyjacker" },
+        { "Code": "bmt_01", "Id": 533, "Label": "Flip" },
+        { "Code": "bmt_02", "Id": 534, "Label": "Breed" },
+        { "Code": "bmt_06", "Id": 538, "Label": "Ogio" }
+      ]
     },
     {
       "Code": "ecl",
@@ -586,7 +813,14 @@
       "Event": "Rally",
       "Label": "Mitsubishi Eclipse GT - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "ecl_00", "Id": 434, "Label": "Dalik Fodda" },
+        { "Code": "ecl_04", "Id": 438, "Label": "Eibach" },
+        { "Code": "ecl_03", "Id": 437, "Label": "Breed" },
+        { "Code": "ecl_02", "Id": 436, "Label": "Slime" },
+        { "Code": "ecl_01", "Id": 435, "Label": "DC Shoes" }
+      ]
     },
     {
       "Code": "ecx",
@@ -594,7 +828,14 @@
       "Event": "Rallycross",
       "Label": "Mitsubishi Eclipse GT - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "ecx_00", "Id": 487, "Label": "Dalik Fodda" },
+        { "Code": "ecx_04", "Id": 491, "Label": "Eibach" },
+        { "Code": "ecx_03", "Id": 490, "Label": "Breed" },
+        { "Code": "ecx_02", "Id": 489, "Label": "Slime" },
+        { "Code": "ecx_01", "Id": 488, "Label": "DC Shoes" }
+      ]
     },
     {
       "Code": "ect",
@@ -602,7 +843,14 @@
       "Event": "Trailblazer",
       "Label": "Mitsubishi Eclipse GT - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "ect_00", "Id": 539, "Label": "Dalik Fodda" },
+        { "Code": "ect_04", "Id": 543, "Label": "Eibach" },
+        { "Code": "ect_03", "Id": 542, "Label": "Breed" },
+        { "Code": "ect_02", "Id": 541, "Label": "Slime" },
+        { "Code": "ect_01", "Id": 540, "Label": "DC Shoes" }
+      ]
     },
     {
       "Code": "cme",
@@ -610,7 +858,21 @@
       "Event": "Rally",
       "Label": "Ford Escort MK II - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "cme_00", "Id": 702, "Label": "Colin McRae Motorsport" },
+        { "Code": "cme_09", "Id": 711, "Label": "Alpinestars" },
+        { "Code": "cme_10", "Id": 712, "Label": "Koni" },
+        { "Code": "cme_06", "Id": 708, "Label": "Carhartt" },
+        { "Code": "cme_04", "Id": 706, "Label": "Skyjacker" },
+        { "Code": "cme_05", "Id": 707, "Label": "Breed" },
+        { "Code": "cme_08", "Id": 710, "Label": "Zoo York" },
+        { "Code": "cme_07", "Id": 709, "Label": "DC Shoes" },
+        { "Code": "cme_01", "Id": 703, "Label": "Skin Industries" },
+        { "Code": "cme_02", "Id": 704, "Label": "Dave Mirra" },
+        { "Code": "cme_03", "Id": 705, "Label": "Tanner Foust Racing" },
+        { "Code": "cme_11", "Id": 760, "Label": "Mohammed Ben Sulayem" }
+      ]
     },
     {
       "Code": "e9r",
@@ -618,7 +880,16 @@
       "Event": "Rally",
       "Label": "Mitsubishi Lancer Evolution IX - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "e9r_00", "Id": 718, "Label": "Mitsubishi Ralliart Works Team" },
+        { "Code": "e9r_02", "Id": 720, "Label": "KMC Wheels" },
+        { "Code": "e9r_04", "Id": 722, "Label": "Monster Energy" },
+        { "Code": "e9r_06", "Id": 724, "Label": "Smartpunk" },
+        { "Code": "e9r_01", "Id": 719, "Label": "Flip" },
+        { "Code": "e9r_03", "Id": 721, "Label": "Kicker" },
+        { "Code": "e9r_05", "Id": 723, "Label": "Scott" }
+      ]
     },
     {
       "Code": "e9x",
@@ -626,7 +897,16 @@
       "Event": "Rallycross",
       "Label": "Mitsubishi Lancer Evolution IX - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "e9x_00", "Id": 725, "Label": "Warn" },
+        { "Code": "e9x_02", "Id": 727, "Label": "KMC Wheels" },
+        { "Code": "e9x_04", "Id": 729, "Label": "Monster Energy" },
+        { "Code": "e9x_06", "Id": 731, "Label": "Smartpunk" },
+        { "Code": "e9x_01", "Id": 726, "Label": "Flip" },
+        { "Code": "e9x_03", "Id": 728, "Label": "Kicker" },
+        { "Code": "e9x_05", "Id": 730, "Label": "Scott" }
+      ]
     },
     {
       "Code": "e9t",
@@ -634,7 +914,15 @@
       "Event": "Trailblazer",
       "Label": "Mitsubishi Lancer Evolution IX - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "e9t_00", "Id": 732, "Label": "Warn" },
+        { "Code": "e9t_01", "Id": 733, "Label": "KMC Wheels" },
+        { "Code": "e9t_03", "Id": 735, "Label": "Monster Energy" },
+        { "Code": "e9t_05", "Id": 737, "Label": "Smartpunk" },
+        { "Code": "e9t_02", "Id": 734, "Label": "Kicker" },
+        { "Code": "e9t_04", "Id": 736, "Label": "Scott" }
+      ]
     },
     {
       "Code": "kin",
@@ -642,7 +930,17 @@
       "Event": "Landrush",
       "Label": "Kincaid Ford F-150 Trophy Truck - Trophy Trucks",
       "ClassId": "trophy_trucks",
-      "ClassName": "Trophy Trucks"
+      "ClassName": "Trophy Trucks",
+      "Liveries": [
+        { "Code": "kin_00", "Id": 605, "Label": "Kincaid Racing" },
+        { "Code": "kin_04", "Id": 609, "Label": "KMC Wheels" },
+        { "Code": "kin_02", "Id": 607, "Label": "KMC Wheels (2)" },
+        { "Code": "kin_03", "Id": 608, "Label": "Arai" },
+        { "Code": "kin_05", "Id": 610, "Label": "Superdry" },
+        { "Code": "kin_07", "Id": 612, "Label": "Eibach" },
+        { "Code": "kin_06", "Id": 611, "Label": "Scott" },
+        { "Code": "kin_01", "Id": 606, "Label": "Travis Pastrana" }
+      ]
     },
     {
       "Code": "pfl",
@@ -650,7 +948,16 @@
       "Event": "Landrush",
       "Label": "Chevrolet Silverado CK-1500 - Trophy Trucks",
       "ClassId": "trophy_trucks",
-      "ClassName": "Trophy Trucks"
+      "ClassName": "Trophy Trucks",
+      "Liveries": [
+        { "Code": "pfl_00", "Id": 613, "Label": "Pflueger Racing" },
+        { "Code": "pfl_06", "Id": 619, "Label": "Fabtech" },
+        { "Code": "pfl_05", "Id": 618, "Label": "Ironclad" },
+        { "Code": "pfl_03", "Id": 616, "Label": "Monster Energy" },
+        { "Code": "pfl_02", "Id": 615, "Label": "Zoo York" },
+        { "Code": "pfl_04", "Id": 617, "Label": "Alpinestars" },
+        { "Code": "pfl_01", "Id": 614, "Label": "Ken Block" }
+      ]
     },
     {
       "Code": "por",
@@ -658,7 +965,15 @@
       "Event": "Landrush",
       "Label": "West Coast Choppers Stuka TT - Trophy Trucks",
       "ClassId": "trophy_trucks",
-      "ClassName": "Trophy Trucks"
+      "ClassName": "Trophy Trucks",
+      "Liveries": [
+        { "Code": "por_00", "Id": 620, "Label": "West Coast Choppers" },
+        { "Code": "por_05", "Id": 625, "Label": "King Racing Shocks" },
+        { "Code": "por_04", "Id": 624, "Label": "Shoei" },
+        { "Code": "por_01", "Id": 621, "Label": "Alpinestars" },
+        { "Code": "por_02", "Id": 622, "Label": "DC Shoes" },
+        { "Code": "por_03", "Id": 623, "Label": "Katie Justice" }
+      ]
     },
     {
       "Code": "drt",
@@ -666,7 +981,16 @@
       "Event": "Landrush",
       "Label": "Dodge Ram Trophy Truck - Trophy Trucks",
       "ClassId": "trophy_trucks",
-      "ClassName": "Trophy Trucks"
+      "ClassName": "Trophy Trucks",
+      "Liveries": [
+        { "Code": "drt_00", "Id": 627, "Label": "Collins Motorsports" },
+        { "Code": "drt_06", "Id": 633, "Label": "Beard Seats" },
+        { "Code": "drt_05", "Id": 632, "Label": "Slime" },
+        { "Code": "drt_03", "Id": 630, "Label": "Skin Industries" },
+        { "Code": "drt_04", "Id": 631, "Label": "Monster Energy" },
+        { "Code": "drt_02", "Id": 629, "Label": "Skyjacker" },
+        { "Code": "drt_01", "Id": 628, "Label": "Tanner Foust Racing" }
+      ]
     },
     {
       "Code": "cr4",
@@ -674,7 +998,16 @@
       "Event": "Rally",
       "Label": "Colin McRae R4 - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "cr4_00", "Id": 375, "Label": "Colin McRae Motorsport" },
+        { "Code": "cr4_05", "Id": 388, "Label": "Fabtech" },
+        { "Code": "cr4_06", "Id": 389, "Label": "King Racing Shocks" },
+        { "Code": "cr4_02", "Id": 381, "Label": "Zoo York" },
+        { "Code": "cr4_03", "Id": 384, "Label": "DC Shoes" },
+        { "Code": "cr4_01", "Id": 378, "Label": "Skin Industries" },
+        { "Code": "cr4_04", "Id": 387, "Label": "Katie Justice" }
+      ]
     },
     {
       "Code": "crx",
@@ -682,7 +1015,16 @@
       "Event": "Rallycross",
       "Label": "Colin McRae R4 - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "crx_00", "Id": 376, "Label": "Colin McRae Motorsport" },
+        { "Code": "crx_05", "Id": 441, "Label": "Fabtech" },
+        { "Code": "crx_06", "Id": 442, "Label": "King Racing Shocks" },
+        { "Code": "crx_02", "Id": 382, "Label": "Zoo York" },
+        { "Code": "crx_03", "Id": 385, "Label": "DC Shoes" },
+        { "Code": "crx_01", "Id": 379, "Label": "Skin Industries" },
+        { "Code": "crx_04", "Id": 440, "Label": "Katie Justice" }
+      ]
     },
     {
       "Code": "crt",
@@ -690,7 +1032,15 @@
       "Event": "Trailblazer",
       "Label": "Colin McRae R4 - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "crt_00", "Id": 377, "Label": "Colin McRae Motorsport" },
+        { "Code": "crt_04", "Id": 494, "Label": "Fabtech" },
+        { "Code": "crt_05", "Id": 495, "Label": "King Racing Shocks" },
+        { "Code": "crt_01", "Id": 383, "Label": "Zoo York" },
+        { "Code": "crt_02", "Id": 386, "Label": "DC Shoes" },
+        { "Code": "crt_03", "Id": 493, "Label": "Katie Justice" }
+      ]
     },
     {
       "Code": "mer",
@@ -698,7 +1048,17 @@
       "Event": "Rally",
       "Label": "Mitsubishi Lancer Evolution X - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "mer_00", "Id": 390, "Label": "Tusk Engineering" },
+        { "Code": "mer_05", "Id": 399, "Label": "Beard Seats" },
+        { "Code": "mer_07", "Id": 746, "Label": "AMD ATI" },
+        { "Code": "mer_02", "Id": 396, "Label": "Skin Industries" },
+        { "Code": "mer_04", "Id": 398, "Label": "Shoei" },
+        { "Code": "mer_01", "Id": 393, "Label": "Alpinestars" },
+        { "Code": "mer_03", "Id": 397, "Label": "Alpinestars (2)" },
+        { "Code": "mer_06", "Id": 400, "Label": "Tanner Foust Racing" }
+      ]
     },
     {
       "Code": "mex",
@@ -706,7 +1066,16 @@
       "Event": "Rallycross",
       "Label": "Mitsubishi Lancer Evolution X - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "mex_00", "Id": 391, "Label": "STP" },
+        { "Code": "mex_05", "Id": 446, "Label": "Beard Seats" },
+        { "Code": "mex_06", "Id": 447, "Label": "AMD ATI" },
+        { "Code": "mex_02", "Id": 443, "Label": "Skin Industries" },
+        { "Code": "mex_04", "Id": 445, "Label": "Shoei" },
+        { "Code": "mex_01", "Id": 394, "Label": "Alpinestars" },
+        { "Code": "mex_03", "Id": 444, "Label": "Alpinestars (2)" }
+      ]
     },
     {
       "Code": "met",
@@ -714,7 +1083,17 @@
       "Event": "Trailblazer",
       "Label": "Mitsubishi Lancer Evolution X - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "met_00", "Id": 392, "Label": "STP" },
+        { "Code": "met_05", "Id": 499, "Label": "Beard Seats" },
+        { "Code": "met_07", "Id": 754, "Label": "AMD ATI" },
+        { "Code": "met_02", "Id": 496, "Label": "Skin Industries" },
+        { "Code": "met_04", "Id": 498, "Label": "Shoei" },
+        { "Code": "met_01", "Id": 395, "Label": "Alpinestars" },
+        { "Code": "met_03", "Id": 497, "Label": "Alpinestars (2)" },
+        { "Code": "met_08", "Id": 755, "Label": "Tanner Foust Racing" }
+      ]
     },
     {
       "Code": "sti",
@@ -722,7 +1101,16 @@
       "Event": "Rally",
       "Label": "Subaru Impreza WRX STI - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "sti_02", "Id": 404, "Label": "Skyjacker" },
+        { "Code": "sti_03", "Id": 405, "Label": "KMC Wheels" },
+        { "Code": "sti_05", "Id": 407, "Label": "Eibach" },
+        { "Code": "sti_04", "Id": 406, "Label": "Shoei" },
+        { "Code": "sti_00", "Id": 402, "Label": "Travis Pastrana" },
+        { "Code": "sti_01", "Id": 403, "Label": "Ken Block" },
+        { "Code": "sti_07", "Id": 748, "Label": "Pre-Order Bonus" }
+      ]
     },
     {
       "Code": "6r4",
@@ -730,7 +1118,14 @@
       "Event": "Rallycross",
       "Label": "MG Metro 6R4 - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "6r4_00", "Id": 673, "Label": "Gibson Motorsport" },
+        { "Code": "6r4_03", "Id": 676, "Label": "KMC Wheels" },
+        { "Code": "6r4_04", "Id": 677, "Label": "Slime" },
+        { "Code": "6r4_02", "Id": 675, "Label": "DC Shoes" },
+        { "Code": "6r4_01", "Id": 674, "Label": "Skin Industries" }
+      ]
     },
     {
       "Code": "dal",
@@ -738,7 +1133,19 @@
       "Event": "Trailblazer",
       "Label": "Dallenbach Special - Trailblazer",
       "ClassId": "trailblazer",
-      "ClassName": "Trailblazer"
+      "ClassName": "Trailblazer",
+      "Liveries": [
+        { "Code": "dal_00", "Id": 691, "Label": "Dallenbach Racing" },
+        { "Code": "dal_04", "Id": 696, "Label": "KMC Wheels" },
+        { "Code": "dal_08", "Id": 700, "Label": "Koni" },
+        { "Code": "dal_09", "Id": 701, "Label": "Skin Industries" },
+        { "Code": "dal_07", "Id": 699, "Label": "Kicker" },
+        { "Code": "dal_05", "Id": 697, "Label": "Skyjacker" },
+        { "Code": "dal_06", "Id": 698, "Label": "Breed" },
+        { "Code": "dal_01", "Id": 692, "Label": "Ken Block" },
+        { "Code": "dal_02", "Id": 693, "Label": "Travis Pastrana" },
+        { "Code": "dal_03", "Id": 694, "Label": "Dave Mirra" }
+      ]
     },
     {
       "Code": "rs2",
@@ -746,7 +1153,13 @@
       "Event": "Rallycross",
       "Label": "Ford RS200 Evolution - Rallycross",
       "ClassId": "rally_cross",
-      "ClassName": "Rallycross"
+      "ClassName": "Rallycross",
+      "Liveries": [
+        { "Code": "rs2_00", "Id": 678, "Label": "Hydrex Rallycross Team" },
+        { "Code": "rs2_03", "Id": 681, "Label": "Monster Energy" },
+        { "Code": "rs2_02", "Id": 680, "Label": "Zoo York" },
+        { "Code": "rs2_01", "Id": 679, "Label": "Flip" }
+      ]
     },
     {
       "Code": "p92",
@@ -754,7 +1167,18 @@
       "Event": "Raid",
       "Label": "Mitsubishi Pajero Dakar 1993 - Raid T1",
       "ClassId": "raid_t1",
-      "ClassName": "Raid T1"
+      "ClassName": "Raid T1",
+      "Liveries": [
+        { "Code": "p92_00", "Id": 682, "Label": "Team Mitsubishi" },
+        { "Code": "p92_02", "Id": 684, "Label": "Alpinestars" },
+        { "Code": "p92_03", "Id": 685, "Label": "Skyjacker" },
+        { "Code": "p92_08", "Id": 690, "Label": "Skin Industries" },
+        { "Code": "p92_04", "Id": 686, "Label": "Carhartt" },
+        { "Code": "p92_05", "Id": 687, "Label": "Arai" },
+        { "Code": "p92_07", "Id": 689, "Label": "Flip" },
+        { "Code": "p92_06", "Id": 688, "Label": "DC Shoes" },
+        { "Code": "p92_01", "Id": 683, "Label": "Tanner Foust Racing" }
+      ]
     },
     {
       "Code": "iro",
@@ -762,7 +1186,19 @@
       "Event": "Landrush",
       "Label": "Toyota Stadium Truck - Trophy Trucks",
       "ClassId": "trophy_trucks",
-      "ClassName": "Trophy Trucks"
+      "ClassName": "Trophy Trucks",
+      "Liveries": [
+        { "Code": "iro_00", "Id": 662, "Label": "Toyota" },
+        { "Code": "iro_09", "Id": 671, "Label": "Skyjacker" },
+        { "Code": "iro_08", "Id": 670, "Label": "Slime" },
+        { "Code": "iro_05", "Id": 667, "Label": "Koni" },
+        { "Code": "iro_07", "Id": 669, "Label": "Kicker" },
+        { "Code": "iro_06", "Id": 668, "Label": "Arai" },
+        { "Code": "iro_03", "Id": 665, "Label": "Flip" },
+        { "Code": "iro_01", "Id": 663, "Label": "Ken Block" },
+        { "Code": "iro_02", "Id": 664, "Label": "Travis Pastrana" },
+        { "Code": "iro_04", "Id": 666, "Label": "Jayde Taylor" }
+      ]
     },
     {
       "Code": "555",
@@ -770,7 +1206,14 @@
       "Event": "Rally",
       "Label": "1995 Subaru Impreza WRX STI - Rally",
       "ClassId": "rally",
-      "ClassName": "Rally"
+      "ClassName": "Rally",
+      "Liveries": [
+        { "Code": "555_00", "Id": 713, "Label": "McRae Challenge" },
+        { "Code": "555_03", "Id": 716, "Label": "Monster Energy" },
+        { "Code": "555_02", "Id": 715, "Label": "Koni" },
+        { "Code": "555_04", "Id": 717, "Label": "DC Shoes" },
+        { "Code": "555_01", "Id": 714, "Label": "Jayde Taylor" }
+      ]
     },
     {
       "Code": "drb",
@@ -778,7 +1221,16 @@
       "Event": "Raid",
       "Label": "Dodge Power Wagon - Stock Baja",
       "ClassId": "stock_baja",
-      "ClassName": "Stock Baja"
+      "ClassName": "Stock Baja",
+      "Liveries": [
+        { "Code": "drb_00", "Id": 598, "Label": "Kroeker Off-Road Engineering" },
+        { "Code": "drb_06", "Id": 604, "Label": "Beard Seats" },
+        { "Code": "drb_02", "Id": 600, "Label": "Carhartt" },
+        { "Code": "drb_04", "Id": 602, "Label": "KMC Wheels" },
+        { "Code": "drb_03", "Id": 601, "Label": "Skin Industries" },
+        { "Code": "drb_05", "Id": 603, "Label": "Ogio" },
+        { "Code": "drb_01", "Id": 599, "Label": "Jayde Taylor" }
+      ]
     }
   ]
 }

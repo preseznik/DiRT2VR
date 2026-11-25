@@ -101,6 +101,7 @@ Public Class Session
             If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM cars off before starting LAN multiplayer.")
             settings.CarCode = CustomCarService.SelectedCode(context)
         End If
+        If savedReplayId Is Nothing Then settings.CarLivery = CarLiveries.ChosenFor(context, settings.CarCode)
         replayId = savedReplayId
         If replayId IsNot Nothing Then
             Dim library As New ReplayLibrary(context)
@@ -111,6 +112,7 @@ Public Class Session
             settings.Laps = replay.Laps
             settings.RaceStart = replay.RaceStart
             settings.CarGrade = replay.CarGrade
+            settings.CarLivery = If(replay.CarLivery, "")
             customTrack = CustomTracks.TrackPacks.IsLayout(settings.TrackId)
             postProcessTest = ButtermilkPostProcess.DefaultProfile(settings.TrackId)
         End If
@@ -228,6 +230,7 @@ Public Class Session
                         DirectRaceStart.Configure(start, settings)
                         CarSetup.Configure(start, settings)
                         CarGrades.Configure(start, settings)
+                        CarLiveries.Configure(start, context, settings)
                         Progress(If(settings.DirectMode, "Preparing the selected track and cars…", "Preparing game files…"))
                         If settings.DirectMode Then
                             Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade, raceStart:=DirectRaceStart.Resolve(settings))
@@ -363,6 +366,7 @@ Public Class Session
             settings.LaunchMode = "menus"
         Else
             chosenEvent.ApplyTo(settings) : chosenEvent = Nothing
+            settings.CarLivery = CarLiveries.ChosenFor(context, settings.CarCode)
             postProcessTest = "normal"
         End If
     End Sub
@@ -415,6 +419,7 @@ Public Class Session
         DirectRaceStart.Configure(start, settings)
         CarSetup.Configure(start, settings)
         CarGrades.Configure(start, settings)
+        CarLiveries.Configure(start, context, settings)
         ' Direct sessions run the DLL, so the seat panel can adjust the desktop cockpit.
         Using seat = If(config IsNot Nothing, New SeatChannel(context, settings, desktopMode:=True), Nothing), input = If(config IsNot Nothing, New ControllerInput(context), Nothing)
             If seat IsNot Nothing Then
