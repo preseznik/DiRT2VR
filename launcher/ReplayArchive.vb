@@ -69,7 +69,7 @@ Public Class ReplayManifest
             Throw New IOException("Invalid saved replay details.")
         End If
         EventConfig()
-        If CarLivery IsNot Nothing AndAlso (Content.Cars.Count = 0 OrElse CarLiveries.Find(Content.Cars(0), CarLivery) Is Nothing) Then Throw New IOException("Invalid saved replay livery.")
+        If CarLivery IsNot Nothing AndAlso (Content.Cars.Count = 0 OrElse Not CarLiveries.Saveable(Content.Cars(0), CarLivery)) Then Throw New IOException("Invalid saved replay livery.")
     End Sub
 End Class
 

@@ -230,7 +230,6 @@ Public Class Session
                         DirectRaceStart.Configure(start, settings)
                         CarSetup.Configure(start, settings)
                         CarGrades.Configure(start, settings)
-                        CarLiveries.Configure(start, context, settings)
                         Progress(If(settings.DirectMode, "Preparing the selected track and cars…", "Preparing game files…"))
                         If settings.DirectMode Then
                             Worker.Invoke(context, "prepare", settings.CarCode, settings.TrackId, settings.GridOpponents, settings.OpponentCars, postProcessTest:=postProcessTest, replayId:=PreparedReplayId(), carGrade:=settings.CarGrade, raceStart:=DirectRaceStart.Resolve(settings))
@@ -245,6 +244,8 @@ Public Class Session
                         Else
                             Worker.Invoke(context, "prepare")
                         End If
+                        ' After preparation, as on desktop: an external car's livery rows exist only in the session database.
+                        CarLiveries.Configure(start, context, settings)
                         Progress("Applying VR graphics settings…")
                         graphics.Prepare(settings)
                         Progress("Preparing the player profile…")

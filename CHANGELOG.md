@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+### Custom cars
+
+- External car packs can bring several liveries: the pack names them in its manifest (`Liveries`, see EXTERNAL_PACKS.md), and the **Livery** picker in Direct practice and Race offers them for your car, on desktop and in VR. Each car remembers its choice, and saved replays keep the livery they were recorded with. AI opponents keep the pack's first livery. If a changed or removed pack no longer has the chosen livery, the car falls back to the pack's first. Packs with several liveries need this launcher. Checked in the lab with GoRacer Kestrel test packs carrying eight liveries each: desktop Direct practice showed two liveries on the rally car and one on the rallycross car; in a desktop race against seven AI Kestrels only your car wore the chosen livery, and the saved replay played back in that livery while another one was chosen; a simulated-headset VR practice applied the chosen livery. Not yet checked by a player in a headset.
+
 ## 0.18.24 — 2026-11-25 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.24)

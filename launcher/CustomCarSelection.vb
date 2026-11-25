@@ -42,7 +42,7 @@ Public Class CustomCarSelection
             Return carClass
         End Get
     End Property
-    ' Likewise the livery: the player's car only, remembered for each stock car.
+    ' Likewise the livery: the player's car only, remembered for each car.
     Public ReadOnly Property LiveryChoice As ComboBox
         Get
             Return livery
@@ -99,7 +99,7 @@ Public Class CustomCarSelection
         AddHandler cars.EnabledChanged, Sub()
                                             Grades.Enabled = cars.Enabled
                                             carClass.Enabled = cars.Enabled AndAlso Not CustomEnabled
-                                            livery.Enabled = cars.Enabled AndAlso Not CustomEnabled
+                                            livery.Enabled = cars.Enabled AndAlso livery.Items.OfType(Of PracticeLivery)().Any()
                                         End Sub
         AddHandler SizeChanged, Sub() status.MaximumSize = New Drawing.Size(Math.Max(1, ClientSize.Width - status.Margin.Horizontal), 0)
         Controls.Add(row) : Controls.Add(toggle) : Controls.Add(status) : actions.Controls.AddRange({build, manage, stopBuild, bar}) : Controls.Add(actions)
@@ -131,9 +131,10 @@ Public Class CustomCarSelection
                                              End Sub
         AddHandler livery.SelectedIndexChanged, Sub()
                                                    Dim choice = TryCast(livery.SelectedItem, PracticeLivery)
-                                                   If loading OrElse CustomEnabled OrElse choice Is Nothing Then Return
+                                                   If loading OrElse choice Is Nothing Then Return
+                                                   Dim car = LiveryCar()
                                                    Dim saved = CustomCarPreferences.Load(context)
-                                                   If choice.Code = CarLiveries.GameLivery(stockCode) Then saved.Liveries.Remove(stockCode) Else saved.Liveries(stockCode) = choice.Code
+                                                   If choice.Code = CarLiveries.GameLivery(car) Then saved.Liveries.Remove(car) Else saved.Liveries(car) = choice.Code
                                                    saved.Save(context)
                                                    ' The other car picker (stock or CUSTOM tracks) shows the same car's livery.
                                                    If IsHandleCreated Then BeginInvoke(Sub() CustomCarService.Notify(context))
@@ -236,23 +237,30 @@ Public Class CustomCarSelection
         End Try
         RaiseEvent Changed(Me, EventArgs.Empty)
     End Sub
-    ' CUSTOM and external cars keep their own livery; stock cars list theirs in the game's order.
+    ' The car whose livery the picker shows: the stock selection, or the selected CUSTOM or External car.
+    Private Function LiveryCar() As String
+        If Not CustomEnabled Then Return stockCode
+        Return If(TryCast(cars.SelectedItem, PracticeCar)?.Code, "")
+    End Function
+    ' Stock cars list theirs in the game's order and External cars their pack's; the Ferrari F2004
+    ' and one-livery packs keep their own. A saved choice the pack no longer has shows its first livery.
     Private Sub RefreshLiveries(preferences As CustomCarPreferences)
         Dim wasLoading = loading
         loading = True
         Try
             livery.Items.Clear()
-            If CustomEnabled Then
+            Dim car = LiveryCar()
+            Dim choices = CarLiveries.Choices(car)
+            If choices.Count = 0 Then
                 livery.Items.Add("Pack livery")
                 livery.SelectedIndex = 0
             Else
-                Dim choices = CarLiveries.Choices(stockCode)
                 livery.Items.AddRange(choices.Cast(Of Object).ToArray())
                 Dim saved As String = Nothing
-                preferences.Liveries.TryGetValue(stockCode, saved)
-                livery.SelectedItem = If(choices.FirstOrDefault(Function(l) l.Code = saved), choices.FirstOrDefault(Function(l) l.Code = CarLiveries.GameLivery(stockCode)))
+                preferences.Liveries.TryGetValue(car, saved)
+                livery.SelectedItem = If(choices.FirstOrDefault(Function(l) l.Code = saved), choices.FirstOrDefault(Function(l) l.Code = CarLiveries.GameLivery(car)))
             End If
-            livery.Enabled = cars.Enabled AndAlso Not CustomEnabled
+            livery.Enabled = cars.Enabled AndAlso choices.Count > 0
         Finally
             loading = wasLoading
         End Try

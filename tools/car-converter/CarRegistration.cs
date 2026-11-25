@@ -15,18 +15,13 @@ public static class CarRegistration
             throw new IOException("Invalid car registration identity.");
     }
     public static byte[] Database(byte[] original) => Database(original, CarPack.Code, "prc");
-    public static byte[] Database(byte[] original, string code, string donorCode)
+    // An external pack's liveries: livery_00 is the donor's default row as for one livery, then <code>_01, <code>_02, ...
+    public static byte[] Database(byte[] original, string code, string donorCode, int liveries = 1)
     {
         RequireCodes(code, donorCode);
-        // EGO's database reader requires filenames. Keep its temporary inputs private.
-        string folder = Path.Combine(Path.GetTempPath(), "DiRT2VR-car-db-" + Guid.NewGuid().ToString("N"));
-        SafeFiles.NoLinks(folder); Directory.CreateDirectory(folder);
-        string input = Path.Combine(folder, "source.bin"), schema = Path.Combine(folder, "schema.xml"), output = Path.Combine(folder, "result.bin");
-        try
+        if (liveries is < 1 or > ExternalPacks.MaximumLiveries) throw new IOException("Invalid car livery count.");
+        return WithDatabase(original, (input, schema, output) =>
         {
-            File.WriteAllBytes(input, original);
-            using (var resource = typeof(CarRegistration).Assembly.GetManifestResourceStream("car-schemaDirt2.xml")!)
-            using (var target = File.Create(schema)) resource.CopyTo(target);
             var before = new DatabaseFile(input, schema); var db = new DatabaseFile(input, schema);
             if (db.Tables["vehicle"]!.Rows.Cast<DataRow>().Any(r => (string)r["file_string"] == code)) throw new IOException("The database already contains " + code + ". Restore original files before launching.");
             DataRow One(string table, string column, object value) => db.Tables[table]!.Rows.Cast<DataRow>().Single(r => Equals(r[column], value));
@@ -45,8 +40,13 @@ public static class CarRegistration
             var car = Clone("vehicle", donor);
             car["file_string"] = code; car["vehicle_model_id"] = model["id"]; car["vehicle_interior_id"] = interior["id"];
             car["count_towards_achievement"] = false; car["purchasable"] = false; car["livery_image_to_use"] = code + "_00";
-            var livery = Clone("vehicle_livery", db.Tables["vehicle_livery"]!.Rows.Cast<DataRow>().Where(r => Equals(r["vehicle_id"], donor["id"]) && (bool)r["is_default_livery"]).OrderBy(r => (string)r["file_string"] == donorCode + "_00" ? 0 : 1).ThenBy(r => (int)r["id"]).FirstOrDefault() ?? throw new IOException("Donor car has no default livery."));
-            livery["vehicle_id"] = car["id"]; livery["file_string"] = code + "_00"; livery["always_allow_online"] = false;
+            var template = db.Tables["vehicle_livery"]!.Rows.Cast<DataRow>().Where(r => Equals(r["vehicle_id"], donor["id"]) && (bool)r["is_default_livery"]).OrderBy(r => (string)r["file_string"] == donorCode + "_00" ? 0 : 1).ThenBy(r => (int)r["id"]).FirstOrDefault() ?? throw new IOException("Donor car has no default livery.");
+            for (int number = 0; number < liveries; number++)
+            {
+                var livery = Clone("vehicle_livery", template);
+                livery["vehicle_id"] = car["id"]; livery["file_string"] = code + "_" + number.ToString("00", System.Globalization.CultureInfo.InvariantCulture); livery["always_allow_online"] = false;
+                if (number > 0) { livery["is_default_livery"] = false; livery["order_index"] = checked((int)template["order_index"] + number); }
+            }
             foreach (var old in db.Tables["vehicle_attribute"]!.Rows.Cast<DataRow>().Where(r => Equals(r["vehicle_id"], donor["id"])).ToArray())
             {
                 var row = Clone("vehicle_attribute", old); row["vehicle_id"] = car["id"];
@@ -65,6 +65,33 @@ public static class CarRegistration
                     if (!actual.Rows[i].ItemArray.SequenceEqual(old.Rows[i].ItemArray)) throw new IOException("Car conversion changed an existing database row.");
             }
             return File.ReadAllBytes(output);
+        });
+    }
+    // The id the session database gave the livery <code>_<kk> of the registered car <code>: the DLL puts the player's choice on by id.
+    public static int LiveryId(byte[] database, string code, string livery)
+    {
+        if (!System.Text.RegularExpressions.Regex.IsMatch(code, "^[a-z0-9]{3}$") || !System.Text.RegularExpressions.Regex.IsMatch(livery, "^" + code + "_[0-9]{2}$"))
+            throw new IOException("Invalid car livery identity.");
+        return WithDatabase(database, (input, schema, _) =>
+        {
+            var db = new DatabaseFile(input, schema);
+            var car = db.Tables["vehicle"]!.Rows.Cast<DataRow>().Where(r => (string)r["file_string"] == code).ToArray();
+            var rows = car.Length == 1 ? db.Tables["vehicle_livery"]!.Rows.Cast<DataRow>().Where(r => (string)r["file_string"] == livery && Equals(r["vehicle_id"], car[0]["id"])).ToArray() : [];
+            return rows.Length == 1 ? (int)rows[0]["id"] : throw new IOException("The " + livery + " livery is missing from the session's game database.");
+        });
+    }
+    // EGO's database reader requires filenames. Keep its temporary inputs private.
+    static T WithDatabase<T>(byte[] original, Func<string, string, string, T> work)
+    {
+        string folder = Path.Combine(Path.GetTempPath(), "DiRT2VR-car-db-" + Guid.NewGuid().ToString("N"));
+        SafeFiles.NoLinks(folder); Directory.CreateDirectory(folder);
+        string input = Path.Combine(folder, "source.bin"), schema = Path.Combine(folder, "schema.xml"), output = Path.Combine(folder, "result.bin");
+        try
+        {
+            File.WriteAllBytes(input, original);
+            using (var resource = typeof(CarRegistration).Assembly.GetManifestResourceStream("car-schemaDirt2.xml")!)
+            using (var target = File.Create(schema)) resource.CopyTo(target);
+            return work(input, schema, output);
         }
         finally { foreach (var path in new[] { input, schema, output }) if (File.Exists(path)) SafeFiles.DeleteOwned(path); Directory.Delete(folder); }
     }

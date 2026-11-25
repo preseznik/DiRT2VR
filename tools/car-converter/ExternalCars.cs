@@ -56,7 +56,7 @@ public static class ExternalCars
                 throw new IOException("Track and car need different game databases.");
             databaseInput = File.ReadAllBytes(SafeFiles.Inside(game, entry.InstalledPath));
         }
-        byte[] registered = CarRegistration.Database(databaseInput!, car.Code, car.Donor);
+        byte[] registered = CarRegistration.Database(databaseInput!, car.Code, car.Donor, car.Liveries?.Length ?? 1);
         string expected = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(databaseInput!));
         return () => SessionFiles.Prepare(game, externalTrack is null && trackPack is not null ? track : null,
             progress, files, source => {

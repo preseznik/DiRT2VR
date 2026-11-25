@@ -22,7 +22,9 @@ public sealed record ExternalLayout(string Id, string Name, string Folder, strin
 // (NESSamples.dic and <Bank>.wip) played through payload/audio/cars/<code>engine.ini.
 // Samples is the ramp length in frames; Turbo false silences the donor's turbo layer.
 public sealed record ExternalCarAudio(string Bank, int Samples, bool Turbo);
-public sealed record ExternalCar(string Code, string Donor, string ClassName, ExternalCarAudio? Audio = null);
+// Optional livery names in order: entry k is payload/cars/<code>/livery_<kk>/ (ExternalPacks.LiveryFiles).
+// Absent means one livery, livery_00, as before.
+public sealed record ExternalCar(string Code, string Donor, string ClassName, ExternalCarAudio? Audio = null, string[]? Liveries = null);
 public sealed record ExternalManifest(int Schema, string Kind, string Id, string Name, string Author,
     string Version, string MinimumLauncher, string Description, string[] Modes, bool Replay,
     ExternalFile[] Files, ExternalDependency[] Dependencies, ExternalLayout[] Layouts, ExternalCar? Car);
@@ -94,6 +96,13 @@ public static class ExternalPacks
     // audio/cars/<code>engine.ini files the game ships, including codes that are not stock car codes.
     static readonly string[] StockEngineAudioCodes = ["111", "350", "bmw", "bow", "cr4", "dej", "drb", "drt", "e9r", "ecl", "hh3", "hon", "hsb", "ick", "kin", "lan", "mer", "n12", "p92", "pfl", "por", "prc", "sor", "sti", "tfj", "tst"];
     public static string CarAudioFolder(string code) => "audio/dictionaries/d2ve_" + code;
+    public const int MaximumLiveries = 16;
+    // The textures of an external car's livery k, laid out as the stock cars' (the game reads them by the livery's file_string <code>_<kk>).
+    public static string[] LiveryFiles(string code, int livery)
+    {
+        string number = livery.ToString("00", System.Globalization.CultureInfo.InvariantCulture);
+        return [$"cars/{code}/livery_{number}/textures_high/{code}_tex_high_{number}.pssg", $"cars/{code}/livery_{number}/textures_low/{code}_tex_low_{number}.pssg"];
+    }
     public static string CarEngineIni(string code) => "audio/cars/" + code + "engine.ini";
     static bool CarAudioPath(string path)
     {
@@ -218,6 +227,14 @@ public static class ExternalPacks
                 foreach (string required in new[] { CarEngineIni(code), $"{CarAudioFolder(code)}/NESSamples.dic", $"{CarAudioFolder(code)}/{audio.Bank}.wip" })
                     if (!m.Files.Any(f => f.Path == "payload/" + required)) throw new IOException("Incomplete external car audio: " + required);
                 if (m.Files.Any(f => f.Path.StartsWith("payload/audio/", StringComparison.Ordinal) && !CarAudioPath(f.Path["payload/".Length..]))) throw new IOException("Invalid external car audio file name.");
+            }
+            if (m.Car.Liveries is { } liveries)
+            {
+                if (liveries.Length is < 2 or > MaximumLiveries || liveries.Any(name => !Text(name, 32) || name != name.Trim()) ||
+                    liveries.Distinct(StringComparer.OrdinalIgnoreCase).Count() != liveries.Length) throw new IOException("Invalid external car livery names.");
+                for (int livery = 0; livery < liveries.Length; livery++)
+                    foreach (string required in LiveryFiles(m.Car.Code!, livery))
+                        if (!m.Files.Any(f => f.Path == "payload/" + required)) throw new IOException("Incomplete external car livery: " + required);
             }
             if (m.Files.Any(f => !roots.Any(root => f.Path.StartsWith(root, StringComparison.Ordinal))))
                 throw new IOException("External car payload is outside its own car or interior folders.");

@@ -8,7 +8,7 @@ Public Class CustomCarPreferences
     Public Property Enabled As Boolean
     Public Property SourceFolder As String = ""
     Public Property StockCars As New Dictionary(Of String, String)(StringComparer.Ordinal)
-    ' Stock car code -> chosen livery code. No entry keeps the game's livery.
+    ' Stock or external car code -> chosen livery code. No entry keeps the car's first livery.
     Public Property Liveries As New Dictionary(Of String, String)(StringComparer.Ordinal)
     Public Shared Function Load(context As InstallContext) As CustomCarPreferences
         Dim path = IO.Path.Combine(context.UserRoot, "custom-cars.json")
@@ -16,7 +16,7 @@ Public Class CustomCarPreferences
         Dim value = Files.ReadJson(Of CustomCarPreferences)(path)
         If value Is Nothing OrElse String.IsNullOrEmpty(value.SelectedId) OrElse value.SelectedId.Length > 100 OrElse value.Schema <> 1 OrElse value.StockCars Is Nothing OrElse value.StockCars.Count > 32 OrElse
             value.StockCars.Any(Function(p) String.IsNullOrWhiteSpace(p.Key) OrElse Not RaceCatalog.Current.Cars.Any(Function(c) c.Code = p.Value)) OrElse
-            value.Liveries Is Nothing OrElse value.Liveries.Count > 64 OrElse value.Liveries.Any(Function(p) CarLiveries.Find(p.Key, p.Value) Is Nothing) Then Throw New IOException("Invalid custom-car preferences. The saved file was kept.")
+            value.Liveries Is Nothing OrElse value.Liveries.Count > 512 OrElse value.Liveries.Any(Function(p) Not CarLiveries.Saveable(p.Key, p.Value)) Then Throw New IOException("Invalid custom-car preferences. The saved file was kept.")
         Return value
     End Function
     Public Sub Save(context As InstallContext)
