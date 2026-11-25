@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+### Direct practice and Race
+
+- **Livery** now sits directly under the car picker; the CUSTOM cars switch, its status and its buttons follow below it, in both car pickers.
+
 ## 0.18.25 — 2026-11-25 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.25)

@@ -166,7 +166,7 @@ Public Class SettingRow
         Try
             ' A car picker aligns with the dropdowns and keeps its caption beside the model dropdown.
             Dim picker = TryCast(editor, CustomCarSelection)
-            Dim compact = TypeOf editor Is ValueSlider OrElse TypeOf editor Is ComboBox OrElse TypeOf editor Is MouseLookPicker OrElse picker IsNot Nothing
+            Dim compact = TypeOf editor Is ValueSlider OrElse TypeOf editor Is ComboBox OrElse TypeOf editor Is MouseLookPicker OrElse picker IsNot Nothing OrElse TypeOf editor Is CustomCarOptions
             Dim gap = Px(Me, If(compact, 8, 10)), padding = Px(Me, If(compact, 3, 5)), width = ClientSize.Width
             Dim stacked = width < Px(Me, If(compact, 380, 590)) AndAlso Not TypeOf editor Is CheckBox
             Dim labelWidth = If(compact, Math.Min(Px(Me, 170), CInt(width * 0.4)), Math.Min(Px(Me, 215), width \ 2))

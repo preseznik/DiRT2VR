@@ -2,12 +2,18 @@ Imports DiRT2VR.CustomCars
 Imports DiRT2VR.CustomTracks
 Imports System.Windows.Forms
 
+' The CUSTOM cars switch, its status and actions: hosts place it below the livery, so the livery sits right under the car.
+Public Class CustomCarOptions
+    Inherits VerticalStack
+End Class
+
 Public Class CustomCarSelection
     Inherits VerticalStack
     Private ReadOnly context As InstallContext
     Private ReadOnly cars As ComboBox
     Private ReadOnly carClass As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .AccessibleName = "Car class filter"}
     Private ReadOnly livery As New ComboBox With {.DropDownStyle = ComboBoxStyle.DropDownList, .AccessibleName = "Livery"}
+    Private ReadOnly customOptions As New CustomCarOptions With {.AccessibleName = "CUSTOM cars"}
     Private ReadOnly toggle As New CheckBox With {.Text = "CUSTOM cars (Experimental)", .AutoSize = True}
     Private ReadOnly status As New TrackStatusLabel With {.AutoSize = True, .UseMnemonic = False}
     Private ReadOnly actions As New FlowLayoutPanel With {.AutoSize = True, .WrapContents = True}
@@ -46,6 +52,12 @@ Public Class CustomCarSelection
     Public ReadOnly Property LiveryChoice As ComboBox
         Get
             Return livery
+        End Get
+    End Property
+    ' And the CUSTOM cars switch with its status and actions, in a row of its own below the livery.
+    Public ReadOnly Property Options As CustomCarOptions
+        Get
+            Return customOptions
         End Get
     End Property
     ' Height that centres a host caption on the model dropdown line.
@@ -87,7 +99,7 @@ Public Class CustomCarSelection
         Me.context = context : Me.cars = cars : Me.key = key
         Name = "CustomCarSelection" & If(key = "stock", "Stock", "Track") : toggle.Name = Name & "Toggle"
         build.Name = Name & "Build" : manage.Name = Name & "Manage" : stopBuild.Name = Name & "Cancel" : status.Name = Name & "Status"
-        carClass.Name = Name & "Class" : livery.Name = Name & "Livery"
+        carClass.Name = Name & "Class" : livery.Name = Name & "Livery" : customOptions.Name = Name & "Options"
         StyleChoice(carClass, Me) : StyleChoice(livery, Me)
         carClass.Items.Add("All")
         carClass.Items.AddRange(RaceCatalog.Current.Cars.Select(Function(c) c.ClassName).Distinct().Order().Cast(Of Object).ToArray())
@@ -101,8 +113,8 @@ Public Class CustomCarSelection
                                             carClass.Enabled = cars.Enabled AndAlso Not CustomEnabled
                                             livery.Enabled = cars.Enabled AndAlso livery.Items.OfType(Of PracticeLivery)().Any()
                                         End Sub
-        AddHandler SizeChanged, Sub() status.MaximumSize = New Drawing.Size(Math.Max(1, ClientSize.Width - status.Margin.Horizontal), 0)
-        Controls.Add(row) : Controls.Add(toggle) : Controls.Add(status) : actions.Controls.AddRange({build, manage, stopBuild, bar}) : Controls.Add(actions)
+        AddHandler customOptions.SizeChanged, Sub() status.MaximumSize = New Drawing.Size(Math.Max(1, customOptions.ClientSize.Width - status.Margin.Horizontal), 0)
+        Controls.Add(row) : customOptions.Controls.Add(toggle) : customOptions.Controls.Add(status) : actions.Controls.AddRange({build, manage, stopBuild, bar}) : customOptions.Controls.Add(actions)
         AddHandler toggle.CheckedChanged, Sub()
                                             If loading Then Return
                                             Dim preferences = CustomCarPreferences.Load(context)
@@ -147,6 +159,7 @@ Public Class CustomCarSelection
                                  RemoveHandler CustomCarService.Changed, AddressOf ExternalChanged
                                  cancellation?.Cancel()
                                  menu.Dispose() : status.Dispose() : actions.Dispose()
+                                 If customOptions.Parent Is Nothing Then customOptions.Dispose()
                              End Sub
         SetStockSelection(key, selectedStock)
     End Sub
@@ -222,8 +235,8 @@ Public Class CustomCarSelection
             Grades.SetStock(Not CustomEnabled)
             status.Visible = CustomEnabled : actions.Visible = CustomEnabled
             For Each extra As Control In New Control() {status, actions}
-                If CustomEnabled AndAlso Not Controls.Contains(extra) Then Controls.Add(extra)
-                If Not CustomEnabled AndAlso Controls.Contains(extra) Then Controls.Remove(extra)
+                If CustomEnabled AndAlso Not customOptions.Controls.Contains(extra) Then customOptions.Controls.Add(extra)
+                If Not CustomEnabled AndAlso customOptions.Controls.Contains(extra) Then customOptions.Controls.Remove(extra)
             Next
             toggle.Enabled = Not CustomCarService.Building : cars.Enabled = Not CustomCarService.Building
             carClass.Enabled = cars.Enabled AndAlso Not CustomEnabled
