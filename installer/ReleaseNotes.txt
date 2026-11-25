@@ -1,7 +1,8 @@
-DiRT2VR 0.18.23 — Experimental
+DiRT2VR 0.18.24 — Experimental
 
 LATEST CHANGES (since 0.18.20)
 
+- Livery choice in Direct practice and Race: pick your car's livery below the car picker, for every stock car, on desktop and in VR. AI opponents keep the game's liveries, each car remembers its choice, and saved replays keep the livery they were recorded with.
 - Fix for DiRT 2 closing while loading, with no error, on NVIDIA graphics cards: this happened once NVIDIA's shader cache file for the game grew to 512 MB. The launcher now removes an oversized DiRT 2 cache file before each launch (other programs' caches are left alone). The first minutes after that can stutter while the cache rebuilds.
 - Distance blur (desktop): Graphics → Main → Desktop → Distance blur softens far scenery and the sky while you drive, at Slight, Medium or Strong; the road, cars, near landscape and HUD stay sharp. Needs DX11 and in-game shadows. Off by default; not in VR.
 - External track packs can now use your own DiRT 2 files instead of shipping copies of them: they borrow the original venue files, add their track to the game's database and language files, and fill in parts of their files from yours, all for the session only. Your files are restored afterwards. Packs made this way are smaller and contain no game assets; upcoming track packs need this version.

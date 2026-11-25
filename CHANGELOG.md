@@ -6,15 +6,15 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.24 — 2026-11-25 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.24)
+
+Changes since 0.18.20, the last published release. Distance blur was first tried in the Experimental test build 0.18.21, and external cars' own engine sounds in the test builds 0.18.22 and 0.18.23; none of these was published.
+
 ### Direct practice and Race
 
 - Livery choice for stock cars, on desktop and in VR: **Livery** below the car picker lists the car's liveries by their in-game names, in the game's order. It paints your car only; AI opponents keep the game's liveries, also in Same as driver grids. Each car remembers its own choice, which saves immediately and starts at the livery Direct starts have always used (the car's first livery; for the Subaru Impreza WRX STI and STI Group N that is not the career default). Saved replays keep the livery they were recorded with. CUSTOM and External cars keep their own livery; Normal Launch, LAN and career are unchanged. The special-event X Games liveries are not offered, as they belong to separate vehicle entries with their own handling. Checked in the lab with the Subaru Impreza WRX STI: desktop Direct practice showed the Ken Block and Skyjacker liveries; desktop races against seven AI Subarus put Ken Block or Eibach on your car while the AI cars kept the default livery; saved replays of those races played back in their recorded livery while the other one was chosen; a simulated-headset VR practice applied the chosen livery. Not yet checked by a player in a headset.
-
-## 0.18.23 — 2026-11-24 — Experimental
-
-[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.23)
-
-Changes since 0.18.20, the last published release. Distance blur was first tried in the Experimental test build 0.18.21, and external cars' own engine sounds in the test build 0.18.22; neither was published.
 
 ### Custom cars
 
