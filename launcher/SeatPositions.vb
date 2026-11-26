@@ -112,7 +112,17 @@ Public Class SeatChannel
                 If menuButtons(binding.DeviceId)(slot) = 0 Then menuButtons(binding.DeviceId)(slot) = button + 1
             Next
         End If
-        cars = RaceCatalog.Current.Cars.Take(128).ToArray()
+        ' The race catalog lists stock cars only. A CUSTOM or External car joins the table for its own sessions,
+        ' so the seat panel can identify it ("Car not identified" in the GoRacer Kestrel, 2026-11-25).
+        Dim catalog = RaceCatalog.Current.Cars
+        Dim own As PracticeCar = Nothing
+        If Not catalog.Any(Function(c) c.Code = settings.CarCode) Then
+            Try
+                own = RaceCatalog.Current.Car(settings.CarCode)
+            Catch ex As IOException
+            End Try
+        End If
+        cars = If(own Is Nothing, catalog.Take(128), catalog.Take(127).Append(own)).ToArray()
         mapping = MemoryMappedFile.CreateNew(Name, Size) : view = mapping.CreateViewAccessor()
         view.Write(0, &H54414553) : view.Write(4, 2) : view.Write(8, Size)
         view.Write(12, CUInt(Environment.TickCount64 And &HFFFFFFFFL)) : view.Write(88, -1) : view.Write(120, -1)

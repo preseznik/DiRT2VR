@@ -6,24 +6,28 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.28 — 2026-11-26 — Experimental
+
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.28)
+
+Changes since 0.18.20, the last published release. Distance blur was first tried in the Experimental test build 0.18.21, external cars' own engine sounds in the test builds 0.18.22 and 0.18.23, the livery choice in the test builds 0.18.24 to 0.18.26 and the seat position fix in the test build 0.18.27; none of these was published.
+
+### Photo Mode
+
+- VR photos now save on headsets with high eye resolutions: A (or P) in VR Photo Mode could fail with "photo capture failed: memory" in the log, because both eyes were copied into one large block of memory that the 32-bit game often no longer has (seen with 3072×3264 eyes, about 150 MB largest free block while driving). Photos are now read and written as PNG in small strips, on desktop too, and a failed save also shows a message on the headset layer. Checked with a standalone test of the save code: a 6144×3264 side-by-side photo saved correctly with no free block over 14 MB, where the previous code failed with 70 MB. Not yet checked in the game or in a headset.
+
 ### Direct practice and Race
 
-- **Livery** now sits directly under the car picker; the CUSTOM cars switch, its status and its buttons follow below it, in both car pickers.
-
-## 0.18.25 — 2026-11-25 — Experimental
-
-[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.25)
-
-Changes since 0.18.20, the last published release. Distance blur was first tried in the Experimental test build 0.18.21, external cars' own engine sounds in the test builds 0.18.22 and 0.18.23, and the livery choice in the test build 0.18.24; none of these was published.
-
-### Direct practice and Race
-
-- Livery choice for stock cars, on desktop and in VR: **Livery** below the car picker lists the car's liveries by their in-game names, in the game's order. It paints your car only; AI opponents keep the game's liveries, also in Same as driver grids. Each car remembers its own choice, which saves immediately and starts at the livery Direct starts have always used (the car's first livery; for the Subaru Impreza WRX STI and STI Group N that is not the career default). Saved replays keep the livery they were recorded with. External car packs can bring several liveries for it (see Custom cars); the Ferrari F2004 keeps its own, and Normal Launch, LAN and career are unchanged. The special-event X Games liveries are not offered, as they belong to separate vehicle entries with their own handling. Checked in the lab with the Subaru Impreza WRX STI: desktop Direct practice showed the Ken Block and Skyjacker liveries; desktop races against seven AI Subarus put Ken Block or Eibach on your car while the AI cars kept the default livery; saved replays of those races played back in their recorded livery while the other one was chosen; a simulated-headset VR practice applied the chosen livery. Not yet checked by a player in a headset.
+- Livery choice for stock cars, on desktop and in VR: **Livery**, directly under the car picker, lists the car's liveries by their in-game names, in the game's order; the CUSTOM cars switch, its status and its buttons now follow below it, in both car pickers. It paints your car only; AI opponents keep the game's liveries, also in Same as driver grids. Each car remembers its own choice, which saves immediately and starts at the livery Direct starts have always used (the car's first livery; for the Subaru Impreza WRX STI and STI Group N that is not the career default). Saved replays keep the livery they were recorded with. External car packs can bring several liveries for it (see Custom cars); the Ferrari F2004 keeps its own, and Normal Launch, LAN and career are unchanged. The special-event X Games liveries are not offered, as they belong to separate vehicle entries with their own handling. Checked in the lab with the Subaru Impreza WRX STI: desktop Direct practice showed the Ken Block and Skyjacker liveries; desktop races against seven AI Subarus put Ken Block or Eibach on your car while the AI cars kept the default livery; saved replays of those races played back in their recorded livery while the other one was chosen; a simulated-headset VR practice applied the chosen livery. Not yet checked by a player in a headset.
 
 ### Custom cars
 
 - External car packs can bring several liveries: the pack names them in its manifest (`Liveries`, see EXTERNAL_PACKS.md), and the **Livery** picker in Direct practice and Race offers them for your car, on desktop and in VR. Each car remembers its choice, and saved replays keep the livery they were recorded with. AI opponents keep the pack's first livery. If a changed or removed pack no longer has the chosen livery, the car falls back to the pack's first. Packs with several liveries need 0.18.25 or later. Checked in the lab with GoRacer Kestrel test packs carrying eight liveries each: desktop Direct practice showed two liveries on the rally car and one on the rallycross car; in a desktop race against seven AI Kestrels only your car wore the chosen livery, and the saved replay played back in that livery while another one was chosen; a simulated-headset VR practice applied the chosen livery. Not yet checked by a player in a headset.
 - External car packs can bring their own engine sound: an optional `Audio` entry in the car's manifest, with a ramp-engine sound bank and engine INI under `payload/audio/` (see EXTERNAL_PACKS.md). The launcher registers them for the player's car for the session and restores the shared audio files afterwards; gear, exhaust and AI car sounds stay the donor's. The sound follows the engine revs: DiRT2VR selects the game's legacy engine controller for that car, as for the converted F2004 (0.18.22 played the sweep without following the revs); build each sweep with its pitch rising in proportion to the revs. Checked with the GoRacer Kestrel packs: in desktop lab practice the engine's firing tone stayed within 5 % of the frequency the revs give in 85 % of frames (13 % with 0.18.22) and it sounded right by ear; lab races and replays recorded, played back and restored the audio setup files; in a simulated-headset VR race the controller was active, every frame was shown and memory matched the previous pack. Not yet heard in a real headset.
+
+### Seat position
+
+- The seat position panel now works in CUSTOM and External cars, in VR and on desktop: it showed "Car not identified" and refused adjustments, because only stock cars were in its car list (seen in the GoRacer Kestrel). The car of the current session is now added, and its position is saved under its own car code. The launcher's **Cockpit seat** car list still shows stock cars only. Checked in the lab with the GoRacer Kestrel rally pack: in desktop and simulated-headset Direct practice the seat adjustment recognised the car, which it did not before; opening the panel and saving a moved seat were not tried there, and the CUSTOM Ferrari F2004 was not run. Not yet checked by a player in a headset.
 
 ### Custom tracks
 

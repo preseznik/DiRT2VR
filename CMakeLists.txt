@@ -45,7 +45,7 @@ target_sources(d3d11 PRIVATE src/scenery_motion.cpp src/car_tracker.cpp src/car_
 target_sources(d3d11 PRIVATE src/menu_motion_blur.cpp)
 target_sources(d3d11 PRIVATE src/water_ripples.cpp)
 target_include_directories(d3d11 PRIVATE "${CMAKE_BINARY_DIR}" src)
-target_link_libraries(d3d11 PRIVATE minhook d3dcompiler dxguid psapi bcrypt gdiplus dinput8 openxr_loader pdh)
+target_link_libraries(d3d11 PRIVATE minhook d3dcompiler dxguid psapi bcrypt gdiplus windowscodecs ole32 dinput8 openxr_loader pdh)
 target_compile_definitions(d3d11 PRIVATE WIN32_LEAN_AND_MEAN NOMINMAX XR_USE_PLATFORM_WIN32 XR_USE_GRAPHICS_API_D3D11)
 target_sources(d3d11 PRIVATE src/desktop_bridge.cpp)
 if(DIRT2VR_DESKTOP_BRIDGE)

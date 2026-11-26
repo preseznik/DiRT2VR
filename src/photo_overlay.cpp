@@ -1,10 +1,12 @@
 #include "photo_overlay.h"
 #include "overlay_blit.h"
 #include "common.h"
+#include "graphics_diagnostics.h"
 #include <d3d11.h>
 #include <wrl/client.h>
 #include <gdiplus.h>
 #include <shlobj.h>
+#include <wincodec.h>
 #include <atomic>
 #include <algorithm>
 #include <cstdio>
@@ -38,14 +40,47 @@ bool StartGdiplus() {
     }();
     return started;
 }
-bool PngEncoder(CLSID& clsid) {
-    UINT count{},bytes{};
-    if(Gdiplus::GetImageEncodersSize(&count,&bytes)!=Gdiplus::Ok || !bytes)return false;
-    std::vector<BYTE> buffer(bytes);
-    auto* codecs=reinterpret_cast<Gdiplus::ImageCodecInfo*>(buffer.data());
-    if(Gdiplus::GetImageEncoders(count,bytes,codecs)!=Gdiplus::Ok)return false;
-    for(UINT i=0;i<count;++i)if(!wcscmp(codecs[i].MimeType,L"image/png")){clsid=codecs[i].Clsid;return true;}
-    return false;
+// A photo as 24-bit BGR rows kept in small strips: the 32-bit game rarely has one free block
+// large enough for a whole headset photo (two 3072x3264 eyes are 60 MB).
+struct Picture {
+    static constexpr UINT Rows=64;
+    UINT width{},height{};
+    std::vector<std::vector<unsigned char>> strips;
+    bool Allocate(UINT w,UINT h) {
+        width=w;height=h;
+        try {
+            strips.resize((h+Rows-1)/Rows);
+            for(size_t i=0;i<strips.size();++i)strips[i].resize(size_t(w)*3*std::min(Rows,h-UINT(i)*Rows));
+        } catch(const std::bad_alloc&){strips.clear();return false;}
+        return true;
+    }
+    unsigned char* Row(UINT y){return strips[y/Rows].data()+size_t(y%Rows)*width*3;}
+};
+// PNG written strip by strip, so the encoder never needs the whole picture in one block.
+bool SavePng(const std::wstring& path,Picture& picture) {
+    const HRESULT com=CoInitializeEx(nullptr,COINIT_MULTITHREADED);
+    bool saved{};
+    {
+        ComPtr<IWICImagingFactory> factory;ComPtr<IWICStream> stream;
+        ComPtr<IWICBitmapEncoder> encoder;ComPtr<IWICBitmapFrameEncode> frame;
+        WICPixelFormatGUID format=GUID_WICPixelFormat24bppBGR;
+        saved=SUCCEEDED(CoCreateInstance(CLSID_WICImagingFactory,nullptr,CLSCTX_INPROC_SERVER,IID_PPV_ARGS(&factory))) &&
+            SUCCEEDED(factory->CreateStream(&stream)) && SUCCEEDED(stream->InitializeFromFilename(path.c_str(),GENERIC_WRITE)) &&
+            SUCCEEDED(factory->CreateEncoder(GUID_ContainerFormatPng,nullptr,&encoder)) &&
+            SUCCEEDED(encoder->Initialize(stream.Get(),WICBitmapEncoderNoCache)) &&
+            SUCCEEDED(encoder->CreateNewFrame(&frame,nullptr)) && SUCCEEDED(frame->Initialize(nullptr)) &&
+            SUCCEEDED(frame->SetSize(picture.width,picture.height)) && SUCCEEDED(frame->SetPixelFormat(&format)) &&
+            IsEqualGUID(format,GUID_WICPixelFormat24bppBGR);
+        const UINT stride=picture.width*3;
+        for(UINT y=0;saved && y<picture.height;y+=Picture::Rows) {
+            const UINT lines=std::min(Picture::Rows,picture.height-y);
+            saved=SUCCEEDED(frame->WritePixels(lines,stride,stride*lines,picture.Row(y)));
+        }
+        saved=saved && SUCCEEDED(frame->Commit()) && SUCCEEDED(encoder->Commit());
+    }
+    if(SUCCEEDED(com))CoUninitialize();
+    if(!saved)DeleteFileW(path.c_str());
+    return saved;
 }
 std::wstring PhotoFolder() {
     PWSTR pictures{};
@@ -56,17 +91,15 @@ std::wstring PhotoFolder() {
     return folder;
 }
 // Runs on its own thread so PNG compression never stalls the game.
-void Encode(std::vector<unsigned char> pixels,unsigned width,unsigned height,bool stereo,PhotoStereoView view) {
+void Encode(std::shared_ptr<Picture> picture,bool stereo,PhotoStereoView view) {
     SYSTEMTIME t{};GetLocalTime(&t);
     auto name=PhotoFileName(t.wYear,t.wMonth,t.wDay,t.wHour,t.wMinute,t.wSecond,t.wMilliseconds);
     // Side-by-side stereo (left eye on the left), marked in the name for viewers and the launcher.
     if(stereo)name.insert(name.size()-4,L"-SBS");
-    bool saved=false;CLSID png{};
     const auto folder=PhotoFolder();
-    if(!folder.empty() && StartGdiplus() && PngEncoder(png)) {
-        Gdiplus::Bitmap bitmap(int(width),int(height),int(width*4),PixelFormat32bppRGB,pixels.data());
-        saved=bitmap.GetLastStatus()==Gdiplus::Ok && bitmap.Save((folder+L"\\"+name).c_str(),&png,nullptr)==Gdiplus::Ok;
-    }
+    const UINT width=picture->width,height=picture->height;
+    const bool saved=!folder.empty() && SavePng(folder+L"\\"+name,*picture);
+    picture.reset();
     if(saved && stereo && view.valid) {
         // The view beside the photo: the 3D viewer shows each eye with the field of view it was taken with.
         char json[512]{};
@@ -150,8 +183,9 @@ std::wstring PhotoFileName(int year,int month,int day,int hour,int minute,int se
 }
 
 namespace {
-// The texture's picture as 32-bit BGRX rows; false with the reason in why.
-bool ReadPixels(ID3D11Texture2D* texture,std::vector<unsigned char>& pixels,UINT& width,UINT& height,const char*& why) {
+// Copies the texture into the picture from column left on, through a small staging band
+// (no full-size CPU copy); false with the reason in why.
+bool ReadInto(ID3D11Texture2D* texture,Picture& picture,UINT left,const char*& why) {
     ComPtr<ID3D11Device> device;texture->GetDevice(&device);
     ComPtr<ID3D11DeviceContext> context;device->GetImmediateContext(&context);
     D3D11_TEXTURE2D_DESC desc{};texture->GetDesc(&desc);
@@ -161,6 +195,7 @@ bool ReadPixels(ID3D11Texture2D* texture,std::vector<unsigned char>& pixels,UINT
         format==DXGI_FORMAT_B8G8R8X8_UNORM || format==DXGI_FORMAT_B8G8R8X8_UNORM_SRGB;
     const bool tenBit=format==DXGI_FORMAT_R10G10B10A2_UNORM;
     if(!rgba && !bgra && !tenBit){Log("photo capture: unsupported format=%u",unsigned(format));why="format";return false;}
+    if(desc.Height!=picture.height || left+desc.Width>picture.width){why="eye sizes";return false;}
     ComPtr<ID3D11Texture2D> source=texture,staging;
     auto copy=desc;copy.SampleDesc={1,0};copy.BindFlags=0;copy.MiscFlags=0;copy.MipLevels=1;copy.ArraySize=1;
     if(desc.SampleDesc.Count>1) {
@@ -168,34 +203,44 @@ bool ReadPixels(ID3D11Texture2D* texture,std::vector<unsigned char>& pixels,UINT
         if(FAILED(device->CreateTexture2D(&copy,nullptr,&source))){why="resolve texture";return false;}
         context->ResolveSubresource(source.Get(),0,texture,0,format);
     }
+    constexpr UINT Band=256;
+    copy.Height=std::min(Band,desc.Height);
     copy.Usage=D3D11_USAGE_STAGING;copy.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
     if(FAILED(device->CreateTexture2D(&copy,nullptr,&staging))){why="staging texture";return false;}
-    context->CopySubresourceRegion(staging.Get(),0,0,0,0,source.Get(),0,nullptr);
-    D3D11_MAPPED_SUBRESOURCE mapped{};
-    if(FAILED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped))){why="map";return false;}
-    try{pixels.resize(size_t(desc.Width)*desc.Height*4);}
-    catch(const std::bad_alloc&){context->Unmap(staging.Get(),0);why="memory";return false;}
-    for(UINT y=0;y<desc.Height;++y) {
-        const auto* in=static_cast<const unsigned char*>(mapped.pData)+size_t(y)*mapped.RowPitch;
-        auto* out=pixels.data()+size_t(y)*desc.Width*4;
-        for(UINT x=0;x<desc.Width;++x,in+=4,out+=4) {
-            if(tenBit) {
-                unsigned v{};std::memcpy(&v,in,4);
-                const auto byte=[](unsigned c){return static_cast<unsigned char>((c*255+511)/1023);};
-                out[0]=byte((v>>20)&1023);out[1]=byte((v>>10)&1023);out[2]=byte(v&1023);
-            } else {
-                out[0]=in[bgra?0:2];out[1]=in[1];out[2]=in[bgra?2:0];
+    for(UINT top=0;top<desc.Height;top+=Band) {
+        const UINT rows=std::min(Band,desc.Height-top);
+        const D3D11_BOX box{0,top,0,desc.Width,top+rows,1};
+        context->CopySubresourceRegion(staging.Get(),0,0,0,0,source.Get(),0,&box);
+        D3D11_MAPPED_SUBRESOURCE mapped{};
+        if(FAILED(context->Map(staging.Get(),0,D3D11_MAP_READ,0,&mapped))){why="map";return false;}
+        for(UINT y=0;y<rows;++y) {
+            const auto* in=static_cast<const unsigned char*>(mapped.pData)+size_t(y)*mapped.RowPitch;
+            auto* out=picture.Row(top+y)+size_t(left)*3;
+            for(UINT x=0;x<desc.Width;++x,in+=4,out+=3) {
+                if(tenBit) {
+                    unsigned v{};std::memcpy(&v,in,4);
+                    const auto byte=[](unsigned c){return static_cast<unsigned char>((c*255+511)/1023);};
+                    out[0]=byte((v>>20)&1023);out[1]=byte((v>>10)&1023);out[2]=byte(v&1023);
+                } else {
+                    out[0]=in[bgra?0:2];out[1]=in[1];out[2]=in[bgra?2:0]; // Alpha is not picture transparency.
+                }
             }
-            out[3]=255; // The game's alpha channel is not picture transparency.
         }
+        context->Unmap(staging.Get(),0);
     }
-    context->Unmap(staging.Get(),0);
-    width=desc.Width;height=desc.Height;return true;
+    return true;
 }
-void StartEncode(std::vector<unsigned char> pixels,unsigned width,unsigned height,bool stereo,const PhotoStereoView& view={}) {
+void StartEncode(std::shared_ptr<Picture> picture,bool stereo,const PhotoStereoView& view={}) {
     SetMessage(L"Saving photo\u2026",false);
-    try{std::thread(Encode,std::move(pixels),width,height,stereo,view).detach();}
+    try{std::thread(Encode,std::move(picture),stereo,view).detach();}
     catch(const std::exception&){Log("photo capture failed: thread");SetMessage(L"The photo could not be saved.",true);saving=false;}
+}
+std::shared_ptr<Picture> NewPicture(UINT width,UINT height) {
+    try {
+        auto picture=std::make_shared<Picture>();
+        if(picture->Allocate(width,height))return picture;
+    } catch(const std::bad_alloc&){}
+    return {};
 }
 }
 
@@ -206,26 +251,32 @@ void PhotoCapture(IDXGISwapChain* swapchain) {
     };
     ComPtr<ID3D11Texture2D> back;
     if(!swapchain || FAILED(swapchain->GetBuffer(0,IID_PPV_ARGS(&back))))return fail("back buffer");
-    std::vector<unsigned char> pixels;UINT width{},height{};const char* why="";
-    if(!ReadPixels(back.Get(),pixels,width,height,why))return fail(why);
-    StartEncode(std::move(pixels),width,height,false);
+    D3D11_TEXTURE2D_DESC desc{};back->GetDesc(&desc);
+    const auto picture=NewPicture(desc.Width,desc.Height);
+    if(!picture)return fail("memory");
+    const char* why="";
+    if(!ReadInto(back.Get(),*picture,0,why))return fail(why);
+    StartEncode(picture,false);
 }
 
 void PhotoCaptureStereo(ID3D11Texture2D* left,ID3D11Texture2D* right,const PhotoStereoView& view) {
     if(!left || !right)return;
     if(saving.exchange(true)){Log("photo capture: still saving");MessageBeep(MB_ICONHAND);return;}
-    const auto fail=[](const char* why){Log("photo capture failed: %s",why);MessageBeep(MB_ICONHAND);saving=false;};
-    std::vector<unsigned char> a,b;UINT wa{},ha{},wb{},hb{};const char* why="";
-    if(!ReadPixels(left,a,wa,ha,why) || !ReadPixels(right,b,wb,hb,why))return fail(why);
-    if(ha!=hb)return fail("eye sizes");
+    // No panel in the headset, but messages are shown on its layer (never in the photo).
+    const auto fail=[](const char* why) {
+        Log("photo capture failed: %s",why);MessageBeep(MB_ICONHAND);
+        SetMessage(L"The photo could not be saved.",true);saving=false;
+    };
+    graphics::Memory("photo capture","before");
+    D3D11_TEXTURE2D_DESC a{},b{};left->GetDesc(&a);right->GetDesc(&b);
+    if(a.Height!=b.Height)return fail("eye sizes");
     // Left eye on the left, right eye on the right (parallel viewing).
-    std::vector<unsigned char> pixels;
-    try{pixels.resize(size_t(wa+wb)*ha*4);}catch(const std::bad_alloc&){return fail("memory");}
-    for(UINT y=0;y<ha;++y) {
-        std::memcpy(pixels.data()+size_t(y)*(wa+wb)*4,a.data()+size_t(y)*wa*4,size_t(wa)*4);
-        std::memcpy(pixels.data()+(size_t(y)*(wa+wb)+wa)*4,b.data()+size_t(y)*wb*4,size_t(wb)*4);
-    }
-    StartEncode(std::move(pixels),wa+wb,ha,true,view);
+    const auto picture=NewPicture(a.Width+b.Width,a.Height);
+    if(!picture)return fail("memory");
+    const char* why="";
+    if(!ReadInto(left,*picture,0,why) || !ReadInto(right,*picture,a.Width,why))return fail(why);
+    graphics::Memory("photo capture","after");
+    StartEncode(picture,true,view);
 }
 void PhotoShowMessage(const std::wstring& text,bool error){SetMessage(text,error);}
 namespace {

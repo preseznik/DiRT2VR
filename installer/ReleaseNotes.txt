@@ -1,8 +1,10 @@
-DiRT2VR 0.18.25 — Experimental
+DiRT2VR 0.18.28 — Experimental
 
 LATEST CHANGES (since 0.18.20)
 
-- Livery choice in Direct practice and Race: pick your car's livery below the car picker, for every stock car and for External cars whose pack brings several liveries, on desktop and in VR. AI opponents keep their usual livery, each car remembers its choice, and saved replays keep the livery they were recorded with.
+- Livery choice in Direct practice and Race: pick your car's livery right under the car picker, for every stock car and for External cars whose pack brings several liveries, on desktop and in VR. AI opponents keep their usual livery, each car remembers its choice, and saved replays keep the livery they were recorded with.
+- Fix for VR photos not saving on high-resolution headsets: A (or P) in VR Photo Mode could save nothing because the game ran short of memory for both eyes. Photos are now saved in small pieces, and a failed save shows a message in the headset.
+- Fix for the seat position panel in CUSTOM and External cars: it said "Car not identified" and refused adjustments. Adjust these cars with the panel while driving; the launcher's Cockpit seat list shows stock cars only.
 - Fix for DiRT 2 closing while loading, with no error, on NVIDIA graphics cards: this happened once NVIDIA's shader cache file for the game grew to 512 MB. The launcher now removes an oversized DiRT 2 cache file before each launch (other programs' caches are left alone). The first minutes after that can stutter while the cache rebuilds.
 - Distance blur (desktop): Graphics → Main → Desktop → Distance blur softens far scenery and the sky while you drive, at Slight, Medium or Strong; the road, cars, near landscape and HUD stay sharp. Needs DX11 and in-game shadows. Off by default; not in VR.
 - External track packs can now use your own DiRT 2 files instead of shipping copies of them: they borrow the original venue files, add their track to the game's database and language files, and fill in parts of their files from yours, all for the session only. Your files are restored afterwards. Packs made this way are smaller and contain no game assets; upcoming track packs need this version.
