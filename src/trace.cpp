@@ -90,8 +90,11 @@ using LapDescriptorCopyFn = void* (__thiscall*)(void*,const unsigned*);
 LapDescriptorCopyFn realLapDescriptorCopy{};
 unsigned directLaps=1;
 unsigned directStaggeredDiscipline{};
+// Practice on a Rally or Trailblazer stage: only the event discipline changes (the demo's first discipline is Raid,
+// which the intro and loading screen showed as "RAID <country>"); the race type stays the demo's standard one.
+unsigned directEventDiscipline{};
 void* directLapCaller{};
-const void* StaggeredDiscipline(unsigned database) {
+const void* Discipline(unsigned database,unsigned wanted) {
     using GetTable=void* (__thiscall*)(void*,const char*);
     using GetRow=const void* (__thiscall*)(void*,unsigned);
     using GetInteger=int (__thiscall*)(void*,int*,const void*,const char*);
@@ -105,7 +108,7 @@ const void* StaggeredDiscipline(unsigned database) {
         if(!row) return nullptr;
         int id=-1;
         if(reinterpret_cast<GetInteger>(base+0x719260)(table,&id,row,"id")==0 &&
-           id==static_cast<int>(directStaggeredDiscipline)) return row;
+           id==static_cast<int>(wanted)) return row;
     }
     return nullptr;
 }
@@ -120,7 +123,7 @@ void* __fastcall LapDescriptorCopy(void* target,void*,const unsigned* source) {
     }
     descriptor[5]=directLaps;
     if(directStaggeredDiscipline) {
-        const auto discipline=StaggeredDiscipline(descriptor[1]);
+        const auto discipline=Discipline(descriptor[1],directStaggeredDiscipline);
         if(descriptor[2]!=0 || directLaps!=1 || !discipline) {
             Log("direct start: staggered route validation failed; stopping launch");
             ExitProcess(ERROR_BAD_EXE_FORMAT);
@@ -129,22 +132,34 @@ void* __fastcall LapDescriptorCopy(void* target,void*,const unsigned* source) {
         // The demo otherwise uses standard racing and the first discipline (Raid).
         descriptor[2]=2;
         descriptor[4]=reinterpret_cast<unsigned>(discipline);
+    } else if(directEventDiscipline) {
+        const auto discipline=Discipline(descriptor[1],directEventDiscipline);
+        if(!discipline) {
+            Log("direct start: event discipline validation failed; stopping launch");
+            ExitProcess(ERROR_BAD_EXE_FORMAT);
+        }
+        descriptor[4]=reinterpret_cast<unsigned>(discipline);
     }
     auto result=realLapDescriptorCopy(target,descriptor);
     Log("direct start: demo route laps=%u copied=%u",directLaps,static_cast<unsigned*>(target)[5]);
     if(directStaggeredDiscipline)
         Log("direct start: staggered race type=%u discipline=%u",static_cast<unsigned*>(target)[2],directStaggeredDiscipline);
+    else if(directEventDiscipline)
+        Log("direct start: event discipline=%u race type=%u",directEventDiscipline,static_cast<unsigned*>(target)[2]);
     return result;
 }
 bool EnableDirectLaps(unsigned char* base,unsigned laps) {
-    wchar_t mode[16]{};
+    wchar_t mode[16]{},event[16]{};
     const auto modeLength=GetEnvironmentVariableW(L"DIRT2VR_STAGGERED_DISCIPLINE",mode,16);
-    unsigned discipline=0;
-    if(modeLength) {
+    const auto eventLength=GetEnvironmentVariableW(L"DIRT2VR_DIRECT_DISCIPLINE",event,16);
+    unsigned discipline=0,eventDiscipline=0;
+    const auto parse=[](const wchar_t* text)->unsigned { return !wcscmp(text,L"rally")?30u:!wcscmp(text,L"trailblazer")?28u:0u; };
+    if(eventLength) {
+        if(eventLength>=16 || modeLength || !(eventDiscipline=parse(event))) return false;
+    }
+    if(modeLength || eventDiscipline) {
         if(modeLength>=16) return false;
-        if(!wcscmp(mode,L"rally")) discipline=30;
-        else if(!wcscmp(mode,L"trailblazer")) discipline=28;
-        else return false;
+        if(modeLength && !(discipline=parse(mode))) return false;
         if(laps!=1) return false;
         constexpr unsigned char tableStart[]{0x51,0x56,0x57,0x8b,0xf1};
         constexpr unsigned char integerStart[]{0x51,0x8b,0x44,0x24,0x10,0x8b,0x54,0x24,0x0c};
@@ -153,7 +168,7 @@ bool EnableDirectLaps(unsigned char* base,unsigned laps) {
            memcmp(base+0x719260,integerStart,sizeof(integerStart)) ||
            memcmp(base+0x6ecc40,rowStart,sizeof(rowStart))) return false;
     }
-    if(laps==1 && !discipline) return true;
+    if(laps==1 && !discipline && !eventDiscipline) return true;
     const unsigned char copyPrologue[]={0x8b,0xc1,0x8b,0x4c,0x24,0x04,0x8b,0x11};
     const unsigned char callSite[]={0x89,0x94,0x24,0xa4,0x00,0x00,0x00,0xe8,0xfb,0x56,0x02,0x00};
     if(memcmp(base+0x36a3d0,copyPrologue,sizeof(copyPrologue))!=0 ||
@@ -162,6 +177,7 @@ bool EnableDirectLaps(unsigned char* base,unsigned laps) {
     if(status!=MH_OK && status!=MH_ERROR_ALREADY_INITIALIZED) return false;
     directLaps=laps;
     directStaggeredDiscipline=discipline;
+    directEventDiscipline=eventDiscipline;
     directLapCaller=base+0x344cd5;
     status=MH_CreateHook(base+0x36a3d0,reinterpret_cast<void*>(LapDescriptorCopy),reinterpret_cast<void**>(&realLapDescriptorCopy));
     if(status==MH_OK) status=EnableRecordedHook(base+0x36a3d0);

@@ -12,7 +12,7 @@ public static class ExternalSession
     public static bool Pending(string game) => File.Exists(SafeFiles.Inside(game, Folder + "/pending.json"))
         || File.Exists(SafeFiles.Inside(game, Folder + "/preparing.json"));
     public static void Prepare(string game, ExternalPack pack, string layoutId, Action<int>? afterWrite = null) => PrepareContent(game, pack, layoutId, null, afterWrite);
-    public static void PrepareContent(string game, ExternalPack? pack, string? layoutId, ExternalPack? car, Action<int>? afterWrite = null, bool race = false, string raceStart = "auto")
+    public static void PrepareContent(string game, ExternalPack? pack, string? layoutId, ExternalPack? car, Action<int>? afterWrite = null, bool race = false, string raceStart = "auto", bool vr = false)
     {
         SafeFiles.RequireClosed();
         if (Pending(game)) throw new IOException("External content recovery is pending.");
@@ -20,7 +20,7 @@ public static class ExternalSession
         string stage = Path.Combine(Path.GetTempPath(), "DiRT2VR-track-registration-" + Guid.NewGuid().ToString("N"));
         try
         {
-        if (pack is not null) writes.AddRange(TrackWrites(game, pack, layoutId!, race, raceStart, default, stage));
+        if (pack is not null) writes.AddRange(TrackWrites(game, pack, layoutId!, race, raceStart, default, stage, vr));
         if (car is not null)
         {
             car.Verify(); car.RequireDependencies(game);
@@ -71,7 +71,7 @@ public static class ExternalSession
     }
 
     internal static IEnumerable<(Entry Entry, string Source)> TrackWrites(string game, ExternalPack pack,
-        string layoutId, bool race, string raceStart, CancellationToken cancel, string? stage = null)
+        string layoutId, bool race, string raceStart, CancellationToken cancel, string? stage = null, bool vr = false)
     {
         pack.Verify(cancel);
         pack.RequireDependencies(game, cancel);
@@ -90,6 +90,7 @@ public static class ExternalSession
             string target = file.Path["payload/".Length..];
             if (File.Exists(SafeFiles.Inside(game, target))) throw new IOException("External track destination already exists; it was preserved: " + target);
             var replacement = race ? raceSession?.SingleOrDefault(s => s.Target == target) : null;
+            if (replacement is null && vr) replacement = layout.VrSession?.SingleOrDefault(s => s.Target == target);
             var applied = replacement is null ? file : pack.Manifest.Files.Single(f => f.Path == replacement.File);
             var splices = layout.Splice?.Where(s => s.Target == target).ToArray() ?? [];
             if (splices.Length > 0)

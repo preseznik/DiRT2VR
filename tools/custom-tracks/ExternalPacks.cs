@@ -22,7 +22,9 @@ public sealed record ExternalLayout(string Id, string Name, string Folder, strin
     string Discipline, bool Circuit, int MaximumOpponents, ExternalReplacement[] Session,
     string RaceStart = "grid", ExternalReplacement[]? RaceSession = null,
     int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null, ExternalBorrow[]? Borrow = null,
-    ExternalRegistration? Registration = null, ExternalSplice[]? Splice = null, ExternalCondition[]? Conditions = null);
+    ExternalRegistration? Registration = null, ExternalSplice[]? Splice = null, ExternalCondition[]? Conditions = null,
+    ExternalReplacement[]? VrSession = null);
+// VrSession: packed layout files replaced by lighter versions in VR sessions only (desktop keeps the originals).
 // Optional own engine sound: DiRT 2 ramp-engine samples in payload/audio/dictionaries/d2ve_<code>/
 // (NESSamples.dic and <Bank>.wip) played through payload/audio/cars/<code>engine.ini.
 // Samples is the ramp length in frames; Turbo false silences the donor's turbo layer.
@@ -325,6 +327,21 @@ public static class ExternalPacks
                     throw new IOException("External session replacement is outside supported game targets.");
                 used.Add(replace.File);
             }
+            if (layout.VrSession is not null)
+            {
+                // Lighter versions of the layout's own packed files for VR sessions (for example sparser grass).
+                if (layout.VrSession.Length is < 1 or > 8 || layout.VrSession.Any(s => s is null) ||
+                    layout.VrSession.Select(s => s.Target).Distinct().Count() != layout.VrSession.Length)
+                    throw new IOException("Invalid external VR replacements.");
+                foreach (var item in layout.VrSession)
+                {
+                    if (!item.Target.StartsWith($"tracks/usa/{layout.Folder}/", StringComparison.Ordinal) || !m.Files.Any(f => f.Path == "payload/" + item.Target) ||
+                        !item.File.StartsWith($"payload/session/{layout.Id}/vr/", StringComparison.Ordinal) ||
+                        !m.Files.Any(f => f.Path == item.File && f.Bytes <= 64 * 1024 * 1024))
+                        throw new IOException("External VR replacement is outside its own layout payload.");
+                    used.Add(item.File);
+                }
+            }
             if (layout.Registration is not null)
             {
                 // Registered in the player's own pinned files at launch, never also replaced by a shipped copy.
@@ -360,7 +377,8 @@ public static class ExternalPacks
                     if (packed is null || !splice.Target.StartsWith(prefix["payload/".Length..], StringComparison.Ordinal) ||
                         !m.Dependencies.Any(d => d.Path == splice.Source) || !DataExtension(splice.Source) ||
                         splice.Source.StartsWith("tracks/usa/d2ve_", StringComparison.OrdinalIgnoreCase) || TrackPacks.SessionTargets.Contains(splice.Source) ||
-                        splice.Offset < 0 || splice.Length is < 1 or > 65536 || splice.Offset + splice.Length > packed.Bytes)
+                        splice.Offset < 0 || splice.Length is < 1 or > 65536 || splice.Offset + splice.Length > packed.Bytes ||
+                        layout.VrSession?.SingleOrDefault(s => s.Target == splice.Target) is { } vr && splice.Offset + splice.Length > m.Files.Single(f => f.Path == vr.File).Bytes)
                         throw new IOException("External spliced range is outside its layout's packed file or not from a pinned stock file: " + splice.Target);
                 }
                 if (layout.Splice.GroupBy(s => s.Target).Any(g => g.OrderBy(s => s.Offset).Zip(g.OrderBy(s => s.Offset).Skip(1)).Any(p => p.First.Offset + p.First.Length > p.Second.Offset)))

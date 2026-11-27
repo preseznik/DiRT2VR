@@ -9,6 +9,11 @@ Version headings identify distribution builds; published packages include a GitH
 ### Direct practice and Race
 
 - AI cars in a Race now wear varied liveries; until now every AI car wore its car's first livery. AI cars driving your model wear its other liveries, never yours, and with Mixed or Same class opponents each car gets a random livery of its own. The liveries are picked anew for each event (Restart keeps them), External car packs with several liveries included. Saved replays keep the AI liveries they were recorded with; replays saved before this still show every AI car in its first livery. Not yet checked in game.
+- Direct practice on Rally and Trailblazer stages is now introduced as a rally or trailblazer event: the intro and loading screen said "RAID" with the country (for example "RAID SLOVENIA"), because Direct sessions start from the game's demo route, whose event type is the first in the game's list, Raid. Practice now takes the stage's own discipline, as Rally (staggered) races already did, and keeps its usual start. Other tracks are unchanged. Checked in the lab with desktop practice on an External rally stage: the intro now reads "RALLY SLOVENIA" and the stage starts as before. Not yet checked in a headset.
+
+### External tracks
+
+- External track packs can ship lighter versions of some of their files for VR only, for example sparser grass, while desktop launches keep the full version (`VrSession`, see EXTERNAL_PACKS.md; needs launcher 0.18.31 or later). Checked with launcher tests (desktop sessions keep the original) and in the lab with a simulated headset (the VR session installed the VR file). Not yet checked in a headset.
 
 ## 0.18.30 — 2026-11-27 — Experimental
 

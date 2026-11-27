@@ -28,9 +28,14 @@ Public Module DirectRaceStart
 
     Public Sub Configure(start As ProcessStartInfo, settings As VrSettings)
         start.Environment.Remove("DIRT2VR_STAGGERED_DISCIPLINE")
+        start.Environment.Remove("DIRT2VR_DIRECT_DISCIPLINE")
         start.Environment.Remove("DIRT2VR_PIKES_GRID_RACE")
         Dim format = Resolve(settings)
-        If format = "staggered" Then
+        If settings.LaunchMode = "practice" AndAlso SupportsStaggered(settings.TrackId) Then
+            ' Practice keeps its standard start but names the stage's own discipline: the game's default (Raid)
+            ' put "RAID <country>" on the intro and loading screen of Rally and Trailblazer stages.
+            start.Environment("DIRT2VR_DIRECT_DISCIPLINE") = RaceCatalog.Current.Track(settings.TrackId).Event.ToLowerInvariant()
+        ElseIf format = "staggered" Then
             start.Environment("DIRT2VR_STAGGERED_DISCIPLINE") = RaceCatalog.Current.Track(settings.TrackId).Event.ToLowerInvariant()
         ElseIf settings.LaunchMode = "race" AndAlso DepthOfFieldTransaction.Supports(settings.TrackId) Then
             start.Environment("DIRT2VR_PIKES_GRID_RACE") = "1"

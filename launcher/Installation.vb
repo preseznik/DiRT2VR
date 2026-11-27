@@ -121,7 +121,7 @@ Public Module Worker
                     ElseIf CustomCars.CarPack.IsCustom(carCode) Then
                         prepareCar = CustomCars.CarSession.Plan(context.GameRoot, trackId)
                     End If
-                    CustomTracks.ExternalSession.PrepareContent(context.GameRoot, external, trackId, externalCar, race:=opponents > 0, raceStart:=raceStart)
+                    CustomTracks.ExternalSession.PrepareContent(context.GameRoot, external, trackId, externalCar, race:=opponents > 0, raceStart:=raceStart, vr:=operation <> "prepare-desktop")
                 ElseIf CustomTracks.ExternalSession.Pending(context.GameRoot) Then
                     Throw New IOException("Restore original files before launching; external content recovery is pending.")
                 End If
