@@ -17,15 +17,19 @@ Public NotInheritable Class BestLapChannel
     Private ReadOnly carGrade As String
     Private ReadOnly version As String
     Private ReadOnly carVersion As String = ""
+    Private ReadOnly externalCarId As String, externalCarVersion As String
     Private ReadOnly createdUtc As DateTime = DateTime.UtcNow
     Private lastSequence As Integer
     Public ReadOnly Name As String
     Public Sub New(context As InstallContext, start As ProcessStartInfo, layoutId As String, carCode As String, Optional carGrade As String = Nothing)
         start.Environment.Remove("DIRT2VR_LAP_CHANNEL")
-        If Not BestLapStore.Timed(layoutId) OrElse CustomCars.ExternalCars.Find(carCode) IsNot Nothing Then Return
+        If Not BestLapStore.Timed(layoutId) Then Return
         Me.context = context : Me.layoutId = layoutId : Me.carCode = carCode : Me.carGrade = If(carGrade, "")
         version = BestLapStore.TrackVersion(context, layoutId)
         If CustomCars.CarPack.IsCustom(carCode) Then carVersion = CustomCars.CarPack.Read(context.GameRoot, False).Version
+        ' External cars: the pack and its version go with each time (ExternalCarTimes).
+        Dim externalCar = CustomCars.ExternalCars.Find(carCode)
+        If externalCar IsNot Nothing Then externalCarId = externalCar.Id : externalCarVersion = externalCar.Manifest.Version
         Name = "Local\DiRT2VR.Lap." & Guid.NewGuid().ToString("N")
         mapping = MemoryMappedFile.CreateNew(Name, 32) : view = mapping.CreateViewAccessor()
         view.Write(0, &H32504C44) : view.Write(4, 1) : view.Write(8, 32)
@@ -52,7 +56,8 @@ Public NotInheritable Class BestLapChannel
             End Using
             lastSequence = result.Sequence
             BestLapStore.Record(context, New BestLapRecord With {.LayoutId = layoutId, .PackVersion = version, .CarCode = carCode, .CarGrade = carGrade,
-                .CarConversionVersion = carVersion, .Milliseconds = result.Microseconds \ 1000, .CompletedUtc = DateTime.UtcNow})
+                .CarConversionVersion = carVersion, .ExternalCarId = externalCarId, .ExternalCarVersion = externalCarVersion,
+                .Milliseconds = result.Microseconds \ 1000, .CompletedUtc = DateTime.UtcNow})
         Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is System.Text.Json.JsonException
             Console.Error.WriteLine("Best lap could not be saved: " & ex.Message)
         Catch ex As Exception When TypeOf ex Is ArgumentException OrElse TypeOf ex Is InvalidOperationException OrElse TypeOf ex Is ComponentModel.Win32Exception

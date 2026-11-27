@@ -10,6 +10,12 @@ Public Class BestLapRecord
     Public Property CarConversionVersion As String = ""
     Public Property Milliseconds As Long
     Public Property CompletedUtc As DateTime
+    ' External car pack (external-car-<id>) and its version; Nothing for stock and CUSTOM cars, whose
+    ' records are written exactly as before. These records live in ExternalCarTimes' own file.
+    <Serialization.JsonIgnore(Condition:=Serialization.JsonIgnoreCondition.WhenWritingNull)>
+    Public Property ExternalCarId As String
+    <Serialization.JsonIgnore(Condition:=Serialization.JsonIgnoreCondition.WhenWritingNull)>
+    Public Property ExternalCarVersion As String
 End Class
 Public Class BestLapHistory
     Public Property Schema As Integer = 1
@@ -42,10 +48,15 @@ Public Module BestLapStore
         Return RaceCatalog.Current.Tracks.Any(Function(t) t.Id = trackId)
     End Function
     Public Function Valid(record As BestLapRecord, Optional customCar As Boolean = False) As Boolean
-        Return record IsNot Nothing AndAlso (record.CarGrade = "" OrElse CarGrades.Values.Contains(record.CarGrade)) AndAlso Timed(record.LayoutId) AndAlso
-            If(Stock(record.LayoutId), record.PackVersion = "", SafeFiles.Version(record.PackVersion)) AndAlso
+        Return record IsNot Nothing AndAlso record.ExternalCarId Is Nothing AndAlso record.ExternalCarVersion Is Nothing AndAlso ValidTrackAndTime(record) AndAlso
             If(customCar, CustomCars.CarPack.IsCustom(record.CarCode) AndAlso SafeFiles.Version(record.CarConversionVersion),
-                record.CarConversionVersion = "" AndAlso RaceCatalog.Current.Cars.Any(Function(c) c.Code = record.CarCode)) AndAlso record.Milliseconds >= 1000 AndAlso record.Milliseconds <= 7200000 AndAlso
+                record.CarConversionVersion = "" AndAlso RaceCatalog.Current.Cars.Any(Function(c) c.Code = record.CarCode))
+    End Function
+    ' Grade, timed layout with its version rule, a plausible time and a UTC completion time: shared by every store.
+    Friend Function ValidTrackAndTime(record As BestLapRecord) As Boolean
+        Return (record.CarGrade = "" OrElse CarGrades.Values.Contains(record.CarGrade)) AndAlso Timed(record.LayoutId) AndAlso
+            If(Stock(record.LayoutId), record.PackVersion = "", SafeFiles.Version(record.PackVersion)) AndAlso
+            record.Milliseconds >= 1000 AndAlso record.Milliseconds <= 7200000 AndAlso
             record.CompletedUtc.Kind = DateTimeKind.Utc AndAlso record.CompletedUtc >= New DateTime(2020, 1, 1, 0, 0, 0, DateTimeKind.Utc)
     End Function
     ' Stock routes have no pack version. Selective builds record each layout's own
@@ -77,6 +88,7 @@ Public Module BestLapStore
             CompatibleVersion(layoutId, r.PackVersion, version) AndAlso (Not customCar OrElse r.CarConversionVersion = CustomCars.CarPack.Version)).OrderBy(Function(r) r.Milliseconds).FirstOrDefault()
     End Function
     Public Function Record(context As InstallContext, lap As BestLapRecord) As Boolean
+        If lap IsNot Nothing AndAlso lap.ExternalCarId IsNot Nothing Then Return ExternalCarTimes.Record(context, lap)
         Dim customCar = CustomCars.CarPack.IsCustom(lap.CarCode)
         If Not Valid(lap, customCar) Then Throw New IOException("Invalid completed lap result.")
         Dim personalBest = PracticeTimes.RecordPersonalBest(context, lap)
@@ -102,12 +114,12 @@ Public Module BestLapStore
         Dim circuit = RaceCatalog.Current.Track(trackId).Circuit
         Dim customCar = CustomCars.CarPack.IsCustom(carCode)
         Try
-            If CustomCars.ExternalCars.Find(carCode) IsNot Nothing Then
-                lines.Add("Best times are not recorded for External cars")
-            Else
-                Dim lap = Best(context, trackId, TrackVersion(context, trackId, receipt), customCar)
-                lines.Add(If(circuit, "Best lap: ", "Best time: ") & If(lap Is Nothing, If(circuit, "no completed lap yet", "no completed run yet"), Display(lap)))
-            End If
+            ' An External car shows its own best for the installed pack version (no other car's time).
+            Dim externalCar = CustomCars.ExternalCars.Find(carCode)
+            Dim lap = If(externalCar IsNot Nothing,
+                ExternalCarTimes.Best(context, trackId, TrackVersion(context, trackId, receipt), externalCar.Id, externalCar.Manifest.Version),
+                Best(context, trackId, TrackVersion(context, trackId, receipt), customCar))
+            lines.Add(If(circuit, "Best lap: ", "Best time: ") & If(lap Is Nothing, If(circuit, "no completed lap yet", "no completed run yet"), Display(lap)))
         Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException OrElse TypeOf ex Is JsonException
             lines.Add("Best lap history unavailable; saved file kept")
         End Try

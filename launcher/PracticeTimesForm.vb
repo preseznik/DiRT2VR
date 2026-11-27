@@ -56,7 +56,7 @@ Public Class PracticeTimesForm
         Dim car = If(TryCast(carFilter.SelectedItem, Choice)?.Id, initialCar)
         loading = True
         Try
-            records = PracticeTimes.Entries(context)
+            records = PracticeTimes.AllEntries(context)
             trackFilter.Items.Clear() : trackFilter.Items.Add(New Choice("", "All tracks"))
             For Each id In records.Select(Function(r) BestLapStore.TimedLayout(r.LayoutId)).Concat({BestLapStore.TimedLayout(selectedTrack)}).
                 Where(Function(value) value <> "").Distinct().OrderBy(Function(value) PracticeTimes.TrackName(value))
@@ -87,12 +87,12 @@ Public Class PracticeTimesForm
         Try
             rows.Items.Clear()
             For Each lap As BestLapRecord In visible
-                Dim cells As New List(Of String) From {BestLapStore.Time(lap.Milliseconds), PracticeTimes.CarName(lap.CarCode),
+                Dim cells As New List(Of String) From {BestLapStore.Time(lap.Milliseconds), PracticeTimes.CarLabel(lap),
                     If(lap.CarGrade = "", "Unspecified", CarGrades.GradeLabel(lap.CarGrade))}
                 If selectedTrack = "" Then cells.Add(PracticeTimes.TrackName(lap.LayoutId))
                 cells.Add(lap.CompletedUtc.ToLocalTime().ToString("yyyy-MM-dd HH:mm"))
                 cells.Add(If(lap.PackVersion = "", "Stock", lap.PackVersion))
-                cells.Add(If(lap.CarConversionVersion = "", "Stock", lap.CarConversionVersion))
+                cells.Add(If(lap.ExternalCarVersion, If(lap.CarConversionVersion = "", "Stock", lap.CarConversionVersion)))
                 rows.Items.Add(New ListViewItem(cells.ToArray()) With {.Tag = lap})
             Next
         Finally

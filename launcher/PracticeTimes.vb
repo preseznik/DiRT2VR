@@ -12,11 +12,11 @@ Public Module PracticeTimes
     End Function
     Private Function Identity(record As BestLapRecord) As String
         Return String.Join("|", record.LayoutId, record.PackVersion, record.CarCode, record.CarGrade,
-                           record.CarConversionVersion, record.Milliseconds.ToString(), record.CompletedUtc.Ticks.ToString())
+                           record.CarConversionVersion, record.Milliseconds.ToString(), record.CompletedUtc.Ticks.ToString(), record.ExternalCarId, record.ExternalCarVersion)
     End Function
     Private Function Configuration(record As BestLapRecord) As String
         Return String.Join("|", BestLapStore.TimedLayout(record.LayoutId), record.PackVersion,
-                           record.CarCode, record.CarGrade, record.CarConversionVersion)
+                           record.CarCode, record.CarGrade, record.CarConversionVersion, record.ExternalCarId, record.ExternalCarVersion)
     End Function
     Public Function Entries(context As InstallContext) As List(Of BestLapRecord)
         Dim history As New PracticeTimeHistory()
@@ -34,6 +34,11 @@ Public Module PracticeTimes
             Next
         Next
         Return records.GroupBy(AddressOf Identity).Select(Function(group) group.First()).ToList()
+    End Function
+    ' Everything the history and leaderboard windows list: the files above plus External car times. Only Entries is
+    ' written back to practice-time-history.json, so External car records never reach the files older launchers read.
+    Public Function AllEntries(context As InstallContext) As List(Of BestLapRecord)
+        Return Entries(context).Concat(ExternalCarTimes.Load(context).Records).ToList()
     End Function
     Public Function RecordPersonalBest(context As InstallContext, lap As BestLapRecord) As Boolean
         If lap Is Nothing OrElse Not BestLapStore.Valid(lap, CustomCars.CarPack.IsCustom(lap.CarCode)) Then Throw New IOException("Invalid completed lap result.")
@@ -64,6 +69,14 @@ Public Module PracticeTimes
         End Try
     End Function
     Public Function CarName(carCode As String) As String
+        Dim external = CustomCars.ExternalCars.Find(carCode)
+        If external IsNot Nothing Then Return external.Name & " — External"
         Return If(RaceCatalog.Current.Cars.FirstOrDefault(Function(car) car.Code = carCode)?.Label, carCode)
+    End Function
+    ' A record's car: an External car by its pack, also after the pack was removed or another pack took its code.
+    Public Function CarLabel(record As BestLapRecord) As String
+        If record.ExternalCarId Is Nothing Then Return CarName(record.CarCode)
+        Dim external = CustomCars.ExternalCars.Find(record.CarCode)
+        Return If(external IsNot Nothing AndAlso external.Id = record.ExternalCarId, external.Name, record.ExternalCarId.Substring("external-car-".Length)) & " — External"
     End Function
 End Module
