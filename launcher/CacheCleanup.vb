@@ -28,7 +28,7 @@ Public NotInheritable Class CacheCleanup
     Private Const LeaseName As String = "cache-activity.lock"
     Private Const ReceiptName As String = "cache-cleanup.json"
     ' Raise when the rules change, so the next launch checks again at once.
-    Private Const CurrentRules As Integer = 2
+    Private Const CurrentRules As Integer = 3
 
     ' A file lease survives async thread switches and releases automatically on crash.
     Public Shared Async Function AcquireUpdateLeaseAsync(context As InstallContext, token As CancellationToken) As Task(Of FileStream)
@@ -287,7 +287,9 @@ Public NotInheritable Class CacheCleanup
                     Not {"trace.log", "dirt2vr-settings.json", "preflight.txt", "custom-build-error.json"}.Any(Function(n) File.Exists(IO.Path.Combine(item.Path, n))) Then
                     kept += size : Continue For
                 End If
-                RemoveOldTree(root, IO.Path.GetFileName(item.Path), If(expired, now.AddDays(-30), now.AddDays(-1)), result, watch)
+                ' A session that stays (too recent or in use) still fills the budget,
+                ' so smaller older sessions behind it are not mistaken for room to spare.
+                If Not RemoveOldTree(root, IO.Path.GetFileName(item.Path), If(expired, now.AddDays(-30), now.AddDays(-1)), result, watch) Then kept += size
             Catch ex As Exception
                 Problem(result, ex)
             End Try
@@ -306,7 +308,8 @@ Public NotInheritable Class CacheCleanup
         Next
         Return total
     End Function
-    Private Shared Sub RemoveOldTree(parent As String, name As String, cutoff As DateTime, result As Receipt, watch As Stopwatch)
+    ' True once the tree is claimed for removal.
+    Private Shared Function RemoveOldTree(parent As String, name As String, cutoff As DateTime, result As Receipt, watch As Stopwatch) As Boolean
         ' Resolves the root and rejects links anywhere on its path.
         Dim root = SafeFiles.Inside(parent, name)
         Dim pending As New Stack(Of DirectoryInfo)
@@ -317,29 +320,30 @@ Public NotInheritable Class CacheCleanup
         ' entries carry their own attributes and times, so nothing is opened: opening
         ' each file (often scanned by antivirus) cost about 2 ms per file.
         While pending.Count > 0
-            If OutOfTime(watch) Then Return
+            If OutOfTime(watch) Then Return False
             Dim folder = pending.Pop()
-            If folder.LastWriteTimeUtc >= cutoff Then Return
+            If folder.LastWriteTimeUtc >= cutoff Then Return False
             For Each entry In folder.EnumerateFileSystemInfos()
                 inspected += 1
-                If inspected > 25000 OrElse OutOfTime(watch) Then Return
-                If (entry.Attributes And FileAttributes.ReparsePoint) <> 0 Then Return
+                If inspected > 25000 OrElse OutOfTime(watch) Then Return False
+                If (entry.Attributes And FileAttributes.ReparsePoint) <> 0 Then Return False
                 Dim child = TryCast(entry, DirectoryInfo)
                 If child IsNot Nothing Then pending.Push(child) : Continue For
-                If entry.LastWriteTimeUtc >= cutoff Then Return
+                If entry.LastWriteTimeUtc >= cutoff Then Return False
             Next
         End While
         ' Claim the whole tree in one step: Windows refuses to rename a folder while
         ' any file inside it is open, so a tree in use stays exactly as it is.
         Dim claimed = SafeFiles.Inside(parent, name & ClaimSuffix)
-        If Directory.Exists(claimed) OrElse File.Exists(claimed) Then Return
+        If Directory.Exists(claimed) OrElse File.Exists(claimed) Then Return False
         Try
             Directory.Move(root, claimed)
         Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
-            Return
+            Return False
         End Try
         DeleteClaimed(claimed, result, watch)
-    End Sub
+        Return True
+    End Function
     ' Claimed trees are deleted over as many passes as they need.
     Private Const ClaimSuffix As String = ".removing"
     Private Shared Sub ResumeClaims(folder As String, result As Receipt, watch As Stopwatch)
