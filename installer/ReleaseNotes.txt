@@ -1,7 +1,10 @@
-DiRT2VR 0.18.28 — Experimental
+DiRT2VR 0.18.30 — Experimental
 
 LATEST CHANGES (since 0.18.20)
 
+- Times of day and weather on External tracks: a track pack can offer conditions such as Day, Evening, Overcast and Morning mist from one installation. Each appears as its own layout, for example "Katarina Descent · Evening", with its own best times and replays. Your game files are restored after every session.
+- Best times for External cars: practice runs with an External car are now saved, per car pack and pack version, and shown under the car picker, in Best times and in Leaderboards.
+- Fix for the CUSTOM car picker: with CUSTOM cars on, the launcher came back on the Ferrari F2004 at every start. Your last CUSTOM or External car now stays selected, with its livery.
 - Livery choice in Direct practice and Race: pick your car's livery right under the car picker, for every stock car and for External cars whose pack brings several liveries, on desktop and in VR. AI opponents keep their usual livery, each car remembers its choice, and saved replays keep the livery they were recorded with.
 - Fix for VR photos not saving on high-resolution headsets: A (or P) in VR Photo Mode could save nothing because the game ran short of memory for both eyes. Photos are now saved in small pieces, and a failed save shows a message in the headset.
 - Fix for the seat position panel in CUSTOM and External cars: it said "Car not identified" and refused adjustments. Adjust these cars with the panel while driving; the launcher's Cockpit seat list shows stock cars only.
