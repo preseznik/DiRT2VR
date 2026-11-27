@@ -8,6 +8,9 @@ Imports DiRT2VR.CustomTracks
 ' Failures never block play.
 Public NotInheritable Class CacheCleanup
     Public Class Receipt
+        ' Cleanup rules that wrote this receipt. Older launchers wrote none (0),
+        ' so a daily check from before an upgrade does not delay the new rules.
+        Public Property Rules As Integer
         Public Property CompletedUtc As DateTime
         Public Property FilesRemoved As Integer
         Public Property BytesRemoved As Long
@@ -24,6 +27,8 @@ Public NotInheritable Class CacheCleanup
     Private Shared ReadOnly InstallerName As New Regex("^[0-9a-f]{32}-DiRT2VR-(\d+\.\d+\.\d+)-Setup\.exe(\.part)?$", RegexOptions.IgnoreCase Or RegexOptions.CultureInvariant)
     Private Const LeaseName As String = "cache-activity.lock"
     Private Const ReceiptName As String = "cache-cleanup.json"
+    ' Raise when the rules change, so the next launch checks again at once.
+    Private Const CurrentRules As Integer = 2
 
     ' A file lease survives async thread switches and releases automatically on crash.
     Public Shared Async Function AcquireUpdateLeaseAsync(context As InstallContext, token As CancellationToken) As Task(Of FileStream)
@@ -90,7 +95,7 @@ Public NotInheritable Class CacheCleanup
                         Dim now = DateTime.UtcNow
                         If File.Exists(receiptPath) Then
                             Dim previous = SafeFiles.ReadJson(Of Receipt)(receiptPath)
-                            If previous.CompletedUtc <= now AndAlso previous.CompletedUtc > now.AddDays(-1) Then
+                            If previous.Rules >= CurrentRules AndAlso previous.CompletedUtc <= now AndAlso previous.CompletedUtc > now.AddDays(-1) Then
                                 result.Skipped = "Already checked today" : Return result
                             End If
                         End If
@@ -112,6 +117,7 @@ Public NotInheritable Class CacheCleanup
                         ' daily check only once everything has been looked at.
                         result.Incomplete = OutOfTime(watch)
                         If Not result.Incomplete Then
+                            result.Rules = CurrentRules
                             result.CompletedUtc = now
                             SafeFiles.WriteJson(receiptPath, result)
                         End If
