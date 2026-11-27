@@ -24,6 +24,9 @@ Public Class ReplayManifest
     ' The player's chosen livery; absent for the game's own, so older launchers still read those.
     <JsonIgnore(Condition:=JsonIgnoreCondition.WhenWritingNull)>
     Public Property CarLivery As String
+    ' The AI cars' livery order (CarLiveries.ConfigureOpponents); absent for recordings whose AI cars kept the game's.
+    <JsonIgnore(Condition:=JsonIgnoreCondition.WhenWritingNull)>
+    Public Property AiLiverySeed As Integer?
     Public Property LaunchConfig As String = ""
     Public Property Content As ReplayContentRequirement
     Public Property RecordingBytes As Long
@@ -70,6 +73,7 @@ Public Class ReplayManifest
         End If
         EventConfig()
         If CarLivery IsNot Nothing AndAlso (Content.Cars.Count = 0 OrElse Not CarLiveries.Saveable(Content.Cars(0), CarLivery)) Then Throw New IOException("Invalid saved replay livery.")
+        If AiLiverySeed.HasValue AndAlso AiLiverySeed.Value < 1 Then Throw New IOException("Invalid saved replay livery.")
     End Sub
 End Class
 

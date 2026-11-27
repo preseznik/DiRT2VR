@@ -34,6 +34,7 @@ Public NotInheritable Class ReplaySession
             manifest = New ReplayManifest With {
                 .Name = RaceCatalog.Current.Track(settings.TrackId).Label & " — " & RaceCatalog.Current.Car(settings.CarCode).Label,
                 .Laps = settings.SessionLaps, .RaceStart = DirectRaceStart.Resolve(settings), .CarGrade = settings.CarGrade, .CarLivery = CarLiveries.Effective(settings)?.Code,
+                .AiLiverySeed = If(settings.AiLiverySeed > 0 AndAlso CarLiveries.OpponentCount(xml) > 0, settings.AiLiverySeed, CType(Nothing, Integer?)),
                 .LaunchConfig = xml.ToString(), .Content = New AssetTransaction(context).RecordingContent()}
             If manifest.Name.Length > 100 Then manifest.Name = manifest.Name.Substring(0, 100)
             manifest.EventConfig()

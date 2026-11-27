@@ -101,7 +101,7 @@ Public Class Session
             If multiplayer OrElse joinTarget IsNot Nothing Then Throw New IOException("Turn CUSTOM cars off before starting LAN multiplayer.")
             settings.CarCode = CustomCarService.SelectedCode(context)
         End If
-        If savedReplayId Is Nothing Then settings.CarLivery = CarLiveries.ChosenFor(context, settings.CarCode)
+        If savedReplayId Is Nothing Then settings.CarLivery = CarLiveries.ChosenFor(context, settings.CarCode) : settings.AiLiverySeed = CarLiveries.NewSeed()
         replayId = savedReplayId
         If replayId IsNot Nothing Then
             Dim library As New ReplayLibrary(context)
@@ -113,6 +113,7 @@ Public Class Session
             settings.RaceStart = replay.RaceStart
             settings.CarGrade = replay.CarGrade
             settings.CarLivery = If(replay.CarLivery, "")
+            settings.AiLiverySeed = If(replay.AiLiverySeed, 0)
             customTrack = CustomTracks.TrackPacks.IsLayout(settings.TrackId)
             postProcessTest = ButtermilkPostProcess.DefaultProfile(settings.TrackId)
         End If
@@ -246,6 +247,7 @@ Public Class Session
                         End If
                         ' After preparation, as on desktop: an external car's livery rows exist only in the session database.
                         CarLiveries.Configure(start, context, settings)
+                        CarLiveries.ConfigureOpponents(start, context, settings)
                         Progress("Applying VR graphics settings…")
                         graphics.Prepare(settings)
                         Progress("Preparing the player profile…")
@@ -367,7 +369,7 @@ Public Class Session
             settings.LaunchMode = "menus"
         Else
             chosenEvent.ApplyTo(settings) : chosenEvent = Nothing
-            settings.CarLivery = CarLiveries.ChosenFor(context, settings.CarCode)
+            settings.CarLivery = CarLiveries.ChosenFor(context, settings.CarCode) : settings.AiLiverySeed = CarLiveries.NewSeed()
             postProcessTest = "normal"
         End If
     End Sub
@@ -421,6 +423,7 @@ Public Class Session
         CarSetup.Configure(start, settings)
         CarGrades.Configure(start, settings)
         CarLiveries.Configure(start, context, settings)
+        CarLiveries.ConfigureOpponents(start, context, settings)
         ' Direct sessions run the DLL, so the seat panel can adjust the desktop cockpit.
         Using seat = If(config IsNot Nothing, New SeatChannel(context, settings, desktopMode:=True), Nothing), input = If(config IsNot Nothing, New ControllerInput(context), Nothing)
             If seat IsNot Nothing Then

@@ -1,8 +1,10 @@
+Imports System.Xml.Linq
+
 ' A stock car's liveries come from the embedded catalog: the game's vehicle_livery rows
 ' for that vehicle, in the game's own order. An external car's come from its pack's
 ' Car.Liveries, registered for the session as "<code>_00", "<code>_01", ... Direct
-' starts give every car "<car>_00"; a chosen livery replaces it on the player's car
-' only (src/car_livery.cpp).
+' starts give every car "<car>_00"; a chosen livery replaces it on the player's car, and
+' in races each AI car wears another of its own model's (src/car_livery.cpp).
 Public Class PracticeLivery
     Public Property Code As String = ""
     ' The catalog's vehicle_livery id. 0 for an external car's: its rows exist only in the session database.
@@ -58,4 +60,46 @@ Public Module CarLiveries
         Dim id = If(external, CustomCars.CarRegistration.LiveryId(File.ReadAllBytes(CustomTracks.SafeFiles.Inside(context.GameRoot, "database/database.bin")), settings.CarCode, livery.Code), livery.Id)
         start.Environment("DIRT2VR_CAR_LIVERY") = id.ToString(Globalization.CultureInfo.InvariantCulture)
     End Sub
+    ' A live event's AI livery order; saved replays keep theirs.
+    Public Function NewSeed() As Integer
+        Return Random.Shared.Next(1, Integer.MaxValue)
+    End Function
+    ' AI cars on a Direct grid: every "car" entry counts its number, and the first car is the player's.
+    Public Function OpponentCount(config As XDocument) As Integer
+        Return config.Root.Element("track").Elements("car").Sum(Function(c) CInt(c.Attribute("number"))) - 1
+    End Function
+    ' Direct races (ProJict 268d8918): the installed liveries of every car on the grid and this event's seed. The DLL
+    ' gives each AI car one of its own model's, never the player's, in the seed's random order, so AI cars of one
+    ' model differ and mixed grids get random liveries (src/car_livery.cpp). Runs after the worker prepared the
+    ' session: an external car's rows exist only in the session database.
+    Public Sub ConfigureOpponents(start As ProcessStartInfo, context As InstallContext, settings As VrSettings)
+        start.Environment.Remove("DIRT2VR_AI_LIVERIES") : start.Environment.Remove("DIRT2VR_AI_LIVERY_SEED")
+        If Not settings.DirectMode OrElse settings.AiLiverySeed < 1 Then Return
+        Dim config = XDocument.Parse(Text.Encoding.UTF8.GetString(Files.ReadBytes(IO.Path.Combine(context.GameRoot, New AssetTransaction(context).PracticeConfig()))))
+        Dim ids = OpponentLiveryIds(context, config)
+        If ids.Count < 2 Then Return
+        start.Environment("DIRT2VR_AI_LIVERIES") = String.Join(",", ids.Select(Function(i) i.ToString(Globalization.CultureInfo.InvariantCulture)))
+        start.Environment("DIRT2VR_AI_LIVERY_SEED") = settings.AiLiverySeed.ToString(Globalization.CultureInfo.InvariantCulture)
+    End Sub
+    ' The grid's cars' installed liveries in catalog order; none without AI cars.
+    Public Function OpponentLiveryIds(context As InstallContext, config As XDocument) As List(Of Integer)
+        Dim ids As New List(Of Integer)
+        If OpponentCount(config) < 1 Then Return ids
+        Dim database As Byte() = Nothing
+        For Each code In config.Root.Element("track").Elements("car").Select(Function(c) CStr(c.Attribute("name"))).Distinct(StringComparer.Ordinal)
+            For Each livery In Choices(code)
+                Dim folder = IO.Path.Combine(context.GameRoot, "cars", code, "livery_" & livery.Code.Substring(livery.Code.Length - 2))
+                Files.NoLinks(folder)
+                If Not Directory.Exists(folder) Then Continue For
+                If CarGrades.IsStock(code) Then ids.Add(livery.Id) : Continue For
+                If database Is Nothing Then database = File.ReadAllBytes(CustomTracks.SafeFiles.Inside(context.GameRoot, "database/database.bin"))
+                Try
+                    ids.Add(CustomCars.CarRegistration.LiveryId(database, code, livery.Code))
+                Catch ex As IOException
+                    ' A pack livery the session did not register: the AI cars wear the others.
+                End Try
+            Next
+        Next
+        Return ids
+    End Function
 End Module

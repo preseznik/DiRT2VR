@@ -535,7 +535,7 @@ Public Class MainForm
             Field(If(i = 4, race, selection), labels(i), If(i = 3, CType(customCars, Control), choices(i)))
             If i = 3 Then Field(selection, "Livery", customCars.LiveryChoice) : Field(selection, "", customCars.Options)
         Next
-        Tip(customCars.LiveryChoice, "Your car's livery in Direct practice and Race. Opponents keep the game's liveries." & vbCrLf & "Saved replays keep the livery they were recorded with. External car packs can bring several liveries.")
+        Tip(customCars.LiveryChoice, "Your car's livery in Direct practice and Race. In a race, AI cars wear other liveries of their own models, chosen at random." & vbCrLf & "Saved replays keep the liveries they were recorded with. External car packs can bring several liveries.")
         Dim setupButton As New Button With {.Text = "Vehicle setup…", .Name = "VehicleSetup", .AutoSize = True}
         selection.Controls.Add(setupButton)
         selection.Controls.Add(bestTime)

@@ -203,6 +203,10 @@ Public Class VrSettings
     ' This launch's livery: the car's saved choice (custom-cars.json) or a saved replay's.
     <Serialization.JsonIgnore>
     Public Property CarLivery As String = ""
+    ' This launch's AI livery order (CarLiveries.ConfigureOpponents): new for each live event, a saved replay's own;
+    ' 0 keeps the game's livery on every AI car (replays recorded before AI liveries varied).
+    <Serialization.JsonIgnore>
+    Public Property AiLiverySeed As Integer
     Public Property Opponents As Integer = 7
     Public Property OpponentCars As String = "same"
     Public Property Laps As Integer = 1
