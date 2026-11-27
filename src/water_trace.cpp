@@ -253,6 +253,7 @@ void TraceWaterInputs(ID3D11DeviceContext* context,uint64_t shader,uint64_t fram
         // views in metadata without pretending a cube or MSAA surface is 2D.
         if((int(slot)!=reflection && slot!=0) || desc.ArraySize!=1 || desc.MipLevels!=1 || desc.SampleDesc.Count!=1 ||
             uint64_t(desc.Width)*desc.Height>2048*2048) { meta << '\n'; continue; }
+        if(!TextureDumpsEnabled()) { meta << " skipped=texture_dumps_off\n"; continue; }
         desc.Usage=D3D11_USAGE_STAGING; desc.BindFlags=desc.MiscFlags=0; desc.CPUAccessFlags=D3D11_CPU_ACCESS_READ;
         ComPtr<ID3D11Texture2D> copy;
         if(FAILED(device->CreateTexture2D(&desc,nullptr,&copy))) { meta << " copy_failed\n"; continue; }

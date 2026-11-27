@@ -243,9 +243,9 @@ Public Class MainForm
         AddHandler Shown, Async Sub() Await CheckStartupUpdate()
         AddHandler Shown, Async Sub()
                               cacheTimer.Start()
-                              Await CacheCleanup.RunAsync(context)
+                              Await RunCacheCleanup()
                           End Sub
-        AddHandler cacheTimer.Tick, Async Sub() Await CacheCleanup.RunAsync(context)
+        AddHandler cacheTimer.Tick, Async Sub() Await RunCacheCleanup()
         AddHandler FormClosed, Sub() cacheTimer.Dispose()
     End Sub
     Private Sub ConfigureTooltips()
@@ -1289,9 +1289,15 @@ Public Class MainForm
         settings.RuntimeMode = saved.RuntimeMode
         runtimeChoice.SelectedIndex = Array.IndexOf(VrRuntime.Modes, saved.RuntimeMode)
     End Sub
+    Private Async Function RunCacheCleanup() As Task
+        Dim receipt = Await CacheCleanup.RunAsync(context)
+        ' A large backlog is removed a few seconds at a time: come back in a minute until done.
+        If Not IsDisposed Then cacheTimer.Interval = If(receipt.Incomplete, 60000, 3600000)
+    End Function
     Private Sub Spawn(ParamArray arguments As String())
         Dim launching = arguments.Contains("--launch")
         If launching AndAlso (busy OrElse launchProgress IsNot Nothing) Then Return
+        If launching Then CacheCleanup.PauseForLaunch()
         Dim start As New ProcessStartInfo(Environment.ProcessPath) With {.UseShellExecute = False, .CreateNoWindow = True}
         For Each arg In arguments.Concat({"--game", context.GameRoot})
             start.ArgumentList.Add(arg)

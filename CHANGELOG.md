@@ -6,6 +6,17 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+### Disk space
+
+- The launcher now cleans up after itself in `%LOCALAPPDATA%\DiRT2VR`:
+  - Diagnostic logs stay within about 2 GB per installation. The five newest sessions are always kept; older sessions go after 30 days, or after a day once the logs pass 2 GB.
+  - The Direct multiplayer game copy (about 10 GB) is removed after two weeks without a Direct race; the next race prepares it again.
+  - Folders left by other or removed DiRT 2 installations get the same log, Direct, download and build cleanup. Folders with a pending recovery are left alone.
+  - A large backlog is cleared a few seconds at a time, every minute while the launcher is open, and cleanup steps aside when you launch. Deleting is about 20 times faster than before.
+  - Uninstalling (or `--remove-proxy`) removes that installation's logs, Direct game copy, downloaded updates and build leftovers. Settings, profiles, saved replays and lap times stay.
+  - Checked with the launcher against test folders (logs, Direct copies, a 60,000-file backlog, recovery-pending and non-install folders, uninstall); not yet run on a player PC or through the real uninstaller.
+- Development screenshot captures no longer save raw GPU textures (tens of MB each, about 0.5 GB per session); they stay available to developers through a separate switch. Normal play and normal diagnostic logging never saved them.
+
 ## 0.18.31 — 2026-11-27 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.31)

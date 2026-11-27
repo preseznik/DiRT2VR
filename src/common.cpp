@@ -15,6 +15,13 @@ bool LoggingEnabled() {
     }();
     return enabled;
 }
+bool TextureDumpsEnabled() {
+    static const bool enabled=[] {
+        wchar_t value[8]{};
+        return GetEnvironmentVariableW(L"DIRT2VR_TRACE_TEXTURES",value,8)==1 && value[0]==L'1';
+    }();
+    return enabled && LoggingEnabled();
+}
 std::ofstream TraceFile(const std::filesystem::path& path, std::ios::openmode mode) {
     if(!LoggingEnabled()) return {};
     std::error_code ec;

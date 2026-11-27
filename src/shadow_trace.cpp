@@ -117,6 +117,7 @@ void CaptureLightingTexture(ID3D11DeviceContext* context,ID3D11Resource* resourc
     D3D11_TEXTURE2D_DESC d{};texture->GetDesc(&d);
     meta<<label<<" resource="<<resource<<" width="<<d.Width<<" height="<<d.Height
         <<" format="<<format<<" samples="<<d.SampleDesc.Count<<" mip="<<mip<<'\n';
+    if(!TextureDumpsEnabled()){meta<<label<<"_skipped=texture_dumps_off\n";return;}
     UINT pixelBytes{};
     switch(format) {
     case DXGI_FORMAT_R16G16B16A16_FLOAT:pixelBytes=8;break;

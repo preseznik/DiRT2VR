@@ -5,6 +5,8 @@
 #include <fstream>
 namespace vr {
 bool LoggingEnabled();
+// Raw GPU texture dumps (tens of MB each) are a separate lab opt-in.
+bool TextureDumpsEnabled();
 std::ofstream TraceFile(const std::filesystem::path& path, std::ios::openmode mode=std::ios::out);
 std::filesystem::path Output();
 void Log(const char* format, ...);

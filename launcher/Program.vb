@@ -80,7 +80,12 @@ Public Module Program
                         Call (New GraphicsTransaction(context)).Recover()
                         Worker.Invoke(context, "recover")
                         If args.Contains("--setup") Then Worker.Invoke(context, "setup")
-                        If args.Contains("--remove-proxy") Then Worker.Invoke(context, "remove")
+                        If args.Contains("--remove-proxy") Then
+                            Worker.Invoke(context, "remove")
+                            ' Uninstalling also removes this installation's caches (logs, the Direct
+                            ' game copy, downloads, build leftovers). Settings and replays stay.
+                            CacheCleanup.RemoveDisposable(context)
+                        End If
                     Finally
                         guard.ReleaseMutex()
                     End Try
