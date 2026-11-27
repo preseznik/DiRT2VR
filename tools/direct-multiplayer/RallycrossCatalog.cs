@@ -45,7 +45,8 @@ public static class RallycrossCatalog
         var pack = DirectLayout.Pack(id);
         var layout = pack.GetLayout(id);
         string label = pack.Layouts.Length == 1 ? pack.Name : pack.Name + " – " +
-            (pack.Layouts.Count(other=>other.Name==layout.Name)>1 ? layout.Condition : layout.Name);
+            (pack.Layouts.Count(other=>other.Name==layout.Name)>1
+                ? (pack.Layouts.Any(other=>other.Name!=layout.Name) ? layout.Name + " · " + layout.Condition : layout.Condition) : layout.Name);
         return new(0, label + (pack.External == null ? " (custom)" : " (external)"), id, layout.Circuit);
     }
 

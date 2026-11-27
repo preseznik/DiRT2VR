@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+### Custom tracks
+
+- External track packs can offer several lighting conditions (for example Day, Evening, Overcast) from one installation: the pack lists them per layout (`Conditions`, see EXTERNAL_PACKS.md), each condition appears as its own layout entry such as "Katarina Climb · Evening" with its own best times and replays, and the launcher sets the condition's values in the player's own borrowed venue lighting for the session, restoring everything afterwards as usual. A condition can also take a borrowed file such as the sky from another original track, for example a cloudy sky for Overcast. Packs using it need 0.18.29 or later. Checked with launcher tests on a real stock Croatia Rally lighting file (values set, everything else unchanged, recovery removes the file, invalid values and unknown parameters refused). Checked in the lab on desktop with a Polhov Gradec test build offering Day, Evening, Overcast (with Malaysia Rally's cloudy sky) and Morning mist: each condition loaded with its own lighting and sky, and the original files were restored after every session. Not yet checked in a headset, in races or replays, or by a player.
+
 ## 0.18.28 — 2026-11-26 — Experimental
 
 [GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.28)

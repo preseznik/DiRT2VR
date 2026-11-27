@@ -116,11 +116,29 @@ public static class ExternalSession
             yield return (new(target, null, applied.Sha256, null), SafeFiles.Inside(pack.Root, applied.Path));
         }
         // Stock files from the player's own game (pinned and checked above), staged and recovered like packed files.
-        foreach (var borrow in layout.Borrow ?? [])
+        var condition = pack.Condition(layoutId);
+        var lighting = condition?.Lighting;
+        foreach (var listed in layout.Borrow ?? [])
         {
             cancel.ThrowIfCancellationRequested();
+            // The selected condition may take this file from another pinned stock source.
+            var borrow = condition?.Borrow?.SingleOrDefault(b => b.Target == listed.Target) ?? listed;
             if (File.Exists(SafeFiles.Inside(game, borrow.Target))) throw new IOException("External track destination already exists; it was preserved: " + borrow.Target);
             var dependency = pack.Manifest.Dependencies.Single(d => d.Path == borrow.Source);
+            if (lighting is { Count: > 0 } && borrow.Target == $"tracks/usa/{layout.Folder}/lighting.xml")
+            {
+                // The selected condition: the player's own lighting with the condition's values, staged for the journal.
+                if (stage is null) throw new IOException("External track conditions need a staging folder.");
+                byte[] original = File.ReadAllBytes(SafeFiles.Inside(game, borrow.Source));
+                if (Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(original)) != dependency.Sha256)
+                    throw new IOException("External pack needs a different or missing game dependency: " + borrow.Source);
+                byte[] patched = ExternalLighting.Patch(original, lighting);
+                SafeFiles.NoLinks(stage); Directory.CreateDirectory(stage);
+                string staged = Path.Combine(stage, "lighting-" + borrow.Target.Replace('/', '_'));
+                File.WriteAllBytes(staged, patched);
+                yield return (new(borrow.Target, null, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(patched)), null), staged);
+                continue;
+            }
             yield return (new(borrow.Target, null, dependency.Sha256, null), SafeFiles.Inside(game, borrow.Source));
         }
         if (layout.Registration is not null)

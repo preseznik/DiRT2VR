@@ -65,14 +65,20 @@ Public Class CustomTrackPanel
     Private Class LayoutItem
         Public ReadOnly Value As Layout
         Public Property AssetQuality As String = ""
-        Private ReadOnly conditionName As Boolean
-        Public Sub New(value As Layout, Optional showCondition As Boolean = False)
-            Me.Value = value : conditionName = showCondition
+        Private ReadOnly conditionName As Boolean, withCondition As Boolean
+        Public Sub New(value As Layout, Optional showCondition As Boolean = False, Optional nameAndCondition As Boolean = False)
+            Me.Value = value : conditionName = showCondition : withCondition = nameAndCondition
         End Sub
         Public Overrides Function ToString() As String
-            Return If(conditionName, Value.Condition, Value.Name) & AssetQuality
+            Return If(conditionName, Value.Condition, If(withCondition, Value.Name & " · " & Value.Condition, Value.Name)) & AssetQuality
         End Function
     End Class
+    ' An external pack listing one layout under several conditions names both (e.g. "Katarina Climb · Evening").
+    Private ReadOnly Property ExternalConditions As Boolean
+        Get
+            Return currentPack?.External IsNot Nothing AndAlso currentPack.Layouts.GroupBy(Function(l) l.Name).Any(Function(g) g.Count() > 1)
+        End Get
+    End Property
     Public ReadOnly Property CustomEnabled As Boolean
         Get
             Return toggle.Checked
@@ -329,7 +335,7 @@ Public Class CustomTrackPanel
             circuitRaceLaps = Math.Clamp(selected.Laps, 1, 20)
             layouts.Items.Clear()
             For Each trackLayout In currentPack.Layouts
-                layouts.Items.Add(New LayoutItem(trackLayout, conditions))
+                layouts.Items.Add(New LayoutItem(trackLayout, conditions, ExternalConditions))
             Next
             layouts.SelectedItem = layouts.Items.Cast(Of LayoutItem).FirstOrDefault(Function(item) item.Value.Id = selected.LayoutId)
             launchMode.Items.Clear()
@@ -417,7 +423,7 @@ Public Class CustomTrackPanel
                 Dim lighting = lightingTest.SelectedIndex
                 layouts.BeginUpdate() : layouts.Items.Clear()
                 For Each trackLayout In visibleLayouts
-                    layouts.Items.Add(New LayoutItem(trackLayout, currentPack.Id = "nordschleife" OrElse currentPack.Id = "misty-loch"))
+                    layouts.Items.Add(New LayoutItem(trackLayout, currentPack.Id = "nordschleife" OrElse currentPack.Id = "misty-loch", ExternalConditions))
                 Next
                 layouts.SelectedItem = layouts.Items.Cast(Of LayoutItem).FirstOrDefault(Function(item) item.Value.Id = selectedLayout)
                 lightingTest.SelectedIndex = lighting : layouts.EndUpdate()

@@ -13,11 +13,16 @@ public sealed record ExternalBorrow(string Target, string Source);
 // Bytes [Offset, Offset + Length) of a pinned stock Source copied over the same range of one of the layout's own
 // packed files for the session (e.g. a grass file's type library), so the pack ships that range blank.
 public sealed record ExternalSplice(string Target, string Source, long Offset, int Length);
+// A lighting choice for one layout: Lighting sets parameters of the layout's borrowed lighting.xml for the session,
+// and Borrow takes some of the layout's borrowed files from other pinned stock files (e.g. another venue's sky.pssg).
+// The first condition keeps the layout's own id; each other one is listed as its own layout, <layout>-<condition>,
+// over the same installed files (its own best times and replays).
+public sealed record ExternalCondition(string Id, string Name, Dictionary<string, string>? Lighting = null, ExternalBorrow[]? Borrow = null);
 public sealed record ExternalLayout(string Id, string Name, string Folder, string Condition,
     string Discipline, bool Circuit, int MaximumOpponents, ExternalReplacement[] Session,
     string RaceStart = "grid", ExternalReplacement[]? RaceSession = null,
     int GridMaximumOpponents = 0, ExternalReplacement[]? GridRaceSession = null, ExternalBorrow[]? Borrow = null,
-    ExternalRegistration? Registration = null, ExternalSplice[]? Splice = null);
+    ExternalRegistration? Registration = null, ExternalSplice[]? Splice = null, ExternalCondition[]? Conditions = null);
 // Optional own engine sound: DiRT 2 ramp-engine samples in payload/audio/dictionaries/d2ve_<code>/
 // (NESSamples.dic and <Bank>.wip) played through payload/audio/cars/<code>engine.ini.
 // Samples is the ramp length in frames; Turbo false silences the donor's turbo layer.
@@ -48,8 +53,18 @@ public sealed class ExternalPack
     internal ExternalPack(string root, string kind, string id, ExternalManifest? manifest, string hash, string problem)
         => (Root, Kind, FolderId, Manifest, ManifestHash, Problem) = (root, kind, id, manifest, hash, problem);
     public string LayoutId(ExternalLayout layout) => Id + "/" + layout.Id;
-    public ExternalLayout Layout(string id) => Manifest!.Layouts.SingleOrDefault(l => LayoutId(l) == id)
-        ?? throw new IOException("External layout is not present in this pack.");
+    // Every listed layout: each manifest layout once per condition (the first under the layout's own id).
+    public IEnumerable<(string Id, ExternalLayout Layout, ExternalCondition? Condition)> Variants() =>
+        Manifest!.Layouts.SelectMany(l => l.Conditions is { Length: > 0 } conditions
+            ? conditions.Select((c, i) => (i == 0 ? LayoutId(l) : LayoutId(l) + "-" + c.Id, l with { Condition = c.Name }, (ExternalCondition?)c))
+            : [(LayoutId(l), l, (ExternalCondition?)null)]);
+    public ExternalLayout Layout(string id) => Variant(id).Layout;
+    public ExternalCondition? Condition(string id) => Variant(id).Condition;
+    (string Id, ExternalLayout Layout, ExternalCondition? Condition) Variant(string id)
+    {
+        foreach (var variant in Variants()) if (variant.Id == id) return variant;
+        throw new IOException("External layout is not present in this pack.");
+    }
     public void Verify(CancellationToken token = default)
     {
         if (!Ready) throw new IOException(Problem);
@@ -72,13 +87,13 @@ public sealed class ExternalPack
         }
     }
     internal TrackPack TrackDefinition() => new(Id, Name, Manifest!.Version, Manifest.MinimumLauncher, Manifest.Modes,
-        Manifest.Layouts.Select(l => new Layout(LayoutId(l), l.Name, l.Folder, l.Condition, l.Discipline, l.Circuit)).ToArray(), [], this);
+        Variants().Select(v => new Layout(v.Id, v.Layout.Name, v.Layout.Folder, v.Layout.Condition, v.Layout.Discipline, v.Layout.Circuit)).ToArray(), [], this);
     internal PackReceipt ReadReceipt(bool verify, CancellationToken token)
     {
         if (verify) Verify(token);
         return new(2, Id, Manifest!.Version, Manifest.MinimumLauncher,
             Manifest.Files.Select(f => new PackFile(Support + "/" + f.Path, f.Bytes, f.Sha256)).ToArray(),
-            Manifest.Layouts.Select(l => new LayoutSession(LayoutId(l), [], Manifest.Version)).ToArray(), []);
+            Variants().Select(v => new LayoutSession(v.Id, [], Manifest.Version)).ToArray(), []);
     }
 }
 
@@ -353,5 +368,31 @@ public static class ExternalPacks
             }
         }
         if (used.Count != m.Files.Length) throw new IOException("External inventory contains unreferenced files or unsupported destinations.");
+        var listed = new HashSet<string>(m.Layouts.Select(l => l.Id), StringComparer.Ordinal);
+        foreach (var layout in m.Layouts.Where(l => l.Conditions is not null))
+        {
+            var conditions = layout.Conditions!;
+            if (conditions.Length is < 2 or > 8 || conditions.Any(c => c is null || !Slug(c.Id) || !Text(c.Name, 40) || c.Name != c.Name.Trim()) ||
+                conditions.Select(c => c.Id).Distinct().Count() != conditions.Length || conditions.Select(c => c.Name).Distinct(StringComparer.OrdinalIgnoreCase).Count() != conditions.Length)
+                throw new IOException("Invalid external layout conditions.");
+            string lighting = $"tracks/usa/{layout.Folder}/lighting.xml";
+            foreach (var condition in conditions)
+            {
+                if (condition != conditions[0] && (!Slug(layout.Id + "-" + condition.Id) || !listed.Add(layout.Id + "-" + condition.Id)))
+                    throw new IOException("An external condition's layout id is too long or already used: " + layout.Id + "-" + condition.Id);
+                // Another pinned stock source for one of the layout's own borrowed targets.
+                if (condition.Borrow is { } swaps && (swaps.Length > 16 || swaps.Any(b => b is null || layout.Borrow?.Any(l => l.Target == b.Target) != true ||
+                        !m.Dependencies.Any(d => d.Path == b.Source) || !DataExtension(b.Source) || Path.GetExtension(b.Source) != Path.GetExtension(b.Target) ||
+                        b.Source.StartsWith("tracks/usa/d2ve_", StringComparison.OrdinalIgnoreCase) || TrackPacks.SessionTargets.Contains(b.Source) ||
+                        (b.Target == lighting && condition.Lighting is { Count: > 0 })) ||
+                    swaps.Select(b => b.Target).Distinct(StringComparer.OrdinalIgnoreCase).Count() != swaps.Length))
+                    throw new IOException("Invalid external condition borrowed files: " + condition.Name);
+                if (condition.Lighting is not { Count: > 0 } values) continue;
+                // Values only for the borrowed stock lighting file, patched at launch; never a packed file.
+                if (layout.Borrow?.Any(b => b.Target == lighting && b.Source.EndsWith("/lighting.xml", StringComparison.Ordinal)) != true || values.Count > 64 ||
+                    values.Any(v => !Regex.IsMatch(v.Key, "^[A-Za-z_][A-Za-z0-9_]{0,63}$") || !ExternalLighting.Value(v.Value)))
+                    throw new IOException("Invalid external condition lighting: " + condition.Name);
+            }
+        }
     }
 }
