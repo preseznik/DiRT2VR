@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+### Custom cars
+
+- The launcher now remembers your CUSTOM car. With CUSTOM cars on, the car picker came back on the Ferrari F2004 at every start and saved it over your choice, because the launcher reapplied its stock-car selection to the picker after the picker had restored your car. Your last CUSTOM or External car now stays selected after a restart, with its livery, in both car pickers. If its pack has been removed, the picker shows it as missing and launching waits until you restore the pack or choose another car, instead of switching to the Ferrari F2004. Checked with launcher tests that reopen the launcher with the Ferrari F2004, with an External car that has several liveries, and with that car's pack removed and restored. Not yet checked in a player's game.
+
 ### Custom tracks
 
 - External track packs can offer several lighting conditions (for example Day, Evening, Overcast) from one installation: the pack lists them per layout (`Conditions`, see EXTERNAL_PACKS.md), each condition appears as its own layout entry such as "Katarina Climb · Evening" with its own best times and replays, and the launcher sets the condition's values in the player's own borrowed venue lighting for the session, restoring everything afterwards as usual. A condition can also take a borrowed file such as the sky from another original track, for example a cloudy sky for Overcast. Packs using it need 0.18.29 or later. Checked with launcher tests on a real stock Croatia Rally lighting file (values set, everything else unchanged, recovery removes the file, invalid values and unknown parameters refused). Checked in the lab on desktop with a Polhov Gradec test build offering Day, Evening, Overcast (with Malaysia Rally's cloudy sky) and Morning mist: each condition loaded with its own lighting and sky, and the original files were restored after every session. Not yet checked in a headset, in races or replays, or by a player.

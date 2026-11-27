@@ -579,8 +579,12 @@ Public Class MainForm
         If eventChoice.SelectedIndex < 0 AndAlso eventChoice.Items.Count > 0 Then eventChoice.SelectedIndex = 0
         trackChoice.SelectedItem = trackChoice.Items.Cast(Of PracticeTrack).FirstOrDefault(Function(t) t.Id = settings.TrackId)
         If trackChoice.SelectedIndex < 0 AndAlso trackChoice.Items.Count > 0 Then trackChoice.SelectedIndex = 0
-        carChoice.SelectedItem = carChoice.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = settings.CarCode)
-        If carChoice.SelectedIndex < 0 AndAlso carChoice.Items.Count > 0 Then carChoice.SelectedIndex = 0
+        ' The saved stock car applies only to the stock list. With CUSTOM cars on, the picker has already restored the
+        ' player's CUSTOM car; selecting here would pick its first entry, the Ferrari F2004, and save it over that choice.
+        If Not customCars.CustomEnabled Then
+            carChoice.SelectedItem = carChoice.Items.Cast(Of PracticeCar).FirstOrDefault(Function(c) c.Code = settings.CarCode)
+            If carChoice.SelectedIndex < 0 AndAlso carChoice.Items.Count > 0 Then carChoice.SelectedIndex = 0
+        End If
         AddHandler launchMode.SelectedIndexChanged, Sub()
                                                         For Each control In {eventChoice, trackChoice, carChoice}
                                                             control.Enabled = launchMode.SelectedIndex = 1 OrElse launchMode.SelectedIndex = 2
