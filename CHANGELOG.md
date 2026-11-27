@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.31 — 2026-11-27 — Experimental
+
+Changes since 0.18.30, the last published release.
+
 ### Direct practice and Race
 
 - AI cars in a Race now wear varied liveries; until now every AI car wore its car's first livery. AI cars driving your model wear its other liveries, never yours, and with Mixed or Same class opponents each car gets a random livery of its own. The liveries are picked anew for each event (Restart keeps them), External car packs with several liveries included. Saved replays keep the AI liveries they were recorded with; replays saved before this still show every AI car in its first livery. Not yet checked in game.
