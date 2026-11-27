@@ -6,6 +6,10 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
+## 0.18.32 — 2026-11-27 — Experimental
+
+Changes since 0.18.31, the last published release.
+
 ### Disk space
 
 - The launcher now cleans up after itself in `%LOCALAPPDATA%\DiRT2VR`:

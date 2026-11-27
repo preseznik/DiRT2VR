@@ -1,16 +1,23 @@
-DiRT2VR 0.18.31 — Experimental
+DiRT2VR 0.18.32 — Experimental
 
-LATEST CHANGES (since 0.18.30)
+LATEST CHANGES (since 0.18.31)
 
-- AI cars in a Race now wear varied liveries instead of all wearing their car's first one. AI cars driving your model never wear your livery. Restart keeps the liveries, and saved replays keep the ones they were recorded with.
-- Direct practice on rally stages is now introduced as a rally: the intro said "RAID" with the country, for example "RAID SLOVENIA". It now says "RALLY SLOVENIA".
-- External track packs can use lighter files in VR only, for example sparser grass for a better frame rate, while desktop keeps the full version. Upcoming track packs need this version.
-- The rally intro and the VR-only track files were checked in the lab, on desktop and with a simulated headset. The AI liveries are not yet checked in the game. A real headset and multiplayer still need player testing.
+- The launcher now cleans up after itself in %LOCALAPPDATA%\DiRT2VR, which could grow to tens of GB:
+  - Diagnostic logs stay within about 2 GB per installation. The five newest sessions are always kept; older ones go after 30 days, or after a day once the logs pass 2 GB.
+  - The Direct multiplayer game copy (about 10 GB) is removed after two weeks without a Direct race; the next race prepares it again.
+  - Folders left behind by other or removed DiRT 2 installations are cleaned too.
+  - A large backlog is cleared a little at a time while the launcher is open, and cleanup steps aside when you launch.
+  - Uninstalling removes logs, the Direct game copy, downloaded updates and build leftovers. Settings, profiles, saved replays and lap times stay.
+- The cleanup was checked with test folders. It has not yet run on a player PC or through the real uninstaller.
 
 ============================================================
 EARLIER RELEASES
 Highlights only; the latest changes are listed above.
 ============================================================
+
+0.18.31 — Experimental (changes since 0.18.30)
+
+- Varied AI liveries in Races, a Rally intro for Direct practice on rally stages, and VR-only files for External track packs.
 
 0.18.30 — Experimental (changes since 0.18.20)
 
