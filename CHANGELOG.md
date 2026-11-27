@@ -6,9 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-## 0.18.34 — 2026-11-27 — Experimental
+## 0.18.35 — 2026-11-27 — Experimental
 
-Changes since 0.18.31, the last published release. The cleanup was first packaged as 0.18.32 and 0.18.33, which were not published. After an upgrade, 0.18.32 waited up to a day because the older launcher's daily check still counted. 0.18.33 waited an hour because setup was still running when it opened the launcher.
+Changes since 0.18.31, the last published release. The cleanup was first packaged as 0.18.32 to 0.18.34, which were not published. After an upgrade, 0.18.32 waited up to a day because the older launcher's daily check still counted. 0.18.33 waited an hour because setup was still running when it opened the launcher. 0.18.34 removed only about one large log session per minute.
 
 ### Disk space
 
@@ -16,7 +16,7 @@ Changes since 0.18.31, the last published release. The cleanup was first package
   - Diagnostic logs stay within about 2 GB per installation. The five newest sessions are always kept; older sessions go after 30 days, or after a day once the logs pass 2 GB.
   - The Direct multiplayer game copy (about 10 GB) is removed after two weeks without a Direct race; the next race prepares it again.
   - Folders left by other or removed DiRT 2 installations get the same log, Direct, download and build cleanup. Folders with a pending recovery are left alone.
-  - A large backlog is cleared a few seconds at a time, every minute while the launcher is open, and cleanup steps aside when you launch. Deleting is about 20 times faster than before.
+  - A large backlog is cleared a few seconds at a time, every minute while the launcher is open, and cleanup steps aside when you launch. A folder is claimed by renaming it, which Windows refuses while any file inside is in use, instead of opening every file first (about 2 ms per file, mostly antivirus scanning). Three real 2,500-file sessions (1.6 GB) went in one second; one such session used to take a whole 5-second pass. A folder whose removal is interrupted is finished on a later pass.
   - Uninstalling (or `--remove-proxy`) removes that installation's logs, Direct game copy, downloaded updates and build leftovers. Settings, profiles, saved replays and lap times stay.
   - The first cleanup runs as soon as the upgraded launcher opens, even if an older version already checked that day. When cleanup has to wait (a game, DiRT2VR's setup or a track build is running), it tries again a minute later. Other programs' installers no longer hold it off.
   - Checked with the launcher against test folders (logs, Direct copies, a 60,000-file backlog, recovery-pending and non-install folders, uninstall); not yet run on a player PC or through the real uninstaller.

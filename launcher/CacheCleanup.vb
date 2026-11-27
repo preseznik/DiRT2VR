@@ -23,7 +23,7 @@ Public NotInheritable Class CacheCleanup
     Private Shared ReadOnly TimeBudget As TimeSpan = TimeSpan.FromSeconds(5)
     Private Const DirectUnusedDays As Integer = 14
     ' Removed on uninstall. Settings, replays, lap times and recovery data stay.
-    Private Shared ReadOnly DisposableFolders As String() = {"logs", "Direct", "updates", "custom-track-builds", "custom-car-builds", "replay-playback"}
+    Private Shared ReadOnly DisposableFolders As String() = {"logs", "Direct", "Direct.removing", "updates", "custom-track-builds", "custom-car-builds", "replay-playback"}
     Private Shared ReadOnly InstallerName As New Regex("^[0-9a-f]{32}-DiRT2VR-(\d+\.\d+\.\d+)-Setup\.exe(\.part)?$", RegexOptions.IgnoreCase Or RegexOptions.CultureInvariant)
     Private Const LeaseName As String = "cache-activity.lock"
     Private Const ReceiptName As String = "cache-cleanup.json"
@@ -106,6 +106,10 @@ Public NotInheritable Class CacheCleanup
                             Try
                                 ' Another installation's recovery journal keeps its folder as it is.
                                 If userRoot <> context.UserRoot AndAlso Directory.EnumerateFiles(userRoot, "*pending*.json", SearchOption.TopDirectoryOnly).Any() Then Continue For
+                                ' Finish trees an earlier pass claimed but ran out of time on.
+                                ResumeClaims(userRoot, result, watch)
+                                ResumeClaims(SafeFiles.Inside(userRoot, "logs"), result, watch)
+                                ResumeClaims(SafeFiles.Inside(userRoot, "custom-track-builds"), result, watch)
                                 CleanUpdates(userRoot, now, result, watch)
                                 CleanBuilds(userRoot, now, result, watch)
                                 CleanDirect(userRoot, now, result, watch)
@@ -305,18 +309,17 @@ Public NotInheritable Class CacheCleanup
     Private Shared Sub RemoveOldTree(parent As String, name As String, cutoff As DateTime, result As Receipt, watch As Stopwatch)
         ' Resolves the root and rejects links anywhere on its path.
         Dim root = SafeFiles.Inside(parent, name)
-        Dim files As New List(Of FileInfo), folders As New List(Of DirectoryInfo), pending As New Stack(Of DirectoryInfo)
+        Dim pending As New Stack(Of DirectoryInfo)
         pending.Push(New DirectoryInfo(root))
         Dim inspected As Integer
-        ' Validate the whole candidate before deleting any file. Reject links, fresh
-        ' children and locked files; never recurse into unrecognized cache roots.
-        ' Directory entries carry their own attributes and times, and every parent
-        ' has already been checked, so each entry needs no further lookups.
+        ' Validate the whole candidate before deleting any file. Reject links and
+        ' fresh children; never recurse into unrecognized cache roots. Directory
+        ' entries carry their own attributes and times, so nothing is opened: opening
+        ' each file (often scanned by antivirus) cost about 2 ms per file.
         While pending.Count > 0
             If OutOfTime(watch) Then Return
             Dim folder = pending.Pop()
             If folder.LastWriteTimeUtc >= cutoff Then Return
-            folders.Add(folder)
             For Each entry In folder.EnumerateFileSystemInfos()
                 inspected += 1
                 If inspected > 25000 OrElse OutOfTime(watch) Then Return
@@ -324,22 +327,61 @@ Public NotInheritable Class CacheCleanup
                 Dim child = TryCast(entry, DirectoryInfo)
                 If child IsNot Nothing Then pending.Push(child) : Continue For
                 If entry.LastWriteTimeUtc >= cutoff Then Return
-                Using probe As New FileStream(entry.FullName, FileMode.Open, FileAccess.Read, FileShare.None)
-                End Using
-                files.Add(DirectCast(entry, FileInfo))
             Next
         End While
-        Dim bytes As Long
-        For Each file In files
-            ' Older converters copied read-only source flags into their work folders.
-            If (file.Attributes And FileAttributes.ReadOnly) <> 0 Then file.Attributes = FileAttributes.Normal
-            bytes += file.Length
-            file.Delete()
+        ' Claim the whole tree in one step: Windows refuses to rename a folder while
+        ' any file inside it is open, so a tree in use stays exactly as it is.
+        Dim claimed = SafeFiles.Inside(parent, name & ClaimSuffix)
+        If Directory.Exists(claimed) OrElse File.Exists(claimed) Then Return
+        Try
+            Directory.Move(root, claimed)
+        Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
+            Return
+        End Try
+        DeleteClaimed(claimed, result, watch)
+    End Sub
+    ' Claimed trees are deleted over as many passes as they need.
+    Private Const ClaimSuffix As String = ".removing"
+    Private Shared Sub ResumeClaims(folder As String, result As Receipt, watch As Stopwatch)
+        If Not Directory.Exists(folder) Then Return
+        For Each claimed In New DirectoryInfo(folder).EnumerateDirectories("*" & ClaimSuffix).Take(1000).ToArray()
+            If OutOfTime(watch) Then Return
+            If (claimed.Attributes And FileAttributes.ReparsePoint) <> 0 Then Continue For
+            DeleteClaimed(claimed.FullName, result, watch)
         Next
+    End Sub
+    Private Shared Sub DeleteClaimed(root As String, result As Receipt, watch As Stopwatch)
+        Dim folders As New List(Of DirectoryInfo), pending As New Stack(Of DirectoryInfo)
+        pending.Push(New DirectoryInfo(root))
+        While pending.Count > 0
+            If OutOfTime(watch) Then Return
+            Dim folder = pending.Pop()
+            folders.Add(folder)
+            For Each entry In folder.EnumerateFileSystemInfos().ToArray()
+                If OutOfTime(watch) Then Return
+                ' Never follow a link; its folder simply stays behind.
+                If (entry.Attributes And FileAttributes.ReparsePoint) <> 0 Then Continue For
+                Dim child = TryCast(entry, DirectoryInfo)
+                If child IsNot Nothing Then pending.Push(child) : Continue For
+                Dim file = DirectCast(entry, FileInfo)
+                Try
+                    ' Older converters copied read-only source flags into their work folders.
+                    If (file.Attributes And FileAttributes.ReadOnly) <> 0 Then file.Attributes = FileAttributes.Normal
+                    Dim size = file.Length
+                    file.Delete()
+                    result.FilesRemoved += 1 : result.BytesRemoved += size
+                Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
+                    Problem(result, ex)
+                End Try
+            Next
+        End While
         For Each folder In folders.OrderByDescending(Function(d) d.FullName.Length)
-            folder.Delete()
+            Try
+                folder.Delete()
+            Catch ex As Exception When TypeOf ex Is IOException OrElse TypeOf ex Is UnauthorizedAccessException
+                ' A file that could not be removed keeps its folders; retried next pass.
+            End Try
         Next
-        result.FilesRemoved += files.Count : result.BytesRemoved += bytes
     End Sub
     Private Shared Sub Problem(result As Receipt, ex As Exception)
         If result.Problems.Count < 20 Then result.Problems.Add(ex.Message)
