@@ -6,7 +6,7 @@ Imports System.Windows.Forms
 ' LastPublished to it so earlier marks disappear. Stable builds never show marks.
 Public Module NewFeatures
     ' The last published release; tests may set it.
-    Public Property LastPublished As String = "0.18.30"
+    Public Property LastPublished As String = "0.18.31"
     ' Control name -> the published release it was added after.
     Private ReadOnly addedAfter As New Dictionary(Of String, String) From {
         {"DistanceBlur", "0.18.20"}, {"CustomCarSelectionStockLivery", "0.18.20"}, {"CustomCarSelectionTrackLivery", "0.18.20"},

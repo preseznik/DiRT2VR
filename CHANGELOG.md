@@ -8,6 +8,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.18.31 — 2026-11-27 — Experimental
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.31)
+
 Changes since 0.18.30, the last published release.
 
 ### Direct practice and Race
