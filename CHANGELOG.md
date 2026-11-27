@@ -8,6 +8,8 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## 0.18.36 — 2026-11-28 — Experimental
 
+[GitHub release](https://github.com/preseznik/DiRT2VR/releases/tag/v0.18.36)
+
 Changes since 0.18.31, the last published release. The cleanup was first packaged as 0.18.32 to 0.18.35, which were not published. After an upgrade, 0.18.32 waited up to a day because the older launcher's daily check still counted. 0.18.33 waited an hour because setup was still running when it opened the launcher. 0.18.34 removed only about one large log session per minute. 0.18.35 kept small old sessions while large recent ones filled the budget.
 
 ### Disk space
@@ -19,7 +21,7 @@ Changes since 0.18.31, the last published release. The cleanup was first package
   - A large backlog is cleared a few seconds at a time, every minute while the launcher is open, and cleanup steps aside when you launch. A folder is claimed by renaming it, which Windows refuses while any file inside is in use, instead of opening every file first (about 2 ms per file, mostly antivirus scanning). Three real 2,500-file sessions (1.6 GB) went in one second; one such session used to take a whole 5-second pass. A folder whose removal is interrupted is finished on a later pass.
   - Uninstalling (or `--remove-proxy`) removes that installation's logs, Direct game copy, downloaded updates and build leftovers. Settings, profiles, saved replays and lap times stay.
   - The first cleanup runs as soon as the upgraded launcher opens, even if an older version already checked that day. When cleanup has to wait (a game, DiRT2VR's setup or a track build is running), it tries again a minute later. Other programs' installers no longer hold it off.
-  - Checked with the launcher against test folders (logs, Direct copies, a 60,000-file backlog, recovery-pending and non-install folders, uninstall); not yet run on a player PC or through the real uninstaller.
+  - Checked with the launcher against test folders (logs, Direct copies, a 60,000-file backlog, recovery-pending and non-install folders, uninstall), and by updating a development PC through setup: about 91 GB of logs and Direct copies across many installation folders went down to 15 GB within about seven minutes, with settings, replays and lap times intact. Not yet run through the real uninstaller.
 - Development screenshot captures no longer save raw GPU textures (tens of MB each, about 0.5 GB per session); they stay available to developers through a separate switch. Normal play and normal diagnostic logging never saved them.
 
 ## 0.18.31 — 2026-11-27 — Experimental
