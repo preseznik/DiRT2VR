@@ -79,13 +79,14 @@ Public NotInheritable Class CacheCleanup
                 Catch ex As AbandonedMutexException
                     held = True
                 End Try
+                ' Busy skips retry soon: setup opens the launcher while it is still running.
                 If Not held Then
-                    result.Skipped = "Session or build active" : Return result
+                    result.Skipped = "Session or build active" : result.Incomplete = True : Return result
                 End If
                 idle.Reset()
                 Try
                     If ExternalOperationActive() Then
-                        result.Skipped = "Game, installer or converter active" : Return result
+                        result.Skipped = "Game, installer or converter active" : result.Incomplete = True : Return result
                     End If
                     Using lease = OpenLease(context)
                         If RecoveryPending(context) Then
@@ -142,7 +143,7 @@ Public NotInheritable Class CacheCleanup
                 Dim name = item.ProcessName
                 If name.Equals("dirt2", StringComparison.OrdinalIgnoreCase) OrElse name.Equals("dirt2_game", StringComparison.OrdinalIgnoreCase) OrElse
                     (name.Equals("DiRT2VR", StringComparison.OrdinalIgnoreCase) AndAlso item.Id <> Environment.ProcessId) OrElse
-                    name.Contains("setup", StringComparison.OrdinalIgnoreCase) OrElse name.EndsWith("Converter", StringComparison.OrdinalIgnoreCase) Then Return True
+                    IsOwnInstaller(name) OrElse name.EndsWith("Converter", StringComparison.OrdinalIgnoreCase) Then Return True
             Next
             Return False
         Finally
@@ -150,6 +151,11 @@ Public NotInheritable Class CacheCleanup
                 item.Dispose()
             Next
         End Try
+    End Function
+    ' DiRT2VR's setup and its .tmp stage, as downloaded by hand or by the updater
+    ' ("<id>-DiRT2VR-x.y.z-Setup"). Other programs' installers do not hold cleanup off.
+    Friend Shared Function IsOwnInstaller(processName As String) As Boolean
+        Return processName.Contains("DiRT2VR", StringComparison.OrdinalIgnoreCase) AndAlso processName.Contains("setup", StringComparison.OrdinalIgnoreCase)
     End Function
     Private Shared Function RecoveryPending(context As InstallContext) As Boolean
         ' Include journals outside AppData; a stale Ready session.json proves nothing.

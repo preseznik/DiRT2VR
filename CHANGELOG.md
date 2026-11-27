@@ -6,9 +6,9 @@ Version headings identify distribution builds; published packages include a GitH
 
 ## Unreleased
 
-## 0.18.33 — 2026-11-27 — Experimental
+## 0.18.34 — 2026-11-27 — Experimental
 
-Changes since 0.18.31, the last published release. The cleanup was first packaged as 0.18.32, which was not published: after an upgrade it waited up to a day, because the older launcher's daily check still counted.
+Changes since 0.18.31, the last published release. The cleanup was first packaged as 0.18.32 and 0.18.33, which were not published. After an upgrade, 0.18.32 waited up to a day because the older launcher's daily check still counted. 0.18.33 waited an hour because setup was still running when it opened the launcher.
 
 ### Disk space
 
@@ -18,7 +18,7 @@ Changes since 0.18.31, the last published release. The cleanup was first package
   - Folders left by other or removed DiRT 2 installations get the same log, Direct, download and build cleanup. Folders with a pending recovery are left alone.
   - A large backlog is cleared a few seconds at a time, every minute while the launcher is open, and cleanup steps aside when you launch. Deleting is about 20 times faster than before.
   - Uninstalling (or `--remove-proxy`) removes that installation's logs, Direct game copy, downloaded updates and build leftovers. Settings, profiles, saved replays and lap times stay.
-  - The first cleanup runs as soon as the upgraded launcher opens, even if an older version already checked that day.
+  - The first cleanup runs as soon as the upgraded launcher opens, even if an older version already checked that day. When cleanup has to wait (a game, DiRT2VR's setup or a track build is running), it tries again a minute later. Other programs' installers no longer hold it off.
   - Checked with the launcher against test folders (logs, Direct copies, a 60,000-file backlog, recovery-pending and non-install folders, uninstall); not yet run on a player PC or through the real uninstaller.
 - Development screenshot captures no longer save raw GPU textures (tens of MB each, about 0.5 GB per session); they stay available to developers through a separate switch. Normal play and normal diagnostic logging never saved them.
 

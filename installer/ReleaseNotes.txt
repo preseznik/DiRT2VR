@@ -1,4 +1,4 @@
-DiRT2VR 0.18.33 — Experimental
+DiRT2VR 0.18.34 — Experimental
 
 LATEST CHANGES (since 0.18.31)
 
